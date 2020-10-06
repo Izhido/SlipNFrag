@@ -336,7 +336,6 @@ struct PerImage
 	Texture* sky;
 	Texture* floor;
 	VkDeviceSize texturedVertexBase;
-	VkDeviceSize colormappedVertexBase;
 	VkDeviceSize coloredVertexBase;
 	VkDeviceSize texturedAttributeBase;
 	VkDeviceSize colormappedAttributeBase;
@@ -4278,7 +4277,6 @@ void android_main(struct android_app *app)
 					d_lists.last_sky = -1;
 					d_lists.last_textured_vertex = -1;
 					d_lists.last_textured_attribute = -1;
-					d_lists.last_colormapped_vertex = -1;
 					d_lists.last_colormapped_attribute = -1;
 					d_lists.last_colormapped_index16 = -1;
 					d_lists.last_colormapped_index32 = -1;
@@ -4416,9 +4414,9 @@ void android_main(struct android_app *app)
 			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			auto floorVerticesSize = 0;
 			auto texturedVerticesSize = 0;
-			auto colormappedVerticesSize = 0;
 			auto coloredVerticesSize = 0;
 			auto verticesSize = 0;
+			auto colormappedVerticesSize = 0;
 			auto floorAttributesSize = 0;
 			auto texturedAttributesSize = 0;
 			auto colormappedAttributesSize = 0;
@@ -4441,9 +4439,8 @@ void android_main(struct android_app *app)
 				floorVerticesSize = 3 * 4 * sizeof(float);
 			}
 			texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
-			colormappedVerticesSize = (d_lists.last_colormapped_vertex + 1) * sizeof(float);
 			coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-			verticesSize = texturedVerticesSize + colormappedVerticesSize + coloredVerticesSize + floorVerticesSize;
+			verticesSize = texturedVerticesSize + coloredVerticesSize + floorVerticesSize;
 			if (verticesSize > 0 || d_lists.last_alias >= 0 || d_lists.last_viewmodel >= 0)
 			{
 				for (Buffer** b = &perImage.vertices.oldBuffers; *b != nullptr; b = &(*b)->next)
@@ -4490,9 +4487,7 @@ void android_main(struct android_app *app)
 				}
 				perImage.texturedVertexBase = floorVerticesSize;
 				memcpy((unsigned char*)vertices->mapped + perImage.texturedVertexBase, d_lists.textured_vertices.data(), texturedVerticesSize);
-				perImage.colormappedVertexBase = perImage.texturedVertexBase + texturedVerticesSize;
-				memcpy((unsigned char*)vertices->mapped + perImage.colormappedVertexBase, d_lists.colormapped_vertices.data(), colormappedVerticesSize);
-				perImage.coloredVertexBase = perImage.colormappedVertexBase + colormappedVerticesSize;
+				perImage.coloredVertexBase = perImage.texturedVertexBase + texturedVerticesSize;
 				memcpy((unsigned char*)vertices->mapped + perImage.coloredVertexBase, d_lists.colored_vertices.data(), coloredVerticesSize);
 				VC(appState.Device.vkUnmapMemory(appState.Device.device, vertices->memory));
 				vertices->mapped = nullptr;
@@ -4529,6 +4524,7 @@ void android_main(struct android_app *app)
 						moveBufferToFront(colormappedVertices, perImage.colormappedVertices);
 						colormappedVertices->key = alias.vertices;
 						perImage.colormappedVerticesPerKey.insert({ alias.vertices, colormappedVertices });
+						colormappedVerticesSize += colormappedVertices->size;
 						VK(appState.Device.vkMapMemory(appState.Device.device, colormappedVertices->memory, 0, colormappedVertices->size, 0, &colormappedVertices->mapped));
 						auto mapped = (float*)colormappedVertices->mapped;
 						auto vertexFromModel = alias.vertices;
@@ -4584,6 +4580,7 @@ void android_main(struct android_app *app)
 						moveBufferToFront(colormappedVertices, perImage.colormappedVertices);
 						colormappedVertices->key = viewmodel.vertices;
 						perImage.colormappedVerticesPerKey.insert({ viewmodel.vertices, colormappedVertices });
+						colormappedVerticesSize += colormappedVertices->size;
 						VK(appState.Device.vkMapMemory(appState.Device.device, colormappedVertices->memory, 0, colormappedVertices->size, 0, &colormappedVertices->mapped));
 						auto mapped = (float*)colormappedVertices->mapped;
 						auto vertexFromModel = viewmodel.vertices;
@@ -5128,9 +5125,10 @@ void android_main(struct android_app *app)
 				floorSize = 0;
 			}
 #if defined(_DEBUG)
-			__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** %i; %i, %i, %i, %i = %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
+			__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** %i; %i, %i, %i = %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
 					stagingBufferSize,
-					floorVerticesSize, texturedVerticesSize, colormappedVerticesSize, coloredVerticesSize, verticesSize,
+					floorVerticesSize, texturedVerticesSize, coloredVerticesSize, verticesSize,
+					colormappedVerticesSize,
 					floorAttributesSize, texturedAttributesSize, colormappedAttributesSize, vertexTransformSize, attributesSize,
 					floorIndicesSize, colormappedIndices16Size, coloredIndices16Size, indices16Size,
 					colormappedIndices32Size, coloredIndices32Size, indices32Size);
@@ -5531,274 +5529,272 @@ void android_main(struct android_app *app)
 						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &resources->turbulent.descriptorSet, 0, nullptr));
 						VC(appState.Device.vkCmdDraw(perImage.commandBuffer, turbulent.count, 1, turbulent.first_vertex, 0));
 					}
-					if (colormappedVerticesSize > 0 || d_lists.last_alias >= 0 || d_lists.last_viewmodel >= 0)
+					if (d_lists.last_alias >= 0)
 					{
 						VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 3, 1, &attributes->buffer, &perImage.vertexTransformBase));
-						if (d_lists.last_alias >= 0)
+						VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipeline));
+						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &resources->palette.descriptorSet, 0, nullptr));
+						poolSizes[0].descriptorCount = 1;
+						poolSizes[1].descriptorCount = 2;
+						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->alias.descriptorPool));
+						descriptorSetAllocateInfo.descriptorPool = resources->alias.descriptorPool;
+						descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.alias.descriptorSetLayout;
+						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->alias.descriptorSet));
+						resources->alias.created = true;
+						bufferInfo[0].buffer = appState.Scene.matrices.buffer;
+						bufferInfo[0].range = appState.Scene.matrices.size;
+						writes[0].dstBinding = 0;
+						writes[0].dstSet = resources->alias.descriptorSet;
+						writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						writes[0].pBufferInfo = bufferInfo;
+						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						if (indices16 != nullptr)
 						{
-							VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipeline));
-							VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &resources->palette.descriptorSet, 0, nullptr));
-							poolSizes[0].descriptorCount = 1;
-							poolSizes[1].descriptorCount = 2;
-							VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->alias.descriptorPool));
-							descriptorSetAllocateInfo.descriptorPool = resources->alias.descriptorPool;
-							descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.alias.descriptorSetLayout;
-							VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->alias.descriptorSet));
-							resources->alias.created = true;
-							bufferInfo[0].buffer = appState.Scene.matrices.buffer;
-							bufferInfo[0].range = appState.Scene.matrices.size;
-							writes[0].dstBinding = 0;
-							writes[0].dstSet = resources->alias.descriptorSet;
-							writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-							writes[0].pBufferInfo = bufferInfo;
-							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-							if (indices16 != nullptr)
+							VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
+							for (auto i = 0; i <= d_lists.last_alias; i++)
 							{
-								VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
-								for (auto i = 0; i <= d_lists.last_alias; i++)
+								auto& alias = d_lists.alias[i];
+								if (alias.first_index16 < 0)
 								{
-									auto& alias = d_lists.alias[i];
-									if (alias.first_index16 < 0)
-									{
-										continue;
-									}
-									auto colormappedVertices = perImage.colormappedVerticesPerKey.find(alias.vertices)->second;
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
-									VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &attributeOffset));
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-									float transforms[16];
-									transforms[0] = alias.transform[0][0];
-									transforms[1] = alias.transform[2][0];
-									transforms[2] = -alias.transform[1][0];
-									transforms[3] = 0;
-									transforms[4] = alias.transform[0][2];
-									transforms[5] = alias.transform[2][2];
-									transforms[6] = -alias.transform[1][2];
-									transforms[7] = 0;
-									transforms[8] = -alias.transform[0][1];
-									transforms[9] = -alias.transform[2][1];
-									transforms[10] = alias.transform[1][1];
-									transforms[11] = 0;
-									transforms[12] = alias.transform[0][3];
-									transforms[13] = alias.transform[2][3];
-									transforms[14] = -alias.transform[1][3];
-									transforms[15] = 1;
-									VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
-									auto texture = perImage.aliasPerKey.find(alias.data)->second;
-									auto colormap = perImage.aliasColormapList[i];
-									textureInfo[0].sampler = texture->sampler;
-									textureInfo[0].imageView = texture->view;
-									textureInfo[1].sampler = colormap->sampler;
-									textureInfo[1].imageView = colormap->view;
-									writes[0].dstBinding = 1;
-									writes[0].dstSet = resources->alias.descriptorSet;
-									writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-									writes[0].pImageInfo = textureInfo;
-									writes[1].dstBinding = 2;
-									writes[1].dstSet = resources->alias.descriptorSet;
-									writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-									writes[1].pImageInfo = textureInfo + 1;
-									VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
-									VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &resources->alias.descriptorSet, 0, nullptr));
-									VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, alias.count, 1, alias.first_index16, 0, 0));
+									continue;
 								}
-							}
-							if (indices32 != nullptr)
-							{
-								VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
-								for (auto i = 0; i <= d_lists.last_alias; i++)
-								{
-									auto& alias = d_lists.alias[i];
-									if (alias.first_index32 < 0)
-									{
-										continue;
-									}
-									auto colormappedVertices = perImage.colormappedVerticesPerKey.find(alias.vertices)->second;
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
-									VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &attributeOffset));
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-									float transforms[16];
-									transforms[0] = alias.transform[0][0];
-									transforms[1] = alias.transform[2][0];
-									transforms[2] = -alias.transform[1][0];
-									transforms[3] = 0;
-									transforms[4] = alias.transform[0][2];
-									transforms[5] = alias.transform[2][2];
-									transforms[6] = -alias.transform[1][2];
-									transforms[7] = 0;
-									transforms[8] = -alias.transform[0][1];
-									transforms[9] = -alias.transform[2][1];
-									transforms[10] = alias.transform[1][1];
-									transforms[11] = 0;
-									transforms[12] = alias.transform[0][3];
-									transforms[13] = alias.transform[2][3];
-									transforms[14] = -alias.transform[1][3];
-									transforms[15] = 1;
-									VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
-									auto texture = perImage.aliasPerKey.find(alias.data)->second;
-									auto colormap = perImage.aliasColormapList[i];
-									textureInfo[0].sampler = texture->sampler;
-									textureInfo[0].imageView = texture->view;
-									textureInfo[1].sampler = colormap->sampler;
-									textureInfo[1].imageView = colormap->view;
-									writes[0].dstBinding = 1;
-									writes[0].dstSet = resources->alias.descriptorSet;
-									writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-									writes[0].pImageInfo = textureInfo;
-									writes[1].dstBinding = 2;
-									writes[1].dstSet = resources->alias.descriptorSet;
-									writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-									writes[1].pImageInfo = textureInfo + 1;
-									VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
-									VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &resources->alias.descriptorSet, 0, nullptr));
-									VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, alias.count, 1, alias.first_index32, 0, 0));
-								}
+								auto colormappedVertices = perImage.colormappedVerticesPerKey.find(alias.vertices)->second;
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
+								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &attributeOffset));
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
+								float transforms[16];
+								transforms[0] = alias.transform[0][0];
+								transforms[1] = alias.transform[2][0];
+								transforms[2] = -alias.transform[1][0];
+								transforms[3] = 0;
+								transforms[4] = alias.transform[0][2];
+								transforms[5] = alias.transform[2][2];
+								transforms[6] = -alias.transform[1][2];
+								transforms[7] = 0;
+								transforms[8] = -alias.transform[0][1];
+								transforms[9] = -alias.transform[2][1];
+								transforms[10] = alias.transform[1][1];
+								transforms[11] = 0;
+								transforms[12] = alias.transform[0][3];
+								transforms[13] = alias.transform[2][3];
+								transforms[14] = -alias.transform[1][3];
+								transforms[15] = 1;
+								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
+								auto texture = perImage.aliasPerKey.find(alias.data)->second;
+								auto colormap = perImage.aliasColormapList[i];
+								textureInfo[0].sampler = texture->sampler;
+								textureInfo[0].imageView = texture->view;
+								textureInfo[1].sampler = colormap->sampler;
+								textureInfo[1].imageView = colormap->view;
+								writes[0].dstBinding = 1;
+								writes[0].dstSet = resources->alias.descriptorSet;
+								writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+								writes[0].pImageInfo = textureInfo;
+								writes[1].dstBinding = 2;
+								writes[1].dstSet = resources->alias.descriptorSet;
+								writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+								writes[1].pImageInfo = textureInfo + 1;
+								VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+								VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &resources->alias.descriptorSet, 0, nullptr));
+								VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, alias.count, 1, alias.first_index16, 0, 0));
 							}
 						}
-						if (d_lists.last_viewmodel >= 0)
+						if (indices32 != nullptr)
 						{
-							VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipeline));
-							VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 0, 1, &resources->palette.descriptorSet, 0, nullptr));
-							poolSizes[0].descriptorCount = 1;
-							poolSizes[1].descriptorCount = 2;
-							VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->viewmodels.descriptorPool));
-							descriptorSetAllocateInfo.descriptorPool = resources->viewmodels.descriptorPool;
-							descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.viewmodel.descriptorSetLayout;
-							VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->viewmodels.descriptorSet));
-							resources->viewmodels.created = true;
-							bufferInfo[0].buffer = appState.Scene.matrices.buffer;
-							bufferInfo[0].range = appState.Scene.matrices.size;
-							writes[0].dstBinding = 0;
-							writes[0].dstSet = resources->viewmodels.descriptorSet;
-							writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-							writes[0].pBufferInfo = bufferInfo;
-							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-							float transformsPlusTint[24];
-							if (appState.NearViewModel)
+							VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+							for (auto i = 0; i <= d_lists.last_alias; i++)
 							{
-								transformsPlusTint[16] = vpn[0] / scale;
-								transformsPlusTint[17] = vpn[2] / scale;
-								transformsPlusTint[18] = -vpn[1] / scale;
-								transformsPlusTint[19] = 0;
-								transformsPlusTint[20] = 1;
-								transformsPlusTint[21] = 1;
-								transformsPlusTint[22] = 1;
-								transformsPlusTint[23] = 1;
-							}
-							else
-							{
-								transformsPlusTint[16] = 1 / scale;
-								transformsPlusTint[17] = 0;
-								transformsPlusTint[18] = 0;
-								transformsPlusTint[19] = 8;
-								transformsPlusTint[20] = 1;
-								transformsPlusTint[21] = 0;
-								transformsPlusTint[22] = 0;
-								transformsPlusTint[23] = 0.7 + 0.3 * sin(cl.time * M_PI);
-							}
-							if (indices16 != nullptr)
-							{
-								VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
-								for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+								auto& alias = d_lists.alias[i];
+								if (alias.first_index32 < 0)
 								{
-									auto& viewmodel = d_lists.viewmodel[i];
-									if (viewmodel.first_index16 < 0)
-									{
-										continue;
-									}
-									auto colormappedVertices = perImage.colormappedVerticesPerKey.find(viewmodel.vertices)->second;
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
-									VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &attributeOffset));
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-									transformsPlusTint[0] = viewmodel.transform[0][0];
-									transformsPlusTint[1] = viewmodel.transform[2][0];
-									transformsPlusTint[2] = -viewmodel.transform[1][0];
-									transformsPlusTint[3] = 0;
-									transformsPlusTint[4] = viewmodel.transform[0][2];
-									transformsPlusTint[5] = viewmodel.transform[2][2];
-									transformsPlusTint[6] = -viewmodel.transform[1][2];
-									transformsPlusTint[7] = 0;
-									transformsPlusTint[8] = -viewmodel.transform[0][1];
-									transformsPlusTint[9] = -viewmodel.transform[2][1];
-									transformsPlusTint[10] = viewmodel.transform[1][1];
-									transformsPlusTint[11] = 0;
-									transformsPlusTint[12] = viewmodel.transform[0][3];
-									transformsPlusTint[13] = viewmodel.transform[2][3];
-									transformsPlusTint[14] = -viewmodel.transform[1][3];
-									transformsPlusTint[15] = 1;
-									VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
-									auto texture = perImage.viewmodelsPerKey.find(viewmodel.data)->second;
-									auto colormap = perImage.viewmodelColormapList[i];
-									textureInfo[0].sampler = texture->sampler;
-									textureInfo[0].imageView = texture->view;
-									textureInfo[1].sampler = colormap->sampler;
-									textureInfo[1].imageView = colormap->view;
-									writes[0].dstBinding = 1;
-									writes[0].dstSet = resources->viewmodels.descriptorSet;
-									writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-									writes[0].pImageInfo = textureInfo;
-									writes[1].dstBinding = 2;
-									writes[1].dstSet = resources->viewmodels.descriptorSet;
-									writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-									writes[1].pImageInfo = textureInfo + 1;
-									VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
-									VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &resources->viewmodels.descriptorSet, 0, nullptr));
-									VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, viewmodel.count, 1, viewmodel.first_index16, 0, 0));
+									continue;
 								}
+								auto colormappedVertices = perImage.colormappedVerticesPerKey.find(alias.vertices)->second;
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
+								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &attributeOffset));
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
+								float transforms[16];
+								transforms[0] = alias.transform[0][0];
+								transforms[1] = alias.transform[2][0];
+								transforms[2] = -alias.transform[1][0];
+								transforms[3] = 0;
+								transforms[4] = alias.transform[0][2];
+								transforms[5] = alias.transform[2][2];
+								transforms[6] = -alias.transform[1][2];
+								transforms[7] = 0;
+								transforms[8] = -alias.transform[0][1];
+								transforms[9] = -alias.transform[2][1];
+								transforms[10] = alias.transform[1][1];
+								transforms[11] = 0;
+								transforms[12] = alias.transform[0][3];
+								transforms[13] = alias.transform[2][3];
+								transforms[14] = -alias.transform[1][3];
+								transforms[15] = 1;
+								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
+								auto texture = perImage.aliasPerKey.find(alias.data)->second;
+								auto colormap = perImage.aliasColormapList[i];
+								textureInfo[0].sampler = texture->sampler;
+								textureInfo[0].imageView = texture->view;
+								textureInfo[1].sampler = colormap->sampler;
+								textureInfo[1].imageView = colormap->view;
+								writes[0].dstBinding = 1;
+								writes[0].dstSet = resources->alias.descriptorSet;
+								writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+								writes[0].pImageInfo = textureInfo;
+								writes[1].dstBinding = 2;
+								writes[1].dstSet = resources->alias.descriptorSet;
+								writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+								writes[1].pImageInfo = textureInfo + 1;
+								VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+								VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &resources->alias.descriptorSet, 0, nullptr));
+								VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, alias.count, 1, alias.first_index32, 0, 0));
 							}
-							if (indices32 != nullptr)
+						}
+					}
+					if (d_lists.last_viewmodel >= 0)
+					{
+						VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 3, 1, &attributes->buffer, &perImage.vertexTransformBase));
+						VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipeline));
+						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 0, 1, &resources->palette.descriptorSet, 0, nullptr));
+						poolSizes[0].descriptorCount = 1;
+						poolSizes[1].descriptorCount = 2;
+						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->viewmodels.descriptorPool));
+						descriptorSetAllocateInfo.descriptorPool = resources->viewmodels.descriptorPool;
+						descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.viewmodel.descriptorSetLayout;
+						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->viewmodels.descriptorSet));
+						resources->viewmodels.created = true;
+						bufferInfo[0].buffer = appState.Scene.matrices.buffer;
+						bufferInfo[0].range = appState.Scene.matrices.size;
+						writes[0].dstBinding = 0;
+						writes[0].dstSet = resources->viewmodels.descriptorSet;
+						writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+						writes[0].pBufferInfo = bufferInfo;
+						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						float transformsPlusTint[24];
+						if (appState.NearViewModel)
+						{
+							transformsPlusTint[16] = vpn[0] / scale;
+							transformsPlusTint[17] = vpn[2] / scale;
+							transformsPlusTint[18] = -vpn[1] / scale;
+							transformsPlusTint[19] = 0;
+							transformsPlusTint[20] = 1;
+							transformsPlusTint[21] = 1;
+							transformsPlusTint[22] = 1;
+							transformsPlusTint[23] = 1;
+						}
+						else
+						{
+							transformsPlusTint[16] = 1 / scale;
+							transformsPlusTint[17] = 0;
+							transformsPlusTint[18] = 0;
+							transformsPlusTint[19] = 8;
+							transformsPlusTint[20] = 1;
+							transformsPlusTint[21] = 0;
+							transformsPlusTint[22] = 0;
+							transformsPlusTint[23] = 0.7 + 0.3 * sin(cl.time * M_PI);
+						}
+						if (indices16 != nullptr)
+						{
+							VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
+							for (auto i = 0; i <= d_lists.last_viewmodel; i++)
 							{
-								VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
-								for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+								auto& viewmodel = d_lists.viewmodel[i];
+								if (viewmodel.first_index16 < 0)
 								{
-									auto& viewmodel = d_lists.viewmodel[i];
-									if (viewmodel.first_index32 < 0)
-									{
-										continue;
-									}
-									auto colormappedVertices = perImage.colormappedVerticesPerKey.find(viewmodel.vertices)->second;
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
-									VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &attributeOffset));
-									VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-									transformsPlusTint[0] = viewmodel.transform[0][0];
-									transformsPlusTint[1] = viewmodel.transform[2][0];
-									transformsPlusTint[2] = -viewmodel.transform[1][0];
-									transformsPlusTint[3] = 0;
-									transformsPlusTint[4] = viewmodel.transform[0][2];
-									transformsPlusTint[5] = viewmodel.transform[2][2];
-									transformsPlusTint[6] = -viewmodel.transform[1][2];
-									transformsPlusTint[7] = 0;
-									transformsPlusTint[8] = -viewmodel.transform[0][1];
-									transformsPlusTint[9] = -viewmodel.transform[2][1];
-									transformsPlusTint[10] = viewmodel.transform[1][1];
-									transformsPlusTint[11] = 0;
-									transformsPlusTint[12] = viewmodel.transform[0][3];
-									transformsPlusTint[13] = viewmodel.transform[2][3];
-									transformsPlusTint[14] = -viewmodel.transform[1][3];
-									transformsPlusTint[15] = 1;
-									VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
-									auto texture = perImage.viewmodelsPerKey.find(viewmodel.data)->second;
-									auto colormap = perImage.viewmodelColormapList[i];
-									textureInfo[0].sampler = texture->sampler;
-									textureInfo[0].imageView = texture->view;
-									textureInfo[1].sampler = colormap->sampler;
-									textureInfo[1].imageView = colormap->view;
-									writes[0].dstBinding = 1;
-									writes[0].dstSet = resources->viewmodels.descriptorSet;
-									writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-									writes[0].pImageInfo = textureInfo;
-									writes[1].dstBinding = 2;
-									writes[1].dstSet = resources->viewmodels.descriptorSet;
-									writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-									writes[1].pImageInfo = textureInfo + 1;
-									VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
-									VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &resources->viewmodels.descriptorSet, 0, nullptr));
-									VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, viewmodel.count, 1, viewmodel.first_index32, 0, 0));
+									continue;
 								}
+								auto colormappedVertices = perImage.colormappedVerticesPerKey.find(viewmodel.vertices)->second;
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
+								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &attributeOffset));
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
+								transformsPlusTint[0] = viewmodel.transform[0][0];
+								transformsPlusTint[1] = viewmodel.transform[2][0];
+								transformsPlusTint[2] = -viewmodel.transform[1][0];
+								transformsPlusTint[3] = 0;
+								transformsPlusTint[4] = viewmodel.transform[0][2];
+								transformsPlusTint[5] = viewmodel.transform[2][2];
+								transformsPlusTint[6] = -viewmodel.transform[1][2];
+								transformsPlusTint[7] = 0;
+								transformsPlusTint[8] = -viewmodel.transform[0][1];
+								transformsPlusTint[9] = -viewmodel.transform[2][1];
+								transformsPlusTint[10] = viewmodel.transform[1][1];
+								transformsPlusTint[11] = 0;
+								transformsPlusTint[12] = viewmodel.transform[0][3];
+								transformsPlusTint[13] = viewmodel.transform[2][3];
+								transformsPlusTint[14] = -viewmodel.transform[1][3];
+								transformsPlusTint[15] = 1;
+								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
+								auto texture = perImage.viewmodelsPerKey.find(viewmodel.data)->second;
+								auto colormap = perImage.viewmodelColormapList[i];
+								textureInfo[0].sampler = texture->sampler;
+								textureInfo[0].imageView = texture->view;
+								textureInfo[1].sampler = colormap->sampler;
+								textureInfo[1].imageView = colormap->view;
+								writes[0].dstBinding = 1;
+								writes[0].dstSet = resources->viewmodels.descriptorSet;
+								writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+								writes[0].pImageInfo = textureInfo;
+								writes[1].dstBinding = 2;
+								writes[1].dstSet = resources->viewmodels.descriptorSet;
+								writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+								writes[1].pImageInfo = textureInfo + 1;
+								VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+								VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &resources->viewmodels.descriptorSet, 0, nullptr));
+								VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, viewmodel.count, 1, viewmodel.first_index16, 0, 0));
+							}
+						}
+						if (indices32 != nullptr)
+						{
+							VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+							for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+							{
+								auto& viewmodel = d_lists.viewmodel[i];
+								if (viewmodel.first_index32 < 0)
+								{
+									continue;
+								}
+								auto colormappedVertices = perImage.colormappedVerticesPerKey.find(viewmodel.vertices)->second;
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
+								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &attributeOffset));
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
+								transformsPlusTint[0] = viewmodel.transform[0][0];
+								transformsPlusTint[1] = viewmodel.transform[2][0];
+								transformsPlusTint[2] = -viewmodel.transform[1][0];
+								transformsPlusTint[3] = 0;
+								transformsPlusTint[4] = viewmodel.transform[0][2];
+								transformsPlusTint[5] = viewmodel.transform[2][2];
+								transformsPlusTint[6] = -viewmodel.transform[1][2];
+								transformsPlusTint[7] = 0;
+								transformsPlusTint[8] = -viewmodel.transform[0][1];
+								transformsPlusTint[9] = -viewmodel.transform[2][1];
+								transformsPlusTint[10] = viewmodel.transform[1][1];
+								transformsPlusTint[11] = 0;
+								transformsPlusTint[12] = viewmodel.transform[0][3];
+								transformsPlusTint[13] = viewmodel.transform[2][3];
+								transformsPlusTint[14] = -viewmodel.transform[1][3];
+								transformsPlusTint[15] = 1;
+								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
+								auto texture = perImage.viewmodelsPerKey.find(viewmodel.data)->second;
+								auto colormap = perImage.viewmodelColormapList[i];
+								textureInfo[0].sampler = texture->sampler;
+								textureInfo[0].imageView = texture->view;
+								textureInfo[1].sampler = colormap->sampler;
+								textureInfo[1].imageView = colormap->view;
+								writes[0].dstBinding = 1;
+								writes[0].dstSet = resources->viewmodels.descriptorSet;
+								writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+								writes[0].pImageInfo = textureInfo;
+								writes[1].dstBinding = 2;
+								writes[1].dstSet = resources->viewmodels.descriptorSet;
+								writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+								writes[1].pImageInfo = textureInfo + 1;
+								VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+								VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &resources->viewmodels.descriptorSet, 0, nullptr));
+								VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, viewmodel.count, 1, viewmodel.first_index32, 0, 0));
 							}
 						}
 					}
