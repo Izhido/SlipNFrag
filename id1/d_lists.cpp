@@ -321,8 +321,9 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	}
 }
 
-void D_AddAliasIndicesToLists (dalias_t& alias, aliashdr_t* aliashdr, bool is_index16, mdl_t* mdl, stvert_t* texcoordsbase, int base_vertex)
+void D_AddAliasIndicesToLists (dalias_t& alias, aliashdr_t* aliashdr, bool is_index16, mdl_t* mdl)
 {
+	auto texcoordsbase = alias.texture_coordinates;
 	auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
 	if (is_index16)
 	{
@@ -339,9 +340,9 @@ void D_AddAliasIndicesToLists (dalias_t& alias, aliashdr_t* aliashdr, bool is_in
 			auto v0back = (((texcoordsbase[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
 			auto v1back = (((texcoordsbase[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
 			auto v2back = (((texcoordsbase[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-			v0 = base_vertex + v0 * 2 + (v0back ? 1 : 0);
-			v1 = base_vertex + v1 * 2 + (v1back ? 1 : 0);
-			v2 = base_vertex + v2 * 2 + (v2back ? 1 : 0);
+			v0 = v0 * 2 + (v0back ? 1 : 0);
+			v1 = v1 * 2 + (v1back ? 1 : 0);
+			v2 = v2 * 2 + (v2back ? 1 : 0);
 			d_lists.last_colormapped_index16++;
 			d_lists.colormapped_indices16[d_lists.last_colormapped_index16] = v0;
 			d_lists.last_colormapped_index16++;
@@ -366,9 +367,9 @@ void D_AddAliasIndicesToLists (dalias_t& alias, aliashdr_t* aliashdr, bool is_in
 			auto v0back = (((texcoordsbase[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
 			auto v1back = (((texcoordsbase[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
 			auto v2back = (((texcoordsbase[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-			v0 = base_vertex + v0 * 2 + (v0back ? 1 : 0);
-			v1 = base_vertex + v1 * 2 + (v1back ? 1 : 0);
-			v2 = base_vertex + v2 * 2 + (v2back ? 1 : 0);
+			v0 = v0 * 2 + (v0back ? 1 : 0);
+			v1 = v1 * 2 + (v1back ? 1 : 0);
+			v2 = v2 * 2 + (v2back ? 1 : 0);
 			d_lists.last_colormapped_index32++;
 			d_lists.colormapped_indices32[d_lists.last_colormapped_index32] = v0;
 			d_lists.last_colormapped_index32++;
@@ -411,6 +412,7 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 		memcpy(alias.colormap.data(), colormap, 16384);
 	}
 	alias.vertices = vertices;
+	alias.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
 	alias.vertex_count = mdl->numverts;
 	auto is_index16 = (mdl->numverts * 2 <= 65520);
 	if (is_index16)
@@ -424,7 +426,7 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 		alias.first_index32 = d_lists.last_colormapped_index32 + 1;
 	}
 	alias.first_attribute = d_lists.last_colormapped_attribute + 1;
-	auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * 3 * mdl->numverts;
+	auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
 	if (d_lists.colormapped_attributes.size() < new_size)
 	{
 		d_lists.colormapped_attributes.resize(new_size);
@@ -454,15 +456,8 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 	t2matrix[2][3] = currententity->origin[2];
 	R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
 	auto vertex = vertices;
-	auto texcoordsbase = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
-	auto texcoords = texcoordsbase;
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
-		auto s = (float)(texcoords->s >> 16);
-		auto t = (float)(texcoords->t >> 16);
-		s /= alias.width;
-		t /= alias.height;
-
 		// lighting
 		auto plightnormal = r_avertexnormals[vertex->lightnormalindex];
 		auto lightcos = DotProduct (plightnormal, r_plightvec);
@@ -481,22 +476,13 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 		float light = temp / 256;
 
 		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = s;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = t;
-		d_lists.last_colormapped_attribute++;
 		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = s + 0.5;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = t;
 		d_lists.last_colormapped_attribute++;
 		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
 		vertex++;
-		texcoords++;
 	}
 	alias.count = mdl->numtris * 3;
-	D_AddAliasIndicesToLists (alias, aliashdr, is_index16, mdl, texcoordsbase, 0);
+	D_AddAliasIndicesToLists (alias, aliashdr, is_index16, mdl);
 }
 
 void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* vertices)
@@ -530,6 +516,7 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 		memcpy(view_model.colormap.data(), colormap, 16384);
 	}
 	view_model.vertices = vertices;
+	view_model.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
 	view_model.vertex_count = mdl->numverts;
 	auto is_index16 = (mdl->numverts * 2 <= 65520);
 	if (is_index16)
@@ -543,7 +530,7 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 		view_model.first_index32 = d_lists.last_colormapped_index32 + 1;
 	}
 	view_model.first_attribute = d_lists.last_colormapped_attribute + 1;
-	auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * 3 * mdl->numverts;
+	auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
 	if (d_lists.colormapped_attributes.size() < new_size)
 	{
 		d_lists.colormapped_attributes.resize(new_size);
@@ -592,14 +579,6 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 	auto texcoords = texcoordsbase;
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
-		auto x = (float)vertex->v[0];
-		auto y = (float)vertex->v[1];
-		auto z = (float)vertex->v[2];
-		auto s = (float)(texcoords->s >> 16);
-		auto t = (float)(texcoords->t >> 16);
-		s /= view_model.width;
-		t /= view_model.height;
-
 		// lighting
 		float light;
 		if (d_awayfromviewmodel)
@@ -624,24 +603,15 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 
 			light = temp / 256;
 		}
-
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = s;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = t;
 		d_lists.last_colormapped_attribute++;
 		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = s + 0.5;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = t;
 		d_lists.last_colormapped_attribute++;
 		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
 		vertex++;
 		texcoords++;
 	}
 	view_model.count = mdl->numtris * 3;
-	D_AddAliasIndicesToLists (view_model, aliashdr, is_index16, mdl, texcoordsbase, 0);
+	D_AddAliasIndicesToLists (view_model, aliashdr, is_index16, mdl);
 }
 
 void D_AddParticleToLists (particle_t* part)

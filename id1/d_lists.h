@@ -50,6 +50,7 @@ struct dalias_t
 	std::vector<unsigned char> colormap;
 	qboolean is_host_colormap;
 	trivertx_t* vertices;
+	stvert_t* texture_coordinates;
 	int vertex_count;
 	int first_attribute;
 	int first_index16;
