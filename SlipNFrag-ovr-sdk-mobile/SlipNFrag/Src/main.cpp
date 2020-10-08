@@ -292,9 +292,28 @@ struct Scene
 	int hostClearCount;
 	std::unordered_map<void*, std::unordered_map<void*, int>> texturedFrameCountsPerKeys;
 	CachedBuffers colormappedVertices;
-	std::unordered_map<void*, Buffer*> colormappedVerticesPerKey;
 	CachedBuffers colormappedTexCoords;
+	CachedTextures aliasTextures;
+	CachedTextures viewmodelTextures;
+	std::unordered_map<void*, Buffer*> colormappedVerticesPerKey;
 	std::unordered_map<void*, Buffer*> colormappedTexCoordsPerKey;
+	std::unordered_map<void*, Texture*> aliasPerKey;
+	std::unordered_map<void*, Texture*> viewmodelsPerKey;
+	std::vector<int> surfaceOffsets;
+	std::vector<int> spriteOffsets;
+	std::vector<int> turbulentOffsets;
+	std::vector<int> aliasOffsets;
+	std::vector<int> aliasColormapOffsets;
+	std::vector<int> viewmodelOffsets;
+	std::vector<int> viewmodelColormapOffsets;
+	std::vector<Texture*> surfaceList;
+	std::vector<Texture*> spriteList;
+	std::unordered_map<void*, Texture*> turbulentPerKey;
+	std::vector<Texture*> turbulentList;
+	std::vector<Texture*> aliasList;
+	std::vector<Texture*> aliasColormapList;
+	std::vector<Texture*> viewmodelList;
+	std::vector<Texture*> viewmodelColormapList;
 };
 
 struct PerImage
@@ -309,32 +328,16 @@ struct PerImage
 	CachedTextures surfaces;
 	CachedTextures sprites;
 	CachedTextures turbulent;
-	CachedTextures alias;
-	CachedTextures viewmodels;
 	CachedTextures colormaps;
 	PipelineResources* pipelineResources;
 	int paletteOffset;
 	int host_colormapOffset;
-	std::vector<int> surfaceOffsets;
-	std::vector<int> spriteOffsets;
-	std::vector<int> turbulentOffsets;
-	std::vector<int> aliasOffsets;
-	std::vector<int> aliasColormapOffsets;
-	std::vector<int> viewmodelOffsets;
-	std::vector<int> viewmodelColormapOffsets;
 	int skyOffset;
 	int floorOffset;
 	int paletteChanged;
 	Texture* palette;
 	Texture* host_colormap;
 	int hostClearCount;
-	std::vector<Texture*> surfaceList;
-	std::vector<Texture*> spriteList;
-	std::unordered_map<void*, Texture*> turbulentPerKey;
-	std::unordered_map<void*, Texture*> aliasPerKey;
-	std::vector<Texture*> aliasColormapList;
-	std::unordered_map<void*, Texture*> viewmodelsPerKey;
-	std::vector<Texture*> viewmodelColormapList;
 	Texture* sky;
 	Texture* floor;
 	VkDeviceSize texturedVertexBase;
@@ -838,6 +841,18 @@ void disposeFrontBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 	cachedBuffers.buffers = nullptr;
 }
 
+void forcedDisposeFrontBuffers(AppState& appState, CachedBuffers& cachedBuffers)
+{
+	for (Buffer* b = cachedBuffers.buffers, *next = nullptr; b != nullptr; b = next)
+	{
+		next = b->next;
+		b->size = 0;
+		b->next = cachedBuffers.oldBuffers;
+		cachedBuffers.oldBuffers = b;
+	}
+	cachedBuffers.buffers = nullptr;
+}
+
 void resetCachedBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 {
 	deleteOldBuffers(appState, cachedBuffers);
@@ -855,7 +870,7 @@ void deleteTexture(AppState& appState, Texture* texture)
 	}
 }
 
-void resetCachedTextures(AppState& appState, CachedTextures& cachedTextures)
+void deleteOldTextures(AppState& appState, CachedTextures& cachedTextures)
 {
 	for (Texture** t = &cachedTextures.oldTextures; *t != nullptr; )
 	{
@@ -872,6 +887,10 @@ void resetCachedTextures(AppState& appState, CachedTextures& cachedTextures)
 			t = &(*t)->next;
 		}
 	}
+}
+
+void disposeFrontTextures(AppState& appState, CachedTextures& cachedTextures)
+{
 	for (Texture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
 	{
 		next = t->next;
@@ -879,6 +898,25 @@ void resetCachedTextures(AppState& appState, CachedTextures& cachedTextures)
 		cachedTextures.oldTextures = t;
 	}
 	cachedTextures.textures = nullptr;
+}
+
+void forcedDisposeFrontTextures(AppState& appState, CachedTextures& cachedTextures)
+{
+	for (Texture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
+	{
+		next = t->next;
+		t->next = cachedTextures.oldTextures;
+		t->width = 0;
+		t->height = 0;
+		cachedTextures.oldTextures = t;
+	}
+	cachedTextures.textures = nullptr;
+}
+
+void resetCachedTextures(AppState& appState, CachedTextures& cachedTextures)
+{
+	deleteOldTextures(appState, cachedTextures);
+	disposeFrontTextures(appState, cachedTextures);
 }
 
 void fillTexture(AppState& appState, Texture* texture, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
@@ -4303,10 +4341,14 @@ void android_main(struct android_app *app)
 					cl.nodrift = nodrift;
 					if (appState.Scene.hostClearCount != host_clearcount)
 					{
-						disposeFrontBuffers(appState, appState.Scene.colormappedTexCoords);
-						disposeFrontBuffers(appState, appState.Scene.colormappedVertices);
+						appState.Scene.viewmodelsPerKey.clear();
+						appState.Scene.aliasPerKey.clear();
 						appState.Scene.colormappedTexCoordsPerKey.clear();
 						appState.Scene.colormappedVerticesPerKey.clear();
+						forcedDisposeFrontTextures(appState, appState.Scene.viewmodelTextures);
+						forcedDisposeFrontTextures(appState, appState.Scene.aliasTextures);
+						forcedDisposeFrontBuffers(appState, appState.Scene.colormappedTexCoords);
+						forcedDisposeFrontBuffers(appState, appState.Scene.colormappedVertices);
 						appState.Scene.texturedFrameCountsPerKeys.clear();
 						appState.Scene.hostClearCount = host_clearcount;
 					}
@@ -4362,8 +4404,6 @@ void android_main(struct android_app *app)
 			resetCachedTextures(appState, perImage.surfaces);
 			resetCachedTextures(appState, perImage.sprites);
 			resetCachedTextures(appState, perImage.turbulent);
-			resetCachedTextures(appState, perImage.alias);
-			resetCachedTextures(appState, perImage.viewmodels);
 			resetCachedTextures(appState, perImage.colormaps);
 			for (PipelineResources** r = &perImage.pipelineResources; *r != nullptr; )
 			{
@@ -4959,10 +4999,10 @@ void android_main(struct android_app *app)
 				perImage.host_colormapOffset = stagingBufferSize;
 				stagingBufferSize += 16384;
 			}
-			if (d_lists.last_surface >= perImage.surfaceOffsets.size())
+			if (d_lists.last_surface >= appState.Scene.surfaceOffsets.size())
 			{
-				perImage.surfaceOffsets.resize(d_lists.last_surface + 1);
-				perImage.surfaceList.resize(d_lists.last_surface + 1);
+				appState.Scene.surfaceOffsets.resize(d_lists.last_surface + 1);
+				appState.Scene.surfaceList.resize(d_lists.last_surface + 1);
 			}
 			for (auto i = 0; i <= d_lists.last_surface; i++)
 			{
@@ -4984,7 +5024,7 @@ void android_main(struct android_app *app)
 					texture->key = surface.surface;
 					texture->key2 = surface.entity;
 					texture->frameCount = r_framecount;
-					perImage.surfaceOffsets[i] = stagingBufferSize;
+					appState.Scene.surfaceOffsets[i] = stagingBufferSize;
 					stagingBufferSize += surface.size;
 				}
 				else
@@ -4993,22 +5033,22 @@ void android_main(struct android_app *app)
 					auto secondEntry = firstEntry->second.find(surface.entity);
 					if (texture->frameCount == secondEntry->second)
 					{
-						perImage.surfaceOffsets[i] = -1;
+						appState.Scene.surfaceOffsets[i] = -1;
 					}
 					else
 					{
 						texture->frameCount = secondEntry->second;
-						perImage.surfaceOffsets[i] = stagingBufferSize;
+						appState.Scene.surfaceOffsets[i] = stagingBufferSize;
 						stagingBufferSize += surface.size;
 					}
 				}
-				perImage.surfaceList[i] = texture;
+				appState.Scene.surfaceList[i] = texture;
 				moveTextureToFront(texture, perImage.surfaces);
 			}
-			if (d_lists.last_sprite >= perImage.spriteOffsets.size())
+			if (d_lists.last_sprite >= appState.Scene.spriteOffsets.size())
 			{
-				perImage.spriteOffsets.resize(d_lists.last_sprite + 1);
-				perImage.spriteList.resize(d_lists.last_sprite + 1);
+				appState.Scene.spriteOffsets.resize(d_lists.last_sprite + 1);
+				appState.Scene.spriteList.resize(d_lists.last_sprite + 1);
 			}
 			for (auto i = 0; i <= d_lists.last_sprite; i++)
 			{
@@ -5028,23 +5068,25 @@ void android_main(struct android_app *app)
 					auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 					createTexture(appState, perImage.commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
 				}
-				perImage.spriteOffsets[i] = stagingBufferSize;
+				appState.Scene.spriteOffsets[i] = stagingBufferSize;
 				stagingBufferSize += sprite.size;
-				perImage.spriteList[i] = texture;
+				appState.Scene.spriteList[i] = texture;
 				moveTextureToFront(texture, perImage.sprites);
 			}
-			if (d_lists.last_turbulent >= perImage.turbulentOffsets.size())
+			if (d_lists.last_turbulent >= appState.Scene.turbulentOffsets.size())
 			{
-				perImage.turbulentOffsets.resize(d_lists.last_turbulent + 1);
+				appState.Scene.turbulentOffsets.resize(d_lists.last_turbulent + 1);
+				appState.Scene.turbulentList.resize(d_lists.last_turbulent + 1);
 			}
-			perImage.turbulentPerKey.clear();
+			appState.Scene.turbulentPerKey.clear();
 			for (auto i = 0; i <= d_lists.last_turbulent; i++)
 			{
 				auto& turbulent = d_lists.turbulent[i];
-				auto entry = perImage.turbulentPerKey.find(turbulent.texture);
-				if (perImage.hostClearCount == host_clearcount && entry != perImage.turbulentPerKey.end())
+				auto entry = appState.Scene.turbulentPerKey.find(turbulent.texture);
+				if (perImage.hostClearCount == host_clearcount && entry != appState.Scene.turbulentPerKey.end())
 				{
-					perImage.turbulentOffsets[i] = -1;
+					appState.Scene.turbulentOffsets[i] = -1;
+					appState.Scene.turbulentList[i] = entry->second;
 					entry->second->unusedCount = 0;
 				}
 				else if (perImage.hostClearCount == host_clearcount)
@@ -5064,14 +5106,15 @@ void android_main(struct android_app *app)
 						auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 						createTexture(appState, perImage.commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
 						texture->key = turbulent.texture;
-						perImage.turbulentOffsets[i] = stagingBufferSize;
+						appState.Scene.turbulentOffsets[i] = stagingBufferSize;
 						stagingBufferSize += turbulent.size;
 					}
 					else
 					{
-						perImage.turbulentOffsets[i] = -1;
+						appState.Scene.turbulentOffsets[i] = -1;
 					}
-					perImage.turbulentPerKey.insert({ texture->key, texture });
+					appState.Scene.turbulentList[i] = texture;
+					appState.Scene.turbulentPerKey.insert({ texture->key, texture });
 					moveTextureToFront(texture, perImage.turbulent);
 				}
 				else
@@ -5080,34 +5123,30 @@ void android_main(struct android_app *app)
 					auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 					createTexture(appState, perImage.commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
 					texture->key = turbulent.texture;
-					perImage.turbulentOffsets[i] = stagingBufferSize;
+					appState.Scene.turbulentOffsets[i] = stagingBufferSize;
 					stagingBufferSize += turbulent.size;
-					perImage.turbulentPerKey.insert({ texture->key, texture });
+					appState.Scene.turbulentList[i] = texture;
+					appState.Scene.turbulentPerKey.insert({ texture->key, texture });
 					moveTextureToFront(texture, perImage.turbulent);
 				}
 			}
-			if (d_lists.last_alias >= perImage.aliasOffsets.size())
+			if (d_lists.last_alias >= appState.Scene.aliasOffsets.size())
 			{
-				perImage.aliasOffsets.resize(d_lists.last_alias + 1);
-				perImage.aliasColormapOffsets.resize(d_lists.last_alias + 1);
-				perImage.aliasColormapList.resize(d_lists.last_alias + 1);
+				appState.Scene.aliasOffsets.resize(d_lists.last_alias + 1);
+				appState.Scene.aliasList.resize(d_lists.last_alias + 1);
+				appState.Scene.aliasColormapOffsets.resize(d_lists.last_alias + 1);
+				appState.Scene.aliasColormapList.resize(d_lists.last_alias + 1);
 			}
-			perImage.aliasPerKey.clear();
 			for (auto i = 0; i <= d_lists.last_alias; i++)
 			{
 				auto& alias = d_lists.alias[i];
-				auto entry = perImage.aliasPerKey.find(alias.data);
-				if (perImage.hostClearCount == host_clearcount && entry != perImage.aliasPerKey.end())
-				{
-					perImage.aliasOffsets[i] = -1;
-					entry->second->unusedCount = 0;
-				}
-				else if (perImage.hostClearCount == host_clearcount)
+				auto entry = appState.Scene.aliasPerKey.find(alias.data);
+				if (entry == appState.Scene.aliasPerKey.end())
 				{
 					Texture* texture = nullptr;
-					for (Texture** t = &perImage.alias.oldTextures; *t != nullptr; t = &(*t)->next)
+					for (Texture** t = &appState.Scene.aliasTextures.oldTextures; *t != nullptr; t = &(*t)->next)
 					{
-						if ((*t)->key == alias.data)
+						if ((*t)->width == alias.width && (*t)->height == alias.height)
 						{
 							texture = *t;
 							*t = (*t)->next;
@@ -5119,60 +5158,50 @@ void android_main(struct android_app *app)
 						auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 						createTexture(appState, perImage.commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
 						texture->key = alias.data;
-						perImage.aliasOffsets[i] = stagingBufferSize;
-						stagingBufferSize += alias.size;
 					}
-					else
-					{
-						perImage.aliasOffsets[i] = -1;
-					}
-					perImage.aliasPerKey.insert({ texture->key, texture });
-					moveTextureToFront(texture, perImage.alias);
+					appState.Scene.aliasOffsets[i] = stagingBufferSize;
+					stagingBufferSize += alias.size;
+					moveTextureToFront(texture, appState.Scene.aliasTextures);
+					appState.Scene.aliasPerKey.insert({ alias.data, texture });
+					appState.Scene.aliasList[i] = texture;
 				}
 				else
 				{
-					Texture* texture;
-					auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
-					createTexture(appState, perImage.commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-					texture->key = alias.data;
-					perImage.aliasOffsets[i] = stagingBufferSize;
-					stagingBufferSize += alias.size;
-					perImage.aliasPerKey.insert({ texture->key, texture });
-					moveTextureToFront(texture, perImage.alias);
+					appState.Scene.aliasOffsets[i] = -1;
+					appState.Scene.aliasList[i] = entry->second;
 				}
+			}
+			for (auto i = 0; i <= d_lists.last_alias; i++)
+			{
+				auto& alias = d_lists.alias[i];
 				if (alias.is_host_colormap)
 				{
-					perImage.aliasColormapOffsets[i] = -1;
-					perImage.aliasColormapList[i] = perImage.host_colormap;
+					appState.Scene.aliasColormapOffsets[i] = -1;
+					appState.Scene.aliasColormapList[i] = perImage.host_colormap;
 				}
 				else
 				{
-					perImage.aliasColormapOffsets[i] = stagingBufferSize;
+					appState.Scene.aliasColormapOffsets[i] = stagingBufferSize;
 					stagingBufferSize += 16384;
 				}
 			}
-			if (d_lists.last_viewmodel >= perImage.viewmodelOffsets.size())
+			if (d_lists.last_viewmodel >= appState.Scene.viewmodelOffsets.size())
 			{
-				perImage.viewmodelOffsets.resize(d_lists.last_viewmodel + 1);
-				perImage.viewmodelColormapOffsets.resize(d_lists.last_viewmodel + 1);
-				perImage.viewmodelColormapList.resize(d_lists.last_viewmodel + 1);
+				appState.Scene.viewmodelOffsets.resize(d_lists.last_viewmodel + 1);
+				appState.Scene.viewmodelList.resize(d_lists.last_viewmodel + 1);
+				appState.Scene.viewmodelColormapOffsets.resize(d_lists.last_viewmodel + 1);
+				appState.Scene.viewmodelColormapList.resize(d_lists.last_viewmodel + 1);
 			}
-			perImage.viewmodelsPerKey.clear();
 			for (auto i = 0; i <= d_lists.last_viewmodel; i++)
 			{
 				auto& viewmodel = d_lists.viewmodel[i];
-				auto entry = perImage.viewmodelsPerKey.find(viewmodel.data);
-				if (perImage.hostClearCount == host_clearcount && entry != perImage.viewmodelsPerKey.end())
-				{
-					perImage.viewmodelOffsets[i] = -1;
-					entry->second->unusedCount = 0;
-				}
-				else if (perImage.hostClearCount == host_clearcount)
+				auto entry = appState.Scene.viewmodelsPerKey.find(viewmodel.data);
+				if (entry == appState.Scene.viewmodelsPerKey.end())
 				{
 					Texture* texture = nullptr;
-					for (Texture** t = &perImage.viewmodels.oldTextures; *t != nullptr; t = &(*t)->next)
+					for (Texture** t = &appState.Scene.viewmodelTextures.oldTextures; *t != nullptr; t = &(*t)->next)
 					{
-						if ((*t)->key == viewmodel.data)
+						if ((*t)->width == viewmodel.width && (*t)->height == viewmodel.height)
 						{
 							texture = *t;
 							*t = (*t)->next;
@@ -5184,35 +5213,30 @@ void android_main(struct android_app *app)
 						auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
 						createTexture(appState, perImage.commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
 						texture->key = viewmodel.data;
-						perImage.viewmodelOffsets[i] = stagingBufferSize;
-						stagingBufferSize += viewmodel.size;
 					}
-					else
-					{
-						perImage.viewmodelOffsets[i] = -1;
-					}
-					perImage.viewmodelsPerKey.insert({ texture->key, texture });
-					moveTextureToFront(texture, perImage.viewmodels);
+					appState.Scene.viewmodelOffsets[i] = stagingBufferSize;
+					stagingBufferSize += viewmodel.size;
+					moveTextureToFront(texture, appState.Scene.viewmodelTextures);
+					appState.Scene.viewmodelsPerKey.insert({ viewmodel.data, texture });
+					appState.Scene.viewmodelList[i] = texture;
 				}
 				else
 				{
-					Texture* texture;
-					auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
-					createTexture(appState, perImage.commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-					texture->key = viewmodel.data;
-					perImage.viewmodelOffsets[i] = stagingBufferSize;
-					stagingBufferSize += viewmodel.size;
-					perImage.viewmodelsPerKey.insert({ texture->key, texture });
-					moveTextureToFront(texture, perImage.viewmodels);
+					appState.Scene.viewmodelOffsets[i] = -1;
+					appState.Scene.viewmodelList[i] = entry->second;
 				}
+			}
+			for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+			{
+				auto& viewmodel = d_lists.viewmodel[i];
 				if (viewmodel.is_host_colormap)
 				{
-					perImage.viewmodelColormapOffsets[i] = -1;
-					perImage.viewmodelColormapList[i] = perImage.host_colormap;
+					appState.Scene.viewmodelColormapOffsets[i] = -1;
+					appState.Scene.viewmodelColormapList[i] = perImage.host_colormap;
 				}
 				else
 				{
-					perImage.viewmodelColormapOffsets[i] = stagingBufferSize;
+					appState.Scene.viewmodelColormapOffsets[i] = stagingBufferSize;
 					stagingBufferSize += 16384;
 				}
 			}
@@ -5279,7 +5303,7 @@ void android_main(struct android_app *app)
 				}
 				for (auto i = 0; i <= d_lists.last_surface; i++)
 				{
-					if (perImage.surfaceOffsets[i] >= 0)
+					if (appState.Scene.surfaceOffsets[i] >= 0)
 					{
 						auto& surface = d_lists.surfaces[i];
 						memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.data.data(), surface.size);
@@ -5294,7 +5318,7 @@ void android_main(struct android_app *app)
 				}
 				for (auto i = 0; i <= d_lists.last_turbulent; i++)
 				{
-					if (perImage.turbulentOffsets[i] >= 0)
+					if (appState.Scene.turbulentOffsets[i] >= 0)
 					{
 						auto& turbulent = d_lists.turbulent[i];
 						memcpy(((unsigned char*)stagingBuffer->mapped) + offset, turbulent.data, turbulent.size);
@@ -5304,7 +5328,7 @@ void android_main(struct android_app *app)
 				for (auto i = 0; i <= d_lists.last_alias; i++)
 				{
 					auto& alias = d_lists.alias[i];
-					if (perImage.aliasOffsets[i] >= 0)
+					if (appState.Scene.aliasOffsets[i] >= 0)
 					{
 						memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.data, alias.size);
 						offset += alias.size;
@@ -5318,7 +5342,7 @@ void android_main(struct android_app *app)
 				for (auto i = 0; i <= d_lists.last_viewmodel; i++)
 				{
 					auto& viewmodel = d_lists.viewmodel[i];
-					if (perImage.viewmodelOffsets[i] >= 0)
+					if (appState.Scene.viewmodelOffsets[i] >= 0)
 					{
 						memcpy(((unsigned char*)stagingBuffer->mapped) + offset, viewmodel.data, viewmodel.size);
 						offset += viewmodel.size;
@@ -5363,68 +5387,68 @@ void android_main(struct android_app *app)
 				}
 				for (auto i = 0; i <= d_lists.last_surface; i++)
 				{
-					if (perImage.surfaceOffsets[i] >= 0)
+					if (appState.Scene.surfaceOffsets[i] >= 0)
 					{
-						fillMipmappedTexture(appState, perImage.surfaceList[i], stagingBuffer, perImage.surfaceOffsets[i], perImage.commandBuffer);
+						fillMipmappedTexture(appState, appState.Scene.surfaceList[i], stagingBuffer, appState.Scene.surfaceOffsets[i], perImage.commandBuffer);
 					}
 				}
 				for (auto i = 0; i <= d_lists.last_sprite; i++)
 				{
-					fillMipmappedTexture(appState, perImage.spriteList[i], stagingBuffer, perImage.spriteOffsets[i], perImage.commandBuffer);
+					fillMipmappedTexture(appState, appState.Scene.spriteList[i], stagingBuffer, appState.Scene.spriteOffsets[i], perImage.commandBuffer);
 				}
 				for (auto i = 0; i <= d_lists.last_turbulent; i++)
 				{
-					if (perImage.turbulentOffsets[i] >= 0)
+					if (appState.Scene.turbulentOffsets[i] >= 0)
 					{
 						auto& turbulent = d_lists.turbulent[i];
-						auto texture = perImage.turbulentPerKey.find(turbulent.texture)->second;
-						fillMipmappedTexture(appState, texture, stagingBuffer, perImage.turbulentOffsets[i], perImage.commandBuffer);
+						auto texture = appState.Scene.turbulentList[i];
+						fillMipmappedTexture(appState, texture, stagingBuffer, appState.Scene.turbulentOffsets[i], perImage.commandBuffer);
 					}
 				}
 				for (auto i = 0; i <= d_lists.last_alias; i++)
 				{
 					auto& alias = d_lists.alias[i];
-					if (perImage.aliasOffsets[i] >= 0)
+					if (appState.Scene.aliasOffsets[i] >= 0)
 					{
-						auto texture = perImage.aliasPerKey.find(alias.data)->second;
-						fillMipmappedTexture(appState, texture, stagingBuffer, perImage.aliasOffsets[i], perImage.commandBuffer);
+						auto texture = appState.Scene.aliasList[i];
+						fillMipmappedTexture(appState, texture, stagingBuffer, appState.Scene.aliasOffsets[i], perImage.commandBuffer);
 					}
 					if (!alias.is_host_colormap)
 					{
 						if (perImage.colormaps.oldTextures != nullptr)
 						{
-							perImage.aliasColormapList[i] = perImage.colormaps.oldTextures;
-							perImage.colormaps.oldTextures = perImage.aliasColormapList[i]->next;
+							appState.Scene.aliasColormapList[i] = perImage.colormaps.oldTextures;
+							perImage.colormaps.oldTextures = appState.Scene.aliasColormapList[i]->next;
 						}
 						else
 						{
-							createTexture(appState, perImage.commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, perImage.aliasColormapList[i]);
+							createTexture(appState, perImage.commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, appState.Scene.aliasColormapList[i]);
 						}
-						fillTexture(appState, perImage.aliasColormapList[i], stagingBuffer, perImage.aliasColormapOffsets[i], perImage.commandBuffer);
-						moveTextureToFront(perImage.aliasColormapList[i], perImage.colormaps);
+						fillTexture(appState, appState.Scene.aliasColormapList[i], stagingBuffer, appState.Scene.aliasColormapOffsets[i], perImage.commandBuffer);
+						moveTextureToFront(appState.Scene.aliasColormapList[i], perImage.colormaps);
 					}
 				}
 				for (auto i = 0; i <= d_lists.last_viewmodel; i++)
 				{
 					auto& viewmodel = d_lists.viewmodel[i];
-					if (perImage.viewmodelOffsets[i] >= 0)
+					if (appState.Scene.viewmodelOffsets[i] >= 0)
 					{
-						auto texture = perImage.viewmodelsPerKey.find(viewmodel.data)->second;
-						fillMipmappedTexture(appState, texture, stagingBuffer, perImage.viewmodelOffsets[i], perImage.commandBuffer);
+						auto texture = appState.Scene.viewmodelList[i];
+						fillMipmappedTexture(appState, texture, stagingBuffer, appState.Scene.viewmodelOffsets[i], perImage.commandBuffer);
 					}
 					if (!viewmodel.is_host_colormap)
 					{
 						if (perImage.colormaps.oldTextures != nullptr)
 						{
-							perImage.viewmodelColormapList[i] = perImage.colormaps.oldTextures;
-							perImage.colormaps.oldTextures = perImage.viewmodelColormapList[i]->next;
+							appState.Scene.viewmodelColormapList[i] = perImage.colormaps.oldTextures;
+							perImage.colormaps.oldTextures = appState.Scene.viewmodelColormapList[i]->next;
 						}
 						else
 						{
-							createTexture(appState, perImage.commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, perImage.viewmodelColormapList[i]);
+							createTexture(appState, perImage.commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, appState.Scene.viewmodelColormapList[i]);
 						}
-						fillTexture(appState, perImage.viewmodelColormapList[i], stagingBuffer, perImage.viewmodelColormapOffsets[i], perImage.commandBuffer);
-						moveTextureToFront(perImage.viewmodelColormapList[i], perImage.colormaps);
+						fillTexture(appState, appState.Scene.viewmodelColormapList[i], stagingBuffer, appState.Scene.viewmodelColormapOffsets[i], perImage.commandBuffer);
+						moveTextureToFront(appState.Scene.viewmodelColormapList[i], perImage.colormaps);
 					}
 				}
 				if (d_lists.last_sky >= 0)
@@ -5571,7 +5595,7 @@ void android_main(struct android_app *app)
 						origin[1] = surface.origin_z;
 						origin[2] = -surface.origin_y;
 						VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.textured.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 3 * sizeof(float), origin));
-						auto texture = perImage.surfaceList[i];
+						auto texture = appState.Scene.surfaceList[i];
 						textureInfo[0].sampler = texture->sampler;
 						textureInfo[0].imageView = texture->view;
 						writes[0].dstBinding = 1;
@@ -5592,7 +5616,7 @@ void android_main(struct android_app *app)
 					for (auto i = 0; i <= d_lists.last_sprite; i++)
 					{
 						auto& sprite = d_lists.sprites[i];
-						auto texture = perImage.spriteList[i];
+						auto texture = appState.Scene.spriteList[i];
 						textureInfo[0].sampler = texture->sampler;
 						textureInfo[0].imageView = texture->view;
 						writes[0].dstBinding = 1;
@@ -5633,7 +5657,7 @@ void android_main(struct android_app *app)
 						originPlusTime[1] = turbulent.origin_z;
 						originPlusTime[2] = -turbulent.origin_y;
 						VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), originPlusTime));
-						auto texture = perImage.turbulentPerKey.find(turbulent.texture)->second;
+						auto texture = appState.Scene.turbulentList[i];
 						textureInfo[0].sampler = texture->sampler;
 						textureInfo[0].imageView = texture->view;
 						writes[0].dstBinding = 1;
@@ -5697,8 +5721,8 @@ void android_main(struct android_app *app)
 								transforms[14] = -alias.transform[1][3];
 								transforms[15] = 1;
 								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
-								auto texture = perImage.aliasPerKey.find(alias.data)->second;
-								auto colormap = perImage.aliasColormapList[i];
+								auto texture = appState.Scene.aliasList[i];
+								auto colormap = appState.Scene.aliasColormapList[i];
 								textureInfo[0].sampler = texture->sampler;
 								textureInfo[0].imageView = texture->view;
 								textureInfo[1].sampler = colormap->sampler;
@@ -5750,8 +5774,8 @@ void android_main(struct android_app *app)
 								transforms[14] = -alias.transform[1][3];
 								transforms[15] = 1;
 								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
-								auto texture = perImage.aliasPerKey.find(alias.data)->second;
-								auto colormap = perImage.aliasColormapList[i];
+								auto texture = appState.Scene.aliasList[i];
+								auto colormap = appState.Scene.aliasColormapList[i];
 								textureInfo[0].sampler = texture->sampler;
 								textureInfo[0].imageView = texture->view;
 								textureInfo[1].sampler = colormap->sampler;
@@ -5845,8 +5869,8 @@ void android_main(struct android_app *app)
 								transformsPlusTint[14] = -viewmodel.transform[1][3];
 								transformsPlusTint[15] = 1;
 								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
-								auto texture = perImage.viewmodelsPerKey.find(viewmodel.data)->second;
-								auto colormap = perImage.viewmodelColormapList[i];
+								auto texture = appState.Scene.viewmodelList[i];
+								auto colormap = appState.Scene.viewmodelColormapList[i];
 								textureInfo[0].sampler = texture->sampler;
 								textureInfo[0].imageView = texture->view;
 								textureInfo[1].sampler = colormap->sampler;
@@ -5897,8 +5921,8 @@ void android_main(struct android_app *app)
 								transformsPlusTint[14] = -viewmodel.transform[1][3];
 								transformsPlusTint[15] = 1;
 								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
-								auto texture = perImage.viewmodelsPerKey.find(viewmodel.data)->second;
-								auto colormap = perImage.viewmodelColormapList[i];
+								auto texture = appState.Scene.viewmodelList[i];
+								auto colormap = appState.Scene.viewmodelColormapList[i];
 								textureInfo[0].sampler = texture->sampler;
 								textureInfo[0].imageView = texture->view;
 								textureInfo[1].sampler = colormap->sampler;
@@ -6588,8 +6612,6 @@ void android_main(struct android_app *app)
 				deleteTexture(appState, perImage.palette);
 			}
 			deleteCachedTextures(appState, perImage.colormaps);
-			deleteCachedTextures(appState, perImage.viewmodels);
-			deleteCachedTextures(appState, perImage.alias);
 			deleteCachedTextures(appState, perImage.turbulent);
 			deleteCachedTextures(appState, perImage.sprites);
 			deleteCachedTextures(appState, perImage.surfaces);
@@ -6649,6 +6671,8 @@ void android_main(struct android_app *app)
 	vrapi_DestroyTextureSwapChain(appState.Console.SwapChain);
 	VC(appState.Device.vkDestroyRenderPass(appState.Device.device, appState.RenderPass, nullptr));
 	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
+	deleteCachedTextures(appState, appState.Scene.viewmodelTextures);
+	deleteCachedTextures(appState, appState.Scene.aliasTextures);
 	deleteCachedBuffers(appState, appState.Scene.colormappedTexCoords);
 	deleteCachedBuffers(appState, appState.Scene.colormappedVertices);
 	deletePipeline(appState, appState.Scene.console);
