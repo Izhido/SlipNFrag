@@ -117,7 +117,6 @@ struct Device
 	PFN_vkCreatePipelineCache vkCreatePipelineCache;
 	PFN_vkDestroyPipelineCache vkDestroyPipelineCache;
 	PFN_vkCreateGraphicsPipelines vkCreateGraphicsPipelines;
-	PFN_vkCreateComputePipelines vkCreateComputePipelines;
 	PFN_vkDestroyPipeline vkDestroyPipeline;
 	PFN_vkCreatePipelineLayout vkCreatePipelineLayout;
 	PFN_vkDestroyPipelineLayout vkDestroyPipelineLayout;
@@ -175,13 +174,18 @@ struct Context
 struct Buffer
 {
 	Buffer* next;
-	void* key;
 	int unusedCount;
 	size_t size;
 	VkMemoryPropertyFlags flags;
 	VkBuffer buffer;
 	VkDeviceMemory memory;
 	void* mapped;
+};
+
+struct BufferWithOffset
+{
+	Buffer* buffer;
+	VkDeviceSize offset;
 };
 
 struct Texture
@@ -295,8 +299,8 @@ struct Scene
 	CachedBuffers colormappedTexCoords;
 	CachedTextures aliasTextures;
 	CachedTextures viewmodelTextures;
-	std::unordered_map<void*, Buffer*> colormappedVerticesPerKey;
-	std::unordered_map<void*, Buffer*> colormappedTexCoordsPerKey;
+	std::unordered_map<void*, BufferWithOffset> colormappedVerticesPerKey;
+	std::unordered_map<void*, BufferWithOffset> colormappedTexCoordsPerKey;
 	std::unordered_map<void*, Texture*> aliasPerKey;
 	std::unordered_map<void*, Texture*> viewmodelsPerKey;
 	std::vector<int> surfaceOffsets;
@@ -306,10 +310,12 @@ struct Scene
 	std::vector<int> aliasColormapOffsets;
 	std::vector<int> viewmodelOffsets;
 	std::vector<int> viewmodelColormapOffsets;
-	std::vector<Buffer*> aliasVerticesList;
-	std::vector<Buffer*> aliasTexCoordsList;
-	std::vector<Buffer*> viewmodelVerticesList;
-	std::vector<Buffer*> viewmodelTexCoordsList;
+	std::vector<int> newVertices;
+	std::vector<int> newTexCoords;
+	std::vector<BufferWithOffset*> aliasVerticesList;
+	std::vector<BufferWithOffset*> aliasTexCoordsList;
+	std::vector<BufferWithOffset*> viewmodelVerticesList;
+	std::vector<BufferWithOffset*> viewmodelTexCoordsList;
 	std::vector<Texture*> surfaceList;
 	std::vector<Texture*> spriteList;
 	std::unordered_map<void*, Texture*> turbulentPerKey;
@@ -1502,10 +1508,10 @@ void android_main(struct android_app *app)
 		}
 		int workQueueFamilyIndex = -1;
 		int presentQueueFamilyIndex = -1;
-		auto queueFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
+		auto queueFlags = VK_QUEUE_GRAPHICS_BIT;
 		for (uint32_t queueFamilyIndex = 0; queueFamilyIndex < queueFamilyCount; queueFamilyIndex++)
 		{
-			if (queueFamilyProperties[queueFamilyIndex].queueFlags & queueFlags == queueFlags)
+			if ((queueFamilyProperties[queueFamilyIndex].queueFlags & queueFlags) == queueFlags)
 			{
 				if ((int) queueFamilyProperties[queueFamilyIndex].queueCount >= queueCount)
 				{
@@ -1850,13 +1856,6 @@ void android_main(struct android_app *app)
 	if (appState.Device.vkCreateGraphicsPipelines == nullptr)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkCreateGraphicsPipelines.");
-		vrapi_Shutdown();
-		exit(0);
-	}
-	appState.Device.vkCreateComputePipelines = (PFN_vkCreateComputePipelines)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkCreateComputePipelines"));
-	if (appState.Device.vkCreateComputePipelines == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkCreateComputePipelines.");
 		vrapi_Shutdown();
 		exit(0);
 	}
@@ -4562,33 +4561,52 @@ void android_main(struct android_app *app)
 					appState.Scene.aliasVerticesList.resize(d_lists.last_alias + 1);
 					appState.Scene.aliasTexCoordsList.resize(d_lists.last_alias + 1);
 				}
+				appState.Scene.newVertices.clear();
+				appState.Scene.newTexCoords.clear();
+				auto verticesOffset = 0;
+				auto texCoordsOffset = 0;
 				for (auto i = 0; i <= d_lists.last_alias; i++)
 				{
 					auto& alias = d_lists.alias[i];
 					auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(alias.vertices);
 					if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
 					{
-						Buffer* colormappedVertices = nullptr;
-						auto size = alias.vertex_count * 2 * 3 * sizeof(float);
-						for (Buffer** b = &appState.Scene.colormappedVertices.oldBuffers; *b != nullptr; b = &(*b)->next)
-						{
-							if ((*b)->size == size)
-							{
-								colormappedVertices = *b;
-								*b = (*b)->next;
-								break;
-							}
-						}
-						if (colormappedVertices == nullptr)
-						{
-							createVertexBuffer(appState, size, colormappedVertices);
-						}
-						moveBufferToFront(colormappedVertices, appState.Scene.colormappedVertices);
-						colormappedVertices->key = alias.vertices;
-						appState.Scene.colormappedVerticesPerKey.insert({ alias.vertices, colormappedVertices });
-						colormappedVerticesSize += size;
-						VK(appState.Device.vkMapMemory(appState.Device.device, colormappedVertices->memory, 0, colormappedVertices->size, 0, &colormappedVertices->mapped));
-						auto mapped = (float*)colormappedVertices->mapped;
+						auto newEntry = appState.Scene.colormappedVerticesPerKey.emplace(alias.vertices, BufferWithOffset());
+						newEntry.first->second.offset = verticesOffset;
+						appState.Scene.newVertices.push_back(i);
+						appState.Scene.aliasVerticesList[i] = &newEntry.first->second;
+						verticesOffset += alias.vertex_count * 2 * 3 * sizeof(float);
+					}
+					else
+					{
+						appState.Scene.aliasVerticesList[i] = &verticesEntry->second;
+					}
+					auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(alias.texture_coordinates);
+					if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
+					{
+						auto newEntry = appState.Scene.colormappedTexCoordsPerKey.emplace(alias.texture_coordinates, BufferWithOffset());
+						newEntry.first->second.offset = texCoordsOffset;
+						appState.Scene.newTexCoords.push_back(i);
+						appState.Scene.aliasTexCoordsList[i] = &newEntry.first->second;
+						texCoordsOffset += alias.vertex_count * 2 * 2 * sizeof(float);
+					}
+					else
+					{
+						appState.Scene.aliasTexCoordsList[i] = &texCoordsEntry->second;
+					}
+				}
+				if (verticesOffset > 0)
+				{
+					Buffer* buffer = nullptr;
+					createVertexBuffer(appState, verticesOffset, buffer);
+					moveBufferToFront(buffer, appState.Scene.colormappedVertices);
+					colormappedVerticesSize += verticesOffset;
+					VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, buffer->size, 0, &buffer->mapped));
+					auto mapped = (float*)buffer->mapped;
+					for (auto i : appState.Scene.newVertices)
+					{
+						auto& alias = d_lists.alias[i];
+						auto entry = appState.Scene.aliasVerticesList[i];
 						auto vertexFromModel = alias.vertices;
 						for (auto j = 0; j < alias.vertex_count; j++)
 						{
@@ -4609,43 +4627,28 @@ void android_main(struct android_app *app)
 							mapped++;
 							vertexFromModel++;
 						}
-						VC(appState.Device.vkUnmapMemory(appState.Device.device, colormappedVertices->memory));
-						colormappedVertices->mapped = nullptr;
-						bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-						bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-						bufferMemoryBarrier.buffer = colormappedVertices->buffer;
-						bufferMemoryBarrier.size = colormappedVertices->size;
-						VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
-						appState.Scene.aliasVerticesList[i] = colormappedVertices;
+						entry->buffer = buffer;
 					}
-					else
+					VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+					buffer->mapped = nullptr;
+					bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+					bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+					bufferMemoryBarrier.buffer = buffer->buffer;
+					bufferMemoryBarrier.size = buffer->size;
+					VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+				}
+				if (texCoordsOffset > 0)
+				{
+					Buffer* buffer = nullptr;
+					createVertexBuffer(appState, texCoordsOffset, buffer);
+					moveBufferToFront(buffer, appState.Scene.colormappedTexCoords);
+					colormappedTexCoordsSize += texCoordsOffset;
+					VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, buffer->size, 0, &buffer->mapped));
+					auto mapped = (float*)buffer->mapped;
+					for (auto i : appState.Scene.newTexCoords)
 					{
-						appState.Scene.aliasVerticesList[i] = verticesEntry->second;
-					}
-					auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(alias.texture_coordinates);
-					if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
-					{
-						Buffer* colormappedTexCoords = nullptr;
-						auto size = alias.vertex_count * 2 * 2 * sizeof(float);
-						for (Buffer** b = &appState.Scene.colormappedTexCoords.oldBuffers; *b != nullptr; b = &(*b)->next)
-						{
-							if ((*b)->size == size)
-							{
-								colormappedTexCoords = *b;
-								*b = (*b)->next;
-								break;
-							}
-						}
-						if (colormappedTexCoords == nullptr)
-						{
-							createVertexBuffer(appState, size, colormappedTexCoords);
-						}
-						moveBufferToFront(colormappedTexCoords, appState.Scene.colormappedTexCoords);
-						colormappedTexCoords->key = alias.texture_coordinates;
-						appState.Scene.colormappedTexCoordsPerKey.insert({ alias.texture_coordinates, colormappedTexCoords });
-						colormappedTexCoordsSize += size;
-						VK(appState.Device.vkMapMemory(appState.Device.device, colormappedTexCoords->memory, 0, colormappedTexCoords->size, 0, &colormappedTexCoords->mapped));
-						auto mapped = (float*)colormappedTexCoords->mapped;
+						auto& alias = d_lists.alias[i];
+						auto entry = appState.Scene.aliasTexCoordsList[i];
 						auto texCoords = alias.texture_coordinates;
 						for (auto j = 0; j < alias.vertex_count; j++)
 						{
@@ -4663,18 +4666,7 @@ void android_main(struct android_app *app)
 							mapped++;
 							texCoords++;
 						}
-						VC(appState.Device.vkUnmapMemory(appState.Device.device, colormappedTexCoords->memory));
-						colormappedTexCoords->mapped = nullptr;
-						bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-						bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-						bufferMemoryBarrier.buffer = colormappedTexCoords->buffer;
-						bufferMemoryBarrier.size = colormappedTexCoords->size;
-						VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
-						appState.Scene.aliasTexCoordsList[i] = colormappedTexCoords;
-					}
-					else
-					{
-						appState.Scene.aliasTexCoordsList[i] = texCoordsEntry->second;
+						entry->buffer = buffer;
 					}
 				}
 				if (d_lists.last_viewmodel >= appState.Scene.viewmodelVerticesList.size())
@@ -4682,33 +4674,52 @@ void android_main(struct android_app *app)
 					appState.Scene.viewmodelVerticesList.resize(d_lists.last_viewmodel + 1);
 					appState.Scene.viewmodelTexCoordsList.resize(d_lists.last_viewmodel + 1);
 				}
+				appState.Scene.newVertices.clear();
+				appState.Scene.newTexCoords.clear();
+				verticesOffset = 0;
+				texCoordsOffset = 0;
 				for (auto i = 0; i <= d_lists.last_viewmodel; i++)
 				{
 					auto& viewmodel = d_lists.viewmodel[i];
 					auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(viewmodel.vertices);
 					if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
 					{
-						Buffer* colormappedVertices = nullptr;
-						auto size = viewmodel.vertex_count * 2 * 3 * sizeof(float);
-						for (Buffer** b = &appState.Scene.colormappedVertices.oldBuffers; *b != nullptr; b = &(*b)->next)
-						{
-							if ((*b)->size == size)
-							{
-								colormappedVertices = *b;
-								*b = (*b)->next;
-								break;
-							}
-						}
-						if (colormappedVertices == nullptr)
-						{
-							createVertexBuffer(appState, size, colormappedVertices);
-						}
-						moveBufferToFront(colormappedVertices, appState.Scene.colormappedVertices);
-						colormappedVertices->key = viewmodel.vertices;
-						appState.Scene.colormappedVerticesPerKey.insert({ viewmodel.vertices, colormappedVertices });
-						colormappedVerticesSize += size;
-						VK(appState.Device.vkMapMemory(appState.Device.device, colormappedVertices->memory, 0, colormappedVertices->size, 0, &colormappedVertices->mapped));
-						auto mapped = (float*)colormappedVertices->mapped;
+						auto newEntry = appState.Scene.colormappedVerticesPerKey.emplace(viewmodel.vertices, BufferWithOffset());
+						newEntry.first->second.offset = verticesOffset;
+						appState.Scene.newVertices.push_back(i);
+						appState.Scene.viewmodelVerticesList[i] = &newEntry.first->second;
+						verticesOffset += viewmodel.vertex_count * 2 * 3 * sizeof(float);
+					}
+					else
+					{
+						appState.Scene.viewmodelVerticesList[i] = &verticesEntry->second;
+					}
+					auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(viewmodel.texture_coordinates);
+					if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
+					{
+						auto newEntry = appState.Scene.colormappedTexCoordsPerKey.emplace(viewmodel.texture_coordinates, BufferWithOffset());
+						newEntry.first->second.offset = texCoordsOffset;
+						appState.Scene.newTexCoords.push_back(i);
+						appState.Scene.viewmodelTexCoordsList[i] = &newEntry.first->second;
+						texCoordsOffset += viewmodel.vertex_count * 2 * 2 * sizeof(float);
+					}
+					else
+					{
+						appState.Scene.viewmodelTexCoordsList[i] = &texCoordsEntry->second;
+					}
+				}
+				if (verticesOffset > 0)
+				{
+					Buffer* buffer = nullptr;
+					createVertexBuffer(appState, verticesOffset, buffer);
+					moveBufferToFront(buffer, appState.Scene.colormappedVertices);
+					colormappedVerticesSize += verticesOffset;
+					VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, buffer->size, 0, &buffer->mapped));
+					auto mapped = (float*)buffer->mapped;
+					for (auto i : appState.Scene.newVertices)
+					{
+						auto& viewmodel = d_lists.viewmodel[i];
+						auto entry = appState.Scene.viewmodelVerticesList[i];
 						auto vertexFromModel = viewmodel.vertices;
 						for (auto j = 0; j < viewmodel.vertex_count; j++)
 						{
@@ -4729,43 +4740,28 @@ void android_main(struct android_app *app)
 							mapped++;
 							vertexFromModel++;
 						}
-						VC(appState.Device.vkUnmapMemory(appState.Device.device, colormappedVertices->memory));
-						colormappedVertices->mapped = nullptr;
-						bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-						bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-						bufferMemoryBarrier.buffer = colormappedVertices->buffer;
-						bufferMemoryBarrier.size = colormappedVertices->size;
-						VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
-						appState.Scene.viewmodelVerticesList[i] = colormappedVertices;
+						entry->buffer = buffer;
 					}
-					else
+					VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+					buffer->mapped = nullptr;
+					bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+					bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+					bufferMemoryBarrier.buffer = buffer->buffer;
+					bufferMemoryBarrier.size = buffer->size;
+					VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+				}
+				if (texCoordsOffset > 0)
+				{
+					Buffer* buffer = nullptr;
+					createVertexBuffer(appState, texCoordsOffset, buffer);
+					moveBufferToFront(buffer, appState.Scene.colormappedTexCoords);
+					colormappedTexCoordsSize += texCoordsOffset;
+					VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, buffer->size, 0, &buffer->mapped));
+					auto mapped = (float*)buffer->mapped;
+					for (auto i : appState.Scene.newTexCoords)
 					{
-						appState.Scene.viewmodelVerticesList[i] = verticesEntry->second;
-					}
-					auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(viewmodel.texture_coordinates);
-					if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
-					{
-						Buffer* colormappedTexCoords = nullptr;
-						auto size = viewmodel.vertex_count * 2 * 2 * sizeof(float);
-						for (Buffer** b = &appState.Scene.colormappedTexCoords.oldBuffers; *b != nullptr; b = &(*b)->next)
-						{
-							if ((*b)->size == size)
-							{
-								colormappedTexCoords = *b;
-								*b = (*b)->next;
-								break;
-							}
-						}
-						if (colormappedTexCoords == nullptr)
-						{
-							createVertexBuffer(appState, size, colormappedTexCoords);
-						}
-						moveBufferToFront(colormappedTexCoords, appState.Scene.colormappedTexCoords);
-						colormappedTexCoords->key = viewmodel.texture_coordinates;
-						appState.Scene.colormappedTexCoordsPerKey.insert({ viewmodel.texture_coordinates, colormappedTexCoords });
-						colormappedTexCoordsSize += size;
-						VK(appState.Device.vkMapMemory(appState.Device.device, colormappedTexCoords->memory, 0, colormappedTexCoords->size, 0, &colormappedTexCoords->mapped));
-						auto mapped = (float*)colormappedTexCoords->mapped;
+						auto& viewmodel = d_lists.viewmodel[i];
+						auto entry = appState.Scene.viewmodelTexCoordsList[i];
 						auto texCoords = viewmodel.texture_coordinates;
 						for (auto j = 0; j < viewmodel.vertex_count; j++)
 						{
@@ -4783,18 +4779,7 @@ void android_main(struct android_app *app)
 							mapped++;
 							texCoords++;
 						}
-						VC(appState.Device.vkUnmapMemory(appState.Device.device, colormappedTexCoords->memory));
-						colormappedTexCoords->mapped = nullptr;
-						bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-						bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-						bufferMemoryBarrier.buffer = colormappedTexCoords->buffer;
-						bufferMemoryBarrier.size = colormappedTexCoords->size;
-						VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
-						appState.Scene.viewmodelTexCoordsList[i] = colormappedTexCoords;
-					}
-					else
-					{
-						appState.Scene.viewmodelTexCoordsList[i] = texCoordsEntry->second;
+						entry->buffer = buffer;
 					}
 				}
 				if (appState.Mode != AppWorldMode)
@@ -5731,10 +5716,10 @@ void android_main(struct android_app *app)
 								{
 									continue;
 								}
-								auto colormappedVertices = appState.Scene.aliasVerticesList[i];
-								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
-								auto colormappedTexCoords = appState.Scene.aliasTexCoordsList[i];
-								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &colormappedTexCoords->buffer, &noOffset));
+								auto vertices = appState.Scene.aliasVerticesList[i];
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer->buffer, &vertices->offset));
+								auto texCoords = appState.Scene.aliasTexCoordsList[i];
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords->buffer->buffer, &texCoords->offset));
 								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
 								float transforms[16];
@@ -5784,10 +5769,10 @@ void android_main(struct android_app *app)
 								{
 									continue;
 								}
-								auto colormappedVertices = appState.Scene.aliasVerticesList[i];
-								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
-								auto colormappedTexCoords = appState.Scene.aliasTexCoordsList[i];
-								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &colormappedTexCoords->buffer, &noOffset));
+								auto vertices = appState.Scene.aliasVerticesList[i];
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer->buffer, &vertices->offset));
+								auto texCoords = appState.Scene.aliasTexCoordsList[i];
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords->buffer->buffer, &texCoords->offset));
 								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
 								float transforms[16];
@@ -5880,10 +5865,10 @@ void android_main(struct android_app *app)
 								{
 									continue;
 								}
-								auto colormappedVertices = appState.Scene.viewmodelVerticesList[i];
-								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
-								auto colormappedTexCoords = appState.Scene.viewmodelTexCoordsList[i];
-								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &colormappedTexCoords->buffer, &noOffset));
+								auto vertices = appState.Scene.viewmodelVerticesList[i];
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer->buffer, &vertices->offset));
+								auto texCoords = appState.Scene.viewmodelTexCoordsList[i];
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords->buffer->buffer, &texCoords->offset));
 								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
 								transformsPlusTint[0] = viewmodel.transform[0][0];
@@ -5932,10 +5917,10 @@ void android_main(struct android_app *app)
 								{
 									continue;
 								}
-								auto colormappedVertices = appState.Scene.viewmodelVerticesList[i];
-								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &colormappedVertices->buffer, &noOffset));
-								auto colormappedTexCoords = appState.Scene.viewmodelTexCoordsList[i];
-								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &colormappedTexCoords->buffer, &noOffset));
+								auto vertices = appState.Scene.viewmodelVerticesList[i];
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer->buffer, &vertices->offset));
+								auto texCoords = appState.Scene.viewmodelTexCoordsList[i];
+								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords->buffer->buffer, &texCoords->offset));
 								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
 								transformsPlusTint[0] = viewmodel.transform[0][0];
