@@ -392,19 +392,12 @@ struct View
 	std::vector<PerImage> perImage;
 };
 
-struct ConsolePipelineResources
-{
-	ConsolePipelineResources *next;
-	int unusedCount;
-	PipelineDescriptorResources descriptorResources;
-};
-
 struct ConsolePerImage
 {
 	CachedBuffers vertices;
 	CachedBuffers indices;
 	CachedBuffers stagingBuffers;
-	ConsolePipelineResources* pipelineResources;
+	PipelineDescriptorResources* descriptorResources;
 	int paletteOffset;
 	int textureOffset;
 	int paletteChanged;
@@ -5498,7 +5491,6 @@ void android_main(struct android_app *app)
 					resetPipelineDescriptorResources(appState, resources->turbulent);
 					resetPipelineDescriptorResources(appState, resources->sprites);
 					resetPipelineDescriptorResources(appState, resources->textured);
-					resetPipelineDescriptorResources(appState, resources->palette);
 				}
 				VkDescriptorPoolSize poolSizes[2] { };
 				VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
@@ -5525,17 +5517,17 @@ void android_main(struct android_app *app)
 				if (resources->palette.descriptorPool == nullptr)
 				{
 					VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->palette.descriptorPool));
+					descriptorSetAllocateInfo.descriptorPool = resources->palette.descriptorPool;
+					descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.palette;
+					VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->palette.descriptorSet));
+					resources->palette.created = true;
+					textureInfo[0].sampler = perImage.palette->sampler;
+					textureInfo[0].imageView = perImage.palette->view;
+					writes[0].dstSet = resources->palette.descriptorSet;
+					writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					writes[0].pImageInfo = textureInfo;
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
 				}
-				descriptorSetAllocateInfo.descriptorPool = resources->palette.descriptorPool;
-				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.palette;
-				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->palette.descriptorSet));
-				resources->palette.created = true;
-				textureInfo[0].sampler = perImage.palette->sampler;
-				textureInfo[0].imageView = perImage.palette->view;
-				writes[0].dstSet = resources->palette.descriptorSet;
-				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writes[0].pImageInfo = textureInfo;
-				VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
 				if (appState.Mode == AppWorldMode)
 				{
 					VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &perImage.texturedVertexBase));
@@ -6163,21 +6155,6 @@ void android_main(struct android_app *app)
 			resetCachedBuffers(appState, perImage.vertices);
 			resetCachedBuffers(appState, perImage.indices);
 			resetCachedBuffers(appState, perImage.stagingBuffers);
-			for (ConsolePipelineResources** r = &perImage.pipelineResources; *r != nullptr; )
-			{
-				(*r)->unusedCount++;
-				if ((*r)->unusedCount >= MAX_UNUSED_COUNT)
-				{
-					ConsolePipelineResources *next = (*r)->next;
-					resetPipelineDescriptorResources(appState, (*r)->descriptorResources);
-					delete *r;
-					*r = next;
-				}
-				else
-				{
-					r = &(*r)->next;
-				}
-			}
 			VK(appState.Device.vkResetCommandBuffer(perImage.commandBuffer, 0));
 			VK(appState.Device.vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 			VkMemoryBarrier memoryBarrier { };
@@ -6310,59 +6287,51 @@ void android_main(struct android_app *app)
 			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &noOffset));
 			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &vertices->buffer, &noOffset));
 			VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipeline));
-			auto resources = perImage.pipelineResources;
+			auto resources = perImage.descriptorResources;
 			if (resources == nullptr)
 			{
-				resources = new ConsolePipelineResources();
-				memset(resources, 0, sizeof(ConsolePipelineResources));
-				perImage.pipelineResources = resources;
+				resources = new PipelineDescriptorResources();
+				memset(resources, 0, sizeof(PipelineDescriptorResources));
+				perImage.descriptorResources = resources;
+				VkDescriptorPoolSize poolSize;
+				poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				poolSize.descriptorCount = 2;
+				VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
+				descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+				descriptorPoolCreateInfo.maxSets = 1;
+				descriptorPoolCreateInfo.poolSizeCount = 1;
+				descriptorPoolCreateInfo.pPoolSizes = &poolSize;
+				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->descriptorPool));
+				VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
+				descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				descriptorSetAllocateInfo.descriptorPool = resources->descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.console.descriptorSetLayout;
+				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->descriptorSet));
+				resources->created = true;
+				VkDescriptorImageInfo textureInfo[2] { };
+				textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				textureInfo[0].sampler = perImage.texture->sampler;
+				textureInfo[0].imageView = perImage.texture->view;
+				textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				textureInfo[1].sampler = perImage.palette->sampler;
+				textureInfo[1].imageView = perImage.palette->view;
+				VkWriteDescriptorSet writes[2] { };
+				writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writes[0].dstSet = resources->descriptorSet;
+				writes[0].descriptorCount = 1;
+				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[0].pImageInfo = textureInfo;
+				writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writes[1].dstBinding = 1;
+				writes[1].dstSet = resources->descriptorSet;
+				writes[1].descriptorCount = 1;
+				writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[1].pImageInfo = textureInfo + 1;
+				VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
 			}
-			else
-			{
-				resetPipelineDescriptorResources(appState, resources->descriptorResources);
-				resources->unusedCount = 0;
-			}
-			VkDescriptorPoolSize poolSize;
-			poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSize.descriptorCount = 2;
-			VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
-			descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			descriptorPoolCreateInfo.maxSets = 1;
-			descriptorPoolCreateInfo.poolSizeCount = 1;
-			descriptorPoolCreateInfo.pPoolSizes = &poolSize;
-			if (resources->descriptorResources.descriptorPool == nullptr)
-			{
-				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->descriptorResources.descriptorPool));
-			}
-			VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
-			descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			descriptorSetAllocateInfo.descriptorPool = resources->descriptorResources.descriptorPool;
-			descriptorSetAllocateInfo.descriptorSetCount = 1;
-			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.console.descriptorSetLayout;
-			VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->descriptorResources.descriptorSet));
-			resources->descriptorResources.created = true;
-			VkDescriptorImageInfo textureInfo[2] { };
-			textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			textureInfo[0].sampler = perImage.texture->sampler;
-			textureInfo[0].imageView = perImage.texture->view;
-			textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			textureInfo[1].sampler = perImage.palette->sampler;
-			textureInfo[1].imageView = perImage.palette->view;
-			VkWriteDescriptorSet writes[2] { };
-			writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writes[0].dstSet = resources->descriptorResources.descriptorSet;
-			writes[0].descriptorCount = 1;
-			writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writes[0].pImageInfo = textureInfo;
-			writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writes[1].dstBinding = 1;
-			writes[1].dstSet = resources->descriptorResources.descriptorSet;
-			writes[1].descriptorCount = 1;
-			writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writes[1].pImageInfo = textureInfo + 1;
-			VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
 			VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices->buffer, noOffset, VK_INDEX_TYPE_UINT16));
-			VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipelineLayout, 0, 1, &resources->descriptorResources.descriptorSet, 0, nullptr));
+			VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipelineLayout, 0, 1, &resources->descriptorSet, 0, nullptr));
 			VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, appState.ConsoleIndices.size(), 1, 0, 0, 0));
 			VC(appState.Device.vkCmdEndRenderPass(perImage.commandBuffer));
 			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.Console.View.framebuffer.endBarriers[appState.Console.View.index]));
@@ -6662,11 +6631,10 @@ void android_main(struct android_app *app)
 	{
 		VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &perImage.commandBuffer));
 		VC(appState.Device.vkDestroyFence(appState.Device.device, perImage.fence, nullptr));
-		for (ConsolePipelineResources *pipelineResources = perImage.pipelineResources, *next = nullptr; pipelineResources != nullptr; pipelineResources = next)
+		if (perImage.descriptorResources != nullptr)
 		{
-			next = pipelineResources->next;
-			resetPipelineDescriptorResources(appState, pipelineResources->descriptorResources);
-			delete pipelineResources;
+			resetPipelineDescriptorResources(appState, *perImage.descriptorResources);
+			delete perImage.descriptorResources;
 		}
 		if (perImage.texture != nullptr)
 		{
