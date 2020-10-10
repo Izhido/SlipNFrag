@@ -125,10 +125,8 @@ struct Device
 	PFN_vkCreateDescriptorSetLayout vkCreateDescriptorSetLayout;
 	PFN_vkDestroyDescriptorSetLayout vkDestroyDescriptorSetLayout;
 	PFN_vkCreateDescriptorPool vkCreateDescriptorPool;
-	PFN_vkDestroyDescriptorPool vkDestroyDescriptorPool;
 	PFN_vkResetDescriptorPool vkResetDescriptorPool;
 	PFN_vkAllocateDescriptorSets vkAllocateDescriptorSets;
-	PFN_vkFreeDescriptorSets vkFreeDescriptorSets;
 	PFN_vkUpdateDescriptorSets vkUpdateDescriptorSets;
 	PFN_vkCreateFramebuffer vkCreateFramebuffer;
 	PFN_vkDestroyFramebuffer vkDestroyFramebuffer;
@@ -151,10 +149,8 @@ struct Device
 	PFN_vkCmdBlitImage vkCmdBlitImage;
 	PFN_vkCmdDraw vkCmdDraw;
 	PFN_vkCmdDrawIndexed vkCmdDrawIndexed;
-	PFN_vkCmdDispatch vkCmdDispatch;
 	PFN_vkCmdCopyBuffer vkCmdCopyBuffer;
 	PFN_vkCmdCopyBufferToImage vkCmdCopyBufferToImage;
-	PFN_vkCmdResolveImage vkCmdResolveImage;
 	PFN_vkCmdPipelineBarrier vkCmdPipelineBarrier;
 	PFN_vkCmdPushConstants vkCmdPushConstants;
 	PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass;
@@ -215,7 +211,6 @@ struct PipelineDescriptorResources
 struct PipelineResources
 {
 	PipelineResources *next;
-	int unusedCount;
 	PipelineDescriptorResources palette;
 	PipelineDescriptorResources textured;
 	PipelineDescriptorResources sprites;
@@ -1097,16 +1092,6 @@ void resetPipelineDescriptorResources(AppState& appState, PipelineDescriptorReso
 	}
 }
 
-void deletePipelineDescriptorResources(AppState& appState, PipelineDescriptorResources& pipelineDescriptorResources)
-{
-	if (pipelineDescriptorResources.created)
-	{
-		VC(appState.Device.vkFreeDescriptorSets(appState.Device.device, pipelineDescriptorResources.descriptorPool, 1, &pipelineDescriptorResources.descriptorSet));
-		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, pipelineDescriptorResources.descriptorPool, nullptr));
-		pipelineDescriptorResources.created = false;
-	}
-}
-
 void deletePipeline(AppState& appState, Pipeline& pipeline)
 {
 	VC(appState.Device.vkDestroyPipeline(appState.Device.device, pipeline.pipeline, nullptr));
@@ -1925,13 +1910,6 @@ void android_main(struct android_app *app)
 		vrapi_Shutdown();
 		exit(0);
 	}
-	appState.Device.vkDestroyDescriptorPool = (PFN_vkDestroyDescriptorPool)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkDestroyDescriptorPool"));
-	if (appState.Device.vkDestroyDescriptorPool == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkDestroyDescriptorPool.");
-		vrapi_Shutdown();
-		exit(0);
-	}
 	appState.Device.vkResetDescriptorPool = (PFN_vkResetDescriptorPool)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkResetDescriptorPool"));
 	if (appState.Device.vkResetDescriptorPool == nullptr)
 	{
@@ -1943,13 +1921,6 @@ void android_main(struct android_app *app)
 	if (appState.Device.vkAllocateDescriptorSets == nullptr)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkAllocateDescriptorSets.");
-		vrapi_Shutdown();
-		exit(0);
-	}
-	appState.Device.vkFreeDescriptorSets = (PFN_vkFreeDescriptorSets)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkFreeDescriptorSets"));
-	if (appState.Device.vkFreeDescriptorSets == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkFreeDescriptorSets.");
 		vrapi_Shutdown();
 		exit(0);
 	}
@@ -2107,13 +2078,6 @@ void android_main(struct android_app *app)
 		vrapi_Shutdown();
 		exit(0);
 	}
-	appState.Device.vkCmdDispatch = (PFN_vkCmdDispatch)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkCmdDispatch"));
-	if (appState.Device.vkCmdDispatch == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkCmdDispatch.");
-		vrapi_Shutdown();
-		exit(0);
-	}
 	appState.Device.vkCmdCopyBuffer = (PFN_vkCmdCopyBuffer)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkCmdCopyBuffer"));
 	if (appState.Device.vkCmdCopyBuffer == nullptr)
 	{
@@ -2125,13 +2089,6 @@ void android_main(struct android_app *app)
 	if (appState.Device.vkCmdCopyBufferToImage == nullptr)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkCmdCopyBufferToImage.");
-		vrapi_Shutdown();
-		exit(0);
-	}
-	appState.Device.vkCmdResolveImage = (PFN_vkCmdResolveImage)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkCmdResolveImage"));
-	if (appState.Device.vkCmdResolveImage == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkCmdResolveImage.");
 		vrapi_Shutdown();
 		exit(0);
 	}
@@ -4418,29 +4375,6 @@ void android_main(struct android_app *app)
 			resetCachedTextures(appState, perImage.sprites);
 			resetCachedTextures(appState, perImage.turbulent);
 			resetCachedTextures(appState, perImage.colormaps);
-			for (PipelineResources** r = &perImage.pipelineResources; *r != nullptr; )
-			{
-				(*r)->unusedCount++;
-				if ((*r)->unusedCount >= MAX_UNUSED_COUNT)
-				{
-					PipelineResources *next = (*r)->next;
-					deletePipelineDescriptorResources(appState, (*r)->floor);
-					deletePipelineDescriptorResources(appState, (*r)->sky);
-					deletePipelineDescriptorResources(appState, (*r)->colored);
-					deletePipelineDescriptorResources(appState, (*r)->viewmodels);
-					deletePipelineDescriptorResources(appState, (*r)->alias);
-					deletePipelineDescriptorResources(appState, (*r)->turbulent);
-					deletePipelineDescriptorResources(appState, (*r)->sprites);
-					deletePipelineDescriptorResources(appState, (*r)->textured);
-					deletePipelineDescriptorResources(appState, (*r)->palette);
-					delete *r;
-					*r = next;
-				}
-				else
-				{
-					r = &(*r)->next;
-				}
-			}
 			VK(appState.Device.vkResetCommandBuffer(perImage.commandBuffer, 0));
 			VK(appState.Device.vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 			VkMemoryBarrier memoryBarrier { };
@@ -5552,7 +5486,6 @@ void android_main(struct android_app *app)
 				{
 					resources = new PipelineResources();
 					memset(resources, 0, sizeof(PipelineResources));
-					resources->next = perImage.pipelineResources;
 					perImage.pipelineResources = resources;
 				}
 				else
@@ -5566,12 +5499,10 @@ void android_main(struct android_app *app)
 					resetPipelineDescriptorResources(appState, resources->sprites);
 					resetPipelineDescriptorResources(appState, resources->textured);
 					resetPipelineDescriptorResources(appState, resources->palette);
-					resources->unusedCount = 0;
 				}
 				VkDescriptorPoolSize poolSizes[2] { };
 				VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
 				descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 				descriptorPoolCreateInfo.maxSets = 1;
 				descriptorPoolCreateInfo.pPoolSizes = poolSizes;
 				VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
@@ -6238,7 +6169,7 @@ void android_main(struct android_app *app)
 				if ((*r)->unusedCount >= MAX_UNUSED_COUNT)
 				{
 					ConsolePipelineResources *next = (*r)->next;
-					deletePipelineDescriptorResources(appState, (*r)->descriptorResources);
+					resetPipelineDescriptorResources(appState, (*r)->descriptorResources);
 					delete *r;
 					*r = next;
 				}
@@ -6379,18 +6310,30 @@ void android_main(struct android_app *app)
 			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &noOffset));
 			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &vertices->buffer, &noOffset));
 			VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipeline));
-			auto resources = new ConsolePipelineResources();
-			memset(resources, 0, sizeof(ConsolePipelineResources));
+			auto resources = perImage.pipelineResources;
+			if (resources == nullptr)
+			{
+				resources = new ConsolePipelineResources();
+				memset(resources, 0, sizeof(ConsolePipelineResources));
+				perImage.pipelineResources = resources;
+			}
+			else
+			{
+				resetPipelineDescriptorResources(appState, resources->descriptorResources);
+				resources->unusedCount = 0;
+			}
 			VkDescriptorPoolSize poolSize;
 			poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			poolSize.descriptorCount = 2;
 			VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
 			descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 			descriptorPoolCreateInfo.maxSets = 1;
 			descriptorPoolCreateInfo.poolSizeCount = 1;
 			descriptorPoolCreateInfo.pPoolSizes = &poolSize;
-			VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->descriptorResources.descriptorPool));
+			if (resources->descriptorResources.descriptorPool == nullptr)
+			{
+				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &resources->descriptorResources.descriptorPool));
+			}
 			VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
 			descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			descriptorSetAllocateInfo.descriptorPool = resources->descriptorResources.descriptorPool;
@@ -6398,8 +6341,6 @@ void android_main(struct android_app *app)
 			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.console.descriptorSetLayout;
 			VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &resources->descriptorResources.descriptorSet));
 			resources->descriptorResources.created = true;
-			resources->next = perImage.pipelineResources;
-			perImage.pipelineResources = resources;
 			VkDescriptorImageInfo textureInfo[2] { };
 			textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			textureInfo[0].sampler = perImage.texture->sampler;
@@ -6657,15 +6598,15 @@ void android_main(struct android_app *app)
 			for (PipelineResources *pipelineResources = perImage.pipelineResources, *next = nullptr; pipelineResources != nullptr; pipelineResources = next)
 			{
 				next = pipelineResources->next;
-				deletePipelineDescriptorResources(appState, pipelineResources->floor);
-				deletePipelineDescriptorResources(appState, pipelineResources->sky);
-				deletePipelineDescriptorResources(appState, pipelineResources->colored);
-				deletePipelineDescriptorResources(appState, pipelineResources->viewmodels);
-				deletePipelineDescriptorResources(appState, pipelineResources->alias);
-				deletePipelineDescriptorResources(appState, pipelineResources->turbulent);
-				deletePipelineDescriptorResources(appState, pipelineResources->sprites);
-				deletePipelineDescriptorResources(appState, pipelineResources->textured);
-				deletePipelineDescriptorResources(appState, pipelineResources->palette);
+				resetPipelineDescriptorResources(appState, pipelineResources->floor);
+				resetPipelineDescriptorResources(appState, pipelineResources->sky);
+				resetPipelineDescriptorResources(appState, pipelineResources->colored);
+				resetPipelineDescriptorResources(appState, pipelineResources->viewmodels);
+				resetPipelineDescriptorResources(appState, pipelineResources->alias);
+				resetPipelineDescriptorResources(appState, pipelineResources->turbulent);
+				resetPipelineDescriptorResources(appState, pipelineResources->sprites);
+				resetPipelineDescriptorResources(appState, pipelineResources->textured);
+				resetPipelineDescriptorResources(appState, pipelineResources->palette);
 				delete pipelineResources;
 			}
 			if (perImage.floor != nullptr)
@@ -6724,7 +6665,7 @@ void android_main(struct android_app *app)
 		for (ConsolePipelineResources *pipelineResources = perImage.pipelineResources, *next = nullptr; pipelineResources != nullptr; pipelineResources = next)
 		{
 			next = pipelineResources->next;
-			deletePipelineDescriptorResources(appState, pipelineResources->descriptorResources);
+			resetPipelineDescriptorResources(appState, pipelineResources->descriptorResources);
 			delete pipelineResources;
 		}
 		if (perImage.texture != nullptr)
