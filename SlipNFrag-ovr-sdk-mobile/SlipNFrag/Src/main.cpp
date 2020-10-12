@@ -151,10 +151,8 @@ struct Device
 	PFN_vkCmdBlitImage vkCmdBlitImage;
 	PFN_vkCmdDraw vkCmdDraw;
 	PFN_vkCmdDrawIndexed vkCmdDrawIndexed;
-	PFN_vkCmdDispatch vkCmdDispatch;
 	PFN_vkCmdCopyBuffer vkCmdCopyBuffer;
 	PFN_vkCmdCopyBufferToImage vkCmdCopyBufferToImage;
-	PFN_vkCmdResolveImage vkCmdResolveImage;
 	PFN_vkCmdPipelineBarrier vkCmdPipelineBarrier;
 	PFN_vkCmdPushConstants vkCmdPushConstants;
 	PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass;
@@ -737,11 +735,6 @@ void createStagingBuffer(AppState& appState, VkDeviceSize size, Buffer*& buffer)
 void createStagingStorageBuffer(AppState& appState, VkDeviceSize size, Buffer*& buffer)
 {
 	createBuffer(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, buffer);
-}
-
-void createUniformBuffer(AppState& appState, VkDeviceSize size, Buffer*& buffer)
-{
-	createBuffer(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, buffer);
 }
 
 void createShaderModule(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule)
@@ -2096,13 +2089,6 @@ void android_main(struct android_app *app)
 		vrapi_Shutdown();
 		exit(0);
 	}
-	appState.Device.vkCmdDispatch = (PFN_vkCmdDispatch)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkCmdDispatch"));
-	if (appState.Device.vkCmdDispatch == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkCmdDispatch.");
-		vrapi_Shutdown();
-		exit(0);
-	}
 	appState.Device.vkCmdCopyBuffer = (PFN_vkCmdCopyBuffer)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkCmdCopyBuffer"));
 	if (appState.Device.vkCmdCopyBuffer == nullptr)
 	{
@@ -2114,13 +2100,6 @@ void android_main(struct android_app *app)
 	if (appState.Device.vkCmdCopyBufferToImage == nullptr)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkCmdCopyBufferToImage.");
-		vrapi_Shutdown();
-		exit(0);
-	}
-	appState.Device.vkCmdResolveImage = (PFN_vkCmdResolveImage)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkCmdResolveImage"));
-	if (appState.Device.vkCmdResolveImage == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkCmdResolveImage.");
 		vrapi_Shutdown();
 		exit(0);
 	}
