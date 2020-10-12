@@ -18,11 +18,10 @@ struct dsurface_t
 
 struct dspritedata_t
 {
-	void* frame;
 	int width;
 	int height;
 	int size;
-	std::vector<unsigned char> data;
+	unsigned char* data;
 	int first_vertex;
 	int count;
 };

@@ -293,10 +293,12 @@ struct Scene
 	int numBuffers;
 	int hostClearCount;
 	std::unordered_map<void*, std::unordered_map<void*, int>> texturedFrameCountsPerKeys;
+	CachedTextures spriteTextures;
 	CachedBuffers colormappedVertices;
 	CachedBuffers colormappedTexCoords;
 	CachedTextures aliasTextures;
 	CachedTextures viewmodelTextures;
+	std::unordered_map<void*, Texture*> spritesPerKey;
 	std::unordered_map<void*, BufferWithOffset> colormappedVerticesPerKey;
 	std::unordered_map<void*, BufferWithOffset> colormappedTexCoordsPerKey;
 	std::unordered_map<void*, Texture*> aliasPerKey;
@@ -333,7 +335,6 @@ struct PerImage
 	CachedBuffers indices32;
 	CachedBuffers stagingBuffers;
 	CachedTextures surfaces;
-	CachedTextures sprites;
 	CachedTextures turbulent;
 	CachedTextures colormaps;
 	PipelineResources* pipelineResources;
@@ -4322,10 +4323,12 @@ void android_main(struct android_app *app)
 						appState.Scene.aliasPerKey.clear();
 						appState.Scene.colormappedTexCoordsPerKey.clear();
 						appState.Scene.colormappedVerticesPerKey.clear();
+						appState.Scene.spritesPerKey.clear();
 						forcedDisposeFrontTextures(appState, appState.Scene.viewmodelTextures);
 						forcedDisposeFrontTextures(appState, appState.Scene.aliasTextures);
 						forcedDisposeFrontBuffers(appState, appState.Scene.colormappedTexCoords);
 						forcedDisposeFrontBuffers(appState, appState.Scene.colormappedVertices);
+						forcedDisposeFrontTextures(appState, appState.Scene.spriteTextures);
 						appState.Scene.texturedFrameCountsPerKeys.clear();
 						appState.Scene.hostClearCount = host_clearcount;
 					}
@@ -4378,7 +4381,6 @@ void android_main(struct android_app *app)
 			resetCachedBuffers(appState, perImage.indices32);
 			resetCachedBuffers(appState, perImage.stagingBuffers);
 			resetCachedTextures(appState, perImage.surfaces);
-			resetCachedTextures(appState, perImage.sprites);
 			resetCachedTextures(appState, perImage.turbulent);
 			resetCachedTextures(appState, perImage.colormaps);
 			for (PipelineResources** r = &perImage.pipelineResources; *r != nullptr; )
@@ -4996,25 +4998,36 @@ void android_main(struct android_app *app)
 			for (auto i = 0; i <= d_lists.last_sprite; i++)
 			{
 				auto& sprite = d_lists.sprites[i];
-				Texture* texture = nullptr;
-				for (Texture** t = &perImage.sprites.oldTextures; *t != nullptr; t = &(*t)->next)
+				auto entry = appState.Scene.spritesPerKey.find(sprite.data);
+				if (entry == appState.Scene.spritesPerKey.end())
 				{
-					if ((*t)->width == sprite.width && (*t)->height == sprite.height)
+					Texture* texture = nullptr;
+					for (Texture** t = &appState.Scene.spriteTextures.oldTextures; *t != nullptr; t = &(*t)->next)
 					{
-						texture = *t;
-						*t = (*t)->next;
-						break;
+						if ((*t)->width == sprite.width && (*t)->height == sprite.height)
+						{
+							texture = *t;
+							*t = (*t)->next;
+							break;
+						}
 					}
+					if (texture == nullptr)
+					{
+						auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
+						createTexture(appState, perImage.commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
+						texture->key = sprite.data;
+					}
+					appState.Scene.spriteOffsets[i] = stagingBufferSize;
+					stagingBufferSize += sprite.size;
+					moveTextureToFront(texture, appState.Scene.spriteTextures);
+					appState.Scene.spritesPerKey.insert({ sprite.data, texture });
+					appState.Scene.spriteList[i] = texture;
 				}
-				if (texture == nullptr)
+				else
 				{
-					auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
-					createTexture(appState, perImage.commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
+					appState.Scene.spriteOffsets[i] = -1;
+					appState.Scene.spriteList[i] = entry->second;
 				}
-				appState.Scene.spriteOffsets[i] = stagingBufferSize;
-				stagingBufferSize += sprite.size;
-				appState.Scene.spriteList[i] = texture;
-				moveTextureToFront(texture, perImage.sprites);
 			}
 			if (d_lists.last_turbulent >= appState.Scene.turbulentOffsets.size())
 			{
@@ -5255,9 +5268,12 @@ void android_main(struct android_app *app)
 				}
 				for (auto i = 0; i <= d_lists.last_sprite; i++)
 				{
-					auto& sprite = d_lists.sprites[i];
-					memcpy(((unsigned char*)stagingBuffer->mapped) + offset, sprite.data.data(), sprite.size);
-					offset += sprite.size;
+					if (appState.Scene.spriteOffsets[i] >= 0)
+					{
+						auto& sprite = d_lists.sprites[i];
+						memcpy(((unsigned char*)stagingBuffer->mapped) + offset, sprite.data, sprite.size);
+						offset += sprite.size;
+					}
 				}
 				for (auto i = 0; i <= d_lists.last_turbulent; i++)
 				{
@@ -5337,7 +5353,10 @@ void android_main(struct android_app *app)
 				}
 				for (auto i = 0; i <= d_lists.last_sprite; i++)
 				{
-					fillMipmappedTexture(appState, appState.Scene.spriteList[i], stagingBuffer, appState.Scene.spriteOffsets[i], perImage.commandBuffer);
+					if (appState.Scene.spriteOffsets[i] >= 0)
+					{
+						fillMipmappedTexture(appState, appState.Scene.spriteList[i], stagingBuffer, appState.Scene.spriteOffsets[i], perImage.commandBuffer);
+					}
 				}
 				for (auto i = 0; i <= d_lists.last_turbulent; i++)
 				{
@@ -6565,7 +6584,6 @@ void android_main(struct android_app *app)
 			}
 			deleteCachedTextures(appState, perImage.colormaps);
 			deleteCachedTextures(appState, perImage.turbulent);
-			deleteCachedTextures(appState, perImage.sprites);
 			deleteCachedTextures(appState, perImage.surfaces);
 			deleteCachedBuffers(appState, perImage.stagingBuffers);
 			deleteCachedBuffers(appState, perImage.indices32);
@@ -6626,6 +6644,7 @@ void android_main(struct android_app *app)
 	deleteCachedTextures(appState, appState.Scene.aliasTextures);
 	deleteCachedBuffers(appState, appState.Scene.colormappedTexCoords);
 	deleteCachedBuffers(appState, appState.Scene.colormappedVertices);
+	deleteCachedTextures(appState, appState.Scene.spriteTextures);
 	deletePipeline(appState, appState.Scene.console);
 	deletePipeline(appState, appState.Scene.floor);
 	deletePipeline(appState, appState.Scene.sky);

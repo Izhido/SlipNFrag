@@ -133,15 +133,10 @@ void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)
 		d_lists.sprites.emplace_back();
 	}
 	auto& sprite = d_lists.sprites[d_lists.last_sprite];
-	sprite.frame = r_spritedesc.pspriteframe;
 	sprite.width = spritedesc->pspriteframe->width;
 	sprite.height = spritedesc->pspriteframe->height;
 	sprite.size = sprite.width * sprite.height;
-	if (sprite.size > sprite.data.size())
-	{
-		sprite.data.resize(sprite.size);
-	}
-	memcpy(sprite.data.data(), &r_spritedesc.pspriteframe->pixels[0], sprite.size);
+	sprite.data = &spritedesc->pspriteframe->pixels[0];
 	sprite.first_vertex = (d_lists.last_textured_vertex + 1) / 3;
 	sprite.count = 4;
 	auto new_size = d_lists.last_textured_vertex + 1 + 3 * 4;
