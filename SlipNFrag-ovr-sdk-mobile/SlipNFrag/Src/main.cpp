@@ -334,7 +334,9 @@ struct PerImage
 	CachedBuffers indices16;
 	CachedBuffers indices32;
 	CachedBuffers stagingBuffers;
-	CachedTextures surfaces;
+	std::list<Texture*> oldSurfaces;
+	std::unordered_map<void*, std::unordered_map<void*, std::list<Texture*>::iterator>> oldSurfaceIndex;
+	Texture* surfaces;
 	CachedTextures turbulent;
 	CachedTextures colormaps;
 	PipelineResources* pipelineResources;
@@ -4380,7 +4382,27 @@ void android_main(struct android_app *app)
 			resetCachedBuffers(appState, perImage.indices16);
 			resetCachedBuffers(appState, perImage.indices32);
 			resetCachedBuffers(appState, perImage.stagingBuffers);
-			resetCachedTextures(appState, perImage.surfaces);
+			for (auto entry = perImage.oldSurfaces.begin(); entry != perImage.oldSurfaces.end(); )
+			{
+				(*entry)->unusedCount++;
+				if ((*entry)->unusedCount >= MAX_UNUSED_COUNT)
+				{
+					perImage.oldSurfaceIndex[(*entry)->key].erase((*entry)->key2);
+					deleteTexture(appState, *entry);
+					delete *entry;
+					entry = perImage.oldSurfaces.erase(entry);
+				}
+				else
+				{
+					entry++;
+				}
+			}
+			for (Texture* texture = perImage.surfaces; texture != nullptr; texture = texture->next)
+			{
+				perImage.oldSurfaces.push_front(texture);
+				perImage.oldSurfaceIndex[texture->key][texture->key2] = perImage.oldSurfaces.begin();
+			}
+			perImage.surfaces = nullptr;
 			resetCachedTextures(appState, perImage.turbulent);
 			resetCachedTextures(appState, perImage.colormaps);
 			for (PipelineResources** r = &perImage.pipelineResources; *r != nullptr; )
@@ -4953,13 +4975,15 @@ void android_main(struct android_app *app)
 			{
 				auto& surface = d_lists.surfaces[i];
 				Texture* texture = nullptr;
-				for (Texture** t = &perImage.surfaces.oldTextures; *t != nullptr; t = &(*t)->next)
+				auto firstEntry = perImage.oldSurfaceIndex.find(surface.surface);
+				if (firstEntry != perImage.oldSurfaceIndex.end())
 				{
-					if ((*t)->key == surface.surface && (*t)->key2 == surface.entity)
+					auto secondEntry = firstEntry->second.find(surface.entity);
+					if (secondEntry != firstEntry->second.end())
 					{
-						texture = *t;
-						*t = (*t)->next;
-						break;
+						texture = *secondEntry->second;
+						perImage.oldSurfaces.erase(secondEntry->second);
+						firstEntry->second.erase(secondEntry);
 					}
 				}
 				if (texture == nullptr)
@@ -4986,9 +5010,11 @@ void android_main(struct android_app *app)
 						appState.Scene.surfaceOffsets[i] = stagingBufferSize;
 						stagingBufferSize += surface.size;
 					}
+					texture->unusedCount = 0;
 				}
 				appState.Scene.surfaceList[i] = texture;
-				moveTextureToFront(texture, perImage.surfaces);
+				texture->next = perImage.surfaces;
+				perImage.surfaces = texture;
 			}
 			if (d_lists.last_sprite >= appState.Scene.spriteOffsets.size())
 			{
@@ -6584,7 +6610,19 @@ void android_main(struct android_app *app)
 			}
 			deleteCachedTextures(appState, perImage.colormaps);
 			deleteCachedTextures(appState, perImage.turbulent);
-			deleteCachedTextures(appState, perImage.surfaces);
+			for (Texture* t = perImage.surfaces, *next = nullptr; t != nullptr; t = next)
+			{
+				next = t->next;
+				deleteTexture(appState, t);
+				delete t;
+			}
+			perImage.oldSurfaceIndex.clear();
+			for (auto entry : perImage.oldSurfaces)
+			{
+				deleteTexture(appState, entry);
+				delete entry;
+			}
+			perImage.oldSurfaces.clear();
 			deleteCachedBuffers(appState, perImage.stagingBuffers);
 			deleteCachedBuffers(appState, perImage.indices32);
 			deleteCachedBuffers(appState, perImage.indices16);
