@@ -186,11 +186,32 @@ struct BufferWithOffset
 	VkDeviceSize offset;
 };
 
+struct TwinKey
+{
+	void* first;
+	void* second;
+};
+
+bool operator==(const TwinKey& first, const TwinKey& second)
+{
+	return (first.first == second.first && first.second == second.second);
+}
+
+namespace std
+{
+	template<> struct hash<TwinKey>
+	{
+		size_t operator()(const TwinKey& key) const
+		{
+			return (hash<void*>()(key.first) + 0x9e3779b9) ^ (hash<void*>()(key.second) + 0xe93b9797);
+		}
+	};
+}
+
 struct Texture
 {
 	Texture* next;
-	void* key;
-	void* key2;
+	TwinKey key;
 	int frameCount;
 	int unusedCount;
 	int width;
@@ -292,7 +313,7 @@ struct Scene
 	Buffer matrices;
 	int numBuffers;
 	int hostClearCount;
-	std::unordered_map<void*, std::unordered_map<void*, int>> texturedFrameCountsPerKeys;
+	std::unordered_map<TwinKey, int> surfaceFrameCounts;
 	CachedTextures spriteTextures;
 	CachedBuffers colormappedVertices;
 	CachedBuffers colormappedTexCoords;
@@ -335,7 +356,7 @@ struct PerImage
 	CachedBuffers indices32;
 	CachedBuffers stagingBuffers;
 	std::list<Texture*> oldSurfaces;
-	std::unordered_map<void*, std::unordered_map<void*, std::list<Texture*>::iterator>> oldSurfaceIndex;
+	std::unordered_map<TwinKey, std::list<Texture*>::iterator> oldSurfaceIndex;
 	Texture* surfaces;
 	CachedTextures turbulent;
 	CachedTextures colormaps;
@@ -4331,24 +4352,17 @@ void android_main(struct android_app *app)
 						forcedDisposeFrontBuffers(appState, appState.Scene.colormappedTexCoords);
 						forcedDisposeFrontBuffers(appState, appState.Scene.colormappedVertices);
 						forcedDisposeFrontTextures(appState, appState.Scene.spriteTextures);
-						appState.Scene.texturedFrameCountsPerKeys.clear();
+						appState.Scene.surfaceFrameCounts.clear();
 						appState.Scene.hostClearCount = host_clearcount;
 					}
 					for (auto i = 0; i <= d_lists.last_surface; i++)
 					{
 						auto& surface = d_lists.surfaces[i];
-						auto firstEntry = appState.Scene.texturedFrameCountsPerKeys.find(surface.surface);
-						if (firstEntry == appState.Scene.texturedFrameCountsPerKeys.end())
+						TwinKey key { surface.surface, surface.entity };
+						auto entry = appState.Scene.surfaceFrameCounts.find(key);
+						if (entry == appState.Scene.surfaceFrameCounts.end() || surface.created)
 						{
-							appState.Scene.texturedFrameCountsPerKeys[surface.surface][surface.entity] = r_framecount;
-						}
-						else
-						{
-							auto secondEntry = firstEntry->second.find(surface.entity);
-							if (secondEntry == firstEntry->second.end() || surface.created)
-							{
-								firstEntry->second[surface.entity] = r_framecount;
-							}
+							appState.Scene.surfaceFrameCounts[key] = r_framecount;
 						}
 					}
 				}
@@ -4387,7 +4401,7 @@ void android_main(struct android_app *app)
 				(*entry)->unusedCount++;
 				if ((*entry)->unusedCount >= MAX_UNUSED_COUNT)
 				{
-					perImage.oldSurfaceIndex[(*entry)->key].erase((*entry)->key2);
+					perImage.oldSurfaceIndex.erase({ (*entry)->key });
 					deleteTexture(appState, *entry);
 					delete *entry;
 					entry = perImage.oldSurfaces.erase(entry);
@@ -4400,7 +4414,7 @@ void android_main(struct android_app *app)
 			for (Texture* texture = perImage.surfaces; texture != nullptr; texture = texture->next)
 			{
 				perImage.oldSurfaces.push_front(texture);
-				perImage.oldSurfaceIndex[texture->key][texture->key2] = perImage.oldSurfaces.begin();
+				perImage.oldSurfaceIndex[texture->key] = perImage.oldSurfaces.begin();
 			}
 			perImage.surfaces = nullptr;
 			resetCachedTextures(appState, perImage.turbulent);
@@ -4975,38 +4989,33 @@ void android_main(struct android_app *app)
 			{
 				auto& surface = d_lists.surfaces[i];
 				Texture* texture = nullptr;
-				auto firstEntry = perImage.oldSurfaceIndex.find(surface.surface);
-				if (firstEntry != perImage.oldSurfaceIndex.end())
+				auto entry = perImage.oldSurfaceIndex.find({ surface.surface, surface.entity });
+				if (entry != perImage.oldSurfaceIndex.end())
 				{
-					auto secondEntry = firstEntry->second.find(surface.entity);
-					if (secondEntry != firstEntry->second.end())
-					{
-						texture = *secondEntry->second;
-						perImage.oldSurfaces.erase(secondEntry->second);
-						firstEntry->second.erase(secondEntry);
-					}
+					texture = *entry->second;
+					perImage.oldSurfaces.erase(entry->second);
+					perImage.oldSurfaceIndex.erase(entry);
 				}
 				if (texture == nullptr)
 				{
 					auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
 					createTexture(appState, perImage.commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-					texture->key = surface.surface;
-					texture->key2 = surface.entity;
+					texture->key.first = surface.surface;
+					texture->key.second = surface.entity;
 					texture->frameCount = r_framecount;
 					appState.Scene.surfaceOffsets[i] = stagingBufferSize;
 					stagingBufferSize += surface.size;
 				}
 				else
 				{
-					auto firstEntry = appState.Scene.texturedFrameCountsPerKeys.find(surface.surface);
-					auto secondEntry = firstEntry->second.find(surface.entity);
-					if (texture->frameCount == secondEntry->second)
+					auto entry = appState.Scene.surfaceFrameCounts.find(texture->key);
+					if (texture->frameCount == entry->second)
 					{
 						appState.Scene.surfaceOffsets[i] = -1;
 					}
 					else
 					{
-						texture->frameCount = secondEntry->second;
+						texture->frameCount = entry->second;
 						appState.Scene.surfaceOffsets[i] = stagingBufferSize;
 						stagingBufferSize += surface.size;
 					}
@@ -5041,7 +5050,7 @@ void android_main(struct android_app *app)
 					{
 						auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 						createTexture(appState, perImage.commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-						texture->key = sprite.data;
+						texture->key.first = sprite.data;
 					}
 					appState.Scene.spriteOffsets[i] = stagingBufferSize;
 					stagingBufferSize += sprite.size;
@@ -5076,7 +5085,7 @@ void android_main(struct android_app *app)
 					Texture* texture = nullptr;
 					for (Texture** t = &perImage.turbulent.oldTextures; *t != nullptr; t = &(*t)->next)
 					{
-						if ((*t)->key == turbulent.texture)
+						if ((*t)->key.first == turbulent.texture)
 						{
 							texture = *t;
 							*t = (*t)->next;
@@ -5087,7 +5096,7 @@ void android_main(struct android_app *app)
 					{
 						auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 						createTexture(appState, perImage.commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-						texture->key = turbulent.texture;
+						texture->key.first = turbulent.texture;
 						appState.Scene.turbulentOffsets[i] = stagingBufferSize;
 						stagingBufferSize += turbulent.size;
 					}
@@ -5096,7 +5105,7 @@ void android_main(struct android_app *app)
 						appState.Scene.turbulentOffsets[i] = -1;
 					}
 					appState.Scene.turbulentList[i] = texture;
-					appState.Scene.turbulentPerKey.insert({ texture->key, texture });
+					appState.Scene.turbulentPerKey.insert({ texture->key.first, texture });
 					moveTextureToFront(texture, perImage.turbulent);
 				}
 				else
@@ -5104,11 +5113,11 @@ void android_main(struct android_app *app)
 					Texture* texture;
 					auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 					createTexture(appState, perImage.commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-					texture->key = turbulent.texture;
+					texture->key.first = turbulent.texture;
 					appState.Scene.turbulentOffsets[i] = stagingBufferSize;
 					stagingBufferSize += turbulent.size;
 					appState.Scene.turbulentList[i] = texture;
-					appState.Scene.turbulentPerKey.insert({ texture->key, texture });
+					appState.Scene.turbulentPerKey.insert({ texture->key.first, texture });
 					moveTextureToFront(texture, perImage.turbulent);
 				}
 			}
@@ -5139,7 +5148,7 @@ void android_main(struct android_app *app)
 					{
 						auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 						createTexture(appState, perImage.commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-						texture->key = alias.data;
+						texture->key.first = alias.data;
 					}
 					appState.Scene.aliasOffsets[i] = stagingBufferSize;
 					stagingBufferSize += alias.size;
@@ -5194,7 +5203,7 @@ void android_main(struct android_app *app)
 					{
 						auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
 						createTexture(appState, perImage.commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-						texture->key = viewmodel.data;
+						texture->key.first = viewmodel.data;
 					}
 					appState.Scene.viewmodelOffsets[i] = stagingBufferSize;
 					stagingBufferSize += viewmodel.size;
