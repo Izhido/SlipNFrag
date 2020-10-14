@@ -4212,8 +4212,11 @@ void android_main(struct android_app *app)
 			}
 			appState.PreviousMode = appState.Mode;
 		}
+		deleteOldTextures(appState, appState.Scene.spriteTextures);
 		deleteOldBuffers(appState, appState.Scene.colormappedVertices);
 		deleteOldBuffers(appState, appState.Scene.colormappedTexCoords);
+		deleteOldTextures(appState, appState.Scene.aliasTextures);
+		deleteOldTextures(appState, appState.Scene.viewmodelTextures);
 		for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 		{
 			appState.ViewMatrices[i] = ovrMatrix4f_Transpose(&tracking.Eye[i].ViewMatrix);
