@@ -6,8 +6,8 @@
 precision highp float;
 precision highp int;
 
-layout(set = 0, binding = 0) uniform sampler2D fragmentPalette;
-layout(set = 1, binding = 1) uniform sampler2D fragmentTexture;
+layout(set = 0, binding = 1) uniform sampler2D fragmentPalette;
+layout(set = 1, binding = 0) uniform sampler2D fragmentTexture;
 
 layout(push_constant) uniform Rotation
 {

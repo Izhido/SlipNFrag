@@ -3,7 +3,7 @@
 #extension GL_EXT_shader_io_blocks : enable
 #extension GL_ARB_enhanced_layouts : enable
 
-layout(binding = 0) uniform SceneMatrices
+layout(set = 0, binding = 0) uniform SceneMatrices
 {
 	layout(offset = 0) mat4 ViewMatrix;
 	layout(offset = 64) mat4 ProjectionMatrix;
