@@ -603,7 +603,16 @@ void Mod_LoadTextures (lump_t *l)
 		for (j=0 ; j<MIPLEVELS ; j++)
 			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
 		// the pixels immediately follow the structures
-        if (tx->name[0] == '{')
+        auto remaining = (mod_base + l->fileofs + l->filelen) - ((byte*)(mt+1));
+        if (remaining < pixels)
+        {
+            Con_Printf("Mod_LoadTextures: %s extends past the end of the lump\n", mt->name);
+            if (remaining > 0)
+            {
+                memcpy ( tx+1, mt+1, remaining);
+            }
+        }
+        else if (tx->name[0] == '{')
         {
             memcpy ( tx+1, mt+1, mt->width*mt->height);
             Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);

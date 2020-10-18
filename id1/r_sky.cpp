@@ -58,7 +58,16 @@ void R_InitSky (texture_t *mt)
 	int			i, j;
 	byte		*src;
 
-	src = (byte *)mt + mt->offsets[0];
+    if (mt->width != 256 || mt->height != 128)
+    {
+        memset(newsky, 0, 128*256);
+        memset(bottommask, 0, 128*131);
+        memset(bottomsky, 0, 128*131);
+        Con_Printf ("R_InitSky: %ix%i instead of 256x128\n", mt->width, mt->height);
+        return;
+    }
+
+    src = (byte *)mt + mt->offsets[0];
 
 	for (i=0 ; i<128 ; i++)
 	{
