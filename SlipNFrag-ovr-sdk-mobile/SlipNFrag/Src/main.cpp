@@ -128,7 +128,6 @@ struct Device
 	PFN_vkDestroyDescriptorPool vkDestroyDescriptorPool;
 	PFN_vkResetDescriptorPool vkResetDescriptorPool;
 	PFN_vkAllocateDescriptorSets vkAllocateDescriptorSets;
-	PFN_vkFreeDescriptorSets vkFreeDescriptorSets;
 	PFN_vkUpdateDescriptorSets vkUpdateDescriptorSets;
 	PFN_vkCreateFramebuffer vkCreateFramebuffer;
 	PFN_vkDestroyFramebuffer vkDestroyFramebuffer;
@@ -1095,24 +1094,6 @@ void deleteCachedTextures(AppState& appState, CachedTextures& cachedTextures)
 	}
 }
 
-void deletePipelineDescriptorResources(AppState& appState, PipelineDescriptorResources& resources)
-{
-	if (resources.created)
-	{
-		VC(appState.Device.vkFreeDescriptorSets(appState.Device.device, resources.descriptorPool, 1, &resources.descriptorSet));
-		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, resources.descriptorPool, nullptr));
-	}
-}
-
-void deleteMultipleSetsPipelineDescriptorResources(AppState& appState, MultipleSetsPipelineDescriptorResources& resources)
-{
-	if (resources.created)
-	{
-		VC(appState.Device.vkFreeDescriptorSets(appState.Device.device, resources.descriptorPool, resources.descriptorSets.size(), resources.descriptorSets.data()));
-		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, resources.descriptorPool, nullptr));
-	}
-}
-
 void deletePipeline(AppState& appState, Pipeline& pipeline)
 {
 	VC(appState.Device.vkDestroyPipeline(appState.Device.device, pipeline.pipeline, nullptr));
@@ -1948,13 +1929,6 @@ void android_main(struct android_app *app)
 	if (appState.Device.vkAllocateDescriptorSets == nullptr)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkAllocateDescriptorSets.");
-		vrapi_Shutdown();
-		exit(0);
-	}
-	appState.Device.vkFreeDescriptorSets = (PFN_vkFreeDescriptorSets)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkFreeDescriptorSets"));
-	if (appState.Device.vkFreeDescriptorSets == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vkGetDeviceProcAddr() could not find vkFreeDescriptorSets.");
 		vrapi_Shutdown();
 		exit(0);
 	}
@@ -5417,7 +5391,6 @@ void android_main(struct android_app *app)
 				VkDescriptorPoolSize poolSizes[2] { };
 				VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
 				descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 				descriptorPoolCreateInfo.maxSets = 1;
 				descriptorPoolCreateInfo.pPoolSizes = poolSizes;
 				VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
@@ -5489,11 +5462,14 @@ void android_main(struct android_app *app)
 					texturedDescriptorSetCount = d_lists.last_surface + 1 + d_lists.last_sprite + 1 + d_lists.last_turbulent + 1;
 					if (texturedDescriptorSetCount == 0)
 					{
-						deleteMultipleSetsPipelineDescriptorResources(appState, perImage.texturedResources);
+						if (perImage.texturedResources.created)
+						{
+							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
+						}
 					}
 					else if (perImage.texturedResources.descriptorSets.size() < texturedDescriptorSetCount || perImage.texturedResources.descriptorSets.size() > texturedDescriptorSetCount * 2)
 					{
-						deleteMultipleSetsPipelineDescriptorResources(appState, perImage.texturedResources);
+						VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
 						poolSizes[0].descriptorCount = texturedDescriptorSetCount;
 						descriptorPoolCreateInfo.maxSets = texturedDescriptorSetCount;
 						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.texturedResources.descriptorPool));
@@ -5560,14 +5536,17 @@ void android_main(struct android_app *app)
 					colormappedDescriptorSetCount = d_lists.last_alias + 1 + d_lists.last_viewmodel + 1;
 					if (colormappedDescriptorSetCount <= 0)
 					{
-						deleteMultipleSetsPipelineDescriptorResources(appState, perImage.colormappedResources);
+						if (perImage.colormappedResources.created)
+						{
+							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
+						}
 					}
 					else
 					{
 						VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 3, 1, &attributes->buffer, &perImage.vertexTransformBase));
 						if (perImage.colormappedResources.descriptorSets.size() < colormappedDescriptorSetCount || perImage.colormappedResources.descriptorSets.size() > colormappedDescriptorSetCount * 2)
 						{
-							deleteMultipleSetsPipelineDescriptorResources(appState, perImage.colormappedResources);
+							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
 							poolSizes[0].descriptorCount = 2 * colormappedDescriptorSetCount;
 							descriptorPoolCreateInfo.maxSets = colormappedDescriptorSetCount;
 							VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.colormappedResources.descriptorPool));
@@ -6163,7 +6142,6 @@ void android_main(struct android_app *app)
 				poolSize.descriptorCount = 2;
 				VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
 				descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				descriptorPoolCreateInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 				descriptorPoolCreateInfo.maxSets = 1;
 				descriptorPoolCreateInfo.poolSizeCount = 1;
 				descriptorPoolCreateInfo.pPoolSizes = &poolSize;
@@ -6430,8 +6408,14 @@ void android_main(struct android_app *app)
 		{
 			VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &perImage.commandBuffer));
 			VC(appState.Device.vkDestroyFence(appState.Device.device, perImage.fence, nullptr));
-			deleteMultipleSetsPipelineDescriptorResources(appState, perImage.colormappedResources);
-			deleteMultipleSetsPipelineDescriptorResources(appState, perImage.texturedResources);
+			if (perImage.colormappedResources.created)
+			{
+				VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
+			}
+			if (perImage.texturedResources.created)
+			{
+				VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
+			}
 			if (perImage.floor != nullptr)
 			{
 				deleteTexture(appState, perImage.floor);
@@ -6495,7 +6479,10 @@ void android_main(struct android_app *app)
 	{
 		VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &perImage.commandBuffer));
 		VC(appState.Device.vkDestroyFence(appState.Device.device, perImage.fence, nullptr));
-		deletePipelineDescriptorResources(appState, perImage.descriptorResources);
+		if (perImage.descriptorResources.created)
+		{
+			VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.descriptorResources.descriptorPool, nullptr));
+		}
 		if (perImage.texture != nullptr)
 		{
 			deleteTexture(appState, perImage.texture);
@@ -6513,10 +6500,22 @@ void android_main(struct android_app *app)
 	vrapi_DestroyTextureSwapChain(appState.Console.SwapChain);
 	VC(appState.Device.vkDestroyRenderPass(appState.Device.device, appState.RenderPass, nullptr));
 	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
-	deletePipelineDescriptorResources(appState, appState.Scene.floorResources);
-	deletePipelineDescriptorResources(appState, appState.Scene.skyResources);
-	deletePipelineDescriptorResources(appState, appState.Scene.sceneMatricesAndPaletteResources);
-	deletePipelineDescriptorResources(appState, appState.Scene.sceneMatricesResources);
+	if (appState.Scene.floorResources.created)
+	{
+		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, appState.Scene.floorResources.descriptorPool, nullptr));
+	}
+	if (appState.Scene.skyResources.created)
+	{
+		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, appState.Scene.skyResources.descriptorPool, nullptr));
+	}
+	if (appState.Scene.sceneMatricesAndPaletteResources.created)
+	{
+		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, appState.Scene.sceneMatricesAndPaletteResources.descriptorPool, nullptr));
+	}
+	if (appState.Scene.sceneMatricesResources.created)
+	{
+		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, appState.Scene.sceneMatricesResources.descriptorPool, nullptr));
+	}
 	deleteCachedTextures(appState, appState.Scene.viewmodelTextures);
 	deleteCachedTextures(appState, appState.Scene.aliasTextures);
 	deleteCachedBuffers(appState, appState.Scene.colormappedTexCoords);
