@@ -358,6 +358,7 @@ struct PerImage
 	CachedTextures turbulent;
 	CachedTextures colormaps;
 	MultipleSetsPipelineDescriptorResources texturedResources;
+	std::vector<Texture*> boundTexturedDescriptors;
 	MultipleSetsPipelineDescriptorResources colormappedResources;
 	int paletteOffset;
 	int host_colormapOffset;
@@ -4400,6 +4401,7 @@ void android_main(struct android_app *app)
 			bufferMemoryBarrier.size = appState.Scene.matrices.size;
 			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			auto stagingBufferSize = 0;
+			auto texturedDescriptorSetsNewlyCreated = ' ';
 			auto texturedDescriptorSetCount = 0;
 			auto colormappedDescriptorSetCount = 0;
 			auto floorVerticesSize = 0;
@@ -5465,22 +5467,35 @@ void android_main(struct android_app *app)
 						if (perImage.texturedResources.created)
 						{
 							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
+							perImage.boundTexturedDescriptors.clear();
+							texturedDescriptorSetsNewlyCreated = '-';
 						}
 					}
-					else if (perImage.texturedResources.descriptorSets.size() < texturedDescriptorSetCount || perImage.texturedResources.descriptorSets.size() > texturedDescriptorSetCount * 2)
+					else
 					{
-						VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
-						poolSizes[0].descriptorCount = texturedDescriptorSetCount;
-						descriptorPoolCreateInfo.maxSets = texturedDescriptorSetCount;
-						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.texturedResources.descriptorPool));
-						descriptorSetAllocateInfo.descriptorPool = perImage.texturedResources.descriptorPool;
-						descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.texturedLayout;
-						perImage.texturedResources.descriptorSets.resize(texturedDescriptorSetCount);
-						for (auto i = 0; i < texturedDescriptorSetCount; i++)
+						auto size = perImage.texturedResources.descriptorSets.size();
+						if (size < texturedDescriptorSetCount || size > texturedDescriptorSetCount * 2)
 						{
-							VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.texturedResources.descriptorSets[i]));
+							auto toCreate = std::max(16, texturedDescriptorSetCount + texturedDescriptorSetCount / 4);
+							if (toCreate != size)
+							{
+								VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
+								perImage.boundTexturedDescriptors.clear();
+								poolSizes[0].descriptorCount = toCreate;
+								descriptorPoolCreateInfo.maxSets = toCreate;
+								VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.texturedResources.descriptorPool));
+								descriptorSetAllocateInfo.descriptorPool = perImage.texturedResources.descriptorPool;
+								descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.texturedLayout;
+								perImage.texturedResources.descriptorSets.resize(toCreate);
+								perImage.boundTexturedDescriptors.resize(toCreate);
+								for (auto i = 0; i < toCreate; i++)
+								{
+									VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.texturedResources.descriptorSets[i]));
+								}
+								perImage.texturedResources.created = true;
+								texturedDescriptorSetsNewlyCreated = '+';
+							}
 						}
-						perImage.texturedResources.created = true;
 					}
 					auto descriptorSetIndex = 0;
 					float pushConstants[4];
@@ -5492,10 +5507,14 @@ void android_main(struct android_app *app)
 						pushConstants[2] = -surface.origin_y;
 						VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.textured.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 3 * sizeof(float), pushConstants));
 						auto texture = appState.Scene.surfaceList[i];
-						textureInfo[0].sampler = texture->sampler;
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						if (perImage.boundTexturedDescriptors[descriptorSetIndex] != texture)
+						{
+							textureInfo[0].sampler = texture->sampler;
+							textureInfo[0].imageView = texture->view;
+							writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
+							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+							perImage.boundTexturedDescriptors[descriptorSetIndex] = texture;
+						}
 						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 1, 1, &perImage.texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
 						VC(appState.Device.vkCmdDraw(perImage.commandBuffer, surface.count, 1, surface.first_vertex, 0));
 						descriptorSetIndex++;
@@ -5506,10 +5525,14 @@ void android_main(struct android_app *app)
 					{
 						auto& sprite = d_lists.sprites[i];
 						auto texture = appState.Scene.spriteList[i];
-						textureInfo[0].sampler = texture->sampler;
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						if (perImage.boundTexturedDescriptors[descriptorSetIndex] != texture)
+						{
+							textureInfo[0].sampler = texture->sampler;
+							textureInfo[0].imageView = texture->view;
+							writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
+							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+							perImage.boundTexturedDescriptors[descriptorSetIndex] = texture;
+						}
 						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &perImage.texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
 						VC(appState.Device.vkCmdDraw(perImage.commandBuffer, sprite.count, 1, sprite.first_vertex, 0));
 						descriptorSetIndex++;
@@ -5525,10 +5548,14 @@ void android_main(struct android_app *app)
 						pushConstants[2] = -turbulent.origin_y;
 						VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), pushConstants));
 						auto texture = appState.Scene.turbulentList[i];
-						textureInfo[0].sampler = texture->sampler;
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						if (perImage.boundTexturedDescriptors[descriptorSetIndex] != texture)
+						{
+							textureInfo[0].sampler = texture->sampler;
+							textureInfo[0].imageView = texture->view;
+							writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
+							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+							perImage.boundTexturedDescriptors[descriptorSetIndex] = texture;
+						}
 						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &perImage.texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
 						VC(appState.Device.vkCmdDraw(perImage.commandBuffer, turbulent.count, 1, turbulent.first_vertex, 0));
 						descriptorSetIndex++;
@@ -5916,9 +5943,9 @@ void android_main(struct android_app *app)
 			perImage.submitted = true;
 			matrixIndex++;
 #if defined(_DEBUG)
-			__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** %i; [%i, %i] %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
+			__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** %i; [%c%i, %i] %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
 								stagingBufferSize,
-								texturedDescriptorSetCount, colormappedDescriptorSetCount,
+								texturedDescriptorSetsNewlyCreated, texturedDescriptorSetCount, colormappedDescriptorSetCount,
 								floorVerticesSize, texturedVerticesSize, coloredVerticesSize, verticesSize,
 								colormappedVerticesSize,
 								colormappedTexCoordsSize,
