@@ -4401,7 +4401,6 @@ void android_main(struct android_app *app)
 			bufferMemoryBarrier.size = appState.Scene.matrices.size;
 			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			auto stagingBufferSize = 0;
-			auto texturedDescriptorSetsNewlyCreated = ' ';
 			auto texturedDescriptorSetCount = 0;
 			auto colormappedDescriptorSetCount = 0;
 			auto floorVerticesSize = 0;
@@ -5468,7 +5467,6 @@ void android_main(struct android_app *app)
 						{
 							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
 							perImage.boundTexturedDescriptors.clear();
-							texturedDescriptorSetsNewlyCreated = '-';
 						}
 					}
 					else
@@ -5491,9 +5489,9 @@ void android_main(struct android_app *app)
 								for (auto i = 0; i < toCreate; i++)
 								{
 									VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.texturedResources.descriptorSets[i]));
+									perImage.boundTexturedDescriptors[i] = nullptr;
 								}
 								perImage.texturedResources.created = true;
-								texturedDescriptorSetsNewlyCreated = '+';
 							}
 						}
 					}
@@ -5943,9 +5941,9 @@ void android_main(struct android_app *app)
 			perImage.submitted = true;
 			matrixIndex++;
 #if defined(_DEBUG)
-			__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** %i; [%c%i, %i] %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
+			__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** [%i, %i] %i; %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
+								texturedDescriptorSetCount, colormappedDescriptorSetCount,
 								stagingBufferSize,
-								texturedDescriptorSetsNewlyCreated, texturedDescriptorSetCount, colormappedDescriptorSetCount,
 								floorVerticesSize, texturedVerticesSize, coloredVerticesSize, verticesSize,
 								colormappedVerticesSize,
 								colormappedTexCoordsSize,
