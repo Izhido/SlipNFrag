@@ -5469,6 +5469,7 @@ void android_main(struct android_app *app)
 						{
 							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
 							perImage.boundTexturedDescriptors.clear();
+							perImage.texturedResources.created = false;
 						}
 					}
 					else
@@ -5479,7 +5480,10 @@ void android_main(struct android_app *app)
 							auto toCreate = std::max(16, texturedDescriptorSetCount + texturedDescriptorSetCount / 4);
 							if (toCreate != size)
 							{
-								VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
+								if (perImage.texturedResources.created)
+								{
+									VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
+								}
 								perImage.boundTexturedDescriptors.clear();
 								poolSizes[0].descriptorCount = toCreate;
 								descriptorPoolCreateInfo.maxSets = toCreate;
@@ -5568,6 +5572,7 @@ void android_main(struct android_app *app)
 							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
 							perImage.boundTexturesInColormappedDescriptors.clear();
 							perImage.boundColormapsInColormappedDescriptors.clear();
+							perImage.colormappedResources.created = false;
 						}
 					}
 					else
@@ -5578,7 +5583,10 @@ void android_main(struct android_app *app)
 							auto toCreate = std::max(16, colormappedDescriptorSetCount + colormappedDescriptorSetCount / 4);
 							if (toCreate != size)
 							{
-								VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
+								if (perImage.colormappedResources.created)
+								{
+									VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
+								}
 								poolSizes[0].descriptorCount = 2 * colormappedDescriptorSetCount;
 								descriptorPoolCreateInfo.maxSets = colormappedDescriptorSetCount;
 								VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.colormappedResources.descriptorPool));
