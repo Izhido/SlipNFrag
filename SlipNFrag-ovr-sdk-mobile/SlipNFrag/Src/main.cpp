@@ -360,6 +360,8 @@ struct PerImage
 	MultipleSetsPipelineDescriptorResources texturedResources;
 	std::vector<Texture*> boundTexturedDescriptors;
 	MultipleSetsPipelineDescriptorResources colormappedResources;
+    std::vector<Texture*> boundTexturesInColormappedDescriptors;
+    std::vector<Texture*> boundColormapsInColormappedDescriptors;
 	int paletteOffset;
 	int host_colormapOffset;
 	int skyOffset;
@@ -5564,6 +5566,8 @@ void android_main(struct android_app *app)
 						if (perImage.colormappedResources.created)
 						{
 							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
+							perImage.boundTexturesInColormappedDescriptors.clear();
+							perImage.boundColormapsInColormappedDescriptors.clear();
 						}
 					}
 					else
@@ -5578,9 +5582,13 @@ void android_main(struct android_app *app)
 							descriptorSetAllocateInfo.descriptorPool = perImage.colormappedResources.descriptorPool;
 							descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.colormappedLayout;
 							perImage.colormappedResources.descriptorSets.resize(colormappedDescriptorSetCount);
+							perImage.boundTexturesInColormappedDescriptors.resize(colormappedDescriptorSetCount);
+							perImage.boundColormapsInColormappedDescriptors.resize(colormappedDescriptorSetCount);
 							for (auto i = 0; i < colormappedDescriptorSetCount; i++)
 							{
 								VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.colormappedResources.descriptorSets[i]));
+								perImage.boundTexturesInColormappedDescriptors[i] = nullptr;
+								perImage.boundColormapsInColormappedDescriptors[i] = nullptr;
 							}
 							perImage.colormappedResources.created = true;
 						}
@@ -5630,13 +5638,18 @@ void android_main(struct android_app *app)
 								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
 								auto texture = appState.Scene.aliasList[i];
 								auto colormap = appState.Scene.aliasColormapList[i];
-								textureInfo[0].sampler = texture->sampler;
-								textureInfo[0].imageView = texture->view;
-								textureInfo[1].sampler = colormap->sampler;
-								textureInfo[1].imageView = colormap->view;
-								writes[0].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
-								writes[1].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
-								VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+								if (perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] != texture || perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] != colormap)
+								{
+									textureInfo[0].sampler = texture->sampler;
+									textureInfo[0].imageView = texture->view;
+									textureInfo[1].sampler = colormap->sampler;
+									textureInfo[1].imageView = colormap->view;
+									writes[0].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+									writes[1].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+									VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+									perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] = texture;
+									perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] = colormap;
+								}
 								VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &perImage.colormappedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
 								VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, alias.count, 1, alias.first_index16, 0, 0));
 								descriptorSetIndex++;
@@ -5678,13 +5691,18 @@ void android_main(struct android_app *app)
 								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
 								auto texture = appState.Scene.aliasList[i];
 								auto colormap = appState.Scene.aliasColormapList[i];
-								textureInfo[0].sampler = texture->sampler;
-								textureInfo[0].imageView = texture->view;
-								textureInfo[1].sampler = colormap->sampler;
-								textureInfo[1].imageView = colormap->view;
-								writes[0].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
-								writes[1].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
-								VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+								if (perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] != texture || perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] != colormap)
+								{
+									textureInfo[0].sampler = texture->sampler;
+									textureInfo[0].imageView = texture->view;
+									textureInfo[1].sampler = colormap->sampler;
+									textureInfo[1].imageView = colormap->view;
+									writes[0].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+									writes[1].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+									VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+									perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] = texture;
+									perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] = colormap;
+								}
 								VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &perImage.colormappedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
 								VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, alias.count, 1, alias.first_index32, 0, 0));
 								descriptorSetIndex++;
@@ -5753,13 +5771,18 @@ void android_main(struct android_app *app)
 								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
 								auto texture = appState.Scene.viewmodelList[i];
 								auto colormap = appState.Scene.viewmodelColormapList[i];
-								textureInfo[0].sampler = texture->sampler;
-								textureInfo[0].imageView = texture->view;
-								textureInfo[1].sampler = colormap->sampler;
-								textureInfo[1].imageView = colormap->view;
-								writes[0].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
-								writes[1].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
-								VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+								if (perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] != texture || perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] != colormap)
+								{
+									textureInfo[0].sampler = texture->sampler;
+									textureInfo[0].imageView = texture->view;
+									textureInfo[1].sampler = colormap->sampler;
+									textureInfo[1].imageView = colormap->view;
+									writes[0].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+									writes[1].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+									VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+									perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] = texture;
+									perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] = colormap;
+								}
 								VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &perImage.colormappedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
 								VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, viewmodel.count, 1, viewmodel.first_index16, 0, 0));
 								descriptorSetIndex++;
@@ -5800,12 +5823,18 @@ void android_main(struct android_app *app)
 								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
 								auto texture = appState.Scene.viewmodelList[i];
 								auto colormap = appState.Scene.viewmodelColormapList[i];
-								textureInfo[0].sampler = texture->sampler;
-								textureInfo[0].imageView = texture->view;
-								textureInfo[1].sampler = colormap->sampler;
-								textureInfo[1].imageView = colormap->view;
-								writes[0].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
-								writes[1].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+								if (perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] != texture || perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] != colormap)
+								{
+									textureInfo[0].sampler = texture->sampler;
+									textureInfo[0].imageView = texture->view;
+									textureInfo[1].sampler = colormap->sampler;
+									textureInfo[1].imageView = colormap->view;
+									writes[0].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+									writes[1].dstSet = perImage.colormappedResources.descriptorSets[descriptorSetIndex];
+									VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+									perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] = texture;
+									perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] = colormap;
+								}
 								VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
 								VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &perImage.colormappedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
 								VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, viewmodel.count, 1, viewmodel.first_index32, 0, 0));
