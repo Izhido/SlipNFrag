@@ -202,7 +202,16 @@ namespace std
 	{
 		size_t operator()(const TwinKey& key) const
 		{
-			return (hash<void*>()(key.first) + 0x9e3779b9) ^ (hash<void*>()(key.second) + 0xe93b9797);
+			uint64_t h = hash<void*>()(key.first);
+			uint64_t k = hash<void*>()(key.second);
+			uint64_t m = 14313749767032793493;
+			const int r = 47;
+			k *= m;
+			k ^= k >> r;
+			k *= m;
+			h ^= k;
+			h *= m;
+			return h + 11400714819323198485;
 		}
 	};
 }
@@ -308,6 +317,8 @@ struct Scene
 	int hostClearCount;
 	std::unordered_map<TwinKey, int> surfaceFrameCounts;
 	CachedTextures spriteTextures;
+	int spriteTextureCount;
+	int resetSpriteDescriptorSetsCount;
 	CachedBuffers colormappedVertices;
 	CachedBuffers colormappedTexCoords;
 	CachedTextures aliasTextures;
@@ -359,6 +370,10 @@ struct PerImage
 	CachedTextures colormaps;
 	MultipleSetsPipelineDescriptorResources texturedResources;
 	std::vector<Texture*> boundTexturedDescriptors;
+    MultipleSetsPipelineDescriptorResources spriteResources;
+    std::unordered_map<Texture*, VkDescriptorSet> spriteDescriptorSets;
+    int spriteDescriptorSetIndex;
+    int resetSpriteDescriptorSetsCount;
 	MultipleSetsPipelineDescriptorResources colormappedResources;
     std::vector<Texture*> boundTexturesInColormappedDescriptors;
     std::vector<Texture*> boundColormapsInColormappedDescriptors;
@@ -4295,6 +4310,8 @@ void android_main(struct android_app *app)
 						disposeFrontBuffers(appState, appState.Scene.colormappedTexCoords);
 						disposeFrontBuffers(appState, appState.Scene.colormappedVertices);
 						disposeFrontTextures(appState, appState.Scene.spriteTextures);
+						appState.Scene.spriteTextureCount = 0;
+						appState.Scene.resetSpriteDescriptorSetsCount++;
 						appState.Scene.surfaceFrameCounts.clear();
 						appState.Scene.hostClearCount = host_clearcount;
 					}
@@ -4404,6 +4421,7 @@ void android_main(struct android_app *app)
 			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			auto stagingBufferSize = 0;
 			auto texturedDescriptorSetCount = 0;
+			auto spriteDescriptorSetCount = 0;
 			auto colormappedDescriptorSetCount = 0;
 			auto floorVerticesSize = 0;
 			auto texturedVerticesSize = 0;
@@ -4965,6 +4983,7 @@ void android_main(struct android_app *app)
 					appState.Scene.spriteOffsets[i] = stagingBufferSize;
 					stagingBufferSize += sprite.size;
 					moveTextureToFront(texture, appState.Scene.spriteTextures);
+					appState.Scene.spriteTextureCount++;
 					appState.Scene.spritesPerKey.insert({ sprite.data, texture });
 					appState.Scene.spriteList[i] = texture;
 				}
@@ -5462,12 +5481,13 @@ void android_main(struct android_app *app)
 					descriptorPoolCreateInfo.poolSizeCount = 1;
 					writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					writes[0].pImageInfo = textureInfo;
-					texturedDescriptorSetCount = d_lists.last_surface + 1 + d_lists.last_sprite + 1 + d_lists.last_turbulent + 1;
+					texturedDescriptorSetCount = d_lists.last_surface + 1 + d_lists.last_turbulent + 1;
 					if (texturedDescriptorSetCount == 0)
 					{
 						if (perImage.texturedResources.created)
 						{
 							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
+							perImage.texturedResources.descriptorSets.clear();
 							perImage.boundTexturedDescriptors.clear();
 							perImage.texturedResources.created = false;
 						}
@@ -5525,21 +5545,55 @@ void android_main(struct android_app *app)
 					}
 					VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipeline));
 					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+                    if (perImage.resetSpriteDescriptorSetsCount != appState.Scene.resetSpriteDescriptorSetsCount || perImage.spriteResources.descriptorSets.size() < appState.Scene.spriteTextureCount)
+                    {
+                        if (perImage.spriteResources.created)
+                        {
+                            VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.spriteResources.descriptorPool, nullptr));
+							perImage.spriteResources.descriptorSets.clear();
+                            perImage.spriteDescriptorSets.clear();
+                            perImage.spriteDescriptorSetIndex = 0;
+                            perImage.spriteResources.created = false;
+                        }
+                        spriteDescriptorSetCount = appState.Scene.spriteTextureCount;
+                        if (spriteDescriptorSetCount > 0)
+                        {
+                            poolSizes[0].descriptorCount = spriteDescriptorSetCount;
+                            descriptorPoolCreateInfo.maxSets = spriteDescriptorSetCount;
+                            VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.spriteResources.descriptorPool));
+                            descriptorSetAllocateInfo.descriptorPool = perImage.spriteResources.descriptorPool;
+                            descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.texturedLayout;
+                            perImage.spriteResources.descriptorSets.resize(spriteDescriptorSetCount);
+                            for (auto i = 0; i < spriteDescriptorSetCount; i++)
+                            {
+                                VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.spriteResources.descriptorSets[i]));
+                            }
+                            perImage.spriteResources.created = true;
+                        }
+                        perImage.resetSpriteDescriptorSetsCount = appState.Scene.resetSpriteDescriptorSetsCount;
+                    }
 					for (auto i = 0; i <= d_lists.last_sprite; i++)
 					{
 						auto& sprite = d_lists.sprites[i];
+						VkDescriptorSet descriptorSet;
 						auto texture = appState.Scene.spriteList[i];
-						if (perImage.boundTexturedDescriptors[descriptorSetIndex] != texture)
+                        auto entry = perImage.spriteDescriptorSets.find(texture);
+						if (entry == perImage.spriteDescriptorSets.end())
 						{
+						    descriptorSet = perImage.spriteResources.descriptorSets[perImage.spriteDescriptorSetIndex];
+                            perImage.spriteDescriptorSetIndex++;
 							textureInfo[0].sampler = texture->sampler;
 							textureInfo[0].imageView = texture->view;
-							writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
+							writes[0].dstSet = descriptorSet;
 							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-							perImage.boundTexturedDescriptors[descriptorSetIndex] = texture;
+                            perImage.spriteDescriptorSets.insert({ texture, descriptorSet });
 						}
-						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &perImage.texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+						else
+                        {
+						    descriptorSet = entry->second;
+                        }
+						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
 						VC(appState.Device.vkCmdDraw(perImage.commandBuffer, sprite.count, 1, sprite.first_vertex, 0));
-						descriptorSetIndex++;
 					}
 					VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline));
 					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
@@ -5570,6 +5624,7 @@ void android_main(struct android_app *app)
 						if (perImage.colormappedResources.created)
 						{
 							VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
+							perImage.colormappedResources.descriptorSets.clear();
 							perImage.boundTexturesInColormappedDescriptors.clear();
 							perImage.boundColormapsInColormappedDescriptors.clear();
 							perImage.colormappedResources.created = false;
@@ -5984,8 +6039,8 @@ void android_main(struct android_app *app)
 			perImage.submitted = true;
 			matrixIndex++;
 #if defined(_DEBUG)
-			__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** [%i, %i] %i; %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
-								texturedDescriptorSetCount, colormappedDescriptorSetCount,
+			__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** [%i, %i, %i] %i; %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
+								texturedDescriptorSetCount, spriteDescriptorSetCount, colormappedDescriptorSetCount,
 								stagingBufferSize,
 								floorVerticesSize, texturedVerticesSize, coloredVerticesSize, verticesSize,
 								colormappedVerticesSize,
