@@ -363,8 +363,7 @@ struct PerImage
 	CachedBuffers indices16;
 	CachedBuffers indices32;
 	CachedBuffers stagingBuffers;
-	std::list<Texture*> surfaces;
-	std::unordered_map<TwinKey, std::list<Texture*>::iterator> surfaceIndex;
+	std::unordered_map<TwinKey, Texture*> surfaces;
 	CachedTextures turbulent;
 	CachedTextures colormaps;
 	MultipleSetsPipelineDescriptorResources texturedResources;
@@ -4357,13 +4356,13 @@ void android_main(struct android_app *app)
 			resetCachedBuffers(appState, perImage.stagingBuffers);
 			for (auto entry = perImage.surfaces.begin(); entry != perImage.surfaces.end(); )
 			{
-				(*entry)->unusedCount++;
-				if ((*entry)->unusedCount >= MAX_UNUSED_COUNT)
+				auto texture = entry->second;
+				texture->unusedCount++;
+				if (texture->unusedCount >= MAX_UNUSED_COUNT)
 				{
-					perImage.surfaceIndex.erase({ (*entry)->key });
-					deleteTexture(appState, *entry);
-					delete *entry;
 					entry = perImage.surfaces.erase(entry);
+					deleteTexture(appState, texture);
+					delete texture;
 				}
 				else
 				{
@@ -4929,10 +4928,10 @@ void android_main(struct android_app *app)
 			{
 				auto& surface = d_lists.surfaces[i];
 				Texture* texture = nullptr;
-				auto entry = perImage.surfaceIndex.find({ surface.surface, surface.entity });
-				if (entry != perImage.surfaceIndex.end())
+				auto entry = perImage.surfaces.find({ surface.surface, surface.entity });
+				if (entry != perImage.surfaces.end())
 				{
-					texture = *entry->second;
+					texture = entry->second;
 				}
 				if (texture == nullptr)
 				{
@@ -4941,8 +4940,7 @@ void android_main(struct android_app *app)
 					texture->key.first = surface.surface;
 					texture->key.second = surface.entity;
 					texture->frameCount = r_framecount;
-					perImage.surfaces.push_front(texture);
-					perImage.surfaceIndex[texture->key] = perImage.surfaces.begin();
+					perImage.surfaces[texture->key] = texture;
 					appState.Scene.surfaceOffsets[i] = stagingBufferSize;
 					stagingBufferSize += surface.size;
 				}
@@ -6556,11 +6554,11 @@ void android_main(struct android_app *app)
 			}
 			deleteCachedTextures(appState, perImage.colormaps);
 			deleteCachedTextures(appState, perImage.turbulent);
-			perImage.surfaceIndex.clear();
-			for (auto entry : perImage.surfaces)
+			for (auto entry = perImage.surfaces.begin(); entry != perImage.surfaces.end(); entry++)
 			{
-				deleteTexture(appState, entry);
-				delete entry;
+				auto texture = entry->second;
+				deleteTexture(appState, texture);
+				delete texture;
 			}
 			perImage.surfaces.clear();
 			deleteCachedBuffers(appState, perImage.stagingBuffers);
