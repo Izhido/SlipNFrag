@@ -15,6 +15,26 @@ extern float r_shadelight;
 extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 extern vec3_t r_plightvec;
 
+void D_ResetLists ()
+{
+	d_lists.last_surface = -1;
+	d_lists.last_sprite = -1;
+	d_lists.last_turbulent = -1;
+	d_lists.last_alias = -1;
+	d_lists.last_viewmodel = -1;
+	d_lists.last_particle = -1;
+	d_lists.last_sky = -1;
+	d_lists.last_textured_vertex = -1;
+	d_lists.last_textured_attribute = -1;
+	d_lists.last_colormapped_attribute = -1;
+	d_lists.last_colormapped_index16 = -1;
+	d_lists.last_colormapped_index32 = -1;
+	d_lists.last_colored_vertex = -1;
+	d_lists.last_colored_index16 = -1;
+	d_lists.last_colored_index32 = -1;
+	d_lists.clear_color = -1;
+}
+
 void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)

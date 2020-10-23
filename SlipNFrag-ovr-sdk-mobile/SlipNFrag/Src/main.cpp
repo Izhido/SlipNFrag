@@ -4121,6 +4121,7 @@ void android_main(struct android_app *app)
 			}
 			if (appState.Mode == AppScreenMode)
 			{
+				D_ResetLists();
 				d_uselists = false;
 				r_skip_fov_check = false;
 				sb_onconsole = false;
@@ -4159,6 +4160,7 @@ void android_main(struct android_app *app)
 			}
 			else if (appState.Mode == AppNoGameDataMode)
 			{
+				D_ResetLists();
 				d_uselists = false;
 				r_skip_fov_check = false;
 				sb_onconsole = false;
@@ -4276,22 +4278,7 @@ void android_main(struct android_app *app)
 					auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
 					appState.NearViewModel = (distanceSquared < 12 * 12);
 					d_awayfromviewmodel = !appState.NearViewModel;
-					d_lists.last_surface = -1;
-					d_lists.last_sprite = -1;
-					d_lists.last_turbulent = -1;
-					d_lists.last_alias = -1;
-					d_lists.last_viewmodel = -1;
-					d_lists.last_particle = -1;
-					d_lists.last_sky = -1;
-					d_lists.last_textured_vertex = -1;
-					d_lists.last_textured_attribute = -1;
-					d_lists.last_colormapped_attribute = -1;
-					d_lists.last_colormapped_index16 = -1;
-					d_lists.last_colormapped_index32 = -1;
-					d_lists.last_colored_vertex = -1;
-					d_lists.last_colored_index16 = -1;
-					d_lists.last_colored_index32 = -1;
-					d_lists.clear_color = -1;
+					D_ResetLists();
 					auto nodrift = cl.nodrift;
 					cl.nodrift = true;
 					Host_FrameRender();
