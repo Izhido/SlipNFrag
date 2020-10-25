@@ -328,9 +328,9 @@ struct Scene
 	int numBuffers;
 	int hostClearCount;
 	std::unordered_map<TwinKey, int> surfaceFrameCounts;
+	int resetDescriptorSetsCount;
 	CachedTextures spriteTextures;
 	int spriteTextureCount;
-	int resetSpriteDescriptorSetsCount;
 	CachedBuffers colormappedVertices;
 	CachedBuffers colormappedTexCoords;
 	CachedTextures aliasTextures;
@@ -352,10 +352,6 @@ struct Scene
 	std::vector<BufferWithOffset*> viewmodelVerticesList;
 	std::vector<BufferWithOffset*> viewmodelTexCoordsList;
 	std::unordered_map<void*, Texture*> turbulentPerKey;
-	PipelineDescriptorResources sceneMatricesResources;
-	PipelineDescriptorResources sceneMatricesAndPaletteResources;
-	PipelineDescriptorResources skyResources;
-	PipelineDescriptorResources floorResources;
 };
 
 struct PerImage
@@ -369,12 +365,12 @@ struct PerImage
 	std::unordered_map<TwinKey, Texture*> surfaces;
 	CachedTextures turbulent;
 	CachedTextures colormaps;
+	int resetDescriptorSetsCount;
 	MultipleSetsPipelineDescriptorResources texturedResources;
 	std::vector<Texture*> boundTexturedDescriptors;
     MultipleSetsPipelineDescriptorResources spriteResources;
     std::unordered_map<Texture*, VkDescriptorSet> spriteDescriptorSets;
     int spriteDescriptorSetIndex;
-    int resetSpriteDescriptorSetsCount;
 	MultipleSetsPipelineDescriptorResources colormappedResources;
     std::vector<Texture*> boundTexturesInColormappedDescriptors;
     std::vector<Texture*> boundColormapsInColormappedDescriptors;
@@ -388,6 +384,10 @@ struct PerImage
 	int hostClearCount;
 	Texture* sky;
 	Texture* floor;
+	PipelineDescriptorResources sceneMatricesResources;
+	PipelineDescriptorResources sceneMatricesAndPaletteResources;
+	PipelineDescriptorResources skyResources;
+	PipelineDescriptorResources floorResources;
 	VkDeviceSize texturedVertexBase;
 	VkDeviceSize coloredVertexBase;
 	VkDeviceSize texturedAttributeBase;
@@ -4299,7 +4299,7 @@ void android_main(struct android_app *app)
 						disposeFrontBuffers(appState, appState.Scene.colormappedVertices);
 						disposeFrontTextures(appState, appState.Scene.spriteTextures);
 						appState.Scene.spriteTextureCount = 0;
-						appState.Scene.resetSpriteDescriptorSetsCount++;
+						appState.Scene.resetDescriptorSetsCount++;
 						appState.Scene.surfaceFrameCounts.clear();
 						appState.Scene.hostClearCount = host_clearcount;
 					}
@@ -5403,7 +5403,7 @@ void android_main(struct android_app *app)
 				writes[1].dstBinding = 1;
 				writes[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writes[2].descriptorCount = 1;
-				if (!appState.Scene.sceneMatricesResources.created || !appState.Scene.sceneMatricesAndPaletteResources.created)
+				if (!perImage.sceneMatricesResources.created || !perImage.sceneMatricesAndPaletteResources.created)
 				{
 					poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					poolSizes[0].descriptorCount = 1;
@@ -5412,17 +5412,17 @@ void android_main(struct android_app *app)
 					bufferInfo[0].range = appState.Scene.matrices.size;
 					writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					writes[0].pBufferInfo = bufferInfo;
-					if (!appState.Scene.sceneMatricesResources.created)
+					if (!perImage.sceneMatricesResources.created)
 					{
-						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &appState.Scene.sceneMatricesResources.descriptorPool));
-						descriptorSetAllocateInfo.descriptorPool = appState.Scene.sceneMatricesResources.descriptorPool;
+						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.sceneMatricesResources.descriptorPool));
+						descriptorSetAllocateInfo.descriptorPool = perImage.sceneMatricesResources.descriptorPool;
 						descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.sceneMatricesLayout;
-						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &appState.Scene.sceneMatricesResources.descriptorSet));
-						writes[0].dstSet = appState.Scene.sceneMatricesResources.descriptorSet;
+						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.sceneMatricesResources.descriptorSet));
+						writes[0].dstSet = perImage.sceneMatricesResources.descriptorSet;
 						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						appState.Scene.sceneMatricesResources.created = true;
+						perImage.sceneMatricesResources.created = true;
 					}
-					if (!appState.Scene.sceneMatricesAndPaletteResources.created)
+					if (!perImage.sceneMatricesAndPaletteResources.created)
 					{
 						poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 						poolSizes[1].descriptorCount = 1;
@@ -5432,14 +5432,14 @@ void android_main(struct android_app *app)
 						writes[1].dstBinding = 1;
 						writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 						writes[1].pImageInfo = textureInfo;
-						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &appState.Scene.sceneMatricesAndPaletteResources.descriptorPool));
-						descriptorSetAllocateInfo.descriptorPool = appState.Scene.sceneMatricesAndPaletteResources.descriptorPool;
+						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.sceneMatricesAndPaletteResources.descriptorPool));
+						descriptorSetAllocateInfo.descriptorPool = perImage.sceneMatricesAndPaletteResources.descriptorPool;
 						descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.sceneMatricesAndPaletteLayout;
-						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet));
-						writes[0].dstSet = appState.Scene.sceneMatricesAndPaletteResources.descriptorSet;
-						writes[1].dstSet = appState.Scene.sceneMatricesAndPaletteResources.descriptorSet;
+						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.sceneMatricesAndPaletteResources.descriptorSet));
+						writes[0].dstSet = perImage.sceneMatricesAndPaletteResources.descriptorSet;
+						writes[1].dstSet = perImage.sceneMatricesAndPaletteResources.descriptorSet;
 						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
-						appState.Scene.sceneMatricesAndPaletteResources.created = true;
+						perImage.sceneMatricesAndPaletteResources.created = true;
 					}
 				}
 				if (appState.Mode == AppWorldMode)
@@ -5448,7 +5448,7 @@ void android_main(struct android_app *app)
 					VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &perImage.texturedAttributeBase));
 					VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &perImage.vertexTransformBase));
 					VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipeline));
-					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 1, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 					poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					poolSizes[0].descriptorCount = 1;
 					descriptorPoolCreateInfo.poolSizeCount = 1;
@@ -5495,7 +5495,7 @@ void android_main(struct android_app *app)
 						}
 					}
 					auto descriptorSetIndex = 0;
-					float pushConstants[4];
+					float pushConstants[24];
 					for (auto i = 0; i <= d_lists.last_surface; i++)
 					{
 						auto& surface = d_lists.surfaces[i];
@@ -5517,8 +5517,8 @@ void android_main(struct android_app *app)
 						descriptorSetIndex++;
 					}
 					VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipeline));
-					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-                    if (perImage.resetSpriteDescriptorSetsCount != appState.Scene.resetSpriteDescriptorSetsCount || perImage.spriteResources.descriptorSets.size() < appState.Scene.spriteTextureCount)
+					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+                    if (perImage.resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || perImage.spriteResources.descriptorSets.size() < appState.Scene.spriteTextureCount)
                     {
                         if (perImage.spriteResources.created)
                         {
@@ -5543,7 +5543,6 @@ void android_main(struct android_app *app)
                             }
                             perImage.spriteResources.created = true;
                         }
-                        perImage.resetSpriteDescriptorSetsCount = appState.Scene.resetSpriteDescriptorSetsCount;
                     }
 					for (auto i = 0; i <= d_lists.last_sprite; i++)
 					{
@@ -5569,7 +5568,7 @@ void android_main(struct android_app *app)
 						VC(appState.Device.vkCmdDraw(perImage.commandBuffer, sprite.count, 1, sprite.first_vertex, 0));
 					}
 					VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline));
-					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 					pushConstants[3] = (float)cl.time;
 					for (auto i = 0; i <= d_lists.last_turbulent; i++)
 					{
@@ -5643,7 +5642,11 @@ void android_main(struct android_app *app)
 					{
 						VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 3, 1, &attributes->buffer, &perImage.vertexTransformBase));
 						VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipeline));
-						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+						pushConstants[3] = 0;
+						pushConstants[7] = 0;
+						pushConstants[11] = 0;
+						pushConstants[15] = 1;
 						if (indices16 != nullptr)
 						{
 							VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
@@ -5660,24 +5663,19 @@ void android_main(struct android_app *app)
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords->buffer->buffer, &texCoords->offset));
 								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-								float transforms[16];
-								transforms[0] = alias.transform[0][0];
-								transforms[1] = alias.transform[2][0];
-								transforms[2] = -alias.transform[1][0];
-								transforms[3] = 0;
-								transforms[4] = alias.transform[0][2];
-								transforms[5] = alias.transform[2][2];
-								transforms[6] = -alias.transform[1][2];
-								transforms[7] = 0;
-								transforms[8] = -alias.transform[0][1];
-								transforms[9] = -alias.transform[2][1];
-								transforms[10] = alias.transform[1][1];
-								transforms[11] = 0;
-								transforms[12] = alias.transform[0][3];
-								transforms[13] = alias.transform[2][3];
-								transforms[14] = -alias.transform[1][3];
-								transforms[15] = 1;
-								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
+								pushConstants[0] = alias.transform[0][0];
+								pushConstants[1] = alias.transform[2][0];
+								pushConstants[2] = -alias.transform[1][0];
+								pushConstants[4] = alias.transform[0][2];
+								pushConstants[5] = alias.transform[2][2];
+								pushConstants[6] = -alias.transform[1][2];
+								pushConstants[8] = -alias.transform[0][1];
+								pushConstants[9] = -alias.transform[2][1];
+								pushConstants[10] = alias.transform[1][1];
+								pushConstants[12] = alias.transform[0][3];
+								pushConstants[13] = alias.transform[2][3];
+								pushConstants[14] = -alias.transform[1][3];
+								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants));
 								auto texture = appState.Scene.aliasList[i].texture.texture;
 								auto colormap = appState.Scene.aliasList[i].colormap.texture;
 								if (perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] != texture || perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] != colormap)
@@ -5713,24 +5711,19 @@ void android_main(struct android_app *app)
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords->buffer->buffer, &texCoords->offset));
 								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-								float transforms[16];
-								transforms[0] = alias.transform[0][0];
-								transforms[1] = alias.transform[2][0];
-								transforms[2] = -alias.transform[1][0];
-								transforms[3] = 0;
-								transforms[4] = alias.transform[0][2];
-								transforms[5] = alias.transform[2][2];
-								transforms[6] = -alias.transform[1][2];
-								transforms[7] = 0;
-								transforms[8] = -alias.transform[0][1];
-								transforms[9] = -alias.transform[2][1];
-								transforms[10] = alias.transform[1][1];
-								transforms[11] = 0;
-								transforms[12] = alias.transform[0][3];
-								transforms[13] = alias.transform[2][3];
-								transforms[14] = -alias.transform[1][3];
-								transforms[15] = 1;
-								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), &transforms));
+								pushConstants[0] = alias.transform[0][0];
+								pushConstants[1] = alias.transform[2][0];
+								pushConstants[2] = -alias.transform[1][0];
+								pushConstants[4] = alias.transform[0][2];
+								pushConstants[5] = alias.transform[2][2];
+								pushConstants[6] = -alias.transform[1][2];
+								pushConstants[8] = -alias.transform[0][1];
+								pushConstants[9] = -alias.transform[2][1];
+								pushConstants[10] = alias.transform[1][1];
+								pushConstants[12] = alias.transform[0][3];
+								pushConstants[13] = alias.transform[2][3];
+								pushConstants[14] = -alias.transform[1][3];
+								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants));
 								auto texture = appState.Scene.aliasList[i].texture.texture;
 								auto colormap = appState.Scene.aliasList[i].colormap.texture;
 								if (perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] != texture || perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] != colormap)
@@ -5755,29 +5748,32 @@ void android_main(struct android_app *app)
 					{
 						VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 3, 1, &attributes->buffer, &perImage.vertexTransformBase));
 						VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipeline));
-						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 0, 1, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-						float transformsPlusTint[24];
+						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+						pushConstants[3] = 0;
+						pushConstants[7] = 0;
+						pushConstants[11] = 0;
+						pushConstants[15] = 1;
 						if (appState.NearViewModel)
 						{
-							transformsPlusTint[16] = vpn[0] / scale;
-							transformsPlusTint[17] = vpn[2] / scale;
-							transformsPlusTint[18] = -vpn[1] / scale;
-							transformsPlusTint[19] = 0;
-							transformsPlusTint[20] = 1;
-							transformsPlusTint[21] = 1;
-							transformsPlusTint[22] = 1;
-							transformsPlusTint[23] = 1;
+							pushConstants[16] = vpn[0] / scale;
+							pushConstants[17] = vpn[2] / scale;
+							pushConstants[18] = -vpn[1] / scale;
+							pushConstants[19] = 0;
+							pushConstants[20] = 1;
+							pushConstants[21] = 1;
+							pushConstants[22] = 1;
+							pushConstants[23] = 1;
 						}
 						else
 						{
-							transformsPlusTint[16] = 1 / scale;
-							transformsPlusTint[17] = 0;
-							transformsPlusTint[18] = 0;
-							transformsPlusTint[19] = 8;
-							transformsPlusTint[20] = 1;
-							transformsPlusTint[21] = 0;
-							transformsPlusTint[22] = 0;
-							transformsPlusTint[23] = 0.7 + 0.3 * sin(cl.time * M_PI);
+							pushConstants[16] = 1 / scale;
+							pushConstants[17] = 0;
+							pushConstants[18] = 0;
+							pushConstants[19] = 8;
+							pushConstants[20] = 1;
+							pushConstants[21] = 0;
+							pushConstants[22] = 0;
+							pushConstants[23] = 0.7 + 0.3 * sin(cl.time * M_PI);
 						}
 						if (indices16 != nullptr)
 						{
@@ -5795,23 +5791,19 @@ void android_main(struct android_app *app)
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords->buffer->buffer, &texCoords->offset));
 								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-								transformsPlusTint[0] = viewmodel.transform[0][0];
-								transformsPlusTint[1] = viewmodel.transform[2][0];
-								transformsPlusTint[2] = -viewmodel.transform[1][0];
-								transformsPlusTint[3] = 0;
-								transformsPlusTint[4] = viewmodel.transform[0][2];
-								transformsPlusTint[5] = viewmodel.transform[2][2];
-								transformsPlusTint[6] = -viewmodel.transform[1][2];
-								transformsPlusTint[7] = 0;
-								transformsPlusTint[8] = -viewmodel.transform[0][1];
-								transformsPlusTint[9] = -viewmodel.transform[2][1];
-								transformsPlusTint[10] = viewmodel.transform[1][1];
-								transformsPlusTint[11] = 0;
-								transformsPlusTint[12] = viewmodel.transform[0][3];
-								transformsPlusTint[13] = viewmodel.transform[2][3];
-								transformsPlusTint[14] = -viewmodel.transform[1][3];
-								transformsPlusTint[15] = 1;
-								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
+								pushConstants[0] = viewmodel.transform[0][0];
+								pushConstants[1] = viewmodel.transform[2][0];
+								pushConstants[2] = -viewmodel.transform[1][0];
+								pushConstants[4] = viewmodel.transform[0][2];
+								pushConstants[5] = viewmodel.transform[2][2];
+								pushConstants[6] = -viewmodel.transform[1][2];
+								pushConstants[8] = -viewmodel.transform[0][1];
+								pushConstants[9] = -viewmodel.transform[2][1];
+								pushConstants[10] = viewmodel.transform[1][1];
+								pushConstants[12] = viewmodel.transform[0][3];
+								pushConstants[13] = viewmodel.transform[2][3];
+								pushConstants[14] = -viewmodel.transform[1][3];
+								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants));
 								auto texture = appState.Scene.viewmodelList[i].texture.texture;
 								auto colormap = appState.Scene.viewmodelList[i].colormap.texture;
 								if (perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] != texture || perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] != colormap)
@@ -5847,23 +5839,19 @@ void android_main(struct android_app *app)
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords->buffer->buffer, &texCoords->offset));
 								VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
 								VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-								transformsPlusTint[0] = viewmodel.transform[0][0];
-								transformsPlusTint[1] = viewmodel.transform[2][0];
-								transformsPlusTint[2] = -viewmodel.transform[1][0];
-								transformsPlusTint[3] = 0;
-								transformsPlusTint[4] = viewmodel.transform[0][2];
-								transformsPlusTint[5] = viewmodel.transform[2][2];
-								transformsPlusTint[6] = -viewmodel.transform[1][2];
-								transformsPlusTint[7] = 0;
-								transformsPlusTint[8] = -viewmodel.transform[0][1];
-								transformsPlusTint[9] = -viewmodel.transform[2][1];
-								transformsPlusTint[10] = viewmodel.transform[1][1];
-								transformsPlusTint[11] = 0;
-								transformsPlusTint[12] = viewmodel.transform[0][3];
-								transformsPlusTint[13] = viewmodel.transform[2][3];
-								transformsPlusTint[14] = -viewmodel.transform[1][3];
-								transformsPlusTint[15] = 1;
-								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), &transformsPlusTint));
+								pushConstants[0] = viewmodel.transform[0][0];
+								pushConstants[1] = viewmodel.transform[2][0];
+								pushConstants[2] = -viewmodel.transform[1][0];
+								pushConstants[4] = viewmodel.transform[0][2];
+								pushConstants[5] = viewmodel.transform[2][2];
+								pushConstants[6] = -viewmodel.transform[1][2];
+								pushConstants[8] = -viewmodel.transform[0][1];
+								pushConstants[9] = -viewmodel.transform[2][1];
+								pushConstants[10] = viewmodel.transform[1][1];
+								pushConstants[12] = viewmodel.transform[0][3];
+								pushConstants[13] = viewmodel.transform[2][3];
+								pushConstants[14] = -viewmodel.transform[1][3];
+								VC(appState.Device.vkCmdPushConstants(perImage.commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants));
 								auto texture = appState.Scene.viewmodelList[i].texture.texture;
 								auto colormap = appState.Scene.viewmodelList[i].colormap.texture;
 								if (perImage.boundTexturesInColormappedDescriptors[descriptorSetIndex] != texture || perImage.boundColormapsInColormappedDescriptors[descriptorSetIndex] != colormap)
@@ -5885,12 +5873,13 @@ void android_main(struct android_app *app)
 							}
 						}
 					}
+					perImage.resetDescriptorSetsCount = appState.Scene.resetDescriptorSetsCount;
 					if (d_lists.last_particle >= 0)
 					{
 						VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &perImage.coloredVertexBase));
 						VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &perImage.vertexTransformBase));
 						VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipeline));
-						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipelineLayout, 0, 1, &appState.Scene.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 						if (indices16 != nullptr)
 						{
 							VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.coloredIndex16Base, VK_INDEX_TYPE_UINT16));
@@ -5929,24 +5918,24 @@ void android_main(struct android_app *app)
 						VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipeline));
 						poolSizes[0].descriptorCount = 1;
 						descriptorPoolCreateInfo.poolSizeCount = 1;
-						if (!appState.Scene.skyResources.created)
+						if (!perImage.skyResources.created)
 						{
-							VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &appState.Scene.skyResources.descriptorPool));
-							descriptorSetAllocateInfo.descriptorPool = appState.Scene.skyResources.descriptorPool;
+							VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.skyResources.descriptorPool));
+							descriptorSetAllocateInfo.descriptorPool = perImage.skyResources.descriptorPool;
 							descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.texturedLayout;
-							VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &appState.Scene.skyResources.descriptorSet));
+							VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.skyResources.descriptorSet));
 							textureInfo[0].sampler = perImage.sky->sampler;
 							textureInfo[0].imageView = perImage.sky->view;
 							writes[0].dstBinding = 1;
-							writes[0].dstSet = appState.Scene.skyResources.descriptorSet;
+							writes[0].dstSet = perImage.skyResources.descriptorSet;
 							writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 							writes[0].pImageInfo = textureInfo;
 							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-							appState.Scene.skyResources.created = true;
+							perImage.skyResources.created = true;
 						}
 						VkDescriptorSet descriptorSets[2];
-						descriptorSets[0] = appState.Scene.sceneMatricesAndPaletteResources.descriptorSet;
-						descriptorSets[1] = appState.Scene.skyResources.descriptorSet;
+						descriptorSets[0] = perImage.sceneMatricesAndPaletteResources.descriptorSet;
+						descriptorSets[1] = perImage.skyResources.descriptorSet;
 						VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipelineLayout, 0, 2, descriptorSets, 0, nullptr));
 						float rotation[13];
 						auto matrix = ovrMatrix4f_CreateFromQuaternion(&orientation);
@@ -5979,24 +5968,24 @@ void android_main(struct android_app *app)
 					poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 					poolSizes[0].descriptorCount = 1;
 					descriptorPoolCreateInfo.poolSizeCount = 1;
-					if (!appState.Scene.floorResources.created)
+					if (!perImage.floorResources.created)
 					{
-						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &appState.Scene.floorResources.descriptorPool));
-						descriptorSetAllocateInfo.descriptorPool = appState.Scene.floorResources.descriptorPool;
+						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.floorResources.descriptorPool));
+						descriptorSetAllocateInfo.descriptorPool = perImage.floorResources.descriptorPool;
 						descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.texturedLayout;
-						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &appState.Scene.floorResources.descriptorSet));
+						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.floorResources.descriptorSet));
 						textureInfo[0].sampler = perImage.floor->sampler;
 						textureInfo[0].imageView = perImage.floor->view;
 						writes[0].dstBinding = 1;
-						writes[0].dstSet = appState.Scene.floorResources.descriptorSet;
+						writes[0].dstSet = perImage.floorResources.descriptorSet;
 						writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 						writes[0].pImageInfo = textureInfo;
 						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						appState.Scene.floorResources.created = true;
+						perImage.floorResources.created = true;
 					}
 					VkDescriptorSet descriptorSets[2];
-					descriptorSets[0] = appState.Scene.sceneMatricesResources.descriptorSet;
-					descriptorSets[1] = appState.Scene.floorResources.descriptorSet;
+					descriptorSets[0] = perImage.sceneMatricesResources.descriptorSet;
+					descriptorSets[1] = perImage.floorResources.descriptorSet;
 					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr));
 					VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, 0, VK_INDEX_TYPE_UINT16));
 					VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, 6, 1, 0, 0, 0));
@@ -6505,6 +6494,14 @@ void android_main(struct android_app *app)
 		{
 			VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &perImage.commandBuffer));
 			VC(appState.Device.vkDestroyFence(appState.Device.device, perImage.fence, nullptr));
+			if (perImage.floorResources.created)
+			{
+				VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.floorResources.descriptorPool, nullptr));
+			}
+			if (perImage.skyResources.created)
+			{
+				VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.skyResources.descriptorPool, nullptr));
+			}
 			if (perImage.colormappedResources.created)
 			{
 				VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.colormappedResources.descriptorPool, nullptr));
@@ -6512,6 +6509,14 @@ void android_main(struct android_app *app)
 			if (perImage.texturedResources.created)
 			{
 				VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.texturedResources.descriptorPool, nullptr));
+			}
+			if (perImage.sceneMatricesAndPaletteResources.created)
+			{
+				VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.sceneMatricesAndPaletteResources.descriptorPool, nullptr));
+			}
+			if (perImage.sceneMatricesResources.created)
+			{
+				VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, perImage.sceneMatricesResources.descriptorPool, nullptr));
 			}
 			if (perImage.floor != nullptr)
 			{
@@ -6591,22 +6596,6 @@ void android_main(struct android_app *app)
 	vrapi_DestroyTextureSwapChain(appState.Console.SwapChain);
 	VC(appState.Device.vkDestroyRenderPass(appState.Device.device, appState.RenderPass, nullptr));
 	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
-	if (appState.Scene.floorResources.created)
-	{
-		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, appState.Scene.floorResources.descriptorPool, nullptr));
-	}
-	if (appState.Scene.skyResources.created)
-	{
-		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, appState.Scene.skyResources.descriptorPool, nullptr));
-	}
-	if (appState.Scene.sceneMatricesAndPaletteResources.created)
-	{
-		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, appState.Scene.sceneMatricesAndPaletteResources.descriptorPool, nullptr));
-	}
-	if (appState.Scene.sceneMatricesResources.created)
-	{
-		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, appState.Scene.sceneMatricesResources.descriptorPool, nullptr));
-	}
 	deleteCachedTextures(appState, appState.Scene.viewmodelTextures);
 	deleteCachedTextures(appState, appState.Scene.aliasTextures);
 	deleteCachedBuffers(appState, appState.Scene.colormappedTexCoords);
