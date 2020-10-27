@@ -902,7 +902,7 @@ void deleteOldBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 	}
 }
 
-void disposeFrontBuffers(AppState& appState, CachedBuffers& cachedBuffers)
+void disposeFrontBuffers(CachedBuffers& cachedBuffers)
 {
 	for (Buffer* b = cachedBuffers.buffers, *next = nullptr; b != nullptr; b = next)
 	{
@@ -916,7 +916,7 @@ void disposeFrontBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 void resetCachedBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 {
 	deleteOldBuffers(appState, cachedBuffers);
-	disposeFrontBuffers(appState, cachedBuffers);
+	disposeFrontBuffers(cachedBuffers);
 }
 
 void deleteTexture(AppState& appState, Texture* texture)
@@ -949,7 +949,7 @@ void deleteOldTextures(AppState& appState, CachedTextures& cachedTextures)
 	}
 }
 
-void disposeFrontTextures(AppState& appState, CachedTextures& cachedTextures)
+void disposeFrontTextures(CachedTextures& cachedTextures)
 {
 	for (Texture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
 	{
@@ -960,10 +960,33 @@ void disposeFrontTextures(AppState& appState, CachedTextures& cachedTextures)
 	cachedTextures.textures = nullptr;
 }
 
+void resetSceneResources(Scene& scene)
+{
+	if (scene.hostClearCount != host_clearcount)
+	{
+		scene.viewmodelsPerKey.clear();
+		scene.aliasPerKey.clear();
+		scene.colormappedTexCoordsPerKey.clear();
+		scene.colormappedVerticesPerKey.clear();
+		scene.spritesPerKey.clear();
+		disposeFrontTextures(scene.viewmodelTextures);
+		disposeFrontTextures(scene.aliasTextures);
+		disposeFrontBuffers(scene.colormappedTexCoords);
+		disposeFrontBuffers(scene.colormappedVertices);
+		disposeFrontTextures(scene.spriteTextures);
+		scene.viewmodelTextureCount = 0;
+		scene.aliasTextureCount = 0;
+		scene.spriteTextureCount = 0;
+		scene.resetDescriptorSetsCount++;
+		scene.surfaceFrameCounts.clear();
+		scene.hostClearCount = host_clearcount;
+	}
+}
+
 void resetCachedTextures(AppState& appState, CachedTextures& cachedTextures)
 {
 	deleteOldTextures(appState, cachedTextures);
-	disposeFrontTextures(appState, cachedTextures);
+	disposeFrontTextures(cachedTextures);
 }
 
 void fillTexture(AppState& appState, Texture* texture, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
@@ -4185,6 +4208,9 @@ void android_main(struct android_app *app)
 				con_height = appState.ConsoleHeight;
 				Cvar_SetValue("fov", appState.DefaultFOV);
 				VID_Resize(320.0 / 240.0);
+				r_modelorg_delta[0] = 0;
+				r_modelorg_delta[1] = 0;
+				r_modelorg_delta[2] = 0;
 			}
 			else if (appState.Mode == AppWorldMode)
 			{
@@ -4272,27 +4298,60 @@ void android_main(struct android_app *app)
 		appState.Scale = -pose.Position.y / playerHeight;
 		if (host_initialized)
 		{
-			if (appState.Mode == AppWorldMode)
+			if (appState.Mode == AppScreenMode)
+			{
+				if (appState.PreviousTime < 0)
+				{
+					appState.PreviousTime = getTime();
+				}
+				else if (appState.CurrentTime < 0)
+				{
+					appState.CurrentTime = getTime();
+				}
+				else
+				{
+					appState.PreviousTime = appState.CurrentTime;
+					appState.CurrentTime = getTime();
+					frame_lapse = (float) (appState.CurrentTime - appState.PreviousTime);
+				}
+				if (r_cache_thrash)
+				{
+					VID_ReallocSurfCache();
+				}
+				auto updated = Host_FrameUpdate(frame_lapse);
+				if (sys_quitcalled)
+				{
+					ANativeActivity_finish(app->activity);
+				}
+				if (sys_errormessage.length() > 0)
+				{
+					exit(0);
+				}
+				if (updated)
+				{
+					Host_FrameRender();
+					resetSceneResources(appState.Scene);
+				}
+				Host_FrameFinish(updated);
+			}
+			else if (appState.Mode == AppWorldMode)
 			{
 				cl.viewangles[YAW] = appState.Yaw * 180 / M_PI + 90;
 				cl.viewangles[PITCH] = -appState.Pitch * 180 / M_PI;
 				cl.viewangles[ROLL] = -appState.Roll * 180 / M_PI;
-			}
-			if (appState.PreviousTime < 0)
-			{
-				appState.PreviousTime = getTime();
-			}
-			else if (appState.CurrentTime < 0)
-			{
-				appState.CurrentTime = getTime();
-			}
-			else
-			{
-				appState.PreviousTime = appState.CurrentTime;
-				appState.CurrentTime = getTime();
-				frame_lapse = (float) (appState.CurrentTime - appState.PreviousTime);
-				if (appState.Mode == AppWorldMode)
+				if (appState.PreviousTime < 0)
 				{
+					appState.PreviousTime = getTime();
+				}
+				else if (appState.CurrentTime < 0)
+				{
+					appState.CurrentTime = getTime();
+				}
+				else
+				{
+					appState.PreviousTime = appState.CurrentTime;
+					appState.CurrentTime = getTime();
+					frame_lapse = (float) (appState.CurrentTime - appState.PreviousTime);
 					appState.TimeInWorldMode += frame_lapse;
 					if (!appState.ControlsMessageDisplayed && appState.TimeInWorldMode > 4)
 					{
@@ -4300,23 +4359,20 @@ void android_main(struct android_app *app)
 						appState.ControlsMessageDisplayed = true;
 					}
 				}
-			}
-			if (r_cache_thrash)
-			{
-				VID_ReallocSurfCache();
-			}
-			auto updated = Host_FrameUpdate(frame_lapse);
-			if (sys_quitcalled)
-			{
-				ANativeActivity_finish(app->activity);
-			}
-			if (sys_errormessage.length() > 0)
-			{
-				exit(0);
-			}
-			if (updated)
-			{
-				if (d_uselists)
+				if (r_cache_thrash)
+				{
+					VID_ReallocSurfCache();
+				}
+				auto updated = Host_FrameUpdate(frame_lapse);
+				if (sys_quitcalled)
+				{
+					ANativeActivity_finish(app->activity);
+				}
+				if (sys_errormessage.length() > 0)
+				{
+					exit(0);
+				}
+				if (updated)
 				{
 					r_modelorg_delta[0] = tracking.HeadPose.Pose.Position.x / appState.Scale;
 					r_modelorg_delta[1] = -tracking.HeadPose.Pose.Position.z / appState.Scale;
@@ -4329,25 +4385,7 @@ void android_main(struct android_app *app)
 					cl.nodrift = true;
 					Host_FrameRender();
 					cl.nodrift = nodrift;
-					if (appState.Scene.hostClearCount != host_clearcount)
-					{
-						appState.Scene.viewmodelsPerKey.clear();
-						appState.Scene.aliasPerKey.clear();
-						appState.Scene.colormappedTexCoordsPerKey.clear();
-						appState.Scene.colormappedVerticesPerKey.clear();
-						appState.Scene.spritesPerKey.clear();
-						disposeFrontTextures(appState, appState.Scene.viewmodelTextures);
-						disposeFrontTextures(appState, appState.Scene.aliasTextures);
-						disposeFrontBuffers(appState, appState.Scene.colormappedTexCoords);
-						disposeFrontBuffers(appState, appState.Scene.colormappedVertices);
-						disposeFrontTextures(appState, appState.Scene.spriteTextures);
-						appState.Scene.viewmodelTextureCount = 0;
-						appState.Scene.aliasTextureCount = 0;
-						appState.Scene.spriteTextureCount = 0;
-						appState.Scene.resetDescriptorSetsCount++;
-						appState.Scene.surfaceFrameCounts.clear();
-						appState.Scene.hostClearCount = host_clearcount;
-					}
+					resetSceneResources(appState.Scene);
 					for (auto i = 0; i <= d_lists.last_surface; i++)
 					{
 						auto& surface = d_lists.surfaces[i];
@@ -4359,15 +4397,8 @@ void android_main(struct android_app *app)
 						}
 					}
 				}
-				else
-				{
-					r_modelorg_delta[0] = 0;
-					r_modelorg_delta[1] = 0;
-					r_modelorg_delta[2] = 0;
-					Host_FrameRender();
-				}
+				Host_FrameFinish(updated);
 			}
-			Host_FrameFinish(updated);
 		}
 		auto matrixIndex = 0;
 		for (auto& view : appState.Views)
@@ -6121,17 +6152,19 @@ void android_main(struct android_app *app)
 					VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &noOffset));
 					VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &noOffset));
 					VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipeline));
-					poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					poolSizes[0].descriptorCount = 1;
-					descriptorPoolCreateInfo.poolSizeCount = 1;
 					if (!perImage.floorResources.created)
 					{
+						poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						poolSizes[0].descriptorCount = 1;
+						descriptorPoolCreateInfo.poolSizeCount = 1;
 						VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.floorResources.descriptorPool));
 						descriptorSetAllocateInfo.descriptorPool = perImage.floorResources.descriptorPool;
 						descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.floorResources.descriptorSet));
 						textureInfo[0].sampler = perImage.floor->sampler;
 						textureInfo[0].imageView = perImage.floor->view;
+						writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						writes[0].pImageInfo = textureInfo;
 						writes[0].dstBinding = 1;
 						writes[0].dstSet = perImage.floorResources.descriptorSet;
 						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
