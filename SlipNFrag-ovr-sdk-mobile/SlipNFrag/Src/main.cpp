@@ -546,6 +546,7 @@ struct AppState
 	float Yaw;
 	float Pitch;
 	float Roll;
+	float Scale;
 	int ScreenWidth;
 	int ScreenHeight;
 	int ConsoleWidth;
@@ -4268,8 +4269,7 @@ void android_main(struct android_app *app)
 				}
 			}
 		}
-		auto scale = -pose.Position.y / playerHeight;
-		bool host_updated = false;
+		appState.Scale = -pose.Position.y / playerHeight;
 		if (host_initialized)
 		{
 			if (appState.Mode == AppWorldMode)
@@ -4305,7 +4305,7 @@ void android_main(struct android_app *app)
 			{
 				VID_ReallocSurfCache();
 			}
-			host_updated = Host_FrameUpdate(frame_lapse);
+			auto updated = Host_FrameUpdate(frame_lapse);
 			if (sys_quitcalled)
 			{
 				ANativeActivity_finish(app->activity);
@@ -4314,13 +4314,13 @@ void android_main(struct android_app *app)
 			{
 				exit(0);
 			}
-			if (host_updated)
+			if (updated)
 			{
 				if (d_uselists)
 				{
-					r_modelorg_delta[0] = tracking.HeadPose.Pose.Position.x / scale;
-					r_modelorg_delta[1] = -tracking.HeadPose.Pose.Position.z / scale;
-					r_modelorg_delta[2] = tracking.HeadPose.Pose.Position.y / scale;
+					r_modelorg_delta[0] = tracking.HeadPose.Pose.Position.x / appState.Scale;
+					r_modelorg_delta[1] = -tracking.HeadPose.Pose.Position.z / appState.Scale;
+					r_modelorg_delta[2] = tracking.HeadPose.Pose.Position.y / appState.Scale;
 					auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
 					appState.NearViewModel = (distanceSquared < 12 * 12);
 					d_awayfromviewmodel = !appState.NearViewModel;
@@ -4367,7 +4367,7 @@ void android_main(struct android_app *app)
 					Host_FrameRender();
 				}
 			}
-			Host_FrameFinish(host_updated);
+			Host_FrameFinish(updated);
 		}
 		auto matrixIndex = 0;
 		for (auto& view : appState.Views)
@@ -4818,7 +4818,7 @@ void android_main(struct android_app *app)
 				memcpy((unsigned char*)attributes->mapped + perImage.colormappedAttributeBase, d_lists.colormapped_attributes.data(), colormappedLightsSize);
 				perImage.vertexTransformBase = perImage.colormappedAttributeBase + colormappedLightsSize;
 				auto mapped = (float*)attributes->mapped + perImage.vertexTransformBase / sizeof(float);
-				(*mapped) = scale;
+				(*mapped) = appState.Scale;
 				mapped++;
 				(*mapped) = 0;
 				mapped++;
@@ -4828,7 +4828,7 @@ void android_main(struct android_app *app)
 				mapped++;
 				(*mapped) = 0;
 				mapped++;
-				(*mapped) = scale;
+				(*mapped) = appState.Scale;
 				mapped++;
 				(*mapped) = 0;
 				mapped++;
@@ -4838,15 +4838,15 @@ void android_main(struct android_app *app)
 				mapped++;
 				(*mapped) = 0;
 				mapped++;
-				(*mapped) = scale;
+				(*mapped) = appState.Scale;
 				mapped++;
 				(*mapped) = 0;
 				mapped++;
-				(*mapped) = -r_refdef.vieworg[0] * scale;
+				(*mapped) = -r_refdef.vieworg[0] * appState.Scale;
 				mapped++;
-				(*mapped) = -r_refdef.vieworg[2] * scale;
+				(*mapped) = -r_refdef.vieworg[2] * appState.Scale;
 				mapped++;
-				(*mapped) = r_refdef.vieworg[1] * scale;
+				(*mapped) = r_refdef.vieworg[1] * appState.Scale;
 				mapped++;
 				(*mapped) = 1;
 				VC(appState.Device.vkUnmapMemory(appState.Device.device, attributes->memory));
@@ -5874,9 +5874,9 @@ void android_main(struct android_app *app)
 						pushConstants[15] = 1;
 						if (appState.NearViewModel)
 						{
-							pushConstants[16] = vpn[0] / scale;
-							pushConstants[17] = vpn[2] / scale;
-							pushConstants[18] = -vpn[1] / scale;
+							pushConstants[16] = vpn[0] / appState.Scale;
+							pushConstants[17] = vpn[2] / appState.Scale;
+							pushConstants[18] = -vpn[1] / appState.Scale;
 							pushConstants[19] = 0;
 							pushConstants[20] = 1;
 							pushConstants[21] = 1;
@@ -5885,7 +5885,7 @@ void android_main(struct android_app *app)
 						}
 						else
 						{
-							pushConstants[16] = 1 / scale;
+							pushConstants[16] = 1 / appState.Scale;
 							pushConstants[17] = 0;
 							pushConstants[18] = 0;
 							pushConstants[19] = 8;
