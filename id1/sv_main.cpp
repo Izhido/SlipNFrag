@@ -250,12 +250,14 @@ This will be sent on the initial connection and upon each server load.
 */
 void SV_SendServerinfo (client_t *client)
 {
+	client->message.maxsize = 0;
 	MSG_WriteByte (&client->message, svc_print);
     char version_message[64];
 	sprintf (version_message, "%c\nVERSION %4.2f SERVER (%i CRC)", 2, VERSION, pr_crc);
 	MSG_WriteString (&client->message,version_message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
+	auto protocol_offset = client->message.data.size();
     MSG_WriteLong (&client->message, sv_protocol_version);
 	MSG_WriteByte (&client->message, svs.maxclients);
 
@@ -287,6 +289,17 @@ void SV_SendServerinfo (client_t *client)
 
 	MSG_WriteByte (&client->message, svc_signonnum);
 	MSG_WriteByte (&client->message, 1);
+
+	if (sv_protocol_version == PROTOCOL_VERSION && client->message.data.size() < MAX_MSGLEN - 64)
+	{
+		host_client->message.maxsize = MAX_MSGLEN;
+	}
+
+	if (sv_protocol_version == PROTOCOL_VERSION && host_client->message.maxsize == 0)
+	{
+		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
+		MSG_WriteLong(host_client->message.data.data() + protocol_offset, sv_protocol_version);
+	}
 
 	client->sendsignon = true;
 	client->spawned = false;		// need prespawn, spawn, etc
@@ -1360,7 +1373,6 @@ void SV_SpawnServer (char *server)
 	for (i=0,host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
 		if (host_client->active)
         {
-            host_client->message.maxsize = (sv_protocol_version == EXPANDED_PROTOCOL_VERSION ? 0 : MAX_MSGLEN);
 			SV_SendServerinfo (host_client);
         }
 	
@@ -1369,7 +1381,7 @@ void SV_SpawnServer (char *server)
 
 void SV_SetProtocolVersion()
 {
-    if (sv.models.size() >= MAX_MODELS || sv.sound_precache.size() >= MAX_SOUNDS || sv.num_edicts >= MAX_EDICTS || sv_static_entity_count >= MAX_STATIC_ENTITIES || sv_bump_protocol_version)
+    if (sv_bump_protocol_version || sv.models.size() >= MAX_MODELS || sv.sound_precache.size() >= MAX_SOUNDS || sv.num_edicts >= MAX_EDICTS || sv_static_entity_count >= MAX_STATIC_ENTITIES)
         sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
     else
         sv_protocol_version = PROTOCOL_VERSION;

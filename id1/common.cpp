@@ -546,15 +546,20 @@ void MSG_WriteShort (sizebuf_t *sb, int c)
 	buf[1] = c>>8;
 }
 
+void MSG_WriteLong (byte* buf, int c)
+{
+	buf[0] = c&0xff;
+	buf[1] = (c>>8)&0xff;
+	buf[2] = (c>>16)&0xff;
+	buf[3] = c>>24;
+}
+
 void MSG_WriteLong (sizebuf_t *sb, int c)
 {
 	byte    *buf;
 	
 	buf = (byte*)SZ_GetSpace (sb, 4);
-	buf[0] = c&0xff;
-	buf[1] = (c>>8)&0xff;
-	buf[2] = (c>>16)&0xff;
-	buf[3] = c>>24;
+	MSG_WriteLong(buf, c);
 }
 
 void MSG_WriteFloat (sizebuf_t *sb, float f)
