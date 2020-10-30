@@ -181,8 +181,8 @@ struct Buffer
 
 struct BufferWithOffset
 {
-	Buffer* buffer;
 	VkDeviceSize offset;
+	Buffer* buffer;
 };
 
 struct TwinKey
@@ -4195,7 +4195,6 @@ void android_main(struct android_app *app)
 				d_uselists = false;
 				r_skip_fov_check = false;
 				sb_onconsole = false;
-				Cvar_SetValue("joystick", 1);
 				Cvar_SetValue("joyadvanced", 1);
 				Cvar_SetValue("joyadvaxisx", AxisSide);
 				Cvar_SetValue("joyadvaxisy", AxisForward);
@@ -4217,7 +4216,6 @@ void android_main(struct android_app *app)
 				d_uselists = true;
 				r_skip_fov_check = true;
 				sb_onconsole = true;
-				Cvar_SetValue("joystick", 1);
 				Cvar_SetValue("joyadvanced", 1);
 				Cvar_SetValue("joyadvaxisx", AxisSide);
 				Cvar_SetValue("joyadvaxisy", AxisForward);
@@ -4575,16 +4573,15 @@ void android_main(struct android_app *app)
 				}
 				appState.Scene.newVertices.clear();
 				appState.Scene.newTexCoords.clear();
-				auto verticesOffset = 0;
-				auto texCoordsOffset = 0;
+				VkDeviceSize verticesOffset = 0;
+				VkDeviceSize texCoordsOffset = 0;
 				for (auto i = 0; i <= d_lists.last_alias; i++)
 				{
 					auto& alias = d_lists.alias[i];
 					auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(alias.vertices);
 					if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
 					{
-						auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ alias.vertices, { } });
-						newEntry.first->second.offset = verticesOffset;
+						auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ alias.vertices, { verticesOffset } });
 						appState.Scene.newVertices.push_back(i);
 						appState.Scene.aliasVerticesList[i] = &newEntry.first->second;
 						verticesOffset += alias.vertex_count * 2 * 3 * sizeof(float);
@@ -4596,8 +4593,7 @@ void android_main(struct android_app *app)
 					auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(alias.texture_coordinates);
 					if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
 					{
-						auto newEntry = appState.Scene.colormappedTexCoordsPerKey.insert({ alias.texture_coordinates, { } });
-						newEntry.first->second.offset = texCoordsOffset;
+						auto newEntry = appState.Scene.colormappedTexCoordsPerKey.insert({ alias.texture_coordinates, { texCoordsOffset } });
 						appState.Scene.newTexCoords.push_back(i);
 						appState.Scene.aliasTexCoordsList[i] = &newEntry.first->second;
 						texCoordsOffset += alias.vertex_count * 2 * 2 * sizeof(float);
@@ -4696,8 +4692,7 @@ void android_main(struct android_app *app)
 					auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(viewmodel.vertices);
 					if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
 					{
-						auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ viewmodel.vertices, { } });
-						newEntry.first->second.offset = verticesOffset;
+						auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ viewmodel.vertices, { verticesOffset } });
 						appState.Scene.newVertices.push_back(i);
 						appState.Scene.viewmodelVerticesList[i] = &newEntry.first->second;
 						verticesOffset += viewmodel.vertex_count * 2 * 3 * sizeof(float);
@@ -4709,8 +4704,7 @@ void android_main(struct android_app *app)
 					auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(viewmodel.texture_coordinates);
 					if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
 					{
-						auto newEntry = appState.Scene.colormappedTexCoordsPerKey.insert({ viewmodel.texture_coordinates, { } });
-						newEntry.first->second.offset = texCoordsOffset;
+						auto newEntry = appState.Scene.colormappedTexCoordsPerKey.insert({ viewmodel.texture_coordinates, { texCoordsOffset } });
 						appState.Scene.newTexCoords.push_back(i);
 						appState.Scene.viewmodelTexCoordsList[i] = &newEntry.first->second;
 						texCoordsOffset += viewmodel.vertex_count * 2 * 2 * sizeof(float);

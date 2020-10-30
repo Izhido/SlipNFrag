@@ -281,7 +281,7 @@ void IN_JoyMove(usercmd_t* cmd)
     }
     
     // verify joystick is available and that the user wants to use it
-    if (!joy_avail || !in_joystick.value)
+    if (!joy_avail)
     {
         return;
     }
