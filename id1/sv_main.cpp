@@ -515,11 +515,11 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 			if (!ent->v.modelindex || !pr_strings[ent->v.model])
 				continue;
 
-			for (i=0 ; i < ent->num_leafs ; i++)
+			for (i=0 ; i < ent->leafnums.size() ; i++)
 				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
 					break;
 				
-			if (i == ent->num_leafs)
+			if (i == ent->leafnums.size())
 				continue;		// not visible
 		}
 

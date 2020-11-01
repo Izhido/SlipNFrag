@@ -213,6 +213,7 @@ void R_RecursiveClipBPoly (bedge_t *pedges, mnode_t *pnode, msurface_t *psurf)
             if (numbverts >= bverts.size())
             {
                 increasebverts = true;
+                Con_Printf ("Out of verts for bmodel\n");
                 return;
             }
 

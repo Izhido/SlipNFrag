@@ -207,7 +207,7 @@ void FindNextChunk(const char *name)
 	{
 		data_p=last_chunk;
 
-		if (data_p >= iff_end)
+		if (data_p + 8 >= iff_end)
 		{	// didn't find the chunk
 			data_p = NULL;
 			return;
