@@ -1,2 +1,2 @@
-MainPackage=C:\Projects\SlipNFrag\x64\Release\SlipNFrag-Windows\SlipNFrag-Windows_1.0.3.0_x64.appx
-SymbolPackage=C:\Projects\SlipNFrag\SlipNFrag-Windows\x64\Release\Symbols\SlipNFrag-Windows_1.0.3.0_x64.appxsym
+MainPackage=C:\Projects\SlipNFrag\x64\Release\SlipNFrag-Windows\SlipNFrag-Windows_1.0.4.0_x64.appx
+SymbolPackage=C:\Projects\SlipNFrag\SlipNFrag-Windows\x64\Release\Symbols\SlipNFrag-Windows_1.0.4.0_x64.appxsym
