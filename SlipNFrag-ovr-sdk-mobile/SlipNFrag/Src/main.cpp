@@ -337,6 +337,7 @@ struct Scene
 	int numBuffers;
 	int hostClearCount;
 	int resetDescriptorSetsCount;
+	Texture* oldSurfaces;
 	std::unordered_map<TwinKey, Texture*> surfaces;
 	CachedTextures spriteTextures;
 	int spriteTextureCount;
@@ -930,21 +931,24 @@ void deleteTexture(AppState& appState, Texture* texture)
 	}
 }
 
-void deleteOldTextures(AppState& appState, CachedTextures& cachedTextures)
+void deleteOldTextures(AppState& appState, Texture** oldTextures)
 {
-	for (Texture** t = &cachedTextures.oldTextures; *t != nullptr; )
+	if (oldTextures != nullptr)
 	{
-		(*t)->unusedCount++;
-		if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
+		for (Texture** t = oldTextures; *t != nullptr; )
 		{
-			Texture* next = (*t)->next;
-			deleteTexture(appState, *t);
-			delete *t;
-			*t = next;
-		}
-		else
-		{
-			t = &(*t)->next;
+			(*t)->unusedCount++;
+			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
+			{
+				Texture* next = (*t)->next;
+				deleteTexture(appState, *t);
+				delete *t;
+				*t = next;
+			}
+			else
+			{
+				t = &(*t)->next;
+			}
 		}
 	}
 }
@@ -974,6 +978,17 @@ void resetSceneResources(Scene& scene)
 		disposeFrontBuffers(scene.colormappedTexCoords);
 		disposeFrontBuffers(scene.colormappedVertices);
 		disposeFrontTextures(scene.spriteTextures);
+		for (auto entry = scene.surfaces.begin(); entry != scene.surfaces.end(); entry++)
+		{
+			for (Texture** t = &entry->second; *t != nullptr; )
+			{
+				Texture* next = (*t)->next;
+				(*t)->next = scene.oldSurfaces;
+				scene.oldSurfaces = *t;
+				*t = next;
+			}
+		}
+		scene.surfaces.clear();
 		scene.viewmodelTextureCount = 0;
 		scene.aliasTextureCount = 0;
 		scene.spriteTextureCount = 0;
@@ -984,7 +999,7 @@ void resetSceneResources(Scene& scene)
 
 void resetCachedTextures(AppState& appState, CachedTextures& cachedTextures)
 {
-	deleteOldTextures(appState, cachedTextures);
+	deleteOldTextures(appState, &cachedTextures.oldTextures);
 	disposeFrontTextures(cachedTextures);
 }
 
@@ -4286,11 +4301,12 @@ void android_main(struct android_app *app)
 				}
 			}
 		}
-		deleteOldTextures(appState, appState.Scene.spriteTextures);
-		deleteOldBuffers(appState, appState.Scene.colormappedVertices);
+		deleteOldTextures(appState, &appState.Scene.viewmodelTextures.oldTextures);
+		deleteOldTextures(appState, &appState.Scene.aliasTextures.oldTextures);
 		deleteOldBuffers(appState, appState.Scene.colormappedTexCoords);
-		deleteOldTextures(appState, appState.Scene.aliasTextures);
-		deleteOldTextures(appState, appState.Scene.viewmodelTextures);
+		deleteOldBuffers(appState, appState.Scene.colormappedVertices);
+		deleteOldTextures(appState, &appState.Scene.spriteTextures.oldTextures);
+		deleteOldTextures(appState, &appState.Scene.oldSurfaces);
 		for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 		{
 			appState.ViewMatrices[i] = ovrMatrix4f_Transpose(&tracking.Eye[i].ViewMatrix);
