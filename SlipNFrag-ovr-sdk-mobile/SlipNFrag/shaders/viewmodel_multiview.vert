@@ -19,7 +19,7 @@ layout(push_constant) uniform Transforms
 	layout(offset = 76) float offset;
 };
 
-layout(location = 0) in vec3 vertexPosition;
+layout(location = 0) in vec4 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
 layout(location = 2) in float vertexLight;
 layout(location = 3) in mat4 vertexTransform;
@@ -34,7 +34,7 @@ out gl_PerVertex
 
 void main(void)
 {
-	vec4 position = vertexTransform * (aliasTransform * vec4(vertexPosition, 1));
+	vec4 position = vertexTransform * (aliasTransform * vertexPosition);
 	gl_Position = ProjectionMatrix[gl_ViewID_OVR] * (ViewMatrix[gl_ViewID_OVR] * position);
 	fragmentTexCoords = vertexTexCoords;
 	fragmentLight = vertexLight;

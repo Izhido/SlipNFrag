@@ -63,6 +63,7 @@ void R_InitSky (texture_t *mt)
         memset(newsky, 0, 128*256);
         memset(bottommask, 0, 128*131);
         memset(bottomsky, 0, 128*131);
+		r_skysource = newsky;
         Con_Printf ("R_InitSky: %ix%i instead of 256x128\n", mt->width, mt->height);
         return;
     }

@@ -3773,8 +3773,8 @@ void android_main(struct android_app *app)
 			appState.Scene.texturedAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 			appState.Scene.colormappedAttributes.vertexAttributes.resize(7);
 			appState.Scene.colormappedAttributes.vertexBindings.resize(4);
-			appState.Scene.colormappedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-			appState.Scene.colormappedAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+			appState.Scene.colormappedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+			appState.Scene.colormappedAttributes.vertexBindings[0].stride = 4 * sizeof(float);
 			appState.Scene.colormappedAttributes.vertexBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 			appState.Scene.colormappedAttributes.vertexAttributes[1].location = 1;
 			appState.Scene.colormappedAttributes.vertexAttributes[1].binding = 1;
@@ -4625,7 +4625,7 @@ void android_main(struct android_app *app)
 						auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ alias.vertices, lastIndex });
 						appState.Scene.newVertices.push_back(i);
 						appState.Scene.aliasVerticesList[i] = lastIndex;
-						verticesOffset += alias.vertex_count * 2 * 3 * sizeof(float);
+						verticesOffset += alias.vertex_count * 2 * 4 * sizeof(float);
 					}
 					else
 					{
@@ -4669,11 +4669,15 @@ void android_main(struct android_app *app)
 							mapped++;
 							(*mapped) = -y;
 							mapped++;
+							(*mapped) = 1;
+							mapped++;
 							(*mapped) = x;
 							mapped++;
 							(*mapped) = z;
 							mapped++;
 							(*mapped) = -y;
+							mapped++;
+							(*mapped) = 1;
 							mapped++;
 							vertexFromModel++;
 						}
@@ -4747,7 +4751,7 @@ void android_main(struct android_app *app)
 						auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ viewmodel.vertices, lastIndex });
 						appState.Scene.newVertices.push_back(i);
 						appState.Scene.viewmodelVerticesList[i] = lastIndex;
-						verticesOffset += viewmodel.vertex_count * 2 * 3 * sizeof(float);
+						verticesOffset += viewmodel.vertex_count * 2 * 4 * sizeof(float);
 					}
 					else
 					{
@@ -4791,11 +4795,15 @@ void android_main(struct android_app *app)
 							mapped++;
 							(*mapped) = -y;
 							mapped++;
+							(*mapped) = 1;
+							mapped++;
 							(*mapped) = x;
 							mapped++;
 							(*mapped) = z;
 							mapped++;
 							(*mapped) = -y;
+							mapped++;
+							(*mapped) = 1;
 							mapped++;
 							vertexFromModel++;
 						}
