@@ -4539,7 +4539,7 @@ void android_main(struct android_app *app)
 				}
 				if (vertices == nullptr)
 				{
-					createVertexBuffer(appState, verticesSize, vertices);
+					createVertexBuffer(appState, verticesSize + verticesSize / 4, vertices);
 				}
 				moveBufferToFront(vertices, perImage.vertices);
 				VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, verticesSize, 0, &vertices->mapped));
@@ -4916,7 +4916,7 @@ void android_main(struct android_app *app)
 				}
 				if (attributes == nullptr)
 				{
-					createVertexBuffer(appState, attributesSize, attributes);
+					createVertexBuffer(appState, attributesSize + attributesSize / 4, attributes);
 				}
 				moveBufferToFront(attributes, perImage.attributes);
 				VK(appState.Device.vkMapMemory(appState.Device.device, attributes->memory, 0, attributesSize, 0, &attributes->mapped));
@@ -5003,7 +5003,7 @@ void android_main(struct android_app *app)
 					}
 					if (indices16 == nullptr)
 					{
-						createIndexBuffer(appState, indices16Size, indices16);
+						createIndexBuffer(appState, indices16Size + indices16Size / 4, indices16);
 					}
 					moveBufferToFront(indices16, perImage.indices16);
 					VK(appState.Device.vkMapMemory(appState.Device.device, indices16->memory, 0, indices16Size, 0, &indices16->mapped));
@@ -5050,7 +5050,7 @@ void android_main(struct android_app *app)
 					}
 					if (indices32 == nullptr)
 					{
-						createIndexBuffer(appState, indices32Size, indices32);
+						createIndexBuffer(appState, indices32Size + indices32Size / 4, indices32);
 					}
 					moveBufferToFront(indices32, perImage.indices32);
 					VK(appState.Device.vkMapMemory(appState.Device.device, indices32->memory, 0, indices32Size, 0, &indices32->mapped));
@@ -5373,7 +5373,7 @@ void android_main(struct android_app *app)
 				}
 				if (stagingBuffer == nullptr)
 				{
-					createStagingStorageBuffer(appState, stagingBufferSize, stagingBuffer);
+					createStagingStorageBuffer(appState, stagingBufferSize + stagingBufferSize / 4, stagingBuffer);
 				}
 				moveBufferToFront(stagingBuffer, perImage.stagingBuffers);
 				VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
