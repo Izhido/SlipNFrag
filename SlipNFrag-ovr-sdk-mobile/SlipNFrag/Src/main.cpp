@@ -26,7 +26,7 @@
 #define VK(func) checkErrors(func, #func);
 #define VC(func) func;
 #define MAX_UNUSED_COUNT 16
-#define MAX_COLORMAPPED_BUFFER_SIZE 1024 * 1024
+#define MAX_COLORMAPPED_MEMORY_SIZE 1024 * 1024
 
 enum PermissionsGrantStatus
 {
@@ -241,15 +241,41 @@ struct Texture
 	VkImageView view;
 };
 
+struct SharedMemory
+{
+	VkDeviceMemory memory;
+	int referenceCount;
+};
+
+struct SharedMemoryTexture
+{
+	SharedMemoryTexture* next;
+	TwinKey key;
+	int unusedCount;
+	int width;
+	int height;
+	int mipCount;
+	int layerCount;
+	VkImage image;
+	SharedMemory* sharedMemory;
+	VkImageView view;
+};
+
 struct LoadedTexture
 {
     Texture* texture;
     int offset;
 };
 
+struct LoadedSharedMemoryTexture
+{
+	SharedMemoryTexture* texture;
+	int offset;
+};
+
 struct LoadedColormappedTexture
 {
-    LoadedTexture texture;
+    LoadedSharedMemoryTexture texture;
     LoadedTexture colormap;
 };
 
@@ -287,6 +313,12 @@ struct CachedTextures
 {
 	Texture* textures;
 	Texture* oldTextures;
+};
+
+struct CachedSharedMemoryTextures
+{
+	SharedMemoryTexture* textures;
+	SharedMemoryTexture* oldTextures;
 };
 
 struct Pipeline
@@ -350,20 +382,20 @@ struct Scene
 	int resetDescriptorSetsCount;
 	Texture* oldSurfaces;
 	std::unordered_map<TwinKey, Texture*> surfaces;
-	CachedTextures spriteTextures;
+	CachedSharedMemoryTextures spriteTextures;
 	int spriteTextureCount;
-	CachedTextures aliasTextures;
+	CachedSharedMemoryTextures aliasTextures;
 	int aliasTextureCount;
-	CachedTextures viewmodelTextures;
+	CachedSharedMemoryTextures viewmodelTextures;
 	int viewmodelTextureCount;
-	std::unordered_map<void*, Texture*> spritesPerKey;
+	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
 	std::unordered_map<void*, int> colormappedVerticesPerKey;
 	std::unordered_map<void*, int> colormappedTexCoordsPerKey;
-	std::unordered_map<void*, Texture*> aliasPerKey;
-	std::unordered_map<void*, Texture*> viewmodelsPerKey;
+	std::unordered_map<void*, SharedMemoryTexture*> aliasPerKey;
+	std::unordered_map<void*, SharedMemoryTexture*> viewmodelsPerKey;
 	std::vector<BufferWithOffset> colormappedBufferList;
 	std::vector<LoadedTexture> surfaceList;
-	std::vector<LoadedTexture> spriteList;
+	std::vector<LoadedSharedMemoryTexture> spriteList;
 	std::vector<LoadedTexture> turbulentList;
 	std::vector<LoadedColormappedTexture> aliasList;
 	std::vector<LoadedColormappedTexture> viewmodelList;
@@ -377,6 +409,8 @@ struct Scene
 	std::vector<VkSampler> samplers;
 	Buffer* latestColormappedBuffer;
 	VkDeviceSize usedInLatestColormappedBuffer;
+	SharedMemory* latestTextureSharedMemory;
+	VkDeviceSize usedInLatestTextureSharedMemory;
 };
 
 struct PerImage
@@ -781,8 +815,7 @@ void createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRe
 
 void createBuffer(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, Buffer*& buffer)
 {
-	buffer = new Buffer();
-	memset(buffer, 0, sizeof(Buffer));
+	buffer = new Buffer { };
 	buffer->size = size;
 	VkBufferCreateInfo bufferCreateInfo { };
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -839,8 +872,7 @@ void createShaderModule(AppState& appState, struct android_app* app, const char*
 
 void createTexture(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage, Texture*& texture)
 {
-	texture = new Texture();
-	memset(texture, 0, sizeof(Texture));
+	texture = new Texture { };
 	texture->width = width;
 	texture->height = height;
 	texture->mipCount = mipCount;
@@ -897,6 +929,85 @@ void createTexture(AppState& appState, VkCommandBuffer commandBuffer, uint32_t w
 	}
 }
 
+void createSharedMemoryTexture(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage, SharedMemoryTexture*& texture)
+{
+	texture = new SharedMemoryTexture { };
+	texture->width = width;
+	texture->height = height;
+	texture->mipCount = mipCount;
+	texture->layerCount = 1;
+	VkImageCreateInfo imageCreateInfo { };
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageCreateInfo.format = format;
+	imageCreateInfo.extent.width = texture->width;
+	imageCreateInfo.extent.height = texture->height;
+	imageCreateInfo.extent.depth = 1;
+	imageCreateInfo.mipLevels = texture->mipCount;
+	imageCreateInfo.arrayLayers = texture->layerCount;
+	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	imageCreateInfo.usage = usage;
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	VK(appState.Device.vkCreateImage(appState.Device.device, &imageCreateInfo, nullptr, &texture->image));
+	VkMemoryRequirements memoryRequirements;
+	VC(appState.Device.vkGetImageMemoryRequirements(appState.Device.device, texture->image, &memoryRequirements));
+	VkMemoryAllocateInfo memoryAllocateInfo { };
+	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+	VkDeviceSize alignmentCorrection = 0;
+	VkDeviceSize alignmentExcess = appState.Scene.usedInLatestTextureSharedMemory % memoryRequirements.alignment;
+	if (alignmentExcess > 0)
+	{
+		alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
+	}
+	if (appState.Scene.latestTextureSharedMemory == nullptr || appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > MAX_COLORMAPPED_MEMORY_SIZE)
+	{
+		VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
+		if (size < memoryAllocateInfo.allocationSize)
+		{
+			size = memoryAllocateInfo.allocationSize;
+		}
+		auto memoryBlockAllocateInfo = memoryAllocateInfo;
+		memoryBlockAllocateInfo.allocationSize = size;
+		appState.Scene.latestTextureSharedMemory = new SharedMemory { };
+		VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryBlockAllocateInfo, nullptr, &appState.Scene.latestTextureSharedMemory->memory));
+		appState.Scene.usedInLatestTextureSharedMemory = 0;
+	}
+	VK(appState.Device.vkBindImageMemory(appState.Device.device, texture->image, appState.Scene.latestTextureSharedMemory->memory, appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection));
+	appState.Scene.usedInLatestTextureSharedMemory += (alignmentCorrection + memoryAllocateInfo.allocationSize);
+	appState.Scene.latestTextureSharedMemory->referenceCount++;
+	VkImageViewCreateInfo imageViewCreateInfo { };
+	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	imageViewCreateInfo.image = texture->image;
+	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	imageViewCreateInfo.format = imageCreateInfo.format;
+	imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageViewCreateInfo.subresourceRange.levelCount = texture->mipCount;
+	imageViewCreateInfo.subresourceRange.layerCount = texture->layerCount;
+	VK(appState.Device.vkCreateImageView(appState.Device.device, &imageViewCreateInfo, nullptr, &texture->view));
+	VkImageMemoryBarrier imageMemoryBarrier { };
+	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageMemoryBarrier.image = texture->image;
+	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageMemoryBarrier.subresourceRange.levelCount = texture->mipCount;
+	imageMemoryBarrier.subresourceRange.layerCount = texture->layerCount;
+	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+	VkSamplerCreateInfo samplerCreateInfo { };
+	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerCreateInfo.maxLod = texture->mipCount;
+	samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+	if (appState.Scene.samplers.size() <= mipCount)
+	{
+		appState.Scene.samplers.resize(mipCount + 1);
+	}
+	if (appState.Scene.samplers[mipCount] == nullptr)
+	{
+		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
+	}
+}
+
 void deleteOldBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 {
 	for (Buffer** b = &cachedBuffers.oldBuffers; *b != nullptr; )
@@ -910,7 +1021,10 @@ void deleteOldBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 				VC(appState.Device.vkUnmapMemory(appState.Device.device, (*b)->memory));
 			}
 			VC(appState.Device.vkDestroyBuffer(appState.Device.device, (*b)->buffer, nullptr));
-			VC(appState.Device.vkFreeMemory(appState.Device.device, (*b)->memory, nullptr));
+			if ((*b)->memory != VK_NULL_HANDLE)
+			{
+				VC(appState.Device.vkFreeMemory(appState.Device.device, (*b)->memory, nullptr));
+			}
 			delete *b;
 			*b = next;
 		}
@@ -940,21 +1054,36 @@ void resetCachedBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 
 void deleteImage(AppState& appState, Image* image)
 {
+	VC(appState.Device.vkDestroyImageView(appState.Device.device, image->view, nullptr));
+	VC(appState.Device.vkDestroyImage(appState.Device.device, image->image, nullptr));
 	if (image->memory != VK_NULL_HANDLE)
 	{
-		VC(appState.Device.vkDestroyImageView(appState.Device.device, image->view, nullptr));
-		VC(appState.Device.vkDestroyImage(appState.Device.device, image->image, nullptr));
 		VC(appState.Device.vkFreeMemory(appState.Device.device, image->memory, nullptr));
 	}
 }
 
 void deleteTexture(AppState& appState, Texture* texture)
 {
+	VC(appState.Device.vkDestroyImageView(appState.Device.device, texture->view, nullptr));
+	VC(appState.Device.vkDestroyImage(appState.Device.device, texture->image, nullptr));
 	if (texture->memory != VK_NULL_HANDLE)
 	{
-		VC(appState.Device.vkDestroyImageView(appState.Device.device, texture->view, nullptr));
-		VC(appState.Device.vkDestroyImage(appState.Device.device, texture->image, nullptr));
 		VC(appState.Device.vkFreeMemory(appState.Device.device, texture->memory, nullptr));
+	}
+}
+
+void deleteSharedMemoryTexture(AppState& appState, SharedMemoryTexture* texture)
+{
+	VC(appState.Device.vkDestroyImageView(appState.Device.device, texture->view, nullptr));
+	VC(appState.Device.vkDestroyImage(appState.Device.device, texture->image, nullptr));
+	if (texture->sharedMemory != nullptr)
+	{
+		texture->sharedMemory->referenceCount--;
+		if (texture->sharedMemory == 0)
+		{
+			VC(appState.Device.vkFreeMemory(appState.Device.device, texture->sharedMemory->memory, nullptr));
+			delete texture->sharedMemory;
+		}
 	}
 }
 
@@ -980,9 +1109,42 @@ void deleteOldTextures(AppState& appState, Texture** oldTextures)
 	}
 }
 
+void deleteOldSharedMemoryTextures(AppState& appState, SharedMemoryTexture** oldTextures)
+{
+	if (oldTextures != nullptr)
+	{
+		for (SharedMemoryTexture** t = oldTextures; *t != nullptr; )
+		{
+			(*t)->unusedCount++;
+			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
+			{
+				SharedMemoryTexture* next = (*t)->next;
+				deleteSharedMemoryTexture(appState, *t);
+				delete *t;
+				*t = next;
+			}
+			else
+			{
+				t = &(*t)->next;
+			}
+		}
+	}
+}
+
 void disposeFrontTextures(CachedTextures& cachedTextures)
 {
 	for (Texture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
+	{
+		next = t->next;
+		t->next = cachedTextures.oldTextures;
+		cachedTextures.oldTextures = t;
+	}
+	cachedTextures.textures = nullptr;
+}
+
+void disposeFrontSharedMemoryTextures(CachedSharedMemoryTextures& cachedTextures)
+{
+	for (SharedMemoryTexture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
 	{
 		next = t->next;
 		t->next = cachedTextures.oldTextures;
@@ -997,15 +1159,17 @@ void resetSceneResources(Scene& scene)
 	{
 		scene.viewmodelsPerKey.clear();
 		scene.aliasPerKey.clear();
+		scene.latestTextureSharedMemory = nullptr;
+		scene.usedInLatestTextureSharedMemory = 0;
 		scene.latestColormappedBuffer = nullptr;
 		scene.usedInLatestColormappedBuffer = 0;
 		scene.colormappedBufferList.clear();
 		scene.colormappedTexCoordsPerKey.clear();
 		scene.colormappedVerticesPerKey.clear();
 		scene.spritesPerKey.clear();
-		disposeFrontTextures(scene.viewmodelTextures);
-		disposeFrontTextures(scene.aliasTextures);
-		disposeFrontTextures(scene.spriteTextures);
+		disposeFrontSharedMemoryTextures(scene.viewmodelTextures);
+		disposeFrontSharedMemoryTextures(scene.aliasTextures);
+		disposeFrontSharedMemoryTextures(scene.spriteTextures);
 		for (auto entry = scene.surfaces.begin(); entry != scene.surfaces.end(); entry++)
 		{
 			for (Texture** t = &entry->second; *t != nullptr; )
@@ -1135,6 +1299,81 @@ void fillMipmappedTexture(AppState& appState, Texture* texture, Buffer* buffer, 
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 }
 
+void fillSharedMemoryMipmappedTexture(AppState& appState, SharedMemoryTexture* texture, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
+{
+	VkImageMemoryBarrier imageMemoryBarrier { };
+	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	imageMemoryBarrier.image = texture->image;
+	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageMemoryBarrier.subresourceRange.levelCount = 1;
+	imageMemoryBarrier.subresourceRange.layerCount = 1;
+	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+	VkBufferImageCopy region { };
+	region.bufferOffset = offset;
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.layerCount = 1;
+	region.imageExtent.width = texture->width;
+	region.imageExtent.height = texture->height;
+	region.imageExtent.depth = 1;
+	VC(appState.Device.vkCmdCopyBufferToImage(commandBuffer, buffer->buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+	imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+	auto width = texture->width;
+	auto height = texture->height;
+	for (auto i = 1; i < texture->mipCount; i++)
+	{
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		imageMemoryBarrier.subresourceRange.baseMipLevel = i;
+		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+		VkImageBlit blit { };
+		blit.srcOffsets[1].x = width;
+		blit.srcOffsets[1].y = height;
+		blit.srcOffsets[1].z = 1;
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.mipLevel = i - 1;
+		blit.srcSubresource.layerCount = 1;
+		width /= 2;
+		if (width < 1)
+		{
+			width = 1;
+		}
+		height /= 2;
+		if (height < 1)
+		{
+			height = 1;
+		}
+		blit.dstOffsets[1].x = width;
+		blit.dstOffsets[1].y = height;
+		blit.dstOffsets[1].z = 1;
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.mipLevel = i;
+		blit.dstSubresource.layerCount = 1;
+		VC(appState.Device.vkCmdBlitImage(commandBuffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST));
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+	}
+	imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
+	imageMemoryBarrier.subresourceRange.levelCount = texture->mipCount;
+	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+}
+
 void moveBufferToFront(Buffer* buffer, CachedBuffers& cachedBuffers)
 {
 	buffer->unusedCount = 0;
@@ -1143,6 +1382,13 @@ void moveBufferToFront(Buffer* buffer, CachedBuffers& cachedBuffers)
 }
 
 void moveTextureToFront(Texture* texture, CachedTextures& cachedTextures)
+{
+	texture->unusedCount = 0;
+	texture->next = cachedTextures.textures;
+	cachedTextures.textures = texture;
+}
+
+void moveSharedMemoryTextureToFront(SharedMemoryTexture* texture, CachedSharedMemoryTextures& cachedTextures)
 {
 	texture->unusedCount = 0;
 	texture->next = cachedTextures.textures;
@@ -1159,7 +1405,10 @@ void deleteCachedBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 			VC(appState.Device.vkUnmapMemory(appState.Device.device, b->memory));
 		}
 		VC(appState.Device.vkDestroyBuffer(appState.Device.device, b->buffer, nullptr));
-		VC(appState.Device.vkFreeMemory(appState.Device.device, b->memory, nullptr));
+		if (b->buffer != VK_NULL_HANDLE)
+		{
+			VC(appState.Device.vkFreeMemory(appState.Device.device, b->memory, nullptr));
+		}
 		delete b;
 	}
 	for (Buffer* b = cachedBuffers.oldBuffers, *next = nullptr; b != nullptr; b = next)
@@ -1170,7 +1419,10 @@ void deleteCachedBuffers(AppState& appState, CachedBuffers& cachedBuffers)
 			VC(appState.Device.vkUnmapMemory(appState.Device.device, b->memory));
 		}
 		VC(appState.Device.vkDestroyBuffer(appState.Device.device, b->buffer, nullptr));
-		VC(appState.Device.vkFreeMemory(appState.Device.device, b->memory, nullptr));
+		if (b->buffer != VK_NULL_HANDLE)
+		{
+			VC(appState.Device.vkFreeMemory(appState.Device.device, b->memory, nullptr));
+		}
 		delete b;
 	}
 }
@@ -1187,6 +1439,22 @@ void deleteCachedTextures(AppState& appState, CachedTextures& cachedTextures)
 	{
 		next = t->next;
 		deleteTexture(appState, t);
+		delete t;
+	}
+}
+
+void deleteCachedSharedMemoryTextures(AppState& appState, CachedSharedMemoryTextures& cachedTextures)
+{
+	for (SharedMemoryTexture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
+	{
+		next = t->next;
+		deleteSharedMemoryTexture(appState, t);
+		delete t;
+	}
+	for (SharedMemoryTexture* t = cachedTextures.oldTextures, *next = nullptr; t != nullptr; t = next)
+	{
+		next = t->next;
+		deleteSharedMemoryTexture(appState, t);
 		delete t;
 	}
 }
@@ -4278,9 +4546,9 @@ void android_main(struct android_app *app)
 				}
 			}
 		}
-		deleteOldTextures(appState, &appState.Scene.viewmodelTextures.oldTextures);
-		deleteOldTextures(appState, &appState.Scene.aliasTextures.oldTextures);
-		deleteOldTextures(appState, &appState.Scene.spriteTextures.oldTextures);
+		deleteOldSharedMemoryTextures(appState, &appState.Scene.viewmodelTextures.oldTextures);
+		deleteOldSharedMemoryTextures(appState, &appState.Scene.aliasTextures.oldTextures);
+		deleteOldSharedMemoryTextures(appState, &appState.Scene.spriteTextures.oldTextures);
 		deleteOldTextures(appState, &appState.Scene.oldSurfaces);
 		deleteOldBuffers(appState, appState.Scene.colormappedBuffers);
 		for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
@@ -4625,9 +4893,9 @@ void android_main(struct android_app *app)
 				if (verticesOffset > 0)
 				{
 					Buffer* buffer;
-					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MAX_COLORMAPPED_BUFFER_SIZE)
+					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MAX_COLORMAPPED_MEMORY_SIZE)
 					{
-						VkDeviceSize size = MAX_COLORMAPPED_BUFFER_SIZE;
+						VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
 						if (size < verticesOffset)
 						{
 							size = verticesOffset;
@@ -4687,9 +4955,9 @@ void android_main(struct android_app *app)
 				if (texCoordsOffset > 0)
 				{
 					Buffer* buffer;
-					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MAX_COLORMAPPED_BUFFER_SIZE)
+					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MAX_COLORMAPPED_MEMORY_SIZE)
 					{
-						VkDeviceSize size = MAX_COLORMAPPED_BUFFER_SIZE;
+						VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
 						if (size < texCoordsOffset)
 						{
 							size = texCoordsOffset;
@@ -4783,9 +5051,9 @@ void android_main(struct android_app *app)
 				if (verticesOffset > 0)
 				{
 					Buffer* buffer;
-					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MAX_COLORMAPPED_BUFFER_SIZE)
+					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MAX_COLORMAPPED_MEMORY_SIZE)
 					{
-						VkDeviceSize size = MAX_COLORMAPPED_BUFFER_SIZE;
+						VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
 						if (size < verticesOffset)
 						{
 							size = verticesOffset;
@@ -4845,9 +5113,9 @@ void android_main(struct android_app *app)
 				if (texCoordsOffset > 0)
 				{
 					Buffer* buffer;
-					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MAX_COLORMAPPED_BUFFER_SIZE)
+					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MAX_COLORMAPPED_MEMORY_SIZE)
 					{
-						VkDeviceSize size = MAX_COLORMAPPED_BUFFER_SIZE;
+						VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
 						if (size < texCoordsOffset)
 						{
 							size = texCoordsOffset;
@@ -5182,13 +5450,13 @@ void android_main(struct android_app *app)
 				auto entry = appState.Scene.spritesPerKey.find(sprite.data);
 				if (entry == appState.Scene.spritesPerKey.end())
 				{
-					Texture* texture;
+					SharedMemoryTexture* texture;
 					auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
-					createTexture(appState, perImage.commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
+					createSharedMemoryTexture(appState, perImage.commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
 					texture->key.first = sprite.data;
 					appState.Scene.spriteList[i].offset = stagingBufferSize;
 					stagingBufferSize += sprite.size;
-					moveTextureToFront(texture, appState.Scene.spriteTextures);
+					moveSharedMemoryTextureToFront(texture, appState.Scene.spriteTextures);
 					appState.Scene.spriteTextureCount++;
 					appState.Scene.spritesPerKey.insert({ sprite.data, texture });
 					appState.Scene.spriteList[i].texture = texture;
@@ -5265,13 +5533,13 @@ void android_main(struct android_app *app)
 				auto entry = appState.Scene.aliasPerKey.find(alias.data);
 				if (entry == appState.Scene.aliasPerKey.end())
 				{
-					Texture* texture;
+					SharedMemoryTexture* texture;
 					auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
-					createTexture(appState, perImage.commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
+					createSharedMemoryTexture(appState, perImage.commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
 					texture->key.first = alias.data;
 					appState.Scene.aliasList[i].texture.offset = stagingBufferSize;
 					stagingBufferSize += alias.size;
-					moveTextureToFront(texture, appState.Scene.aliasTextures);
+					moveSharedMemoryTextureToFront(texture, appState.Scene.aliasTextures);
 					appState.Scene.aliasTextureCount++;
 					appState.Scene.aliasPerKey.insert({ alias.data, texture });
 					appState.Scene.aliasList[i].texture.texture = texture;
@@ -5306,13 +5574,13 @@ void android_main(struct android_app *app)
 				auto entry = appState.Scene.viewmodelsPerKey.find(viewmodel.data);
 				if (entry == appState.Scene.viewmodelsPerKey.end())
 				{
-					Texture* texture;
+					SharedMemoryTexture* texture;
 					auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
-					createTexture(appState, perImage.commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
+					createSharedMemoryTexture(appState, perImage.commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
 					texture->key.first = viewmodel.data;
 					appState.Scene.viewmodelList[i].texture.offset = stagingBufferSize;
 					stagingBufferSize += viewmodel.size;
-					moveTextureToFront(texture, appState.Scene.viewmodelTextures);
+					moveSharedMemoryTextureToFront(texture, appState.Scene.viewmodelTextures);
 					appState.Scene.viewmodelTextureCount++;
 					appState.Scene.viewmodelsPerKey.insert({ viewmodel.data, texture });
 					appState.Scene.viewmodelList[i].texture.texture = texture;
@@ -5487,7 +5755,7 @@ void android_main(struct android_app *app)
 				{
 					if (appState.Scene.spriteList[i].offset >= 0)
 					{
-						fillMipmappedTexture(appState, appState.Scene.spriteList[i].texture, stagingBuffer, appState.Scene.spriteList[i].offset, perImage.commandBuffer);
+						fillSharedMemoryMipmappedTexture(appState, appState.Scene.spriteList[i].texture, stagingBuffer, appState.Scene.spriteList[i].offset, perImage.commandBuffer);
 					}
 				}
 				for (auto i = 0; i <= d_lists.last_turbulent; i++)
@@ -5502,7 +5770,7 @@ void android_main(struct android_app *app)
 					auto& alias = d_lists.alias[i];
 					if (appState.Scene.aliasList[i].texture.offset >= 0)
 					{
-						fillMipmappedTexture(appState, appState.Scene.aliasList[i].texture.texture, stagingBuffer, appState.Scene.aliasList[i].texture.offset, perImage.commandBuffer);
+						fillSharedMemoryMipmappedTexture(appState, appState.Scene.aliasList[i].texture.texture, stagingBuffer, appState.Scene.aliasList[i].texture.offset, perImage.commandBuffer);
 					}
 					if (!alias.is_host_colormap)
 					{
@@ -5525,7 +5793,7 @@ void android_main(struct android_app *app)
 					auto& viewmodel = d_lists.viewmodel[i];
 					if (appState.Scene.viewmodelList[i].texture.offset >= 0)
 					{
-						fillMipmappedTexture(appState, appState.Scene.viewmodelList[i].texture.texture, stagingBuffer, appState.Scene.viewmodelList[i].texture.offset, perImage.commandBuffer);
+						fillSharedMemoryMipmappedTexture(appState, appState.Scene.viewmodelList[i].texture.texture, stagingBuffer, appState.Scene.viewmodelList[i].texture.offset, perImage.commandBuffer);
 					}
 					if (!viewmodel.is_host_colormap)
 					{
@@ -6916,9 +7184,9 @@ void android_main(struct android_app *app)
 	{
 		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.samplers[i], nullptr));
 	}
-	deleteCachedTextures(appState, appState.Scene.viewmodelTextures);
-	deleteCachedTextures(appState, appState.Scene.aliasTextures);
-	deleteCachedTextures(appState, appState.Scene.spriteTextures);
+	deleteCachedSharedMemoryTextures(appState, appState.Scene.viewmodelTextures);
+	deleteCachedSharedMemoryTextures(appState, appState.Scene.aliasTextures);
+	deleteCachedSharedMemoryTextures(appState, appState.Scene.spriteTextures);
 	for (auto entry = appState.Scene.surfaces.begin(); entry != appState.Scene.surfaces.end(); entry++)
 	{
 		auto texture = entry->second;
