@@ -87,6 +87,7 @@ struct Device
 	int presentQueueFamilyIndex;
 	bool supportsMultiview;
 	bool supportsFragmentDensity;
+	bool supportsLazyAllocate;
 	VkDevice device;
 	PFN_vkDestroyDevice vkDestroyDevice;
 	PFN_vkGetDeviceQueue vkGetDeviceQueue;
@@ -741,9 +742,6 @@ void checkErrors(VkResult result, const char *function)
 				break;
 			case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:
 				errorString = "VK_ERROR_INVALID_DEVICE_ADDRESS_EXT";
-				break;
-			case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
-				errorString = "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT";
 				break;
 			default:
 				errorString = "unknown";
@@ -1997,6 +1995,17 @@ void android_main(struct android_app *app)
 			strcpy(extensionNameToAdd, VK_EXT_FRAGMENT_DENSITY_MAP_EXTENSION_NAME);
 			appState.Device.enabledExtensionNames.push_back(extensionNameToAdd);
 		}
+		auto lazyAllocateFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+		for (auto i = 0; i < appState.Device.physicalDeviceMemoryProperties.memoryTypeCount; i++)
+		{
+			const VkFlags propertyFlags = appState.Device.physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags;
+			if ((propertyFlags & lazyAllocateFlags) == lazyAllocateFlags)
+			{
+				appState.Device.supportsLazyAllocate = true;
+				__android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, "Device supports lazy allocated memory pools");
+				break;
+			}
+		}
 		break;
 	}
 	__android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, "--------------------------------\n");
@@ -2834,13 +2843,18 @@ void android_main(struct android_app *app)
 		imageCreateInfo.arrayLayers = texture.layerCount;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_4_BIT;
 		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		VK(appState.Device.vkCreateImage(appState.Device.device, &imageCreateInfo, nullptr, &texture.image));
 		VkMemoryRequirements memoryRequirements;
 		VC(appState.Device.vkGetImageMemoryRequirements(appState.Device.device, texture.image, &memoryRequirements));
+		VkMemoryPropertyFlags memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		if (appState.Device.supportsLazyAllocate)
+		{
+			memFlags |= VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+		}
 		VkMemoryAllocateInfo memoryAllocateInfo { };
-		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		createMemoryAllocateInfo(appState, memoryRequirements, memFlags, memoryAllocateInfo);
 		VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &texture.memory));
 		VK(appState.Device.vkBindImageMemory(appState.Device.device, texture.image, texture.memory, 0));
 		VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
@@ -2888,10 +2902,10 @@ void android_main(struct android_app *app)
 		imageCreateInfo.extent.width = view.framebuffer.width;
 		imageCreateInfo.extent.height = view.framebuffer.height;
 		imageCreateInfo.arrayLayers = numLayers;
-		imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
 		VK(appState.Device.vkCreateImage(appState.Device.device, &imageCreateInfo, nullptr, &view.framebuffer.depthImage));
 		VC(appState.Device.vkGetImageMemoryRequirements(appState.Device.device, view.framebuffer.depthImage, &memoryRequirements));
-		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		createMemoryAllocateInfo(appState, memoryRequirements, memFlags, memoryAllocateInfo);
 		VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &view.framebuffer.depthMemory));
 		VK(appState.Device.vkBindImageMemory(appState.Device.device, view.framebuffer.depthImage, view.framebuffer.depthMemory, 0));
 		imageViewCreateInfo.image = view.framebuffer.depthImage;
@@ -3568,13 +3582,18 @@ void android_main(struct android_app *app)
 			imageCreateInfo.arrayLayers = texture.layerCount;
 			imageCreateInfo.samples = VK_SAMPLE_COUNT_4_BIT;
 			imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-			imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+			imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
 			imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			VK(appState.Device.vkCreateImage(appState.Device.device, &imageCreateInfo, nullptr, &texture.image));
 			VkMemoryRequirements memoryRequirements;
 			VC(appState.Device.vkGetImageMemoryRequirements(appState.Device.device, texture.image, &memoryRequirements));
+			VkMemoryPropertyFlags memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			if (appState.Device.supportsLazyAllocate)
+			{
+				memFlags |= VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+			}
 			VkMemoryAllocateInfo memoryAllocateInfo { };
-			createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+			createMemoryAllocateInfo(appState, memoryRequirements, memFlags, memoryAllocateInfo);
 			VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &texture.memory));
 			VK(appState.Device.vkBindImageMemory(appState.Device.device, texture.image, texture.memory, 0));
 			VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
