@@ -26,7 +26,7 @@
 #define VK(func) checkErrors(func, #func);
 #define VC(func) func;
 #define MAX_UNUSED_COUNT 16
-#define MAX_COLORMAPPED_MEMORY_SIZE 1024 * 1024
+#define MEMORY_BLOCK_SIZE 1024 * 1024
 
 enum PermissionsGrantStatus
 {
@@ -251,7 +251,6 @@ struct SharedMemory
 struct SharedMemoryTexture
 {
 	SharedMemoryTexture* next;
-	TwinKey key;
 	int unusedCount;
 	int width;
 	int height;
@@ -958,9 +957,9 @@ void createSharedMemoryTexture(AppState& appState, VkCommandBuffer commandBuffer
 	{
 		alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
 	}
-	if (appState.Scene.latestTextureSharedMemory == nullptr || appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > MAX_COLORMAPPED_MEMORY_SIZE)
+	if (appState.Scene.latestTextureSharedMemory == nullptr || appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > MEMORY_BLOCK_SIZE)
 	{
-		VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
+		VkDeviceSize size = MEMORY_BLOCK_SIZE;
 		if (size < memoryAllocateInfo.allocationSize)
 		{
 			size = memoryAllocateInfo.allocationSize;
@@ -974,6 +973,7 @@ void createSharedMemoryTexture(AppState& appState, VkCommandBuffer commandBuffer
 	VK(appState.Device.vkBindImageMemory(appState.Device.device, texture->image, appState.Scene.latestTextureSharedMemory->memory, appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection));
 	appState.Scene.usedInLatestTextureSharedMemory += (alignmentCorrection + memoryAllocateInfo.allocationSize);
 	appState.Scene.latestTextureSharedMemory->referenceCount++;
+	texture->sharedMemory = appState.Scene.latestTextureSharedMemory;
 	VkImageViewCreateInfo imageViewCreateInfo { };
 	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	imageViewCreateInfo.image = texture->image;
@@ -4912,9 +4912,9 @@ void android_main(struct android_app *app)
 				if (verticesOffset > 0)
 				{
 					Buffer* buffer;
-					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MAX_COLORMAPPED_MEMORY_SIZE)
+					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MEMORY_BLOCK_SIZE)
 					{
-						VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
+						VkDeviceSize size = MEMORY_BLOCK_SIZE;
 						if (size < verticesOffset)
 						{
 							size = verticesOffset;
@@ -4974,9 +4974,9 @@ void android_main(struct android_app *app)
 				if (texCoordsOffset > 0)
 				{
 					Buffer* buffer;
-					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MAX_COLORMAPPED_MEMORY_SIZE)
+					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MEMORY_BLOCK_SIZE)
 					{
-						VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
+						VkDeviceSize size = MEMORY_BLOCK_SIZE;
 						if (size < texCoordsOffset)
 						{
 							size = texCoordsOffset;
@@ -5070,9 +5070,9 @@ void android_main(struct android_app *app)
 				if (verticesOffset > 0)
 				{
 					Buffer* buffer;
-					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MAX_COLORMAPPED_MEMORY_SIZE)
+					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MEMORY_BLOCK_SIZE)
 					{
-						VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
+						VkDeviceSize size = MEMORY_BLOCK_SIZE;
 						if (size < verticesOffset)
 						{
 							size = verticesOffset;
@@ -5132,9 +5132,9 @@ void android_main(struct android_app *app)
 				if (texCoordsOffset > 0)
 				{
 					Buffer* buffer;
-					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MAX_COLORMAPPED_MEMORY_SIZE)
+					if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MEMORY_BLOCK_SIZE)
 					{
-						VkDeviceSize size = MAX_COLORMAPPED_MEMORY_SIZE;
+						VkDeviceSize size = MEMORY_BLOCK_SIZE;
 						if (size < texCoordsOffset)
 						{
 							size = texCoordsOffset;
@@ -5472,7 +5472,6 @@ void android_main(struct android_app *app)
 					SharedMemoryTexture* texture;
 					auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 					createSharedMemoryTexture(appState, perImage.commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-					texture->key.first = sprite.data;
 					appState.Scene.spriteList[i].offset = stagingBufferSize;
 					stagingBufferSize += sprite.size;
 					moveSharedMemoryTextureToFront(texture, appState.Scene.spriteTextures);
@@ -5555,7 +5554,6 @@ void android_main(struct android_app *app)
 					SharedMemoryTexture* texture;
 					auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 					createSharedMemoryTexture(appState, perImage.commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-					texture->key.first = alias.data;
 					appState.Scene.aliasList[i].texture.offset = stagingBufferSize;
 					stagingBufferSize += alias.size;
 					moveSharedMemoryTextureToFront(texture, appState.Scene.aliasTextures);
@@ -5596,7 +5594,6 @@ void android_main(struct android_app *app)
 					SharedMemoryTexture* texture;
 					auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
 					createSharedMemoryTexture(appState, perImage.commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, texture);
-					texture->key.first = viewmodel.data;
 					appState.Scene.viewmodelList[i].texture.offset = stagingBufferSize;
 					stagingBufferSize += viewmodel.size;
 					moveSharedMemoryTextureToFront(texture, appState.Scene.viewmodelTextures);
