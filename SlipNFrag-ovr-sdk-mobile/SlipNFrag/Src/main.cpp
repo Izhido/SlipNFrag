@@ -407,6 +407,8 @@ struct Scene
 	std::vector<int> viewmodelVerticesList;
 	std::vector<int> viewmodelTexCoordsList;
 	std::unordered_map<void*, Texture*> turbulentPerKey;
+	int floorOffset;
+	Texture* floorTexture;
 	std::vector<VkSampler> samplers;
 	Buffer* latestColormappedBuffer;
 	VkDeviceSize usedInLatestColormappedBuffer;
@@ -429,13 +431,11 @@ struct PerImage
 	int paletteOffset;
 	int host_colormapOffset;
 	int skyOffset;
-	int floorOffset;
 	int paletteChanged;
 	Texture* palette;
 	Texture* host_colormap;
 	int hostClearCount;
 	Texture* sky;
-	Texture* floor;
 	PipelineDescriptorResources host_colormapResources;
 	PipelineDescriptorResources sceneMatricesResources;
 	PipelineDescriptorResources sceneMatricesAndPaletteResources;
@@ -5635,15 +5635,15 @@ void android_main(struct android_app *app)
 				perImage.skyOffset = -1;
 			}
 			int floorSize;
-			if (perImage.floor == nullptr)
+			if (appState.Scene.floorTexture == nullptr)
 			{
-				perImage.floorOffset = stagingBufferSize;
+				appState.Scene.floorOffset = stagingBufferSize;
 				floorSize = appState.FloorWidth * appState.FloorHeight * sizeof(uint32_t);
 				stagingBufferSize += floorSize;
 			}
 			else
 			{
-				perImage.floorOffset = -1;
+				appState.Scene.floorOffset = -1;
 				floorSize = 0;
 			}
 			stagingBuffer = nullptr;
@@ -5742,7 +5742,7 @@ void android_main(struct android_app *app)
 					}
 					offset += 16384;
 				}
-				if (perImage.floorOffset >= 0)
+				if (appState.Scene.floorOffset >= 0)
 				{
 					memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.FloorData.data(), floorSize);
 				}
@@ -5839,10 +5839,10 @@ void android_main(struct android_app *app)
 					}
 					fillMipmappedTexture(appState, perImage.sky, stagingBuffer, perImage.skyOffset, perImage.commandBuffer);
 				}
-				if (appState.Mode != AppWorldMode && perImage.floor == nullptr)
+				if (appState.Mode != AppWorldMode && appState.Scene.floorTexture == nullptr)
 				{
-					createTexture(appState, perImage.commandBuffer, appState.FloorWidth, appState.FloorHeight, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, perImage.floor);
-					fillTexture(appState, perImage.floor, stagingBuffer, perImage.floorOffset, perImage.commandBuffer);
+					createTexture(appState, perImage.commandBuffer, appState.FloorWidth, appState.FloorHeight, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, appState.Scene.floorTexture);
+					fillTexture(appState, appState.Scene.floorTexture, stagingBuffer, appState.Scene.floorOffset, perImage.commandBuffer);
 				}
 			}
 			double clearR;
@@ -6599,8 +6599,8 @@ void android_main(struct android_app *app)
 						descriptorSetAllocateInfo.descriptorPool = perImage.floorResources.descriptorPool;
 						descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.floorResources.descriptorSet));
-						textureInfo[0].sampler = appState.Scene.samplers[perImage.floor->mipCount];
-						textureInfo[0].imageView = perImage.floor->view;
+						textureInfo[0].sampler = appState.Scene.samplers[appState.Scene.floorTexture->mipCount];
+						textureInfo[0].imageView = appState.Scene.floorTexture->view;
 						writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 						writes[0].pImageInfo = textureInfo;
 						writes[0].dstSet = perImage.floorResources.descriptorSet;
@@ -7128,10 +7128,6 @@ void android_main(struct android_app *app)
             deletePipelineDescriptorResources(appState, perImage.sceneMatricesAndPaletteResources);
             deletePipelineDescriptorResources(appState, perImage.sceneMatricesResources);
             deletePipelineDescriptorResources(appState, perImage.host_colormapResources);
-			if (perImage.floor != nullptr)
-			{
-				deleteTexture(appState, perImage.floor);
-			}
 			if (perImage.sky != nullptr)
 			{
 				deleteTexture(appState, perImage.sky);
@@ -7202,6 +7198,10 @@ void android_main(struct android_app *app)
 	for (auto i = 0; i < appState.Scene.samplers.size(); i++)
 	{
 		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.samplers[i], nullptr));
+	}
+	if (appState.Scene.floorTexture != nullptr)
+	{
+		deleteTexture(appState, appState.Scene.floorTexture);
 	}
 	deleteCachedSharedMemoryTextures(appState, appState.Scene.viewmodelTextures);
 	deleteCachedSharedMemoryTextures(appState, appState.Scene.aliasTextures);
