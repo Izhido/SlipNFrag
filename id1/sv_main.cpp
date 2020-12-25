@@ -45,6 +45,7 @@ void server_t::Clear()
     models.clear();
     sound_precache.clear();
     num_edicts = 0;
+	SV_DeleteEdictLeafs(0, edicts.size());
     memset(edicts.data(), 0, edicts.size());
     memset(&state, 0, sizeof(state));
     datagram.Clear();
@@ -512,14 +513,17 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 		if (ent != clent)	// clent is ALLWAYS sent
 		{
 // ignore ents without visible models
-			if (!ent->v.modelindex || !pr_strings[ent->v.model])
+			if (ent->leafnums == nullptr || !ent->v.modelindex || !pr_strings[ent->v.model])
 				continue;
 
-			for (i=0 ; i < ent->leafnums.size() ; i++)
-				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
+			for (i=0 ; i < ent->leafnums->size() ; i++)
+			{
+				auto leafnum = ent->leafnums->at(i);
+				if (pvs[leafnum >> 3] & (1 << (leafnum&7) ))
 					break;
-				
-			if (i == ent->leafnums.size())
+			}
+
+			if (i == ent->leafnums->size())
 				continue;		// not visible
 		}
 
@@ -1255,7 +1259,7 @@ void SV_SpawnServer (char *server)
     {
         tocreate += MAX_EDICTS;
     }
-    sv.edicts.resize(tocreate * pr_edict_size);
+	SV_ResizeEdicts(tocreate * pr_edict_size);
     sv.edicts_reallocation_sequence++;
 
 	sv.datagram.maxsize = 0;
@@ -1385,4 +1389,30 @@ void SV_SetProtocolVersion()
         sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
     else
         sv_protocol_version = PROTOCOL_VERSION;
+}
+
+void SV_DeleteEdictLeafs(size_t start, size_t end)
+{
+	size_t index = start;
+	auto data = sv.edicts.data();
+	while (index < end)
+	{
+		auto e = (edict_t*)(data + index);
+		delete e->leafnums;
+		index += pr_edict_size;
+	}
+}
+
+void SV_ResizeEdicts(size_t newsize)
+{
+	size_t oldsize = sv.edicts.size();
+	if (oldsize > newsize)
+	{
+		SV_DeleteEdictLeafs(newsize, oldsize);
+		sv.edicts.resize(newsize);
+	}
+	else if (oldsize < newsize)
+	{
+		sv.edicts.resize(newsize);
+	}
 }

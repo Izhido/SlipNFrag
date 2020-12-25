@@ -226,3 +226,5 @@ void SV_CheckForNewClients (void);
 void SV_RunClients (void);
 void SV_SaveSpawnparms ();
 void SV_SpawnServer (char *server);
+void SV_DeleteEdictLeafs(size_t start, size_t end);
+void SV_ResizeEdicts(size_t newsize);

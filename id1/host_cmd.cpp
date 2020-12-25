@@ -683,7 +683,7 @@ void Host_Loadgame_f (void)
     {
         tocreate += MAX_EDICTS;
     }
-    sv.edicts.resize(tocreate * pr_edict_size);
+	SV_ResizeEdicts(tocreate * pr_edict_size);
     sv.edicts_reallocation_sequence++;
     sv.num_edicts = entnum;
 // load the edicts out of the savegame file

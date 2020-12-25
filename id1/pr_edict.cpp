@@ -118,7 +118,7 @@ edict_t *ED_Alloc (void)
             e = (edict_t*)(sv.edicts.data() + k);
             SV_UnlinkEdict(e);
         }
-        sv.edicts.resize(sv.edicts.size() + MAX_EDICTS * pr_edict_size);
+		SV_ResizeEdicts(sv.edicts.size() + MAX_EDICTS * pr_edict_size);
         sv.edicts_reallocation_sequence++;
         for (j = 0, k = 0; j < sv.num_edicts; j++, k += pr_edict_size)
         {
