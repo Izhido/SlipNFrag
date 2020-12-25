@@ -115,8 +115,8 @@ typedef struct msurface_s
 // surface generation data
 	struct surfcache_s	*cachespots[MIPLEVELS];
 
-	short		texturemins[2];
-	short		extents[2];
+	int			texturemins[2];
+	int			extents[2];
 
 	mtexinfo_t	*texinfo;
 	
