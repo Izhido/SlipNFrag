@@ -435,8 +435,10 @@ void SV_PushMove (edict_t *pusher, float movetime)
 	vec3_t		mins, maxs, move;
 	vec3_t		entorig, pushorig;
 	int			num_moved;
-    std::vector<edict_t*> moved_edict;
-    std::vector<std::vector<vec_t>> moved_from;
+    static std::vector<edict_t*> moved_edict;
+    auto moved_edict_base = moved_edict.size();
+    static std::vector<vec_t> moved_from;
+    auto moved_from_base = moved_from.size();
 
 	if (!pusher->v.velocity[0] && !pusher->v.velocity[1] && !pusher->v.velocity[2])
 	{
@@ -466,7 +468,9 @@ void SV_PushMove (edict_t *pusher, float movetime)
 	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
     {
         moved_edict.emplace_back();
-        moved_from.emplace_back(3);
+        moved_from.emplace_back();
+        moved_from.emplace_back();
+        moved_from.emplace_back();
 		if (check->free)
 			continue;
 		if (check->v.movetype == MOVETYPE_PUSH
@@ -496,8 +500,9 @@ void SV_PushMove (edict_t *pusher, float movetime)
 			check->v.flags = (int)check->v.flags & ~FL_ONGROUND;
 		
 		VectorCopy (check->v.origin, entorig);
-		VectorCopy (check->v.origin, moved_from[num_moved]);
-		moved_edict[num_moved] = check;
+        auto moved = moved_from.data() + moved_from_base + 3 * num_moved;
+		VectorCopy (check->v.origin, moved);
+		moved_edict[moved_edict_base + num_moved] = check;
 		num_moved++;
 
 		// try moving the contacted entity 
@@ -537,12 +542,15 @@ void SV_PushMove (edict_t *pusher, float movetime)
 		// move back any entities we already moved
 			for (i=0 ; i<num_moved ; i++)
 			{
-				VectorCopy (moved_from[i], moved_edict[i]->v.origin);
-				SV_LinkEdict (moved_edict[i], false);
+                auto moved = moved_from.data() + moved_from_base + 3 * i;
+				VectorCopy (moved, moved_edict[moved_edict_base + i]->v.origin);
+				SV_LinkEdict (moved_edict[moved_edict_base + i], false);
 			}
 			return;
 		}	
 	}
+    moved_from.resize(moved_from_base);
+    moved_edict.resize(moved_edict_base);
 
 	
 }
