@@ -1,4 +1,0 @@
-rootProject.projectDir = new File(settingsDir, '../../..')
-rootProject.name = "SlipNFrag"
-
-include ':', 'SlipNFrag:Projects:Android'

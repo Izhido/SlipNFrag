@@ -956,7 +956,7 @@ void createTexture(AppState& appState, VkCommandBuffer commandBuffer, uint32_t w
 	{
 		appState.Scene.samplers.resize(mipCount + 1);
 	}
-	if (appState.Scene.samplers[mipCount] == nullptr)
+	if (appState.Scene.samplers[mipCount] == VK_NULL_HANDLE)
 	{
 		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
 	}
@@ -1036,7 +1036,7 @@ void createSharedMemoryTexture(AppState& appState, VkCommandBuffer commandBuffer
 	{
 		appState.Scene.samplers.resize(mipCount + 1);
 	}
-	if (appState.Scene.samplers[mipCount] == nullptr)
+	if (appState.Scene.samplers[mipCount] == VK_NULL_HANDLE)
 	{
 		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
 	}
@@ -1143,7 +1143,7 @@ void createTextureFromAllocation(AppState& appState, VkCommandBuffer commandBuff
 	{
 		appState.Scene.samplers.resize(mipCount + 1);
 	}
-	if (appState.Scene.samplers[mipCount] == nullptr)
+	if (appState.Scene.samplers[mipCount] == VK_NULL_HANDLE)
 	{
 		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
 	}
