@@ -34,9 +34,11 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
 	int		srcsample;
+    int     srcsamplefrac;
 	float	stepscale;
 	int		i;
-	int		sample, samplefrac, fracstep;
+	int		y0, y1, y2, y3, samplefrac, fracstep, sample;
+    float   a0, a1, a2, a3, mu, mu2;
 	sfxcache_t	*sc;
 	
 	sc = (sfxcache_t*)sfx->data;
@@ -71,19 +73,60 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 // general case
 		samplefrac = 0;
 		fracstep = stepscale*256;
-		for (i=0 ; i<outcount ; i++)
-		{
-			srcsample = samplefrac >> 8;
-			samplefrac += fracstep;
-			if (inwidth == 2)
-				sample = LittleShort ( ((short *)data)[srcsample] );
-			else
-				sample = (int)( (unsigned char)(data[srcsample]) - 128) << 8;
-			if (sc->width == 2)
-				((short *)sc->data)[i] = sample;
-			else
-				((signed char *)sc->data)[i] = sample >> 8;
-		}
+        for (i=0 ; i<outcount ; i++)
+        {
+            srcsample = samplefrac >> 8;
+            srcsamplefrac = samplefrac - (srcsample << 8);
+            samplefrac += fracstep;
+            if (inwidth == 2)
+                y1 = LittleShort ( ((short *)data)[srcsample] );
+            else
+                y1 = (int)( (unsigned char)(data[srcsample]) - 128) << 8;
+            if (srcsample == 0)
+            {
+                y0 = y1;
+            }
+            else
+            {
+                if (inwidth == 2)
+                    y0 = LittleShort ( ((short *)data)[srcsample - 1] );
+                else
+                    y0 = (int)( (unsigned char)(data[srcsample - 1]) - 128) << 8;
+            }
+            if (srcsample >= sc->length - 1)
+            {
+                y2 = y1;
+            }
+            else
+            {
+                if (inwidth == 2)
+                    y2 = LittleShort ( ((short *)data)[srcsample + 1] );
+                else
+                    y2 = (int)( (unsigned char)(data[srcsample + 1]) - 128) << 8;
+            }
+            if (srcsample >= sc->length - 2)
+            {
+                y3 = y2;
+            }
+            else
+            {
+                if (inwidth == 2)
+                    y3 = LittleShort ( ((short *)data)[srcsample + 2] );
+                else
+                    y3 = (int)( (unsigned char)(data[srcsample + 2]) - 128) << 8;
+            }
+            a0 = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
+            a1 = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
+            a2 = -0.5 * y0 + 0.5 * y2;
+            a3 = y1;
+            mu = srcsamplefrac / 256;
+            mu2 = mu * mu;
+            sample = (int)(a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3);
+            if (sc->width == 2)
+                ((short *)sc->data)[i] = sample;
+            else
+                ((signed char *)sc->data)[i] = sample >> 8;
+        }
 	}
 }
 
@@ -139,6 +182,11 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	if (info.channels != 1)
 	{
 		Con_Printf ("%s is a stereo sample\n",s->name.c_str());
+		return NULL;
+	}
+	if (info.width != 1 && info.width != 2)
+	{
+		Con_Printf ("%s is not either 8-bit or 16-bit\n",s->name.c_str());
 		return NULL;
 	}
 

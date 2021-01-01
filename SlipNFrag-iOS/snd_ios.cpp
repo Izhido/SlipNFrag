@@ -40,9 +40,9 @@ qboolean SNDDMA_Init(void)
     shm = new dma_t;
     shm->splitbuffer = 0;
     shm->samplebits = 16;
-    shm->speed = 22050;
+    shm->speed = 44100;
     shm->channels = 2;
-    shm->samples = 32768;
+    shm->samples = 65536;
     shm->samplepos = 0;
     shm->soundalive = true;
     shm->gamealive = true;

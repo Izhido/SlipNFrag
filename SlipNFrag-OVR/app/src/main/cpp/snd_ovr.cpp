@@ -26,9 +26,9 @@ qboolean SNDDMA_Init(void)
 	shm = new dma_t;
 	shm->splitbuffer = 0;
 	shm->samplebits = 16;
-	shm->speed = 22050;
+	shm->speed = 44100;
 	shm->channels = 2;
-	shm->samples = 32768;
+	shm->samples = 65536;
 	shm->samplepos = 0;
 	shm->soundalive = true;
 	shm->gamealive = true;
@@ -70,7 +70,7 @@ qboolean SNDDMA_Init(void)
 	SLDataFormat_PCM format;
 	format.formatType = SL_DATAFORMAT_PCM;
 	format.numChannels = shm->channels;
-	format.samplesPerSec = SL_SAMPLINGRATE_22_05;
+	format.samplesPerSec = SL_SAMPLINGRATE_44_1;
 	format.bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
 	format.containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
 	format.channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;

@@ -8,11 +8,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 
 add_library(vrapi SHARED IMPORTED)
-
 set_target_properties(vrapi PROPERTIES IMPORTED_LOCATION ../../../../../../ovr_sdk_mobile_1.40.0/VrApi/Libs/Android/${ANDROID_ABI}/Release/libvrapi.so)
 
 add_library(stb STATIC IMPORTED)
-
 set_target_properties(stb PROPERTIES IMPORTED_LOCATION ../../../../../../ovr_sdk_mobile_1.40.0/3rdParty/stb/lib/android/${ANDROID_ABI}/libstb.a)
 
 file(GLOB SRC_FILES *.cpp)
