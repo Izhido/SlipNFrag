@@ -218,6 +218,40 @@ void D_DrawSurfaces (void)
 					D_DrawZSpans (s->spans);
 				}
 			}
+            else if (s->flags & SURF_DRAWSKYBOX)
+            {
+                if (d_uselists)
+                {
+                    // Do nothing for now
+                }
+                else
+                {
+                    pface = (msurface_t*)s->data;
+                    miplevel = 0;
+                    if (!pface->texinfo->texture)
+                        return;
+                    cacheblock = (pixel_t *)
+                            ((byte *)pface->texinfo->texture +
+                            pface->texinfo->texture->offsets[0]);
+                    cachewidth = pface->texinfo->texture->width;
+
+                    d_zistepu = s->d_zistepu;
+                    d_zistepv = s->d_zistepv;
+                    d_ziorigin = s->d_ziorigin;
+
+                    D_CalcGradients (pface);
+
+                    D_DrawSpans8 (s->spans);
+
+                // set up a gradient for the background surface that places it
+                // effectively at infinity distance from the viewpoint
+                    d_zistepu = 0;
+                    d_zistepv = 0;
+                    d_ziorigin = -0.9;
+
+                    D_DrawZSpans (s->spans);
+                }
+            }
 			else if (s->flags & SURF_DRAWBACKGROUND)
 			{
 				if (d_uselists)

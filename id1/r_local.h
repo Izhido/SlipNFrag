@@ -271,4 +271,11 @@ void R_ClipEdge (mvertex_t *pv0, mvertex_t *pv1, clipplane_t *clip);
 void R_SplitEntityOnNode2 (mnode_t *node);
 void R_MarkLights (dlight_t *light, int index, mnode_t *node);
 
+extern qboolean r_skyinitialized;
+extern qboolean r_skyboxinitialized;
+extern std::string r_skyboxprefix;
+
+void R_SetSkyBox (float rotate, vec3_t axis);
+void R_EmitSkyBox (void);
+
 #endif

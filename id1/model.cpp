@@ -621,7 +621,7 @@ void Mod_LoadTextures (lump_t *l)
         {
             memcpy ( tx+1, mt+1, pixels);
         }
-		if (!Q_strncmp(mt->name,"sky",3))
+		if (!Q_strncmp(mt->name,"sky",3) && r_skyboxprefix.length() == 0)
 			R_InitSky (tx);
 	}
 
@@ -770,6 +770,39 @@ void Mod_LoadEntities (lump_t *l)
     mod_pool.entities.emplace_back(l->filelen);
 	loadmodel->entities = mod_pool.entities.back().data();
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
+	auto data = loadmodel->entities;
+	while (1)
+	{
+		data = COM_Parse (data);
+		if (com_token[0] == '{')
+		{
+			continue;
+		}
+		if (com_token[0] == '}')
+		{
+			break;
+		}
+		if (!data)
+		{
+			Sys_Error ("Mod_LoadEntities: EOF without closing brace");
+		}
+		std::string key = com_token;
+		data = COM_Parse (data);
+		if (!data)
+		{
+			Sys_Error ("Mod_LoadEntities: EOF without closing brace");
+		}
+		if (com_token[0] == '}')
+		{
+			Sys_Error ("Mod_LoadEntities: closing brace without data");
+		}
+		std::string value = com_token;
+		if (key == "sky")
+		{
+			r_skyboxprefix = value;
+		}
+	}
+	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
 }
 
 
@@ -788,7 +821,7 @@ void Mod_LoadVertexes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.vertexes.emplace_back(count);
+    mod_pool.vertexes.emplace_back(count + 8); // Extra in case a skybox is loaded
     out = mod_pool.vertexes.back().data();
 
 	loadmodel->vertexes = out;
@@ -854,7 +887,7 @@ void Mod_LoadEdges (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.edges.emplace_back(count + 1);
+    mod_pool.edges.emplace_back(count + 1 + 12); // Extra in case a skybox is loaded
 	out = mod_pool.edges.back().data();
 
 	loadmodel->edges = out;
@@ -882,7 +915,7 @@ void Mod_LoadBSP2Edges (lump_t *l)
     if (l->filelen % sizeof(*in))
         Sys_Error ("Mod_LoadBSP2Edges: funny lump size in %s",pr_strings + loadmodel->name);
     count = l->filelen / sizeof(*in);
-    mod_pool.edges.emplace_back(count + 1);
+    mod_pool.edges.emplace_back(count + 1 + 12); // Extra in case a skybox is loaded
     out = mod_pool.edges.back().data();
 
     loadmodel->edges = out;
@@ -904,7 +937,7 @@ void Mod_LoadTexinfo (lump_t *l)
 {
 	texinfo_t *in;
 	mtexinfo_t *out;
-	int 	i, j, count;
+	int 	i, j, k, count;
 	int		miptex;
 	float	len1, len2;
 
@@ -920,8 +953,9 @@ void Mod_LoadTexinfo (lump_t *l)
 
 	for ( i=0 ; i<count ; i++, in++, out++)
 	{
-		for (j=0 ; j<8 ; j++)
-			out->vecs[0][j] = LittleFloat (in->vecs[0][j]);
+		for (j=0 ; j<2 ; j++)
+            for (k=0 ; k<4 ; k++)
+                out->vecs[j][k] = LittleFloat (in->vecs[j][k]);
 		len1 = Length (out->vecs[0]);
 		len2 = Length (out->vecs[1]);
 		len1 = (len1 + len2)/2;
@@ -1030,7 +1064,7 @@ void Mod_LoadFaces (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.surfaces.emplace_back(count);
+    mod_pool.surfaces.emplace_back(count + 6); // Extra in case a skybox is loaded
     out = mod_pool.surfaces.back().data();
 
 	loadmodel->surfaces = out;
@@ -1101,7 +1135,7 @@ void Mod_LoadBSP2Faces (lump_t *l)
     if (l->filelen % sizeof(*in))
         Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
     count = l->filelen / sizeof(*in);
-    mod_pool.surfaces.emplace_back(count);
+    mod_pool.surfaces.emplace_back(count + 6); // Extra in case a skybox is loaded
     out = mod_pool.surfaces.back().data();
 
     loadmodel->surfaces = out;
@@ -1618,7 +1652,7 @@ void Mod_LoadSurfedges (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.surfedges.emplace_back(count);
+    mod_pool.surfedges.emplace_back(count + 24); // Extra in case a skybox is loaded
 	out = mod_pool.surfedges.back().data();
 
 	loadmodel->surfedges = out;
@@ -1793,6 +1827,17 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
             Q_strncpy(pr_strings + loadmodel->name, name, name_len);
 			mod = loadmodel;
 		}
+	}
+
+	if (!r_skyinitialized && !r_skyboxinitialized && r_skyboxprefix.length() > 0)
+	{
+		float rotate = 0;
+		vec3_t axis;
+		axis[0] = 0;
+		axis[1] = 1;
+		axis[2] = 0;
+		R_InitSkyBox ();
+		R_SetSkyBox (rotate, axis);
 	}
 }
 

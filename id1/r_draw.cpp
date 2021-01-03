@@ -399,6 +399,14 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 	medge_t		*pedges, tedge;
 	clipplane_t	*pclip;
 
+	// sky box surfaces encountered in the world will cause the
+	// environment box surfaces to be emited
+	if ( (fa->flags & SURF_DRAWSKY) && r_skyboxinitialized)
+	{
+		R_EmitSkyBox ();
+		return;
+	}
+
 // skip out if no more surfs
 	if ((surface_p) >= surf_max)
 	{

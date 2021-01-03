@@ -510,6 +510,8 @@ void Host_ClearMemory (void)
 	Con_DPrintf ("Clearing memory\n");
 	D_FlushCaches ();
 	Mod_ClearAll ();
+	r_skyinitialized = false;
+	r_skyboxinitialized = false;
 
     cls.signon = 0;
 	sv.Clear();

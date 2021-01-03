@@ -46,8 +46,8 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 		return;
 
 	stepscale = (float)inrate / shm->speed;	// this is usually 0.5, 1, or 2
-
-	outcount = sc->length / stepscale;
+    auto srclength = sc->length;
+	outcount = srclength / stepscale;
 	sc->length = outcount;
 	if (sc->loopstart != -1)
 		sc->loopstart = sc->loopstart / stepscale;
@@ -81,7 +81,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
             if (inwidth == 2)
                 y1 = LittleShort ( ((short *)data)[srcsample] );
             else
-                y1 = (int)( (unsigned char)(data[srcsample]) - 128) << 8;
+                y1 = (int)( (unsigned char)(data[srcsample]) - 128) * 256;
             if (srcsample == 0)
             {
                 y0 = y1;
@@ -91,9 +91,9 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
                 if (inwidth == 2)
                     y0 = LittleShort ( ((short *)data)[srcsample - 1] );
                 else
-                    y0 = (int)( (unsigned char)(data[srcsample - 1]) - 128) << 8;
+                    y0 = (int)( (unsigned char)(data[srcsample - 1]) - 128) * 256;
             }
-            if (srcsample >= sc->length - 1)
+            if (srcsample >= srclength - 1)
             {
                 y2 = y1;
             }
@@ -102,9 +102,9 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
                 if (inwidth == 2)
                     y2 = LittleShort ( ((short *)data)[srcsample + 1] );
                 else
-                    y2 = (int)( (unsigned char)(data[srcsample + 1]) - 128) << 8;
+                    y2 = (int)( (unsigned char)(data[srcsample + 1]) - 128) * 256;
             }
-            if (srcsample >= sc->length - 2)
+            if (srcsample >= srclength - 2)
             {
                 y3 = y2;
             }
@@ -113,7 +113,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
                 if (inwidth == 2)
                     y3 = LittleShort ( ((short *)data)[srcsample + 2] );
                 else
-                    y3 = (int)( (unsigned char)(data[srcsample + 2]) - 128) << 8;
+                    y3 = (int)( (unsigned char)(data[srcsample + 2]) - 128) * 256;
             }
             a0 = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
             a1 = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
@@ -206,7 +206,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	sc->width = info.width;
 	sc->stereo = info.channels;
 
-	ResampleSfx (s, sc->speed, sc->width, data + info.dataofs);
+    ResampleSfx (s, sc->speed, sc->width, data + info.dataofs);
 
 	return sc;
 }
