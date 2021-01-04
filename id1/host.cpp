@@ -512,6 +512,7 @@ void Host_ClearMemory (void)
 	Mod_ClearAll ();
 	r_skyinitialized = false;
 	r_skyboxinitialized = false;
+    r_skyboxprefix = "";
 
     cls.signon = 0;
 	sv.Clear();

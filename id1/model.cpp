@@ -621,7 +621,7 @@ void Mod_LoadTextures (lump_t *l)
         {
             memcpy ( tx+1, mt+1, pixels);
         }
-		if (!Q_strncmp(mt->name,"sky",3) && r_skyboxprefix.length() == 0)
+		if (!Q_strncmp(mt->name,"sky",3))
 			R_InitSky (tx);
 	}
 
@@ -1829,8 +1829,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		}
 	}
 
-	if (!r_skyinitialized && !r_skyboxinitialized && r_skyboxprefix.length() > 0)
+	if (!r_skyboxinitialized && r_skyboxprefix.length() > 0)
 	{
+        r_skyinitialized = false;
+        r_skyboxinitialized = true;
 		float rotate = 0;
 		vec3_t axis;
 		axis[0] = 0;

@@ -99,6 +99,8 @@ void R_InitSky (texture_t *mt)
 	int			i, j;
 	byte		*src;
 
+    r_skyinitialized = true;
+    
     if (mt->width != 256 || mt->height != 128)
     {
         memset(newsky, 0, 128*256);
@@ -137,7 +139,6 @@ void R_InitSky (texture_t *mt)
 	}
 	
 	r_skysource = newsky;
-	r_skyinitialized = true;
 }
 
 
@@ -190,8 +191,6 @@ void R_InitSkyBox (void)
 		r_skyedges[i].v[1] = loadmodel->numvertexes-9+box_edges[i*2+1];
 		r_skyedges[i].cachededgeoffset = 0;
 	}
-
-	r_skyboxinitialized = true;
 }
 
 

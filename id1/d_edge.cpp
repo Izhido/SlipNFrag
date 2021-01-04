@@ -36,6 +36,8 @@ extern void			R_TransformFrustum (void);
 
 vec3_t		transformed_modelorg;
 
+extern qboolean r_skyinitialized;
+
 
 /*
 =============
@@ -203,20 +205,23 @@ void D_DrawSurfaces (void)
 
 			if (s->flags & SURF_DRAWSKY)
 			{
-				if (!r_skymade)
-				{
-					R_MakeSky ();
-				}
+                if (r_skyinitialized)
+                {
+                    if (!r_skymade)
+                    {
+                        R_MakeSky ();
+                    }
 
-				if (d_uselists)
-				{
-					D_AddSkyToLists(s);
-				}
-				else
-				{
-					D_DrawSkyScans8 (s->spans);
-					D_DrawZSpans (s->spans);
-				}
+                    if (d_uselists)
+                    {
+                        D_AddSkyToLists(s);
+                    }
+                    else
+                    {
+                        D_DrawSkyScans8 (s->spans);
+                        D_DrawZSpans (s->spans);
+                    }
+                }
 			}
             else if (s->flags & SURF_DRAWSKYBOX)
             {

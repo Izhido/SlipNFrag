@@ -644,17 +644,14 @@ void R_GenTile (msurface_t *psurf, void *pdest)
 	}
 	else if (psurf->flags & SURF_DRAWSKY)
 	{
-		if (r_skyinitialized)
-		{
-			if (r_pixbytes == 1)
-			{
-				R_GenSkyTile (pdest);
-			}
-			else
-			{
-				R_GenSkyTile16 (pdest);
-			}
-		}
+        if (r_pixbytes == 1)
+        {
+            R_GenSkyTile (pdest);
+        }
+        else
+        {
+            R_GenSkyTile16 (pdest);
+        }
 	}
 	else
 	{
