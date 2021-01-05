@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -24,6 +24,7 @@ void D_ResetLists ()
 	d_lists.last_viewmodel = -1;
 	d_lists.last_particle = -1;
 	d_lists.last_sky = -1;
+    d_lists.last_skybox = -1;
 	d_lists.last_textured_vertex = -1;
 	d_lists.last_textured_attribute = -1;
 	d_lists.last_colormapped_attribute = -1;
@@ -951,4 +952,18 @@ void D_AddSkyToLists (surf_t* surf)
 		attribute++;
 		d_lists.textured_attributes[attribute] = t;
 	}
+}
+
+void D_AddSkyboxToLists (mtexinfo_t* textures)
+{
+    if (d_lists.last_skybox < 0)
+    {
+        d_lists.last_skybox++;
+        if (d_lists.last_skybox >= d_lists.skyboxes.size())
+        {
+            d_lists.skyboxes.emplace_back();
+        }
+        auto& sky = d_lists.skyboxes[d_lists.last_skybox];
+        sky.textures = textures;
+    }
 }

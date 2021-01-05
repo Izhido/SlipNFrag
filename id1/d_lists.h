@@ -76,6 +76,11 @@ struct dsky_t
 	int count;
 };
 
+struct dskybox_t
+{
+    mtexinfo_t* textures;
+};
+
 struct dlists_t
 {
 	int last_surface;
@@ -85,6 +90,7 @@ struct dlists_t
 	int last_viewmodel;
 	int last_particle;
 	int last_sky;
+    int last_skybox;
 	int last_textured_vertex;
 	int last_textured_attribute;
 	int last_colormapped_attribute;
@@ -101,6 +107,7 @@ struct dlists_t
 	std::vector<dalias_t> viewmodel;
 	std::vector<dparticle_t> particles;
 	std::vector<dsky_t> sky;
+    std::vector<dskybox_t> skyboxes;
 	std::vector<float> textured_vertices;
 	std::vector<float> textured_attributes;
 	std::vector<float> colormapped_attributes;
@@ -124,3 +131,4 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* vertices);
 void D_AddParticleToLists (particle_t* part);
 void D_AddSkyToLists (surf_t* surf);
+void D_AddSkyboxToLists (mtexinfo_t* textures);

@@ -449,6 +449,7 @@ struct Scene
 	VkDeviceSize usedInLatestColormappedBuffer;
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
+	ovrTextureSwapChain* skybox;
 };
 
 struct PerImage
@@ -666,6 +667,7 @@ static const int GPU_LEVEL = 3;
 extern m_state_t m_state;
 extern qboolean r_skip_fov_check;
 extern vec3_t r_modelorg_delta;
+extern qboolean r_skybox_as_rgba;
 
 PermissionsGrantStatus PermissionsGrantStatus = PermissionsPending;
 
@@ -1360,6 +1362,8 @@ void resetSceneResources(Scene& scene)
 		scene.aliasTextureCount = 0;
 		scene.spriteTextureCount = 0;
 		scene.resetDescriptorSetsCount++;
+		vrapi_DestroyTextureSwapChain(scene.skybox);
+		scene.skybox = VK_NULL_HANDLE;
 		scene.hostClearCount = host_clearcount;
 	}
 }
@@ -4726,6 +4730,7 @@ void android_main(struct android_app *app)
 				appState.PreviousLeftButtons = 0;
 				appState.PreviousRightButtons = 0;
 				appState.DefaultFOV = (int)Cvar_VariableValue("fov");
+				r_skybox_as_rgba = true;
 			}
 			if (appState.Mode == AppScreenMode)
 			{
@@ -6106,7 +6111,14 @@ void android_main(struct android_app *app)
 			double clearG;
 			double clearB;
 			double clearA;
-			if (d_lists.clear_color >= 0)
+			if (appState.Scene.skybox != VK_NULL_HANDLE)
+			{
+				clearR = 0;
+				clearG = 0;
+				clearB = 0;
+				clearA = 0;
+			}
+			else if (d_lists.clear_color >= 0)
 			{
 				auto color = d_8to24table[d_lists.clear_color];
 				clearR = (color & 255) / 255.0f;
@@ -7172,6 +7184,7 @@ void android_main(struct android_app *app)
 			VK(appState.Device.vkEndCommandBuffer(appState.Screen.CommandBuffer));
 			VK(appState.Device.vkQueueSubmit(appState.Context.queue, 1, &appState.Screen.SubmitInfo, VK_NULL_HANDLE));
 		}
+		std::vector<ovrLayerCube2> skyboxLayers;
 		ovrLayerProjection2 worldLayer = vrapi_DefaultLayerProjection2();
 		worldLayer.HeadPose = tracking.HeadPose;
 		for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
@@ -7181,10 +7194,151 @@ void android_main(struct android_app *app)
 			worldLayer.Textures[i].SwapChainIndex = appState.Views[view].index;
 			worldLayer.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_TanAngleMatrixFromProjection(&tracking.Eye[i].ProjectionMatrix);
 		}
+		if (appState.Scene.skybox != VK_NULL_HANDLE)
+		{
+			worldLayer.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
+			worldLayer.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
+		}
 		worldLayer.Header.Flags |= VRAPI_FRAME_LAYER_FLAG_CHROMATIC_ABERRATION_CORRECTION;
 		std::vector<ovrLayerCylinder2> cylinderLayers;
 		if (appState.Mode == AppWorldMode)
 		{
+			if (d_lists.last_skybox >= 0 && appState.Scene.skybox == VK_NULL_HANDLE)
+			{
+				int width = -1;
+				int height = -1;
+				auto& skybox = d_lists.skyboxes[0];
+				for (auto i = 0; i < 6; i++)
+				{
+					auto texture = skybox.textures[i].texture;
+					if (texture == nullptr)
+					{
+						width = -1;
+						height = -1;
+						break;
+					}
+					if (width < 0 && height < 0)
+					{
+						width = texture->width;
+						height = texture->height;
+					}
+					else if (width != texture->width || height != texture->height)
+					{
+						width = -1;
+						height = -1;
+						break;
+					}
+				}
+				if (width > 0 && height > 0)
+				{
+					appState.Scene.skybox = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_CUBE, VK_FORMAT_R8G8B8A8_UNORM, width, height, 1, 1);
+					VkBufferCreateInfo bufferCreateInfo { };
+					bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+					bufferCreateInfo.size = width * height * 4;
+					bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+					bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+					std::vector<VkBuffer> buffers(6);
+					VkMemoryRequirements memoryRequirements;
+					VkMemoryAllocateInfo memoryAllocateInfo { };
+					std::vector<VkDeviceMemory> memoryBlocks(6);
+					VkMappedMemoryRange mappedMemoryRange { };
+					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+					VkImageMemoryBarrier imageMemoryBarrier { };
+					imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+					imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+					imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					imageMemoryBarrier.subresourceRange.levelCount = 1;
+					imageMemoryBarrier.subresourceRange.layerCount = 1;
+					VkBufferImageCopy region { };
+					region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					region.imageSubresource.layerCount = 1;
+					region.imageExtent.width = width;
+					region.imageExtent.height = height;
+					region.imageExtent.depth = 1;
+					VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
+					VK(appState.Device.vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
+					auto image = vrapi_GetTextureSwapChainBufferVulkan(appState.Scene.skybox, 0);
+					imageMemoryBarrier.image = image;
+					for (auto i = 0; i < 6; i++)
+					{
+						VK(appState.Device.vkCreateBuffer(appState.Device.device, &bufferCreateInfo, nullptr, &buffers[i]));
+						VC(appState.Device.vkGetBufferMemoryRequirements(appState.Device.device, buffers[i], &memoryRequirements));
+						createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo);
+						VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &memoryBlocks[i]));
+						VK(appState.Device.vkBindBufferMemory(appState.Device.device, buffers[i], memoryBlocks[i], 0));
+						void* mapped;
+						VK(appState.Device.vkMapMemory(appState.Device.device, memoryBlocks[i], 0, memoryRequirements.size, 0, &mapped));
+						std::string name;
+						switch (i)
+						{
+							case 0:
+								name = "ft";
+								break;
+							case 1:
+								name = "bk";
+								break;
+							case 2:
+								name = "up";
+								break;
+							case 3:
+								name = "dn";
+								break;
+							case 4:
+								name = "rt";
+								break;
+							default:
+								name = "lf";
+								break;
+						}
+						auto index = 0;
+						while (index < 5)
+						{
+							if (name == std::string(skybox.textures[index].texture->name))
+							{
+								break;
+							}
+							index++;
+						}
+						memcpy(mapped, (byte*)skybox.textures[index].texture + sizeof(texture_t) + width * height, width * height * 4);
+						mappedMemoryRange.memory = memoryBlocks[i];
+						VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
+						VC(appState.Device.vkUnmapMemory(appState.Device.device, memoryBlocks[i]));
+						imageMemoryBarrier.subresourceRange.baseArrayLayer = i;
+						VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+						region.imageSubresource.baseArrayLayer = i;
+						VC(appState.Device.vkCmdCopyBufferToImage(setupCommandBuffer, buffers[i], image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+					}
+					VK(appState.Device.vkEndCommandBuffer(setupCommandBuffer));
+					VK(appState.Device.vkQueueSubmit(appState.Context.queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
+					VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
+					VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &setupCommandBuffer));
+					for (auto i = 0; i < 6; i++)
+					{
+						VC(appState.Device.vkDestroyBuffer(appState.Device.device, buffers[i], nullptr));
+						VC(appState.Device.vkFreeMemory(appState.Device.device, memoryBlocks[i], nullptr));
+					}
+				}
+			}
+			if (appState.Scene.skybox != VK_NULL_HANDLE)
+			{
+				const auto centerEyeViewMatrix = vrapi_GetViewMatrixFromPose(&tracking.HeadPose.Pose);
+				const auto rotation = ovrMatrix4f_CreateRotation(0, M_PI / 2, 0);
+				const auto rotatedEyeViewMatrix = ovrMatrix4f_Multiply(&centerEyeViewMatrix, &rotation);
+				const auto cubeMatrix = ovrMatrix4f_TanAngleMatrixForCubeMap(&rotatedEyeViewMatrix);
+				auto skyboxLayer = vrapi_DefaultLayerCube2();
+				skyboxLayer.HeadPose = tracking.HeadPose;
+				skyboxLayer.TexCoordsFromTanAngles = cubeMatrix;
+				skyboxLayer.Offset.x = 0;
+				skyboxLayer.Offset.y = 0;
+				skyboxLayer.Offset.z = 0;
+				for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
+				{
+					skyboxLayer.Textures[i].ColorSwapChain = appState.Scene.skybox;
+					skyboxLayer.Textures[i].SwapChainIndex = 0;
+				}
+				skyboxLayers.push_back(skyboxLayer);
+			}
 			auto console = vrapi_DefaultLayerCylinder2();
 			console.Header.ColorScale.x = 1;
 			console.Header.ColorScale.y = 1;
@@ -7331,6 +7485,10 @@ void android_main(struct android_app *app)
 			cylinderLayers.push_back(rightArrows);
 		}
 		std::vector<ovrLayerHeader2*> layers;
+		for (auto& layer : skyboxLayers)
+		{
+			layers.push_back((ovrLayerHeader2*)&layer.Header);
+		}
 		layers.push_back(&worldLayer.Header);
 		for (auto& layer : cylinderLayers)
 		{

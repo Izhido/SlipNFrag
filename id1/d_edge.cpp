@@ -37,7 +37,7 @@ extern void			R_TransformFrustum (void);
 vec3_t		transformed_modelorg;
 
 extern qboolean r_skyinitialized;
-
+extern mtexinfo_t r_skytexinfo[6];
 
 /*
 =============
@@ -227,7 +227,7 @@ void D_DrawSurfaces (void)
             {
                 if (d_uselists)
                 {
-                    // Do nothing for now
+                    D_AddSkyboxToLists(r_skytexinfo);
                 }
                 else
                 {

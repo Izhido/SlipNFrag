@@ -86,6 +86,8 @@ float	box_verts[8][3] = {
 		{1,1,1}
 };
 
+qboolean r_skybox_as_rgba;
+
 
 /*
 =============
@@ -404,7 +406,7 @@ typedef struct _TargaHeader {
 LoadTGA
 =============
 */
-void R_LoadTGA (const char *name, byte **pic, int *width, int *height)
+void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *width, int *height)
 {
 	int		columns, rows, numPixels;
 	byte	*pixbuf;
@@ -481,7 +483,12 @@ void R_LoadTGA (const char *name, byte **pic, int *width, int *height)
 	if (height)
 		*height = rows;
 
-	targa_rgba = new byte[numPixels*4];
+	auto offset = start;
+	if (extra)
+	{
+		offset += numPixels;
+	}
+	targa_rgba = new byte[offset + numPixels*4];
 	*pic = targa_rgba;
 
 	if (targa_header.id_length != 0)
@@ -489,7 +496,7 @@ void R_LoadTGA (const char *name, byte **pic, int *width, int *height)
 
 	if (targa_header.image_type==2) {  // Uncompressed, RGB images
 		for(row=rows-1; row>=0; row--) {
-			pixbuf = targa_rgba + row*columns*4;
+			pixbuf = targa_rgba + offset + row*columns*4;
 			for(column=0; column<columns; column++) {
 				unsigned char red,green,blue,alphabyte;
 				switch (targa_header.pixel_size) {
@@ -520,7 +527,7 @@ void R_LoadTGA (const char *name, byte **pic, int *width, int *height)
 	else if (targa_header.image_type==10) {   // Runlength encoded RGB images
 		unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
 		for(row=rows-1; row>=0; row--) {
-			pixbuf = targa_rgba + row*columns*4;
+			pixbuf = targa_rgba + offset + row*columns*4;
 			for(column=0; column<columns; ) {
 				packetHeader= *buf_p++;
 				packetSize = 1 + (packetHeader & 0x7f);
@@ -552,7 +559,7 @@ void R_LoadTGA (const char *name, byte **pic, int *width, int *height)
 								row--;
 							else
 								goto breakOut;
-							pixbuf = targa_rgba + row*columns*4;
+							pixbuf = targa_rgba + offset + row*columns*4;
 						}
 					}
 				}
@@ -586,7 +593,7 @@ void R_LoadTGA (const char *name, byte **pic, int *width, int *height)
 								row--;
 							else
 								goto breakOut;
-							pixbuf = targa_rgba + row*columns*4;
+							pixbuf = targa_rgba + offset + row*columns*4;
 						}
 					}
 				}
@@ -597,7 +604,7 @@ void R_LoadTGA (const char *name, byte **pic, int *width, int *height)
 }
 
 
-void R_LoadSkyImage(std::string& path, texture_t*& texture)
+void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 {
 	if (texture != nullptr)
 	{
@@ -607,15 +614,31 @@ void R_LoadSkyImage(std::string& path, texture_t*& texture)
 	byte* pic;
 	int width;
 	int height;
-	R_LoadTGA(path.c_str(), &pic, &width, &height);
+	if (r_skybox_as_rgba)
+	{
+		R_LoadTGA(path.c_str(), sizeof(texture_t), true, &pic, &width, &height);
+	}
+	else
+	{
+		R_LoadTGA(path.c_str(), 0, false, &pic, &width, &height);
+	}
 	if (pic != nullptr)
 	{
-		texture = (texture_t*)new byte[sizeof(texture_t) + width * height];
-		memset(texture, 0, sizeof(texture_t));
+        auto pixels = width * height;
+        if (r_skybox_as_rgba)
+        {
+			texture = (texture_t*)pic;
+        }
+		else
+		{
+			texture = (texture_t*)new byte[sizeof(texture_t) + pixels];
+		}
+		Q_memset(texture, 0, sizeof(texture_t));
+        Q_strcpy(texture->name, prefix.c_str());
 		texture->width = width;
 		texture->height = height;
 		texture->offsets[0] = sizeof(texture_t);
-		auto source = (byte*)pic;
+		auto source = pic;
 		auto target = (byte*)texture + sizeof(texture_t);
 		for (auto j = 0; j < height; j++)
 		{
@@ -645,7 +668,10 @@ void R_LoadSkyImage(std::string& path, texture_t*& texture)
 				*target++ = nearest / 3;
 			}
 		}
-		delete[] pic;
+        if (!r_skybox_as_rgba)
+        {
+			delete[] pic;
+        }
 	}
 }
 
@@ -664,8 +690,9 @@ void R_SetSkyBox (float rotate, vec3_t axis)
 
 	for (auto i=0 ; i<6 ; i++)
 	{
-		std::string path = "gfx/env/" + r_skyboxprefix + suf[r_skysideimage[i]] + ".tga";
-		R_LoadSkyImage(path, r_skytexinfo[i].texture);
+		std::string prefix = suf[r_skysideimage[i]];
+		std::string path = "gfx/env/" + r_skyboxprefix + prefix + ".tga";
+		R_LoadSkyImage(path, prefix, r_skytexinfo[i].texture);
         r_skyfaces[i].texturemins[0] = -r_skytexinfo[i].texture->width / 2;
         r_skyfaces[i].texturemins[1] = -r_skytexinfo[i].texture->height / 2;
         r_skyfaces[i].extents[0] = r_skytexinfo[i].texture->width;
