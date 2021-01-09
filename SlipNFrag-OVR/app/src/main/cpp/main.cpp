@@ -19,7 +19,6 @@
 #include "stb_image.h"
 #include "d_lists.h"
 
-#define DEBUG 1
 #define _DEBUG 1
 #define USE_API_DUMP 1
 
@@ -47,7 +46,7 @@ struct Instance
 {
 	void *loader;
 	VkInstance instance;
-	VkBool32 validate;
+	bool validate;
 	PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
 	PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
 	PFN_vkCreateInstance vkCreateInstance;
@@ -1843,9 +1842,9 @@ void android_main(struct android_app *app)
 	}
 	Instance instance { };
 #if defined(_DEBUG)
-	instance.validate = VK_TRUE;
+	instance.validate = true;
 #else
-	instance.validate = VK_FALSE;
+	instance.validate = false;
 #endif
 	auto libraryFilename = "libvulkan.so";
 	instance.loader = dlopen(libraryFilename, RTLD_NOW | RTLD_LOCAL);
@@ -1952,7 +1951,7 @@ void android_main(struct android_app *app)
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 	VkInstanceCreateInfo instanceCreateInfo { };
 	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	instanceCreateInfo.pNext = (instance.validate) ? &debugReportCallbackCreateInfo : nullptr;
+	instanceCreateInfo.pNext = (instance.validate ? &debugReportCallbackCreateInfo : nullptr);
 	instanceCreateInfo.pApplicationInfo = &appInfo;
 	instanceCreateInfo.enabledLayerCount = enabledLayerNames.size();
 	instanceCreateInfo.ppEnabledLayerNames = (const char *const *) (enabledLayerNames.size() != 0 ? enabledLayerNames.data() : nullptr);

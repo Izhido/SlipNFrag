@@ -494,112 +494,148 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
 	if (targa_header.id_length != 0)
 		buf_p += targa_header.id_length;  // skip TARGA image comment
 
-	if (targa_header.image_type==2) {  // Uncompressed, RGB images
-		for(row=rows-1; row>=0; row--) {
-			pixbuf = targa_rgba + offset + row*columns*4;
-			for(column=0; column<columns; column++) {
-				unsigned char red,green,blue,alphabyte;
-				switch (targa_header.pixel_size) {
-					case 24:
-
-						blue = *buf_p++;
-						green = *buf_p++;
-						red = *buf_p++;
-						*pixbuf++ = red;
-						*pixbuf++ = green;
-						*pixbuf++ = blue;
-						*pixbuf++ = 255;
-						break;
-					case 32:
-						blue = *buf_p++;
-						green = *buf_p++;
-						red = *buf_p++;
-						alphabyte = *buf_p++;
-						*pixbuf++ = red;
-						*pixbuf++ = green;
-						*pixbuf++ = blue;
-						*pixbuf++ = alphabyte;
-						break;
-				}
-			}
-		}
+	if (targa_header.image_type==2)  // Uncompressed, RGB images
+    {
+        if (targa_header.pixel_size == 24)
+        {
+            for(row=rows-1; row>=0; row--)
+            {
+                pixbuf = targa_rgba + offset + row*columns*4;
+                for(column=0; column<columns; column++)
+                {
+                    auto blue = *buf_p++;
+                    auto green = *buf_p++;
+                    auto red = *buf_p++;
+                    *pixbuf++ = red;
+                    *pixbuf++ = green;
+                    *pixbuf++ = blue;
+                    *pixbuf++ = 255;
+                }
+            }
+        }
+        else if (targa_header.pixel_size == 32)
+        {
+            auto span = columns * 4;
+            for(row=rows-1; row>=0; row--)
+            {
+                pixbuf = targa_rgba + offset + row*span;
+                Q_memcpy(pixbuf, buf_p, span);
+                pixbuf += span;
+                buf_p += span;
+            }
+        }
 	}
-	else if (targa_header.image_type==10) {   // Runlength encoded RGB images
-		unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
-		for(row=rows-1; row>=0; row--) {
-			pixbuf = targa_rgba + offset + row*columns*4;
-			for(column=0; column<columns; ) {
-				packetHeader= *buf_p++;
-				packetSize = 1 + (packetHeader & 0x7f);
-				if (packetHeader & 0x80) {        // run-length packet
-					switch (targa_header.pixel_size) {
-						case 24:
-							blue = *buf_p++;
-							green = *buf_p++;
-							red = *buf_p++;
-							alphabyte = 255;
-							break;
-						case 32:
-							blue = *buf_p++;
-							green = *buf_p++;
-							red = *buf_p++;
-							alphabyte = *buf_p++;
-							break;
-					}
+	else if (targa_header.image_type==10)   // Runlength encoded RGB images
+    {
+        if (targa_header.pixel_size == 24)
+        {
+            unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
+            for(row=rows-1; row>=0; row--) {
+                pixbuf = targa_rgba + offset + row*columns*4;
+                for(column=0; column<columns; ) {
+                    packetHeader= *buf_p++;
+                    packetSize = 1 + (packetHeader & 0x7f);
+                    if (packetHeader & 0x80) {        // run-length packet
+                        blue = *buf_p++;
+                        green = *buf_p++;
+                        red = *buf_p++;
+                        alphabyte = 255;
 
-					for(j=0;j<packetSize;j++) {
-						*pixbuf++=red;
-						*pixbuf++=green;
-						*pixbuf++=blue;
-						*pixbuf++=alphabyte;
-						column++;
-						if (column==columns) { // run spans across rows
-							column=0;
-							if (row>0)
-								row--;
-							else
-								goto breakOut;
-							pixbuf = targa_rgba + offset + row*columns*4;
-						}
-					}
-				}
-				else {                            // non run-length packet
-					for(j=0;j<packetSize;j++) {
-						switch (targa_header.pixel_size) {
-							case 24:
-								blue = *buf_p++;
-								green = *buf_p++;
-								red = *buf_p++;
-								*pixbuf++ = red;
-								*pixbuf++ = green;
-								*pixbuf++ = blue;
-								*pixbuf++ = 255;
-								break;
-							case 32:
-								blue = *buf_p++;
-								green = *buf_p++;
-								red = *buf_p++;
-								alphabyte = *buf_p++;
-								*pixbuf++ = red;
-								*pixbuf++ = green;
-								*pixbuf++ = blue;
-								*pixbuf++ = alphabyte;
-								break;
-						}
-						column++;
-						if (column==columns) { // pixel packet run spans across rows
-							column=0;
-							if (row>0)
-								row--;
-							else
-								goto breakOut;
-							pixbuf = targa_rgba + offset + row*columns*4;
-						}
-					}
-				}
-			}
-			breakOut:;
-		}
+                        for(j=0;j<packetSize;j++) {
+                            *pixbuf++=red;
+                            *pixbuf++=green;
+                            *pixbuf++=blue;
+                            *pixbuf++=alphabyte;
+                            column++;
+                            if (column==columns) { // run spans across rows
+                                column=0;
+                                if (row>0)
+                                    row--;
+                                else
+                                    goto breakOut24;
+                                pixbuf = targa_rgba + offset + row*columns*4;
+                            }
+                        }
+                    }
+                    else {                            // non run-length packet
+                        for(j=0;j<packetSize;j++) {
+                            blue = *buf_p++;
+                            green = *buf_p++;
+                            red = *buf_p++;
+                            *pixbuf++ = red;
+                            *pixbuf++ = green;
+                            *pixbuf++ = blue;
+                            *pixbuf++ = 255;
+                            column++;
+                            if (column==columns) { // pixel packet run spans across rows
+                                column=0;
+                                if (row>0)
+                                    row--;
+                                else
+                                    goto breakOut24;
+                                pixbuf = targa_rgba + offset + row*columns*4;
+                            }
+                        }
+                    }
+                }
+                breakOut24:;
+            }
+        }
+        else if (targa_header.pixel_size == 32)
+        {
+            unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
+            for(row=rows-1; row>=0; row--) {
+                pixbuf = targa_rgba + offset + row*columns*4;
+                for(column=0; column<columns; ) {
+                    packetHeader= *buf_p++;
+                    packetSize = 1 + (packetHeader & 0x7f);
+                    if (packetHeader & 0x80) {        // run-length packet
+                        blue = *buf_p++;
+                        green = *buf_p++;
+                        red = *buf_p++;
+                        alphabyte = *buf_p++;
+
+                        for(j=0;j<packetSize;j++) {
+                            *pixbuf++=red;
+                            *pixbuf++=green;
+                            *pixbuf++=blue;
+                            *pixbuf++=alphabyte;
+                            column++;
+                            if (column==columns) { // run spans across rows
+                                column=0;
+                                if (row>0)
+                                    row--;
+                                else
+                                    goto breakOut32;
+                                pixbuf = targa_rgba + offset + row*columns*4;
+                            }
+                        }
+                    }
+                    else {                            // non run-length packet
+                        for(j=0;j<packetSize;j++) {
+                            blue = *buf_p++;
+                            green = *buf_p++;
+                            red = *buf_p++;
+                            alphabyte = *buf_p++;
+                            *pixbuf++ = red;
+                            *pixbuf++ = green;
+                            *pixbuf++ = blue;
+                            *pixbuf++ = alphabyte;
+                            column++;
+                            if (column==columns) { // pixel packet run spans across rows
+                                column=0;
+                                if (row>0)
+                                    row--;
+                                else
+                                    goto breakOut32;
+                                pixbuf = targa_rgba + offset + row*columns*4;
+                            }
+                        }
+                    }
+                }
+                breakOut32:;
+            }
+        }
 	}
 }
 
@@ -640,36 +676,34 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 		texture->offsets[0] = sizeof(texture_t);
 		auto source = pic;
 		auto target = (byte*)texture + sizeof(texture_t);
-		for (auto j = 0; j < height; j++)
+		for (auto count = width * height; count > 0; count--)
 		{
-			for (auto i = 0; i < width; i++)
-			{
-				auto nearestDistanceSquared = INT_MAX;
-				int nearest;
-				auto r1 = *source++;
-				auto g1 = *source++;
-				auto b1 = *source++;
-				for (auto p = 0; p < 768; )
-				{
-					auto r2 = host_basepal[p++];
-					auto g2 = host_basepal[p++];
-					auto b2 = host_basepal[p++];
-					auto dr = r2 - r1;
-					auto dg = g2 - g1;
-					auto db = b2 - b1;
-					auto distanceSquared = dr * dr + dg * dg + db * db;
-					if (nearestDistanceSquared > distanceSquared)
-					{
-						nearestDistanceSquared = distanceSquared;
-						nearest = p - 3;
-					}
-				}
-				source++;
-				*target++ = nearest / 3;
-			}
+			auto r1 = *source++;
+			auto g1 = *source++;
+			auto b1 = *source++;
+			source++;
+            auto nearestDistanceSquared = INT_MAX;
+            auto nearestIndex = 0;
+            auto entry = 0;
+            for (auto i = 0; i < 256; i++)
+            {
+                auto r2 = host_basepal[entry++];
+                auto g2 = host_basepal[entry++];
+                auto b2 = host_basepal[entry++];
+                auto dr = r2 - r1;
+                auto dg = g2 - g1;
+                auto db = b2 - b1;
+                auto distanceSquared = dr * dr + dg * dg + db * db;
+                if (nearestDistanceSquared > distanceSquared)
+                {
+                    nearestDistanceSquared = distanceSquared;
+                    nearestIndex = i;
+                }
+            }
+            *target++ = nearestIndex;
 		}
-        if (!r_skybox_as_rgba)
-        {
+		if (!r_skybox_as_rgba)
+		{
 			delete[] pic;
         }
 	}
