@@ -99,7 +99,11 @@ void R_MarkLights (dlight_t *light, int index, mnode_t *node)
 			surf->dlightbits.clear();
 			surf->dlightframe = r_dlightframecount;
 		}
-        if (surf->dlightbits.size() <= index) { surf->dlightbits.resize(index + 1); } surf->dlightbits[index] = true;
+		while (surf->dlightbits.size() <= index)
+		{
+			surf->dlightbits.resize(surf->dlightbits.size() + MAX_DLIGHTS);
+		}
+        surf->dlightbits[index] = true;
 	}
 
 	R_MarkLights (light, index, node->children[0]);

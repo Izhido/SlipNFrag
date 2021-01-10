@@ -55,9 +55,6 @@ struct entity_t
 	int						visframe;		// last frame this entity was
 											//  found in an active leaf
 											
-	int						dlightframe;	// dynamic lighting
-	std::vector<bool> dlightbits;
-	
 // FIXME: could turn these into a union
 	int						trivial_accept;
 	struct mnode_s			*topnode;		// for bmodels, first world node

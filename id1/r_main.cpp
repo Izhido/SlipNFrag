@@ -148,8 +148,6 @@ void entity_t::Clear()
 	effects = 0;
 	skinnum = 0;
 	visframe = 0;
-	dlightframe = 0;
-	dlightbits.clear();
 	trivial_accept = 0;
 	topnode = nullptr;
 }
