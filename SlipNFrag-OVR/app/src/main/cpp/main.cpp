@@ -4,7 +4,6 @@
 #include "VrApi_Helpers.h"
 #include <android/log.h>
 #include "sys_ovr.h"
-#include <android_native_app_glue.h>
 #include <android/window.h>
 #include <sys/prctl.h>
 #include "VrApi.h"
@@ -18,646 +17,15 @@
 #include "in_ovr.h"
 #include "stb_image.h"
 #include "d_lists.h"
+#include "AppState.h"
+#include "MemoryAllocateInfo.h"
+#include "VulkanCallWrappers.h"
 
 #define _DEBUG 1
 #define USE_API_DUMP 1
 
-#define VK(func) checkErrors(func, #func);
-#define VC(func) func;
 #define MAX_UNUSED_COUNT 16
 #define MEMORY_BLOCK_SIZE 1024 * 1024
-
-enum PermissionsGrantStatus
-{
-	PermissionsPending,
-	PermissionsGranted,
-	PermissionsDenied
-};
-
-enum AppMode
-{
-	AppStartupMode,
-	AppScreenMode,
-	AppWorldMode,
-	AppNoGameDataMode
-};
-
-struct Instance
-{
-	void *loader;
-	VkInstance instance;
-	bool validate;
-	PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
-	PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
-	PFN_vkCreateInstance vkCreateInstance;
-	PFN_vkDestroyInstance vkDestroyInstance;
-	PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices;
-	PFN_vkGetPhysicalDeviceFeatures vkGetPhysicalDeviceFeatures;
-	PFN_vkGetPhysicalDeviceFeatures2KHR vkGetPhysicalDeviceFeatures2KHR;
-	PFN_vkGetPhysicalDeviceProperties vkGetPhysicalDeviceProperties;
-	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR;
-	PFN_vkGetPhysicalDeviceMemoryProperties vkGetPhysicalDeviceMemoryProperties;
-	PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties;
-	PFN_vkGetPhysicalDeviceFormatProperties vkGetPhysicalDeviceFormatProperties;
-	PFN_vkGetPhysicalDeviceImageFormatProperties vkGetPhysicalDeviceImageFormatProperties;
-	PFN_vkEnumerateDeviceExtensionProperties vkEnumerateDeviceExtensionProperties;
-	PFN_vkEnumerateDeviceLayerProperties vkEnumerateDeviceLayerProperties;
-	PFN_vkCreateDevice vkCreateDevice;
-	PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
-	PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;
-	PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT;
-	VkDebugReportCallbackEXT debugReportCallback;
-};
-
-struct Device
-{
-	std::vector<const char *> enabledExtensionNames;
-	uint32_t enabledLayerCount;
-	const char *enabledLayerNames[32];
-	VkPhysicalDevice physicalDevice;
-	VkPhysicalDeviceFeatures2 physicalDeviceFeatures;
-	VkPhysicalDeviceProperties2 physicalDeviceProperties;
-	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-	uint32_t queueFamilyCount;
-	VkQueueFamilyProperties *queueFamilyProperties;
-	std::vector<uint32_t> queueFamilyUsedQueues;
-	pthread_mutex_t queueFamilyMutex;
-	int workQueueFamilyIndex;
-	int presentQueueFamilyIndex;
-	bool supportsMultiview;
-	bool supportsFragmentDensity;
-	bool supportsLazyAllocate;
-	VkDevice device;
-	PFN_vkDestroyDevice vkDestroyDevice;
-	PFN_vkGetDeviceQueue vkGetDeviceQueue;
-	PFN_vkQueueSubmit vkQueueSubmit;
-	PFN_vkQueueWaitIdle vkQueueWaitIdle;
-	PFN_vkDeviceWaitIdle vkDeviceWaitIdle;
-	PFN_vkAllocateMemory vkAllocateMemory;
-	PFN_vkFreeMemory vkFreeMemory;
-	PFN_vkMapMemory vkMapMemory;
-	PFN_vkUnmapMemory vkUnmapMemory;
-	PFN_vkFlushMappedMemoryRanges vkFlushMappedMemoryRanges;
-	PFN_vkBindBufferMemory vkBindBufferMemory;
-	PFN_vkBindImageMemory vkBindImageMemory;
-	PFN_vkGetBufferMemoryRequirements vkGetBufferMemoryRequirements;
-	PFN_vkGetImageMemoryRequirements vkGetImageMemoryRequirements;
-	PFN_vkCreateFence vkCreateFence;
-	PFN_vkDestroyFence vkDestroyFence;
-	PFN_vkResetFences vkResetFences;
-	PFN_vkGetFenceStatus vkGetFenceStatus;
-	PFN_vkWaitForFences vkWaitForFences;
-	PFN_vkCreateBuffer vkCreateBuffer;
-	PFN_vkDestroyBuffer vkDestroyBuffer;
-	PFN_vkCreateImage vkCreateImage;
-	PFN_vkDestroyImage vkDestroyImage;
-	PFN_vkCreateImageView vkCreateImageView;
-	PFN_vkDestroyImageView vkDestroyImageView;
-	PFN_vkCreateShaderModule vkCreateShaderModule;
-	PFN_vkDestroyShaderModule vkDestroyShaderModule;
-	PFN_vkCreatePipelineCache vkCreatePipelineCache;
-	PFN_vkDestroyPipelineCache vkDestroyPipelineCache;
-	PFN_vkCreateGraphicsPipelines vkCreateGraphicsPipelines;
-	PFN_vkDestroyPipeline vkDestroyPipeline;
-	PFN_vkCreatePipelineLayout vkCreatePipelineLayout;
-	PFN_vkDestroyPipelineLayout vkDestroyPipelineLayout;
-	PFN_vkCreateSampler vkCreateSampler;
-	PFN_vkDestroySampler vkDestroySampler;
-	PFN_vkCreateDescriptorSetLayout vkCreateDescriptorSetLayout;
-	PFN_vkDestroyDescriptorSetLayout vkDestroyDescriptorSetLayout;
-	PFN_vkCreateDescriptorPool vkCreateDescriptorPool;
-	PFN_vkDestroyDescriptorPool vkDestroyDescriptorPool;
-	PFN_vkResetDescriptorPool vkResetDescriptorPool;
-	PFN_vkAllocateDescriptorSets vkAllocateDescriptorSets;
-	PFN_vkUpdateDescriptorSets vkUpdateDescriptorSets;
-	PFN_vkCreateFramebuffer vkCreateFramebuffer;
-	PFN_vkDestroyFramebuffer vkDestroyFramebuffer;
-	PFN_vkCreateRenderPass vkCreateRenderPass;
-	PFN_vkDestroyRenderPass vkDestroyRenderPass;
-	PFN_vkCreateCommandPool vkCreateCommandPool;
-	PFN_vkDestroyCommandPool vkDestroyCommandPool;
-	PFN_vkResetCommandPool vkResetCommandPool;
-	PFN_vkAllocateCommandBuffers vkAllocateCommandBuffers;
-	PFN_vkFreeCommandBuffers vkFreeCommandBuffers;
-	PFN_vkBeginCommandBuffer vkBeginCommandBuffer;
-	PFN_vkEndCommandBuffer vkEndCommandBuffer;
-	PFN_vkResetCommandBuffer vkResetCommandBuffer;
-	PFN_vkCmdBindPipeline vkCmdBindPipeline;
-	PFN_vkCmdSetViewport vkCmdSetViewport;
-	PFN_vkCmdSetScissor vkCmdSetScissor;
-	PFN_vkCmdBindDescriptorSets vkCmdBindDescriptorSets;
-	PFN_vkCmdBindIndexBuffer vkCmdBindIndexBuffer;
-	PFN_vkCmdBindVertexBuffers vkCmdBindVertexBuffers;
-	PFN_vkCmdBlitImage vkCmdBlitImage;
-	PFN_vkCmdDraw vkCmdDraw;
-	PFN_vkCmdDrawIndexed vkCmdDrawIndexed;
-	PFN_vkCmdCopyBuffer vkCmdCopyBuffer;
-	PFN_vkCmdCopyBufferToImage vkCmdCopyBufferToImage;
-	PFN_vkCmdPipelineBarrier vkCmdPipelineBarrier;
-	PFN_vkCmdPushConstants vkCmdPushConstants;
-	PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass;
-	PFN_vkCmdEndRenderPass vkCmdEndRenderPass;
-};
-
-struct Context
-{
-	Device* device;
-	uint32_t queueFamilyIndex;
-	uint32_t queueIndex;
-	VkQueue queue;
-	VkCommandPool commandPool;
-	VkPipelineCache pipelineCache;
-};
-
-struct Buffer
-{
-	Buffer* next;
-	int unusedCount;
-	size_t size;
-	VkMemoryPropertyFlags flags;
-	VkBuffer buffer;
-	VkDeviceMemory memory;
-	void* mapped;
-};
-
-struct BufferWithOffset
-{
-	VkDeviceSize offset;
-	Buffer* buffer;
-};
-
-struct TwinKey
-{
-	void* first;
-	void* second;
-};
-
-bool operator==(const TwinKey& first, const TwinKey& second)
-{
-	return (first.first == second.first && first.second == second.second);
-}
-
-namespace std
-{
-	template<> struct hash<TwinKey>
-	{
-		size_t operator()(const TwinKey& key) const
-		{
-			uint64_t h = hash<void*>()(key.first);
-			uint64_t k = hash<void*>()(key.second);
-			uint64_t m = 14313749767032793493;
-			const int r = 47;
-			k *= m;
-			k ^= k >> r;
-			k *= m;
-			h ^= k;
-			h *= m;
-			return h + 11400714819323198485;
-		}
-	};
-}
-
-struct Image
-{
-	int width;
-	int height;
-	int layerCount;
-	VkImage image;
-	VkDeviceMemory memory;
-	VkImageView view;
-};
-
-struct Texture
-{
-	Texture* next;
-	void* key;
-	int unusedCount;
-	int width;
-	int height;
-	int mipCount;
-	int layerCount;
-	VkImage image;
-	VkDeviceMemory memory;
-	VkImageView view;
-};
-
-struct SharedMemory
-{
-	VkDeviceMemory memory;
-	int referenceCount;
-};
-
-struct SharedMemoryTexture
-{
-	SharedMemoryTexture* next;
-	int unusedCount;
-	int width;
-	int height;
-	int mipCount;
-	int layerCount;
-	VkImage image;
-	SharedMemory* sharedMemory;
-	VkImageView view;
-};
-
-struct Allocation
-{
-	VkDeviceMemory memory;
-	std::vector<bool> allocated;
-	int allocatedCount;
-};
-
-struct AllocationList
-{
-	std::vector<Allocation> allocations;
-	VkDeviceSize blockSize;
-};
-
-struct TextureFromAllocation
-{
-	TextureFromAllocation* next;
-	TwinKey key;
-	int unusedCount;
-	int width;
-	int height;
-	int mipCount;
-	int layerCount;
-	VkImage image;
-	AllocationList* allocationList;
-	int allocationIndex;
-	int allocatedIndex;
-	VkImageView view;
-};
-
-struct LoadedTexture
-{
-    Texture* texture;
-    int offset;
-};
-
-struct LoadedSharedMemoryTexture
-{
-	SharedMemoryTexture* texture;
-	int offset;
-};
-
-struct LoadedTextureFromAllocation
-{
-	TextureFromAllocation* texture;
-	int offset;
-};
-
-struct LoadedColormappedTexture
-{
-    LoadedSharedMemoryTexture texture;
-    LoadedTexture colormap;
-};
-
-struct PipelineDescriptorResources
-{
-	bool created;
-	VkDescriptorPool descriptorPool;
-	VkDescriptorSet descriptorSet;
-};
-
-struct UpdatablePipelineDescriptorResources
-{
-	bool created;
-	VkDescriptorPool descriptorPool;
-	std::vector<VkDescriptorSet> descriptorSets;
-    std::vector<void*> bound;
-};
-
-struct CachedPipelineDescriptorResources
-{
-    bool created;
-    VkDescriptorPool descriptorPool;
-    std::vector<VkDescriptorSet> descriptorSets;
-    std::unordered_map<void*, VkDescriptorSet> cache;
-    int index;
-};
-
-struct CachedBuffers
-{
-	Buffer* buffers;
-	Buffer* oldBuffers;
-};
-
-struct CachedTextures
-{
-	Texture* textures;
-	Texture* oldTextures;
-};
-
-struct CachedSharedMemoryTextures
-{
-	SharedMemoryTexture* textures;
-	SharedMemoryTexture* oldTextures;
-};
-
-struct Pipeline
-{
-	std::vector<VkPipelineShaderStageCreateInfo> stages;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline pipeline;
-};
-
-struct PipelineAttributes
-{
-	std::vector<VkVertexInputAttributeDescription> vertexAttributes;
-	std::vector<VkVertexInputBindingDescription> vertexBindings;
-	VkPipelineVertexInputStateCreateInfo vertexInputState;
-	VkPipelineInputAssemblyStateCreateInfo inputAssemblyState;
-};
-
-struct Scene
-{
-	bool createdScene;
-	VkShaderModule texturedVertex;
-	VkShaderModule texturedFragment;
-	VkShaderModule surfaceVertex;
-	VkShaderModule spritesFragment;
-	VkShaderModule turbulentFragment;
-	VkShaderModule aliasVertex;
-	VkShaderModule aliasFragment;
-	VkShaderModule viewmodelVertex;
-	VkShaderModule viewmodelFragment;
-	VkShaderModule coloredVertex;
-	VkShaderModule coloredFragment;
-	VkShaderModule skyVertex;
-	VkShaderModule skyFragment;
-	VkShaderModule floorVertex;
-	VkShaderModule floorFragment;
-	VkShaderModule consoleVertex;
-	VkShaderModule consoleFragment;
-	VkDescriptorSetLayout singleBufferLayout;
-	VkDescriptorSetLayout bufferAndImageLayout;
-	VkDescriptorSetLayout singleImageLayout;
-	VkDescriptorSetLayout doubleImageLayout;
-	Pipeline textured;
-	Pipeline sprites;
-	Pipeline turbulent;
-	Pipeline alias;
-	Pipeline viewmodel;
-	Pipeline colored;
-	Pipeline sky;
-	Pipeline floor;
-	Pipeline console;
-	PipelineAttributes texturedAttributes;
-	PipelineAttributes colormappedAttributes;
-	PipelineAttributes coloredAttributes;
-	PipelineAttributes skyAttributes;
-	PipelineAttributes floorAttributes;
-	PipelineAttributes consoleAttributes;
-	Buffer matrices;
-	int numBuffers;
-	int hostClearCount;
-	CachedBuffers colormappedBuffers;
-	int resetDescriptorSetsCount;
-	TextureFromAllocation* oldSurfaces;
-	std::unordered_map<VkDeviceSize, AllocationList> allocations;
-	std::unordered_map<TwinKey, TextureFromAllocation*> surfaces;
-	CachedSharedMemoryTextures spriteTextures;
-	int spriteTextureCount;
-	CachedSharedMemoryTextures aliasTextures;
-	int aliasTextureCount;
-	CachedSharedMemoryTextures viewmodelTextures;
-	int viewmodelTextureCount;
-	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
-	std::unordered_map<void*, int> colormappedVerticesPerKey;
-	std::unordered_map<void*, int> colormappedTexCoordsPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> aliasPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> viewmodelsPerKey;
-	std::vector<BufferWithOffset> colormappedBufferList;
-	std::vector<LoadedTextureFromAllocation> surfaceList;
-	std::vector<LoadedSharedMemoryTexture> spriteList;
-	std::vector<LoadedTexture> turbulentList;
-	std::vector<LoadedColormappedTexture> aliasList;
-	std::vector<LoadedColormappedTexture> viewmodelList;
-	std::vector<int> newVertices;
-	std::vector<int> newTexCoords;
-	std::vector<int> aliasVerticesList;
-	std::vector<int> aliasTexCoordsList;
-	std::vector<int> viewmodelVerticesList;
-	std::vector<int> viewmodelTexCoordsList;
-	std::unordered_map<void*, Texture*> turbulentPerKey;
-	int floorOffset;
-	Texture* floorTexture;
-	std::vector<VkSampler> samplers;
-	Buffer* latestColormappedBuffer;
-	VkDeviceSize usedInLatestColormappedBuffer;
-	SharedMemory* latestTextureSharedMemory;
-	VkDeviceSize usedInLatestTextureSharedMemory;
-	ovrTextureSwapChain* skybox;
-};
-
-struct PerImage
-{
-	CachedBuffers sceneMatricesStagingBuffers;
-	CachedBuffers vertices;
-	CachedBuffers attributes;
-	CachedBuffers indices16;
-	CachedBuffers indices32;
-	CachedBuffers stagingBuffers;
-	CachedTextures turbulent;
-	CachedTextures colormaps;
-	int colormapCount;
-	int resetDescriptorSetsCount;
-	int paletteOffset;
-	int host_colormapOffset;
-	int skyOffset;
-	int paletteChanged;
-	Texture* palette;
-	Texture* host_colormap;
-	int hostClearCount;
-	Texture* sky;
-	PipelineDescriptorResources host_colormapResources;
-	PipelineDescriptorResources sceneMatricesResources;
-	PipelineDescriptorResources sceneMatricesAndPaletteResources;
-    UpdatablePipelineDescriptorResources texturedResources;
-    CachedPipelineDescriptorResources spriteResources;
-    UpdatablePipelineDescriptorResources colormapResources;
-    CachedPipelineDescriptorResources aliasResources;
-    CachedPipelineDescriptorResources viewmodelResources;
-	PipelineDescriptorResources skyResources;
-	PipelineDescriptorResources floorResources;
-	VkDeviceSize texturedVertexBase;
-	VkDeviceSize coloredVertexBase;
-	VkDeviceSize texturedAttributeBase;
-	VkDeviceSize colormappedAttributeBase;
-	VkDeviceSize vertexTransformBase;
-	VkDeviceSize colormappedIndex16Base;
-	VkDeviceSize coloredIndex16Base;
-	VkDeviceSize coloredIndex32Base;
-	VkCommandBuffer commandBuffer;
-	VkFence fence;
-	bool submitted;
-};
-
-struct Framebuffer
-{
-	int swapChainLength;
-	ovrTextureSwapChain *colorTextureSwapChain;
-	std::vector<Image> colorTextures;
-	std::vector<Image> fragmentDensityTextures;
-	std::vector<VkImageMemoryBarrier> startBarriers;
-	std::vector<VkImageMemoryBarrier> endBarriers;
-	VkImage depthImage;
-	VkDeviceMemory depthMemory;
-	VkImageView depthImageView;
-	Image renderTexture;
-	std::vector<VkFramebuffer> framebuffers;
-	int width;
-	int height;
-};
-
-struct ColorSwapChain
-{
-	int SwapChainLength;
-	ovrTextureSwapChain *SwapChain;
-	std::vector<VkImage> ColorTextures;
-	std::vector<VkImage> FragmentDensityTextures;
-	std::vector<VkExtent2D> FragmentDensityTextureSizes;
-};
-
-struct View
-{
-	Framebuffer framebuffer;
-	ColorSwapChain colorSwapChain;
-	int index;
-	std::vector<PerImage> perImage;
-};
-
-struct ConsolePerImage
-{
-	CachedBuffers vertices;
-	CachedBuffers indices;
-	CachedBuffers stagingBuffers;
-	PipelineDescriptorResources descriptorResources;
-	int paletteOffset;
-	int textureOffset;
-	int paletteChanged;
-	Texture* palette;
-	Texture* texture;
-	VkCommandBuffer commandBuffer;
-	VkFence fence;
-	bool submitted;
-};
-
-struct ConsoleFramebuffer
-{
-	int swapChainLength;
-	ovrTextureSwapChain *colorTextureSwapChain;
-	std::vector<Image> colorTextures;
-	std::vector<VkImageMemoryBarrier> startBarriers;
-	std::vector<VkImageMemoryBarrier> endBarriers;
-	Image renderTexture;
-	std::vector<VkFramebuffer> framebuffers;
-	int width;
-	int height;
-};
-
-struct ConsoleColorSwapChain
-{
-	int SwapChainLength;
-	ovrTextureSwapChain *SwapChain;
-	std::vector<VkImage> ColorTextures;
-};
-
-struct ConsoleView
-{
-	ConsoleFramebuffer framebuffer;
-	ConsoleColorSwapChain colorSwapChain;
-	int index;
-	std::vector<ConsolePerImage> perImage;
-};
-
-struct Console
-{
-	ovrTextureSwapChain* SwapChain;
-	VkCommandBuffer CommandBuffer;
-	VkRenderPass RenderPass;
-	ConsoleView View;
-};
-
-struct Panel
-{
-	ovrTextureSwapChain* SwapChain;
-	std::vector<uint32_t> Data;
-	VkImage Image;
-	Buffer Buffer;
-};
-
-struct Screen
-{
-	ovrTextureSwapChain* SwapChain;
-	std::vector<uint32_t> Data;
-	VkImage Image;
-	Buffer Buffer;
-	VkCommandBuffer CommandBuffer;
-	VkSubmitInfo SubmitInfo;
-};
-
-struct AppState
-{
-	ovrJava Java;
-	ANativeWindow *NativeWindow;
-	AppMode Mode;
-	AppMode PreviousMode;
-	bool StartupButtonsPressed;
-	bool Resumed;
-	double PausedTime;
-	Device Device;
-	Context Context;
-	ovrMobile *Ovr;
-	int DefaultFOV;
-	int FOV;
-	Scene Scene;
-	long long FrameIndex;
-	double DisplayTime;
-	int SwapInterval;
-	int CpuLevel;
-	int GpuLevel;
-	int MainThreadTid;
-	int RenderThreadTid;
-	bool UseFragmentDensity;
-	VkRenderPass RenderPass;
-	std::vector<View> Views;
-	ovrMatrix4f ViewMatrices[VRAPI_FRAME_LAYER_EYE_MAX];
-	ovrMatrix4f ProjectionMatrices[VRAPI_FRAME_LAYER_EYE_MAX];
-	float Yaw;
-	float Pitch;
-	float Roll;
-	float Scale;
-	int ScreenWidth;
-	int ScreenHeight;
-	int ConsoleWidth;
-	int ConsoleHeight;
-	Panel LeftArrows;
-	Panel RightArrows;
-	Screen Screen;
-	Console Console;
-	std::vector<float> ConsoleVertices;
-	std::vector<uint16_t> ConsoleIndices;
-	int FloorWidth;
-	int FloorHeight;
-	std::vector<uint32_t> FloorData;
-	std::vector<uint32_t> NoGameDataData;
-	double PreviousTime;
-	double CurrentTime;
-	uint32_t PreviousLeftButtons;
-	uint32_t PreviousRightButtons;
-	uint32_t LeftButtons;
-	uint32_t RightButtons;
-	ovrVector2f PreviousLeftJoystick;
-	ovrVector2f PreviousRightJoystick;
-	ovrVector2f LeftJoystick;
-	ovrVector2f RightJoystick;
-	bool NearViewModel;
-	double TimeInWorldMode;
-	bool ControlsMessageDisplayed;
-	bool ControlsMessageClosed;
-};
 
 static const int queueCount = 1;
 static const int CPU_LEVEL = 2;
@@ -679,111 +47,6 @@ extern "C" void Java_com_heribertodelgado_slipnfrag_MainActivity_notifyPermissio
 	else
 	{
 		PermissionsGrantStatus = PermissionsDenied;
-	}
-}
-
-void checkErrors(VkResult result, const char *function)
-{
-	if (result != VK_SUCCESS)
-	{
-		const char* errorString;
-		switch (result)
-		{
-			case VK_NOT_READY:
-				errorString = "VK_NOT_READY";
-				break;
-			case VK_TIMEOUT:
-				errorString = "VK_TIMEOUT";
-				break;
-			case VK_EVENT_SET:
-				errorString = "VK_EVENT_SET";
-				break;
-			case VK_EVENT_RESET:
-				errorString = "VK_EVENT_RESET";
-				break;
-			case VK_INCOMPLETE:
-				errorString = "VK_INCOMPLETE";
-				break;
-			case VK_ERROR_OUT_OF_HOST_MEMORY:
-				errorString = "VK_ERROR_OUT_OF_HOST_MEMORY";
-				break;
-			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-				errorString = "VK_ERROR_OUT_OF_DEVICE_MEMORY";
-				break;
-			case VK_ERROR_INITIALIZATION_FAILED:
-				errorString = "VK_ERROR_INITIALIZATION_FAILED";
-				break;
-			case VK_ERROR_DEVICE_LOST:
-				errorString = "VK_ERROR_DEVICE_LOST";
-				break;
-			case VK_ERROR_MEMORY_MAP_FAILED:
-				errorString = "VK_ERROR_MEMORY_MAP_FAILED";
-				break;
-			case VK_ERROR_LAYER_NOT_PRESENT:
-				errorString = "VK_ERROR_LAYER_NOT_PRESENT";
-				break;
-			case VK_ERROR_EXTENSION_NOT_PRESENT:
-				errorString = "VK_ERROR_EXTENSION_NOT_PRESENT";
-				break;
-			case VK_ERROR_FEATURE_NOT_PRESENT:
-				errorString = "VK_ERROR_FEATURE_NOT_PRESENT";
-				break;
-			case VK_ERROR_INCOMPATIBLE_DRIVER:
-				errorString = "VK_ERROR_INCOMPATIBLE_DRIVER";
-				break;
-			case VK_ERROR_TOO_MANY_OBJECTS:
-				errorString = "VK_ERROR_TOO_MANY_OBJECTS";
-				break;
-			case VK_ERROR_FORMAT_NOT_SUPPORTED:
-				errorString = "VK_ERROR_FORMAT_NOT_SUPPORTED";
-				break;
-			case VK_ERROR_FRAGMENTED_POOL:
-				errorString = "VK_ERROR_FRAGMENTED_POOL";
-				break;
-			case VK_ERROR_OUT_OF_POOL_MEMORY:
-				errorString = "VK_ERROR_OUT_OF_POOL_MEMORY";
-				break;
-			case VK_ERROR_INVALID_EXTERNAL_HANDLE:
-				errorString = "VK_ERROR_INVALID_EXTERNAL_HANDLE";
-				break;
-			case VK_ERROR_SURFACE_LOST_KHR:
-				errorString = "VK_ERROR_SURFACE_LOST_KHR";
-				break;
-			case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
-				errorString = "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR";
-				break;
-			case VK_SUBOPTIMAL_KHR:
-				errorString = "VK_SUBOPTIMAL_KHR";
-				break;
-			case VK_ERROR_OUT_OF_DATE_KHR:
-				errorString = "VK_ERROR_OUT_OF_DATE_KHR";
-				break;
-			case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
-				errorString = "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
-				break;
-			case VK_ERROR_VALIDATION_FAILED_EXT:
-				errorString = "VK_ERROR_VALIDATION_FAILED_EXT";
-				break;
-			case VK_ERROR_INVALID_SHADER_NV:
-				errorString = "VK_ERROR_INVALID_SHADER_NV";
-				break;
-			case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
-				errorString = "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
-				break;
-			case VK_ERROR_FRAGMENTATION_EXT:
-				errorString = "VK_ERROR_FRAGMENTATION_EXT";
-				break;
-			case VK_ERROR_NOT_PERMITTED_EXT:
-				errorString = "VK_ERROR_NOT_PERMITTED_EXT";
-				break;
-			case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:
-				errorString = "VK_ERROR_INVALID_DEVICE_ADDRESS_EXT";
-				break;
-			default:
-				errorString = "unknown";
-		}
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Vulkan error: %s: %s\n", function, errorString);
-		exit(0);
 	}
 }
 
@@ -819,71 +82,6 @@ double getTime()
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	return (now.tv_sec * 1e9 + now.tv_nsec) * 0.000000001;
-}
-
-void createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties, VkMemoryAllocateInfo& memoryAllocateInfo)
-{
-	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memoryAllocateInfo.allocationSize = memoryRequirements.size;
-	auto found = false;
-	for (auto i = 0; i < appState.Context.device->physicalDeviceMemoryProperties.memoryTypeCount; i++)
-	{
-		if ((memoryRequirements.memoryTypeBits & (1 << i)) != 0)
-		{
-			const VkFlags propertyFlags = appState.Context.device->physicalDeviceMemoryProperties.memoryTypes[i].propertyFlags;
-			if ((propertyFlags & properties) == properties)
-			{
-				found = true;
-				memoryAllocateInfo.memoryTypeIndex = i;
-				break;
-			}
-		}
-	}
-	if (!found)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "createMemoryAllocateInfo(): Memory type %d with properties %d not found.", memoryRequirements.memoryTypeBits, properties);
-		vrapi_Shutdown();
-		exit(0);
-	}
-}
-
-void createBuffer(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, Buffer*& buffer)
-{
-	buffer = new Buffer { };
-	buffer->size = size;
-	VkBufferCreateInfo bufferCreateInfo { };
-	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferCreateInfo.size = buffer->size;
-	bufferCreateInfo.usage = usage;
-	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	VK(appState.Device.vkCreateBuffer(appState.Device.device, &bufferCreateInfo, nullptr, &buffer->buffer));
-	buffer->flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-	VkMemoryRequirements memoryRequirements;
-	VC(appState.Device.vkGetBufferMemoryRequirements(appState.Device.device, buffer->buffer, &memoryRequirements));
-	VkMemoryAllocateInfo memoryAllocateInfo { };
-	createMemoryAllocateInfo(appState, memoryRequirements, buffer->flags, memoryAllocateInfo);
-	VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &buffer->memory));
-	VK(appState.Device.vkBindBufferMemory(appState.Device.device, buffer->buffer, buffer->memory, 0));
-}
-
-void createVertexBuffer(AppState& appState, VkDeviceSize size, Buffer*& buffer)
-{
-	createBuffer(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, buffer);
-}
-
-void createIndexBuffer(AppState& appState, VkDeviceSize size, Buffer*& buffer)
-{
-	createBuffer(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, buffer);
-}
-
-void createStagingBuffer(AppState& appState, VkDeviceSize size, Buffer*& buffer)
-{
-	createBuffer(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, buffer);
-}
-
-void createStagingStorageBuffer(AppState& appState, VkDeviceSize size, Buffer*& buffer)
-{
-	createBuffer(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, buffer);
 }
 
 void createShaderModule(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule)
@@ -5017,7 +4215,8 @@ void android_main(struct android_app *app)
 			}
 			else
 			{
-				createStagingBuffer(appState, appState.Scene.matrices.size, stagingBuffer);
+				stagingBuffer = new Buffer();
+				stagingBuffer->CreateStagingBuffer(appState, appState.Scene.matrices.size);
 			}
 			moveBufferToFront(stagingBuffer, perImage.sceneMatricesStagingBuffers);
 			VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBuffer->size, 0, &stagingBuffer->mapped));
@@ -5090,7 +4289,8 @@ void android_main(struct android_app *app)
 				}
 				if (vertices == nullptr)
 				{
-					createVertexBuffer(appState, verticesSize + verticesSize / 4, vertices);
+					vertices = new Buffer();
+					vertices->CreateVertexBuffer(appState, verticesSize + verticesSize / 4);
 				}
 				moveBufferToFront(vertices, perImage.vertices);
 				VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, verticesSize, 0, &vertices->mapped));
@@ -5183,7 +4383,8 @@ void android_main(struct android_app *app)
 						{
 							size = verticesOffset;
 						}
-						createVertexBuffer(appState, size, buffer);
+						buffer = new Buffer();
+						buffer->CreateVertexBuffer(appState, size);
 						moveBufferToFront(buffer, appState.Scene.colormappedBuffers);
 						appState.Scene.latestColormappedBuffer = buffer;
 						appState.Scene.usedInLatestColormappedBuffer = 0;
@@ -5245,7 +4446,8 @@ void android_main(struct android_app *app)
 						{
 							size = texCoordsOffset;
 						}
-						createVertexBuffer(appState, size, buffer);
+						buffer = new Buffer();
+						buffer->CreateVertexBuffer(appState, size);
 						moveBufferToFront(buffer, appState.Scene.colormappedBuffers);
 						appState.Scene.latestColormappedBuffer = buffer;
 						appState.Scene.usedInLatestColormappedBuffer = 0;
@@ -5341,7 +4543,8 @@ void android_main(struct android_app *app)
 						{
 							size = verticesOffset;
 						}
-						createVertexBuffer(appState, size, buffer);
+						buffer = new Buffer();
+						buffer->CreateVertexBuffer(appState, size);
 						moveBufferToFront(buffer, appState.Scene.colormappedBuffers);
 						appState.Scene.latestColormappedBuffer = buffer;
 						appState.Scene.usedInLatestColormappedBuffer = 0;
@@ -5403,7 +4606,8 @@ void android_main(struct android_app *app)
 						{
 							size = texCoordsOffset;
 						}
-						createVertexBuffer(appState, size, buffer);
+						buffer = new Buffer();
+						buffer->CreateVertexBuffer(appState, size);
 						moveBufferToFront(buffer, appState.Scene.colormappedBuffers);
 						appState.Scene.latestColormappedBuffer = buffer;
 						appState.Scene.usedInLatestColormappedBuffer = 0;
@@ -5467,7 +4671,8 @@ void android_main(struct android_app *app)
 				}
 				if (attributes == nullptr)
 				{
-					createVertexBuffer(appState, attributesSize + attributesSize / 4, attributes);
+					attributes = new Buffer();
+					attributes->CreateVertexBuffer(appState, attributesSize + attributesSize / 4);
 				}
 				moveBufferToFront(attributes, perImage.attributes);
 				VK(appState.Device.vkMapMemory(appState.Device.device, attributes->memory, 0, attributesSize, 0, &attributes->mapped));
@@ -5554,7 +4759,8 @@ void android_main(struct android_app *app)
 					}
 					if (indices16 == nullptr)
 					{
-						createIndexBuffer(appState, indices16Size + indices16Size / 4, indices16);
+						indices16 = new Buffer();
+						indices16->CreateIndexBuffer(appState, indices16Size + indices16Size / 4);
 					}
 					moveBufferToFront(indices16, perImage.indices16);
 					VK(appState.Device.vkMapMemory(appState.Device.device, indices16->memory, 0, indices16Size, 0, &indices16->mapped));
@@ -5601,7 +4807,8 @@ void android_main(struct android_app *app)
 					}
 					if (indices32 == nullptr)
 					{
-						createIndexBuffer(appState, indices32Size + indices32Size / 4, indices32);
+						indices32 = new Buffer();
+						indices32->CreateIndexBuffer(appState, indices32Size + indices32Size / 4);
 					}
 					moveBufferToFront(indices32, perImage.indices32);
 					VK(appState.Device.vkMapMemory(appState.Device.device, indices32->memory, 0, indices32Size, 0, &indices32->mapped));
@@ -5921,7 +5128,8 @@ void android_main(struct android_app *app)
 				}
 				if (stagingBuffer == nullptr)
 				{
-					createStagingStorageBuffer(appState, stagingBufferSize + stagingBufferSize / 4, stagingBuffer);
+					stagingBuffer = new Buffer();
+					stagingBuffer->CreateStagingStorageBuffer(appState, stagingBufferSize + stagingBufferSize / 4);
 				}
 				moveBufferToFront(stagingBuffer, perImage.stagingBuffers);
 				VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
@@ -6996,7 +6204,8 @@ void android_main(struct android_app *app)
 			}
 			else
 			{
-				createVertexBuffer(appState, appState.ConsoleVertices.size() * sizeof(float), vertices);
+				vertices = new Buffer();
+				vertices->CreateVertexBuffer(appState, appState.ConsoleVertices.size() * sizeof(float));
 			}
 			moveBufferToFront(vertices, perImage.vertices);
 			VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, vertices->size, 0, &vertices->mapped));
@@ -7018,7 +6227,8 @@ void android_main(struct android_app *app)
 			}
 			else
 			{
-				createIndexBuffer(appState, appState.ConsoleIndices.size() * sizeof(uint16_t), indices);
+				indices = new Buffer();
+				indices->CreateIndexBuffer(appState, appState.ConsoleIndices.size() * sizeof(uint16_t));
 			}
 			moveBufferToFront(indices, perImage.indices);
 			VK(appState.Device.vkMapMemory(appState.Device.device, indices->memory, 0, indices->size, 0, &indices->mapped));
@@ -7065,7 +6275,8 @@ void android_main(struct android_app *app)
 			}
 			if (stagingBuffer == nullptr)
 			{
-				createStagingBuffer(appState, stagingBufferSize, stagingBuffer);
+				stagingBuffer = new Buffer();
+				stagingBuffer->CreateStagingBuffer(appState, stagingBufferSize);
 			}
 			moveBufferToFront(stagingBuffer, perImage.stagingBuffers);
 			VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
