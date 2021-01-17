@@ -1,6 +1,9 @@
 #pragma once
 
 #include <vector>
+#include "Instance.h"
+
+struct AppState;
 
 struct Device
 {
@@ -90,4 +93,6 @@ struct Device
 	PFN_vkCmdPushConstants vkCmdPushConstants;
 	PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass;
 	PFN_vkCmdEndRenderPass vkCmdEndRenderPass;
+
+	void Bind(AppState& appState, Instance& instance);
 };

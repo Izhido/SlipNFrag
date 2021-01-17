@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+
 struct Instance
 {
 	void *loader;
@@ -25,4 +27,6 @@ struct Instance
 	PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;
 	PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT;
 	VkDebugReportCallbackEXT debugReportCallback;
+
+	void Bind();
 };
