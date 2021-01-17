@@ -1,7 +1,13 @@
 #pragma once
 
+#include "Texture.h"
+
 struct CachedTextures
 {
-	Texture* textures;
-	Texture* oldTextures;
+	Texture* textures = nullptr;
+	Texture* oldTextures = nullptr;
+
+	void Reset(AppState& appState);
+	void MoveToFront(Texture* texture);
+	void Delete(AppState& appState);
 };

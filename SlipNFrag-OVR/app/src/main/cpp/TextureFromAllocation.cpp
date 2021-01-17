@@ -2,8 +2,7 @@
 #include "AppState.h"
 #include "VulkanCallWrappers.h"
 #include "MemoryAllocateInfo.h"
-
-#define MEMORY_BLOCK_SIZE 1024 * 1024
+#include "Constants.h"
 
 void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage)
 {

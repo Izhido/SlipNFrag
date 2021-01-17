@@ -20,12 +20,7 @@
 #include "AppState.h"
 #include "MemoryAllocateInfo.h"
 #include "VulkanCallWrappers.h"
-
-#define _DEBUG 1
-#define USE_API_DUMP 1
-
-#define MAX_UNUSED_COUNT 16
-#define MEMORY_BLOCK_SIZE 1024 * 1024
+#include "Constants.h"
 
 static const int queueCount = 1;
 static const int CPU_LEVEL = 2;
@@ -102,50 +97,6 @@ void createShaderModule(AppState& appState, struct android_app* app, const char*
 	VK(appState.Device.vkCreateShaderModule(appState.Device.device, &moduleCreateInfo, nullptr, shaderModule));
 }
 
-void deleteOldBuffers(AppState& appState, CachedBuffers& cachedBuffers)
-{
-	for (Buffer** b = &cachedBuffers.oldBuffers; *b != nullptr; )
-	{
-		(*b)->unusedCount++;
-		if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
-		{
-			Buffer* next = (*b)->next;
-			if ((*b)->mapped != nullptr)
-			{
-				VC(appState.Device.vkUnmapMemory(appState.Device.device, (*b)->memory));
-			}
-			VC(appState.Device.vkDestroyBuffer(appState.Device.device, (*b)->buffer, nullptr));
-			if ((*b)->memory != VK_NULL_HANDLE)
-			{
-				VC(appState.Device.vkFreeMemory(appState.Device.device, (*b)->memory, nullptr));
-			}
-			delete *b;
-			*b = next;
-		}
-		else
-		{
-			b = &(*b)->next;
-		}
-	}
-}
-
-void disposeFrontBuffers(CachedBuffers& cachedBuffers)
-{
-	for (Buffer* b = cachedBuffers.buffers, *next = nullptr; b != nullptr; b = next)
-	{
-		next = b->next;
-		b->next = cachedBuffers.oldBuffers;
-		cachedBuffers.oldBuffers = b;
-	}
-	cachedBuffers.buffers = nullptr;
-}
-
-void resetCachedBuffers(AppState& appState, CachedBuffers& cachedBuffers)
-{
-	deleteOldBuffers(appState, cachedBuffers);
-	disposeFrontBuffers(cachedBuffers);
-}
-
 void deleteImage(AppState& appState, Image* image)
 {
 	VC(appState.Device.vkDestroyImageView(appState.Device.device, image->view, nullptr));
@@ -153,28 +104,6 @@ void deleteImage(AppState& appState, Image* image)
 	if (image->memory != VK_NULL_HANDLE)
 	{
 		VC(appState.Device.vkFreeMemory(appState.Device.device, image->memory, nullptr));
-	}
-}
-
-void deleteOldTextures(AppState& appState, Texture** oldTextures)
-{
-	if (oldTextures != nullptr)
-	{
-		for (Texture** t = oldTextures; *t != nullptr; )
-		{
-			(*t)->unusedCount++;
-			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
-			{
-				Texture* next = (*t)->next;
-				(*t)->Delete(appState);
-				delete *t;
-				*t = next;
-			}
-			else
-			{
-				t = &(*t)->next;
-			}
-		}
 	}
 }
 
@@ -222,28 +151,6 @@ void deleteOldTexturesFromAllocations(AppState& appState, TextureFromAllocation*
 	}
 }
 
-void disposeFrontTextures(CachedTextures& cachedTextures)
-{
-	for (Texture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
-	{
-		next = t->next;
-		t->next = cachedTextures.oldTextures;
-		cachedTextures.oldTextures = t;
-	}
-	cachedTextures.textures = nullptr;
-}
-
-void disposeFrontSharedMemoryTextures(CachedSharedMemoryTextures& cachedTextures)
-{
-	for (SharedMemoryTexture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
-	{
-		next = t->next;
-		t->next = cachedTextures.oldTextures;
-		cachedTextures.oldTextures = t;
-	}
-	cachedTextures.textures = nullptr;
-}
-
 void resetSceneResources(Scene& scene)
 {
 	if (scene.hostClearCount != host_clearcount)
@@ -258,9 +165,9 @@ void resetSceneResources(Scene& scene)
 		scene.colormappedTexCoordsPerKey.clear();
 		scene.colormappedVerticesPerKey.clear();
 		scene.spritesPerKey.clear();
-		disposeFrontSharedMemoryTextures(scene.viewmodelTextures);
-		disposeFrontSharedMemoryTextures(scene.aliasTextures);
-		disposeFrontSharedMemoryTextures(scene.spriteTextures);
+		scene.viewmodelTextures.DisposeFront();
+		scene.aliasTextures.DisposeFront();
+		scene.spriteTextures.DisposeFront();
 		for (auto entry = scene.surfaces.begin(); entry != scene.surfaces.end(); entry++)
 		{
 			for (TextureFromAllocation** t = &entry->second; *t != nullptr; )
@@ -272,7 +179,7 @@ void resetSceneResources(Scene& scene)
 			}
 		}
 		scene.surfaces.clear();
-		disposeFrontBuffers(scene.colormappedBuffers);
+		scene.colormappedBuffers.DisposeFront();
 		scene.viewmodelTextureCount = 0;
 		scene.aliasTextureCount = 0;
 		scene.spriteTextureCount = 0;
@@ -280,97 +187,6 @@ void resetSceneResources(Scene& scene)
 		vrapi_DestroyTextureSwapChain(scene.skybox);
 		scene.skybox = VK_NULL_HANDLE;
 		scene.hostClearCount = host_clearcount;
-	}
-}
-
-void resetCachedTextures(AppState& appState, CachedTextures& cachedTextures)
-{
-	deleteOldTextures(appState, &cachedTextures.oldTextures);
-	disposeFrontTextures(cachedTextures);
-}
-
-void moveBufferToFront(Buffer* buffer, CachedBuffers& cachedBuffers)
-{
-	buffer->unusedCount = 0;
-	buffer->next = cachedBuffers.buffers;
-	cachedBuffers.buffers = buffer;
-}
-
-void moveTextureToFront(Texture* texture, CachedTextures& cachedTextures)
-{
-	texture->unusedCount = 0;
-	texture->next = cachedTextures.textures;
-	cachedTextures.textures = texture;
-}
-
-void moveSharedMemoryTextureToFront(SharedMemoryTexture* texture, CachedSharedMemoryTextures& cachedTextures)
-{
-	texture->unusedCount = 0;
-	texture->next = cachedTextures.textures;
-	cachedTextures.textures = texture;
-}
-
-void deleteCachedBuffers(AppState& appState, CachedBuffers& cachedBuffers)
-{
-	for (Buffer* b = cachedBuffers.buffers, *next = nullptr; b != nullptr; b = next)
-	{
-		next = b->next;
-		if (b->mapped != nullptr)
-		{
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, b->memory));
-		}
-		VC(appState.Device.vkDestroyBuffer(appState.Device.device, b->buffer, nullptr));
-		if (b->buffer != VK_NULL_HANDLE)
-		{
-			VC(appState.Device.vkFreeMemory(appState.Device.device, b->memory, nullptr));
-		}
-		delete b;
-	}
-	for (Buffer* b = cachedBuffers.oldBuffers, *next = nullptr; b != nullptr; b = next)
-	{
-		next = b->next;
-		if (b->mapped != nullptr)
-		{
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, b->memory));
-		}
-		VC(appState.Device.vkDestroyBuffer(appState.Device.device, b->buffer, nullptr));
-		if (b->buffer != VK_NULL_HANDLE)
-		{
-			VC(appState.Device.vkFreeMemory(appState.Device.device, b->memory, nullptr));
-		}
-		delete b;
-	}
-}
-
-void deleteCachedTextures(AppState& appState, CachedTextures& cachedTextures)
-{
-	for (Texture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
-	{
-		next = t->next;
-		t->Delete(appState);
-		delete t;
-	}
-	for (Texture* t = cachedTextures.oldTextures, *next = nullptr; t != nullptr; t = next)
-	{
-		next = t->next;
-		t->Delete(appState);
-		delete t;
-	}
-}
-
-void deleteCachedSharedMemoryTextures(AppState& appState, CachedSharedMemoryTextures& cachedTextures)
-{
-	for (SharedMemoryTexture* t = cachedTextures.textures, *next = nullptr; t != nullptr; t = next)
-	{
-		next = t->next;
-		t->Delete(appState);
-		delete t;
-	}
-	for (SharedMemoryTexture* t = cachedTextures.oldTextures, *next = nullptr; t != nullptr; t = next)
-	{
-		next = t->next;
-		t->Delete(appState);
-		delete t;
 	}
 }
 
@@ -3496,7 +3312,7 @@ void android_main(struct android_app *app)
 		deleteOldSharedMemoryTextures(appState, &appState.Scene.aliasTextures.oldTextures);
 		deleteOldSharedMemoryTextures(appState, &appState.Scene.spriteTextures.oldTextures);
 		deleteOldTexturesFromAllocations(appState, &appState.Scene.oldSurfaces);
-		deleteOldBuffers(appState, appState.Scene.colormappedBuffers);
+		appState.Scene.colormappedBuffers.DeleteOld(appState);
 		for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 		{
 			appState.ViewMatrices[i] = ovrMatrix4f_Transpose(&tracking.Eye[i].ViewMatrix);
@@ -3656,14 +3472,14 @@ void android_main(struct android_app *app)
 				VK(appState.Device.vkResetFences(appState.Device.device, 1, &perImage.fence));
 				perImage.submitted = false;
 			}
-			resetCachedBuffers(appState, perImage.sceneMatricesStagingBuffers);
-			resetCachedBuffers(appState, perImage.vertices);
-			resetCachedBuffers(appState, perImage.attributes);
-			resetCachedBuffers(appState, perImage.indices16);
-			resetCachedBuffers(appState, perImage.indices32);
-			resetCachedBuffers(appState, perImage.stagingBuffers);
-			resetCachedTextures(appState, perImage.turbulent);
-			resetCachedTextures(appState, perImage.colormaps);
+			perImage.sceneMatricesStagingBuffers.Reset(appState);
+			perImage.vertices.Reset(appState);
+			perImage.attributes.Reset(appState);
+			perImage.indices16.Reset(appState);
+			perImage.indices32.Reset(appState);
+			perImage.stagingBuffers.Reset(appState);
+			perImage.turbulent.Reset(appState);
+			perImage.colormaps.Reset(appState);
 			perImage.colormapCount = 0;
 			VK(appState.Device.vkResetCommandBuffer(perImage.commandBuffer, 0));
 			VK(appState.Device.vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
@@ -3683,7 +3499,7 @@ void android_main(struct android_app *app)
 				stagingBuffer = new Buffer();
 				stagingBuffer->CreateStagingBuffer(appState, appState.Scene.matrices.size);
 			}
-			moveBufferToFront(stagingBuffer, perImage.sceneMatricesStagingBuffers);
+			perImage.sceneMatricesStagingBuffers.MoveToFront(stagingBuffer);
 			VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBuffer->size, 0, &stagingBuffer->mapped));
 			ovrMatrix4f *sceneMatrices = nullptr;
 			*((void**)&sceneMatrices) = stagingBuffer->mapped;
@@ -3757,7 +3573,7 @@ void android_main(struct android_app *app)
 					vertices = new Buffer();
 					vertices->CreateVertexBuffer(appState, verticesSize + verticesSize / 4);
 				}
-				moveBufferToFront(vertices, perImage.vertices);
+				perImage.vertices.MoveToFront(vertices);
 				VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, verticesSize, 0, &vertices->mapped));
 				if (floorVerticesSize > 0)
 				{
@@ -3850,7 +3666,7 @@ void android_main(struct android_app *app)
 						}
 						buffer = new Buffer();
 						buffer->CreateVertexBuffer(appState, size);
-						moveBufferToFront(buffer, appState.Scene.colormappedBuffers);
+						appState.Scene.colormappedBuffers.MoveToFront(buffer);
 						appState.Scene.latestColormappedBuffer = buffer;
 						appState.Scene.usedInLatestColormappedBuffer = 0;
 					}
@@ -3913,7 +3729,7 @@ void android_main(struct android_app *app)
 						}
 						buffer = new Buffer();
 						buffer->CreateVertexBuffer(appState, size);
-						moveBufferToFront(buffer, appState.Scene.colormappedBuffers);
+						appState.Scene.colormappedBuffers.MoveToFront(buffer);
 						appState.Scene.latestColormappedBuffer = buffer;
 						appState.Scene.usedInLatestColormappedBuffer = 0;
 					}
@@ -4010,7 +3826,7 @@ void android_main(struct android_app *app)
 						}
 						buffer = new Buffer();
 						buffer->CreateVertexBuffer(appState, size);
-						moveBufferToFront(buffer, appState.Scene.colormappedBuffers);
+						appState.Scene.colormappedBuffers.MoveToFront(buffer);
 						appState.Scene.latestColormappedBuffer = buffer;
 						appState.Scene.usedInLatestColormappedBuffer = 0;
 					}
@@ -4073,7 +3889,7 @@ void android_main(struct android_app *app)
 						}
 						buffer = new Buffer();
 						buffer->CreateVertexBuffer(appState, size);
-						moveBufferToFront(buffer, appState.Scene.colormappedBuffers);
+						appState.Scene.colormappedBuffers.MoveToFront(buffer);
 						appState.Scene.latestColormappedBuffer = buffer;
 						appState.Scene.usedInLatestColormappedBuffer = 0;
 					}
@@ -4139,7 +3955,7 @@ void android_main(struct android_app *app)
 					attributes = new Buffer();
 					attributes->CreateVertexBuffer(appState, attributesSize + attributesSize / 4);
 				}
-				moveBufferToFront(attributes, perImage.attributes);
+				perImage.attributes.MoveToFront(attributes);
 				VK(appState.Device.vkMapMemory(appState.Device.device, attributes->memory, 0, attributesSize, 0, &attributes->mapped));
 				if (floorAttributesSize > 0)
 				{
@@ -4227,7 +4043,7 @@ void android_main(struct android_app *app)
 						indices16 = new Buffer();
 						indices16->CreateIndexBuffer(appState, indices16Size + indices16Size / 4);
 					}
-					moveBufferToFront(indices16, perImage.indices16);
+					perImage.indices16.MoveToFront(indices16);
 					VK(appState.Device.vkMapMemory(appState.Device.device, indices16->memory, 0, indices16Size, 0, &indices16->mapped));
 					if (floorIndicesSize > 0)
 					{
@@ -4275,7 +4091,7 @@ void android_main(struct android_app *app)
 						indices32 = new Buffer();
 						indices32->CreateIndexBuffer(appState, indices32Size + indices32Size / 4);
 					}
-					moveBufferToFront(indices32, perImage.indices32);
+					perImage.indices32.MoveToFront(indices32);
 					VK(appState.Device.vkMapMemory(appState.Device.device, indices32->memory, 0, indices32Size, 0, &indices32->mapped));
 					memcpy(indices32->mapped, d_lists.colormapped_indices32.data(), colormappedIndices32Size);
 					perImage.coloredIndex32Base = colormappedIndices32Size;
@@ -4413,7 +4229,7 @@ void android_main(struct android_app *app)
 					texture->Create(appState, perImage.commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 					appState.Scene.spriteList[i].offset = stagingBufferSize;
 					stagingBufferSize += sprite.size;
-					moveSharedMemoryTextureToFront(texture, appState.Scene.spriteTextures);
+					appState.Scene.spriteTextures.MoveToFront(texture);
 					appState.Scene.spriteTextureCount++;
 					appState.Scene.spritesPerKey.insert({ sprite.data, texture });
 					appState.Scene.spriteList[i].texture = texture;
@@ -4466,7 +4282,7 @@ void android_main(struct android_app *app)
 					}
 					appState.Scene.turbulentList[i].texture = texture;
 					appState.Scene.turbulentPerKey.insert({ texture->key, texture });
-					moveTextureToFront(texture, perImage.turbulent);
+					perImage.turbulent.MoveToFront(texture);
 				}
 				else
 				{
@@ -4476,7 +4292,7 @@ void android_main(struct android_app *app)
 					texture->key = turbulent.texture;
 					appState.Scene.turbulentList[i].offset = stagingBufferSize;
 					stagingBufferSize += turbulent.size;
-					moveTextureToFront(texture, perImage.turbulent);
+					perImage.turbulent.MoveToFront(texture);
 					appState.Scene.turbulentList[i].texture = texture;
 					appState.Scene.turbulentPerKey.insert({ texture->key, texture });
 				}
@@ -4497,7 +4313,7 @@ void android_main(struct android_app *app)
 					texture->Create(appState, perImage.commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 					appState.Scene.aliasList[i].texture.offset = stagingBufferSize;
 					stagingBufferSize += alias.size;
-					moveSharedMemoryTextureToFront(texture, appState.Scene.aliasTextures);
+					appState.Scene.aliasTextures.MoveToFront(texture);
 					appState.Scene.aliasTextureCount++;
 					appState.Scene.aliasPerKey.insert({ alias.data, texture });
 					appState.Scene.aliasList[i].texture.texture = texture;
@@ -4538,7 +4354,7 @@ void android_main(struct android_app *app)
 					texture->Create(appState, perImage.commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 					appState.Scene.viewmodelList[i].texture.offset = stagingBufferSize;
 					stagingBufferSize += viewmodel.size;
-					moveSharedMemoryTextureToFront(texture, appState.Scene.viewmodelTextures);
+					appState.Scene.viewmodelTextures.MoveToFront(texture);
 					appState.Scene.viewmodelTextureCount++;
 					appState.Scene.viewmodelsPerKey.insert({ viewmodel.data, texture });
 					appState.Scene.viewmodelList[i].texture.texture = texture;
@@ -4602,7 +4418,7 @@ void android_main(struct android_app *app)
 					stagingBuffer = new Buffer();
 					stagingBuffer->CreateStagingStorageBuffer(appState, stagingBufferSize + stagingBufferSize / 4);
 				}
-				moveBufferToFront(stagingBuffer, perImage.stagingBuffers);
+				perImage.stagingBuffers.MoveToFront(stagingBuffer);
 				VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
 				auto offset = 0;
 				if (perImage.paletteOffset >= 0)
@@ -4745,7 +4561,7 @@ void android_main(struct android_app *app)
 							texture->Create(appState, perImage.commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 						}
 						texture->Fill(appState, stagingBuffer, appState.Scene.aliasList[i].colormap.offset, perImage.commandBuffer);
-						moveTextureToFront(texture, perImage.colormaps);
+						perImage.colormaps.MoveToFront(texture);
 						appState.Scene.aliasList[i].colormap.texture = texture;
 						perImage.colormapCount++;
 					}
@@ -4771,7 +4587,7 @@ void android_main(struct android_app *app)
 							texture->Create(appState, perImage.commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 						}
 						texture->Fill(appState, stagingBuffer, appState.Scene.viewmodelList[i].colormap.offset, perImage.commandBuffer);
-						moveTextureToFront(texture, perImage.colormaps);
+						perImage.colormaps.MoveToFront(texture);
 						appState.Scene.viewmodelList[i].colormap.texture = texture;
 						perImage.colormapCount++;
 					}
@@ -5665,9 +5481,9 @@ void android_main(struct android_app *app)
 				VK(appState.Device.vkResetFences(appState.Device.device, 1, &perImage.fence));
 				perImage.submitted = false;
 			}
-			resetCachedBuffers(appState, perImage.vertices);
-			resetCachedBuffers(appState, perImage.indices);
-			resetCachedBuffers(appState, perImage.stagingBuffers);
+			perImage.vertices.Reset(appState);
+			perImage.indices.Reset(appState);
+			perImage.stagingBuffers.Reset(appState);
 			VK(appState.Device.vkResetCommandBuffer(perImage.commandBuffer, 0));
 			VK(appState.Device.vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 			VkMemoryBarrier memoryBarrier { };
@@ -5686,7 +5502,7 @@ void android_main(struct android_app *app)
 				vertices = new Buffer();
 				vertices->CreateVertexBuffer(appState, appState.ConsoleVertices.size() * sizeof(float));
 			}
-			moveBufferToFront(vertices, perImage.vertices);
+			perImage.vertices.MoveToFront(vertices);
 			VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, vertices->size, 0, &vertices->mapped));
 			memcpy(vertices->mapped, appState.ConsoleVertices.data(), vertices->size);
 			VC(appState.Device.vkUnmapMemory(appState.Device.device, vertices->memory));
@@ -5709,7 +5525,7 @@ void android_main(struct android_app *app)
 				indices = new Buffer();
 				indices->CreateIndexBuffer(appState, appState.ConsoleIndices.size() * sizeof(uint16_t));
 			}
-			moveBufferToFront(indices, perImage.indices);
+			perImage.indices.MoveToFront(indices);
 			VK(appState.Device.vkMapMemory(appState.Device.device, indices->memory, 0, indices->size, 0, &indices->mapped));
 			memcpy(indices->mapped, appState.ConsoleIndices.data(), indices->size);
 			VC(appState.Device.vkUnmapMemory(appState.Device.device, indices->memory));
@@ -5759,7 +5575,7 @@ void android_main(struct android_app *app)
 				stagingBuffer = new Buffer();
 				stagingBuffer->CreateStagingBuffer(appState, stagingBufferSize);
 			}
-			moveBufferToFront(stagingBuffer, perImage.stagingBuffers);
+			perImage.stagingBuffers.MoveToFront(stagingBuffer);
 			VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
 			auto offset = 0;
 			if (perImage.paletteOffset >= 0)
@@ -6246,14 +6062,14 @@ void android_main(struct android_app *app)
 			{
 				perImage.palette->Delete(appState);
 			}
-			deleteCachedTextures(appState, perImage.colormaps);
-			deleteCachedTextures(appState, perImage.turbulent);
-			deleteCachedBuffers(appState, perImage.stagingBuffers);
-			deleteCachedBuffers(appState, perImage.indices32);
-			deleteCachedBuffers(appState, perImage.indices16);
-			deleteCachedBuffers(appState, perImage.attributes);
-			deleteCachedBuffers(appState, perImage.vertices);
-			deleteCachedBuffers(appState, perImage.sceneMatricesStagingBuffers);
+			perImage.colormaps.Delete(appState);
+			perImage.turbulent.Delete(appState);
+			perImage.stagingBuffers.Delete(appState);
+			perImage.indices32.Delete(appState);
+			perImage.indices16.Delete(appState);
+			perImage.attributes.Delete(appState);
+			perImage.vertices.Delete(appState);
+			perImage.sceneMatricesStagingBuffers.Delete(appState);
 		}
 	}
 	vrapi_DestroyTextureSwapChain(appState.RightArrows.SwapChain);
@@ -6292,9 +6108,9 @@ void android_main(struct android_app *app)
 		{
 			perImage.palette->Delete(appState);
 		}
-		deleteCachedBuffers(appState, perImage.stagingBuffers);
-		deleteCachedBuffers(appState, perImage.indices);
-		deleteCachedBuffers(appState, perImage.vertices);
+		perImage.stagingBuffers.Delete(appState);
+		perImage.indices.Delete(appState);
+		perImage.vertices.Delete(appState);
 	}
 	VC(appState.Device.vkDestroyRenderPass(appState.Device.device, appState.Console.RenderPass, nullptr));
 	VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &appState.Console.CommandBuffer));
@@ -6309,9 +6125,9 @@ void android_main(struct android_app *app)
 	{
 		appState.Scene.floorTexture->Delete(appState);
 	}
-	deleteCachedSharedMemoryTextures(appState, appState.Scene.viewmodelTextures);
-	deleteCachedSharedMemoryTextures(appState, appState.Scene.aliasTextures);
-	deleteCachedSharedMemoryTextures(appState, appState.Scene.spriteTextures);
+	appState.Scene.viewmodelTextures.Delete(appState);
+	appState.Scene.aliasTextures.Delete(appState);
+	appState.Scene.spriteTextures.Delete(appState);
 	for (auto& entry : appState.Scene.allocations)
 	{
 		for (auto& list : entry.second.allocations)
@@ -6319,7 +6135,7 @@ void android_main(struct android_app *app)
 			VC(appState.Device.vkFreeMemory(appState.Device.device, list.memory, nullptr));
 		}
 	}
-	deleteCachedBuffers(appState, appState.Scene.colormappedBuffers);
+	appState.Scene.colormappedBuffers.Delete(appState);
 	deletePipeline(appState, appState.Scene.console);
 	deletePipeline(appState, appState.Scene.floor);
 	deletePipeline(appState, appState.Scene.sky);
