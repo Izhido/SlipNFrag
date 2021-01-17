@@ -190,93 +190,56 @@ void D_DrawSurfaces (void)
 			D_DrawZSpans (s->spans);
 		}
 	}
-	else
+	else if (d_uselists)
 	{
 		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
-			if (!s->spans)
-				continue;
-
-			r_drawnpolycount++;
-
-			d_zistepu = s->d_zistepu;
-			d_zistepv = s->d_zistepv;
-			d_ziorigin = s->d_ziorigin;
-
 			if (s->flags & SURF_DRAWSKY)
 			{
-                if (r_skyinitialized)
+				if (!s->spans)
+					continue;
+
+				r_drawnpolycount++;
+
+				if (r_skyinitialized)
                 {
                     if (!r_skymade)
                     {
                         R_MakeSky ();
                     }
 
-                    if (d_uselists)
-                    {
-                        D_AddSkyToLists(s);
-                    }
-                    else
-                    {
-                        D_DrawSkyScans8 (s->spans);
-                        D_DrawZSpans (s->spans);
-                    }
+					D_AddSkyToLists(s);
                 }
 			}
             else if (s->flags & SURF_DRAWSKYBOX)
             {
-                if (d_uselists)
-                {
-                    D_AddSkyboxToLists(r_skytexinfo);
-                }
-                else
-                {
-                    pface = (msurface_t*)s->data;
-                    miplevel = 0;
-                    if (!pface->texinfo->texture)
-                        return;
-                    cacheblock = (pixel_t *)
-                            ((byte *)pface->texinfo->texture +
-                            pface->texinfo->texture->offsets[0]);
-                    cachewidth = pface->texinfo->texture->width;
+				if (!s->spans)
+					continue;
 
-                    d_zistepu = s->d_zistepu;
-                    d_zistepv = s->d_zistepv;
-                    d_ziorigin = s->d_ziorigin;
+				r_drawnpolycount++;
 
-                    D_CalcGradients (pface);
-
-                    D_DrawSpans8 (s->spans);
-
-                // set up a gradient for the background surface that places it
-                // effectively at infinity distance from the viewpoint
-                    d_zistepu = 0;
-                    d_zistepv = 0;
-                    d_ziorigin = -0.9;
-
-                    D_DrawZSpans (s->spans);
-                }
+				D_AddSkyboxToLists(r_skytexinfo);
             }
 			else if (s->flags & SURF_DRAWBACKGROUND)
 			{
-				if (d_uselists)
-				{
-					d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
-				}
-				else
-				{
-				// set up a gradient for the background surface that places it
-				// effectively at infinity distance from the viewpoint
-					d_zistepu = 0;
-					d_zistepv = 0;
-					d_ziorigin = -0.9;
+				if (!s->spans)
+					continue;
 
-					D_DrawSolidSurface (s, (int)r_clearcolor.value & 0xFF);
-					D_DrawZSpans (s->spans);
-				}
+				r_drawnpolycount++;
+
+				d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
+				if (!s->spans)
+					continue;
+
+				r_drawnpolycount++;
+
+				d_zistepu = s->d_zistepu;
+				d_zistepv = s->d_zistepv;
+				d_ziorigin = s->d_ziorigin;
+
 				pface = (msurface_t*)s->data;
 				miplevel = 0;
 				cacheblock = (pixel_t *)
@@ -297,16 +260,8 @@ void D_DrawSurfaces (void)
 					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
 										// make entity passed in
 				}
-				if (d_uselists)
-				{
-					D_AddTurbulentToLists (pface, currententity);
-				}
-				else
-				{
-					D_CalcGradients (pface);
-					Turbulent8 (s->spans);
-					D_DrawZSpans (s->spans);
-				}
+
+				D_AddTurbulentToLists (pface, currententity);
 
 				if (s->insubmodel)
 				{
@@ -327,6 +282,12 @@ void D_DrawSurfaces (void)
 			}
 			else
 			{
+				r_drawnpolycount++;
+
+				d_zistepu = s->d_zistepu;
+				d_zistepv = s->d_zistepv;
+				d_ziorigin = s->d_ziorigin;
+
 				if (s->insubmodel)
 				{
 				// FIXME: we don't want to do all this for every polygon!
@@ -341,30 +302,10 @@ void D_DrawSurfaces (void)
 				}
 
 				pface = (msurface_t*)s->data;
-				if (d_uselists)
-				{
-				// FIXME: make this passed in to D_CacheSurface
-					auto created = D_CacheSurface (pface, d_minmip, &pcurrentcache);
+			// FIXME: make this passed in to D_CacheSurface
+				auto created = D_CacheSurface (pface, d_minmip, &pcurrentcache);
 
-					D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
-				}
-				else
-				{
-					miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip
-					* pface->texinfo->mipadjust);
-
-				// FIXME: make this passed in to D_CacheSurface
-					D_CacheSurface (pface, miplevel, &pcurrentcache);
-
-					cacheblock = (pixel_t *)pcurrentcache->data;
-					cachewidth = pcurrentcache->width;
-
-					D_CalcGradients (pface);
-
-					D_DrawSpans8 (s->spans);
-
-					D_DrawZSpans (s->spans);
-				}
+				D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
 
 				if (s->insubmodel)
 				{
@@ -373,6 +314,164 @@ void D_DrawSurfaces (void)
 				// FIXME: we don't want to do this every time!
 				// TODO: speed up
 				//
+					currententity = &cl_entities[0];
+					VectorCopy (world_transformed_modelorg,
+								transformed_modelorg);
+					VectorCopy (base_vpn, vpn);
+					VectorCopy (base_vup, vup);
+					VectorCopy (base_vright, vright);
+					VectorCopy (base_modelorg, modelorg);
+					R_TransformFrustum ();
+				}
+			}
+		}
+	}
+	else
+	{
+		for (s = &surfaces[1] ; s<surface_p ; s++)
+		{
+			if (!s->spans)
+				continue;
+
+			r_drawnpolycount++;
+
+			d_zistepu = s->d_zistepu;
+			d_zistepv = s->d_zistepv;
+			d_ziorigin = s->d_ziorigin;
+
+			if (s->flags & SURF_DRAWSKY)
+			{
+				if (r_skyinitialized)
+				{
+					if (!r_skymade)
+					{
+						R_MakeSky ();
+					}
+
+					D_DrawSkyScans8 (s->spans);
+					D_DrawZSpans (s->spans);
+				}
+			}
+			else if (s->flags & SURF_DRAWSKYBOX)
+			{
+				pface = (msurface_t*)s->data;
+				miplevel = 0;
+				if (!pface->texinfo->texture)
+					return;
+				cacheblock = (pixel_t *)
+						((byte *)pface->texinfo->texture +
+						 pface->texinfo->texture->offsets[0]);
+				cachewidth = pface->texinfo->texture->width;
+
+				d_zistepu = s->d_zistepu;
+				d_zistepv = s->d_zistepv;
+				d_ziorigin = s->d_ziorigin;
+
+				D_CalcGradients (pface);
+
+				D_DrawSpans8 (s->spans);
+
+				// set up a gradient for the background surface that places it
+				// effectively at infinity distance from the viewpoint
+				d_zistepu = 0;
+				d_zistepv = 0;
+				d_ziorigin = -0.9;
+
+				D_DrawZSpans (s->spans);
+			}
+			else if (s->flags & SURF_DRAWBACKGROUND)
+			{
+				// set up a gradient for the background surface that places it
+				// effectively at infinity distance from the viewpoint
+				d_zistepu = 0;
+				d_zistepv = 0;
+				d_ziorigin = -0.9;
+
+				D_DrawSolidSurface (s, (int)r_clearcolor.value & 0xFF);
+				D_DrawZSpans (s->spans);
+			}
+			else if (s->flags & SURF_DRAWTURB)
+			{
+				pface = (msurface_t*)s->data;
+				miplevel = 0;
+				cacheblock = (pixel_t *)
+						((byte *)pface->texinfo->texture +
+						 pface->texinfo->texture->offsets[0]);
+				cachewidth = 64;
+
+				if (s->insubmodel)
+				{
+					// FIXME: we don't want to do all this for every polygon!
+					// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+					// R_RotateBmodel ()
+					VectorSubtract (r_origin, currententity->origin,
+									local_modelorg);
+					TransformVector (local_modelorg, transformed_modelorg);
+
+					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+					// make entity passed in
+				}
+
+				D_CalcGradients (pface);
+				Turbulent8 (s->spans);
+				D_DrawZSpans (s->spans);
+
+				if (s->insubmodel)
+				{
+					//
+					// restore the old drawing state
+					// FIXME: we don't want to do this every time!
+					// TODO: speed up
+					//
+					currententity = &cl_entities[0];
+					VectorCopy (world_transformed_modelorg,
+								transformed_modelorg);
+					VectorCopy (base_vpn, vpn);
+					VectorCopy (base_vup, vup);
+					VectorCopy (base_vright, vright);
+					VectorCopy (base_modelorg, modelorg);
+					R_TransformFrustum ();
+				}
+			}
+			else
+			{
+				if (s->insubmodel)
+				{
+					// FIXME: we don't want to do all this for every polygon!
+					// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+					// R_RotateBmodel ()
+					VectorSubtract (r_origin, currententity->origin, local_modelorg);
+					TransformVector (local_modelorg, transformed_modelorg);
+
+					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+					// make entity passed in
+				}
+
+				pface = (msurface_t*)s->data;
+				miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip
+											   * pface->texinfo->mipadjust);
+
+				// FIXME: make this passed in to D_CacheSurface
+				D_CacheSurface (pface, miplevel, &pcurrentcache);
+
+				cacheblock = (pixel_t *)pcurrentcache->data;
+				cachewidth = pcurrentcache->width;
+
+				D_CalcGradients (pface);
+
+				D_DrawSpans8 (s->spans);
+
+				D_DrawZSpans (s->spans);
+
+				if (s->insubmodel)
+				{
+					//
+					// restore the old drawing state
+					// FIXME: we don't want to do this every time!
+					// TODO: speed up
+					//
 					currententity = &cl_entities[0];
 					VectorCopy (world_transformed_modelorg,
 								transformed_modelorg);
