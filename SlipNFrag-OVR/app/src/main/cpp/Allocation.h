@@ -1,8 +1,11 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+#include <vector>
+
 struct Allocation
 {
-	VkDeviceMemory memory;
+	VkDeviceMemory memory = VK_NULL_HANDLE;
 	std::vector<bool> allocated;
-	int allocatedCount;
+	int allocatedCount = 0;
 };

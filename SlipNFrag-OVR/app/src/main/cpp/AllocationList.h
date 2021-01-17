@@ -1,7 +1,9 @@
 #pragma once
 
+#include "Allocation.h"
+
 struct AllocationList
 {
 	std::vector<Allocation> allocations;
-	VkDeviceSize blockSize;
+	VkDeviceSize blockSize = 0;
 };

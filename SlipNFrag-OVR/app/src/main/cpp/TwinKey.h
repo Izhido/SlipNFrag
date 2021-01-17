@@ -4,8 +4,8 @@
 
 struct TwinKey
 {
-	void* first;
-	void* second;
+	void* first = nullptr;
+	void* second = nullptr;
 };
 
 bool operator==(const TwinKey& first, const TwinKey& second);
