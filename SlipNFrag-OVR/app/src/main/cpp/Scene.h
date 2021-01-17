@@ -13,6 +13,7 @@
 #include "LoadedTexture.h"
 #include "LoadedColormappedTexture.h"
 #include "VrApi.h"
+#include "Instance.h"
 
 struct Scene
 {
@@ -94,5 +95,7 @@ struct Scene
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	ovrTextureSwapChain* skybox;
 
+	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app);
+	void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Reset();
 };
