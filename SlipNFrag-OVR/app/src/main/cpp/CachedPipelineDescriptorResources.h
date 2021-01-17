@@ -1,6 +1,10 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
 #include <unordered_map>
+#include <vector>
+
+struct AppState;
 
 struct CachedPipelineDescriptorResources
 {
@@ -9,4 +13,6 @@ struct CachedPipelineDescriptorResources
 	std::vector<VkDescriptorSet> descriptorSets;
 	std::unordered_map<void*, VkDescriptorSet> cache;
 	int index;
+
+	void Delete(AppState& appState);
 };

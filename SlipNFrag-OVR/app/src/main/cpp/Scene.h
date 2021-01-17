@@ -1,5 +1,17 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+#include "Pipeline.h"
+#include "PipelineAttributes.h"
+#include "CachedBuffers.h"
+#include "TextureFromAllocation.h"
+#include <unordered_map>
+#include "CachedSharedMemoryTextures.h"
+#include "BufferWithOffset.h"
+#include "LoadedTextureFromAllocation.h"
+#include "LoadedSharedMemoryTexture.h"
+#include "LoadedTexture.h"
+#include "LoadedColormappedTexture.h"
 #include "VrApi.h"
 
 struct Scene
@@ -81,4 +93,6 @@ struct Scene
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	ovrTextureSwapChain* skybox;
+
+	void Reset();
 };

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+
+struct AppState;
+
 struct Image
 {
 	int width;
@@ -8,4 +12,6 @@ struct Image
 	VkImage image;
 	VkDeviceMemory memory;
 	VkImageView view;
+
+	void Delete(AppState& appState);
 };

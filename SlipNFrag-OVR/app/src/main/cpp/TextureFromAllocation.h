@@ -24,4 +24,5 @@ struct TextureFromAllocation
 	void Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);
 	void FillMipmapped(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer);
 	void Delete(AppState& appState);
+	static void DeleteOld(AppState& appState, TextureFromAllocation** oldTextures);
 };

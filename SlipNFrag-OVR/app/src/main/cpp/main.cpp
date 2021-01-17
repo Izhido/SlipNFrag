@@ -97,136 +97,6 @@ void createShaderModule(AppState& appState, struct android_app* app, const char*
 	VK(appState.Device.vkCreateShaderModule(appState.Device.device, &moduleCreateInfo, nullptr, shaderModule));
 }
 
-void deleteImage(AppState& appState, Image* image)
-{
-	VC(appState.Device.vkDestroyImageView(appState.Device.device, image->view, nullptr));
-	VC(appState.Device.vkDestroyImage(appState.Device.device, image->image, nullptr));
-	if (image->memory != VK_NULL_HANDLE)
-	{
-		VC(appState.Device.vkFreeMemory(appState.Device.device, image->memory, nullptr));
-	}
-}
-
-void deleteOldSharedMemoryTextures(AppState& appState, SharedMemoryTexture** oldTextures)
-{
-	if (oldTextures != nullptr)
-	{
-		for (SharedMemoryTexture** t = oldTextures; *t != nullptr; )
-		{
-			(*t)->unusedCount++;
-			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
-			{
-				SharedMemoryTexture* next = (*t)->next;
-				(*t)->Delete(appState);
-				delete *t;
-				*t = next;
-			}
-			else
-			{
-				t = &(*t)->next;
-			}
-		}
-	}
-}
-
-void deleteOldTexturesFromAllocations(AppState& appState, TextureFromAllocation** oldTextures)
-{
-	if (oldTextures != nullptr)
-	{
-		for (TextureFromAllocation** t = oldTextures; *t != nullptr; )
-		{
-			(*t)->unusedCount++;
-			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
-			{
-				TextureFromAllocation* next = (*t)->next;
-				(*t)->Delete(appState);
-				delete *t;
-				*t = next;
-			}
-			else
-			{
-				t = &(*t)->next;
-			}
-		}
-	}
-}
-
-void resetSceneResources(Scene& scene)
-{
-	if (scene.hostClearCount != host_clearcount)
-	{
-		scene.viewmodelsPerKey.clear();
-		scene.aliasPerKey.clear();
-		scene.latestTextureSharedMemory = nullptr;
-		scene.usedInLatestTextureSharedMemory = 0;
-		scene.latestColormappedBuffer = nullptr;
-		scene.usedInLatestColormappedBuffer = 0;
-		scene.colormappedBufferList.clear();
-		scene.colormappedTexCoordsPerKey.clear();
-		scene.colormappedVerticesPerKey.clear();
-		scene.spritesPerKey.clear();
-		scene.viewmodelTextures.DisposeFront();
-		scene.aliasTextures.DisposeFront();
-		scene.spriteTextures.DisposeFront();
-		for (auto entry = scene.surfaces.begin(); entry != scene.surfaces.end(); entry++)
-		{
-			for (TextureFromAllocation** t = &entry->second; *t != nullptr; )
-			{
-				TextureFromAllocation* next = (*t)->next;
-				(*t)->next = scene.oldSurfaces;
-				scene.oldSurfaces = *t;
-				*t = next;
-			}
-		}
-		scene.surfaces.clear();
-		scene.colormappedBuffers.DisposeFront();
-		scene.viewmodelTextureCount = 0;
-		scene.aliasTextureCount = 0;
-		scene.spriteTextureCount = 0;
-		scene.resetDescriptorSetsCount++;
-		vrapi_DestroyTextureSwapChain(scene.skybox);
-		scene.skybox = VK_NULL_HANDLE;
-		scene.hostClearCount = host_clearcount;
-	}
-}
-
-void deletePipelineDescriptorResources(AppState& appState, PipelineDescriptorResources& resources)
-{
-    if (resources.created)
-    {
-        VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, resources.descriptorPool, nullptr));
-    }
-}
-
-void deleteUpdatablePipelineDescriptorResources(AppState& appState, UpdatablePipelineDescriptorResources& resources)
-{
-    if (resources.created)
-    {
-        VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, resources.descriptorPool, nullptr));
-        resources.descriptorSets.clear();
-        resources.bound.clear();
-		resources.created = false;
-    }
-}
-
-void deleteCachedPipelineDescriptorResources(AppState& appState, CachedPipelineDescriptorResources& resources)
-{
-    if (resources.created)
-    {
-        VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, resources.descriptorPool, nullptr));
-        resources.descriptorSets.clear();
-        resources.cache.clear();
-        resources.index = 0;
-        resources.created = false;
-    }
-}
-
-void deletePipeline(AppState& appState, Pipeline& pipeline)
-{
-	VC(appState.Device.vkDestroyPipeline(appState.Device.device, pipeline.pipeline, nullptr));
-	VC(appState.Device.vkDestroyPipelineLayout(appState.Device.device, pipeline.pipelineLayout, nullptr));
-}
-
 void appHandleCommands(struct android_app *app, int32_t cmd)
 {
 	auto appState = (AppState*)app->userData;
@@ -3308,10 +3178,10 @@ void android_main(struct android_app *app)
 				}
 			}
 		}
-		deleteOldSharedMemoryTextures(appState, &appState.Scene.viewmodelTextures.oldTextures);
-		deleteOldSharedMemoryTextures(appState, &appState.Scene.aliasTextures.oldTextures);
-		deleteOldSharedMemoryTextures(appState, &appState.Scene.spriteTextures.oldTextures);
-		deleteOldTexturesFromAllocations(appState, &appState.Scene.oldSurfaces);
+		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.viewmodelTextures.oldTextures);
+		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.aliasTextures.oldTextures);
+		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.spriteTextures.oldTextures);
+		TextureFromAllocation::DeleteOld(appState, &appState.Scene.oldSurfaces);
 		appState.Scene.colormappedBuffers.DeleteOld(appState);
 		for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 		{
@@ -3398,7 +3268,11 @@ void android_main(struct android_app *app)
 				if (updated)
 				{
 					Host_FrameRender();
-					resetSceneResources(appState.Scene);
+					if (appState.Scene.hostClearCount != host_clearcount)
+					{
+						appState.Scene.Reset();
+						appState.Scene.hostClearCount = host_clearcount;
+					}
 				}
 				Host_FrameFinish(updated);
 			}
@@ -3453,7 +3327,11 @@ void android_main(struct android_app *app)
 					cl.nodrift = true;
 					Host_FrameRender();
 					cl.nodrift = nodrift;
-					resetSceneResources(appState.Scene);
+					if (appState.Scene.hostClearCount != host_clearcount)
+					{
+						appState.Scene.Reset();
+						appState.Scene.hostClearCount = host_clearcount;
+					}
 				}
 				Host_FrameFinish(updated);
 			}
@@ -4756,7 +4634,7 @@ void android_main(struct android_app *app)
 					writes[0].pImageInfo = textureInfo;
 					if (d_lists.last_surface < 0 && d_lists.last_turbulent < 0)
 					{
-					    deleteUpdatablePipelineDescriptorResources(appState, perImage.texturedResources);
+						perImage.texturedResources.Delete(appState);
 					}
 					else
 					{
@@ -4814,7 +4692,7 @@ void android_main(struct android_app *app)
 					VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
                     if (perImage.resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || perImage.spriteResources.descriptorSets.size() < appState.Scene.spriteTextureCount)
                     {
-						deleteCachedPipelineDescriptorResources(appState, perImage.spriteResources);
+						perImage.spriteResources.Delete(appState);
                         spriteDescriptorSetCount = appState.Scene.spriteTextureCount;
                         if (spriteDescriptorSetCount > 0)
                         {
@@ -4879,7 +4757,7 @@ void android_main(struct android_app *app)
 					}
 					if (perImage.colormapCount == 0)
 					{
-						deleteUpdatablePipelineDescriptorResources(appState, perImage.colormapResources);
+						perImage.colormapResources.Delete(appState);
 					}
 					else
 					{
@@ -4913,7 +4791,7 @@ void android_main(struct android_app *app)
 					}
 					if (perImage.resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || perImage.aliasResources.descriptorSets.size() < appState.Scene.aliasTextureCount)
 					{
-						deleteCachedPipelineDescriptorResources(appState, perImage.aliasResources);
+						perImage.aliasResources.Delete(appState);
 						aliasDescriptorSetCount = appState.Scene.aliasTextureCount;
 						if (aliasDescriptorSetCount > 0)
 						{
@@ -5083,7 +4961,7 @@ void android_main(struct android_app *app)
 					}
 					if (perImage.resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || perImage.viewmodelResources.descriptorSets.size() < appState.Scene.viewmodelTextureCount)
 					{
-						deleteCachedPipelineDescriptorResources(appState, perImage.viewmodelResources);
+						perImage.viewmodelResources.Delete(appState);
 						viewmodelDescriptorSetCount = appState.Scene.viewmodelTextureCount;
 						if (viewmodelDescriptorSetCount > 0)
 						{
@@ -6019,11 +5897,11 @@ void android_main(struct android_app *app)
 			}
 			if (view.framebuffer.colorTextures.size() > 0)
 			{
-				deleteImage(appState, &view.framebuffer.colorTextures[i]);
+				view.framebuffer.colorTextures[i].Delete(appState);
 			}
 			if (view.framebuffer.fragmentDensityTextures.size() > 0)
 			{
-				deleteImage(appState, &view.framebuffer.fragmentDensityTextures[i]);
+				view.framebuffer.fragmentDensityTextures[i].Delete(appState);
 			}
 		}
 		if (view.framebuffer.depthImage != VK_NULL_HANDLE)
@@ -6034,22 +5912,22 @@ void android_main(struct android_app *app)
 		}
 		if (view.framebuffer.renderTexture.image != VK_NULL_HANDLE)
 		{
-			deleteImage(appState, &view.framebuffer.renderTexture);
+			view.framebuffer.renderTexture.Delete(appState);
 		}
 		vrapi_DestroyTextureSwapChain(view.framebuffer.colorTextureSwapChain);
 		for (auto& perImage : view.perImage)
 		{
 			VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &perImage.commandBuffer));
 			VC(appState.Device.vkDestroyFence(appState.Device.device, perImage.fence, nullptr));
-			deletePipelineDescriptorResources(appState, perImage.floorResources);
-            deletePipelineDescriptorResources(appState, perImage.skyResources);
-            deleteCachedPipelineDescriptorResources(appState, perImage.viewmodelResources);
-            deleteCachedPipelineDescriptorResources(appState, perImage.aliasResources);
-            deleteCachedPipelineDescriptorResources(appState, perImage.spriteResources);
-            deleteUpdatablePipelineDescriptorResources(appState, perImage.texturedResources);
-            deletePipelineDescriptorResources(appState, perImage.sceneMatricesAndPaletteResources);
-            deletePipelineDescriptorResources(appState, perImage.sceneMatricesResources);
-            deletePipelineDescriptorResources(appState, perImage.host_colormapResources);
+			perImage.floorResources.Delete(appState);
+			perImage.skyResources.Delete(appState);
+			perImage.viewmodelResources.Delete(appState);
+			perImage.aliasResources.Delete(appState);
+			perImage.spriteResources.Delete(appState);
+			perImage.texturedResources.Delete(appState);
+			perImage.sceneMatricesAndPaletteResources.Delete(appState);
+			perImage.sceneMatricesResources.Delete(appState);
+			perImage.host_colormapResources.Delete(appState);
 			if (perImage.sky != nullptr)
 			{
 				perImage.sky->Delete(appState);
@@ -6084,12 +5962,12 @@ void android_main(struct android_app *app)
 		}
 		if (appState.Console.View.framebuffer.colorTextures.size() > 0)
 		{
-			deleteImage(appState, &appState.Console.View.framebuffer.colorTextures[i]);
+			appState.Console.View.framebuffer.colorTextures[i].Delete(appState);
 		}
 	}
 	if (appState.Console.View.framebuffer.renderTexture.image != VK_NULL_HANDLE)
 	{
-		deleteImage(appState, &appState.Console.View.framebuffer.renderTexture);
+		appState.Console.View.framebuffer.renderTexture.Delete(appState);
 	}
 	vrapi_DestroyTextureSwapChain(appState.Console.View.framebuffer.colorTextureSwapChain);
 	for (auto& perImage : appState.Console.View.perImage)
@@ -6136,15 +6014,15 @@ void android_main(struct android_app *app)
 		}
 	}
 	appState.Scene.colormappedBuffers.Delete(appState);
-	deletePipeline(appState, appState.Scene.console);
-	deletePipeline(appState, appState.Scene.floor);
-	deletePipeline(appState, appState.Scene.sky);
-	deletePipeline(appState, appState.Scene.colored);
-	deletePipeline(appState, appState.Scene.viewmodel);
-	deletePipeline(appState, appState.Scene.alias);
-	deletePipeline(appState, appState.Scene.turbulent);
-	deletePipeline(appState, appState.Scene.sprites);
-	deletePipeline(appState, appState.Scene.textured);
+	appState.Scene.console.Delete(appState);
+	appState.Scene.floor.Delete(appState);
+	appState.Scene.sky.Delete(appState);
+	appState.Scene.colored.Delete(appState);
+	appState.Scene.viewmodel.Delete(appState);
+	appState.Scene.alias.Delete(appState);
+	appState.Scene.turbulent.Delete(appState);
+	appState.Scene.sprites.Delete(appState);
+	appState.Scene.textured.Delete(appState);
 	VC(appState.Device.vkDestroyDescriptorSetLayout(appState.Device.device, appState.Scene.doubleImageLayout, nullptr));
 	VC(appState.Device.vkDestroyDescriptorSetLayout(appState.Device.device, appState.Scene.singleImageLayout, nullptr));
 	VC(appState.Device.vkDestroyDescriptorSetLayout(appState.Device.device, appState.Scene.bufferAndImageLayout, nullptr));

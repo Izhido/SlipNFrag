@@ -204,3 +204,25 @@ void TextureFromAllocation::Delete(AppState& appState)
 		allocationList->allocations.pop_back();
 	}
 }
+
+void TextureFromAllocation::DeleteOld(AppState& appState, TextureFromAllocation** oldTextures)
+{
+	if (oldTextures != nullptr)
+	{
+		for (TextureFromAllocation** t = oldTextures; *t != nullptr; )
+		{
+			(*t)->unusedCount++;
+			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
+			{
+				TextureFromAllocation* next = (*t)->next;
+				(*t)->Delete(appState);
+				delete *t;
+				*t = next;
+			}
+			else
+			{
+				t = &(*t)->next;
+			}
+		}
+	}
+}
