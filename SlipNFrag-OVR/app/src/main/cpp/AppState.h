@@ -100,4 +100,6 @@ struct AppState
 	double TimeInWorldMode;
 	bool ControlsMessageDisplayed;
 	bool ControlsMessageClosed;
+
+	void RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovrPosef& pose, const ovrQuatf& orientation, int eyeTextureWidth, int eyeTextureHeight, VkDeviceSize& noOffset);
 };

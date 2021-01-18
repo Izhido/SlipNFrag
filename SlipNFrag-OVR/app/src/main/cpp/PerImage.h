@@ -1,5 +1,13 @@
 #pragma once
 
+#include "CachedBuffers.h"
+#include "CachedTextures.h"
+#include "PipelineDescriptorResources.h"
+#include "UpdatablePipelineDescriptorResources.h"
+#include "CachedPipelineDescriptorResources.h"
+
+struct View;
+
 struct PerImage
 {
 	CachedBuffers sceneMatricesStagingBuffers;
@@ -41,4 +49,8 @@ struct PerImage
 	VkCommandBuffer commandBuffer;
 	VkFence fence;
 	bool submitted;
+
+	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, int& floorSize);
+	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, int floorSize);
+	void FillTextures(AppState& appState, Buffer* stagingBuffer);
 };
