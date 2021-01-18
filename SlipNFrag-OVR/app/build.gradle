@@ -1,14 +1,6 @@
 apply plugin: 'com.android.application'
 
 android {
-    signingConfigs {
-        slipnfrag {
-            storeFile file('android.debug.keystore')
-            storePassword 'android'
-            keyPassword 'android'
-            keyAlias 'androiddebugkey'
-        }
-    }
     compileSdkVersion 30
     ndkVersion '22.0.7026061'
 
@@ -33,7 +25,6 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'),
                     'proguard-rules.pro'
-            signingConfig signingConfigs.slipnfrag
         }
     }
     externalNativeBuild {
