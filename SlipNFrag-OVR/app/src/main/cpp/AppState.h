@@ -61,6 +61,10 @@ struct AppState
 	int SwapInterval;
 	int CpuLevel;
 	int GpuLevel;
+	int EyeTextureWidth;
+	int EyeTextureHeight;
+	int EyeTextureMaxDimension;
+	VkDeviceSize NoOffset;
 	int MainThreadTid;
 	int RenderThreadTid;
 	bool UseFragmentDensity;
@@ -101,5 +105,5 @@ struct AppState
 	bool ControlsMessageDisplayed;
 	bool ControlsMessageClosed;
 
-	void RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovrPosef& pose, const ovrQuatf& orientation, int eyeTextureWidth, int eyeTextureHeight, VkDeviceSize& noOffset);
+	void RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo);
 };

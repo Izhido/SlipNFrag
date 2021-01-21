@@ -282,6 +282,9 @@ void D_DrawSurfaces (void)
 			}
 			else
 			{
+				if (!s->spans)
+					continue;
+
 				r_drawnpolycount++;
 
 				d_zistepu = s->d_zistepu;

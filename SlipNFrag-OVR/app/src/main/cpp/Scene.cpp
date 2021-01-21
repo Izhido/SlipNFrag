@@ -963,6 +963,57 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	VK(appState.Device.vkBindBufferMemory(appState.Device.device, appState.Scene.matrices.buffer, appState.Scene.matrices.memory, 0));
 }
 
+void Scene::CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule)
+{
+	auto file = AAssetManager_open(app->activity->assetManager, filename, AASSET_MODE_BUFFER);
+	size_t length = AAsset_getLength(file);
+	if ((length % 4) != 0)
+	{
+		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Scene::CreateShader(): %s is not 4-byte aligned.", filename);
+		exit(0);
+	}
+	std::vector<unsigned char> buffer(length);
+	AAsset_read(file, buffer.data(), length);
+	VkShaderModuleCreateInfo moduleCreateInfo { };
+	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	moduleCreateInfo.pCode = (uint32_t *)buffer.data();
+	moduleCreateInfo.codeSize = length;
+	VK(appState.Device.vkCreateShaderModule(appState.Device.device, &moduleCreateInfo, nullptr, shaderModule));
+}
+
+void Scene::ClearBuffersAndSizes()
+{
+	stagingBufferSize = 0;
+	texturedDescriptorSetCount = 0;
+	spriteDescriptorSetCount = 0;
+	colormapDescriptorSetCount = 0;
+	aliasDescriptorSetCount = 0;
+	viewmodelDescriptorSetCount = 0;
+	floorVerticesSize = 0;
+	texturedVerticesSize = 0;
+	coloredVerticesSize = 0;
+	verticesSize = 0;
+	colormappedVerticesSize = 0;
+	colormappedTexCoordsSize = 0;
+	floorAttributesSize = 0;
+	texturedAttributesSize = 0;
+	colormappedLightsSize = 0;
+	vertexTransformSize = 0;
+	attributesSize = 0;
+	floorIndicesSize = 0;
+	colormappedIndices16Size = 0;
+	coloredIndices16Size = 0;
+	indices16Size = 0;
+	colormappedIndices32Size = 0;
+	coloredIndices32Size = 0;
+	indices32Size = 0;
+	floorSize = 0;
+	vertices = nullptr;
+	attributes = nullptr;
+	indices16 = nullptr;
+	indices32 = nullptr;
+}
+
 void Scene::Reset()
 {
 	viewmodelsPerKey.clear();
@@ -996,22 +1047,4 @@ void Scene::Reset()
 	resetDescriptorSetsCount++;
 	vrapi_DestroyTextureSwapChain(skybox);
 	skybox = VK_NULL_HANDLE;
-}
-
-void Scene::CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule)
-{
-	auto file = AAssetManager_open(app->activity->assetManager, filename, AASSET_MODE_BUFFER);
-	size_t length = AAsset_getLength(file);
-	if ((length % 4) != 0)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Scene::CreateShader(): %s is not 4-byte aligned.", filename);
-		exit(0);
-	}
-	std::vector<unsigned char> buffer(length);
-	AAsset_read(file, buffer.data(), length);
-	VkShaderModuleCreateInfo moduleCreateInfo { };
-	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	moduleCreateInfo.pCode = (uint32_t *)buffer.data();
-	moduleCreateInfo.codeSize = length;
-	VK(appState.Device.vkCreateShaderModule(appState.Device.device, &moduleCreateInfo, nullptr, shaderModule));
 }

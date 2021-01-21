@@ -569,26 +569,27 @@ void android_main(struct android_app *app)
 	auto isMultiview = appState.Device.supportsMultiview;
 	auto useFragmentDensity = appState.Device.supportsFragmentDensity;
 	appState.Views.resize(isMultiview ? 1 : VRAPI_FRAME_LAYER_EYE_MAX);
-	auto eyeTextureWidth = vrapi_GetSystemPropertyInt(&appState.Java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_WIDTH);
-	auto eyeTextureHeight = vrapi_GetSystemPropertyInt(&appState.Java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_HEIGHT);
-	if (eyeTextureWidth > appState.Device.physicalDeviceProperties.properties.limits.maxFramebufferWidth)
+	appState.EyeTextureWidth = vrapi_GetSystemPropertyInt(&appState.Java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_WIDTH);
+	appState.EyeTextureHeight = vrapi_GetSystemPropertyInt(&appState.Java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_HEIGHT);
+	if (appState.EyeTextureWidth > appState.Device.physicalDeviceProperties.properties.limits.maxFramebufferWidth)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): Eye texture width exceeds the physical device's limits.");
 		vrapi_Shutdown();
 		exit(0);
 	}
-	if (eyeTextureHeight > appState.Device.physicalDeviceProperties.properties.limits.maxFramebufferHeight)
+	if (appState.EyeTextureHeight > appState.Device.physicalDeviceProperties.properties.limits.maxFramebufferHeight)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): Eye texture height exceeds the physical device's limits.");
 		vrapi_Shutdown();
 		exit(0);
 	}
+	appState.EyeTextureMaxDimension = std::max(appState.EyeTextureWidth, appState.EyeTextureHeight);
 	auto horizontalFOV = vrapi_GetSystemPropertyInt(&appState.Java, VRAPI_SYS_PROP_SUGGESTED_EYE_FOV_DEGREES_X);
 	auto verticalFOV = vrapi_GetSystemPropertyInt(&appState.Java, VRAPI_SYS_PROP_SUGGESTED_EYE_FOV_DEGREES_Y);
 	appState.FOV = std::max(horizontalFOV, verticalFOV);
 	for (auto& view : appState.Views)
 	{
-		view.colorSwapChain.SwapChain = vrapi_CreateTextureSwapChain3(isMultiview ? VRAPI_TEXTURE_TYPE_2D_ARRAY : VRAPI_TEXTURE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, eyeTextureWidth, eyeTextureHeight, 1, 3);
+		view.colorSwapChain.SwapChain = vrapi_CreateTextureSwapChain3(isMultiview ? VRAPI_TEXTURE_TYPE_2D_ARRAY : VRAPI_TEXTURE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, appState.EyeTextureWidth, appState.EyeTextureHeight, 1, 3);
 		view.colorSwapChain.SwapChainLength = vrapi_GetTextureSwapChainLength(view.colorSwapChain.SwapChain);
 		view.colorSwapChain.ColorTextures.resize(view.colorSwapChain.SwapChainLength);
 		view.colorSwapChain.FragmentDensityTextures.resize(view.colorSwapChain.SwapChainLength);
@@ -723,13 +724,13 @@ void android_main(struct android_app *app)
 		view.framebuffer.startBarriers.resize(view.framebuffer.swapChainLength);
 		view.framebuffer.endBarriers.resize(view.framebuffer.swapChainLength);
 		view.framebuffer.framebuffers.resize(view.framebuffer.swapChainLength);
-		view.framebuffer.width = eyeTextureWidth;
-		view.framebuffer.height = eyeTextureHeight;
+		view.framebuffer.width = appState.EyeTextureWidth;
+		view.framebuffer.height = appState.EyeTextureHeight;
 		for (auto i = 0; i < view.framebuffer.swapChainLength; i++)
 		{
 			auto& texture = view.framebuffer.colorTextures[i];
-			texture.width = eyeTextureWidth;
-			texture.height = eyeTextureHeight;
+			texture.width = appState.EyeTextureWidth;
+			texture.height = appState.EyeTextureHeight;
 			texture.layerCount = isMultiview ? 2 : 1;
 			texture.image = view.colorSwapChain.ColorTextures[i];
 			VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
@@ -1083,7 +1084,7 @@ void android_main(struct android_app *app)
 			appState.Scene.createdScene = true;
 		}
 		appState.FrameIndex++;
-		VkDeviceSize noOffset = 0;
+		appState.NoOffset = 0;
 		const double predictedDisplayTime = vrapi_GetPredictedDisplayTime(appState.Ovr, appState.FrameIndex);
 		const ovrTracking2 tracking = vrapi_GetPredictedTracking2(appState.Ovr, predictedDisplayTime);
 		appState.DisplayTime = predictedDisplayTime;
@@ -1273,11 +1274,11 @@ void android_main(struct android_app *app)
 			appState.ViewMatrices[i] = ovrMatrix4f_Transpose(&tracking.Eye[i].ViewMatrix);
 			appState.ProjectionMatrices[i] = ovrMatrix4f_Transpose(&tracking.Eye[i].ProjectionMatrix);
 		}
-		auto& orientation = tracking.HeadPose.Pose.Orientation;
-		auto x = orientation.x;
-		auto y = orientation.y;
-		auto z = orientation.z;
-		auto w = orientation.w;
+		appState.Scene.orientation = tracking.HeadPose.Pose.Orientation;
+		auto x = appState.Scene.orientation.x;
+		auto y = appState.Scene.orientation.y;
+		auto z = appState.Scene.orientation.z;
+		auto w = appState.Scene.orientation.w;
 		float Q[3] = { x, y, z };
 		float ww = w * w;
 		float Q11 = Q[1] * Q[1];
@@ -1304,7 +1305,7 @@ void android_main(struct android_app *app)
 			appState.Pitch = asin(s2);
 			appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
 		}
-		auto pose = vrapi_LocateTrackingSpace(appState.Ovr, VRAPI_TRACKING_SPACE_LOCAL_FLOOR);
+		appState.Scene.pose = vrapi_LocateTrackingSpace(appState.Ovr, VRAPI_TRACKING_SPACE_LOCAL_FLOOR);
 		auto playerHeight = 32;
 		if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
 		{
@@ -1318,7 +1319,7 @@ void android_main(struct android_app *app)
 				}
 			}
 		}
-		appState.Scale = -pose.Position.y / playerHeight;
+		appState.Scale = -appState.Scene.pose.Position.y / playerHeight;
 		if (host_initialized)
 		{
 			if (appState.Mode == AppScreenMode)
@@ -1421,7 +1422,7 @@ void android_main(struct android_app *app)
 				Host_FrameFinish(updated);
 			}
 		}
-		appState.RenderScene(commandBufferBeginInfo, pose, orientation, eyeTextureWidth, eyeTextureHeight, noOffset);
+		appState.RenderScene(commandBufferBeginInfo);
 		if (appState.Mode == AppScreenMode)
 		{
 			auto consoleIndex = 0;
@@ -1633,8 +1634,8 @@ void android_main(struct android_app *app)
 			viewport.maxDepth = 1.0f;
 			VC(appState.Device.vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport));
 			VC(appState.Device.vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect));
-			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &noOffset));
-			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &vertices->buffer, &noOffset));
+			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset));
+			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &vertices->buffer, &appState.NoOffset));
 			VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipeline));
 			if (!perImage.descriptorResources.created)
 			{
@@ -1675,7 +1676,7 @@ void android_main(struct android_app *app)
 				VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
 				perImage.descriptorResources.created = true;
 			}
-			VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices->buffer, noOffset, VK_INDEX_TYPE_UINT16));
+			VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices->buffer, appState.NoOffset, VK_INDEX_TYPE_UINT16));
 			VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipelineLayout, 0, 1, &perImage.descriptorResources.descriptorSet, 0, nullptr));
 			VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, appState.ConsoleIndices.size(), 1, 0, 0, 0));
 			VC(appState.Device.vkCmdEndRenderPass(perImage.commandBuffer));

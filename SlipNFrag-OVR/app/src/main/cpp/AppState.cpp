@@ -7,7 +7,7 @@
 #include <android/log.h>
 #include "sys_ovr.h"
 
-void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovrPosef& pose, const ovrQuatf& orientation, int eyeTextureWidth, int eyeTextureHeight, VkDeviceSize& noOffset)
+void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 {
 	auto matrixIndex = 0;
 	for (auto& view : Views)
@@ -73,97 +73,69 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 		bufferMemoryBarrier.buffer = Scene.matrices.buffer;
 		bufferMemoryBarrier.size = Scene.matrices.size;
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
-		VkDeviceSize stagingBufferSize = 0;
-		auto texturedDescriptorSetCount = 0;
-		auto spriteDescriptorSetCount = 0;
-		auto colormapDescriptorSetCount = 0;
-		auto aliasDescriptorSetCount = 0;
-		auto viewmodelDescriptorSetCount = 0;
-		auto floorVerticesSize = 0;
-		auto texturedVerticesSize = 0;
-		auto coloredVerticesSize = 0;
-		auto verticesSize = 0;
-		auto colormappedVerticesSize = 0;
-		auto colormappedTexCoordsSize = 0;
-		auto floorAttributesSize = 0;
-		auto texturedAttributesSize = 0;
-		auto colormappedLightsSize = 0;
-		auto vertexTransformSize = 0;
-		auto attributesSize = 0;
-		auto floorIndicesSize = 0;
-		auto colormappedIndices16Size = 0;
-		auto coloredIndices16Size = 0;
-		auto indices16Size = 0;
-		auto colormappedIndices32Size = 0;
-		auto coloredIndices32Size = 0;
-		auto indices32Size = 0;
-		auto floorSize = 0;
-		Buffer* vertices = nullptr;
-		Buffer* attributes = nullptr;
-		Buffer* indices16 = nullptr;
-		Buffer* indices32 = nullptr;
+		Scene.ClearBuffersAndSizes();
 		if (Mode != AppWorldMode)
 		{
-			floorVerticesSize = 3 * 4 * sizeof(float);
+			Scene.floorVerticesSize = 3 * 4 * sizeof(float);
 		}
-		texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
-		coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-		verticesSize = texturedVerticesSize + coloredVerticesSize + floorVerticesSize;
-		if (verticesSize > 0 || d_lists.last_alias >= 0 || d_lists.last_viewmodel >= 0)
+		Scene.texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
+		Scene.coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
+		Scene.verticesSize = Scene.texturedVerticesSize + Scene.coloredVerticesSize + Scene.floorVerticesSize;
+		if (Scene.verticesSize > 0 || d_lists.last_alias >= 0 || d_lists.last_viewmodel >= 0)
 		{
 			for (Buffer** b = &perImage.vertices.oldBuffers; *b != nullptr; b = &(*b)->next)
 			{
-				if ((*b)->size >= verticesSize && (*b)->size < verticesSize * 2)
+				if ((*b)->size >= Scene.verticesSize && (*b)->size < Scene.verticesSize * 2)
 				{
-					vertices = *b;
+					Scene.vertices = *b;
 					*b = (*b)->next;
 					break;
 				}
 			}
-			if (vertices == nullptr)
+			if (Scene.vertices == nullptr)
 			{
-				vertices = new Buffer();
-				vertices->CreateVertexBuffer(*this, verticesSize + verticesSize / 4);
+				Scene.vertices = new Buffer();
+				Scene.vertices->CreateVertexBuffer(*this, Scene.verticesSize + Scene.verticesSize / 4);
 			}
-			perImage.vertices.MoveToFront(vertices);
-			VK(Device.vkMapMemory(Device.device, vertices->memory, 0, verticesSize, 0, &vertices->mapped));
-			if (floorVerticesSize > 0)
+			perImage.vertices.MoveToFront(Scene.vertices);
+			VK(Device.vkMapMemory(Device.device, Scene.vertices->memory, 0, Scene.verticesSize, 0, &Scene.vertices->mapped));
+			if (Scene.floorVerticesSize > 0)
 			{
-				auto mapped = (float*)vertices->mapped;
+				auto mapped = (float*)Scene.vertices->mapped;
 				(*mapped) = -0.5;
 				mapped++;
-				(*mapped) = pose.Position.y;
-				mapped++;
-				(*mapped) = -0.5;
-				mapped++;
-				(*mapped) = 0.5;
-				mapped++;
-				(*mapped) = pose.Position.y;
+				(*mapped) = Scene.pose.Position.y;
 				mapped++;
 				(*mapped) = -0.5;
 				mapped++;
 				(*mapped) = 0.5;
 				mapped++;
-				(*mapped) = pose.Position.y;
+				(*mapped) = Scene.pose.Position.y;
+				mapped++;
+				(*mapped) = -0.5;
+				mapped++;
+				(*mapped) = 0.5;
+				mapped++;
+				(*mapped) = Scene.pose.Position.y;
 				mapped++;
 				(*mapped) = 0.5;
 				mapped++;
 				(*mapped) = -0.5;
 				mapped++;
-				(*mapped) = pose.Position.y;
+				(*mapped) = Scene.pose.Position.y;
 				mapped++;
 				(*mapped) = 0.5;
 			}
-			perImage.texturedVertexBase = floorVerticesSize;
-			memcpy((unsigned char*)vertices->mapped + perImage.texturedVertexBase, d_lists.textured_vertices.data(), texturedVerticesSize);
-			perImage.coloredVertexBase = perImage.texturedVertexBase + texturedVerticesSize;
-			memcpy((unsigned char*)vertices->mapped + perImage.coloredVertexBase, d_lists.colored_vertices.data(), coloredVerticesSize);
-			VC(Device.vkUnmapMemory(Device.device, vertices->memory));
-			vertices->mapped = nullptr;
+			perImage.texturedVertexBase = Scene.floorVerticesSize;
+			memcpy((unsigned char*)Scene.vertices->mapped + perImage.texturedVertexBase, d_lists.textured_vertices.data(), Scene.texturedVerticesSize);
+			perImage.coloredVertexBase = perImage.texturedVertexBase + Scene.texturedVerticesSize;
+			memcpy((unsigned char*)Scene.vertices->mapped + perImage.coloredVertexBase, d_lists.colored_vertices.data(), Scene.coloredVerticesSize);
+			VC(Device.vkUnmapMemory(Device.device, Scene.vertices->memory));
+			Scene.vertices->mapped = nullptr;
 			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			bufferMemoryBarrier.buffer = vertices->buffer;
-			bufferMemoryBarrier.size = vertices->size;
+			bufferMemoryBarrier.buffer = Scene.vertices->buffer;
+			bufferMemoryBarrier.size = Scene.vertices->size;
 			VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			if (d_lists.last_alias >= Scene.aliasVerticesList.size())
 			{
@@ -226,7 +198,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 				{
 					buffer = Scene.latestColormappedBuffer;
 				}
-				colormappedVerticesSize += verticesOffset;
+				Scene.colormappedVerticesSize += verticesOffset;
 				VK(Device.vkMapMemory(Device.device, buffer->memory, Scene.usedInLatestColormappedBuffer, verticesOffset, 0, &buffer->mapped));
 				auto mapped = (float*)buffer->mapped;
 				for (auto i : Scene.newVertices)
@@ -289,7 +261,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 				{
 					buffer = Scene.latestColormappedBuffer;
 				}
-				colormappedTexCoordsSize += texCoordsOffset;
+				Scene.colormappedTexCoordsSize += texCoordsOffset;
 				VK(Device.vkMapMemory(Device.device, buffer->memory, Scene.usedInLatestColormappedBuffer, texCoordsOffset, 0, &buffer->mapped));
 				auto mapped = (float*)buffer->mapped;
 				for (auto i : Scene.newTexCoords)
@@ -386,7 +358,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 				{
 					buffer = Scene.latestColormappedBuffer;
 				}
-				colormappedVerticesSize += verticesOffset;
+				Scene.colormappedVerticesSize += verticesOffset;
 				VK(Device.vkMapMemory(Device.device, buffer->memory, Scene.usedInLatestColormappedBuffer, verticesOffset, 0, &buffer->mapped));
 				auto mapped = (float*)buffer->mapped;
 				for (auto i : Scene.newVertices)
@@ -449,7 +421,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 				{
 					buffer = Scene.latestColormappedBuffer;
 				}
-				colormappedTexCoordsSize += texCoordsOffset;
+				Scene.colormappedTexCoordsSize += texCoordsOffset;
 				VK(Device.vkMapMemory(Device.device, buffer->memory, Scene.usedInLatestColormappedBuffer, texCoordsOffset, 0, &buffer->mapped));
 				auto mapped = (float*)buffer->mapped;
 				for (auto i : Scene.newTexCoords)
@@ -487,31 +459,31 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 			}
 			if (Mode != AppWorldMode)
 			{
-				floorAttributesSize = 2 * 4 * sizeof(float);
+				Scene.floorAttributesSize = 2 * 4 * sizeof(float);
 			}
-			texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
-			colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
-			vertexTransformSize = 16 * sizeof(float);
-			attributesSize = floorAttributesSize + texturedAttributesSize + colormappedLightsSize + vertexTransformSize;
+			Scene.texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
+			Scene.colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
+			Scene.vertexTransformSize = 16 * sizeof(float);
+			Scene.attributesSize = Scene.floorAttributesSize + Scene.texturedAttributesSize + Scene.colormappedLightsSize + Scene.vertexTransformSize;
 			for (Buffer** b = &perImage.attributes.oldBuffers; *b != nullptr; b = &(*b)->next)
 			{
-				if ((*b)->size >= attributesSize && (*b)->size < attributesSize * 2)
+				if ((*b)->size >= Scene.attributesSize && (*b)->size < Scene.attributesSize * 2)
 				{
-					attributes = *b;
+					Scene.attributes = *b;
 					*b = (*b)->next;
 					break;
 				}
 			}
-			if (attributes == nullptr)
+			if (Scene.attributes == nullptr)
 			{
-				attributes = new Buffer();
-				attributes->CreateVertexBuffer(*this, attributesSize + attributesSize / 4);
+				Scene.attributes = new Buffer();
+				Scene.attributes->CreateVertexBuffer(*this, Scene.attributesSize + Scene.attributesSize / 4);
 			}
-			perImage.attributes.MoveToFront(attributes);
-			VK(Device.vkMapMemory(Device.device, attributes->memory, 0, attributesSize, 0, &attributes->mapped));
-			if (floorAttributesSize > 0)
+			perImage.attributes.MoveToFront(Scene.attributes);
+			VK(Device.vkMapMemory(Device.device, Scene.attributes->memory, 0, Scene.attributesSize, 0, &Scene.attributes->mapped));
+			if (Scene.floorAttributesSize > 0)
 			{
-				auto mapped = (float*)attributes->mapped;
+				auto mapped = (float*)Scene.attributes->mapped;
 				(*mapped) = 0;
 				mapped++;
 				(*mapped) = 0;
@@ -528,12 +500,12 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 				mapped++;
 				(*mapped) = 1;
 			}
-			perImage.texturedAttributeBase = floorAttributesSize;
-			memcpy((unsigned char*)attributes->mapped + perImage.texturedAttributeBase, d_lists.textured_attributes.data(), texturedAttributesSize);
-			perImage.colormappedAttributeBase = perImage.texturedAttributeBase + texturedAttributesSize;
-			memcpy((unsigned char*)attributes->mapped + perImage.colormappedAttributeBase, d_lists.colormapped_attributes.data(), colormappedLightsSize);
-			perImage.vertexTransformBase = perImage.colormappedAttributeBase + colormappedLightsSize;
-			auto mapped = (float*)attributes->mapped + perImage.vertexTransformBase / sizeof(float);
+			perImage.texturedAttributeBase = Scene.floorAttributesSize;
+			memcpy((unsigned char*)Scene.attributes->mapped + perImage.texturedAttributeBase, d_lists.textured_attributes.data(), Scene.texturedAttributesSize);
+			perImage.colormappedAttributeBase = perImage.texturedAttributeBase + Scene.texturedAttributesSize;
+			memcpy((unsigned char*)Scene.attributes->mapped + perImage.colormappedAttributeBase, d_lists.colormapped_attributes.data(), Scene.colormappedLightsSize);
+			perImage.vertexTransformBase = perImage.colormappedAttributeBase + Scene.colormappedLightsSize;
+			auto mapped = (float*)Scene.attributes->mapped + perImage.vertexTransformBase / sizeof(float);
 			(*mapped) = Scale;
 			mapped++;
 			(*mapped) = 0;
@@ -565,41 +537,41 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 			(*mapped) = r_refdef.vieworg[1] * Scale;
 			mapped++;
 			(*mapped) = 1;
-			VC(Device.vkUnmapMemory(Device.device, attributes->memory));
-			attributes->mapped = nullptr;
+			VC(Device.vkUnmapMemory(Device.device, Scene.attributes->memory));
+			Scene.attributes->mapped = nullptr;
 			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			bufferMemoryBarrier.buffer = attributes->buffer;
-			bufferMemoryBarrier.size = attributes->size;
+			bufferMemoryBarrier.buffer = Scene.attributes->buffer;
+			bufferMemoryBarrier.size = Scene.attributes->size;
 			VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			if (Mode != AppWorldMode)
 			{
-				floorIndicesSize = 6 * sizeof(uint16_t);
+				Scene.floorIndicesSize = 6 * sizeof(uint16_t);
 			}
-			colormappedIndices16Size = (d_lists.last_colormapped_index16 + 1) * sizeof(uint16_t);
-			coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
-			indices16Size = floorIndicesSize + colormappedIndices16Size + coloredIndices16Size;
-			if (indices16Size > 0)
+			Scene.colormappedIndices16Size = (d_lists.last_colormapped_index16 + 1) * sizeof(uint16_t);
+			Scene.coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
+			Scene.indices16Size = Scene.floorIndicesSize + Scene.colormappedIndices16Size + Scene.coloredIndices16Size;
+			if (Scene.indices16Size > 0)
 			{
 				for (Buffer** b = &perImage.indices16.oldBuffers; *b != nullptr; b = &(*b)->next)
 				{
-					if ((*b)->size >= indices16Size && (*b)->size < indices16Size * 2)
+					if ((*b)->size >= Scene.indices16Size && (*b)->size < Scene.indices16Size * 2)
 					{
-						indices16 = *b;
+						Scene.indices16 = *b;
 						*b = (*b)->next;
 						break;
 					}
 				}
-				if (indices16 == nullptr)
+				if (Scene.indices16 == nullptr)
 				{
-					indices16 = new Buffer();
-					indices16->CreateIndexBuffer(*this, indices16Size + indices16Size / 4);
+					Scene.indices16 = new Buffer();
+					Scene.indices16->CreateIndexBuffer(*this, Scene.indices16Size + Scene.indices16Size / 4);
 				}
-				perImage.indices16.MoveToFront(indices16);
-				VK(Device.vkMapMemory(Device.device, indices16->memory, 0, indices16Size, 0, &indices16->mapped));
-				if (floorIndicesSize > 0)
+				perImage.indices16.MoveToFront(Scene.indices16);
+				VK(Device.vkMapMemory(Device.device, Scene.indices16->memory, 0, Scene.indices16Size, 0, &Scene.indices16->mapped));
+				if (Scene.floorIndicesSize > 0)
 				{
-					auto mapped = (uint16_t*)indices16->mapped;
+					auto mapped = (uint16_t*)Scene.indices16->mapped;
 					(*mapped) = 0;
 					mapped++;
 					(*mapped) = 1;
@@ -612,59 +584,59 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 					mapped++;
 					(*mapped) = 0;
 				}
-				perImage.colormappedIndex16Base = floorIndicesSize;
-				memcpy((unsigned char*)indices16->mapped + perImage.colormappedIndex16Base, d_lists.colormapped_indices16.data(), colormappedIndices16Size);
-				perImage.coloredIndex16Base = perImage.colormappedIndex16Base + colormappedIndices16Size;
-				memcpy((unsigned char*)indices16->mapped + perImage.coloredIndex16Base, d_lists.colored_indices16.data(), coloredIndices16Size);
-				VC(Device.vkUnmapMemory(Device.device, indices16->memory));
-				indices16->mapped = nullptr;
+				perImage.colormappedIndex16Base = Scene.floorIndicesSize;
+				memcpy((unsigned char*)Scene.indices16->mapped + perImage.colormappedIndex16Base, d_lists.colormapped_indices16.data(), Scene.colormappedIndices16Size);
+				perImage.coloredIndex16Base = perImage.colormappedIndex16Base + Scene.colormappedIndices16Size;
+				memcpy((unsigned char*)Scene.indices16->mapped + perImage.coloredIndex16Base, d_lists.colored_indices16.data(), Scene.coloredIndices16Size);
+				VC(Device.vkUnmapMemory(Device.device, Scene.indices16->memory));
+				Scene.indices16->mapped = nullptr;
 				bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 				bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
-				bufferMemoryBarrier.buffer = indices16->buffer;
-				bufferMemoryBarrier.size = indices16->size;
+				bufferMemoryBarrier.buffer = Scene.indices16->buffer;
+				bufferMemoryBarrier.size = Scene.indices16->size;
 				VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			}
-			colormappedIndices32Size = (d_lists.last_colormapped_index32 + 1) * sizeof(uint32_t);
-			coloredIndices32Size = (d_lists.last_colored_index32 + 1) * sizeof(uint32_t);
-			indices32Size = colormappedIndices32Size + coloredIndices32Size;
-			if (indices32Size > 0)
+			Scene.colormappedIndices32Size = (d_lists.last_colormapped_index32 + 1) * sizeof(uint32_t);
+			Scene.coloredIndices32Size = (d_lists.last_colored_index32 + 1) * sizeof(uint32_t);
+			Scene.indices32Size = Scene.colormappedIndices32Size + Scene.coloredIndices32Size;
+			if (Scene.indices32Size > 0)
 			{
 				for (Buffer** b = &perImage.indices32.oldBuffers; *b != nullptr; b = &(*b)->next)
 				{
-					if ((*b)->size >= indices32Size && (*b)->size < indices32Size * 2)
+					if ((*b)->size >= Scene.indices32Size && (*b)->size < Scene.indices32Size * 2)
 					{
-						indices32 = *b;
+						Scene.indices32 = *b;
 						*b = (*b)->next;
 						break;
 					}
 				}
-				if (indices32 == nullptr)
+				if (Scene.indices32 == nullptr)
 				{
-					indices32 = new Buffer();
-					indices32->CreateIndexBuffer(*this, indices32Size + indices32Size / 4);
+					Scene.indices32 = new Buffer();
+					Scene.indices32->CreateIndexBuffer(*this, Scene.indices32Size + Scene.indices32Size / 4);
 				}
-				perImage.indices32.MoveToFront(indices32);
-				VK(Device.vkMapMemory(Device.device, indices32->memory, 0, indices32Size, 0, &indices32->mapped));
-				memcpy(indices32->mapped, d_lists.colormapped_indices32.data(), colormappedIndices32Size);
-				perImage.coloredIndex32Base = colormappedIndices32Size;
-				memcpy((unsigned char*)indices32->mapped + perImage.coloredIndex32Base, d_lists.colored_indices32.data(), coloredIndices32Size);
-				VC(Device.vkUnmapMemory(Device.device, indices32->memory));
-				indices32->mapped = nullptr;
+				perImage.indices32.MoveToFront(Scene.indices32);
+				VK(Device.vkMapMemory(Device.device, Scene.indices32->memory, 0, Scene.indices32Size, 0, &Scene.indices32->mapped));
+				memcpy(Scene.indices32->mapped, d_lists.colormapped_indices32.data(), Scene.colormappedIndices32Size);
+				perImage.coloredIndex32Base = Scene.colormappedIndices32Size;
+				memcpy((unsigned char*)Scene.indices32->mapped + perImage.coloredIndex32Base, d_lists.colored_indices32.data(), Scene.coloredIndices32Size);
+				VC(Device.vkUnmapMemory(Device.device, Scene.indices32->memory));
+				Scene.indices32->mapped = nullptr;
 				bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 				bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
-				bufferMemoryBarrier.buffer = indices32->buffer;
-				bufferMemoryBarrier.size = indices32->size;
+				bufferMemoryBarrier.buffer = Scene.indices32->buffer;
+				bufferMemoryBarrier.size = Scene.indices32->size;
 				VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			}
 		}
-		perImage.GetStagingBufferSize(*this, view, stagingBufferSize, floorSize);
+		perImage.GetStagingBufferSize(*this, view, Scene.stagingBufferSize, Scene.floorSize);
 		perImage.hostClearCount = host_clearcount;
 		stagingBuffer = nullptr;
-		if (stagingBufferSize > 0)
+		if (Scene.stagingBufferSize > 0)
 		{
 			for (Buffer** b = &perImage.stagingBuffers.oldBuffers; *b != nullptr; b = &(*b)->next)
 			{
-				if ((*b)->size >= stagingBufferSize && (*b)->size < stagingBufferSize * 2)
+				if ((*b)->size >= Scene.stagingBufferSize && (*b)->size < Scene.stagingBufferSize * 2)
 				{
 					stagingBuffer = *b;
 					*b = (*b)->next;
@@ -674,10 +646,10 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 			if (stagingBuffer == nullptr)
 			{
 				stagingBuffer = new Buffer();
-				stagingBuffer->CreateStagingStorageBuffer(*this, stagingBufferSize + stagingBufferSize / 4);
+				stagingBuffer->CreateStagingStorageBuffer(*this, Scene.stagingBufferSize + Scene.stagingBufferSize / 4);
 			}
 			perImage.stagingBuffers.MoveToFront(stagingBuffer);
-			perImage.LoadStagingBuffer(*this, stagingBuffer, stagingBufferSize, floorSize);
+			perImage.LoadStagingBuffer(*this, stagingBuffer, Scene.stagingBufferSize, Scene.floorSize);
 			perImage.FillTextures(*this, stagingBuffer);
 		}
 		double clearR;
@@ -737,7 +709,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 		viewport.maxDepth = 1.0f;
 		VC(Device.vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport));
 		VC(Device.vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect));
-		if (verticesSize > 0)
+		if (Scene.verticesSize > 0)
 		{
 			VkDescriptorPoolSize poolSizes[2] { };
 			VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
@@ -813,649 +785,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 					perImage.sceneMatricesAndPaletteResources.created = true;
 				}
 			}
-			if (Mode == AppWorldMode)
-			{
-				VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &perImage.texturedVertexBase));
-				VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &perImage.texturedAttributeBase));
-				VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &perImage.vertexTransformBase));
-				VC(Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.textured.pipeline));
-				VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.textured.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-				poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				poolSizes[0].descriptorCount = 1;
-				descriptorPoolCreateInfo.poolSizeCount = 1;
-				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writes[0].pImageInfo = textureInfo;
-				if (d_lists.last_surface < 0 && d_lists.last_turbulent < 0)
-				{
-					perImage.texturedResources.Delete(*this);
-				}
-				else
-				{
-					auto size = perImage.texturedResources.descriptorSets.size();
-					auto required = d_lists.last_surface + 1 + d_lists.last_turbulent + 1;
-					if (size < required || size > required * 2)
-					{
-						auto toCreate = std::max(16, required + required / 4);
-						if (toCreate != size)
-						{
-							texturedDescriptorSetCount = toCreate;
-							if (perImage.texturedResources.created)
-							{
-								VC(Device.vkDestroyDescriptorPool(Device.device, perImage.texturedResources.descriptorPool, nullptr));
-							}
-							perImage.texturedResources.bound.clear();
-							poolSizes[0].descriptorCount = toCreate;
-							descriptorPoolCreateInfo.maxSets = toCreate;
-							VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.texturedResources.descriptorPool));
-							descriptorSetAllocateInfo.descriptorPool = perImage.texturedResources.descriptorPool;
-							descriptorSetAllocateInfo.pSetLayouts = &Scene.singleImageLayout;
-							perImage.texturedResources.descriptorSets.resize(toCreate);
-							perImage.texturedResources.bound.resize(toCreate);
-							for (auto i = 0; i < toCreate; i++)
-							{
-								VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.texturedResources.descriptorSets[i]));
-							}
-							perImage.texturedResources.created = true;
-						}
-					}
-				}
-				auto descriptorSetIndex = 0;
-				float pushConstants[24];
-				for (auto i = 0; i <= d_lists.last_surface; i++)
-				{
-					auto& surface = d_lists.surfaces[i];
-					pushConstants[0] = surface.origin_x;
-					pushConstants[1] = surface.origin_z;
-					pushConstants[2] = -surface.origin_y;
-					VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.textured.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 3 * sizeof(float), pushConstants));
-					auto texture = Scene.surfaceList[i].texture;
-					if (perImage.texturedResources.bound[descriptorSetIndex] != texture)
-					{
-						textureInfo[0].sampler = Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
-						VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-						perImage.texturedResources.bound[descriptorSetIndex] = texture;
-					}
-					VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.textured.pipelineLayout, 1, 1, &perImage.texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-					descriptorSetIndex++;
-					VC(Device.vkCmdDraw(perImage.commandBuffer, surface.count, 1, surface.first_vertex, 0));
-				}
-				VC(Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.sprites.pipeline));
-				VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.sprites.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-				if (perImage.resetDescriptorSetsCount != Scene.resetDescriptorSetsCount || perImage.spriteResources.descriptorSets.size() < Scene.spriteTextureCount)
-				{
-					perImage.spriteResources.Delete(*this);
-					spriteDescriptorSetCount = Scene.spriteTextureCount;
-					if (spriteDescriptorSetCount > 0)
-					{
-						poolSizes[0].descriptorCount = spriteDescriptorSetCount;
-						descriptorPoolCreateInfo.maxSets = spriteDescriptorSetCount;
-						VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.spriteResources.descriptorPool));
-						descriptorSetAllocateInfo.descriptorPool = perImage.spriteResources.descriptorPool;
-						descriptorSetAllocateInfo.pSetLayouts = &Scene.singleImageLayout;
-						perImage.spriteResources.descriptorSets.resize(spriteDescriptorSetCount);
-						for (auto i = 0; i < spriteDescriptorSetCount; i++)
-						{
-							VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.spriteResources.descriptorSets[i]));
-						}
-						perImage.spriteResources.created = true;
-					}
-				}
-				for (auto i = 0; i <= d_lists.last_sprite; i++)
-				{
-					auto& sprite = d_lists.sprites[i];
-					VkDescriptorSet descriptorSet;
-					auto texture = Scene.spriteList[i].texture;
-					auto entry = perImage.spriteResources.cache.find(texture);
-					if (entry == perImage.spriteResources.cache.end())
-					{
-						descriptorSet = perImage.spriteResources.descriptorSets[perImage.spriteResources.index];
-						perImage.spriteResources.index++;
-						textureInfo[0].sampler = Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = descriptorSet;
-						VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-						perImage.spriteResources.cache.insert({ texture, descriptorSet });
-					}
-					else
-					{
-						descriptorSet = entry->second;
-					}
-					VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.sprites.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					VC(Device.vkCmdDraw(perImage.commandBuffer, sprite.count, 1, sprite.first_vertex, 0));
-				}
-				VC(Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.turbulent.pipeline));
-				VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.turbulent.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-				pushConstants[3] = (float)cl.time;
-				for (auto i = 0; i <= d_lists.last_turbulent; i++)
-				{
-					auto& turbulent = d_lists.turbulent[i];
-					pushConstants[0] = turbulent.origin_x;
-					pushConstants[1] = turbulent.origin_z;
-					pushConstants[2] = -turbulent.origin_y;
-					VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), pushConstants));
-					auto texture = Scene.turbulentList[i].texture;
-					if (perImage.texturedResources.bound[descriptorSetIndex] != texture)
-					{
-						textureInfo[0].sampler = Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = perImage.texturedResources.descriptorSets[descriptorSetIndex];
-						VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-						perImage.texturedResources.bound[descriptorSetIndex] = texture;
-					}
-					VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.turbulent.pipelineLayout, 1, 1, &perImage.texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-					descriptorSetIndex++;
-					VC(Device.vkCmdDraw(perImage.commandBuffer, turbulent.count, 1, turbulent.first_vertex, 0));
-				}
-				if (perImage.colormapCount == 0)
-				{
-					perImage.colormapResources.Delete(*this);
-				}
-				else
-				{
-					auto size = perImage.colormapResources.descriptorSets.size();
-					auto required = perImage.colormapCount;
-					if (size < required || size > required * 2)
-					{
-						auto toCreate = std::max(4, required + required / 4);
-						if (toCreate != size)
-						{
-							colormapDescriptorSetCount = toCreate;
-							if (perImage.colormapResources.created)
-							{
-								VC(Device.vkDestroyDescriptorPool(Device.device, perImage.colormapResources.descriptorPool, nullptr));
-							}
-							perImage.texturedResources.bound.clear();
-							poolSizes[0].descriptorCount = toCreate;
-							descriptorPoolCreateInfo.maxSets = toCreate;
-							VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.colormapResources.descriptorPool));
-							descriptorSetAllocateInfo.descriptorPool = perImage.colormapResources.descriptorPool;
-							descriptorSetAllocateInfo.pSetLayouts = &Scene.singleImageLayout;
-							perImage.colormapResources.descriptorSets.resize(toCreate);
-							perImage.texturedResources.bound.resize(toCreate);
-							for (auto i = 0; i < toCreate; i++)
-							{
-								VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.colormapResources.descriptorSets[i]));
-							}
-							perImage.colormapResources.created = true;
-						}
-					}
-				}
-				if (perImage.resetDescriptorSetsCount != Scene.resetDescriptorSetsCount || perImage.aliasResources.descriptorSets.size() < Scene.aliasTextureCount)
-				{
-					perImage.aliasResources.Delete(*this);
-					aliasDescriptorSetCount = Scene.aliasTextureCount;
-					if (aliasDescriptorSetCount > 0)
-					{
-						poolSizes[0].descriptorCount = aliasDescriptorSetCount;
-						descriptorPoolCreateInfo.maxSets = aliasDescriptorSetCount;
-						VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.aliasResources.descriptorPool));
-						descriptorSetAllocateInfo.descriptorPool = perImage.aliasResources.descriptorPool;
-						descriptorSetAllocateInfo.pSetLayouts = &Scene.singleImageLayout;
-						perImage.aliasResources.descriptorSets.resize(aliasDescriptorSetCount);
-						for (auto i = 0; i < aliasDescriptorSetCount; i++)
-						{
-							VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.aliasResources.descriptorSets[i]));
-						}
-						perImage.aliasResources.created = true;
-					}
-				}
-				descriptorSetIndex = 0;
-				if (d_lists.last_alias >= 0)
-				{
-					VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 3, 1, &attributes->buffer, &perImage.vertexTransformBase));
-					VC(Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.alias.pipeline));
-					VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.alias.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-					pushConstants[3] = 0;
-					pushConstants[7] = 0;
-					pushConstants[11] = 0;
-					pushConstants[15] = 1;
-					if (indices16 != nullptr)
-					{
-						VC(Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
-						for (auto i = 0; i <= d_lists.last_alias; i++)
-						{
-							auto& alias = d_lists.alias[i];
-							if (alias.first_index16 < 0)
-							{
-								continue;
-							}
-							auto index = Scene.aliasVerticesList[i];
-							auto& vertices = Scene.colormappedBufferList[index];
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
-							index = Scene.aliasTexCoordsList[i];
-							auto& texCoords = Scene.colormappedBufferList[index];
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
-							VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-							pushConstants[0] = alias.transform[0][0];
-							pushConstants[1] = alias.transform[2][0];
-							pushConstants[2] = -alias.transform[1][0];
-							pushConstants[4] = alias.transform[0][2];
-							pushConstants[5] = alias.transform[2][2];
-							pushConstants[6] = -alias.transform[1][2];
-							pushConstants[8] = -alias.transform[0][1];
-							pushConstants[9] = -alias.transform[2][1];
-							pushConstants[10] = alias.transform[1][1];
-							pushConstants[12] = alias.transform[0][3];
-							pushConstants[13] = alias.transform[2][3];
-							pushConstants[14] = -alias.transform[1][3];
-							VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants));
-							VkDescriptorSet descriptorSet;
-							auto texture = Scene.aliasList[i].texture.texture;
-							auto entry = perImage.aliasResources.cache.find(texture);
-							if (entry == perImage.aliasResources.cache.end())
-							{
-								descriptorSet = perImage.aliasResources.descriptorSets[perImage.aliasResources.index];
-								perImage.aliasResources.index++;
-								textureInfo[0].sampler = Scene.samplers[texture->mipCount];
-								textureInfo[0].imageView = texture->view;
-								writes[0].dstSet = descriptorSet;
-								VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-								perImage.aliasResources.cache.insert({ texture, descriptorSet });
-							}
-							else
-							{
-								descriptorSet = entry->second;
-							}
-							VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.alias.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-							if (alias.is_host_colormap)
-							{
-								VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.alias.pipelineLayout, 2, 1, &perImage.host_colormapResources.descriptorSet, 0, nullptr));
-							}
-							else
-							{
-								auto colormap = Scene.aliasList[i].colormap.texture;
-								if (perImage.colormapResources.bound[descriptorSetIndex] != colormap)
-								{
-									textureInfo[0].sampler = Scene.samplers[colormap->mipCount];
-									textureInfo[0].imageView = colormap->view;
-									writes[0].dstSet = perImage.colormapResources.descriptorSets[descriptorSetIndex];
-									VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-									perImage.colormapResources.bound[descriptorSetIndex] = texture;
-								}
-								VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.alias.pipelineLayout, 2, 1, &perImage.colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-								descriptorSetIndex++;
-							}
-							VC(Device.vkCmdDrawIndexed(perImage.commandBuffer, alias.count, 1, alias.first_index16, 0, 0));
-						}
-					}
-					if (indices32 != nullptr)
-					{
-						VC(Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
-						for (auto i = 0; i <= d_lists.last_alias; i++)
-						{
-							auto& alias = d_lists.alias[i];
-							if (alias.first_index32 < 0)
-							{
-								continue;
-							}
-							auto index = Scene.aliasVerticesList[i];
-							auto& vertices = Scene.colormappedBufferList[index];
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
-							index = Scene.aliasTexCoordsList[i];
-							auto& texCoords = Scene.colormappedBufferList[index];
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
-							VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + alias.first_attribute * sizeof(float);
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-							pushConstants[0] = alias.transform[0][0];
-							pushConstants[1] = alias.transform[2][0];
-							pushConstants[2] = -alias.transform[1][0];
-							pushConstants[4] = alias.transform[0][2];
-							pushConstants[5] = alias.transform[2][2];
-							pushConstants[6] = -alias.transform[1][2];
-							pushConstants[8] = -alias.transform[0][1];
-							pushConstants[9] = -alias.transform[2][1];
-							pushConstants[10] = alias.transform[1][1];
-							pushConstants[12] = alias.transform[0][3];
-							pushConstants[13] = alias.transform[2][3];
-							pushConstants[14] = -alias.transform[1][3];
-							VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants));
-							VkDescriptorSet descriptorSet;
-							auto texture = Scene.aliasList[i].texture.texture;
-							auto entry = perImage.aliasResources.cache.find(texture);
-							if (entry == perImage.aliasResources.cache.end())
-							{
-								descriptorSet = perImage.aliasResources.descriptorSets[perImage.aliasResources.index];
-								perImage.aliasResources.index++;
-								textureInfo[0].sampler = Scene.samplers[texture->mipCount];
-								textureInfo[0].imageView = texture->view;
-								writes[0].dstSet = descriptorSet;
-								VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-								perImage.aliasResources.cache.insert({ texture, descriptorSet });
-							}
-							else
-							{
-								descriptorSet = entry->second;
-							}
-							VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.alias.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-							if (alias.is_host_colormap)
-							{
-								VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.alias.pipelineLayout, 2, 1, &perImage.host_colormapResources.descriptorSet, 0, nullptr));
-							}
-							else
-							{
-								auto colormap = Scene.aliasList[i].colormap.texture;
-								if (perImage.colormapResources.bound[descriptorSetIndex] != colormap)
-								{
-									textureInfo[0].sampler = Scene.samplers[colormap->mipCount];
-									textureInfo[0].imageView = colormap->view;
-									writes[0].dstSet = perImage.colormapResources.descriptorSets[descriptorSetIndex];
-									VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-									perImage.colormapResources.bound[descriptorSetIndex] = texture;
-								}
-								VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.alias.pipelineLayout, 2, 1, &perImage.colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-								descriptorSetIndex++;
-							}
-							VC(Device.vkCmdDrawIndexed(perImage.commandBuffer, alias.count, 1, alias.first_index32, 0, 0));
-						}
-					}
-				}
-				if (perImage.resetDescriptorSetsCount != Scene.resetDescriptorSetsCount || perImage.viewmodelResources.descriptorSets.size() < Scene.viewmodelTextureCount)
-				{
-					perImage.viewmodelResources.Delete(*this);
-					viewmodelDescriptorSetCount = Scene.viewmodelTextureCount;
-					if (viewmodelDescriptorSetCount > 0)
-					{
-						poolSizes[0].descriptorCount = viewmodelDescriptorSetCount;
-						descriptorPoolCreateInfo.maxSets = viewmodelDescriptorSetCount;
-						VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.viewmodelResources.descriptorPool));
-						descriptorSetAllocateInfo.descriptorPool = perImage.viewmodelResources.descriptorPool;
-						descriptorSetAllocateInfo.pSetLayouts = &Scene.singleImageLayout;
-						perImage.viewmodelResources.descriptorSets.resize(viewmodelDescriptorSetCount);
-						for (auto i = 0; i < viewmodelDescriptorSetCount; i++)
-						{
-							VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.viewmodelResources.descriptorSets[i]));
-						}
-						perImage.viewmodelResources.created = true;
-					}
-				}
-				if (d_lists.last_viewmodel >= 0)
-				{
-					VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 3, 1, &attributes->buffer, &perImage.vertexTransformBase));
-					VC(Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.viewmodel.pipeline));
-					VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.viewmodel.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-					pushConstants[3] = 0;
-					pushConstants[7] = 0;
-					pushConstants[11] = 0;
-					pushConstants[15] = 1;
-					if (NearViewModel)
-					{
-						pushConstants[16] = vpn[0] / Scale;
-						pushConstants[17] = vpn[2] / Scale;
-						pushConstants[18] = -vpn[1] / Scale;
-						pushConstants[19] = 0;
-						pushConstants[20] = 1;
-						pushConstants[21] = 1;
-						pushConstants[22] = 1;
-						pushConstants[23] = 1;
-					}
-					else
-					{
-						pushConstants[16] = 1 / Scale;
-						pushConstants[17] = 0;
-						pushConstants[18] = 0;
-						pushConstants[19] = 8;
-						pushConstants[20] = 1;
-						pushConstants[21] = 0;
-						pushConstants[22] = 0;
-						pushConstants[23] = 0.7 + 0.3 * sin(cl.time * M_PI);
-					}
-					if (indices16 != nullptr)
-					{
-						VC(Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
-						for (auto i = 0; i <= d_lists.last_viewmodel; i++)
-						{
-							auto& viewmodel = d_lists.viewmodel[i];
-							if (viewmodel.first_index16 < 0)
-							{
-								continue;
-							}
-							auto index = Scene.viewmodelVerticesList[i];
-							auto& vertices = Scene.colormappedBufferList[index];
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
-							index = Scene.viewmodelTexCoordsList[i];
-							auto& texCoords = Scene.colormappedBufferList[index];
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
-							VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-							pushConstants[0] = viewmodel.transform[0][0];
-							pushConstants[1] = viewmodel.transform[2][0];
-							pushConstants[2] = -viewmodel.transform[1][0];
-							pushConstants[4] = viewmodel.transform[0][2];
-							pushConstants[5] = viewmodel.transform[2][2];
-							pushConstants[6] = -viewmodel.transform[1][2];
-							pushConstants[8] = -viewmodel.transform[0][1];
-							pushConstants[9] = -viewmodel.transform[2][1];
-							pushConstants[10] = viewmodel.transform[1][1];
-							pushConstants[12] = viewmodel.transform[0][3];
-							pushConstants[13] = viewmodel.transform[2][3];
-							pushConstants[14] = -viewmodel.transform[1][3];
-							VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants));
-							VkDescriptorSet descriptorSet;
-							auto texture = Scene.viewmodelList[i].texture.texture;
-							auto entry = perImage.viewmodelResources.cache.find(texture);
-							if (entry == perImage.viewmodelResources.cache.end())
-							{
-								descriptorSet = perImage.viewmodelResources.descriptorSets[perImage.viewmodelResources.index];
-								perImage.viewmodelResources.index++;
-								textureInfo[0].sampler = Scene.samplers[texture->mipCount];
-								textureInfo[0].imageView = texture->view;
-								writes[0].dstSet = descriptorSet;
-								VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-								perImage.viewmodelResources.cache.insert({ texture, descriptorSet });
-							}
-							else
-							{
-								descriptorSet = entry->second;
-							}
-							VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.viewmodel.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-							if (viewmodel.is_host_colormap)
-							{
-								VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.viewmodel.pipelineLayout, 2, 1, &perImage.host_colormapResources.descriptorSet, 0, nullptr));
-							}
-							else
-							{
-								auto colormap = Scene.viewmodelList[i].colormap.texture;
-								if (perImage.colormapResources.bound[descriptorSetIndex] != colormap)
-								{
-									textureInfo[0].sampler = Scene.samplers[colormap->mipCount];
-									textureInfo[0].imageView = colormap->view;
-									writes[0].dstSet = perImage.colormapResources.descriptorSets[descriptorSetIndex];
-									VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-									perImage.colormapResources.bound[descriptorSetIndex] = texture;
-								}
-								VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.viewmodel.pipelineLayout, 2, 1, &perImage.colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-								descriptorSetIndex++;
-							}
-							VC(Device.vkCmdDrawIndexed(perImage.commandBuffer, viewmodel.count, 1, viewmodel.first_index16, 0, 0));
-						}
-					}
-					if (indices32 != nullptr)
-					{
-						VC(Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
-						for (auto i = 0; i <= d_lists.last_viewmodel; i++)
-						{
-							auto& viewmodel = d_lists.viewmodel[i];
-							if (viewmodel.first_index32 < 0)
-							{
-								continue;
-							}
-							auto index = Scene.viewmodelVerticesList[i];
-							auto& vertices = Scene.colormappedBufferList[index];
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
-							index = Scene.viewmodelTexCoordsList[i];
-							auto& texCoords = Scene.colormappedBufferList[index];
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
-							VkDeviceSize attributeOffset = perImage.colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
-							VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-							pushConstants[0] = viewmodel.transform[0][0];
-							pushConstants[1] = viewmodel.transform[2][0];
-							pushConstants[2] = -viewmodel.transform[1][0];
-							pushConstants[4] = viewmodel.transform[0][2];
-							pushConstants[5] = viewmodel.transform[2][2];
-							pushConstants[6] = -viewmodel.transform[1][2];
-							pushConstants[8] = -viewmodel.transform[0][1];
-							pushConstants[9] = -viewmodel.transform[2][1];
-							pushConstants[10] = viewmodel.transform[1][1];
-							pushConstants[12] = viewmodel.transform[0][3];
-							pushConstants[13] = viewmodel.transform[2][3];
-							pushConstants[14] = -viewmodel.transform[1][3];
-							VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants));
-							VkDescriptorSet descriptorSet;
-							auto texture = Scene.viewmodelList[i].texture.texture;
-							auto entry = perImage.viewmodelResources.cache.find(texture);
-							if (entry == perImage.viewmodelResources.cache.end())
-							{
-								descriptorSet = perImage.viewmodelResources.descriptorSets[perImage.viewmodelResources.index];
-								perImage.viewmodelResources.index++;
-								textureInfo[0].sampler = Scene.samplers[texture->mipCount];
-								textureInfo[0].imageView = texture->view;
-								writes[0].dstSet = descriptorSet;
-								VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-								perImage.viewmodelResources.cache.insert({ texture, descriptorSet });
-							}
-							else
-							{
-								descriptorSet = entry->second;
-							}
-							VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.viewmodel.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-							if (viewmodel.is_host_colormap)
-							{
-								VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.viewmodel.pipelineLayout, 2, 1, &perImage.host_colormapResources.descriptorSet, 0, nullptr));
-							}
-							else
-							{
-								auto colormap = Scene.viewmodelList[i].colormap.texture;
-								if (perImage.colormapResources.bound[descriptorSetIndex] != colormap)
-								{
-									textureInfo[0].sampler = Scene.samplers[colormap->mipCount];
-									textureInfo[0].imageView = colormap->view;
-									writes[0].dstSet = perImage.colormapResources.descriptorSets[descriptorSetIndex];
-									VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-									perImage.colormapResources.bound[descriptorSetIndex] = texture;
-								}
-								VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.viewmodel.pipelineLayout, 2, 1, &perImage.colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-								descriptorSetIndex++;
-							}
-							VC(Device.vkCmdDrawIndexed(perImage.commandBuffer, viewmodel.count, 1, viewmodel.first_index32, 0, 0));
-						}
-					}
-				}
-				perImage.resetDescriptorSetsCount = Scene.resetDescriptorSetsCount;
-				if (d_lists.last_particle >= 0)
-				{
-					VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &perImage.coloredVertexBase));
-					VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &perImage.vertexTransformBase));
-					VC(Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.colored.pipeline));
-					VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.colored.pipelineLayout, 0, 1, &perImage.sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-					if (indices16 != nullptr)
-					{
-						VC(Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, perImage.coloredIndex16Base, VK_INDEX_TYPE_UINT16));
-						for (auto i = 0; i <= d_lists.last_particle; i++)
-						{
-							auto& particle = d_lists.particles[i];
-							if (particle.first_index16 < 0)
-							{
-								continue;
-							}
-							float color = (float)particle.color;
-							VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.colored.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &color));
-							VC(Device.vkCmdDrawIndexed(perImage.commandBuffer, particle.count, 1, particle.first_index16, 0, 0));
-						}
-					}
-					if (indices32 != nullptr)
-					{
-						VC(Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices32->buffer, perImage.coloredIndex32Base, VK_INDEX_TYPE_UINT32));
-						for (auto i = 0; i <= d_lists.last_particle; i++)
-						{
-							auto& particle = d_lists.particles[i];
-							if (particle.first_index32 < 0)
-							{
-								continue;
-							}
-							float color = (float)particle.color;
-							VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.colored.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &color));
-							VC(Device.vkCmdDrawIndexed(perImage.commandBuffer, particle.count, 1, particle.first_index32, 0, 0));
-						}
-					}
-				}
-				if (d_lists.last_sky >= 0)
-				{
-					VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &perImage.texturedVertexBase));
-					VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &perImage.texturedAttributeBase));
-					VC(Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.sky.pipeline));
-					poolSizes[0].descriptorCount = 1;
-					descriptorPoolCreateInfo.poolSizeCount = 1;
-					if (!perImage.skyResources.created)
-					{
-						VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.skyResources.descriptorPool));
-						descriptorSetAllocateInfo.descriptorPool = perImage.skyResources.descriptorPool;
-						descriptorSetAllocateInfo.pSetLayouts = &Scene.singleImageLayout;
-						VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.skyResources.descriptorSet));
-						textureInfo[0].sampler = Scene.samplers[perImage.sky->mipCount];
-						textureInfo[0].imageView = perImage.sky->view;
-						writes[0].dstSet = perImage.skyResources.descriptorSet;
-						VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-						perImage.skyResources.created = true;
-					}
-					VkDescriptorSet descriptorSets[2];
-					descriptorSets[0] = perImage.sceneMatricesAndPaletteResources.descriptorSet;
-					descriptorSets[1] = perImage.skyResources.descriptorSet;
-					VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.sky.pipelineLayout, 0, 2, descriptorSets, 0, nullptr));
-					float rotation[13];
-					auto matrix = ovrMatrix4f_CreateFromQuaternion(&orientation);
-					rotation[0] = -matrix.M[0][2];
-					rotation[1] = matrix.M[2][2];
-					rotation[2] = -matrix.M[1][2];
-					rotation[3] = matrix.M[0][0];
-					rotation[4] = -matrix.M[2][0];
-					rotation[5] = matrix.M[1][0];
-					rotation[6] = matrix.M[0][1];
-					rotation[7] = -matrix.M[2][1];
-					rotation[8] = matrix.M[1][1];
-					rotation[9] = eyeTextureWidth;
-					rotation[10] = eyeTextureHeight;
-					rotation[11] = std::max(eyeTextureWidth, eyeTextureHeight);
-					rotation[12] = skytime*skyspeed;
-					VC(Device.vkCmdPushConstants(perImage.commandBuffer, Scene.sky.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 13 * sizeof(float), &rotation));
-					for (auto i = 0; i <= d_lists.last_sky; i++)
-					{
-						auto& sky = d_lists.sky[i];
-						VC(Device.vkCmdDraw(perImage.commandBuffer, sky.count, 1, sky.first_vertex, 0));
-					}
-				}
-			}
-			else
-			{
-				VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &noOffset));
-				VC(Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &attributes->buffer, &noOffset));
-				VC(Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.floor.pipeline));
-				if (!perImage.floorResources.created)
-				{
-					poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					poolSizes[0].descriptorCount = 1;
-					descriptorPoolCreateInfo.poolSizeCount = 1;
-					VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.floorResources.descriptorPool));
-					descriptorSetAllocateInfo.descriptorPool = perImage.floorResources.descriptorPool;
-					descriptorSetAllocateInfo.pSetLayouts = &Scene.singleImageLayout;
-					VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.floorResources.descriptorSet));
-					textureInfo[0].sampler = Scene.samplers[Scene.floorTexture->mipCount];
-					textureInfo[0].imageView = Scene.floorTexture->view;
-					writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					writes[0].pImageInfo = textureInfo;
-					writes[0].dstSet = perImage.floorResources.descriptorSet;
-					VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-					perImage.floorResources.created = true;
-				}
-				VkDescriptorSet descriptorSets[2];
-				descriptorSets[0] = perImage.sceneMatricesResources.descriptorSet;
-				descriptorSets[1] = perImage.floorResources.descriptorSet;
-				VC(Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr));
-				VC(Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices16->buffer, 0, VK_INDEX_TYPE_UINT16));
-				VC(Device.vkCmdDrawIndexed(perImage.commandBuffer, 6, 1, 0, 0, 0));
-			}
+			perImage.Render(*this, poolSizes, descriptorPoolCreateInfo, writes, descriptorSetAllocateInfo, textureInfo);
 		}
 		VC(Device.vkCmdEndRenderPass(perImage.commandBuffer));
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &view.framebuffer.endBarriers[view.index]));
@@ -1469,14 +799,14 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo, ovr
 		matrixIndex++;
 #if defined(_DEBUG)
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** [%i, %i, %i, %i, %i] %i; %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
-								texturedDescriptorSetCount, spriteDescriptorSetCount, colormapDescriptorSetCount, aliasDescriptorSetCount, viewmodelDescriptorSetCount,
-								stagingBufferSize,
-								floorVerticesSize, texturedVerticesSize, coloredVerticesSize, verticesSize,
-								colormappedVerticesSize,
-								colormappedTexCoordsSize,
-								floorAttributesSize, texturedAttributesSize, colormappedLightsSize, vertexTransformSize, attributesSize,
-								floorIndicesSize, colormappedIndices16Size, coloredIndices16Size, indices16Size,
-								colormappedIndices32Size, coloredIndices32Size, indices32Size);
+			Scene.texturedDescriptorSetCount, Scene.spriteDescriptorSetCount, Scene.colormapDescriptorSetCount, Scene.aliasDescriptorSetCount, Scene.viewmodelDescriptorSetCount,
+			Scene.stagingBufferSize,
+			Scene.floorVerticesSize, Scene.texturedVerticesSize, Scene.coloredVerticesSize, Scene.verticesSize,
+			Scene.colormappedVerticesSize,
+			Scene.colormappedTexCoordsSize,
+			Scene.floorAttributesSize, Scene.texturedAttributesSize, Scene.colormappedLightsSize, Scene.vertexTransformSize, Scene.attributesSize,
+			Scene.floorIndicesSize, Scene.colormappedIndices16Size, Scene.coloredIndices16Size, Scene.indices16Size,
+			Scene.colormappedIndices32Size, Scene.coloredIndices32Size, Scene.indices32Size);
 #endif
 	}
 }
