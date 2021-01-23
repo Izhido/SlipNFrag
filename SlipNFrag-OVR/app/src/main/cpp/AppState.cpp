@@ -23,15 +23,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			VK(Device.vkResetFences(Device.device, 1, &perImage.fence));
 			perImage.submitted = false;
 		}
-		perImage.sceneMatricesStagingBuffers.Reset(*this);
-		perImage.vertices.Reset(*this);
-		perImage.attributes.Reset(*this);
-		perImage.indices16.Reset(*this);
-		perImage.indices32.Reset(*this);
-		perImage.stagingBuffers.Reset(*this);
-		perImage.turbulent.Reset(*this);
-		perImage.colormaps.Reset(*this);
-		perImage.colormapCount = 0;
+		perImage.Reset(*this);
 		VK(Device.vkResetCommandBuffer(perImage.commandBuffer, 0));
 		VK(Device.vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 		VkMemoryBarrier memoryBarrier { };
@@ -628,6 +620,66 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 				bufferMemoryBarrier.size = Scene.indices32->size;
 				VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			}
+			Scene.particles16Size = 0;
+			for (auto i = 0; i <= d_lists.last_particles_index16; i++)
+			{
+				Scene.particles16Size += (d_lists.particles_index16[i].last_color + 1) * 4 * sizeof(float);
+			}
+			Scene.particles32Size = 0;
+			for (auto i = 0; i <= d_lists.last_particles_index32; i++)
+			{
+				Scene.particles32Size += (d_lists.particles_index32[i].last_color + 1) * 4 * sizeof(float);
+			}
+			Scene.particlesSize = Scene.particles16Size + Scene.particles32Size;
+			if (Scene.particlesSize > 0)
+			{
+				for (Buffer** b = &perImage.particles.oldBuffers; *b != nullptr; b = &(*b)->next)
+				{
+					if ((*b)->size >= Scene.particlesSize)
+					{
+						Scene.particles = *b;
+						*b = (*b)->next;
+						break;
+					}
+				}
+				if (Scene.particles == nullptr)
+				{
+					Scene.particles = new Buffer();
+					Scene.particles->CreateVertexBuffer(*this, Scene.particlesSize + Scene.particlesSize / 4);
+				}
+				perImage.particles.MoveToFront(Scene.particles);
+				VK(Device.vkMapMemory(Device.device, Scene.particles->memory, 0, Scene.particlesSize, 0, &Scene.particles->mapped));
+				auto mapped = (float*)Scene.particles->mapped;
+				for (auto j = 0; j <= d_lists.last_particles_index16; j++)
+				{
+					auto& particles = d_lists.particles_index16[j];
+					for (auto i = 0; i <= particles.last_color; i++)
+					{
+						*mapped++ = particles.colors[i];
+						*mapped++ = particles.colors[i];
+						*mapped++ = particles.colors[i];
+						*mapped++ = particles.colors[i];
+					}
+				}
+				for (auto j = 0; j <= d_lists.last_particles_index32; j++)
+				{
+					auto& particles = d_lists.particles_index32[j];
+					for (auto i = 0; i <= particles.last_color; i++)
+					{
+						*mapped++ = particles.colors[i];
+						*mapped++ = particles.colors[i];
+						*mapped++ = particles.colors[i];
+						*mapped++ = particles.colors[i];
+					}
+				}
+				VC(Device.vkUnmapMemory(Device.device, Scene.particles->memory));
+				Scene.particles->mapped = nullptr;
+				bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+				bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
+				bufferMemoryBarrier.buffer = Scene.particles->buffer;
+				bufferMemoryBarrier.size = Scene.particles->size;
+				VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			}
 		}
 		perImage.GetStagingBufferSize(*this, view, Scene.stagingBufferSize, Scene.floorSize);
 		perImage.hostClearCount = host_clearcount;
@@ -798,7 +850,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		perImage.submitted = true;
 		matrixIndex++;
 #if defined(_DEBUG)
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** [%i, %i, %i, %i, %i] %i; %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i",
+		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** [%i, %i, %i, %i, %i] %i; %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i; %i, %i = %i",
 			Scene.texturedDescriptorSetCount, Scene.spriteDescriptorSetCount, Scene.colormapDescriptorSetCount, Scene.aliasDescriptorSetCount, Scene.viewmodelDescriptorSetCount,
 			Scene.stagingBufferSize,
 			Scene.floorVerticesSize, Scene.texturedVerticesSize, Scene.coloredVerticesSize, Scene.verticesSize,
@@ -806,7 +858,8 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			Scene.colormappedTexCoordsSize,
 			Scene.floorAttributesSize, Scene.texturedAttributesSize, Scene.colormappedLightsSize, Scene.vertexTransformSize, Scene.attributesSize,
 			Scene.floorIndicesSize, Scene.colormappedIndices16Size, Scene.coloredIndices16Size, Scene.indices16Size,
-			Scene.colormappedIndices32Size, Scene.coloredIndices32Size, Scene.indices32Size);
+			Scene.colormappedIndices32Size, Scene.coloredIndices32Size, Scene.indices32Size,
+			Scene.particles16Size, Scene.particles32Size, Scene.particlesSize);
 #endif
 	}
 }

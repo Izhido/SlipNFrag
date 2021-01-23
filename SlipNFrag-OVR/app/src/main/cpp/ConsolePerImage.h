@@ -1,5 +1,9 @@
 #pragma once
 
+#include "CachedBuffers.h"
+#include "PipelineDescriptorResources.h"
+#include "Texture.h"
+
 struct ConsolePerImage
 {
 	CachedBuffers vertices;
@@ -14,4 +18,6 @@ struct ConsolePerImage
 	VkCommandBuffer commandBuffer;
 	VkFence fence;
 	bool submitted;
+
+	void Reset(AppState& appState);
 };

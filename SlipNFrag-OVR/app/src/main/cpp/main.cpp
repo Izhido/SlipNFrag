@@ -1496,9 +1496,7 @@ void android_main(struct android_app *app)
 				VK(appState.Device.vkResetFences(appState.Device.device, 1, &perImage.fence));
 				perImage.submitted = false;
 			}
-			perImage.vertices.Reset(appState);
-			perImage.indices.Reset(appState);
-			perImage.stagingBuffers.Reset(appState);
+			perImage.Reset(appState);
 			VK(appState.Device.vkResetCommandBuffer(perImage.commandBuffer, 0));
 			VK(appState.Device.vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 			VkMemoryBarrier memoryBarrier { };
@@ -2080,6 +2078,7 @@ void android_main(struct android_app *app)
 			perImage.colormaps.Delete(appState);
 			perImage.turbulent.Delete(appState);
 			perImage.stagingBuffers.Delete(appState);
+			perImage.particles.Delete(appState);
 			perImage.indices32.Delete(appState);
 			perImage.indices16.Delete(appState);
 			perImage.attributes.Delete(appState);

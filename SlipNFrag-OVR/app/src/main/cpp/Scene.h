@@ -118,11 +118,15 @@ struct Scene
 	VkDeviceSize colormappedIndices32Size;
 	VkDeviceSize coloredIndices32Size;
 	VkDeviceSize indices32Size;
+	VkDeviceSize particles16Size;
+	VkDeviceSize particles32Size;
+	VkDeviceSize particlesSize;
 	VkDeviceSize floorSize;
 	Buffer* vertices;
 	Buffer* attributes;
 	Buffer* indices16;
 	Buffer* indices32;
+	Buffer* particles;
 	ovrQuatf orientation;
 	ovrPosef pose;
 

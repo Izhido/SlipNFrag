@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -22,7 +22,8 @@ void D_ResetLists ()
 	d_lists.last_turbulent = -1;
 	d_lists.last_alias = -1;
 	d_lists.last_viewmodel = -1;
-	d_lists.last_particle = -1;
+	d_lists.last_particles_index16 = -1;
+	d_lists.last_particles_index32 = -1;
 	d_lists.last_sky = -1;
     d_lists.last_skybox = -1;
 	d_lists.last_textured_vertex = -1;
@@ -633,52 +634,62 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 void D_AddParticleToLists (particle_t* part)
 {
 	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
+	dparticles_t* particles;
 	auto is_index16 = (first_vertex + 4 <= 65520);
-	auto is_new = true;
-	if (d_lists.last_particle >= 0)
+	if (is_index16)
 	{
-		auto& particle = d_lists.particles[d_lists.last_particle];
-		if (particle.color == part->color)
+		auto is_new = true;
+		if (d_lists.last_particles_index16 >= 0)
 		{
-			if (particle.first_index16 >= 0)
+			particles = &d_lists.particles_index16[d_lists.last_particles_index16];
+			if (particles->first_index + (particles->last_color + 1) * 6 == d_lists.last_colored_index16 + 1)
 			{
-				if (is_index16 && particle.first_index16 + particle.count == d_lists.last_colored_index16 + 1)
-				{
-					is_new = false;
-				}
-			}
-			else if (particle.first_index32 >= 0)
-			{
-				if (!is_index16 && particle.first_index32 + particle.count == d_lists.last_colored_index32 + 1)
-				{
-					is_new = false;
-				}
+				is_new = false;
 			}
 		}
-	}
-	if (is_new)
-	{
-		d_lists.last_particle++;
-		if (d_lists.last_particle >= d_lists.particles.size())
+		if (is_new)
 		{
-			d_lists.particles.emplace_back();
+			d_lists.last_particles_index16++;
+			if (d_lists.last_particles_index16 >= d_lists.particles_index16.size())
+			{
+				d_lists.particles_index16.emplace_back();
+			}
+			particles = &d_lists.particles_index16[d_lists.last_particles_index16];
+			particles->first_index = d_lists.last_colored_index16 + 1;
+			particles->last_color = -1;
 		}
 	}
-	auto& particle = d_lists.particles[d_lists.last_particle];
-	if (is_new)
+	else
 	{
-		particle.color = part->color;
-		particle.count = 0;
-		if (is_index16)
+		auto is_new = true;
+		if (d_lists.last_particles_index32 >= 0)
 		{
-			particle.first_index16 = d_lists.last_colored_index16 + 1;
-			particle.first_index32 = -1;
+			particles = &d_lists.particles_index32[d_lists.last_particles_index32];
+			if (particles->first_index + (particles->last_color + 1) * 6 == d_lists.last_colored_index32 + 1)
+			{
+				is_new = false;
+			}
 		}
-		else
+		if (is_new)
 		{
-			particle.first_index16 = -1;
-			particle.first_index32 = d_lists.last_colored_index32 + 1;
+			d_lists.last_particles_index32++;
+			if (d_lists.last_particles_index32 >= d_lists.particles_index32.size())
+			{
+				d_lists.particles_index32.emplace_back();
+			}
+			particles = &d_lists.particles_index32[d_lists.last_particles_index32];
+			particles->first_index = d_lists.last_colored_index32 + 1;
+			particles->last_color = -1;
 		}
+	}
+	particles->last_color++;
+	if (particles->last_color >= particles->colors.size())
+	{
+		particles->colors.push_back(part->color);
+	}
+	else
+	{
+		particles->colors[particles->last_color] = part->color;
 	}
 	auto new_size = d_lists.last_colored_vertex + 1 + 3 * 4;
 	if (d_lists.colored_vertices.size() < new_size)
@@ -721,7 +732,6 @@ void D_AddParticleToLists (particle_t* part)
 	d_lists.colored_vertices[d_lists.last_colored_vertex] = z;
 	d_lists.last_colored_vertex++;
 	d_lists.colored_vertices[d_lists.last_colored_vertex] = -y;
-	particle.count += 6;
 	if (is_index16)
 	{
 		new_size = d_lists.last_colored_index16 + 1 + 6;

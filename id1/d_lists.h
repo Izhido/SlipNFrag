@@ -58,12 +58,11 @@ struct dalias_t
 	float transform[3][4];
 };
 
-struct dparticle_t
+struct dparticles_t
 {
-	byte color;
-	int first_index16;
-	int first_index32;
-	int count;
+	int first_index;
+	std::vector<float> colors;
+	int last_color;
 };
 
 struct dsky_t
@@ -88,7 +87,8 @@ struct dlists_t
 	int last_turbulent;
 	int last_alias;
 	int last_viewmodel;
-	int last_particle;
+	int last_particles_index16;
+	int last_particles_index32;
 	int last_sky;
     int last_skybox;
 	int last_textured_vertex;
@@ -105,7 +105,8 @@ struct dlists_t
 	std::vector<dturbulent_t> turbulent;
 	std::vector<dalias_t> alias;
 	std::vector<dalias_t> viewmodel;
-	std::vector<dparticle_t> particles;
+	std::vector<dparticles_t> particles_index16;
+	std::vector<dparticles_t> particles_index32;
 	std::vector<dsky_t> sky;
     std::vector<dskybox_t> skyboxes;
 	std::vector<float> textured_vertices;

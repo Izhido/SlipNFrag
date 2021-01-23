@@ -15,6 +15,7 @@ struct PerImage
 	CachedBuffers attributes;
 	CachedBuffers indices16;
 	CachedBuffers indices32;
+	CachedBuffers particles;
 	CachedBuffers stagingBuffers;
 	CachedTextures turbulent;
 	CachedTextures colormaps;
@@ -50,6 +51,7 @@ struct PerImage
 	VkFence fence;
 	bool submitted;
 
+	void Reset(AppState& appState);
 	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, int floorSize);
 	void FillTextures(AppState& appState, Buffer* stagingBuffer);
