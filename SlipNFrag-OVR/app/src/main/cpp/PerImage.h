@@ -15,7 +15,7 @@ struct PerImage
 	CachedBuffers attributes;
 	CachedBuffers indices16;
 	CachedBuffers indices32;
-	CachedBuffers particles;
+	CachedBuffers colors;
 	CachedBuffers stagingBuffers;
 	CachedTextures turbulent;
 	CachedTextures colormaps;

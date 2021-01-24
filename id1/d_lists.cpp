@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -18,6 +18,8 @@ extern vec3_t r_plightvec;
 void D_ResetLists ()
 {
 	d_lists.last_surface = -1;
+	d_lists.last_colored_surfaces_index16 = -1;
+	d_lists.last_colored_surfaces_index32 = -1;
 	d_lists.last_sprite = -1;
 	d_lists.last_turbulent = -1;
 	d_lists.last_alias = -1;
@@ -144,6 +146,165 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 		d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
 		d_lists.last_textured_attribute++;
 		d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
+	}
+}
+
+void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, float color)
+{
+	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
+	dcolors_t* surfaces;
+	auto is_index16 = (first_vertex + face->numedges <= 65520);
+	if (is_index16)
+	{
+		auto is_new = true;
+		if (d_lists.last_colored_surfaces_index16 >= 0)
+		{
+			surfaces = &d_lists.colored_surfaces_index16[d_lists.last_colored_surfaces_index16];
+			if (surfaces->first_index + surfaces->count == d_lists.last_colored_index16 + 1)
+			{
+				is_new = false;
+			}
+		}
+		if (is_new)
+		{
+			d_lists.last_colored_surfaces_index16++;
+			if (d_lists.last_colored_surfaces_index16 >= d_lists.colored_surfaces_index16.size())
+			{
+				d_lists.colored_surfaces_index16.emplace_back();
+			}
+			surfaces = &d_lists.colored_surfaces_index16[d_lists.last_colored_surfaces_index16];
+			surfaces->first_index = d_lists.last_colored_index16 + 1;
+			surfaces->last_color = -1;
+			surfaces->count = 0;
+		}
+	}
+	else
+	{
+		auto is_new = true;
+		if (d_lists.last_colored_surfaces_index32 >= 0)
+		{
+			surfaces = &d_lists.colored_surfaces_index32[d_lists.last_colored_surfaces_index32];
+			if (surfaces->first_index + surfaces->count == d_lists.last_colored_index32 + 1)
+			{
+				is_new = false;
+			}
+		}
+		if (is_new)
+		{
+			d_lists.last_colored_surfaces_index32++;
+			if (d_lists.last_colored_surfaces_index32 >= d_lists.colored_surfaces_index32.size())
+			{
+				d_lists.colored_surfaces_index32.emplace_back();
+			}
+			surfaces = &d_lists.colored_surfaces_index32[d_lists.last_colored_surfaces_index32];
+			surfaces->first_index = d_lists.last_colored_index32 + 1;
+			surfaces->last_color = -1;
+			surfaces->count = 0;
+		}
+	}
+	for (auto i = 0; i < face->numedges; i++)
+	{
+		surfaces->last_color++;
+		if (surfaces->last_color >= surfaces->colors.size())
+		{
+			surfaces->colors.push_back(color);
+		}
+		else
+		{
+			surfaces->colors[surfaces->last_color] = color;
+		}
+	}
+	auto new_size = d_lists.last_colored_vertex + 1 + 3 * face->numedges;
+	if (d_lists.colored_vertices.size() < new_size)
+	{
+		d_lists.colored_vertices.resize(new_size);
+	}
+	auto edgeindex = face->firstedge;
+	for (auto i = 0; i < face->numedges; i++)
+	{
+		auto edge = entity->model->surfedges[edgeindex];
+		mvertex_t* vertex;
+		if (edge >= 0)
+		{
+			vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
+		}
+		else
+		{
+			vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
+		}
+		auto x = vertex->position[0];
+		auto y = vertex->position[1];
+		auto z = vertex->position[2];
+		x += entity->origin[0];
+		y += entity->origin[1];
+		z += entity->origin[2];
+		d_lists.last_colored_vertex++;
+		d_lists.colored_vertices[d_lists.last_colored_vertex] = x;
+		d_lists.last_colored_vertex++;
+		d_lists.colored_vertices[d_lists.last_colored_vertex] = z;
+		d_lists.last_colored_vertex++;
+		d_lists.colored_vertices[d_lists.last_colored_vertex] = -y;
+		edgeindex++;
+	}
+	auto next_front = first_vertex;
+	auto next_back = next_front + face->numedges - 1;
+	auto count = (face->numedges - 2) * 3;
+	surfaces->count += count;
+	qboolean use_back = false;
+	if (is_index16)
+	{
+		new_size = d_lists.last_colored_index16 + 1 + count;
+		if (d_lists.colored_indices16.size() < new_size)
+		{
+			d_lists.colored_indices16.resize(new_size);
+		}
+	}
+	else
+	{
+		new_size = d_lists.last_colored_index32 + 1 + count;
+		if (d_lists.colored_indices32.size() < new_size)
+		{
+			d_lists.colored_indices32.resize(new_size);
+		}
+	}
+	for (auto i = 0; i < face->numedges - 2; i++)
+	{
+		int v0;
+		int v1;
+		int v2;
+		if (use_back)
+		{
+			v0 = next_front;
+			v2 = next_back;
+			next_back--;
+			v1 = next_back;
+		}
+		else
+		{
+			v0 = next_front;
+			next_front++;
+			v1 = next_front;
+			v2 = next_back;
+		}
+		use_back = !use_back;
+		if (is_index16)
+		{
+			d_lists.last_colored_index16++;
+			d_lists.colored_indices16[d_lists.last_colored_index16] = v0;
+			d_lists.last_colored_index16++;
+			d_lists.colored_indices16[d_lists.last_colored_index16] = v1;
+			d_lists.last_colored_index16++;
+			d_lists.colored_indices16[d_lists.last_colored_index16] = v2;
+		}
+		else
+		{
+			d_lists.last_colored_index32++;
+			d_lists.colored_indices32[d_lists.last_colored_index32] = v0;
+			d_lists.last_colored_index32++;
+			d_lists.colored_indices32[d_lists.last_colored_index32] = v1;
+			d_lists.last_colored_index32++;
+			d_lists.colored_indices32[d_lists.last_colored_index32] = v2;
+		}
 	}
 }
 
@@ -634,7 +795,7 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 void D_AddParticleToLists (particle_t* part)
 {
 	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
-	dparticles_t* particles;
+	dcolors_t* particles;
 	auto is_index16 = (first_vertex + 4 <= 65520);
 	if (is_index16)
 	{
@@ -642,7 +803,7 @@ void D_AddParticleToLists (particle_t* part)
 		if (d_lists.last_particles_index16 >= 0)
 		{
 			particles = &d_lists.particles_index16[d_lists.last_particles_index16];
-			if (particles->first_index + (particles->last_color + 1) * 6 == d_lists.last_colored_index16 + 1)
+			if (particles->first_index + particles->count == d_lists.last_colored_index16 + 1)
 			{
 				is_new = false;
 			}
@@ -657,6 +818,7 @@ void D_AddParticleToLists (particle_t* part)
 			particles = &d_lists.particles_index16[d_lists.last_particles_index16];
 			particles->first_index = d_lists.last_colored_index16 + 1;
 			particles->last_color = -1;
+			particles->count = 0;
 		}
 	}
 	else
@@ -665,7 +827,7 @@ void D_AddParticleToLists (particle_t* part)
 		if (d_lists.last_particles_index32 >= 0)
 		{
 			particles = &d_lists.particles_index32[d_lists.last_particles_index32];
-			if (particles->first_index + (particles->last_color + 1) * 6 == d_lists.last_colored_index32 + 1)
+			if (particles->first_index + particles->count == d_lists.last_colored_index32 + 1)
 			{
 				is_new = false;
 			}
@@ -680,16 +842,20 @@ void D_AddParticleToLists (particle_t* part)
 			particles = &d_lists.particles_index32[d_lists.last_particles_index32];
 			particles->first_index = d_lists.last_colored_index32 + 1;
 			particles->last_color = -1;
+			particles->count = 0;
 		}
 	}
-	particles->last_color++;
-	if (particles->last_color >= particles->colors.size())
+	for (auto i = 0; i < 4; i++)
 	{
-		particles->colors.push_back(part->color);
-	}
-	else
-	{
-		particles->colors[particles->last_color] = part->color;
+		particles->last_color++;
+		if (particles->last_color >= particles->colors.size())
+		{
+			particles->colors.push_back(part->color);
+		}
+		else
+		{
+			particles->colors[particles->last_color] = part->color;
+		}
 	}
 	auto new_size = d_lists.last_colored_vertex + 1 + 3 * 4;
 	if (d_lists.colored_vertices.size() < new_size)
@@ -732,6 +898,7 @@ void D_AddParticleToLists (particle_t* part)
 	d_lists.colored_vertices[d_lists.last_colored_vertex] = z;
 	d_lists.last_colored_vertex++;
 	d_lists.colored_vertices[d_lists.last_colored_vertex] = -y;
+	particles->count += 6;
 	if (is_index16)
 	{
 		new_size = d_lists.last_colored_index16 + 1 + 6;

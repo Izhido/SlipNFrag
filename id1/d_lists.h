@@ -58,11 +58,12 @@ struct dalias_t
 	float transform[3][4];
 };
 
-struct dparticles_t
+struct dcolors_t
 {
 	int first_index;
 	std::vector<float> colors;
 	int last_color;
+	int count;
 };
 
 struct dsky_t
@@ -83,6 +84,8 @@ struct dskybox_t
 struct dlists_t
 {
 	int last_surface;
+	int last_colored_surfaces_index16;
+	int last_colored_surfaces_index32;
 	int last_sprite;
 	int last_turbulent;
 	int last_alias;
@@ -101,12 +104,14 @@ struct dlists_t
 	int last_colored_index32;
 	int clear_color;
 	std::vector<dsurface_t> surfaces;
+	std::vector<dcolors_t> colored_surfaces_index16;
+	std::vector<dcolors_t> colored_surfaces_index32;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dturbulent_t> turbulent;
 	std::vector<dalias_t> alias;
 	std::vector<dalias_t> viewmodel;
-	std::vector<dparticles_t> particles_index16;
-	std::vector<dparticles_t> particles_index32;
+	std::vector<dcolors_t> particles_index16;
+	std::vector<dcolors_t> particles_index32;
 	std::vector<dsky_t> sky;
     std::vector<dskybox_t> skyboxes;
 	std::vector<float> textured_vertices;
@@ -126,6 +131,7 @@ extern qboolean d_awayfromviewmodel;
 
 void D_ResetLists ();
 void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
+void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, float color);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* vertices);

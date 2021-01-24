@@ -12,7 +12,7 @@ void PerImage::Reset(AppState& appState)
 	attributes.Reset(appState);
 	indices16.Reset(appState);
 	indices32.Reset(appState);
-	particles.Reset(appState);
+	colors.Reset(appState);
 	stagingBuffers.Reset(appState);
 	turbulent.Reset(appState);
 	colormaps.Reset(appState);
@@ -1043,25 +1043,46 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 			}
 		}
 		resetDescriptorSetsCount = appState.Scene.resetDescriptorSetsCount;
-		if (d_lists.last_particles_index16 >= 0 || d_lists.last_particles_index32 >= 0)
+		if (d_lists.last_colored_surfaces_index16 >= 0 || d_lists.last_colored_surfaces_index32 >= 0 || d_lists.last_particles_index16 >= 0 || d_lists.last_particles_index32 >= 0)
 		{
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &appState.Scene.vertices->buffer, &coloredVertexBase));
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &appState.Scene.attributes->buffer, &vertexTransformBase));
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.colors->buffer, &appState.NoOffset));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-			VkDeviceSize colorsOffset = 0;
+			if (d_lists.last_colored_surfaces_index16 >= 0)
+			{
+				VkDeviceSize indexOffset = 0;
+				for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
+				{
+					auto& coloredSurfaces = d_lists.colored_surfaces_index16[i];
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices16->buffer, coloredIndex16Base + indexOffset, VK_INDEX_TYPE_UINT16));
+					auto indexCount = coloredSurfaces.count;
+					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, coloredSurfaces.first_index, 0, 0));
+					indexOffset += indexCount;
+				}
+			}
+			if (d_lists.last_colored_surfaces_index32 >= 0)
+			{
+				VkDeviceSize indexOffset = 0;
+				for (auto i = 0; i <= d_lists.last_colored_surfaces_index32; i++)
+				{
+					auto& coloredSurfaces = d_lists.colored_surfaces_index32[i];
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices32->buffer, coloredIndex32Base + indexOffset, VK_INDEX_TYPE_UINT32));
+					auto indexCount = coloredSurfaces.count;
+					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, coloredSurfaces.first_index, 0, 0));
+					indexOffset += indexCount;
+				}
+			}
 			if (d_lists.last_particles_index16 >= 0)
 			{
 				VkDeviceSize indexOffset = 0;
 				for (auto i = 0; i <= d_lists.last_particles_index16; i++)
 				{
 					auto& particles = d_lists.particles_index16[i];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.particles->buffer, &colorsOffset));
 					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices16->buffer, coloredIndex16Base + indexOffset, VK_INDEX_TYPE_UINT16));
-					auto colorCount = particles.last_color + 1;
-					auto indexCount = colorCount * 6;
+					auto indexCount = particles.count;
 					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, particles.first_index, 0, 0));
-					colorsOffset += colorCount;
 					indexOffset += indexCount;
 				}
 			}
@@ -1071,12 +1092,9 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 				for (auto i = 0; i <= d_lists.last_particles_index32; i++)
 				{
 					auto& particles = d_lists.particles_index32[i];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.particles->buffer, &colorsOffset));
 					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices32->buffer, coloredIndex32Base + indexOffset, VK_INDEX_TYPE_UINT32));
-					auto colorCount = particles.last_color + 1;
-					auto indexCount = colorCount * 6;
+					auto indexCount = particles.count;
 					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, particles.first_index, 0, 0));
-					colorsOffset += colorCount;
 					indexOffset += indexCount;
 				}
 			}

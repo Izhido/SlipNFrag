@@ -280,11 +280,50 @@ void D_DrawSurfaces (void)
 					R_TransformFrustum ();
 				}
 			}
+			else if (!s->spans)
+			{
+				r_drawnpolycount++;
+
+				d_zistepu = s->d_zistepu;
+				d_zistepv = s->d_zistepv;
+				d_ziorigin = s->d_ziorigin;
+
+				if (s->insubmodel)
+				{
+				// FIXME: we don't want to do all this for every polygon!
+				// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+												// R_RotateBmodel ()
+					VectorSubtract (r_origin, currententity->origin, local_modelorg);
+					TransformVector (local_modelorg, transformed_modelorg);
+
+					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+										// make entity passed in
+				}
+
+				pface = (msurface_t*)s->data;
+
+				D_AddColoredSurfaceToLists (pface, currententity, 0);
+
+				if (s->insubmodel)
+				{
+				//
+				// restore the old drawing state
+				// FIXME: we don't want to do this every time!
+				// TODO: speed up
+				//
+					currententity = &cl_entities[0];
+					VectorCopy (world_transformed_modelorg,
+								transformed_modelorg);
+					VectorCopy (base_vpn, vpn);
+					VectorCopy (base_vup, vup);
+					VectorCopy (base_vright, vright);
+					VectorCopy (base_modelorg, modelorg);
+					R_TransformFrustum ();
+				}
+			}
 			else
 			{
-				if (!s->spans)
-					continue;
-
 				r_drawnpolycount++;
 
 				d_zistepu = s->d_zistepu;
