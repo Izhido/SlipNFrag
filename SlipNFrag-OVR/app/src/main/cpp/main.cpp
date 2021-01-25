@@ -1593,7 +1593,13 @@ void android_main(struct android_app *app)
 			auto offset = 0;
 			if (perImage.paletteOffset >= 0)
 			{
-				memcpy(stagingBuffer->mapped, d_8to24table, 1024);
+				// Copy all but the last entry of the palette:
+				memcpy(stagingBuffer->mapped, d_8to24table, 1020);
+				// Force the last entry to be transparent black - thus adding back the transparent pixel removed in VID_SetPalette():
+				*((unsigned char*)stagingBuffer->mapped + 1020) = 0;
+				*((unsigned char*)stagingBuffer->mapped + 1021) = 0;
+				*((unsigned char*)stagingBuffer->mapped + 1022) = 0;
+				*((unsigned char*)stagingBuffer->mapped + 1023) = 0;
 				offset += 1024;
 			}
 			if (perImage.textureOffset >= 0)

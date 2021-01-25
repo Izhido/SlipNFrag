@@ -30,7 +30,8 @@ void VID_SetPalette(unsigned char *palette)
     //
     pal = palette;
     table = d_8to24table;
-    for (i=0 ; i<256 ; i++)
+    // Copy all but the last entry of the palette:
+    for (i=0 ; i<255 ; i++)
     {
         r = pal[0];
         g = pal[1];
@@ -40,7 +41,8 @@ void VID_SetPalette(unsigned char *palette)
         v = (255 << 24) | (b << 16) | (g << 8) | r;
         *table++ = v;
     }
-    d_8to24table[255] &= 0xFFFFFF;    // 255 is transparent
+    // Force the last entry to be solid black. This should help cover areas that would otherwise allow the skybox to go through them:
+    d_8to24table[255] = 255 << 24;
     pal_changed++;
 }
 
