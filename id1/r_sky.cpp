@@ -674,22 +674,78 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 		texture->width = width;
 		texture->height = height;
 		texture->offsets[0] = sizeof(texture_t);
+		auto start = Sys_FloatTime ();
+        static std::vector<float> halfSquaredDistances;
+        if (halfSquaredDistances.size() == 0)
+        {
+            auto first = host_basepal;
+            for (auto i = 0; i < 256; i++)
+            {
+                auto r1 = *first++;
+                auto g1 = *first++;
+                auto b1 = *first++;
+                auto second = host_basepal;
+                auto nearestDistanceSquared = INT_MAX;
+                for (auto j = 0; j < 256; j++)
+                {
+                    auto r2 = *second++;
+                    auto g2 = *second++;
+                    auto b2 = *second++;
+                    auto dr = r2 - r1;
+                    auto dg = g2 - g1;
+                    auto db = b2 - b1;
+                    if (dr == 0 && dg == 0 && db == 0)
+                    {
+                        continue;
+                    }
+                    auto distanceSquared = dr * dr + dg * dg + db * db;
+                    if (nearestDistanceSquared > distanceSquared)
+                    {
+                        nearestDistanceSquared = distanceSquared;
+                    }
+                }
+                auto halfDistance = sqrt((float)nearestDistanceSquared) / 2;
+                halfSquaredDistances.push_back(halfDistance * halfDistance);
+            }
+        }
 		auto source = pic;
 		auto target = (byte*)texture + sizeof(texture_t);
+        auto rprev = -1;
+        auto gprev = -1;
+        auto bprev = -1;
+        auto iprev = -1;
 		for (auto count = width * height; count > 0; count--)
 		{
 			auto r1 = *source++;
 			auto g1 = *source++;
 			auto b1 = *source++;
 			source++;
+            if (rprev == r1 && gprev == g1 && bprev == b1)
+            {
+                *target++ = iprev;
+                continue;
+            }
+            if (iprev >= 0)
+            {
+                auto previous = host_basepal + iprev * 4;
+                auto drprev = *previous++ - r1;
+                auto dgprev = *previous++ - g1;
+                auto dbprev = *previous - b1;
+                auto squaredDistanceToPrevious = drprev * drprev + dgprev * dgprev + dbprev * dbprev;
+                if (squaredDistanceToPrevious < halfSquaredDistances[iprev])
+                {
+                    *target++ = iprev;
+                    continue;
+                }
+            }
             auto nearestDistanceSquared = INT_MAX;
             auto nearestIndex = 0;
-            auto entry = 0;
+            auto entry = host_basepal;
             for (auto i = 0; i < 256; i++)
             {
-                auto r2 = host_basepal[entry++];
-                auto g2 = host_basepal[entry++];
-                auto b2 = host_basepal[entry++];
+                auto r2 = *entry++;
+                auto g2 = *entry++;
+                auto b2 = *entry++;
                 auto dr = r2 - r1;
                 auto dg = g2 - g1;
                 auto db = b2 - b1;
@@ -701,7 +757,13 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
                 }
             }
             *target++ = nearestIndex;
+            rprev = r1;
+            gprev = g1;
+            bprev = b1;
+            iprev = nearestIndex;
 		}
+		auto stop = Sys_FloatTime();
+		Sys_Printf("%s: %.3f seconds\n", path.c_str(), stop - start);
 		if (!r_skybox_as_rgba)
 		{
 			delete[] pic;
