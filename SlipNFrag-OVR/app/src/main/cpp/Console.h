@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ConsoleView.h"
+
 struct Console
 {
 	ovrTextureSwapChain* SwapChain;

@@ -202,19 +202,17 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, float color
 			surfaces->count = 0;
 		}
 	}
+	auto new_size = surfaces->last_color + 1 + face->numedges;
+	if (surfaces->colors.size() < new_size)
+	{
+		surfaces->colors.resize(new_size);
+	}
 	for (auto i = 0; i < face->numedges; i++)
 	{
 		surfaces->last_color++;
-		if (surfaces->last_color >= surfaces->colors.size())
-		{
-			surfaces->colors.push_back(color);
-		}
-		else
-		{
-			surfaces->colors[surfaces->last_color] = color;
-		}
+		surfaces->colors[surfaces->last_color] = color;
 	}
-	auto new_size = d_lists.last_colored_vertex + 1 + 3 * face->numedges;
+	new_size = d_lists.last_colored_vertex + 1 + 3 * face->numedges;
 	if (d_lists.colored_vertices.size() < new_size)
 	{
 		d_lists.colored_vertices.resize(new_size);
@@ -235,9 +233,6 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, float color
 		auto x = vertex->position[0];
 		auto y = vertex->position[1];
 		auto z = vertex->position[2];
-		x += entity->origin[0];
-		y += entity->origin[1];
-		z += entity->origin[2];
 		d_lists.last_colored_vertex++;
 		d_lists.colored_vertices[d_lists.last_colored_vertex] = x;
 		d_lists.last_colored_vertex++;
