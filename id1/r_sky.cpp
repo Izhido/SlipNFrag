@@ -412,7 +412,7 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
 	byte	*pixbuf;
 	int		row, column;
 	byte	*buf_p;
-	int		length;
+	byte	*buffer;
 	TargaHeader		targa_header;
 	byte			*targa_rgba;
 	byte tmp[2];
@@ -422,25 +422,15 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
 	//
 	// load the file
 	//
-	static std::vector<byte> buffer;
-	int handle = -1;
-	length = COM_OpenFile(name, &handle);
-	if (handle >= 0 && length > 0)
+	static std::vector<byte> contents;
+	buffer = COM_LoadFile (name, contents);
+	if (!buffer)
 	{
-		buffer.resize(length);
-		if (Sys_FileRead(handle, buffer.data(), length) != length)
-		{
-			buffer.clear();
-		}
-		COM_CloseFile(handle);
-	}
-	if (buffer.size() == 0)
-	{
-		Con_Printf("Bad tga file %s\n", name);
+		Con_DPrintf("Bad tga file %s\n", name);
 		return;
 	}
 
-	buf_p = buffer.data();
+	buf_p = buffer;
 
 	targa_header.id_length = *buf_p++;
 	targa_header.colormap_type = *buf_p++;
@@ -650,6 +640,7 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 	byte* pic;
 	int width;
 	int height;
+	Draw_BeginDisc ();
 	if (r_skybox_as_rgba)
 	{
 		R_LoadTGA(path.c_str(), sizeof(texture_t), true, &pic, &width, &height);
@@ -678,13 +669,13 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
         static std::vector<float> halfSquaredDistances;
         if (halfSquaredDistances.size() == 0)
         {
-            auto first = host_basepal;
+            auto first = host_basepal.data();
             for (auto i = 0; i < 256; i++)
             {
                 auto r1 = *first++;
                 auto g1 = *first++;
                 auto b1 = *first++;
-                auto second = host_basepal;
+                auto second = host_basepal.data();
                 auto nearestDistanceSquared = INT_MAX;
                 for (auto j = 0; j < 256; j++)
                 {
@@ -727,7 +718,7 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
             }
             if (iprev >= 0)
             {
-                auto previous = host_basepal + iprev * 4;
+                auto previous = host_basepal.data() + iprev * 3;
                 auto drprev = *previous++ - r1;
                 auto dgprev = *previous++ - g1;
                 auto dbprev = *previous - b1;
@@ -740,7 +731,7 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
             }
             auto nearestDistanceSquared = INT_MAX;
             auto nearestIndex = 0;
-            auto entry = host_basepal;
+            auto entry = host_basepal.data();
             for (auto i = 0; i < 256; i++)
             {
                 auto r2 = *entry++;
@@ -769,6 +760,7 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 			delete[] pic;
         }
 	}
+	Draw_EndDisc ();
 }
 
 /*

@@ -1539,6 +1539,40 @@ void COM_CloseFile (int h)
 
 
 /*
+============
+COM_LoadFile
+
+Filename are reletive to the quake directory.
+Allways appends a 0 byte.
+============
+*/
+byte *COM_LoadFile (const char *path, std::vector<byte>& contents)
+{
+	int             h;
+	byte    *buf;
+	int             len;
+
+	buf = NULL;     // quiet compiler warning
+
+// look for it in the filesystem or pack files
+	len = COM_OpenFile (path, &h);
+	if (h == -1)
+		return NULL;
+
+	contents.resize(len+1);
+	contents[len] = 0;
+
+	Draw_BeginDisc ();
+	Sys_FileRead (h, contents.data(), len);
+	COM_CloseFile (h);
+	Draw_EndDisc ();
+
+	buf = contents.data();
+
+	return buf;
+}
+
+/*
 =================
 COM_LoadPackFile
 

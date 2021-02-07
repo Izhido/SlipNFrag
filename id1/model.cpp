@@ -314,6 +314,8 @@ Loads a model into the cache
 */
 model_t *Mod_LoadModel (model_t *mod, qboolean crash)
 {
+	unsigned *buf;
+
 	if (mod->type == mod_alias)
 	{
 		if (mod->extradata != nullptr)
@@ -335,20 +337,8 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash)
 //
 // load the file
 //
-    unsigned *buf = nullptr;
-    std::vector<byte> contents;
-    int handle = -1;
-    auto length = COM_OpenFile(pr_strings + mod->name, &handle);
-    if (handle >= 0 && length > 0)
-    {
-        contents.resize(length + 1);
-        if (Sys_FileRead(handle, contents.data(), length) == length)
-        {
-            buf = (unsigned*)contents.data();
-            ((byte*)buf)[length] = 0;
-        }
-        COM_CloseFile(handle);
-    }
+	std::vector<byte> contents;
+    buf = (unsigned *)COM_LoadFile (pr_strings + mod->name, contents);
 	if (!buf)
 	{
 		if (crash)
@@ -492,7 +482,7 @@ byte Mod_AveragePixels (std::vector<byte>& pixdata, int& d_red, int& d_green, in
     {
         pix = i;    //pixdata[i];
 
-        pal = host_basepal + pix*3;
+        pal = host_basepal.data() + pix*3;
 
         dr = r - (int)pal[0];
         dg = g - (int)pal[1];
@@ -514,7 +504,7 @@ byte Mod_AveragePixels (std::vector<byte>& pixdata, int& d_red, int& d_green, in
 
     if (!fullbright)
     {    // error diffusion
-        pal = host_basepal + bestcolor*3;
+        pal = host_basepal.data() + bestcolor*3;
         d_red = r - (int)pal[0];
         d_green = g - (int)pal[1];
         d_blue = b - (int)pal[2];

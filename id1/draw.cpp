@@ -57,7 +57,10 @@ Draw_CachePic
 */
 qpic_t	*Draw_CachePic (const char *path)
 {
-    auto entry = menu_cachepics.find(std::string(path));
+	std::vector<byte> pic;
+	qpic_t		*dat;
+
+	auto entry = menu_cachepics.find(std::string(path));
     if (entry != menu_cachepics.end())
     {
         return entry->second;
@@ -66,33 +69,19 @@ qpic_t	*Draw_CachePic (const char *path)
 //
 // load the pic from disk
 //
-    qpic_t* dat = nullptr;
-    int handle = -1;
-    auto length = COM_OpenFile(path, &handle);
-    if (handle >= 0 && length > 0)
-    {
-        dat = (qpic_t*)new byte[length + 1];
-        if (Sys_FileRead(handle, dat, length) == length)
-        {
-            ((byte*)dat)[length] = 0;
-        }
-        else
-        {
-            delete[] dat;
-            dat = nullptr;
-        }
-        COM_CloseFile(handle);
-    }
-	if (dat == nullptr)
+    dat = (qpic_t*)COM_LoadFile (path, pic);
+	if (!dat)
 	{
 		Sys_Error ("Draw_CachePic: failed to load %s", path);
 	}
 
 	SwapPic (dat);
+
+	auto cached = new byte[pic.size()];
+	Q_memcpy(cached, pic.data(), pic.size());
+    menu_cachepics.insert({ std::string(path), (qpic_t*)cached });
     
-    menu_cachepics.insert({ std::string(path), dat });
-    
-	return dat;
+	return (qpic_t*)cached;
 }
 
 

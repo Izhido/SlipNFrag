@@ -1033,7 +1033,6 @@ void ED_LoadFromFile (char *data)
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
 }
 
-std::vector<byte> progs_block;
 
 /*
 ===============
@@ -1050,19 +1049,8 @@ void PR_LoadProgs (void)
 
 	CRC_Init (&pr_crc);
 
-    progs = nullptr;
-    int handle = -1;
-    auto length = COM_OpenFile("progs.dat", &handle);
-    if (handle >= 0 && length > 0)
-    {
-        progs_block.resize(length + 1);
-        if (Sys_FileRead(handle, progs_block.data(), length) == length)
-        {
-            progs = (dprograms_t*)progs_block.data();
-            ((byte*)progs)[length] = 0;
-        }
-        COM_CloseFile(handle);
-    }
+	static std::vector<byte> progs_block;
+    progs = (dprograms_t *)COM_LoadFile ("progs.dat", progs_block);
 	if (!progs)
 		Sys_Error ("PR_LoadProgs: couldn't load progs.dat");
 	Con_DPrintf ("Programs occupy %iK.\n", com_filesize/1024);

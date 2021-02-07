@@ -7,28 +7,62 @@
 
 extern m_state_t m_state;
 
-bool leftButtonIsDown(AppState& appState, uint32_t button)
+std::vector<Input> Input::inputQueue;
+int Input::lastInputQueueItem = -1;
+
+bool Input::LeftButtonIsDown(AppState& appState, uint32_t button)
 {
 	return ((appState.LeftButtons & button) != 0 && (appState.PreviousLeftButtons & button) == 0);
 }
 
-bool leftButtonIsUp(AppState& appState, uint32_t button)
+bool Input::LeftButtonIsUp(AppState& appState, uint32_t button)
 {
 	return ((appState.LeftButtons & button) == 0 && (appState.PreviousLeftButtons & button) != 0);
 }
 
-bool rightButtonIsDown(AppState& appState, uint32_t button)
+bool Input::RightButtonIsDown(AppState& appState, uint32_t button)
 {
 	return ((appState.RightButtons & button) != 0 && (appState.PreviousRightButtons & button) == 0);
 }
 
-bool rightButtonIsUp(AppState& appState, uint32_t button)
+bool Input::RightButtonIsUp(AppState& appState, uint32_t button)
 {
 	return ((appState.RightButtons & button) == 0 && (appState.PreviousRightButtons & button) != 0);
 }
 
-void handleInput(AppState& appState)
+void Input::AddKeyInput(int key, int down)
 {
+	lastInputQueueItem++;
+	if (lastInputQueueItem >= inputQueue.size())
+	{
+		inputQueue.push_back({ key, down });
+	}
+	else
+	{
+		inputQueue[lastInputQueueItem].key = key;
+		inputQueue[lastInputQueueItem].down = down;
+		inputQueue[lastInputQueueItem].command.clear();
+	}
+}
+
+void Input::AddCommandInput(const char* command)
+{
+	lastInputQueueItem++;
+	if (lastInputQueueItem >= inputQueue.size())
+	{
+		inputQueue.push_back({ 0, false, command });
+	}
+	else
+	{
+		inputQueue[lastInputQueueItem].key = 0;
+		inputQueue[lastInputQueueItem].down = false;
+		inputQueue[lastInputQueueItem].command = command;
+	}
+}
+
+void Input::Handle(AppState& appState)
+{
+	std::lock_guard<std::mutex> lock(appState.InputMutex);
 	if (appState.Mode == AppStartupMode)
 	{
 		if (appState.StartupButtonsPressed)
@@ -48,13 +82,13 @@ void handleInput(AppState& appState)
 	{
 		if (host_initialized)
 		{
-			if (leftButtonIsDown(appState, ovrButton_Enter))
+			if (LeftButtonIsDown(appState, ovrButton_Enter))
 			{
-				Key_Event(K_ESCAPE, true);
+				AddKeyInput(K_ESCAPE, true);
 			}
-			if (leftButtonIsUp(appState, ovrButton_Enter))
+			if (LeftButtonIsUp(appState, ovrButton_Enter))
 			{
-				Key_Event(K_ESCAPE, false);
+				AddKeyInput(K_ESCAPE, false);
 			}
 			if (key_dest == key_game)
 			{
@@ -66,151 +100,151 @@ void handleInput(AppState& appState)
 					pdwRawValue[JOY_AXIS_Z] = appState.RightJoystick.x;
 					pdwRawValue[JOY_AXIS_R] = appState.RightJoystick.y;
 				}
-				if (leftButtonIsDown(appState, ovrButton_Trigger) || rightButtonIsDown(appState, ovrButton_Trigger))
+				if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
 				{
-					Cmd_ExecuteString("+attack", src_command);
+					AddCommandInput("+attack");
 				}
-				if (leftButtonIsUp(appState, ovrButton_Trigger) || rightButtonIsUp(appState, ovrButton_Trigger))
+				if (LeftButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_Trigger))
 				{
-					Cmd_ExecuteString("-attack", src_command);
+					AddCommandInput("-attack");
 				}
-				if (leftButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_GripTrigger))
+				if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger))
 				{
-					Cmd_ExecuteString("+speed", src_command);
+					AddCommandInput("+speed");
 				}
-				if (leftButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_GripTrigger))
+				if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger))
 				{
-					Cmd_ExecuteString("-speed", src_command);
+					AddCommandInput("-speed");
 				}
-				if (leftButtonIsDown(appState, ovrButton_Joystick))
+				if (LeftButtonIsDown(appState, ovrButton_Joystick))
 				{
-					Cmd_ExecuteString("impulse 10", src_command);
+					AddCommandInput("impulse 10");
 				}
 				if (m_state == m_quit)
 				{
-					if (rightButtonIsDown(appState, ovrButton_B))
+					if (RightButtonIsDown(appState, ovrButton_B))
 					{
-						Cmd_ExecuteString("+jump", src_command);
+						AddCommandInput("+jump");
 					}
-					if (rightButtonIsUp(appState, ovrButton_B))
+					if (RightButtonIsUp(appState, ovrButton_B))
 					{
-						Cmd_ExecuteString("-jump", src_command);
+						AddCommandInput("-jump");
 					}
-					if (leftButtonIsDown(appState, ovrButton_Y))
+					if (LeftButtonIsDown(appState, ovrButton_Y))
 					{
-						Key_Event('y', true);
+						AddKeyInput('y', true);
 					}
-					if (leftButtonIsUp(appState, ovrButton_Y))
+					if (LeftButtonIsUp(appState, ovrButton_Y))
 					{
-						Key_Event('y', false);
+						AddKeyInput('y', false);
 					}
 				}
 				else
 				{
-					if (leftButtonIsDown(appState, ovrButton_Y) || rightButtonIsDown(appState, ovrButton_B))
+					if (LeftButtonIsDown(appState, ovrButton_Y) || RightButtonIsDown(appState, ovrButton_B))
 					{
-						Cmd_ExecuteString("+jump", src_command);
+						AddCommandInput("+jump");
 					}
-					if (leftButtonIsUp(appState, ovrButton_Y) || rightButtonIsUp(appState, ovrButton_B))
+					if (LeftButtonIsUp(appState, ovrButton_Y) || RightButtonIsUp(appState, ovrButton_B))
 					{
-						Cmd_ExecuteString("-jump", src_command);
+						AddCommandInput("-jump");
 					}
 				}
-				if (leftButtonIsDown(appState, ovrButton_X) || rightButtonIsDown(appState, ovrButton_A))
+				if (LeftButtonIsDown(appState, ovrButton_X) || RightButtonIsDown(appState, ovrButton_A))
 				{
-					Cmd_ExecuteString("+movedown", src_command);
+					AddCommandInput("+movedown");
 				}
-				if (leftButtonIsUp(appState, ovrButton_X) || rightButtonIsUp(appState, ovrButton_A))
+				if (LeftButtonIsUp(appState, ovrButton_X) || RightButtonIsUp(appState, ovrButton_A))
 				{
-					Cmd_ExecuteString("-movedown", src_command);
+					AddCommandInput("-movedown");
 				}
-				if (rightButtonIsDown(appState, ovrButton_Joystick))
+				if (RightButtonIsDown(appState, ovrButton_Joystick))
 				{
-					Cmd_ExecuteString("+mlook", src_command);
+					AddCommandInput("+mlook");
 				}
-				if (rightButtonIsUp(appState, ovrButton_Joystick))
+				if (RightButtonIsUp(appState, ovrButton_Joystick))
 				{
-					Cmd_ExecuteString("-mlook", src_command);
+					AddCommandInput("-mlook");
 				}
 			}
 			else
 			{
 				if ((appState.LeftJoystick.y > 0.5 && appState.PreviousLeftJoystick.y <= 0.5) || (appState.RightJoystick.y > 0.5 && appState.PreviousRightJoystick.y <= 0.5))
 				{
-					Key_Event(K_UPARROW, true);
+					AddKeyInput(K_UPARROW, true);
 				}
 				if ((appState.LeftJoystick.y <= 0.5 && appState.PreviousLeftJoystick.y > 0.5) || (appState.RightJoystick.y <= 0.5 && appState.PreviousRightJoystick.y > 0.5))
 				{
-					Key_Event(K_UPARROW, false);
+					AddKeyInput(K_UPARROW, false);
 				}
 				if ((appState.LeftJoystick.y < -0.5 && appState.PreviousLeftJoystick.y >= -0.5) || (appState.RightJoystick.y < -0.5 && appState.PreviousRightJoystick.y >= -0.5))
 				{
-					Key_Event(K_DOWNARROW, true);
+					AddKeyInput(K_DOWNARROW, true);
 				}
 				if ((appState.LeftJoystick.y >= -0.5 && appState.PreviousLeftJoystick.y < -0.5) || (appState.RightJoystick.y >= -0.5 && appState.PreviousRightJoystick.y < -0.5))
 				{
-					Key_Event(K_DOWNARROW, false);
+					AddKeyInput(K_DOWNARROW, false);
 				}
 				if ((appState.LeftJoystick.x > 0.5 && appState.PreviousLeftJoystick.x <= 0.5) || (appState.RightJoystick.x > 0.5 && appState.PreviousRightJoystick.x <= 0.5))
 				{
-					Key_Event(K_RIGHTARROW, true);
+					AddKeyInput(K_RIGHTARROW, true);
 				}
 				if ((appState.LeftJoystick.x <= 0.5 && appState.PreviousLeftJoystick.x > 0.5) || (appState.RightJoystick.x <= 0.5 && appState.PreviousRightJoystick.x > 0.5))
 				{
-					Key_Event(K_RIGHTARROW, false);
+					AddKeyInput(K_RIGHTARROW, false);
 				}
 				if ((appState.LeftJoystick.x < -0.5 && appState.PreviousLeftJoystick.x >= -0.5) || (appState.RightJoystick.x < -0.5 && appState.PreviousRightJoystick.x >= -0.5))
 				{
-					Key_Event(K_LEFTARROW, true);
+					AddKeyInput(K_LEFTARROW, true);
 				}
 				if ((appState.LeftJoystick.x >= -0.5 && appState.PreviousLeftJoystick.x < -0.5) || (appState.RightJoystick.x >= -0.5 && appState.PreviousRightJoystick.x < -0.5))
 				{
-					Key_Event(K_LEFTARROW, false);
+					AddKeyInput(K_LEFTARROW, false);
 				}
-				if (leftButtonIsDown(appState, ovrButton_Trigger) || leftButtonIsDown(appState, ovrButton_X) || rightButtonIsDown(appState, ovrButton_Trigger) || rightButtonIsDown(appState, ovrButton_A))
+				if (LeftButtonIsDown(appState, ovrButton_Trigger) || LeftButtonIsDown(appState, ovrButton_X) || RightButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_A))
 				{
-					Key_Event(K_ENTER, true);
+					AddKeyInput(K_ENTER, true);
 				}
-				if (leftButtonIsUp(appState, ovrButton_Trigger) || leftButtonIsUp(appState, ovrButton_X) || rightButtonIsUp(appState, ovrButton_Trigger) || rightButtonIsUp(appState, ovrButton_A))
+				if (LeftButtonIsUp(appState, ovrButton_Trigger) || LeftButtonIsUp(appState, ovrButton_X) || RightButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_A))
 				{
-					Key_Event(K_ENTER, false);
+					AddKeyInput(K_ENTER, false);
 				}
-				if (leftButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_B))
+				if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
 				{
-					Key_Event(K_ESCAPE, true);
+					AddKeyInput(K_ESCAPE, true);
 				}
-				if (leftButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_B))
+				if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
 				{
-					Key_Event(K_ESCAPE, false);
+					AddKeyInput(K_ESCAPE, false);
 				}
 				if (m_state == m_quit)
 				{
-					if (leftButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_B))
+					if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
 					{
-						Key_Event(K_ESCAPE, true);
+						AddKeyInput(K_ESCAPE, true);
 					}
-					if (leftButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_B))
+					if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
 					{
-						Key_Event(K_ESCAPE, false);
+						AddKeyInput(K_ESCAPE, false);
 					}
-					if (leftButtonIsDown(appState, ovrButton_Y))
+					if (LeftButtonIsDown(appState, ovrButton_Y))
 					{
-						Key_Event('y', true);
+						AddKeyInput('y', true);
 					}
-					if (leftButtonIsUp(appState, ovrButton_Y))
+					if (LeftButtonIsUp(appState, ovrButton_Y))
 					{
-						Key_Event('y', false);
+						AddKeyInput('y', false);
 					}
 				}
 				else
 				{
-					if (leftButtonIsDown(appState, ovrButton_GripTrigger) || leftButtonIsDown(appState, ovrButton_Y) || rightButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_B))
+					if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || LeftButtonIsDown(appState, ovrButton_Y) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
 					{
-						Key_Event(K_ESCAPE, true);
+						AddKeyInput(K_ESCAPE, true);
 					}
-					if (leftButtonIsUp(appState, ovrButton_GripTrigger) || leftButtonIsUp(appState, ovrButton_Y) || rightButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_B))
+					if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || LeftButtonIsUp(appState, ovrButton_Y) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
 					{
-						Key_Event(K_ESCAPE, false);
+						AddKeyInput(K_ESCAPE, false);
 					}
 				}
 			}
@@ -220,13 +254,13 @@ void handleInput(AppState& appState)
 	{
 		if (host_initialized)
 		{
-			if (leftButtonIsDown(appState, ovrButton_Enter))
+			if (LeftButtonIsDown(appState, ovrButton_Enter))
 			{
-				Key_Event(K_ESCAPE, true);
+				AddKeyInput(K_ESCAPE, true);
 			}
-			if (leftButtonIsUp(appState, ovrButton_Enter))
+			if (LeftButtonIsUp(appState, ovrButton_Enter))
 			{
-				Key_Event(K_ESCAPE, false);
+				AddKeyInput(K_ESCAPE, false);
 			}
 			if (key_dest == key_game)
 			{
@@ -236,7 +270,7 @@ void handleInput(AppState& appState)
 					pdwRawValue[JOY_AXIS_X] = -appState.LeftJoystick.x - appState.RightJoystick.x;
 					pdwRawValue[JOY_AXIS_Y] = -appState.LeftJoystick.y - appState.RightJoystick.y;
 				}
-				if (leftButtonIsDown(appState, ovrButton_Trigger) || rightButtonIsDown(appState, ovrButton_Trigger))
+				if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
 				{
 					if (!appState.ControlsMessageClosed && appState.ControlsMessageDisplayed && (appState.NearViewModel || d_lists.last_viewmodel < 0))
 					{
@@ -245,134 +279,134 @@ void handleInput(AppState& appState)
 					}
 					else if (appState.NearViewModel || d_lists.last_viewmodel < 0)
 					{
-						Cmd_ExecuteString("+attack", src_command);
+						AddCommandInput("+attack");
 					}
 				}
-				if (leftButtonIsUp(appState, ovrButton_Trigger) || rightButtonIsUp(appState, ovrButton_Trigger))
+				if (LeftButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_Trigger))
 				{
-					Cmd_ExecuteString("-attack", src_command);
+					AddCommandInput("-attack");
 				}
-				if (leftButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_GripTrigger))
+				if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger))
 				{
-					Cmd_ExecuteString("+speed", src_command);
+					AddCommandInput("+speed");
 				}
-				if (leftButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_GripTrigger))
+				if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger))
 				{
-					Cmd_ExecuteString("-speed", src_command);
+					AddCommandInput("-speed");
 				}
-				if (leftButtonIsDown(appState, ovrButton_Joystick) || rightButtonIsDown(appState, ovrButton_Joystick))
+				if (LeftButtonIsDown(appState, ovrButton_Joystick) || RightButtonIsDown(appState, ovrButton_Joystick))
 				{
-					Cmd_ExecuteString("impulse 10", src_command);
+					AddCommandInput("impulse 10");
 				}
 				if (m_state == m_quit)
 				{
-					if (rightButtonIsDown(appState, ovrButton_B))
+					if (RightButtonIsDown(appState, ovrButton_B))
 					{
-						Cmd_ExecuteString("+jump", src_command);
+						AddCommandInput("+jump");
 					}
-					if (rightButtonIsUp(appState, ovrButton_B))
+					if (RightButtonIsUp(appState, ovrButton_B))
 					{
-						Cmd_ExecuteString("-jump", src_command);
+						AddCommandInput("-jump");
 					}
-					if (leftButtonIsDown(appState, ovrButton_Y))
+					if (LeftButtonIsDown(appState, ovrButton_Y))
 					{
-						Key_Event('y', true);
+						AddKeyInput('y', true);
 					}
-					if (leftButtonIsUp(appState, ovrButton_Y))
+					if (LeftButtonIsUp(appState, ovrButton_Y))
 					{
-						Key_Event('y', false);
+						AddKeyInput('y', false);
 					}
 				}
 				else
 				{
-					if (leftButtonIsDown(appState, ovrButton_Y) || rightButtonIsDown(appState, ovrButton_B))
+					if (LeftButtonIsDown(appState, ovrButton_Y) || RightButtonIsDown(appState, ovrButton_B))
 					{
-						Cmd_ExecuteString("+jump", src_command);
+						AddCommandInput("+jump");
 					}
-					if (leftButtonIsUp(appState, ovrButton_Y) || rightButtonIsUp(appState, ovrButton_B))
+					if (LeftButtonIsUp(appState, ovrButton_Y) || RightButtonIsUp(appState, ovrButton_B))
 					{
-						Cmd_ExecuteString("-jump", src_command);
+						AddCommandInput("-jump");
 					}
 				}
-				if (leftButtonIsDown(appState, ovrButton_X) || rightButtonIsDown(appState, ovrButton_A))
+				if (LeftButtonIsDown(appState, ovrButton_X) || RightButtonIsDown(appState, ovrButton_A))
 				{
-					Cmd_ExecuteString("+movedown", src_command);
+					AddCommandInput("+movedown");
 				}
-				if (leftButtonIsUp(appState, ovrButton_X) || rightButtonIsUp(appState, ovrButton_A))
+				if (LeftButtonIsUp(appState, ovrButton_X) || RightButtonIsUp(appState, ovrButton_A))
 				{
-					Cmd_ExecuteString("-movedown", src_command);
+					AddCommandInput("-movedown");
 				}
 			}
 			else
 			{
 				if ((appState.LeftJoystick.y > 0.5 && appState.PreviousLeftJoystick.y <= 0.5) || (appState.RightJoystick.y > 0.5 && appState.PreviousRightJoystick.y <= 0.5))
 				{
-					Key_Event(K_UPARROW, true);
+					AddKeyInput(K_UPARROW, true);
 				}
 				if ((appState.LeftJoystick.y <= 0.5 && appState.PreviousLeftJoystick.y > 0.5) || (appState.RightJoystick.y <= 0.5 && appState.PreviousRightJoystick.y > 0.5))
 				{
-					Key_Event(K_UPARROW, false);
+					AddKeyInput(K_UPARROW, false);
 				}
 				if ((appState.LeftJoystick.y < -0.5 && appState.PreviousLeftJoystick.y >= -0.5) || (appState.RightJoystick.y < -0.5 && appState.PreviousRightJoystick.y >= -0.5))
 				{
-					Key_Event(K_DOWNARROW, true);
+					AddKeyInput(K_DOWNARROW, true);
 				}
 				if ((appState.LeftJoystick.y >= -0.5 && appState.PreviousLeftJoystick.y < -0.5) || (appState.RightJoystick.y >= -0.5 && appState.PreviousRightJoystick.y < -0.5))
 				{
-					Key_Event(K_DOWNARROW, false);
+					AddKeyInput(K_DOWNARROW, false);
 				}
 				if ((appState.LeftJoystick.x > 0.5 && appState.PreviousLeftJoystick.x <= 0.5) || (appState.RightJoystick.x > 0.5 && appState.PreviousRightJoystick.x <= 0.5))
 				{
-					Key_Event(K_RIGHTARROW, true);
+					AddKeyInput(K_RIGHTARROW, true);
 				}
 				if ((appState.LeftJoystick.x <= 0.5 && appState.PreviousLeftJoystick.x > 0.5) || (appState.RightJoystick.x <= 0.5 && appState.PreviousRightJoystick.x > 0.5))
 				{
-					Key_Event(K_RIGHTARROW, false);
+					AddKeyInput(K_RIGHTARROW, false);
 				}
 				if ((appState.LeftJoystick.x < -0.5 && appState.PreviousLeftJoystick.x >= -0.5) || (appState.RightJoystick.x < -0.5 && appState.PreviousRightJoystick.x >= -0.5))
 				{
-					Key_Event(K_LEFTARROW, true);
+					AddKeyInput(K_LEFTARROW, true);
 				}
 				if ((appState.LeftJoystick.x >= -0.5 && appState.PreviousLeftJoystick.x < -0.5) || (appState.RightJoystick.x >= -0.5 && appState.PreviousRightJoystick.x < -0.5))
 				{
-					Key_Event(K_LEFTARROW, false);
+					AddKeyInput(K_LEFTARROW, false);
 				}
-				if (leftButtonIsDown(appState, ovrButton_Trigger) || leftButtonIsDown(appState, ovrButton_X) || rightButtonIsDown(appState, ovrButton_Trigger) || rightButtonIsDown(appState, ovrButton_A))
+				if (LeftButtonIsDown(appState, ovrButton_Trigger) || LeftButtonIsDown(appState, ovrButton_X) || RightButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_A))
 				{
-					Key_Event(K_ENTER, true);
+					AddKeyInput(K_ENTER, true);
 				}
-				if (leftButtonIsUp(appState, ovrButton_Trigger) || leftButtonIsUp(appState, ovrButton_X) || rightButtonIsUp(appState, ovrButton_Trigger) || rightButtonIsUp(appState, ovrButton_A))
+				if (LeftButtonIsUp(appState, ovrButton_Trigger) || LeftButtonIsUp(appState, ovrButton_X) || RightButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_A))
 				{
-					Key_Event(K_ENTER, false);
+					AddKeyInput(K_ENTER, false);
 				}
 				if (m_state == m_quit)
 				{
-					if (leftButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_B))
+					if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
 					{
-						Key_Event(K_ESCAPE, true);
+						AddKeyInput(K_ESCAPE, true);
 					}
-					if (leftButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_B))
+					if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
 					{
-						Key_Event(K_ESCAPE, false);
+						AddKeyInput(K_ESCAPE, false);
 					}
-					if (leftButtonIsDown(appState, ovrButton_Y))
+					if (LeftButtonIsDown(appState, ovrButton_Y))
 					{
-						Key_Event('y', true);
+						AddKeyInput('y', true);
 					}
-					if (leftButtonIsUp(appState, ovrButton_Y))
+					if (LeftButtonIsUp(appState, ovrButton_Y))
 					{
-						Key_Event('y', false);
+						AddKeyInput('y', false);
 					}
 				}
 				else
 				{
-					if (leftButtonIsDown(appState, ovrButton_GripTrigger) || leftButtonIsDown(appState, ovrButton_Y) || rightButtonIsDown(appState, ovrButton_GripTrigger) || rightButtonIsDown(appState, ovrButton_B))
+					if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || LeftButtonIsDown(appState, ovrButton_Y) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
 					{
-						Key_Event(K_ESCAPE, true);
+						AddKeyInput(K_ESCAPE, true);
 					}
-					if (leftButtonIsUp(appState, ovrButton_GripTrigger) || leftButtonIsUp(appState, ovrButton_Y) || rightButtonIsUp(appState, ovrButton_GripTrigger) || rightButtonIsUp(appState, ovrButton_B))
+					if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || LeftButtonIsUp(appState, ovrButton_Y) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
 					{
-						Key_Event(K_ESCAPE, false);
+						AddKeyInput(K_ESCAPE, false);
 					}
 				}
 			}

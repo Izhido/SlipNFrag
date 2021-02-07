@@ -241,20 +241,8 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-    std::vector<char> contents;
-    f = nullptr;
-    int handle = -1;
-    auto length = COM_OpenFile(Cmd_Argv(1), &handle);
-    if (handle >= 0 && length > 0)
-    {
-        contents.resize(length + 1);
-        if (Sys_FileRead(handle, contents.data(), length) == length)
-        {
-            f = contents.data();
-            f[length] = 0;
-        }
-        COM_CloseFile(handle);
-    }
+    std::vector<byte> contents;
+    f = (char *)COM_LoadFile (Cmd_Argv(1), contents);
 	if (!f)
 	{
 		Con_Printf ("couldn't exec %s\n",Cmd_Argv(1));

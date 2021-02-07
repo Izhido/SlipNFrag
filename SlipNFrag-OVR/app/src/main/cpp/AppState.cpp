@@ -9,6 +9,7 @@
 
 void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 {
+	std::lock_guard<std::mutex> lock(RenderMutex);
 	auto matrixIndex = 0;
 	for (auto& view : Views)
 	{

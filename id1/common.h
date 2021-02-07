@@ -172,7 +172,7 @@ int COM_OpenFile (const char *filename, int *hndl);
 int COM_FOpenFile (const char *filename, int* file);
 void COM_CloseFile (int h);
 
-
+byte *COM_LoadFile (const char *path, std::vector<byte>& contents);
 
 extern	struct cvar_s	registered;
 

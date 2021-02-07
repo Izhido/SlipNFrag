@@ -1,24 +1,23 @@
 #define VK_USE_PLATFORM_ANDROID_KHR
+#include "vid_ovr.h"
 #include "VrApi_Helpers.h"
+#include "VulkanCallWrappers.h"
 #include <android/log.h>
 #include "sys_ovr.h"
+#include "AppState.h"
+#include "Time.h"
 #include <android/window.h>
 #include <sys/prctl.h>
-#include "VrApi.h"
 #include "VrApi_Vulkan.h"
 #include <dlfcn.h>
-#include <cerrno>
 #include <unistd.h>
-#include "VrApi_Input.h"
-#include "VrApi_SystemUtils.h"
-#include "vid_ovr.h"
-#include "in_ovr.h"
-#include "d_lists.h"
-#include "AppState.h"
 #include "MemoryAllocateInfo.h"
-#include "VulkanCallWrappers.h"
-#include "Constants.h"
+#include "VrApi_Input.h"
 #include "Input.h"
+#include "in_ovr.h"
+#include "EngineThread.h"
+#include "d_lists.h"
+#include "Constants.h"
 
 static const int queueCount = 1;
 static const int CPU_LEVEL = 2;
@@ -28,20 +27,6 @@ extern m_state_t m_state;
 extern qboolean r_skip_fov_check;
 extern vec3_t r_modelorg_delta;
 extern qboolean r_skybox_as_rgba;
-
-PermissionsGrantStatus PermissionsGrantStatus = PermissionsPending;
-
-extern "C" void Java_com_heribertodelgado_slipnfrag_MainActivity_notifyPermissionsGrantStatus(JNIEnv* jni, jclass clazz, int permissionsGranted)
-{
-	if (permissionsGranted != 0)
-	{
-		PermissionsGrantStatus = PermissionsGranted;
-	}
-	else
-	{
-		PermissionsGrantStatus = PermissionsDenied;
-	}
-}
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallback(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
 {
@@ -70,14 +55,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallback(VkDebugReportFlagsEXT msgFlag
 	return VK_FALSE;
 }
 
-double getTime()
-{
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	return (now.tv_sec * 1e9 + now.tv_nsec) * 0.000000001;
-}
-
-void appHandleCommands(struct android_app *app, int32_t cmd)
+void appHandleCommands(struct android_app* app, int32_t cmd)
 {
 	auto appState = (AppState*)app->userData;
 	double delta;
@@ -110,7 +88,7 @@ void appHandleCommands(struct android_app *app, int32_t cmd)
 	}
 }
 
-void android_main(struct android_app *app)
+void android_main(struct android_app* app)
 {
 	ANativeActivity_setWindowFlags(app->activity, AWINDOW_FLAG_KEEP_SCREEN_ON, 0);
 	ovrJava java;
@@ -1042,7 +1020,7 @@ void android_main(struct android_app *app)
 		}
 		if (leftRemoteFound && rightRemoteFound)
 		{
-			handleInput(appState);
+			Input::Handle(appState);
 		}
 		else
 		{
@@ -1074,10 +1052,6 @@ void android_main(struct android_app *app)
 		{
 			continue;
 		}
-		if (PermissionsGrantStatus == PermissionsDenied)
-		{
-			ANativeActivity_finish(app->activity);
-		}
 		if (!appState.Scene.createdScene)
 		{
 			appState.Scene.Create(appState, commandBufferAllocateInfo, setupCommandBuffer, commandBufferBeginInfo, setupSubmitInfo, instance, fenceCreateInfo, app);
@@ -1086,134 +1060,142 @@ void android_main(struct android_app *app)
 		appState.FrameIndex++;
 		appState.NoOffset = 0;
 		const double predictedDisplayTime = vrapi_GetPredictedDisplayTime(appState.Ovr, appState.FrameIndex);
-		const ovrTracking2 tracking = vrapi_GetPredictedTracking2(appState.Ovr, predictedDisplayTime);
+		appState.Tracking = vrapi_GetPredictedTracking2(appState.Ovr, predictedDisplayTime);
 		appState.DisplayTime = predictedDisplayTime;
-		if (appState.Mode != AppStartupMode && appState.Mode != AppNoGameDataMode)
 		{
-			if (cls.demoplayback || cl.intermission)
+			std::lock_guard<std::mutex> lock(appState.ModeChangeMutex);
+			if (appState.Mode != AppStartupMode && appState.Mode != AppNoGameDataMode)
 			{
-				appState.Mode = AppScreenMode;
-			}
-			else
-			{
-				appState.Mode = AppWorldMode;
-			}
-		}
-		if (appState.PreviousMode != appState.Mode)
-		{
-			if (appState.PreviousMode == AppStartupMode)
-			{
-				sys_version = "OVR 1.0.6";
-				const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag/files";
-				std::vector<std::string> arguments;
-				arguments.emplace_back("SlipNFrag");
-				arguments.emplace_back("-basedir");
-				arguments.emplace_back(basedir);
-				std::vector<unsigned char> commandline;
-				auto file = fopen((std::string(basedir) + "/slipnfrag.commandline").c_str(), "rb");
-				if (file != nullptr)
+				if (cls.demoplayback || cl.intermission || con_forcedup)
 				{
-					fseek(file, 0, SEEK_END);
-					auto length = ftell(file);
-					if (length > 0)
-					{
-						fseek(file, 0, SEEK_SET);
-						commandline.resize(length);
-						fread(commandline.data(), length, 1, file);
-					}
-					fclose(file);
+					appState.Mode = AppScreenMode;
 				}
-				arguments.emplace_back();
-				for (auto c : commandline)
+				else
 				{
-					if (c <= ' ')
+					appState.Mode = AppWorldMode;
+				}
+			}
+			if (appState.PreviousMode != appState.Mode)
+			{
+				if (appState.PreviousMode == AppStartupMode)
+				{
+					sys_version = "OVR 1.0.6";
+					const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag/files";
+					std::vector<std::string> arguments;
+					arguments.emplace_back("SlipNFrag");
+					arguments.emplace_back("-basedir");
+					arguments.emplace_back(basedir);
+					std::vector<unsigned char> commandline;
+					auto file = fopen((std::string(basedir) + "/slipnfrag.commandline").c_str(), "rb");
+					if (file != nullptr)
 					{
-						if (arguments[arguments.size() - 1].size() != 0)
+						fseek(file, 0, SEEK_END);
+						auto length = ftell(file);
+						if (length > 0)
 						{
-							arguments.emplace_back();
+							fseek(file, 0, SEEK_SET);
+							commandline.resize(length);
+							fread(commandline.data(), length, 1, file);
+						}
+						fclose(file);
+					}
+					arguments.emplace_back();
+					for (auto c : commandline)
+					{
+						if (c <= ' ')
+						{
+							if (arguments[arguments.size() - 1].size() != 0)
+							{
+								arguments.emplace_back();
+							}
+						}
+						else
+						{
+							arguments[arguments.size() - 1] += c;
 						}
 					}
-					else
+					if (arguments[arguments.size() - 1].size() == 0)
 					{
-						arguments[arguments.size() - 1] += c;
+						arguments.pop_back();
 					}
-				}
-				if (arguments[arguments.size() - 1].size() == 0)
-				{
-					arguments.pop_back();
-				}
-				sys_argc = (int)arguments.size();
-				sys_argv = new char*[sys_argc];
-				for (auto i = 0; i < arguments.size(); i++)
-				{
-					sys_argv[i] = new char[arguments[i].length() + 1];
-					strcpy(sys_argv[i], arguments[i].c_str());
-				}
-				Sys_Init(sys_argc, sys_argv);
-				if (sys_errormessage.length() > 0)
-				{
-					if (sys_nogamedata)
+					sys_argc = (int)arguments.size();
+					sys_argv = new char*[sys_argc];
+					for (auto i = 0; i < arguments.size(); i++)
 					{
-						appState.Mode = AppNoGameDataMode;
+						sys_argv[i] = new char[arguments[i].length() + 1];
+						strcpy(sys_argv[i], arguments[i].c_str());
 					}
-					else
+					Sys_Init(sys_argc, sys_argv);
+					if (sys_errormessage.length() > 0)
 					{
-						exit(0);
+						if (sys_nogamedata)
+						{
+							appState.Mode = AppNoGameDataMode;
+						}
+						else
+						{
+							exit(0);
+						}
 					}
+					appState.PreviousLeftButtons = 0;
+					appState.PreviousRightButtons = 0;
+					appState.DefaultFOV = (int)Cvar_VariableValue("fov");
+					r_skybox_as_rgba = true;
+					appState.EngineThread = std::thread(runEngine, &appState, app);
 				}
-				appState.PreviousLeftButtons = 0;
-				appState.PreviousRightButtons = 0;
-				appState.DefaultFOV = (int)Cvar_VariableValue("fov");
-				r_skybox_as_rgba = true;
+				if (appState.Mode == AppScreenMode)
+				{
+					std::lock_guard<std::mutex> lock(appState.RenderMutex);
+					D_ResetLists();
+					d_uselists = false;
+					r_skip_fov_check = false;
+					sb_onconsole = false;
+					Cvar_SetValue("joyadvanced", 1);
+					Cvar_SetValue("joyadvaxisx", AxisSide);
+					Cvar_SetValue("joyadvaxisy", AxisForward);
+					Cvar_SetValue("joyadvaxisz", AxisTurn);
+					Cvar_SetValue("joyadvaxisr", AxisLook);
+					Joy_AdvancedUpdate_f();
+					vid_width = appState.ScreenWidth;
+					vid_height = appState.ScreenHeight;
+					con_width = appState.ConsoleWidth;
+					con_height = appState.ConsoleHeight;
+					Cvar_SetValue("fov", appState.DefaultFOV);
+					VID_Resize(320.0 / 240.0);
+					r_modelorg_delta[0] = 0;
+					r_modelorg_delta[1] = 0;
+					r_modelorg_delta[2] = 0;
+				}
+				else if (appState.Mode == AppWorldMode)
+				{
+					std::lock_guard<std::mutex> lock(appState.RenderMutex);
+					D_ResetLists();
+					d_uselists = true;
+					r_skip_fov_check = true;
+					sb_onconsole = true;
+					Cvar_SetValue("joyadvanced", 1);
+					Cvar_SetValue("joyadvaxisx", AxisSide);
+					Cvar_SetValue("joyadvaxisy", AxisForward);
+					Cvar_SetValue("joyadvaxisz", AxisNada);
+					Cvar_SetValue("joyadvaxisr", AxisNada);
+					Joy_AdvancedUpdate_f();
+					vid_width = appState.ScreenWidth;
+					vid_height = appState.ScreenWidth; // to force a square screen for VR, and to get better results for FOV angle calculations
+					con_width = appState.ConsoleWidth;
+					con_height = appState.ConsoleHeight;
+					Cvar_SetValue("fov", appState.FOV);
+					VID_Resize(1);
+				}
+				else if (appState.Mode == AppNoGameDataMode)
+				{
+					std::lock_guard<std::mutex> lock(appState.RenderMutex);
+					D_ResetLists();
+					d_uselists = false;
+					r_skip_fov_check = false;
+					sb_onconsole = false;
+				}
+				appState.PreviousMode = appState.Mode;
 			}
-			if (appState.Mode == AppScreenMode)
-			{
-				D_ResetLists();
-				d_uselists = false;
-				r_skip_fov_check = false;
-				sb_onconsole = false;
-				Cvar_SetValue("joyadvanced", 1);
-				Cvar_SetValue("joyadvaxisx", AxisSide);
-				Cvar_SetValue("joyadvaxisy", AxisForward);
-				Cvar_SetValue("joyadvaxisz", AxisTurn);
-				Cvar_SetValue("joyadvaxisr", AxisLook);
-				Joy_AdvancedUpdate_f();
-				vid_width = appState.ScreenWidth;
-				vid_height = appState.ScreenHeight;
-				con_width = appState.ConsoleWidth;
-				con_height = appState.ConsoleHeight;
-				Cvar_SetValue("fov", appState.DefaultFOV);
-				VID_Resize(320.0 / 240.0);
-				r_modelorg_delta[0] = 0;
-				r_modelorg_delta[1] = 0;
-				r_modelorg_delta[2] = 0;
-			}
-			else if (appState.Mode == AppWorldMode)
-			{
-				d_uselists = true;
-				r_skip_fov_check = true;
-				sb_onconsole = true;
-				Cvar_SetValue("joyadvanced", 1);
-				Cvar_SetValue("joyadvaxisx", AxisSide);
-				Cvar_SetValue("joyadvaxisy", AxisForward);
-				Cvar_SetValue("joyadvaxisz", AxisNada);
-				Cvar_SetValue("joyadvaxisr", AxisNada);
-				Joy_AdvancedUpdate_f();
-				vid_width = appState.ScreenWidth;
-				vid_height = appState.ScreenWidth; // to force a square screen for VR, and to get better results for FOV angle calculations
-				con_width = appState.ConsoleWidth;
-				con_height = appState.ConsoleHeight;
-				Cvar_SetValue("fov", appState.FOV);
-				VID_Resize(1);
-			}
-			else if (appState.Mode == AppNoGameDataMode)
-			{
-				D_ResetLists();
-				d_uselists = false;
-				r_skip_fov_check = false;
-				sb_onconsole = false;
-			}
-			appState.PreviousMode = appState.Mode;
 		}
 		for (auto entry = appState.Scene.surfaces.begin(); entry != appState.Scene.surfaces.end(); )
 		{
@@ -1269,158 +1251,59 @@ void android_main(struct android_app *app)
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.spriteTextures.oldTextures);
 		TextureFromAllocation::DeleteOld(appState, &appState.Scene.oldSurfaces);
 		appState.Scene.colormappedBuffers.DeleteOld(appState);
-		for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 		{
-			appState.ViewMatrices[i] = ovrMatrix4f_Transpose(&tracking.Eye[i].ViewMatrix);
-			appState.ProjectionMatrices[i] = ovrMatrix4f_Transpose(&tracking.Eye[i].ProjectionMatrix);
-		}
-		appState.Scene.orientation = tracking.HeadPose.Pose.Orientation;
-		auto x = appState.Scene.orientation.x;
-		auto y = appState.Scene.orientation.y;
-		auto z = appState.Scene.orientation.z;
-		auto w = appState.Scene.orientation.w;
-		float Q[3] = { x, y, z };
-		float ww = w * w;
-		float Q11 = Q[1] * Q[1];
-		float Q22 = Q[0] * Q[0];
-		float Q33 = Q[2] * Q[2];
-		const float psign = -1;
-		float s2 = psign * 2 * (psign * w * Q[0] + Q[1] * Q[2]);
-		const float singularityRadius = 1e-12;
-		if (s2 < singularityRadius - 1)
-		{
-			appState.Yaw = 0;
-			appState.Pitch = -M_PI / 2;
-			appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
-		}
-		else if (s2 > 1 - singularityRadius)
-		{
-			appState.Yaw = 0;
-			appState.Pitch = M_PI / 2;
-			appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
-		}
-		else
-		{
-			appState.Yaw = -(atan2(-2 * (w * Q[1] - psign * Q[0] * Q[2]), ww + Q33 - Q11 - Q22));
-			appState.Pitch = asin(s2);
-			appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
-		}
-		appState.Scene.pose = vrapi_LocateTrackingSpace(appState.Ovr, VRAPI_TRACKING_SPACE_LOCAL_FLOOR);
-		auto playerHeight = 32;
-		if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
-		{
-			auto player = &cl_entities[cl.viewentity];
-			if (player != nullptr)
+			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
+			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 			{
-				auto model = player->model;
-				if (model != nullptr)
-				{
-					playerHeight = model->maxs[1] - model->mins[1];
-				}
+				appState.ViewMatrices[i] = ovrMatrix4f_Transpose(&appState.Tracking.Eye[i].ViewMatrix);
+				appState.ProjectionMatrices[i] = ovrMatrix4f_Transpose(&appState.Tracking.Eye[i].ProjectionMatrix);
 			}
-		}
-		appState.Scale = -appState.Scene.pose.Position.y / playerHeight;
-		if (host_initialized)
-		{
-			if (appState.Mode == AppScreenMode)
+			appState.Scene.orientation = appState.Tracking.HeadPose.Pose.Orientation;
+			auto x = appState.Scene.orientation.x;
+			auto y = appState.Scene.orientation.y;
+			auto z = appState.Scene.orientation.z;
+			auto w = appState.Scene.orientation.w;
+			float Q[3] = { x, y, z };
+			float ww = w * w;
+			float Q11 = Q[1] * Q[1];
+			float Q22 = Q[0] * Q[0];
+			float Q33 = Q[2] * Q[2];
+			const float psign = -1;
+			float s2 = psign * 2 * (psign * w * Q[0] + Q[1] * Q[2]);
+			const float singularityRadius = 1e-12;
+			if (s2 < singularityRadius - 1)
 			{
-				if (appState.PreviousTime < 0)
+				appState.Yaw = 0;
+				appState.Pitch = -M_PI / 2;
+				appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
+			}
+			else if (s2 > 1 - singularityRadius)
+			{
+				appState.Yaw = 0;
+				appState.Pitch = M_PI / 2;
+				appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
+			}
+			else
+			{
+				appState.Yaw = -(atan2(-2 * (w * Q[1] - psign * Q[0] * Q[2]), ww + Q33 - Q11 - Q22));
+				appState.Pitch = asin(s2);
+				appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
+			}
+			appState.Scene.pose = vrapi_LocateTrackingSpace(appState.Ovr, VRAPI_TRACKING_SPACE_LOCAL_FLOOR);
+			auto playerHeight = 32;
+			if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
+			{
+				auto player = &cl_entities[cl.viewentity];
+				if (player != nullptr)
 				{
-					appState.PreviousTime = getTime();
-				}
-				else if (appState.CurrentTime < 0)
-				{
-					appState.CurrentTime = getTime();
-				}
-				else
-				{
-					appState.PreviousTime = appState.CurrentTime;
-					appState.CurrentTime = getTime();
-					frame_lapse = (float) (appState.CurrentTime - appState.PreviousTime);
-				}
-				if (r_cache_thrash)
-				{
-					VID_ReallocSurfCache();
-				}
-				auto updated = Host_FrameUpdate(frame_lapse);
-				if (sys_quitcalled)
-				{
-					ANativeActivity_finish(app->activity);
-				}
-				if (sys_errormessage.length() > 0)
-				{
-					exit(0);
-				}
-				if (updated)
-				{
-					Host_FrameRender();
-					if (appState.Scene.hostClearCount != host_clearcount)
+					auto model = player->model;
+					if (model != nullptr)
 					{
-						appState.Scene.Reset();
-						appState.Scene.hostClearCount = host_clearcount;
+						playerHeight = model->maxs[1] - model->mins[1];
 					}
 				}
-				Host_FrameFinish(updated);
 			}
-			else if (appState.Mode == AppWorldMode)
-			{
-				cl.viewangles[YAW] = appState.Yaw * 180 / M_PI + 90;
-				cl.viewangles[PITCH] = -appState.Pitch * 180 / M_PI;
-				cl.viewangles[ROLL] = -appState.Roll * 180 / M_PI;
-				if (appState.PreviousTime < 0)
-				{
-					appState.PreviousTime = getTime();
-				}
-				else if (appState.CurrentTime < 0)
-				{
-					appState.CurrentTime = getTime();
-				}
-				else
-				{
-					appState.PreviousTime = appState.CurrentTime;
-					appState.CurrentTime = getTime();
-					frame_lapse = (float) (appState.CurrentTime - appState.PreviousTime);
-					appState.TimeInWorldMode += frame_lapse;
-					if (!appState.ControlsMessageDisplayed && appState.TimeInWorldMode > 4)
-					{
-						SCR_InterruptableCenterPrint("Controls:\n\nLeft or Right Joysticks:\nWalk Forward / Backpedal, \n   Step Left / Step Right \n\n[B] / [Y]: Jump     \n[A] / [X]: Swim down\nTriggers: Attack  \nGrip Triggers: Run          \nClick Joysticks: Change Weapon  \n\nApproach and fire weapon to close");
-						appState.ControlsMessageDisplayed = true;
-					}
-				}
-				if (r_cache_thrash)
-				{
-					VID_ReallocSurfCache();
-				}
-				auto updated = Host_FrameUpdate(frame_lapse);
-				if (sys_quitcalled)
-				{
-					ANativeActivity_finish(app->activity);
-				}
-				if (sys_errormessage.length() > 0)
-				{
-					exit(0);
-				}
-				if (updated)
-				{
-					r_modelorg_delta[0] = tracking.HeadPose.Pose.Position.x / appState.Scale;
-					r_modelorg_delta[1] = -tracking.HeadPose.Pose.Position.z / appState.Scale;
-					r_modelorg_delta[2] = tracking.HeadPose.Pose.Position.y / appState.Scale;
-					auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
-					appState.NearViewModel = (distanceSquared < 12 * 12);
-					d_awayfromviewmodel = !appState.NearViewModel;
-					D_ResetLists();
-					auto nodrift = cl.nodrift;
-					cl.nodrift = true;
-					Host_FrameRender();
-					cl.nodrift = nodrift;
-					if (appState.Scene.hostClearCount != host_clearcount)
-					{
-						appState.Scene.Reset();
-						appState.Scene.hostClearCount = host_clearcount;
-					}
-				}
-				Host_FrameFinish(updated);
-			}
+			appState.Scale = -appState.Scene.pose.Position.y / playerHeight;
 		}
 		appState.RenderScene(commandBufferBeginInfo);
 		if (appState.Mode == AppScreenMode)
@@ -1429,43 +1312,46 @@ void android_main(struct android_app *app)
 			auto consoleIndexCache = 0;
 			auto screenIndex = 0;
 			auto targetIndex = 0;
-			auto y = 0;
-			while (y < vid_height)
 			{
-				auto x = 0;
-				while (x < vid_width)
+				std::lock_guard<std::mutex> lock(appState.RenderMutex);
+				auto y = 0;
+				while (y < vid_height)
 				{
-					auto entry = con_buffer[consoleIndex];
-					if (entry == 255)
+					auto x = 0;
+					while (x < vid_width)
 					{
-						do
+						auto entry = con_buffer[consoleIndex];
+						if (entry == 255)
 						{
-							appState.Screen.Data[targetIndex] = d_8to24table[vid_buffer[screenIndex]];
-							screenIndex++;
-							targetIndex++;
-							x++;
-						} while ((x % 3) != 0);
+							do
+							{
+								appState.Screen.Data[targetIndex] = d_8to24table[vid_buffer[screenIndex]];
+								screenIndex++;
+								targetIndex++;
+								x++;
+							} while ((x % 3) != 0);
+						}
+						else
+						{
+							do
+							{
+								appState.Screen.Data[targetIndex] = d_8to24table[entry];
+								screenIndex++;
+								targetIndex++;
+								x++;
+							} while ((x % 3) != 0);
+						}
+						consoleIndex++;
+					}
+					y++;
+					if ((y % 3) == 0)
+					{
+						consoleIndexCache = consoleIndex;
 					}
 					else
 					{
-						do
-						{
-							appState.Screen.Data[targetIndex] = d_8to24table[entry];
-							screenIndex++;
-							targetIndex++;
-							x++;
-						} while ((x % 3) != 0);
+						consoleIndex = consoleIndexCache;
 					}
-					consoleIndex++;
-				}
-				y++;
-				if ((y % 3) == 0)
-				{
-					consoleIndexCache = consoleIndex;
-				}
-				else
-				{
-					consoleIndex = consoleIndexCache;
 				}
 			}
 			VK(appState.Device.vkMapMemory(appState.Device.device, appState.Screen.Buffer.memory, 0, appState.Screen.Buffer.size, 0, &appState.Screen.Buffer.mapped));
@@ -1604,6 +1490,7 @@ void android_main(struct android_app *app)
 			}
 			if (perImage.textureOffset >= 0)
 			{
+				std::lock_guard<std::mutex> lock(appState.RenderMutex);
 				memcpy(((unsigned char*)stagingBuffer->mapped) + offset, con_buffer.data(), con_buffer.size());
 			}
 			VkMappedMemoryRange mappedMemoryRange { };
@@ -1712,13 +1599,13 @@ void android_main(struct android_app *app)
 		}
 		std::vector<ovrLayerCube2> skyboxLayers;
 		ovrLayerProjection2 worldLayer = vrapi_DefaultLayerProjection2();
-		worldLayer.HeadPose = tracking.HeadPose;
+		worldLayer.HeadPose = appState.Tracking.HeadPose;
 		for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 		{
 			auto view = (appState.Views.size() == 1 ? 0 : i);
 			worldLayer.Textures[i].ColorSwapChain = appState.Views[view].framebuffer.colorTextureSwapChain;
 			worldLayer.Textures[i].SwapChainIndex = appState.Views[view].index;
-			worldLayer.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_TanAngleMatrixFromProjection(&tracking.Eye[i].ProjectionMatrix);
+			worldLayer.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_TanAngleMatrixFromProjection(&appState.Tracking.Eye[i].ProjectionMatrix);
 		}
 		if (appState.Scene.skybox != VK_NULL_HANDLE)
 		{
@@ -1848,12 +1735,12 @@ void android_main(struct android_app *app)
 			}
 			if (appState.Scene.skybox != VK_NULL_HANDLE)
 			{
-				const auto centerEyeViewMatrix = vrapi_GetViewMatrixFromPose(&tracking.HeadPose.Pose);
+				const auto centerEyeViewMatrix = vrapi_GetViewMatrixFromPose(&appState.Tracking.HeadPose.Pose);
 				const auto rotation = ovrMatrix4f_CreateRotation(0, M_PI / 2, 0);
 				const auto rotatedEyeViewMatrix = ovrMatrix4f_Multiply(&centerEyeViewMatrix, &rotation);
 				const auto cubeMatrix = ovrMatrix4f_TanAngleMatrixForCubeMap(&rotatedEyeViewMatrix);
 				auto skyboxLayer = vrapi_DefaultLayerCube2();
-				skyboxLayer.HeadPose = tracking.HeadPose;
+				skyboxLayer.HeadPose = appState.Tracking.HeadPose;
 				skyboxLayer.TexCoordsFromTanAngles = cubeMatrix;
 				skyboxLayer.Offset.x = 0;
 				skyboxLayer.Offset.y = 0;
@@ -1872,12 +1759,12 @@ void android_main(struct android_app *app)
 			console.Header.ColorScale.w = 1;
 			console.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
 			console.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
-			console.HeadPose = tracking.HeadPose;
+			console.HeadPose = appState.Tracking.HeadPose;
 			const float density = 4500;
 			float rotateYaw = appState.Yaw;
 			float rotatePitch = appState.Pitch;
 			const float radius = 1;
-			const ovrVector3f translation = { tracking.HeadPose.Pose.Position.x, tracking.HeadPose.Pose.Position.y, tracking.HeadPose.Pose.Position.z };
+			const ovrVector3f translation = { appState.Tracking.HeadPose.Pose.Position.x, appState.Tracking.HeadPose.Pose.Position.y, appState.Tracking.HeadPose.Pose.Position.z };
 			const ovrMatrix4f scaleMatrix = ovrMatrix4f_CreateScale(radius, radius * (float) appState.ScreenHeight * VRAPI_PI / density, radius);
 			const ovrMatrix4f transMatrix = ovrMatrix4f_CreateTranslation(translation.x, translation.y, translation.z);
 			const ovrMatrix4f rotXMatrix = ovrMatrix4f_CreateRotation(rotatePitch, 0, 0);
@@ -1889,7 +1776,7 @@ void android_main(struct android_app *app)
 			float circBias = -circScale * (0.5 * (1 - 1 / circScale));
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 			{
-				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&tracking.Eye[i].ViewMatrix, &cylinderTransform);
+				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&appState.Tracking.Eye[i].ViewMatrix, &cylinderTransform);
 				console.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_Inverse(&modelViewMatrix);
 				console.Textures[i].ColorSwapChain = appState.Console.SwapChain;
 				console.Textures[i].SwapChainIndex = appState.Console.View.index;
@@ -1915,7 +1802,7 @@ void android_main(struct android_app *app)
 			screen.Header.ColorScale.w = 1;
 			screen.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
 			screen.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
-			screen.HeadPose = tracking.HeadPose;
+			screen.HeadPose = appState.Tracking.HeadPose;
 			const float density = 4500;
 			float rotateYaw = 0;
 			float rotatePitch = 0;
@@ -1929,7 +1816,7 @@ void android_main(struct android_app *app)
 			float circBias = -circScale * (0.5f * (1.0f - 1.0f / circScale));
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 			{
-				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&tracking.Eye[i].ViewMatrix, &cylinderTransform);
+				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&appState.Tracking.Eye[i].ViewMatrix, &cylinderTransform);
 				screen.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_Inverse(&modelViewMatrix);
 				screen.Textures[i].ColorSwapChain = appState.Screen.SwapChain;
 				screen.Textures[i].SwapChainIndex = 0;
@@ -1952,7 +1839,7 @@ void android_main(struct android_app *app)
 			leftArrows.Header.ColorScale.w = 1;
 			leftArrows.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
 			leftArrows.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
-			leftArrows.HeadPose = tracking.HeadPose;
+			leftArrows.HeadPose = appState.Tracking.HeadPose;
 			rotateYaw = 2 * M_PI / 3;
 			scaleMatrix = ovrMatrix4f_CreateScale(radius, radius * (float) appState.ScreenHeight * VRAPI_PI / density, radius);
 			rotXMatrix = ovrMatrix4f_CreateRotation(rotatePitch, 0.0f, 0.0f);
@@ -1961,7 +1848,7 @@ void android_main(struct android_app *app)
 			cylinderTransform = ovrMatrix4f_Multiply(&rotYMatrix, &m0);
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 			{
-				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&tracking.Eye[i].ViewMatrix, &cylinderTransform);
+				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&appState.Tracking.Eye[i].ViewMatrix, &cylinderTransform);
 				leftArrows.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_Inverse(&modelViewMatrix);
 				leftArrows.Textures[i].ColorSwapChain = appState.LeftArrows.SwapChain;
 				leftArrows.Textures[i].SwapChainIndex = 0;
@@ -1984,7 +1871,7 @@ void android_main(struct android_app *app)
 			rightArrows.Header.ColorScale.w = 1;
 			rightArrows.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
 			rightArrows.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
-			rightArrows.HeadPose = tracking.HeadPose;
+			rightArrows.HeadPose = appState.Tracking.HeadPose;
 			rotateYaw = -2 * M_PI / 3;
 			scaleMatrix = ovrMatrix4f_CreateScale(radius, radius * (float) appState.ScreenHeight * VRAPI_PI / density, radius);
 			rotXMatrix = ovrMatrix4f_CreateRotation(rotatePitch, 0.0f, 0.0f);
@@ -1993,7 +1880,7 @@ void android_main(struct android_app *app)
 			cylinderTransform = ovrMatrix4f_Multiply(&rotYMatrix, &m0);
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 			{
-				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&tracking.Eye[i].ViewMatrix, &cylinderTransform);
+				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&appState.Tracking.Eye[i].ViewMatrix, &cylinderTransform);
 				rightArrows.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_Inverse(&modelViewMatrix);
 				rightArrows.Textures[i].ColorSwapChain = appState.RightArrows.SwapChain;
 				rightArrows.Textures[i].SwapChainIndex = 0;
@@ -2027,6 +1914,11 @@ void android_main(struct android_app *app)
 		frameDesc.LayerCount = layers.size();
 		frameDesc.Layers = layers.data();
 		vrapi_SubmitFrame2(appState.Ovr, &frameDesc);
+	}
+	if (appState.EngineThread.joinable())
+	{
+		appState.EngineThreadStopped = true;
+		appState.EngineThread.join();
 	}
 	for (auto& view : appState.Views)
 	{

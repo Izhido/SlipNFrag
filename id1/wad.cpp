@@ -61,7 +61,7 @@ void W_CleanupName (const char *in, char *out)
 }
 
 
-std::vector<byte> wad_contents;
+
 /*
 ====================
 W_LoadWadFile
@@ -73,20 +73,9 @@ void W_LoadWadFile (const char *filename)
 	wadinfo_t		*header;
 	unsigned		i;
 	int				infotableofs;
-	
-    wad_base = nullptr;
-    int handle = -1;
-    auto length = COM_OpenFile(filename, &handle);
-    if (handle >= 0 && length > 0)
-    {
-        wad_contents.resize(length + 1);
-        if (Sys_FileRead(handle, wad_contents.data(), length) == length)
-        {
-            wad_base = wad_contents.data();
-            ((byte*)wad_base)[length] = 0;
-        }
-        COM_CloseFile(handle);
-    }
+	static std::vector<byte> wad_contents;
+
+	wad_base = COM_LoadFile (filename, wad_contents);
 	if (!wad_base)
     {
         sys_nogamedata = 1;

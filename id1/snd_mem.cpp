@@ -157,20 +157,8 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 //	Con_Printf ("loading %s\n",namebuffer);
 
-    data = nullptr;
     std::vector<byte> contents;
-    int handle = -1;
-    auto length = COM_OpenFile(namebuffer.c_str(), &handle);
-    if (handle >= 0 && length > 0)
-    {
-        contents.resize(length + 1);
-        if (Sys_FileRead(handle, contents.data(), length) == length)
-        {
-            data = contents.data();
-            data[length] = 0;
-        }
-        COM_CloseFile(handle);
-    }
+	data = COM_LoadFile (namebuffer.c_str(), contents);
 
 	if (!data)
 	{

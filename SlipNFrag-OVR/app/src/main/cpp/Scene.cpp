@@ -8,6 +8,7 @@
 #include "MemoryAllocateInfo.h"
 #include "stb_image.h"
 #include "vid_ovr.h"
+#include "d_lists.h"
 
 void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app)
 {
@@ -1018,6 +1019,7 @@ void Scene::ClearBuffersAndSizes()
 
 void Scene::Reset()
 {
+	D_ResetLists();
 	viewmodelsPerKey.clear();
 	aliasPerKey.clear();
 	latestTextureSharedMemory = nullptr;

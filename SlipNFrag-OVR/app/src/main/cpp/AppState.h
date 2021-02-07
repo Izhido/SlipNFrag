@@ -1,7 +1,6 @@
 #pragma once
 
 #include <android_native_app_glue.h>
-#include "PermissionsGrantStatus.h"
 #include "AppMode.h"
 #include "Device.h"
 #include "Context.h"
@@ -10,6 +9,7 @@
 #include "Panel.h"
 #include "Screen.h"
 #include "Console.h"
+#include <thread>
 
 struct AppState
 {
@@ -42,6 +42,7 @@ struct AppState
 	std::vector<View> Views;
 	ovrMatrix4f ViewMatrices[VRAPI_FRAME_LAYER_EYE_MAX];
 	ovrMatrix4f ProjectionMatrices[VRAPI_FRAME_LAYER_EYE_MAX];
+	ovrTracking2 Tracking;
 	float Yaw;
 	float Pitch;
 	float Roll;
@@ -74,6 +75,12 @@ struct AppState
 	double TimeInWorldMode;
 	bool ControlsMessageDisplayed;
 	bool ControlsMessageClosed;
+	std::mutex ModeChangeMutex;
+	std::mutex InputMutex;
+	std::mutex RenderInputMutex;
+	std::mutex RenderMutex;
+	std::thread EngineThread;
+	bool EngineThreadStopped;
 
 	void RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo);
 };

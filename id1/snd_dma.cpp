@@ -54,6 +54,7 @@ int   		paintedtime; 	// sample PAIRS
 
 
 std::list<sfx_t> known_sfx;
+std::unordered_map<std::string, std::list<sfx_t>::iterator> known_sfx_index;
 
 sfx_t		*ambient_sfx[NUM_AMBIENTS];
 
@@ -266,17 +267,16 @@ sfx_t *S_FindName (const char *name)
 		Sys_Error ("Sound name too long: %s", name);
 
 // see if already loaded
-	for (auto& entry : known_sfx)
-    {
-        sfx = &entry;
-		if (!Q_strcmp(sfx->name.c_str(), name))
-		{
-			return sfx;
-		}
-    }
+	auto entry = known_sfx_index.find(std::string(name));
+	if (entry != known_sfx_index.end())
+	{
+		return &*entry->second;
+	}
 
     known_sfx.emplace_back();
-	sfx = &known_sfx.back();
+	auto last = std::prev(known_sfx.end());
+	known_sfx_index.insert({ std::string(name), last });
+	sfx = &*last;
 	sfx->name = name;
 	
 	return sfx;

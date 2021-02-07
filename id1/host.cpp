@@ -46,7 +46,7 @@ int			host_framecount;
 
 client_t	*host_client;			// current client
 
-byte		*host_basepal;
+std::vector<byte>	host_basepal;
 std::vector<byte>	host_colormap;
 
 cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
@@ -952,43 +952,17 @@ void Host_Init (quakeparms_t *parms)
  
 	if (cls.state != ca_dedicated)
 	{
-        host_basepal = nullptr;
-        int handle = -1;
-        auto length = COM_OpenFile("gfx/palette.lmp", &handle);
-        if (handle >= 0 && length > 0)
-        {
-            host_basepal = new byte[length + 1];
-            if (Sys_FileRead(handle, host_basepal, length) == length)
-            {
-                host_basepal[length] = 0;
-            }
-            else
-            {
-                delete[] host_basepal;
-                host_basepal = nullptr;
-            }
-            COM_CloseFile(handle);
-        }
-		if (!host_basepal)
+		auto basepal = COM_LoadFile ("gfx/palette.lmp", host_basepal);
+		if (!basepal)
 			Sys_Error ("Couldn't load gfx/palette.lmp");
-        handle = -1;
-        length = COM_OpenFile("gfx/colormap.lmp", &handle);
-        if (handle >= 0 && length > 0)
-        {
-            host_colormap.resize(length);
-            if (Sys_FileRead(handle, host_colormap.data(), length) != length)
-            {
-            	host_colormap.clear();
-            }
-            COM_CloseFile(handle);
-        }
-		if (host_colormap.size() == 0)
+		auto colormap = COM_LoadFile ("gfx/colormap.lmp", host_colormap);
+		if (!colormap)
 			Sys_Error ("Couldn't load gfx/colormap.lmp");
 
 #ifndef _WIN32 // on non win32, mouse comes before video for security reasons
 		IN_Init ();
 #endif
-		VID_Init (host_basepal);
+		VID_Init (host_basepal.data());
 
 		Draw_Init ();
 		SCR_Init ();

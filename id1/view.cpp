@@ -653,7 +653,7 @@ void V_UpdatePalette (void)
 	if (!is_new && !force)
 		return;
 			
-	basepal = host_basepal;
+	basepal = host_basepal.data();
 	newpal = pal;
 	
 	for (i=0 ; i<256 ; i++)
