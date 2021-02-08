@@ -18,6 +18,7 @@
 #include "EngineThread.h"
 #include "d_lists.h"
 #include "Constants.h"
+#include "DirectRect.h"
 
 static const int queueCount = 1;
 static const int CPU_LEVEL = 2;
@@ -1308,12 +1309,12 @@ void android_main(struct android_app* app)
 		appState.RenderScene(commandBufferBeginInfo);
 		if (appState.Mode == AppScreenMode)
 		{
-			auto consoleIndex = 0;
-			auto consoleIndexCache = 0;
-			auto screenIndex = 0;
-			auto targetIndex = 0;
 			{
 				std::lock_guard<std::mutex> lock(appState.RenderMutex);
+				auto consoleIndex = 0;
+				auto consoleIndexCache = 0;
+				auto screenIndex = 0;
+				auto targetIndex = 0;
 				auto y = 0;
 				while (y < vid_height)
 				{
@@ -1351,6 +1352,43 @@ void android_main(struct android_app* app)
 					else
 					{
 						consoleIndex = consoleIndexCache;
+					}
+				}
+			}
+			{
+				std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+				for (auto& directRect : DirectRect::directRects)
+				{
+					auto width = directRect.width * 3;
+					auto height = directRect.height * 3;
+					auto directRectIndex = 0;
+					auto directRectIndexCache = 0;
+					auto targetIndex = directRect.y * 3 * vid_width + directRect.x * 3;
+					auto y = 0;
+					while (y < height)
+					{
+						auto x = 0;
+						while (x < width)
+						{
+							auto entry = d_8to24table[directRect.data[directRectIndex]];
+							do
+							{
+								appState.Screen.Data[targetIndex] = entry;
+								targetIndex++;
+								x++;
+							} while ((x % 3) != 0);
+							directRectIndex++;
+						}
+						y++;
+						if ((y % 3) == 0)
+						{
+							directRectIndexCache = directRectIndex;
+						}
+						else
+						{
+							directRectIndex = directRectIndexCache;
+						}
+						targetIndex += vid_width - width;
 					}
 				}
 			}
@@ -1490,8 +1528,34 @@ void android_main(struct android_app* app)
 			}
 			if (perImage.textureOffset >= 0)
 			{
-				std::lock_guard<std::mutex> lock(appState.RenderMutex);
-				memcpy(((unsigned char*)stagingBuffer->mapped) + offset, con_buffer.data(), con_buffer.size());
+				{
+					std::lock_guard<std::mutex> lock(appState.RenderMutex);
+					memcpy(((unsigned char*)stagingBuffer->mapped) + offset, con_buffer.data(), con_buffer.size());
+				}
+				{
+					std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+					for (auto& directRect : DirectRect::directRects)
+					{
+						auto directRectIndex = 0;
+						auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+						auto targetIndex = directRect.y * con_width + directRect.x;
+						auto y = 0;
+						while (y < directRect.height)
+						{
+							auto x = 0;
+							while (x < directRect.width)
+							{
+								auto entry = directRect.data[directRectIndex];
+								target[targetIndex] = entry;
+								targetIndex++;
+								x++;
+								directRectIndex++;
+							}
+							y++;
+							targetIndex += con_width - directRect.width;
+						}
+					}
+				}
 			}
 			VkMappedMemoryRange mappedMemoryRange { };
 			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;

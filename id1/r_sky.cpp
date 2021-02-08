@@ -640,7 +640,6 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 	byte* pic;
 	int width;
 	int height;
-	Draw_BeginDisc ();
 	if (r_skybox_as_rgba)
 	{
 		R_LoadTGA(path.c_str(), sizeof(texture_t), true, &pic, &width, &height);
@@ -651,6 +650,7 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 	}
 	if (pic != nullptr)
 	{
+		Draw_BeginDisc ();
         auto pixels = width * height;
         if (r_skybox_as_rgba)
         {
@@ -759,8 +759,8 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 		{
 			delete[] pic;
         }
+		Draw_EndDisc ();
 	}
-	Draw_EndDisc ();
 }
 
 /*
