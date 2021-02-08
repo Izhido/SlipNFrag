@@ -8,15 +8,20 @@
 void PerImage::Reset(AppState& appState)
 {
 	sceneMatricesStagingBuffers.Reset(appState);
-	vertices.Reset(appState);
-	attributes.Reset(appState);
-	indices16.Reset(appState);
-	indices32.Reset(appState);
-	colors.Reset(appState);
+	cachedVertices.Reset(appState);
+	cachedAttributes.Reset(appState);
+	cachedIndices16.Reset(appState);
+	cachedIndices32.Reset(appState);
+	cachedColors.Reset(appState);
 	stagingBuffers.Reset(appState);
 	turbulent.Reset(appState);
 	colormaps.Reset(appState);
 	colormapCount = 0;
+	vertices = nullptr;
+	attributes = nullptr;
+	indices16 = nullptr;
+	indices32 = nullptr;
+	colors = nullptr;
 }
 
 void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize)
@@ -514,9 +519,9 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 {
 	if (appState.Mode == AppWorldMode)
 	{
-		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &appState.Scene.vertices->buffer, &texturedVertexBase));
-		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &appState.Scene.attributes->buffer, &texturedAttributeBase));
-		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.attributes->buffer, &vertexTransformBase));
+		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase));
+		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase));
+		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &vertexTransformBase));
 		VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipeline));
 		VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -703,16 +708,16 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 		descriptorSetIndex = 0;
 		if (d_lists.last_alias >= 0)
 		{
-			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 3, 1, &appState.Scene.attributes->buffer, &vertexTransformBase));
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 3, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 			pushConstants[3] = 0;
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			if (appState.Scene.indices16 != nullptr)
+			if (indices16 != nullptr)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
+				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
 				for (auto i = 0; i <= d_lists.last_alias; i++)
 				{
 					auto& alias = d_lists.alias[i];
@@ -727,7 +732,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 					auto& texCoords = appState.Scene.colormappedBufferList[index];
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
 					VkDeviceSize attributeOffset = colormappedAttributeBase + alias.first_attribute * sizeof(float);
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.attributes->buffer, &attributeOffset));
+					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
 					pushConstants[0] = alias.transform[0][0];
 					pushConstants[1] = alias.transform[2][0];
 					pushConstants[2] = -alias.transform[1][0];
@@ -780,9 +785,9 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, alias.count, 1, alias.first_index16, 0, 0));
 				}
 			}
-			if (appState.Scene.indices32 != nullptr)
+			if (indices32 != nullptr)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 				for (auto i = 0; i <= d_lists.last_alias; i++)
 				{
 					auto& alias = d_lists.alias[i];
@@ -797,7 +802,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 					auto& texCoords = appState.Scene.colormappedBufferList[index];
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
 					VkDeviceSize attributeOffset = colormappedAttributeBase + alias.first_attribute * sizeof(float);
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.attributes->buffer, &attributeOffset));
+					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
 					pushConstants[0] = alias.transform[0][0];
 					pushConstants[1] = alias.transform[2][0];
 					pushConstants[2] = -alias.transform[1][0];
@@ -872,7 +877,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 		}
 		if (d_lists.last_viewmodel >= 0)
 		{
-			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 3, 1, &appState.Scene.attributes->buffer, &vertexTransformBase));
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 3, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 			pushConstants[3] = 0;
@@ -901,9 +906,9 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 				pushConstants[22] = 0;
 				pushConstants[23] = 0.7 + 0.3 * sin(cl.time * M_PI);
 			}
-			if (appState.Scene.indices16 != nullptr)
+			if (indices16 != nullptr)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
+				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
 				for (auto i = 0; i <= d_lists.last_viewmodel; i++)
 				{
 					auto& viewmodel = d_lists.viewmodel[i];
@@ -918,7 +923,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 					auto& texCoords = appState.Scene.colormappedBufferList[index];
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
 					VkDeviceSize attributeOffset = colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.attributes->buffer, &attributeOffset));
+					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
 					pushConstants[0] = viewmodel.transform[0][0];
 					pushConstants[1] = viewmodel.transform[2][0];
 					pushConstants[2] = -viewmodel.transform[1][0];
@@ -971,9 +976,9 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, viewmodel.count, 1, viewmodel.first_index16, 0, 0));
 				}
 			}
-			if (appState.Scene.indices32 != nullptr)
+			if (indices32 != nullptr)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 				for (auto i = 0; i <= d_lists.last_viewmodel; i++)
 				{
 					auto& viewmodel = d_lists.viewmodel[i];
@@ -988,7 +993,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 					auto& texCoords = appState.Scene.colormappedBufferList[index];
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
 					VkDeviceSize attributeOffset = colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.attributes->buffer, &attributeOffset));
+					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
 					pushConstants[0] = viewmodel.transform[0][0];
 					pushConstants[1] = viewmodel.transform[2][0];
 					pushConstants[2] = -viewmodel.transform[1][0];
@@ -1045,9 +1050,9 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 		resetDescriptorSetsCount = appState.Scene.resetDescriptorSetsCount;
 		if (d_lists.last_colored_surfaces_index16 >= 0 || d_lists.last_colored_surfaces_index32 >= 0 || d_lists.last_particles_index16 >= 0 || d_lists.last_particles_index32 >= 0)
 		{
-			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &appState.Scene.vertices->buffer, &coloredVertexBase));
-			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &appState.Scene.attributes->buffer, &vertexTransformBase));
-			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &appState.Scene.colors->buffer, &appState.NoOffset));
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &coloredVertexBase));
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &colors->buffer, &appState.NoOffset));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 			if (d_lists.last_colored_surfaces_index16 >= 0)
@@ -1056,7 +1061,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 				for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
 				{
 					auto& coloredSurfaces = d_lists.colored_surfaces_index16[i];
-					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices16->buffer, coloredIndex16Base + indexOffset, VK_INDEX_TYPE_UINT16));
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, coloredIndex16Base + indexOffset, VK_INDEX_TYPE_UINT16));
 					auto indexCount = coloredSurfaces.count;
 					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, coloredSurfaces.first_index, 0, 0));
 					indexOffset += indexCount;
@@ -1068,7 +1073,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 				for (auto i = 0; i <= d_lists.last_colored_surfaces_index32; i++)
 				{
 					auto& coloredSurfaces = d_lists.colored_surfaces_index32[i];
-					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices32->buffer, coloredIndex32Base + indexOffset, VK_INDEX_TYPE_UINT32));
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, coloredIndex32Base + indexOffset, VK_INDEX_TYPE_UINT32));
 					auto indexCount = coloredSurfaces.count;
 					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, coloredSurfaces.first_index, 0, 0));
 					indexOffset += indexCount;
@@ -1080,7 +1085,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 				for (auto i = 0; i <= d_lists.last_particles_index16; i++)
 				{
 					auto& particles = d_lists.particles_index16[i];
-					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices16->buffer, coloredIndex16Base + indexOffset, VK_INDEX_TYPE_UINT16));
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, coloredIndex16Base + indexOffset, VK_INDEX_TYPE_UINT16));
 					auto indexCount = particles.count;
 					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, particles.first_index, 0, 0));
 					indexOffset += indexCount;
@@ -1092,7 +1097,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 				for (auto i = 0; i <= d_lists.last_particles_index32; i++)
 				{
 					auto& particles = d_lists.particles_index32[i];
-					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices32->buffer, coloredIndex32Base + indexOffset, VK_INDEX_TYPE_UINT32));
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, coloredIndex32Base + indexOffset, VK_INDEX_TYPE_UINT32));
 					auto indexCount = particles.count;
 					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, particles.first_index, 0, 0));
 					indexOffset += indexCount;
@@ -1101,8 +1106,8 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 		}
 		if (d_lists.last_sky >= 0)
 		{
-			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &appState.Scene.vertices->buffer, &texturedVertexBase));
-			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &appState.Scene.attributes->buffer, &texturedAttributeBase));
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase));
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipeline));
 			poolSizes[0].descriptorCount = 1;
 			descriptorPoolCreateInfo.poolSizeCount = 1;
@@ -1147,8 +1152,8 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 	}
 	else
 	{
-		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &appState.Scene.vertices->buffer, &appState.NoOffset));
-		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &appState.Scene.attributes->buffer, &appState.NoOffset));
+		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset));
+		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &appState.NoOffset));
 		VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipeline));
 		if (!floorResources.created)
 		{
@@ -1171,7 +1176,7 @@ void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDe
 		descriptorSets[0] = sceneMatricesResources.descriptorSet;
 		descriptorSets[1] = floorResources.descriptorSet;
 		VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr));
-		VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, appState.Scene.indices16->buffer, 0, VK_INDEX_TYPE_UINT16));
+		VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, 0, VK_INDEX_TYPE_UINT16));
 		VC(appState.Device.vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0));
 	}
 }

@@ -2040,11 +2040,11 @@ void android_main(struct android_app* app)
 			perImage.colormaps.Delete(appState);
 			perImage.turbulent.Delete(appState);
 			perImage.stagingBuffers.Delete(appState);
-			perImage.colors.Delete(appState);
-			perImage.indices32.Delete(appState);
-			perImage.indices16.Delete(appState);
-			perImage.attributes.Delete(appState);
-			perImage.vertices.Delete(appState);
+			perImage.cachedColors.Delete(appState);
+			perImage.cachedIndices32.Delete(appState);
+			perImage.cachedIndices16.Delete(appState);
+			perImage.cachedAttributes.Delete(appState);
+			perImage.cachedVertices.Delete(appState);
 			perImage.sceneMatricesStagingBuffers.Delete(appState);
 		}
 	}

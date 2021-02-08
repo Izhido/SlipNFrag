@@ -66,7 +66,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		bufferMemoryBarrier.buffer = Scene.matrices.buffer;
 		bufferMemoryBarrier.size = Scene.matrices.size;
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
-		Scene.ClearBuffersAndSizes();
+		Scene.ClearSizes();
 		if (Mode != AppWorldMode)
 		{
 			Scene.floorVerticesSize = 3 * 4 * sizeof(float);
@@ -76,25 +76,25 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		Scene.verticesSize = Scene.texturedVerticesSize + Scene.coloredVerticesSize + Scene.floorVerticesSize;
 		if (Scene.verticesSize > 0 || d_lists.last_alias >= 0 || d_lists.last_viewmodel >= 0)
 		{
-			for (Buffer** b = &perImage.vertices.oldBuffers; *b != nullptr; b = &(*b)->next)
+			for (Buffer** b = &perImage.cachedVertices.oldBuffers; *b != nullptr; b = &(*b)->next)
 			{
 				if ((*b)->size >= Scene.verticesSize && (*b)->size < Scene.verticesSize * 2)
 				{
-					Scene.vertices = *b;
+					perImage.vertices = *b;
 					*b = (*b)->next;
 					break;
 				}
 			}
-			if (Scene.vertices == nullptr)
+			if (perImage.vertices == nullptr)
 			{
-				Scene.vertices = new Buffer();
-				Scene.vertices->CreateVertexBuffer(*this, Scene.verticesSize + Scene.verticesSize / 4);
+				perImage.vertices = new Buffer();
+				perImage.vertices->CreateVertexBuffer(*this, Scene.verticesSize + Scene.verticesSize / 4);
 			}
-			perImage.vertices.MoveToFront(Scene.vertices);
-			VK(Device.vkMapMemory(Device.device, Scene.vertices->memory, 0, Scene.verticesSize, 0, &Scene.vertices->mapped));
+			perImage.cachedVertices.MoveToFront(perImage.vertices);
+			VK(Device.vkMapMemory(Device.device, perImage.vertices->memory, 0, Scene.verticesSize, 0, &perImage.vertices->mapped));
 			if (Scene.floorVerticesSize > 0)
 			{
-				auto mapped = (float*)Scene.vertices->mapped;
+				auto mapped = (float*)perImage.vertices->mapped;
 				(*mapped) = -0.5;
 				mapped++;
 				(*mapped) = Scene.pose.Position.y;
@@ -120,15 +120,15 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 				(*mapped) = 0.5;
 			}
 			perImage.texturedVertexBase = Scene.floorVerticesSize;
-			memcpy((unsigned char*)Scene.vertices->mapped + perImage.texturedVertexBase, d_lists.textured_vertices.data(), Scene.texturedVerticesSize);
+			memcpy((unsigned char*)perImage.vertices->mapped + perImage.texturedVertexBase, d_lists.textured_vertices.data(), Scene.texturedVerticesSize);
 			perImage.coloredVertexBase = perImage.texturedVertexBase + Scene.texturedVerticesSize;
-			memcpy((unsigned char*)Scene.vertices->mapped + perImage.coloredVertexBase, d_lists.colored_vertices.data(), Scene.coloredVerticesSize);
-			VC(Device.vkUnmapMemory(Device.device, Scene.vertices->memory));
-			Scene.vertices->mapped = nullptr;
+			memcpy((unsigned char*)perImage.vertices->mapped + perImage.coloredVertexBase, d_lists.colored_vertices.data(), Scene.coloredVerticesSize);
+			VC(Device.vkUnmapMemory(Device.device, perImage.vertices->memory));
+			perImage.vertices->mapped = nullptr;
 			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			bufferMemoryBarrier.buffer = Scene.vertices->buffer;
-			bufferMemoryBarrier.size = Scene.vertices->size;
+			bufferMemoryBarrier.buffer = perImage.vertices->buffer;
+			bufferMemoryBarrier.size = perImage.vertices->size;
 			VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			if (d_lists.last_alias >= Scene.aliasVerticesList.size())
 			{
@@ -458,25 +458,25 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			Scene.colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
 			Scene.vertexTransformSize = 16 * sizeof(float);
 			Scene.attributesSize = Scene.floorAttributesSize + Scene.texturedAttributesSize + Scene.colormappedLightsSize + Scene.vertexTransformSize;
-			for (Buffer** b = &perImage.attributes.oldBuffers; *b != nullptr; b = &(*b)->next)
+			for (Buffer** b = &perImage.cachedAttributes.oldBuffers; *b != nullptr; b = &(*b)->next)
 			{
 				if ((*b)->size >= Scene.attributesSize && (*b)->size < Scene.attributesSize * 2)
 				{
-					Scene.attributes = *b;
+					perImage.attributes = *b;
 					*b = (*b)->next;
 					break;
 				}
 			}
-			if (Scene.attributes == nullptr)
+			if (perImage.attributes == nullptr)
 			{
-				Scene.attributes = new Buffer();
-				Scene.attributes->CreateVertexBuffer(*this, Scene.attributesSize + Scene.attributesSize / 4);
+				perImage.attributes = new Buffer();
+				perImage.attributes->CreateVertexBuffer(*this, Scene.attributesSize + Scene.attributesSize / 4);
 			}
-			perImage.attributes.MoveToFront(Scene.attributes);
-			VK(Device.vkMapMemory(Device.device, Scene.attributes->memory, 0, Scene.attributesSize, 0, &Scene.attributes->mapped));
+			perImage.cachedAttributes.MoveToFront(perImage.attributes);
+			VK(Device.vkMapMemory(Device.device, perImage.attributes->memory, 0, Scene.attributesSize, 0, &perImage.attributes->mapped));
 			if (Scene.floorAttributesSize > 0)
 			{
-				auto mapped = (float*)Scene.attributes->mapped;
+				auto mapped = (float*)perImage.attributes->mapped;
 				(*mapped) = 0;
 				mapped++;
 				(*mapped) = 0;
@@ -494,11 +494,11 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 				(*mapped) = 1;
 			}
 			perImage.texturedAttributeBase = Scene.floorAttributesSize;
-			memcpy((unsigned char*)Scene.attributes->mapped + perImage.texturedAttributeBase, d_lists.textured_attributes.data(), Scene.texturedAttributesSize);
+			memcpy((unsigned char*)perImage.attributes->mapped + perImage.texturedAttributeBase, d_lists.textured_attributes.data(), Scene.texturedAttributesSize);
 			perImage.colormappedAttributeBase = perImage.texturedAttributeBase + Scene.texturedAttributesSize;
-			memcpy((unsigned char*)Scene.attributes->mapped + perImage.colormappedAttributeBase, d_lists.colormapped_attributes.data(), Scene.colormappedLightsSize);
+			memcpy((unsigned char*)perImage.attributes->mapped + perImage.colormappedAttributeBase, d_lists.colormapped_attributes.data(), Scene.colormappedLightsSize);
 			perImage.vertexTransformBase = perImage.colormappedAttributeBase + Scene.colormappedLightsSize;
-			auto mapped = (float*)Scene.attributes->mapped + perImage.vertexTransformBase / sizeof(float);
+			auto mapped = (float*)perImage.attributes->mapped + perImage.vertexTransformBase / sizeof(float);
 			(*mapped) = Scale;
 			mapped++;
 			(*mapped) = 0;
@@ -530,12 +530,12 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			(*mapped) = r_refdef.vieworg[1] * Scale;
 			mapped++;
 			(*mapped) = 1;
-			VC(Device.vkUnmapMemory(Device.device, Scene.attributes->memory));
-			Scene.attributes->mapped = nullptr;
+			VC(Device.vkUnmapMemory(Device.device, perImage.attributes->memory));
+			perImage.attributes->mapped = nullptr;
 			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			bufferMemoryBarrier.buffer = Scene.attributes->buffer;
-			bufferMemoryBarrier.size = Scene.attributes->size;
+			bufferMemoryBarrier.buffer = perImage.attributes->buffer;
+			bufferMemoryBarrier.size = perImage.attributes->size;
 			VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			if (Mode != AppWorldMode)
 			{
@@ -546,25 +546,25 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			Scene.indices16Size = Scene.floorIndicesSize + Scene.colormappedIndices16Size + Scene.coloredIndices16Size;
 			if (Scene.indices16Size > 0)
 			{
-				for (Buffer** b = &perImage.indices16.oldBuffers; *b != nullptr; b = &(*b)->next)
+				for (Buffer** b = &perImage.cachedIndices16.oldBuffers; *b != nullptr; b = &(*b)->next)
 				{
 					if ((*b)->size >= Scene.indices16Size && (*b)->size < Scene.indices16Size * 2)
 					{
-						Scene.indices16 = *b;
+						perImage.indices16 = *b;
 						*b = (*b)->next;
 						break;
 					}
 				}
-				if (Scene.indices16 == nullptr)
+				if (perImage.indices16 == nullptr)
 				{
-					Scene.indices16 = new Buffer();
-					Scene.indices16->CreateIndexBuffer(*this, Scene.indices16Size + Scene.indices16Size / 4);
+					perImage.indices16 = new Buffer();
+					perImage.indices16->CreateIndexBuffer(*this, Scene.indices16Size + Scene.indices16Size / 4);
 				}
-				perImage.indices16.MoveToFront(Scene.indices16);
-				VK(Device.vkMapMemory(Device.device, Scene.indices16->memory, 0, Scene.indices16Size, 0, &Scene.indices16->mapped));
+				perImage.cachedIndices16.MoveToFront(perImage.indices16);
+				VK(Device.vkMapMemory(Device.device, perImage.indices16->memory, 0, Scene.indices16Size, 0, &perImage.indices16->mapped));
 				if (Scene.floorIndicesSize > 0)
 				{
-					auto mapped = (uint16_t*)Scene.indices16->mapped;
+					auto mapped = (uint16_t*)perImage.indices16->mapped;
 					(*mapped) = 0;
 					mapped++;
 					(*mapped) = 1;
@@ -578,15 +578,15 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 					(*mapped) = 0;
 				}
 				perImage.colormappedIndex16Base = Scene.floorIndicesSize;
-				memcpy((unsigned char*)Scene.indices16->mapped + perImage.colormappedIndex16Base, d_lists.colormapped_indices16.data(), Scene.colormappedIndices16Size);
+				memcpy((unsigned char*)perImage.indices16->mapped + perImage.colormappedIndex16Base, d_lists.colormapped_indices16.data(), Scene.colormappedIndices16Size);
 				perImage.coloredIndex16Base = perImage.colormappedIndex16Base + Scene.colormappedIndices16Size;
-				memcpy((unsigned char*)Scene.indices16->mapped + perImage.coloredIndex16Base, d_lists.colored_indices16.data(), Scene.coloredIndices16Size);
-				VC(Device.vkUnmapMemory(Device.device, Scene.indices16->memory));
-				Scene.indices16->mapped = nullptr;
+				memcpy((unsigned char*)perImage.indices16->mapped + perImage.coloredIndex16Base, d_lists.colored_indices16.data(), Scene.coloredIndices16Size);
+				VC(Device.vkUnmapMemory(Device.device, perImage.indices16->memory));
+				perImage.indices16->mapped = nullptr;
 				bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 				bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
-				bufferMemoryBarrier.buffer = Scene.indices16->buffer;
-				bufferMemoryBarrier.size = Scene.indices16->size;
+				bufferMemoryBarrier.buffer = perImage.indices16->buffer;
+				bufferMemoryBarrier.size = perImage.indices16->size;
 				VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			}
 			Scene.colormappedIndices32Size = (d_lists.last_colormapped_index32 + 1) * sizeof(uint32_t);
@@ -594,31 +594,31 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			Scene.indices32Size = Scene.colormappedIndices32Size + Scene.coloredIndices32Size;
 			if (Scene.indices32Size > 0)
 			{
-				for (Buffer** b = &perImage.indices32.oldBuffers; *b != nullptr; b = &(*b)->next)
+				for (Buffer** b = &perImage.cachedIndices32.oldBuffers; *b != nullptr; b = &(*b)->next)
 				{
 					if ((*b)->size >= Scene.indices32Size && (*b)->size < Scene.indices32Size * 2)
 					{
-						Scene.indices32 = *b;
+						perImage.indices32 = *b;
 						*b = (*b)->next;
 						break;
 					}
 				}
-				if (Scene.indices32 == nullptr)
+				if (perImage.indices32 == nullptr)
 				{
-					Scene.indices32 = new Buffer();
-					Scene.indices32->CreateIndexBuffer(*this, Scene.indices32Size + Scene.indices32Size / 4);
+					perImage.indices32 = new Buffer();
+					perImage.indices32->CreateIndexBuffer(*this, Scene.indices32Size + Scene.indices32Size / 4);
 				}
-				perImage.indices32.MoveToFront(Scene.indices32);
-				VK(Device.vkMapMemory(Device.device, Scene.indices32->memory, 0, Scene.indices32Size, 0, &Scene.indices32->mapped));
-				memcpy(Scene.indices32->mapped, d_lists.colormapped_indices32.data(), Scene.colormappedIndices32Size);
+				perImage.cachedIndices32.MoveToFront(perImage.indices32);
+				VK(Device.vkMapMemory(Device.device, perImage.indices32->memory, 0, Scene.indices32Size, 0, &perImage.indices32->mapped));
+				memcpy(perImage.indices32->mapped, d_lists.colormapped_indices32.data(), Scene.colormappedIndices32Size);
 				perImage.coloredIndex32Base = Scene.colormappedIndices32Size;
-				memcpy((unsigned char*)Scene.indices32->mapped + perImage.coloredIndex32Base, d_lists.colored_indices32.data(), Scene.coloredIndices32Size);
-				VC(Device.vkUnmapMemory(Device.device, Scene.indices32->memory));
-				Scene.indices32->mapped = nullptr;
+				memcpy((unsigned char*)perImage.indices32->mapped + perImage.coloredIndex32Base, d_lists.colored_indices32.data(), Scene.coloredIndices32Size);
+				VC(Device.vkUnmapMemory(Device.device, perImage.indices32->memory));
+				perImage.indices32->mapped = nullptr;
 				bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 				bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
-				bufferMemoryBarrier.buffer = Scene.indices32->buffer;
-				bufferMemoryBarrier.size = Scene.indices32->size;
+				bufferMemoryBarrier.buffer = perImage.indices32->buffer;
+				bufferMemoryBarrier.size = perImage.indices32->size;
 				VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			}
 			for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
@@ -640,57 +640,57 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			Scene.colorsSize = Scene.coloredSurfaces16Size + Scene.coloredSurfaces32Size + Scene.particles16Size + Scene.particles32Size;
 			if (Scene.colorsSize > 0)
 			{
-				for (Buffer** b = &perImage.colors.oldBuffers; *b != nullptr; b = &(*b)->next)
+				for (Buffer** b = &perImage.cachedColors.oldBuffers; *b != nullptr; b = &(*b)->next)
 				{
 					if ((*b)->size >= Scene.colorsSize && (*b)->size < Scene.colorsSize * 2)
 					{
-						Scene.colors = *b;
+						perImage.colors = *b;
 						*b = (*b)->next;
 						break;
 					}
 				}
-				if (Scene.colors == nullptr)
+				if (perImage.colors == nullptr)
 				{
-					Scene.colors = new Buffer();
-					Scene.colors->CreateVertexBuffer(*this, Scene.colorsSize + Scene.colorsSize / 4);
+					perImage.colors = new Buffer();
+					perImage.colors->CreateVertexBuffer(*this, Scene.colorsSize + Scene.colorsSize / 4);
 				}
-				perImage.colors.MoveToFront(Scene.colors);
-				VK(Device.vkMapMemory(Device.device, Scene.colors->memory, 0, Scene.colorsSize, 0, &Scene.colors->mapped));
+				perImage.cachedColors.MoveToFront(perImage.colors);
+				VK(Device.vkMapMemory(Device.device, perImage.colors->memory, 0, Scene.colorsSize, 0, &perImage.colors->mapped));
 				auto offset = 0;
 				for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
 				{
 					auto& coloredSurfaces = d_lists.colored_surfaces_index16[i];
 					auto count = (coloredSurfaces.last_color + 1) * sizeof(float);
-					memcpy((unsigned char*)Scene.colors->mapped + offset, coloredSurfaces.colors.data(), count);
+					memcpy((unsigned char*)perImage.colors->mapped + offset, coloredSurfaces.colors.data(), count);
 					offset += count;
 				}
 				for (auto i = 0; i <= d_lists.last_colored_surfaces_index32; i++)
 				{
 					auto& coloredSurfaces = d_lists.colored_surfaces_index32[i];
 					auto count = (coloredSurfaces.last_color + 1) * sizeof(float);
-					memcpy((unsigned char*)Scene.colors->mapped + offset, coloredSurfaces.colors.data(), count);
+					memcpy((unsigned char*)perImage.colors->mapped + offset, coloredSurfaces.colors.data(), count);
 					offset += count;
 				}
 				for (auto i = 0; i <= d_lists.last_particles_index16; i++)
 				{
 					auto& particles = d_lists.particles_index16[i];
 					auto count = (particles.last_color + 1) * sizeof(float);
-					memcpy((unsigned char*)Scene.colors->mapped + offset, particles.colors.data(), count);
+					memcpy((unsigned char*)perImage.colors->mapped + offset, particles.colors.data(), count);
 					offset += count;
 				}
 				for (auto i = 0; i <= d_lists.last_particles_index32; i++)
 				{
 					auto& particles = d_lists.particles_index32[i];
 					auto count = (particles.last_color + 1) * sizeof(float);
-					memcpy((unsigned char*)Scene.colors->mapped + offset, particles.colors.data(), count);
+					memcpy((unsigned char*)perImage.colors->mapped + offset, particles.colors.data(), count);
 					offset += count;
 				}
-				VC(Device.vkUnmapMemory(Device.device, Scene.colors->memory));
-				Scene.colors->mapped = nullptr;
+				VC(Device.vkUnmapMemory(Device.device, perImage.colors->memory));
+				perImage.colors->mapped = nullptr;
 				bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 				bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
-				bufferMemoryBarrier.buffer = Scene.colors->buffer;
-				bufferMemoryBarrier.size = Scene.colors->size;
+				bufferMemoryBarrier.buffer = perImage.colors->buffer;
+				bufferMemoryBarrier.size = perImage.colors->size;
 				VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			}
 		}

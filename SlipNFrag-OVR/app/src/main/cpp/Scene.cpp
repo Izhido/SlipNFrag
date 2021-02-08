@@ -978,7 +978,7 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 	VK(appState.Device.vkCreateShaderModule(appState.Device.device, &moduleCreateInfo, nullptr, shaderModule));
 }
 
-void Scene::ClearBuffersAndSizes()
+void Scene::ClearSizes()
 {
 	stagingBufferSize = 0;
 	texturedDescriptorSetCount = 0;
@@ -1010,11 +1010,6 @@ void Scene::ClearBuffersAndSizes()
 	particles32Size = 0;
 	colorsSize = 0;
 	floorSize = 0;
-	vertices = nullptr;
-	attributes = nullptr;
-	indices16 = nullptr;
-	indices32 = nullptr;
-	colors = nullptr;
 }
 
 void Scene::Reset()

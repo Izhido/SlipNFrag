@@ -11,11 +11,11 @@ struct View;
 struct PerImage
 {
 	CachedBuffers sceneMatricesStagingBuffers;
-	CachedBuffers vertices;
-	CachedBuffers attributes;
-	CachedBuffers indices16;
-	CachedBuffers indices32;
-	CachedBuffers colors;
+	CachedBuffers cachedVertices;
+	CachedBuffers cachedAttributes;
+	CachedBuffers cachedIndices16;
+	CachedBuffers cachedIndices32;
+	CachedBuffers cachedColors;
 	CachedBuffers stagingBuffers;
 	CachedTextures turbulent;
 	CachedTextures colormaps;
@@ -28,6 +28,11 @@ struct PerImage
 	Texture* palette;
 	Texture* host_colormap;
 	int hostClearCount;
+	Buffer* vertices;
+	Buffer* attributes;
+	Buffer* indices16;
+	Buffer* indices32;
+	Buffer* colors;
 	Texture* sky;
 	PipelineDescriptorResources host_colormapResources;
 	PipelineDescriptorResources sceneMatricesResources;

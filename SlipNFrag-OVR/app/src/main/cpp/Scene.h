@@ -124,16 +124,11 @@ struct Scene
 	VkDeviceSize particles32Size;
 	VkDeviceSize colorsSize;
 	VkDeviceSize floorSize;
-	Buffer* vertices;
-	Buffer* attributes;
-	Buffer* indices16;
-	Buffer* indices32;
-	Buffer* colors;
 	ovrQuatf orientation;
 	ovrPosef pose;
 
 	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app);
 	void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
-	void ClearBuffersAndSizes();
+	void ClearSizes();
 	void Reset();
 };
