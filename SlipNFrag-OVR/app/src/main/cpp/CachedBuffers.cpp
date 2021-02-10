@@ -3,6 +3,68 @@
 #include "AppState.h"
 #include "VulkanCallWrappers.h"
 
+Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
+{
+	for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
+	{
+		if ((*b)->size >= size && (*b)->size < size * 2)
+		{
+			auto buffer = *b;
+			*b = (*b)->next;
+			return buffer;
+		}
+	}
+	return nullptr;
+}
+
+Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(appState, size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer();
+		buffer->CreateVertexBuffer(appState, size * 5 / 4);
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
+Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(appState, size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer();
+		buffer->CreateIndexBuffer(appState, size * 5 / 4);
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
+Buffer* CachedBuffers::GetStagingBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(appState, size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer();
+		buffer->CreateStagingBuffer(appState, size);
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
+Buffer* CachedBuffers::GetStagingStorageBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(appState, size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer();
+		buffer->CreateStagingStorageBuffer(appState, size * 5 / 4);
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
 void CachedBuffers::DeleteOld(AppState& appState)
 {
 	for (Buffer** b = &oldBuffers; *b != nullptr; )

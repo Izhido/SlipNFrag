@@ -36,21 +36,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	appState.Scene.verticesSize = appState.Scene.texturedVerticesSize + appState.Scene.coloredVerticesSize + appState.Scene.floorVerticesSize;
 	if (appState.Scene.verticesSize > 0 || d_lists.last_alias >= 0 || d_lists.last_viewmodel >= 0)
 	{
-		for (Buffer** b = &cachedVertices.oldBuffers; *b != nullptr; b = &(*b)->next)
-		{
-			if ((*b)->size >= appState.Scene.verticesSize && (*b)->size < appState.Scene.verticesSize * 2)
-			{
-				vertices = *b;
-				*b = (*b)->next;
-				break;
-			}
-		}
-		if (vertices == nullptr)
-		{
-			vertices = new Buffer();
-			vertices->CreateVertexBuffer(appState, appState.Scene.verticesSize + appState.Scene.verticesSize / 4);
-		}
-		cachedVertices.MoveToFront(vertices);
+		vertices = cachedVertices.GetVertexBuffer(appState, appState.Scene.verticesSize);
 		VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, appState.Scene.verticesSize, 0, &vertices->mapped));
 		if (appState.Scene.floorVerticesSize > 0)
 		{
@@ -418,21 +404,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		appState.Scene.colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
 		appState.Scene.vertexTransformSize = 16 * sizeof(float);
 		appState.Scene.attributesSize = appState.Scene.floorAttributesSize + appState.Scene.texturedAttributesSize + appState.Scene.colormappedLightsSize + appState.Scene.vertexTransformSize;
-		for (Buffer** b = &cachedAttributes.oldBuffers; *b != nullptr; b = &(*b)->next)
-		{
-			if ((*b)->size >= appState.Scene.attributesSize && (*b)->size < appState.Scene.attributesSize * 2)
-			{
-				attributes = *b;
-				*b = (*b)->next;
-				break;
-			}
-		}
-		if (attributes == nullptr)
-		{
-			attributes = new Buffer();
-			attributes->CreateVertexBuffer(appState, appState.Scene.attributesSize + appState.Scene.attributesSize / 4);
-		}
-		cachedAttributes.MoveToFront(attributes);
+		attributes = cachedAttributes.GetVertexBuffer(appState, appState.Scene.attributesSize);
 		VK(appState.Device.vkMapMemory(appState.Device.device, attributes->memory, 0, appState.Scene.attributesSize, 0, &attributes->mapped));
 		if (appState.Scene.floorAttributesSize > 0)
 		{
@@ -506,21 +478,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		appState.Scene.indices16Size = appState.Scene.floorIndicesSize + appState.Scene.colormappedIndices16Size + appState.Scene.coloredIndices16Size;
 		if (appState.Scene.indices16Size > 0)
 		{
-			for (Buffer** b = &cachedIndices16.oldBuffers; *b != nullptr; b = &(*b)->next)
-			{
-				if ((*b)->size >= appState.Scene.indices16Size && (*b)->size < appState.Scene.indices16Size * 2)
-				{
-					indices16 = *b;
-					*b = (*b)->next;
-					break;
-				}
-			}
-			if (indices16 == nullptr)
-			{
-				indices16 = new Buffer();
-				indices16->CreateIndexBuffer(appState, appState.Scene.indices16Size + appState.Scene.indices16Size / 4);
-			}
-			cachedIndices16.MoveToFront(indices16);
+			indices16 = cachedIndices16.GetIndexBuffer(appState, appState.Scene.indices16Size);
 			VK(appState.Device.vkMapMemory(appState.Device.device, indices16->memory, 0, appState.Scene.indices16Size, 0, &indices16->mapped));
 			if (appState.Scene.floorIndicesSize > 0)
 			{
@@ -554,21 +512,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		appState.Scene.indices32Size = appState.Scene.colormappedIndices32Size + appState.Scene.coloredIndices32Size;
 		if (appState.Scene.indices32Size > 0)
 		{
-			for (Buffer** b = &cachedIndices32.oldBuffers; *b != nullptr; b = &(*b)->next)
-			{
-				if ((*b)->size >= appState.Scene.indices32Size && (*b)->size < appState.Scene.indices32Size * 2)
-				{
-					indices32 = *b;
-					*b = (*b)->next;
-					break;
-				}
-			}
-			if (indices32 == nullptr)
-			{
-				indices32 = new Buffer();
-				indices32->CreateIndexBuffer(appState, appState.Scene.indices32Size + appState.Scene.indices32Size / 4);
-			}
-			cachedIndices32.MoveToFront(indices32);
+			indices32 = cachedIndices32.GetIndexBuffer(appState, appState.Scene.indices32Size);
 			VK(appState.Device.vkMapMemory(appState.Device.device, indices32->memory, 0, appState.Scene.indices32Size, 0, &indices32->mapped));
 			memcpy(indices32->mapped, d_lists.colormapped_indices32.data(), appState.Scene.colormappedIndices32Size);
 			coloredIndex32Base = appState.Scene.colormappedIndices32Size;
@@ -600,21 +544,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		appState.Scene.colorsSize = appState.Scene.coloredSurfaces16Size + appState.Scene.coloredSurfaces32Size + appState.Scene.particles16Size + appState.Scene.particles32Size;
 		if (appState.Scene.colorsSize > 0)
 		{
-			for (Buffer** b = &cachedColors.oldBuffers; *b != nullptr; b = &(*b)->next)
-			{
-				if ((*b)->size >= appState.Scene.colorsSize && (*b)->size < appState.Scene.colorsSize * 2)
-				{
-					colors = *b;
-					*b = (*b)->next;
-					break;
-				}
-			}
-			if (colors == nullptr)
-			{
-				colors = new Buffer();
-				colors->CreateVertexBuffer(appState, appState.Scene.colorsSize + appState.Scene.colorsSize / 4);
-			}
-			cachedColors.MoveToFront(colors);
+			colors = cachedColors.GetVertexBuffer(appState, appState.Scene.colorsSize);
 			VK(appState.Device.vkMapMemory(appState.Device.device, colors->memory, 0, appState.Scene.colorsSize, 0, &colors->mapped));
 			auto offset = 0;
 			for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)

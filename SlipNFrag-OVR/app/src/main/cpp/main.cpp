@@ -1500,22 +1500,7 @@ void android_main(struct android_app* app)
 			}
 			perImage.textureOffset = stagingBufferSize;
 			stagingBufferSize += con_buffer.size();
-			Buffer* stagingBuffer = nullptr;
-			for (Buffer** b = &perImage.stagingBuffers.oldBuffers; *b != nullptr; b = &(*b)->next)
-			{
-				if ((*b)->size >= stagingBufferSize && (*b)->size < stagingBufferSize * 2)
-				{
-					stagingBuffer = *b;
-					*b = (*b)->next;
-					break;
-				}
-			}
-			if (stagingBuffer == nullptr)
-			{
-				stagingBuffer = new Buffer();
-				stagingBuffer->CreateStagingBuffer(appState, stagingBufferSize);
-			}
-			perImage.stagingBuffers.MoveToFront(stagingBuffer);
+			auto stagingBuffer = perImage.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
 			VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
 			auto offset = 0;
 			if (perImage.paletteOffset >= 0)

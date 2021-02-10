@@ -73,21 +73,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		stagingBuffer = nullptr;
 		if (Scene.stagingBufferSize > 0)
 		{
-			for (Buffer** b = &perImage.stagingBuffers.oldBuffers; *b != nullptr; b = &(*b)->next)
-			{
-				if ((*b)->size >= Scene.stagingBufferSize && (*b)->size < Scene.stagingBufferSize * 2)
-				{
-					stagingBuffer = *b;
-					*b = (*b)->next;
-					break;
-				}
-			}
-			if (stagingBuffer == nullptr)
-			{
-				stagingBuffer = new Buffer();
-				stagingBuffer->CreateStagingStorageBuffer(*this, Scene.stagingBufferSize + Scene.stagingBufferSize / 4);
-			}
-			perImage.stagingBuffers.MoveToFront(stagingBuffer);
+			stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, Scene.stagingBufferSize);
 			perImage.LoadStagingBuffer(*this, stagingBuffer, Scene.stagingBufferSize, Scene.floorSize);
 			perImage.FillTextures(*this, stagingBuffer);
 		}
