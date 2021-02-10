@@ -57,6 +57,7 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
+	void LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier);
 	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, int floorSize);
 	void FillTextures(AppState& appState, Buffer* stagingBuffer);

@@ -4,6 +4,7 @@
 #include "d_lists.h"
 #include "VulkanCallWrappers.h"
 #include "VrApi_Helpers.h"
+#include "Constants.h"
 
 void PerImage::Reset(AppState& appState)
 {
@@ -22,6 +23,637 @@ void PerImage::Reset(AppState& appState)
 	indices16 = nullptr;
 	indices32 = nullptr;
 	colors = nullptr;
+}
+
+void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier)
+{
+	if (appState.Mode != AppWorldMode)
+	{
+		appState.Scene.floorVerticesSize = 3 * 4 * sizeof(float);
+	}
+	appState.Scene.texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
+	appState.Scene.coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
+	appState.Scene.verticesSize = appState.Scene.texturedVerticesSize + appState.Scene.coloredVerticesSize + appState.Scene.floorVerticesSize;
+	if (appState.Scene.verticesSize > 0 || d_lists.last_alias >= 0 || d_lists.last_viewmodel >= 0)
+	{
+		for (Buffer** b = &cachedVertices.oldBuffers; *b != nullptr; b = &(*b)->next)
+		{
+			if ((*b)->size >= appState.Scene.verticesSize && (*b)->size < appState.Scene.verticesSize * 2)
+			{
+				vertices = *b;
+				*b = (*b)->next;
+				break;
+			}
+		}
+		if (vertices == nullptr)
+		{
+			vertices = new Buffer();
+			vertices->CreateVertexBuffer(appState, appState.Scene.verticesSize + appState.Scene.verticesSize / 4);
+		}
+		cachedVertices.MoveToFront(vertices);
+		VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, appState.Scene.verticesSize, 0, &vertices->mapped));
+		if (appState.Scene.floorVerticesSize > 0)
+		{
+			auto mapped = (float*)vertices->mapped;
+			(*mapped) = -0.5;
+			mapped++;
+			(*mapped) = appState.Scene.pose.Position.y;
+			mapped++;
+			(*mapped) = -0.5;
+			mapped++;
+			(*mapped) = 0.5;
+			mapped++;
+			(*mapped) = appState.Scene.pose.Position.y;
+			mapped++;
+			(*mapped) = -0.5;
+			mapped++;
+			(*mapped) = 0.5;
+			mapped++;
+			(*mapped) = appState.Scene.pose.Position.y;
+			mapped++;
+			(*mapped) = 0.5;
+			mapped++;
+			(*mapped) = -0.5;
+			mapped++;
+			(*mapped) = appState.Scene.pose.Position.y;
+			mapped++;
+			(*mapped) = 0.5;
+		}
+		texturedVertexBase = appState.Scene.floorVerticesSize;
+		memcpy((unsigned char*)vertices->mapped + texturedVertexBase, d_lists.textured_vertices.data(), appState.Scene.texturedVerticesSize);
+		coloredVertexBase = texturedVertexBase + appState.Scene.texturedVerticesSize;
+		memcpy((unsigned char*)vertices->mapped + coloredVertexBase, d_lists.colored_vertices.data(), appState.Scene.coloredVerticesSize);
+		VC(appState.Device.vkUnmapMemory(appState.Device.device, vertices->memory));
+		vertices->mapped = nullptr;
+		bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+		bufferMemoryBarrier.buffer = vertices->buffer;
+		bufferMemoryBarrier.size = vertices->size;
+		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+		if (d_lists.last_alias >= appState.Scene.aliasVerticesList.size())
+		{
+			appState.Scene.aliasVerticesList.resize(d_lists.last_alias + 1);
+			appState.Scene.aliasTexCoordsList.resize(d_lists.last_alias + 1);
+		}
+		appState.Scene.newVertices.clear();
+		appState.Scene.newTexCoords.clear();
+		VkDeviceSize verticesOffset = 0;
+		VkDeviceSize texCoordsOffset = 0;
+		for (auto i = 0; i <= d_lists.last_alias; i++)
+		{
+			auto& alias = d_lists.alias[i];
+			auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(alias.vertices);
+			if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
+			{
+				auto lastIndex = appState.Scene.colormappedBufferList.size();
+				appState.Scene.colormappedBufferList.push_back({ verticesOffset });
+				auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ alias.vertices, lastIndex });
+				appState.Scene.newVertices.push_back(i);
+				appState.Scene.aliasVerticesList[i] = lastIndex;
+				verticesOffset += alias.vertex_count * 2 * 4 * sizeof(float);
+			}
+			else
+			{
+				appState.Scene.aliasVerticesList[i] = verticesEntry->second;
+			}
+			auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(alias.texture_coordinates);
+			if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
+			{
+				auto lastIndex = appState.Scene.colormappedBufferList.size();
+				appState.Scene.colormappedBufferList.push_back({ texCoordsOffset });
+				auto newEntry = appState.Scene.colormappedTexCoordsPerKey.insert({ alias.texture_coordinates, lastIndex });
+				appState.Scene.newTexCoords.push_back(i);
+				appState.Scene.aliasTexCoordsList[i] = lastIndex;
+				texCoordsOffset += alias.vertex_count * 2 * 2 * sizeof(float);
+			}
+			else
+			{
+				appState.Scene.aliasTexCoordsList[i] = texCoordsEntry->second;
+			}
+		}
+		if (verticesOffset > 0)
+		{
+			Buffer* buffer;
+			if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MEMORY_BLOCK_SIZE)
+			{
+				VkDeviceSize size = MEMORY_BLOCK_SIZE;
+				if (size < verticesOffset)
+				{
+					size = verticesOffset;
+				}
+				buffer = new Buffer();
+				buffer->CreateVertexBuffer(appState, size);
+				appState.Scene.colormappedBuffers.MoveToFront(buffer);
+				appState.Scene.latestColormappedBuffer = buffer;
+				appState.Scene.usedInLatestColormappedBuffer = 0;
+			}
+			else
+			{
+				buffer = appState.Scene.latestColormappedBuffer;
+			}
+			appState.Scene.colormappedVerticesSize += verticesOffset;
+			VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, verticesOffset, 0, &buffer->mapped));
+			auto mapped = (float*)buffer->mapped;
+			for (auto i : appState.Scene.newVertices)
+			{
+				auto& alias = d_lists.alias[i];
+				auto vertexFromModel = alias.vertices;
+				for (auto j = 0; j < alias.vertex_count; j++)
+				{
+					auto x = (float)(vertexFromModel->v[0]);
+					auto y = (float)(vertexFromModel->v[1]);
+					auto z = (float)(vertexFromModel->v[2]);
+					(*mapped) = x;
+					mapped++;
+					(*mapped) = z;
+					mapped++;
+					(*mapped) = -y;
+					mapped++;
+					(*mapped) = 1;
+					mapped++;
+					(*mapped) = x;
+					mapped++;
+					(*mapped) = z;
+					mapped++;
+					(*mapped) = -y;
+					mapped++;
+					(*mapped) = 1;
+					mapped++;
+					vertexFromModel++;
+				}
+				auto index = appState.Scene.aliasVerticesList[i];
+				appState.Scene.colormappedBufferList[index].buffer = buffer;
+				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+			buffer->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+			bufferMemoryBarrier.buffer = buffer->buffer;
+			bufferMemoryBarrier.size = buffer->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			appState.Scene.usedInLatestColormappedBuffer += verticesOffset;
+		}
+		if (texCoordsOffset > 0)
+		{
+			Buffer* buffer;
+			if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MEMORY_BLOCK_SIZE)
+			{
+				VkDeviceSize size = MEMORY_BLOCK_SIZE;
+				if (size < texCoordsOffset)
+				{
+					size = texCoordsOffset;
+				}
+				buffer = new Buffer();
+				buffer->CreateVertexBuffer(appState, size);
+				appState.Scene.colormappedBuffers.MoveToFront(buffer);
+				appState.Scene.latestColormappedBuffer = buffer;
+				appState.Scene.usedInLatestColormappedBuffer = 0;
+			}
+			else
+			{
+				buffer = appState.Scene.latestColormappedBuffer;
+			}
+			appState.Scene.colormappedTexCoordsSize += texCoordsOffset;
+			VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, texCoordsOffset, 0, &buffer->mapped));
+			auto mapped = (float*)buffer->mapped;
+			for (auto i : appState.Scene.newTexCoords)
+			{
+				auto& alias = d_lists.alias[i];
+				auto texCoords = alias.texture_coordinates;
+				for (auto j = 0; j < alias.vertex_count; j++)
+				{
+					auto s = (float)(texCoords->s >> 16);
+					auto t = (float)(texCoords->t >> 16);
+					s /= alias.width;
+					t /= alias.height;
+					(*mapped) = s;
+					mapped++;
+					(*mapped) = t;
+					mapped++;
+					(*mapped) = s + 0.5;
+					mapped++;
+					(*mapped) = t;
+					mapped++;
+					texCoords++;
+				}
+				auto index = appState.Scene.aliasTexCoordsList[i];
+				appState.Scene.colormappedBufferList[index].buffer = buffer;
+				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+			buffer->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+			bufferMemoryBarrier.buffer = buffer->buffer;
+			bufferMemoryBarrier.size = buffer->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			appState.Scene.usedInLatestColormappedBuffer += texCoordsOffset;
+		}
+		if (d_lists.last_viewmodel >= appState.Scene.viewmodelVerticesList.size())
+		{
+			appState.Scene.viewmodelVerticesList.resize(d_lists.last_viewmodel + 1);
+			appState.Scene.viewmodelTexCoordsList.resize(d_lists.last_viewmodel + 1);
+		}
+		appState.Scene.newVertices.clear();
+		appState.Scene.newTexCoords.clear();
+		verticesOffset = 0;
+		texCoordsOffset = 0;
+		for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+		{
+			auto& viewmodel = d_lists.viewmodel[i];
+			auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(viewmodel.vertices);
+			if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
+			{
+				auto lastIndex = appState.Scene.colormappedBufferList.size();
+				appState.Scene.colormappedBufferList.push_back({ verticesOffset });
+				auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ viewmodel.vertices, lastIndex });
+				appState.Scene.newVertices.push_back(i);
+				appState.Scene.viewmodelVerticesList[i] = lastIndex;
+				verticesOffset += viewmodel.vertex_count * 2 * 4 * sizeof(float);
+			}
+			else
+			{
+				appState.Scene.viewmodelVerticesList[i] = verticesEntry->second;
+			}
+			auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(viewmodel.texture_coordinates);
+			if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
+			{
+				auto lastIndex = appState.Scene.colormappedBufferList.size();
+				appState.Scene.colormappedBufferList.push_back({ texCoordsOffset });
+				auto newEntry = appState.Scene.colormappedTexCoordsPerKey.insert({ viewmodel.texture_coordinates, lastIndex });
+				appState.Scene.newTexCoords.push_back(i);
+				appState.Scene.viewmodelTexCoordsList[i] = lastIndex;
+				texCoordsOffset += viewmodel.vertex_count * 2 * 2 * sizeof(float);
+			}
+			else
+			{
+				appState.Scene.viewmodelTexCoordsList[i] = texCoordsEntry->second;
+			}
+		}
+		if (verticesOffset > 0)
+		{
+			Buffer* buffer;
+			if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MEMORY_BLOCK_SIZE)
+			{
+				VkDeviceSize size = MEMORY_BLOCK_SIZE;
+				if (size < verticesOffset)
+				{
+					size = verticesOffset;
+				}
+				buffer = new Buffer();
+				buffer->CreateVertexBuffer(appState, size);
+				appState.Scene.colormappedBuffers.MoveToFront(buffer);
+				appState.Scene.latestColormappedBuffer = buffer;
+				appState.Scene.usedInLatestColormappedBuffer = 0;
+			}
+			else
+			{
+				buffer = appState.Scene.latestColormappedBuffer;
+			}
+			appState.Scene.colormappedVerticesSize += verticesOffset;
+			VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, verticesOffset, 0, &buffer->mapped));
+			auto mapped = (float*)buffer->mapped;
+			for (auto i : appState.Scene.newVertices)
+			{
+				auto& viewmodel = d_lists.viewmodel[i];
+				auto vertexFromModel = viewmodel.vertices;
+				for (auto j = 0; j < viewmodel.vertex_count; j++)
+				{
+					auto x = (float)(vertexFromModel->v[0]);
+					auto y = (float)(vertexFromModel->v[1]);
+					auto z = (float)(vertexFromModel->v[2]);
+					(*mapped) = x;
+					mapped++;
+					(*mapped) = z;
+					mapped++;
+					(*mapped) = -y;
+					mapped++;
+					(*mapped) = 1;
+					mapped++;
+					(*mapped) = x;
+					mapped++;
+					(*mapped) = z;
+					mapped++;
+					(*mapped) = -y;
+					mapped++;
+					(*mapped) = 1;
+					mapped++;
+					vertexFromModel++;
+				}
+				auto index = appState.Scene.viewmodelVerticesList[i];
+				appState.Scene.colormappedBufferList[index].buffer = buffer;
+				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+			buffer->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+			bufferMemoryBarrier.buffer = buffer->buffer;
+			bufferMemoryBarrier.size = buffer->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			appState.Scene.usedInLatestColormappedBuffer += verticesOffset;
+		}
+		if (texCoordsOffset > 0)
+		{
+			Buffer* buffer;
+			if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MEMORY_BLOCK_SIZE)
+			{
+				VkDeviceSize size = MEMORY_BLOCK_SIZE;
+				if (size < texCoordsOffset)
+				{
+					size = texCoordsOffset;
+				}
+				buffer = new Buffer();
+				buffer->CreateVertexBuffer(appState, size);
+				appState.Scene.colormappedBuffers.MoveToFront(buffer);
+				appState.Scene.latestColormappedBuffer = buffer;
+				appState.Scene.usedInLatestColormappedBuffer = 0;
+			}
+			else
+			{
+				buffer = appState.Scene.latestColormappedBuffer;
+			}
+			appState.Scene.colormappedTexCoordsSize += texCoordsOffset;
+			VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, texCoordsOffset, 0, &buffer->mapped));
+			auto mapped = (float*)buffer->mapped;
+			for (auto i : appState.Scene.newTexCoords)
+			{
+				auto& viewmodel = d_lists.viewmodel[i];
+				auto texCoords = viewmodel.texture_coordinates;
+				for (auto j = 0; j < viewmodel.vertex_count; j++)
+				{
+					auto s = (float)(texCoords->s >> 16);
+					auto t = (float)(texCoords->t >> 16);
+					s /= viewmodel.width;
+					t /= viewmodel.height;
+					(*mapped) = s;
+					mapped++;
+					(*mapped) = t;
+					mapped++;
+					(*mapped) = s + 0.5;
+					mapped++;
+					(*mapped) = t;
+					mapped++;
+					texCoords++;
+				}
+				auto index = appState.Scene.viewmodelTexCoordsList[i];
+				appState.Scene.colormappedBufferList[index].buffer = buffer;
+				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+			buffer->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+			bufferMemoryBarrier.buffer = buffer->buffer;
+			bufferMemoryBarrier.size = buffer->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			appState.Scene.usedInLatestColormappedBuffer += texCoordsOffset;
+		}
+		if (appState.Mode != AppWorldMode)
+		{
+			appState.Scene.floorAttributesSize = 2 * 4 * sizeof(float);
+		}
+		appState.Scene.texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
+		appState.Scene.colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
+		appState.Scene.vertexTransformSize = 16 * sizeof(float);
+		appState.Scene.attributesSize = appState.Scene.floorAttributesSize + appState.Scene.texturedAttributesSize + appState.Scene.colormappedLightsSize + appState.Scene.vertexTransformSize;
+		for (Buffer** b = &cachedAttributes.oldBuffers; *b != nullptr; b = &(*b)->next)
+		{
+			if ((*b)->size >= appState.Scene.attributesSize && (*b)->size < appState.Scene.attributesSize * 2)
+			{
+				attributes = *b;
+				*b = (*b)->next;
+				break;
+			}
+		}
+		if (attributes == nullptr)
+		{
+			attributes = new Buffer();
+			attributes->CreateVertexBuffer(appState, appState.Scene.attributesSize + appState.Scene.attributesSize / 4);
+		}
+		cachedAttributes.MoveToFront(attributes);
+		VK(appState.Device.vkMapMemory(appState.Device.device, attributes->memory, 0, appState.Scene.attributesSize, 0, &attributes->mapped));
+		if (appState.Scene.floorAttributesSize > 0)
+		{
+			auto mapped = (float*)attributes->mapped;
+			(*mapped) = 0;
+			mapped++;
+			(*mapped) = 0;
+			mapped++;
+			(*mapped) = 1;
+			mapped++;
+			(*mapped) = 0;
+			mapped++;
+			(*mapped) = 1;
+			mapped++;
+			(*mapped) = 1;
+			mapped++;
+			(*mapped) = 0;
+			mapped++;
+			(*mapped) = 1;
+		}
+		texturedAttributeBase = appState.Scene.floorAttributesSize;
+		memcpy((unsigned char*)attributes->mapped + texturedAttributeBase, d_lists.textured_attributes.data(), appState.Scene.texturedAttributesSize);
+		colormappedAttributeBase = texturedAttributeBase + appState.Scene.texturedAttributesSize;
+		memcpy((unsigned char*)attributes->mapped + colormappedAttributeBase, d_lists.colormapped_attributes.data(), appState.Scene.colormappedLightsSize);
+		vertexTransformBase = colormappedAttributeBase + appState.Scene.colormappedLightsSize;
+		auto mapped = (float*)attributes->mapped + vertexTransformBase / sizeof(float);
+		(*mapped) = appState.Scale;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = appState.Scale;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = appState.Scale;
+		mapped++;
+		(*mapped) = 0;
+		mapped++;
+		(*mapped) = -r_refdef.vieworg[0] * appState.Scale;
+		mapped++;
+		(*mapped) = -r_refdef.vieworg[2] * appState.Scale;
+		mapped++;
+		(*mapped) = r_refdef.vieworg[1] * appState.Scale;
+		mapped++;
+		(*mapped) = 1;
+		VC(appState.Device.vkUnmapMemory(appState.Device.device, attributes->memory));
+		attributes->mapped = nullptr;
+		bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+		bufferMemoryBarrier.buffer = attributes->buffer;
+		bufferMemoryBarrier.size = attributes->size;
+		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+		if (appState.Mode != AppWorldMode)
+		{
+			appState.Scene.floorIndicesSize = 6 * sizeof(uint16_t);
+		}
+		appState.Scene.colormappedIndices16Size = (d_lists.last_colormapped_index16 + 1) * sizeof(uint16_t);
+		appState.Scene.coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
+		appState.Scene.indices16Size = appState.Scene.floorIndicesSize + appState.Scene.colormappedIndices16Size + appState.Scene.coloredIndices16Size;
+		if (appState.Scene.indices16Size > 0)
+		{
+			for (Buffer** b = &cachedIndices16.oldBuffers; *b != nullptr; b = &(*b)->next)
+			{
+				if ((*b)->size >= appState.Scene.indices16Size && (*b)->size < appState.Scene.indices16Size * 2)
+				{
+					indices16 = *b;
+					*b = (*b)->next;
+					break;
+				}
+			}
+			if (indices16 == nullptr)
+			{
+				indices16 = new Buffer();
+				indices16->CreateIndexBuffer(appState, appState.Scene.indices16Size + appState.Scene.indices16Size / 4);
+			}
+			cachedIndices16.MoveToFront(indices16);
+			VK(appState.Device.vkMapMemory(appState.Device.device, indices16->memory, 0, appState.Scene.indices16Size, 0, &indices16->mapped));
+			if (appState.Scene.floorIndicesSize > 0)
+			{
+				auto mapped = (uint16_t*)indices16->mapped;
+				(*mapped) = 0;
+				mapped++;
+				(*mapped) = 1;
+				mapped++;
+				(*mapped) = 2;
+				mapped++;
+				(*mapped) = 2;
+				mapped++;
+				(*mapped) = 3;
+				mapped++;
+				(*mapped) = 0;
+			}
+			colormappedIndex16Base = appState.Scene.floorIndicesSize;
+			memcpy((unsigned char*)indices16->mapped + colormappedIndex16Base, d_lists.colormapped_indices16.data(), appState.Scene.colormappedIndices16Size);
+			coloredIndex16Base = colormappedIndex16Base + appState.Scene.colormappedIndices16Size;
+			memcpy((unsigned char*)indices16->mapped + coloredIndex16Base, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, indices16->memory));
+			indices16->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
+			bufferMemoryBarrier.buffer = indices16->buffer;
+			bufferMemoryBarrier.size = indices16->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+		}
+		appState.Scene.colormappedIndices32Size = (d_lists.last_colormapped_index32 + 1) * sizeof(uint32_t);
+		appState.Scene.coloredIndices32Size = (d_lists.last_colored_index32 + 1) * sizeof(uint32_t);
+		appState.Scene.indices32Size = appState.Scene.colormappedIndices32Size + appState.Scene.coloredIndices32Size;
+		if (appState.Scene.indices32Size > 0)
+		{
+			for (Buffer** b = &cachedIndices32.oldBuffers; *b != nullptr; b = &(*b)->next)
+			{
+				if ((*b)->size >= appState.Scene.indices32Size && (*b)->size < appState.Scene.indices32Size * 2)
+				{
+					indices32 = *b;
+					*b = (*b)->next;
+					break;
+				}
+			}
+			if (indices32 == nullptr)
+			{
+				indices32 = new Buffer();
+				indices32->CreateIndexBuffer(appState, appState.Scene.indices32Size + appState.Scene.indices32Size / 4);
+			}
+			cachedIndices32.MoveToFront(indices32);
+			VK(appState.Device.vkMapMemory(appState.Device.device, indices32->memory, 0, appState.Scene.indices32Size, 0, &indices32->mapped));
+			memcpy(indices32->mapped, d_lists.colormapped_indices32.data(), appState.Scene.colormappedIndices32Size);
+			coloredIndex32Base = appState.Scene.colormappedIndices32Size;
+			memcpy((unsigned char*)indices32->mapped + coloredIndex32Base, d_lists.colored_indices32.data(), appState.Scene.coloredIndices32Size);
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, indices32->memory));
+			indices32->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
+			bufferMemoryBarrier.buffer = indices32->buffer;
+			bufferMemoryBarrier.size = indices32->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+		}
+		for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
+		{
+			appState.Scene.coloredSurfaces16Size += (d_lists.colored_surfaces_index16[i].last_color + 1) * sizeof(float);
+		}
+		for (auto i = 0; i <= d_lists.last_colored_surfaces_index32; i++)
+		{
+			appState.Scene.coloredSurfaces32Size += (d_lists.colored_surfaces_index32[i].last_color + 1) * sizeof(float);
+		}
+		for (auto i = 0; i <= d_lists.last_particles_index16; i++)
+		{
+			appState.Scene.particles16Size += (d_lists.particles_index16[i].last_color + 1) * sizeof(float);
+		}
+		for (auto i = 0; i <= d_lists.last_particles_index32; i++)
+		{
+			appState.Scene.particles32Size += (d_lists.particles_index32[i].last_color + 1) * sizeof(float);
+		}
+		appState.Scene.colorsSize = appState.Scene.coloredSurfaces16Size + appState.Scene.coloredSurfaces32Size + appState.Scene.particles16Size + appState.Scene.particles32Size;
+		if (appState.Scene.colorsSize > 0)
+		{
+			for (Buffer** b = &cachedColors.oldBuffers; *b != nullptr; b = &(*b)->next)
+			{
+				if ((*b)->size >= appState.Scene.colorsSize && (*b)->size < appState.Scene.colorsSize * 2)
+				{
+					colors = *b;
+					*b = (*b)->next;
+					break;
+				}
+			}
+			if (colors == nullptr)
+			{
+				colors = new Buffer();
+				colors->CreateVertexBuffer(appState, appState.Scene.colorsSize + appState.Scene.colorsSize / 4);
+			}
+			cachedColors.MoveToFront(colors);
+			VK(appState.Device.vkMapMemory(appState.Device.device, colors->memory, 0, appState.Scene.colorsSize, 0, &colors->mapped));
+			auto offset = 0;
+			for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
+			{
+				auto& coloredSurfaces = d_lists.colored_surfaces_index16[i];
+				auto count = (coloredSurfaces.last_color + 1) * sizeof(float);
+				memcpy((unsigned char*)colors->mapped + offset, coloredSurfaces.colors.data(), count);
+				offset += count;
+			}
+			for (auto i = 0; i <= d_lists.last_colored_surfaces_index32; i++)
+			{
+				auto& coloredSurfaces = d_lists.colored_surfaces_index32[i];
+				auto count = (coloredSurfaces.last_color + 1) * sizeof(float);
+				memcpy((unsigned char*)colors->mapped + offset, coloredSurfaces.colors.data(), count);
+				offset += count;
+			}
+			for (auto i = 0; i <= d_lists.last_particles_index16; i++)
+			{
+				auto& particles = d_lists.particles_index16[i];
+				auto count = (particles.last_color + 1) * sizeof(float);
+				memcpy((unsigned char*)colors->mapped + offset, particles.colors.data(), count);
+				offset += count;
+			}
+			for (auto i = 0; i <= d_lists.last_particles_index32; i++)
+			{
+				auto& particles = d_lists.particles_index32[i];
+				auto count = (particles.last_color + 1) * sizeof(float);
+				memcpy((unsigned char*)colors->mapped + offset, particles.colors.data(), count);
+				offset += count;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, colors->memory));
+			colors->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
+			bufferMemoryBarrier.buffer = colors->buffer;
+			bufferMemoryBarrier.size = colors->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+		}
+	}
 }
 
 void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize)

@@ -20,6 +20,9 @@
 #include "Constants.h"
 #include "DirectRect.h"
 
+#define _DEBUG 1
+#define USE_API_DUMP 1
+
 static const int queueCount = 1;
 static const int CPU_LEVEL = 2;
 static const int GPU_LEVEL = 3;
