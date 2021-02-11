@@ -134,84 +134,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		viewport.maxDepth = 1.0f;
 		VC(Device.vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport));
 		VC(Device.vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect));
-		if (Scene.verticesSize > 0)
-		{
-			VkDescriptorPoolSize poolSizes[2] { };
-			VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
-			descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			descriptorPoolCreateInfo.maxSets = 1;
-			descriptorPoolCreateInfo.pPoolSizes = poolSizes;
-			VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
-			descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			descriptorSetAllocateInfo.descriptorSetCount = 1;
-			VkDescriptorImageInfo textureInfo[2] { };
-			textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			VkWriteDescriptorSet writes[2] { };
-			writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writes[0].descriptorCount = 1;
-			writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writes[1].descriptorCount = 1;
-			writes[1].dstBinding = 1;
-			if (!perImage.host_colormapResources.created && perImage.host_colormap != nullptr)
-			{
-				poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				poolSizes[0].descriptorCount = 1;
-				textureInfo[0].sampler = Scene.samplers[perImage.host_colormap->mipCount];
-				textureInfo[0].imageView = perImage.host_colormap->view;
-				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writes[0].pImageInfo = textureInfo;
-				descriptorPoolCreateInfo.poolSizeCount = 1;
-				VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.host_colormapResources.descriptorPool));
-				descriptorSetAllocateInfo.descriptorPool = perImage.host_colormapResources.descriptorPool;
-				descriptorSetAllocateInfo.pSetLayouts = &Scene.singleImageLayout;
-				VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.host_colormapResources.descriptorSet));
-				writes[0].dstSet = perImage.host_colormapResources.descriptorSet;
-				VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-				perImage.host_colormapResources.created = true;
-			}
-			if (!perImage.sceneMatricesResources.created || !perImage.sceneMatricesAndPaletteResources.created)
-			{
-				poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				poolSizes[0].descriptorCount = 1;
-				VkDescriptorBufferInfo bufferInfo { };
-				bufferInfo.buffer = Scene.matrices.buffer;
-				bufferInfo.range = Scene.matrices.size;
-				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				writes[0].pBufferInfo = &bufferInfo;
-				if (!perImage.sceneMatricesResources.created)
-				{
-					descriptorPoolCreateInfo.poolSizeCount = 1;
-					VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.sceneMatricesResources.descriptorPool));
-					descriptorSetAllocateInfo.descriptorPool = perImage.sceneMatricesResources.descriptorPool;
-					descriptorSetAllocateInfo.pSetLayouts = &Scene.singleBufferLayout;
-					VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.sceneMatricesResources.descriptorSet));
-					writes[0].dstSet = perImage.sceneMatricesResources.descriptorSet;
-					VC(Device.vkUpdateDescriptorSets(Device.device, 1, writes, 0, nullptr));
-					perImage.sceneMatricesResources.created = true;
-				}
-				if (!perImage.sceneMatricesAndPaletteResources.created)
-				{
-					poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					poolSizes[1].descriptorCount = 1;
-					textureInfo[0].sampler = Scene.samplers[perImage.palette->mipCount];
-					textureInfo[0].imageView = perImage.palette->view;
-					writes[1].dstBinding = 1;
-					writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					writes[1].pImageInfo = textureInfo;
-					descriptorPoolCreateInfo.poolSizeCount = 2;
-					VK(Device.vkCreateDescriptorPool(Device.device, &descriptorPoolCreateInfo, nullptr, &perImage.sceneMatricesAndPaletteResources.descriptorPool));
-					descriptorSetAllocateInfo.descriptorPool = perImage.sceneMatricesAndPaletteResources.descriptorPool;
-					descriptorSetAllocateInfo.pSetLayouts = &Scene.bufferAndImageLayout;
-					VK(Device.vkAllocateDescriptorSets(Device.device, &descriptorSetAllocateInfo, &perImage.sceneMatricesAndPaletteResources.descriptorSet));
-					writes[0].dstSet = perImage.sceneMatricesAndPaletteResources.descriptorSet;
-					writes[1].dstSet = perImage.sceneMatricesAndPaletteResources.descriptorSet;
-					VC(Device.vkUpdateDescriptorSets(Device.device, 2, writes, 0, nullptr));
-					perImage.sceneMatricesAndPaletteResources.created = true;
-				}
-			}
-			perImage.Render(*this, poolSizes, descriptorPoolCreateInfo, writes, descriptorSetAllocateInfo, textureInfo);
-		}
+		perImage.Render(*this);
 		VC(Device.vkCmdEndRenderPass(perImage.commandBuffer));
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &view.framebuffer.endBarriers[view.index]));
 		VK(Device.vkEndCommandBuffer(perImage.commandBuffer));
@@ -222,17 +145,5 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		VK(Device.vkQueueSubmit(Context.queue, 1, &submitInfo, perImage.fence));
 		perImage.submitted = true;
 		matrixIndex++;
-#if defined(_DEBUG)
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "**** [%i, %i, %i, %i, %i] %i; %i, %i, %i = %i; %i; %i; %i, %i, %i, %i = %i; %i, %i, %i = %i; %i, %i = %i; %i, %i, %i, %i = %i",
-			Scene.texturedDescriptorSetCount, Scene.spriteDescriptorSetCount, Scene.colormapDescriptorSetCount, Scene.aliasDescriptorSetCount, Scene.viewmodelDescriptorSetCount,
-			Scene.stagingBufferSize,
-			Scene.floorVerticesSize, Scene.texturedVerticesSize, Scene.coloredVerticesSize, Scene.verticesSize,
-			Scene.colormappedVerticesSize,
-			Scene.colormappedTexCoordsSize,
-			Scene.floorAttributesSize, Scene.texturedAttributesSize, Scene.colormappedLightsSize, Scene.vertexTransformSize, Scene.attributesSize,
-			Scene.floorIndicesSize, Scene.colormappedIndices16Size, Scene.coloredIndices16Size, Scene.indices16Size,
-			Scene.colormappedIndices32Size, Scene.coloredIndices32Size, Scene.indices32Size,
-			Scene.coloredSurfaces16Size, Scene.coloredSurfaces32Size, Scene.particles16Size, Scene.particles32Size, Scene.colorsSize);
-#endif
 	}
 }

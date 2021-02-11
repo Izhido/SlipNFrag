@@ -1044,6 +1044,9 @@ void Scene::Reset()
 	aliasTextureCount = 0;
 	spriteTextureCount = 0;
 	resetDescriptorSetsCount++;
-	vrapi_DestroyTextureSwapChain(skybox);
-	skybox = VK_NULL_HANDLE;
+	if (skybox != VK_NULL_HANDLE)
+	{
+		vrapi_DestroyTextureSwapChain(skybox);
+		skybox = VK_NULL_HANDLE;
+	}
 }

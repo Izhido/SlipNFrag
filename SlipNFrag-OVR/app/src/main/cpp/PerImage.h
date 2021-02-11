@@ -61,5 +61,5 @@ struct PerImage
 	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, int floorSize);
 	void FillTextures(AppState& appState, Buffer* stagingBuffer);
-	void Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDescriptorPoolCreateInfo& descriptorPoolCreateInfo, VkWriteDescriptorSet writes[], VkDescriptorSetAllocateInfo& descriptorSetAllocateInfo, VkDescriptorImageInfo textureInfo[]);
+	void Render(AppState& appState);
 };

@@ -1077,8 +1077,86 @@ void PerImage::FillTextures(AppState &appState, Buffer* stagingBuffer)
 	}
 }
 
-void PerImage::Render(AppState& appState, VkDescriptorPoolSize poolSizes[], VkDescriptorPoolCreateInfo& descriptorPoolCreateInfo, VkWriteDescriptorSet writes[], VkDescriptorSetAllocateInfo& descriptorSetAllocateInfo, VkDescriptorImageInfo textureInfo[])
+void PerImage::Render(AppState& appState)
 {
+	if (appState.Scene.verticesSize == 0)
+	{
+		return;
+	}
+	VkDescriptorPoolSize poolSizes[2] { };
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
+	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	descriptorPoolCreateInfo.maxSets = 1;
+	descriptorPoolCreateInfo.pPoolSizes = poolSizes;
+	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
+	descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	descriptorSetAllocateInfo.descriptorSetCount = 1;
+	VkDescriptorImageInfo textureInfo[2] { };
+	textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	VkWriteDescriptorSet writes[2] { };
+	writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writes[0].descriptorCount = 1;
+	writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writes[1].descriptorCount = 1;
+	writes[1].dstBinding = 1;
+	if (!host_colormapResources.created && host_colormap != nullptr)
+	{
+		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes[0].descriptorCount = 1;
+		textureInfo[0].sampler = appState.Scene.samplers[host_colormap->mipCount];
+		textureInfo[0].imageView = host_colormap->view;
+		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writes[0].pImageInfo = textureInfo;
+		descriptorPoolCreateInfo.poolSizeCount = 1;
+		VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &host_colormapResources.descriptorPool));
+		descriptorSetAllocateInfo.descriptorPool = host_colormapResources.descriptorPool;
+		descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+		VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &host_colormapResources.descriptorSet));
+		writes[0].dstSet = host_colormapResources.descriptorSet;
+		VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+		host_colormapResources.created = true;
+	}
+	if (!sceneMatricesResources.created || !sceneMatricesAndPaletteResources.created)
+	{
+		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSizes[0].descriptorCount = 1;
+		VkDescriptorBufferInfo bufferInfo { };
+		bufferInfo.buffer = appState.Scene.matrices.buffer;
+		bufferInfo.range = appState.Scene.matrices.size;
+		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writes[0].pBufferInfo = &bufferInfo;
+		if (!sceneMatricesResources.created)
+		{
+			descriptorPoolCreateInfo.poolSizeCount = 1;
+			VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesResources.descriptorPool));
+			descriptorSetAllocateInfo.descriptorPool = sceneMatricesResources.descriptorPool;
+			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleBufferLayout;
+			VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &sceneMatricesResources.descriptorSet));
+			writes[0].dstSet = sceneMatricesResources.descriptorSet;
+			VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+			sceneMatricesResources.created = true;
+		}
+		if (!sceneMatricesAndPaletteResources.created)
+		{
+			poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			poolSizes[1].descriptorCount = 1;
+			textureInfo[0].sampler = appState.Scene.samplers[palette->mipCount];
+			textureInfo[0].imageView = palette->view;
+			writes[1].dstBinding = 1;
+			writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writes[1].pImageInfo = textureInfo;
+			descriptorPoolCreateInfo.poolSizeCount = 2;
+			VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesAndPaletteResources.descriptorPool));
+			descriptorSetAllocateInfo.descriptorPool = sceneMatricesAndPaletteResources.descriptorPool;
+			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.bufferAndImageLayout;
+			VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &sceneMatricesAndPaletteResources.descriptorSet));
+			writes[0].dstSet = sceneMatricesAndPaletteResources.descriptorSet;
+			writes[1].dstSet = sceneMatricesAndPaletteResources.descriptorSet;
+			VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+			sceneMatricesAndPaletteResources.created = true;
+		}
+	}
 	if (appState.Mode == AppWorldMode)
 	{
 		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase));
