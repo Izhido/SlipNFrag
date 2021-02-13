@@ -14,6 +14,9 @@ struct dsurface_t
 	float origin_x;
 	float origin_y;
 	float origin_z;
+	float vecs[2][4];
+	float texturemins[2];
+	float extents[2];
 };
 
 struct dspritedata_t
@@ -38,6 +41,7 @@ struct dturbulent_t
 	float origin_x;
 	float origin_y;
 	float origin_z;
+	float vecs[2][4];
 };
 
 struct dalias_t
@@ -94,6 +98,7 @@ struct dlists_t
 	int last_particles_index32;
 	int last_sky;
     int last_skybox;
+    int last_surface_vertex;
 	int last_textured_vertex;
 	int last_textured_attribute;
 	int last_colormapped_attribute;
@@ -114,6 +119,7 @@ struct dlists_t
 	std::vector<dcolors_t> particles_index32;
 	std::vector<dsky_t> sky;
     std::vector<dskybox_t> skyboxes;
+	std::vector<float> surface_vertices;
 	std::vector<float> textured_vertices;
 	std::vector<float> textured_attributes;
 	std::vector<float> colormapped_attributes;

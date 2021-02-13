@@ -2033,6 +2033,7 @@ void android_main(struct android_app* app)
 			perImage.cachedIndices16.Delete(appState);
 			perImage.cachedAttributes.Delete(appState);
 			perImage.cachedVertices.Delete(appState);
+			perImage.cachedSurfaceVertices.Delete(appState);
 			perImage.sceneMatricesStagingBuffers.Delete(appState);
 		}
 	}

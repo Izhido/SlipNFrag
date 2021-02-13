@@ -48,6 +48,7 @@ struct Scene
 	Pipeline sky;
 	Pipeline floor;
 	Pipeline console;
+	PipelineAttributes surfaceAttributes;
 	PipelineAttributes texturedAttributes;
 	PipelineAttributes colormappedAttributes;
 	PipelineAttributes coloredAttributes;
@@ -100,6 +101,7 @@ struct Scene
 	VkDeviceSize colormapDescriptorSetCount;
 	VkDeviceSize aliasDescriptorSetCount;
 	VkDeviceSize viewmodelDescriptorSetCount;
+	VkDeviceSize surfaceVerticesSize;
 	VkDeviceSize floorVerticesSize;
 	VkDeviceSize texturedVerticesSize;
 	VkDeviceSize coloredVerticesSize;

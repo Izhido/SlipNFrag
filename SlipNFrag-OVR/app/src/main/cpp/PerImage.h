@@ -11,6 +11,7 @@ struct View;
 struct PerImage
 {
 	CachedBuffers sceneMatricesStagingBuffers;
+	CachedBuffers cachedSurfaceVertices;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
 	CachedBuffers cachedIndices16;
@@ -28,6 +29,7 @@ struct PerImage
 	Texture* palette;
 	Texture* host_colormap;
 	int hostClearCount;
+	Buffer* surfaceVertices;
 	Buffer* vertices;
 	Buffer* attributes;
 	Buffer* indices16;

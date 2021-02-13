@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -28,6 +28,7 @@ void D_ResetLists ()
 	d_lists.last_particles_index32 = -1;
 	d_lists.last_sky = -1;
     d_lists.last_skybox = -1;
+	d_lists.last_surface_vertex = -1;
 	d_lists.last_textured_vertex = -1;
 	d_lists.last_textured_attribute = -1;
 	d_lists.last_colormapped_attribute = -1;
@@ -62,22 +63,26 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 		surface.data.resize(surface.size);
 	}
 	memcpy(surface.data.data(), cache->data, surface.size);
-	surface.first_vertex = (d_lists.last_textured_vertex + 1) / 3;
+	surface.first_vertex = (d_lists.last_surface_vertex + 1) / 3;
 	surface.count = face->numedges;
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
-	auto new_size = d_lists.last_textured_vertex + 1 + 3 * face->numedges;
-	if (d_lists.textured_vertices.size() < new_size)
+	auto new_size = d_lists.last_surface_vertex + 1 + 3 * face->numedges;
+	if (d_lists.surface_vertices.size() < new_size)
 	{
-		d_lists.textured_vertices.resize(new_size);
-	}
-	new_size = d_lists.last_textured_attribute + 1 + 2 * face->numedges;
-	if (d_lists.textured_attributes.size() < new_size)
-	{
-		d_lists.textured_attributes.resize(new_size);
+		d_lists.surface_vertices.resize(new_size);
 	}
 	auto texinfo = face->texinfo;
+	for (auto j = 0; j < 2; j++)
+	{
+		for (auto i = 0; i < 4; i++)
+		{
+			surface.vecs[j][i] = texinfo->vecs[j][i];
+		}
+		surface.texturemins[j] = face->texturemins[j];
+		surface.extents[j] = face->extents[j];
+	}
 	auto edge = entity->model->surfedges[face->firstedge];
 	mvertex_t* vertex;
 	if (edge >= 0)
@@ -91,20 +96,12 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 	auto x = vertex->position[0];
 	auto y = vertex->position[1];
 	auto z = vertex->position[2];
-	auto s = x * texinfo->vecs[0][0] + y * texinfo->vecs[0][1] + z * texinfo->vecs[0][2] + texinfo->vecs[0][3];
-	auto t = x * texinfo->vecs[1][0] + y * texinfo->vecs[1][1] + z * texinfo->vecs[1][2] + texinfo->vecs[1][3];
-	s = (s - face->texturemins[0]) / face->extents[0];
-	t = (t - face->texturemins[1]) / face->extents[1];
-	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
-	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
-	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
-	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
-	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
+	d_lists.last_surface_vertex++;
+	d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
+	d_lists.last_surface_vertex++;
+	d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
+	d_lists.last_surface_vertex++;
+	d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
 	auto next_front = 0;
 	auto next_back = face->numedges;
 	auto use_back = false;
@@ -132,20 +129,12 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 		x = vertex->position[0];
 		y = vertex->position[1];
 		z = vertex->position[2];
-		s = x * texinfo->vecs[0][0] + y * texinfo->vecs[0][1] + z * texinfo->vecs[0][2] + texinfo->vecs[0][3];
-		t = x * texinfo->vecs[1][0] + y * texinfo->vecs[1][1] + z * texinfo->vecs[1][2] + texinfo->vecs[1][3];
-		s = (s - face->texturemins[0]) / face->extents[0];
-		t = (t - face->texturemins[1]) / face->extents[1];
-		d_lists.last_textured_vertex++;
-		d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
-		d_lists.last_textured_vertex++;
-		d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
-		d_lists.last_textured_vertex++;
-		d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
-		d_lists.last_textured_attribute++;
-		d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
-		d_lists.last_textured_attribute++;
-		d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
+		d_lists.last_surface_vertex++;
+		d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
+		d_lists.last_surface_vertex++;
+		d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
+		d_lists.last_surface_vertex++;
+		d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
 	}
 }
 
@@ -408,20 +397,22 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	turbulent.height = texture->height;
 	turbulent.size = turbulent.width * turbulent.height;
 	turbulent.data = (unsigned char*)texture + texture->offsets[0];
-	turbulent.first_vertex = (d_lists.last_textured_vertex + 1) / 3;
+	turbulent.first_vertex = (d_lists.last_surface_vertex + 1) / 3;
 	turbulent.count = face->numedges;
 	turbulent.origin_x = entity->origin[0];
 	turbulent.origin_y = entity->origin[1];
 	turbulent.origin_z = entity->origin[2];
-	auto new_size = d_lists.last_textured_vertex + 1 + 3 * face->numedges;
-	if (d_lists.textured_vertices.size() < new_size)
+	for (auto j = 0; j < 2; j++)
 	{
-		d_lists.textured_vertices.resize(new_size);
+		for (auto i = 0; i < 4; i++)
+		{
+			turbulent.vecs[j][i] = texinfo->vecs[j][i];
+		}
 	}
-	new_size = d_lists.last_textured_attribute + 1 + 2 * face->numedges;
-	if (d_lists.textured_attributes.size() < new_size)
+	auto new_size = d_lists.last_surface_vertex + 1 + 3 * face->numedges;
+	if (d_lists.surface_vertices.size() < new_size)
 	{
-		d_lists.textured_attributes.resize(new_size);
+		d_lists.surface_vertices.resize(new_size);
 	}
 	auto edge = entity->model->surfedges[face->firstedge];
 	mvertex_t* vertex;
@@ -436,20 +427,12 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	auto x = vertex->position[0];
 	auto y = vertex->position[1];
 	auto z = vertex->position[2];
-	auto s = x * texinfo->vecs[0][0] + y * texinfo->vecs[0][1] + z * texinfo->vecs[0][2] + texinfo->vecs[0][3];
-	auto t = x * texinfo->vecs[1][0] + y * texinfo->vecs[1][1] + z * texinfo->vecs[1][2] + texinfo->vecs[1][3];
-	s /= turbulent.width;
-	t /= turbulent.height;
-	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
-	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
-	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
-	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
-	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
+	d_lists.last_surface_vertex++;
+	d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
+	d_lists.last_surface_vertex++;
+	d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
+	d_lists.last_surface_vertex++;
+	d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
 	auto next_front = 0;
 	auto next_back = face->numedges;
 	auto use_back = false;
@@ -477,20 +460,12 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 		x = vertex->position[0];
 		y = vertex->position[1];
 		z = vertex->position[2];
-		s = x * texinfo->vecs[0][0] + y * texinfo->vecs[0][1] + z * texinfo->vecs[0][2] + texinfo->vecs[0][3];
-		t = x * texinfo->vecs[1][0] + y * texinfo->vecs[1][1] + z * texinfo->vecs[1][2] + texinfo->vecs[1][3];
-		s /= turbulent.width;
-		t /= turbulent.height;
-		d_lists.last_textured_vertex++;
-		d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
-		d_lists.last_textured_vertex++;
-		d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
-		d_lists.last_textured_vertex++;
-		d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
-		d_lists.last_textured_attribute++;
-		d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
-		d_lists.last_textured_attribute++;
-		d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
+		d_lists.last_surface_vertex++;
+		d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
+		d_lists.last_surface_vertex++;
+		d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
+		d_lists.last_surface_vertex++;
+		d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
 	}
 }
 
