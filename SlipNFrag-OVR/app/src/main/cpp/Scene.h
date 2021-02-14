@@ -120,10 +120,6 @@ struct Scene
 	VkDeviceSize colormappedIndices32Size;
 	VkDeviceSize coloredIndices32Size;
 	VkDeviceSize indices32Size;
-	VkDeviceSize coloredSurfaces16Size;
-	VkDeviceSize coloredSurfaces32Size;
-	VkDeviceSize particles16Size;
-	VkDeviceSize particles32Size;
 	VkDeviceSize colorsSize;
 	VkDeviceSize floorSize;
 	ovrQuatf orientation;

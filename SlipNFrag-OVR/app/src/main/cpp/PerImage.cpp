@@ -545,56 +545,12 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		bufferMemoryBarrier.size = indices32->size;
 		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 	}
-	for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
-	{
-		appState.Scene.coloredSurfaces16Size += (d_lists.colored_surfaces_index16[i].last_color + 1) * sizeof(float);
-	}
-	for (auto i = 0; i <= d_lists.last_colored_surfaces_index32; i++)
-	{
-		appState.Scene.coloredSurfaces32Size += (d_lists.colored_surfaces_index32[i].last_color + 1) * sizeof(float);
-	}
-	for (auto i = 0; i <= d_lists.last_particles_index16; i++)
-	{
-		appState.Scene.particles16Size += (d_lists.particles_index16[i].last_color + 1) * sizeof(float);
-	}
-	for (auto i = 0; i <= d_lists.last_particles_index32; i++)
-	{
-		appState.Scene.particles32Size += (d_lists.particles_index32[i].last_color + 1) * sizeof(float);
-	}
-	appState.Scene.colorsSize = appState.Scene.coloredSurfaces16Size + appState.Scene.coloredSurfaces32Size + appState.Scene.particles16Size + appState.Scene.particles32Size;
+	appState.Scene.colorsSize = (d_lists.last_colored_attribute + 1) * sizeof(float);
 	if (appState.Scene.colorsSize > 0)
 	{
 		colors = cachedColors.GetVertexBuffer(appState, appState.Scene.colorsSize);
 		VK(appState.Device.vkMapMemory(appState.Device.device, colors->memory, 0, appState.Scene.colorsSize, 0, &colors->mapped));
-		auto offset = 0;
-		for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
-		{
-			auto& coloredSurfaces = d_lists.colored_surfaces_index16[i];
-			auto count = (coloredSurfaces.last_color + 1) * sizeof(float);
-			memcpy((unsigned char*)colors->mapped + offset, coloredSurfaces.colors.data(), count);
-			offset += count;
-		}
-		for (auto i = 0; i <= d_lists.last_colored_surfaces_index32; i++)
-		{
-			auto& coloredSurfaces = d_lists.colored_surfaces_index32[i];
-			auto count = (coloredSurfaces.last_color + 1) * sizeof(float);
-			memcpy((unsigned char*)colors->mapped + offset, coloredSurfaces.colors.data(), count);
-			offset += count;
-		}
-		for (auto i = 0; i <= d_lists.last_particles_index16; i++)
-		{
-			auto& particles = d_lists.particles_index16[i];
-			auto count = (particles.last_color + 1) * sizeof(float);
-			memcpy((unsigned char*)colors->mapped + offset, particles.colors.data(), count);
-			offset += count;
-		}
-		for (auto i = 0; i <= d_lists.last_particles_index32; i++)
-		{
-			auto& particles = d_lists.particles_index32[i];
-			auto count = (particles.last_color + 1) * sizeof(float);
-			memcpy((unsigned char*)colors->mapped + offset, particles.colors.data(), count);
-			offset += count;
-		}
+		memcpy(colors->mapped, d_lists.colored_attributes.data(), appState.Scene.colorsSize);
 		VC(appState.Device.vkUnmapMemory(appState.Device.device, colors->memory));
 		colors->mapped = nullptr;
 		bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
@@ -1744,60 +1700,22 @@ void PerImage::Render(AppState& appState)
 			}
 		}
 		resetDescriptorSetsCount = appState.Scene.resetDescriptorSetsCount;
-		if (d_lists.last_colored_surfaces_index16 >= 0 || d_lists.last_colored_surfaces_index32 >= 0 || d_lists.last_particles_index16 >= 0 || d_lists.last_particles_index32 >= 0)
+		if (d_lists.last_colored_index16 >= 0 || d_lists.last_colored_index32 >= 0)
 		{
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &coloredVertexBase));
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &colors->buffer, &appState.NoOffset));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-			if (d_lists.last_colored_surfaces_index16 >= 0)
+			if (d_lists.last_colored_index16 >= 0)
 			{
-				VkDeviceSize indexOffset = 0;
-				for (auto i = 0; i <= d_lists.last_colored_surfaces_index16; i++)
-				{
-					auto& coloredSurfaces = d_lists.colored_surfaces_index16[i];
-					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, coloredIndex16Base + indexOffset, VK_INDEX_TYPE_UINT16));
-					auto indexCount = coloredSurfaces.count;
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, coloredSurfaces.first_index, 0, 0));
-					indexOffset += indexCount;
-				}
+				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, coloredIndex16Base, VK_INDEX_TYPE_UINT16));
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, d_lists.last_colored_index16 + 1, 1, 0, 0, 0));
 			}
-			if (d_lists.last_colored_surfaces_index32 >= 0)
+			if (d_lists.last_colored_index32 >= 0)
 			{
-				VkDeviceSize indexOffset = 0;
-				for (auto i = 0; i <= d_lists.last_colored_surfaces_index32; i++)
-				{
-					auto& coloredSurfaces = d_lists.colored_surfaces_index32[i];
-					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, coloredIndex32Base + indexOffset, VK_INDEX_TYPE_UINT32));
-					auto indexCount = coloredSurfaces.count;
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, coloredSurfaces.first_index, 0, 0));
-					indexOffset += indexCount;
-				}
-			}
-			if (d_lists.last_particles_index16 >= 0)
-			{
-				VkDeviceSize indexOffset = 0;
-				for (auto i = 0; i <= d_lists.last_particles_index16; i++)
-				{
-					auto& particles = d_lists.particles_index16[i];
-					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, coloredIndex16Base + indexOffset, VK_INDEX_TYPE_UINT16));
-					auto indexCount = particles.count;
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, particles.first_index, 0, 0));
-					indexOffset += indexCount;
-				}
-			}
-			if (d_lists.last_particles_index32 >= 0)
-			{
-				VkDeviceSize indexOffset = 0;
-				for (auto i = 0; i <= d_lists.last_particles_index32; i++)
-				{
-					auto& particles = d_lists.particles_index32[i];
-					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, coloredIndex32Base + indexOffset, VK_INDEX_TYPE_UINT32));
-					auto indexCount = particles.count;
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, indexCount, 1, particles.first_index, 0, 0));
-					indexOffset += indexCount;
-				}
+				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, coloredIndex32Base, VK_INDEX_TYPE_UINT32));
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, d_lists.last_colored_index32 + 1, 1, 0, 0, 0));
 			}
 		}
 		if (d_lists.last_sky >= 0)

@@ -1038,10 +1038,6 @@ void Scene::ClearSizes()
 	colormappedIndices32Size = 0;
 	coloredIndices32Size = 0;
 	indices32Size = 0;
-	coloredSurfaces16Size = 0;
-	coloredSurfaces32Size = 0;
-	particles16Size = 0;
-	particles32Size = 0;
 	colorsSize = 0;
 	floorSize = 0;
 }
