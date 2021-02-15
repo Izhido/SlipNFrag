@@ -10,9 +10,15 @@ SLPlayItf audioPlayer;
 SLAndroidSimpleBufferQueueItf audioBufferQueue;
 
 volatile int snd_current_sample_pos = 0;
+qboolean snd_forceclear;
 
 void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 {
+	if (snd_forceclear)
+	{
+		S_ClearBuffer();
+		snd_forceclear = false;
+	}
 	(*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data() + (snd_current_sample_pos << 1), shm->samples >> 2);
 	snd_current_sample_pos += (shm->samples >> 3);
 	if(snd_current_sample_pos >= shm->samples)

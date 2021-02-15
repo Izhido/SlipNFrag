@@ -16,12 +16,19 @@ pthread_mutex_t snd_lock;
 
 volatile int snd_current_sample_pos = 0;
 
+qboolean snd_forceclear;
+
 void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef buffer)
 {
-    pthread_mutex_lock(&snd_lock);
     if (snd_audioqueue == nil)
     {
         return;
+    }
+    pthread_mutex_lock(&snd_lock);
+    if (snd_forceclear)
+    {
+        S_ClearBuffer();
+        snd_forceclear = false;
     }
     memcpy(buffer->mAudioData, shm->buffer.data() + (snd_current_sample_pos << 1), shm->samples >> 2);
     AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
@@ -48,10 +55,10 @@ qboolean SNDDMA_Init(void)
     shm->gamealive = true;
     shm->submission_chunk = (shm->samples >> 3);
     shm->buffer.resize(shm->samples * shm->samplebits/8);
-    AudioStreamBasicDescription format;
+    AudioStreamBasicDescription format { };
     format.mSampleRate = shm->speed;
     format.mFormatID = kAudioFormatLinearPCM;
-    format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+    format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked;
     format.mBitsPerChannel = shm->samplebits;
     format.mChannelsPerFrame = shm->channels;
     format.mBytesPerFrame = shm->channels * shm->samplebits/8;
@@ -63,17 +70,38 @@ qboolean SNDDMA_Init(void)
     {
         return false;
     }
-    AudioQueueBufferRef buffer;
-    status = AudioQueueAllocateBuffer(snd_audioqueue, shm->samples >> 2, &buffer);
+    AudioQueueBufferRef firstBuffer;
+    status = AudioQueueAllocateBuffer(snd_audioqueue, shm->samples >> 2, &firstBuffer);
     if (status != 0)
     {
+        AudioQueueDispose(snd_audioqueue, false);
         return false;
     }
-    buffer->mAudioDataByteSize = shm->samples >> 2;
-    status = AudioQueueEnqueueBuffer(snd_audioqueue, buffer, 0, NULL);
+    firstBuffer->mAudioDataByteSize = shm->samples >> 2;
+    memset(firstBuffer->mAudioData, 0, firstBuffer->mAudioDataByteSize);
+    status = AudioQueueEnqueueBuffer(snd_audioqueue, firstBuffer, 0, NULL);
     if (status != 0)
     {
-        AudioQueueFreeBuffer(snd_audioqueue, buffer);
+        AudioQueueFreeBuffer(snd_audioqueue, firstBuffer);
+        AudioQueueDispose(snd_audioqueue, false);
+        return false;
+    }
+    AudioQueueBufferRef secondBuffer;
+    status = AudioQueueAllocateBuffer(snd_audioqueue, shm->samples >> 2, &secondBuffer);
+    if (status != 0)
+    {
+        AudioQueueFreeBuffer(snd_audioqueue, firstBuffer);
+        AudioQueueDispose(snd_audioqueue, false);
+        return false;
+    }
+    secondBuffer->mAudioDataByteSize = shm->samples >> 2;
+    memset(secondBuffer->mAudioData, 0, secondBuffer->mAudioDataByteSize);
+    status = AudioQueueEnqueueBuffer(snd_audioqueue, secondBuffer, 0, NULL);
+    if (status != 0)
+    {
+        AudioQueueFreeBuffer(snd_audioqueue, secondBuffer);
+        AudioQueueFreeBuffer(snd_audioqueue, firstBuffer);
+        AudioQueueDispose(snd_audioqueue, false);
         return false;
     }
     status = AudioQueueStart(snd_audioqueue, NULL);
@@ -81,7 +109,6 @@ qboolean SNDDMA_Init(void)
     {
         return false;
     }
-    snd_current_sample_pos = shm->samples >> 1;
     pthread_mutex_unlock(&snd_lock);
     return true;
 }

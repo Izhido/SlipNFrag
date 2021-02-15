@@ -1204,6 +1204,7 @@ This is called at the start of each level
 ================
 */
 extern float		scr_centertime_off;
+extern qboolean		snd_forceclear;
 
 void SV_SpawnServer (char *server)
 {
@@ -1214,6 +1215,7 @@ void SV_SpawnServer (char *server)
 	if (hostname.string[0] == 0)
 		Cvar_Set ("hostname", "UNNAMED");
 	scr_centertime_off = 0;
+	snd_forceclear = true;
 
 	Con_DPrintf ("SpawnServer: %s\n",server);
 	svs.changelevel_issued = false;		// now safe to issue another
