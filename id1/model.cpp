@@ -2113,7 +2113,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	pmodel = (mdl_t *) ((byte *)&pheader[1] +
 			(LittleLong (pinmodel->numframes) - 1) *
 			 sizeof (pheader->frames[0]));
-    int pmodeloffset = (byte*)pmodel - (byte*)pheader;
+    auto pmodeloffset = (byte*)pmodel - (byte*)pheader;
 	
 //	mod->cache.data = pheader;
 	mod->flags = LittleLong (pinmodel->flags);

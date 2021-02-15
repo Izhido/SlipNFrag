@@ -33,7 +33,7 @@ qboolean SNDDMA_Init(void)
 	shm->soundalive = true;
 	shm->gamealive = true;
 	shm->submission_chunk = (shm->samples >> 3);
-	shm->buffer.resize(shm->samples * (shm->samplebits >> 3) * shm->channels);
+	shm->buffer.resize(shm->samples * shm->samplebits/8);
 	auto result = slCreateEngine(&audioEngineObject, 0, nullptr, 0, nullptr, nullptr);
 	if (result != SL_RESULT_SUCCESS)
 	{
