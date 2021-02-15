@@ -1,6 +1,7 @@
 #include "quakedef.h"
 
 int snd_current_sample_pos = 0;
+qboolean snd_forceclear;
 
 qboolean SNDDMA_Init(void)
 {

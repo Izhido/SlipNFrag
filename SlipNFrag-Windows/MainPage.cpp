@@ -8,6 +8,8 @@
 #include "in_uwp.h"
 #include "snd_uwp.h"
 
+extern qboolean snd_forceclear;
+
 #pragma comment(lib, "User32.lib")
 
 struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
@@ -2598,6 +2600,11 @@ namespace winrt::SlipNFrag_Windows::implementation
 						byteAccess->GetBuffer(&data, &capacity);
 						if (shm != nullptr)
 						{
+							if (snd_forceclear)
+							{
+								memset(shm->buffer.data(), 0, shm->samples * shm->samplebits / 8);
+								snd_forceclear = false;
+							}
 							memcpy(data, shm->buffer.data() + (snd_current_sample_pos << 1), capacity);
 							snd_current_sample_pos += (samples << 1);
 							if (snd_current_sample_pos >= shm->samples)
