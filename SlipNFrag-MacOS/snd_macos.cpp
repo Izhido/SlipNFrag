@@ -47,14 +47,14 @@ qboolean SNDDMA_Init(void)
     shm->soundalive = true;
     shm->gamealive = true;
     shm->submission_chunk = (shm->samples >> 3);
-    shm->buffer.resize(shm->samples * (shm->samplebits >> 3) * shm->channels);
+    shm->buffer.resize(shm->samples * shm->samplebits/8);
     AudioStreamBasicDescription format;
     format.mSampleRate = shm->speed;
     format.mFormatID = kAudioFormatLinearPCM;
     format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
     format.mBitsPerChannel = shm->samplebits;
     format.mChannelsPerFrame = shm->channels;
-    format.mBytesPerFrame = shm->channels * (shm->samplebits >> 3);
+    format.mBytesPerFrame = shm->channels * shm->samplebits/8;
     format.mFramesPerPacket = 1;
     format.mBytesPerPacket = format.mBytesPerFrame * format.mFramesPerPacket;
     format.mReserved = 0;
@@ -71,18 +71,6 @@ qboolean SNDDMA_Init(void)
     }
     buffer->mAudioDataByteSize = shm->samples >> 2;
     status = AudioQueueEnqueueBuffer(snd_audioqueue, buffer, 0, NULL);
-    if (status != 0)
-    {
-        AudioQueueFreeBuffer(snd_audioqueue, buffer);
-        return false;
-    }
-    status = AudioQueueAllocateBuffer(snd_audioqueue, shm->samples >> 2, &buffer);
-    if (status != 0)
-    {
-        return false;
-    }
-    buffer->mAudioDataByteSize = shm->samples >> 2;
-    AudioQueueEnqueueBuffer(snd_audioqueue, buffer, 0, NULL);
     if (status != 0)
     {
         AudioQueueFreeBuffer(snd_audioqueue, buffer);

@@ -781,8 +781,8 @@ void R_SetSkyBox (float rotate, vec3_t axis)
 		std::string prefix = suf[r_skysideimage[i]];
 		std::string path = "gfx/env/" + r_skyboxprefix + prefix + ".tga";
 		R_LoadSkyImage(path, prefix, r_skytexinfo[i].texture);
-        r_skyfaces[i].texturemins[0] = -r_skytexinfo[i].texture->width / 2;
-        r_skyfaces[i].texturemins[1] = -r_skytexinfo[i].texture->height / 2;
+        r_skyfaces[i].texturemins[0] = -(int)r_skytexinfo[i].texture->width / 2;
+        r_skyfaces[i].texturemins[1] = -(int)r_skytexinfo[i].texture->height / 2;
         r_skyfaces[i].extents[0] = r_skytexinfo[i].texture->width;
         r_skyfaces[i].extents[1] = r_skytexinfo[i].texture->height;
 	}
