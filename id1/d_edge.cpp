@@ -245,7 +245,7 @@ void D_DrawSurfaces (void)
 				cacheblock = (pixel_t *)
 						((byte *)pface->texinfo->texture +
 						pface->texinfo->texture->offsets[0]);
-				cachewidth = 64;
+				cachewidth = pface->texinfo->texture->width;
 
 				if (s->insubmodel)
 				{
@@ -392,12 +392,13 @@ void D_DrawSurfaces (void)
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
+                
 				pface = (msurface_t*)s->data;
 				miplevel = 0;
 				cacheblock = (pixel_t *)
 						((byte *)pface->texinfo->texture +
 						 pface->texinfo->texture->offsets[0]);
-				cachewidth = 64;
+				cachewidth = pface->texinfo->texture->width;
 
 				if (s->insubmodel)
 				{
@@ -414,7 +415,14 @@ void D_DrawSurfaces (void)
 				}
 
 				D_CalcGradients (pface);
-				Turbulent8 (s->spans);
+                if (cachewidth == 64)
+                {
+                    Turbulent8 (s->spans);
+                }
+                else
+                {
+                    Turbulent8Non64 (s->spans);
+                }
 				D_DrawZSpans (s->spans);
 
 				if (s->insubmodel)
