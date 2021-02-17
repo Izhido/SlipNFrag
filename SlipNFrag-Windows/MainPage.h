@@ -123,7 +123,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 		void CreateDepthStencilBuffer(UINT width, UINT height);
 		void CreateScreen();
 		void UpdateModelViewProjectionMatrix(DirectX::XMFLOAT4X4 const& orientationTransform3D);
-		bool DisplaySysErrorIfNeeded();
+		void DisplaySysError();
 		void ProcessFiles();
 		void SignalFileOperationError(std::string errorMessage);
 		void OpenFileForRead();

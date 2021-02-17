@@ -278,7 +278,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 		{
 			sys_errormessage = "FutureAccessList does not contain an entry for basedir_text";
 			sys_nogamedata = 1;
-			DisplaySysErrorIfNeeded();
+			DisplaySysError();
 			return;
 		}
 		auto task = StorageApplicationPermissions::FutureAccessList().GetFolderAsync(L"basedir_text");
@@ -562,7 +562,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 						catch (...)
 						{
 							sys_errormessage = "DirectX 12, Feature Level 11.0 is not currently available in your system.";
-							DisplaySysErrorIfNeeded();
+							DisplaySysError();
 							return;
 						}
 						std::thread filesThread([this]()
@@ -577,8 +577,12 @@ namespace winrt::SlipNFrag_Windows::implementation
 						con_height = (int)newConsoleHeight;
 						con_rowbytes = (int)newConsoleRowbytes;
 						Sys_Init(sys_argc, sys_argv);
-						if (DisplaySysErrorIfNeeded())
+						if (sys_errorcalled || sys_quitcalled)
 						{
+							if (sys_errormessage.length() > 0)
+							{
+								DisplaySysError();
+							}
 							return;
 						}
 						if (joy_initialized)
@@ -1304,7 +1308,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 			catch (...)
 			{
 				sys_errormessage = "DirectX 12, Feature Level 11.0 is not currently available in your system.";
-				DisplaySysErrorIfNeeded();
+				DisplaySysError();
 				return;
 			}
 		}
@@ -1657,14 +1661,22 @@ namespace winrt::SlipNFrag_Windows::implementation
 			{
 				// Do nothing - error messages (and Sys_Quit) will already be handled before getting here
 			}
-			if (DisplaySysErrorIfNeeded() || sys_errorcalled || sys_quitcalled)
+			if (sys_errorcalled || sys_quitcalled)
 			{
+				if (sys_errormessage.length() > 0)
+				{
+					DisplaySysError();
+				}
 				return false;
 			}
 		}
 		Sys_Frame(elapsed);
-		if (DisplaySysErrorIfNeeded() || sys_errorcalled || sys_quitcalled)
+		if (sys_errorcalled || sys_quitcalled)
 		{
+			if (sys_errormessage.length() > 0)
+			{
+				DisplaySysError();
+			}
 			return false;
 		}
 		byte* data = nullptr;
@@ -2019,109 +2031,111 @@ namespace winrt::SlipNFrag_Windows::implementation
 		XMStoreFloat4x4(&constantBufferData.modelViewProjection, XMMatrixTranspose(perspectiveMatrix * orientationMatrix));
 	}
 
-	bool MainPage::DisplaySysErrorIfNeeded()
+	void MainPage::DisplaySysError()
 	{
-		if (sys_errormessage.length() > 0)
+		if (sys_nogamedata)
 		{
-			if (sys_nogamedata)
-			{
-				swapChainPanel().Dispatcher().RunAsync(CoreDispatcherPriority::High, [this]()
-					{
-						ContentDialog dialog;
-						dialog.Title(box_value(L"Game data not found"));
-						dialog.Content(box_value(L"Go to Preferences and set Game directory (-basedir) to your copy of the game files."));
-						dialog.CloseButtonText(L"Go to Preferences");
-						dialog.PrimaryButtonText(L"Where to buy the game");
-						dialog.SecondaryButtonText(L"Where to get shareware episode");
-						auto task = dialog.ShowAsync();
-						task.Completed([this](IAsyncOperation<ContentDialogResult> const& operation, AsyncStatus const&)
-							{
-								auto result = operation.GetResults();
-								if (result == ContentDialogResult::Primary)
-								{
-									Launcher::LaunchUriAsync(Uri(L"https://www.google.com/search?q=buy+quake+1+game"));
-									Application::Current().Exit();
-								}
-								else if (result == ContentDialogResult::Secondary)
-								{
-									Launcher::LaunchUriAsync(Uri(L"https://www.google.com/search?q=download+quake+1+shareware+episode"));
-									Application::Current().Exit();
-								}
-								else
-								{
-									SettingsContentDialog settings;
-									auto task = settings.ShowAsync(ContentDialogPlacement::InPlace);
-									task.Completed([](IAsyncOperation<ContentDialogResult> const&, AsyncStatus const&)
-										{
-											Application::Current().Exit();
-										});
-								}
-							});
-					});
-			}
-			else
-			{
-				swapChainPanel().Dispatcher().RunAsync(CoreDispatcherPriority::High, [this]()
-					{
-						std::wstring toDisplay;
-						for (auto c : sys_errormessage)
+			swapChainPanel().Dispatcher().RunAsync(CoreDispatcherPriority::High, [this]()
+				{
+					ContentDialog dialog;
+					dialog.Title(box_value(L"Game data not found"));
+					dialog.Content(box_value(L"Go to Preferences and set Game directory (-basedir) to your copy of the game files."));
+					dialog.CloseButtonText(L"Go to Preferences");
+					dialog.PrimaryButtonText(L"Where to buy the game");
+					dialog.SecondaryButtonText(L"Where to get shareware episode");
+					auto task = dialog.ShowAsync();
+					task.Completed([this](IAsyncOperation<ContentDialogResult> const& operation, AsyncStatus const&)
 						{
-							toDisplay.push_back((wchar_t)c);
-						}
-						toDisplay += L"\n\nSlip & Frag will now close.";
-						ContentDialog dialog;
-						dialog.Title(box_value(L"Sys_Error"));
-						dialog.Content(box_value(toDisplay));
-						dialog.CloseButtonText(L"Close");
-						auto task = dialog.ShowAsync();
-						task.Completed([this](IAsyncOperation<ContentDialogResult> const&, AsyncStatus const&)
+							auto result = operation.GetResults();
+							if (result == ContentDialogResult::Primary)
 							{
+								Launcher::LaunchUriAsync(Uri(L"https://www.google.com/search?q=buy+quake+1+game"));
 								Application::Current().Exit();
-							});
-					});
-			}
-			return true;
+							}
+							else if (result == ContentDialogResult::Secondary)
+							{
+								Launcher::LaunchUriAsync(Uri(L"https://www.google.com/search?q=download+quake+1+shareware+episode"));
+								Application::Current().Exit();
+							}
+							else
+							{
+								SettingsContentDialog settings;
+								auto task = settings.ShowAsync(ContentDialogPlacement::InPlace);
+								task.Completed([](IAsyncOperation<ContentDialogResult> const&, AsyncStatus const&)
+									{
+										Application::Current().Exit();
+									});
+							}
+						});
+				});
 		}
-		return false;
+		else
+		{
+			swapChainPanel().Dispatcher().RunAsync(CoreDispatcherPriority::High, [this]()
+				{
+					std::wstring toDisplay;
+					for (auto c : sys_errormessage)
+					{
+						toDisplay.push_back((wchar_t)c);
+					}
+					toDisplay += L"\n\nSlip & Frag will now close.";
+					ContentDialog dialog;
+					dialog.Title(box_value(L"Sys_Error"));
+					dialog.Content(box_value(toDisplay));
+					dialog.CloseButtonText(L"Close");
+					auto task = dialog.ShowAsync();
+					task.Completed([this](IAsyncOperation<ContentDialogResult> const&, AsyncStatus const&)
+						{
+							Application::Current().Exit();
+						});
+				});
+		}
 	}
 
 	void MainPage::ProcessFiles()
 	{
+		auto keepRunning = false;
 		do
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			std::this_thread::yield();
+			fileoperation_t operation = fo_idle;
 			{
 				std::lock_guard lock(sys_iomutex);
 				if (fileOperationRunning)
 				{
 					continue;
 				}
+				operation = sys_fileoperation;
 			}
-			if (sys_fileoperation == fo_openread)
+			if (operation == fo_openread)
 			{
 				OpenFileForRead();
 			}
-			else if (sys_fileoperation == fo_openwrite)
+			else if (operation == fo_openwrite)
 			{
 				OpenFileForWrite();
 			}
-			else if (sys_fileoperation == fo_openappend)
+			else if (operation == fo_openappend)
 			{
 				OpenFileForAppend();
 			}
-			else if (sys_fileoperation == fo_read)
+			else if (operation == fo_read)
 			{
 				ReadFile();
 			}
-			else if (sys_fileoperation == fo_write)
+			else if (operation == fo_write)
 			{
 				WriteToFile();
 			}
-			else if (sys_fileoperation == fo_time)
+			else if (operation == fo_time)
 			{
 				GetFileTime();
 			}
-		} while (true);
+			{
+				std::lock_guard lock(sys_errormutex);
+				keepRunning = (!sys_errorcalled && !sys_quitcalled);
+			}
+		} while (keepRunning);
 	}
 
 	void MainPage::SignalFileOperationError(std::string errorMessage)

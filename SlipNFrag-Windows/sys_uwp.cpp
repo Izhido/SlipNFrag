@@ -26,6 +26,7 @@ int sys_fileoperationsize;
 std::string sys_fileoperationerror;
 int sys_fileoperationtime;
 std::mutex sys_iomutex;
+std::mutex sys_errormutex;
 
 int findhandle()
 {
@@ -212,8 +213,11 @@ void Sys_Error(const char* error, ...)
 		string.resize(needed + 1);
 	}
 	Sys_Printf("Sys_Error: %s\n", string.data());
-	sys_errormessage = string.data();
-	sys_errorcalled = true;
+	{
+		std::lock_guard lock(sys_errormutex);
+		sys_errormessage = string.data();
+		sys_errorcalled = true;
+	}
 	throw std::runtime_error("Sys_Error called.");
 }
 
@@ -239,7 +243,10 @@ void Sys_Printf(const char* fmt, ...)
 void Sys_Quit()
 {
 	Host_Shutdown();
-	sys_quitcalled = true;
+	{
+		std::lock_guard lock(sys_errormutex);
+		sys_quitcalled = true;
+	}
 	throw std::runtime_error("Sys_Quit called.");
 }
 
