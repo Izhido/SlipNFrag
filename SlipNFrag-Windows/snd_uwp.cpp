@@ -15,8 +15,7 @@ qboolean SNDDMA_Init(void)
     shm->soundalive = true;
     shm->gamealive = true;
     shm->submission_chunk = (shm->samples >> 3);
-    shm->buffer.resize(shm->samples * (shm->samplebits >> 3) * shm->channels);
-    snd_current_sample_pos = shm->samples >> 1;
+    shm->buffer.resize(shm->samples * shm->samplebits/8);
     return true;
 }
 
