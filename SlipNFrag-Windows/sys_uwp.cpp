@@ -25,6 +25,7 @@ byte* sys_fileoperationbuffer;
 int sys_fileoperationsize;
 std::string sys_fileoperationerror;
 int sys_fileoperationtime;
+std::mutex sys_iomutex;
 
 int findhandle()
 {
@@ -39,21 +40,35 @@ int findhandle()
 	return (int)sys_files.size() - 1;
 }
 
-int Sys_FileOpenRead(const char* path, int* hndl)
+fileoperation_t Sys_WaitForIOCompletion(fileoperation_t operation)
 {
-	sys_fileoperation = fo_openread;
-	sys_fileoperationindex = findhandle();
-	sys_fileoperationname = path;
 	auto start = Sys_FloatTime();
+	fileoperation_t result = fo_idle;
 	do
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	} while (sys_fileoperation == fo_openread && Sys_FloatTime() - start < 5);
-	if (sys_fileoperation == fo_openread)
+		std::this_thread::yield();
+		{
+			std::lock_guard lock(sys_iomutex);
+			result = sys_fileoperation;
+		}
+	} while (result == operation && Sys_FloatTime() - start < 5);
+	return result;
+}
+
+int Sys_FileOpenRead(const char* path, int* hndl)
+{
+	{
+		std::lock_guard lock(sys_iomutex);
+		sys_fileoperation = fo_openread;
+		sys_fileoperationindex = findhandle();
+		sys_fileoperationname = path;
+	}
+	auto operation = Sys_WaitForIOCompletion(fo_openread);
+	if (operation == fo_openread)
 	{
 		Sys_Error("Sys_FileOpenRead timed out opening file after 5 seconds");
 	}
-	if (sys_fileoperation == fo_error)
+	if (operation == fo_error)
 	{
 		*hndl = -1;
 		return -1;
@@ -64,19 +79,18 @@ int Sys_FileOpenRead(const char* path, int* hndl)
 
 int Sys_FileOpenWrite(const char* path, qboolean abortonfail)
 {
-	sys_fileoperation = fo_openwrite;
-	sys_fileoperationindex = findhandle();
-	sys_fileoperationname = path;
-	auto start = Sys_FloatTime();
-	do
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	} while (sys_fileoperation == fo_openwrite && Sys_FloatTime() - start < 5);
-	if (sys_fileoperation == fo_openwrite)
+		std::lock_guard lock(sys_iomutex);
+		sys_fileoperation = fo_openwrite;
+		sys_fileoperationindex = findhandle();
+		sys_fileoperationname = path;
+	}
+	auto operation = Sys_WaitForIOCompletion(fo_openwrite);
+	if (operation == fo_openwrite)
 	{
 		Sys_Error("Sys_FileOpenWrite timed out after 5 seconds");
 	}
-	if (sys_fileoperation == fo_error)
+	if (operation == fo_error)
 	{
 		if (abortonfail)
 		{
@@ -89,19 +103,18 @@ int Sys_FileOpenWrite(const char* path, qboolean abortonfail)
 
 int Sys_FileOpenAppend(const char* path)
 {
-	sys_fileoperation = fo_openappend;
-	sys_fileoperationindex = findhandle();
-	sys_fileoperationname = path;
-	auto start = Sys_FloatTime();
-	do
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	} while (sys_fileoperation == fo_openappend && Sys_FloatTime() - start < 5);
-	if (sys_fileoperation == fo_openappend)
+		std::lock_guard lock(sys_iomutex);
+		sys_fileoperation = fo_openappend;
+		sys_fileoperationindex = findhandle();
+		sys_fileoperationname = path;
+	}
+	auto operation = Sys_WaitForIOCompletion(fo_openappend);
+	if (operation == fo_openappend)
 	{
 		Sys_Error("Sys_FileOpenAppend timed out after 5 seconds");
 	}
-	if (sys_fileoperation == fo_error)
+	if (operation == fo_error)
 	{
 		return -1;
 	}
@@ -119,21 +132,19 @@ void Sys_FileClose(int handle)
 void Sys_FileSeek(int handle, int position)
 {
 	sys_files[handle].stream.Seek(position);
-
 }
 
 int Sys_FileRead(int handle, void* dest, int count)
 {
-	sys_fileoperation = fo_read;
-	sys_fileoperationindex = handle;
-	sys_fileoperationbuffer = (byte*)dest;
-	sys_fileoperationsize = count;
-	auto start = Sys_FloatTime();
-	do
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	} while (sys_fileoperation == fo_read && Sys_FloatTime() - start < 5);
-	if (sys_fileoperation == fo_read)
+		std::lock_guard lock(sys_iomutex);
+		sys_fileoperation = fo_read;
+		sys_fileoperationindex = handle;
+		sys_fileoperationbuffer = (byte*)dest;
+		sys_fileoperationsize = count;
+	}
+	auto operation = Sys_WaitForIOCompletion(fo_read);
+	if (operation == fo_read)
 	{
 		Sys_Error("Sys_FileRead timed out after 5 seconds");
 	}
@@ -142,16 +153,15 @@ int Sys_FileRead(int handle, void* dest, int count)
 
 int Sys_FileWrite(int handle, void* data, int count)
 {
-	sys_fileoperation = fo_write;
-	sys_fileoperationindex = handle;
-	sys_fileoperationbuffer = (byte*)data;
-	sys_fileoperationsize = count;
-	auto start = Sys_FloatTime();
-	do
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	} while (sys_fileoperation == fo_write && Sys_FloatTime() - start < 5);
-	if (sys_fileoperation == fo_write)
+		std::lock_guard lock(sys_iomutex);
+		sys_fileoperation = fo_write;
+		sys_fileoperationindex = handle;
+		sys_fileoperationbuffer = (byte*)data;
+		sys_fileoperationsize = count;
+	}
+	auto operation = Sys_WaitForIOCompletion(fo_write);
+	if (operation == fo_write)
 	{
 		Sys_Error("Sys_FileWrite timed out after 5 seconds");
 	}
@@ -160,18 +170,17 @@ int Sys_FileWrite(int handle, void* data, int count)
 
 int Sys_FileTime(char* path)
 {
-	sys_fileoperation = fo_time;
-	sys_fileoperationname = path;
-	auto start = Sys_FloatTime();
-	do
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	} while (sys_fileoperation == fo_time && Sys_FloatTime() - start < 5);
-	if (sys_fileoperation == fo_time)
+		std::lock_guard lock(sys_iomutex);
+		sys_fileoperation = fo_time;
+		sys_fileoperationname = path;
+	}
+	auto operation = Sys_WaitForIOCompletion(fo_time);
+	if (operation == fo_time)
 	{
 		Sys_Error("Sys_FileTime timed out after 5 seconds");
 	}
-	if (sys_fileoperation == fo_error)
+	if (operation == fo_error)
 	{
 		return -1;
 	}

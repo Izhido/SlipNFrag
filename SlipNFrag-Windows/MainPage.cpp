@@ -2090,9 +2090,12 @@ namespace winrt::SlipNFrag_Windows::implementation
 		do
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-			if (fileOperationRunning)
 			{
-				continue;
+				std::lock_guard lock(sys_iomutex);
+				if (fileOperationRunning)
+				{
+					continue;
+				}
 			}
 			if (sys_fileoperation == fo_openread)
 			{
@@ -2121,6 +2124,14 @@ namespace winrt::SlipNFrag_Windows::implementation
 		} while (true);
 	}
 
+	void MainPage::SignalFileOperationError(std::string errorMessage)
+	{
+		std::lock_guard lock(sys_iomutex);
+		sys_fileoperationerror = errorMessage;
+		sys_fileoperation = fo_error;
+		fileOperationRunning = false;
+	}
+
 	void MainPage::OpenFileForRead()
 	{
 		if (!StorageApplicationPermissions::FutureAccessList().ContainsItem(L"basedir_text"))
@@ -2135,9 +2146,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 			{
 				if (status == AsyncStatus::Error)
 				{
-					sys_fileoperationerror = std::to_string(operation.ErrorCode());
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError(std::to_string(operation.ErrorCode()));
 					return;
 				}
 				auto folder = operation.GetResults();
@@ -2153,9 +2162,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 				}
 				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
 				{
-					sys_fileoperationerror = "Filename is not a subpath of specified folder";
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError("Filename is not a subpath of specified folder");
 					return;
 				}
 				if (sys_fileoperationname[i] == '/' || sys_fileoperationname[i] == '\\')
@@ -2177,9 +2184,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 					{
 						if (status == AsyncStatus::Error)
 						{
-							sys_fileoperationerror = std::to_string(operation.ErrorCode());
-							sys_fileoperation = fo_error;
-							fileOperationRunning = false;
+							SignalFileOperationError(std::to_string(operation.ErrorCode()));
 							return;
 						}
 						sys_files[sys_fileoperationindex].file = operation.GetResults();
@@ -2188,9 +2193,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 							{
 								if (status == AsyncStatus::Error)
 								{
-									sys_fileoperationerror = std::to_string(operation.ErrorCode());
-									sys_fileoperation = fo_error;
-									fileOperationRunning = false;
+									SignalFileOperationError(std::to_string(operation.ErrorCode()));
 									return;
 								}
 								auto basicProperties = operation.GetResults();
@@ -2200,14 +2203,15 @@ namespace winrt::SlipNFrag_Windows::implementation
 									{
 										if (status == AsyncStatus::Error)
 										{
-											sys_fileoperationerror = std::to_string(operation.ErrorCode());
-											sys_fileoperation = fo_error;
-											fileOperationRunning = false;
+											SignalFileOperationError(std::to_string(operation.ErrorCode()));
 											return;
 										}
 										sys_files[sys_fileoperationindex].stream = operation.GetResults();
-										sys_fileoperation = fo_idle;
-										fileOperationRunning = false;
+										{
+											std::lock_guard lock(sys_iomutex);
+											sys_fileoperation = fo_idle;
+											fileOperationRunning = false;
+										}
 									});
 							});
 					});
@@ -2228,9 +2232,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 			{
 				if (status == AsyncStatus::Error)
 				{
-					sys_fileoperationerror = std::to_string(operation.ErrorCode());
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError(std::to_string(operation.ErrorCode()));
 					return;
 				}
 				auto folder = operation.GetResults();
@@ -2246,9 +2248,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 				}
 				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
 				{
-					sys_fileoperationerror = "Filename is not a subpath of specified folder";
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError("Filename is not a subpath of specified folder");
 					return;
 				}
 				if (sys_fileoperationname[i] == '/' || sys_fileoperationname[i] == '\\')
@@ -2270,9 +2270,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 					{
 						if (status == AsyncStatus::Error)
 						{
-							sys_fileoperationerror = std::to_string(operation.ErrorCode());
-							sys_fileoperation = fo_error;
-							fileOperationRunning = false;
+							SignalFileOperationError(std::to_string(operation.ErrorCode()));
 							return;
 						}
 						sys_files[sys_fileoperationindex].file = operation.GetResults();
@@ -2281,14 +2279,15 @@ namespace winrt::SlipNFrag_Windows::implementation
 							{
 								if (status == AsyncStatus::Error)
 								{
-									sys_fileoperationerror = std::to_string(operation.ErrorCode());
-									sys_fileoperation = fo_error;
-									fileOperationRunning = false;
+									SignalFileOperationError(std::to_string(operation.ErrorCode()));
 									return;
 								}
 								sys_files[sys_fileoperationindex].stream = operation.GetResults();
-								sys_fileoperation = fo_idle;
-								fileOperationRunning = false;
+								{
+									std::lock_guard lock(sys_iomutex);
+									sys_fileoperation = fo_idle;
+									fileOperationRunning = false;
+								}
 							});
 					});
 			});
@@ -2308,9 +2307,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 			{
 				if (status == AsyncStatus::Error)
 				{
-					sys_fileoperationerror = std::to_string(operation.ErrorCode());
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError(std::to_string(operation.ErrorCode()));
 					return;
 				}
 				auto folder = operation.GetResults();
@@ -2326,9 +2323,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 				}
 				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
 				{
-					sys_fileoperationerror = "Filename is not a subpath of specified folder";
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError("Filename is not a subpath of specified folder");
 					return;
 				}
 				if (sys_fileoperationname[i] == '/' || sys_fileoperationname[i] == '\\')
@@ -2350,9 +2345,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 					{
 						if (status == AsyncStatus::Error)
 						{
-							sys_fileoperationerror = std::to_string(operation.ErrorCode());
-							sys_fileoperation = fo_error;
-							fileOperationRunning = false;
+							SignalFileOperationError(std::to_string(operation.ErrorCode()));
 							return;
 						}
 						sys_files[sys_fileoperationindex].file = operation.GetResults();
@@ -2361,9 +2354,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 							{
 								if (status == AsyncStatus::Error)
 								{
-									sys_fileoperationerror = std::to_string(operation.ErrorCode());
-									sys_fileoperation = fo_error;
-									fileOperationRunning = false;
+									SignalFileOperationError(std::to_string(operation.ErrorCode()));
 									return;
 								}
 								auto basicProperties = operation.GetResults();
@@ -2373,15 +2364,16 @@ namespace winrt::SlipNFrag_Windows::implementation
 									{
 										if (status == AsyncStatus::Error)
 										{
-											sys_fileoperationerror = std::to_string(operation.ErrorCode());
-											sys_fileoperation = fo_error;
-											fileOperationRunning = false;
+											SignalFileOperationError(std::to_string(operation.ErrorCode()));
 											return;
 										}
 										sys_files[sys_fileoperationindex].stream = operation.GetResults();
 										sys_files[sys_fileoperationindex].stream.Seek(sys_fileoperationsize);
-										sys_fileoperation = fo_idle;
-										fileOperationRunning = false;
+										{
+											std::lock_guard lock(sys_iomutex);
+											sys_fileoperation = fo_idle;
+											fileOperationRunning = false;
+										}
 									});
 							});
 					});
@@ -2404,16 +2396,17 @@ namespace winrt::SlipNFrag_Windows::implementation
 			{
 				if (status == AsyncStatus::Error)
 				{
-					sys_fileoperationerror = std::to_string(operation.ErrorCode());
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError(std::to_string(operation.ErrorCode()));
 					return;
 				}
 				auto buffer = operation.GetResults();
 				memcpy(sys_fileoperationbuffer + sys_fileoperationsize, buffer.data(), buffer.Length());
 				sys_fileoperationsize += buffer.Length();
-				sys_fileoperation = fo_idle;
-				fileOperationRunning = false;
+				{
+					std::lock_guard lock(sys_iomutex);
+					sys_fileoperation = fo_idle;
+					fileOperationRunning = false;
+				}
 			});
 	}
 
@@ -2426,9 +2419,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 			{
 				if (status == AsyncStatus::Error)
 				{
-					sys_fileoperationerror = std::to_string(operation.ErrorCode());
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError(std::to_string(operation.ErrorCode()));
 					return;
 				}
 				auto task = sys_files[sys_fileoperationindex].stream.FlushAsync();
@@ -2436,13 +2427,14 @@ namespace winrt::SlipNFrag_Windows::implementation
 					{
 						if (status == AsyncStatus::Error)
 						{
-							sys_fileoperationerror = std::to_string(operation.ErrorCode());
-							sys_fileoperation = fo_error;
-							fileOperationRunning = false;
+							SignalFileOperationError(std::to_string(operation.ErrorCode()));
 							return;
 						}
-						sys_fileoperation = fo_idle;
-						fileOperationRunning = false;
+						{
+							std::lock_guard lock(sys_iomutex);
+							sys_fileoperation = fo_idle;
+							fileOperationRunning = false;
+						}
 					});
 			});
 	}
@@ -2461,9 +2453,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 			{
 				if (status == AsyncStatus::Error)
 				{
-					sys_fileoperationerror = std::to_string(operation.ErrorCode());
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError(std::to_string(operation.ErrorCode()));
 					return;
 				}
 				auto folder = operation.GetResults();
@@ -2479,9 +2469,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 				}
 				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
 				{
-					sys_fileoperationerror = "Filename is not a subpath of specified folder";
-					sys_fileoperation = fo_error;
-					fileOperationRunning = false;
+					SignalFileOperationError("Filename is not a subpath of specified folder");
 					return;
 				}
 				if (sys_fileoperationname[i] == '/' || sys_fileoperationname[i] == '\\')
@@ -2503,9 +2491,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 					{
 						if (status == AsyncStatus::Error)
 						{
-							sys_fileoperationerror = std::to_string(operation.ErrorCode());
-							sys_fileoperation = fo_error;
-							fileOperationRunning = false;
+							SignalFileOperationError(std::to_string(operation.ErrorCode()));
 							return;
 						}
 						sys_files[sys_fileoperationindex].file = operation.GetResults();
@@ -2514,15 +2500,16 @@ namespace winrt::SlipNFrag_Windows::implementation
 							{
 								if (status == AsyncStatus::Error)
 								{
-									sys_fileoperationerror = std::to_string(operation.ErrorCode());
-									sys_fileoperation = fo_error;
-									fileOperationRunning = false;
+									SignalFileOperationError(std::to_string(operation.ErrorCode()));
 									return;
 								}
 								auto basicProperties = operation.GetResults();
 								sys_fileoperationtime = (int)basicProperties.ItemDate().time_since_epoch().count();
-								sys_fileoperation = fo_idle;
-								fileOperationRunning = false;
+								{
+									std::lock_guard lock(sys_iomutex);
+									sys_fileoperation = fo_idle;
+									fileOperationRunning = false;
+								}
 							});
 					});
 			});

@@ -35,6 +35,7 @@ extern std::string sys_fileoperationerror;
 extern int sys_fileoperationtime;
 extern qboolean sys_errorcalled;
 extern qboolean sys_quitcalled;
+extern std::mutex sys_iomutex;
 
 void Sys_Init(int argc, char** argv);
 void Sys_Frame(float frame_lapse);

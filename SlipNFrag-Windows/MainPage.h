@@ -125,6 +125,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 		void UpdateModelViewProjectionMatrix(DirectX::XMFLOAT4X4 const& orientationTransform3D);
 		bool DisplaySysErrorIfNeeded();
 		void ProcessFiles();
+		void SignalFileOperationError(std::string errorMessage);
 		void OpenFileForRead();
 		void OpenFileForWrite();
 		void OpenFileForAppend();
