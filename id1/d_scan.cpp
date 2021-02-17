@@ -127,9 +127,25 @@ void D_DrawTurbulent8SpanNon64 (void)
 
     do
     {
-        sturb = ((r_turb_s + r_turb_turb[(r_turb_t>>16)&(CYCLE-1)])>>16)%cachewidth;
-        tturb = ((r_turb_t + r_turb_turb[(r_turb_s>>16)&(CYCLE-1)])>>16)%cachewidth;
-        *r_turb_pdest++ = *(r_turb_pbase + (tturb*cachewidth) + sturb);
+        sturb = ((r_turb_s + r_turb_turb[(r_turb_t>>16)&(CYCLE-1)])>>16);
+		if (sturb >= 0)
+		{
+			sturb = sturb % cachewidth;
+		}
+		else
+		{
+			sturb = cachewidth - (-sturb) % cachewidth;
+		}
+        tturb = ((r_turb_t + r_turb_turb[(r_turb_s>>16)&(CYCLE-1)])>>16);
+		if (tturb >= 0)
+		{
+			tturb = tturb % cachewidth;
+		}
+		else
+		{
+			tturb = cachewidth - (-tturb) % cachewidth;
+		}
+		*r_turb_pdest++ = *(r_turb_pbase + (tturb*cachewidth) + sturb);
         r_turb_s += r_turb_sstep;
         r_turb_t += r_turb_tstep;
     } while (--r_turb_spancount > 0);
