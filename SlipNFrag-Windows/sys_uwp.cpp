@@ -47,7 +47,7 @@ int Sys_FileOpenRead(const char* path, int* hndl)
 	auto start = Sys_FloatTime();
 	do
 	{
-		std::this_thread::yield();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	} while (sys_fileoperation == fo_openread && Sys_FloatTime() - start < 5);
 	if (sys_fileoperation == fo_openread)
 	{
@@ -70,7 +70,7 @@ int Sys_FileOpenWrite(const char* path, qboolean abortonfail)
 	auto start = Sys_FloatTime();
 	do
 	{
-		std::this_thread::yield();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	} while (sys_fileoperation == fo_openwrite && Sys_FloatTime() - start < 5);
 	if (sys_fileoperation == fo_openwrite)
 	{
@@ -95,7 +95,7 @@ int Sys_FileOpenAppend(const char* path)
 	auto start = Sys_FloatTime();
 	do
 	{
-		std::this_thread::yield();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	} while (sys_fileoperation == fo_openappend && Sys_FloatTime() - start < 5);
 	if (sys_fileoperation == fo_openappend)
 	{
@@ -131,7 +131,7 @@ int Sys_FileRead(int handle, void* dest, int count)
 	auto start = Sys_FloatTime();
 	do
 	{
-		std::this_thread::yield();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	} while (sys_fileoperation == fo_read && Sys_FloatTime() - start < 5);
 	if (sys_fileoperation == fo_read)
 	{
@@ -149,7 +149,7 @@ int Sys_FileWrite(int handle, void* data, int count)
 	auto start = Sys_FloatTime();
 	do
 	{
-		std::this_thread::yield();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	} while (sys_fileoperation == fo_write && Sys_FloatTime() - start < 5);
 	if (sys_fileoperation == fo_write)
 	{
@@ -165,7 +165,7 @@ int Sys_FileTime(char* path)
 	auto start = Sys_FloatTime();
 	do
 	{
-		std::this_thread::yield();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	} while (sys_fileoperation == fo_time && Sys_FloatTime() - start < 5);
 	if (sys_fileoperation == fo_time)
 	{

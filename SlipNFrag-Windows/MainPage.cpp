@@ -2089,7 +2089,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 	{
 		do
 		{
-			std::this_thread::yield();
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			if (fileOperationRunning)
 			{
 				continue;
