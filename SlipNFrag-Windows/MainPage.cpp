@@ -549,7 +549,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 					sys_argv[i] = new char[arguments[i].length() + 1];
 					strcpy(sys_argv[i], arguments[i].c_str());
 				}
-				sys_version = "UWP 1.0.5";
+				sys_version = "UWP 1.0.6";
 				swapChainPanel().Dispatcher().RunAsync(CoreDispatcherPriority::High, [=]()
 					{
 						newScreenWidth = (float)swapChainPanel().ActualWidth();
@@ -2043,27 +2043,38 @@ namespace winrt::SlipNFrag_Windows::implementation
 					dialog.CloseButtonText(L"Go to Preferences");
 					dialog.PrimaryButtonText(L"Where to buy the game");
 					dialog.SecondaryButtonText(L"Where to get shareware episode");
-					auto task = dialog.ShowAsync();
-					task.Completed([this](IAsyncOperation<ContentDialogResult> const& operation, AsyncStatus const&)
+					dialog.Closing([](ContentDialog const&, ContentDialogClosingEventArgs const& args)
 						{
-							auto result = operation.GetResults();
+							auto result = args.Result();
 							if (result == ContentDialogResult::Primary)
 							{
 								Launcher::LaunchUriAsync(Uri(L"https://www.google.com/search?q=buy+quake+1+game"));
-								Application::Current().Exit();
 							}
 							else if (result == ContentDialogResult::Secondary)
 							{
 								Launcher::LaunchUriAsync(Uri(L"https://www.google.com/search?q=download+quake+1+shareware+episode"));
-								Application::Current().Exit();
 							}
-							else
+							args.Cancel(result == ContentDialogResult::Primary || result == ContentDialogResult::Secondary);
+						});
+					auto task = dialog.ShowAsync();
+					task.Completed([this](IAsyncOperation<ContentDialogResult> const& operation, AsyncStatus const&)
+						{
+							auto result = operation.GetResults();
+							if (result != ContentDialogResult::Primary && result != ContentDialogResult::Secondary)
 							{
 								SettingsContentDialog settings;
 								auto task = settings.ShowAsync(ContentDialogPlacement::InPlace);
 								task.Completed([](IAsyncOperation<ContentDialogResult> const&, AsyncStatus const&)
 									{
-										Application::Current().Exit();
+										ContentDialog exitDialog;
+										exitDialog.Title(box_value(L"Preferences saved"));
+										exitDialog.Content(box_value(L"Slip & Frag will now close. Run the application again to play with the new preferences."));
+										exitDialog.CloseButtonText(L"Exit");
+										auto task = exitDialog.ShowAsync();
+										task.Completed([](IAsyncOperation<ContentDialogResult> const& operation, AsyncStatus const&)
+											{
+												Application::Current().Exit();
+											});
 									});
 							}
 						});
