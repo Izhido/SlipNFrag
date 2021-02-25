@@ -28,5 +28,5 @@ struct Instance
 	PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT;
 	VkDebugReportCallbackEXT debugReportCallback;
 
-	void Bind();
+	bool Bind();
 };

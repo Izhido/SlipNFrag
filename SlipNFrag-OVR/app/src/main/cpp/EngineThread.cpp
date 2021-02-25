@@ -74,8 +74,8 @@ void runEngine(AppState* appState, struct android_app* app)
 						appState->Scene.hostClearCount = host_clearcount;
 					}
 				}
-				Host_FrameFinish(updated);
 			}
+			Host_FrameFinish(updated);
 		}
 		else if (mode == AppWorldMode)
 		{
@@ -140,8 +140,8 @@ void runEngine(AppState* appState, struct android_app* app)
 						appState->Scene.hostClearCount = host_clearcount;
 					}
 				}
-				Host_FrameFinish(updated);
 			}
+			Host_FrameFinish(updated);
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}

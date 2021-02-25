@@ -94,5 +94,5 @@ struct Device
 	PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass;
 	PFN_vkCmdEndRenderPass vkCmdEndRenderPass;
 
-	void Bind(AppState& appState, Instance& instance);
+	bool Bind(AppState& appState, Instance& instance);
 };

@@ -88,6 +88,7 @@ void appHandleCommands(struct android_app* app, int32_t cmd)
 			appState->NativeWindow = nullptr;
 			break;
 		case APP_CMD_DESTROY:
+			vrapi_Shutdown();
 			exit(0);
 	}
 }
@@ -249,7 +250,11 @@ void android_main(struct android_app* app)
 	instanceCreateInfo.enabledExtensionCount = enabledExtensionNames.size();
 	instanceCreateInfo.ppEnabledExtensionNames = (const char *const *) (enabledExtensionNames.size() != 0 ? enabledExtensionNames.data() : nullptr);
 	VK(instance.vkCreateInstance(&instanceCreateInfo, nullptr, &instance.instance));
-	instance.Bind();
+	if (!instance.Bind())
+	{
+		vrapi_Shutdown();
+		exit(0);
+	}
 	if (instance.validate)
 	{
 		instance.vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT) (instance.vkGetInstanceProcAddr(instance.instance, "vkCreateDebugReportCallbackEXT"));
@@ -494,7 +499,11 @@ void android_main(struct android_app* app)
 	deviceCreateInfo.enabledExtensionCount = appState.Device.enabledExtensionNames.size();
 	deviceCreateInfo.ppEnabledExtensionNames = (const char *const *) (appState.Device.enabledExtensionNames.size() != 0 ? appState.Device.enabledExtensionNames.data() : nullptr);
 	VK(instance.vkCreateDevice(appState.Device.physicalDevice, &deviceCreateInfo, nullptr, &appState.Device.device));
-	appState.Device.Bind(appState, instance);
+	if (!appState.Device.Bind(appState, instance))
+	{
+		vrapi_Shutdown();
+		exit(0);
+	}
 	if (pthread_mutex_trylock(&appState.Device.queueFamilyMutex) == EBUSY)
 	{
 		pthread_mutex_lock(&appState.Device.queueFamilyMutex);
@@ -953,7 +962,7 @@ void android_main(struct android_app* app)
 					appState.Ovr = vrapi_EnterVrMode((ovrModeParms*)&parms);
 					if (appState.Ovr == nullptr)
 					{
-						__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main: vrapi_EnterVRMode() failed: invalid ANativeWindow");
+						__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "android_main(): vrapi_EnterVRMode() failed: invalid ANativeWindow");
 						appState.NativeWindow = nullptr;
 					}
 					if (appState.Ovr != nullptr)
@@ -977,6 +986,46 @@ void android_main(struct android_app* app)
 			{
 				vrapi_LeaveVrMode(appState.Ovr);
 				appState.Ovr = nullptr;
+			}
+		}
+		ovrEventDataBuffer eventDataBuffer { };
+		// Poll for VrApi events
+		for (;;)
+		{
+			ovrEventHeader* eventHeader = (ovrEventHeader*)(&eventDataBuffer);
+			ovrResult res = vrapi_PollEvent(eventHeader);
+			if (res != ovrSuccess)
+			{
+				break;
+			}
+			std::string eventName;
+			switch (eventHeader->EventType) {
+				case VRAPI_EVENT_DATA_LOST:
+					eventName = "VRAPI_EVENT_DATA_LOST";
+					break;
+				case VRAPI_EVENT_VISIBILITY_GAINED:
+					eventName = "VRAPI_EVENT_VISIBILITY_GAINED";
+					break;
+				case VRAPI_EVENT_VISIBILITY_LOST:
+					eventName = "VRAPI_EVENT_VISIBILITY_LOST";
+					break;
+				case VRAPI_EVENT_FOCUS_GAINED:
+					eventName = "VRAPI_EVENT_FOCUS_GAINED";
+					break;
+				case VRAPI_EVENT_FOCUS_LOST:
+					eventName = "VRAPI_EVENT_FOCUS_LOST";
+					break;
+				case VRAPI_EVENT_DISPLAY_REFRESH_RATE_CHANGE:
+					eventName = "VRAPI_EVENT_DISPLAY_REFRESH_RATE_CHANGE";
+					break;
+			}
+			if (eventName.length() == 0)
+			{
+				__android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, "android_main(): Unknown vrapi_PollEvent() received");
+			}
+			else
+			{
+				__android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, "android_main(): vrapi_PollEvent() returned %s", eventName.c_str());
 			}
 		}
 		auto leftRemoteFound = false;
@@ -1138,6 +1187,7 @@ void android_main(struct android_app* app)
 						}
 						else
 						{
+							vrapi_Shutdown();
 							exit(0);
 						}
 					}
