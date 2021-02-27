@@ -152,7 +152,7 @@ int Sys_FileRead(int handle, void* dest, int count)
 	return (int)sys_fileoperationsize;
 }
 
-int Sys_FileWrite(int handle, void* data, int count)
+int Sys_FileWrite(int handle, const void* data, int count)
 {
 	{
 		std::lock_guard lock(sys_iomutex);
