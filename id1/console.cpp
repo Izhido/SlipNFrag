@@ -627,8 +627,8 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 // draw the text
 	con_vislines = lines;
 
-	rows = (lines-16)>>3;		// rows of text to draw
-	y = lines - 16 - (rows<<3);	// may start slightly negative
+	rows = (lines-16)/8;		// rows of text to draw
+	y = lines - 16 - (rows*8);	// may start slightly negative
 
 	for (i= con_current - rows + 1 ; i<=con_current ; i++, y+=8 )
 	{

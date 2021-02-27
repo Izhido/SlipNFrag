@@ -21,6 +21,13 @@ android {
         }
     }
     buildTypes {
+        debug {
+            externalNativeBuild {
+                cmake {
+                    arguments '-DDEBUG=1 -D_DEBUG=1 -DUSE_API_DUMP=1'
+                }
+            }
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'),

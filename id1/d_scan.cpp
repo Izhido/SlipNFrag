@@ -586,16 +586,16 @@ D_DrawZSpans
 */
 void D_DrawZSpans (espan_t *pspan)
 {
-	int				count, doublecount, izistep;
-	int				izi;
+	int				count, doublecount;
+    long long       izistep, izi;
 	short			*pdest;
-	unsigned		ltemp;
+    long long		ltemp;
 	double			zi;
 	float			du, dv;
 
 // FIXME: check for clamping/range problems
 // we count on FP exceptions being turned off to avoid range problems
-	izistep = (int)(d_zistepu * 0x8000 * 0x10000);
+	izistep = d_zistepu * 0x8000 * 0x10000;
 
 	do
 	{
@@ -609,7 +609,7 @@ void D_DrawZSpans (espan_t *pspan)
 
 		zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
 	// we count on FP exceptions being turned off to avoid range problems
-		izi = (int)(zi * 0x8000 * 0x10000);
+		izi = zi * 0x8000 * 0x10000;
 
 		if ((size_t)pdest & 0x02)
 		{
@@ -624,9 +624,9 @@ void D_DrawZSpans (espan_t *pspan)
 			{
 				ltemp = izi >> 16;
 				izi += izistep;
-				ltemp |= izi & 0xFFFF0000;
+				ltemp |= izi & 0xFFFFFFFFFFFF0000;
 				izi += izistep;
-				*(int *)pdest = ltemp;
+				*(int *)pdest = (int)ltemp;
 				pdest += 2;
 			} while (--doublecount > 0);
 		}

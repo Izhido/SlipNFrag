@@ -282,7 +282,7 @@ void Cmd_Alias_f (void)
 {
 	cmdalias_t	*a;
 	int			i, c;
-	char		*s;
+	const char	*s;
 
 	if (Cmd_Argc() == 1)
 	{
@@ -334,8 +334,8 @@ void Cmd_Alias_f (void)
 
 
 static	std::vector<std::string> cmd_argv;
-static	char		*cmd_null_string = "";
-static	char		*cmd_args = NULL;
+static	const char	*cmd_null_string = "";
+static	const char	*cmd_args = NULL;
 
 cmd_source_t	cmd_source;
 
@@ -375,7 +375,7 @@ int		Cmd_Argc (void)
 Cmd_Argv
 ============
 */
-char	*Cmd_Argv (int arg)
+const char	*Cmd_Argv (int arg)
 {
 	if ( (unsigned)arg >= cmd_argv.size() )
 		return cmd_null_string;
@@ -387,7 +387,7 @@ char	*Cmd_Argv (int arg)
 Cmd_Args
 ============
 */
-char		*Cmd_Args (void)
+const char	*Cmd_Args (void)
 {
 	return cmd_args;
 }
@@ -400,7 +400,7 @@ Cmd_TokenizeString
 Parses the given string into command line tokens.
 ============
 */
-void Cmd_TokenizeString (char *text)
+void Cmd_TokenizeString (const char *text)
 {
 // clear the args from the last string
 	cmd_argv.clear();
@@ -509,7 +509,7 @@ A complete command line has been parsed, so try to execute it
 FIXME: lookupnoadd the token to speed search?
 ============
 */
-void	Cmd_ExecuteString (char *text, cmd_source_t src)
+void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 {	
 	cmdalias_t		*a;
 

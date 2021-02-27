@@ -165,9 +165,9 @@ int Datagram_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	unsigned int	dataLen;
 	unsigned int	eom;
 
-    auto maxsize = Datagram_MaxMessageSize(sock);
-    
 #ifdef DEBUG
+	auto maxsize = Datagram_MaxMessageSize(sock);
+
 	if (data->data.size() == 0)
 		Sys_Error("Datagram_SendMessage: zero length message\n");
 
@@ -298,9 +298,9 @@ int Datagram_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 {
 	int 	packetLen;
 
-    auto maxsize = Datagram_MaxUnreliableMessageSize(sock);
-    
 #ifdef DEBUG
+	auto maxsize = Datagram_MaxUnreliableMessageSize(sock);
+
 	if (data->data.size() == 0)
 		Sys_Error("Datagram_SendUnreliableMessage: zero length message\n");
 
@@ -313,8 +313,8 @@ int Datagram_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 	packetHeader.length = BigLong(packetLen | NETFLAG_UNRELIABLE);
 	packetHeader.sequence = BigLong(sock->unreliableSendSequence++);
     packetBuffer.resize(sizeof(packetHeader) + data->data.size());
-    Q_memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
-    Q_memcpy (packetBuffer.data() + sizeof(packetHeader), data->data.data(), data->data.size());
+    memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
+    memcpy (packetBuffer.data() + sizeof(packetHeader), data->data.data(), data->data.size());
 
 	if (sfunc.Write (sock->socket, packetBuffer.data(), packetLen, &sock->addr) == -1)
 		return -1;
@@ -590,7 +590,7 @@ static void Test_Poll(void*)
 
 static void Test_f (void)
 {
-	char	*host;
+	const char *host;
 	int		n;
 	int		max = MAX_SCOREBOARD;
 	struct qsockaddr sendaddr;
@@ -717,7 +717,7 @@ Done:
 
 static void Test2_f (void)
 {
-	char	*host;
+	const char *host;
 	int		n;
 	struct qsockaddr sendaddr;
 

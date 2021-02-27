@@ -78,7 +78,7 @@ qpic_t	*Draw_CachePic (const char *path)
 	SwapPic (dat);
 
 	auto cached = new byte[pic.size()];
-	Q_memcpy(cached, pic.data(), pic.size());
+	memcpy(cached, pic.data(), pic.size());
     menu_cachepics.insert({ std::string(path), (qpic_t*)cached });
     
 	return (qpic_t*)cached;

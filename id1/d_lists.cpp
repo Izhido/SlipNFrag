@@ -723,26 +723,16 @@ void D_AddSkyToLists (surf_t* surf)
 	{
 		return;
 	}
-	int left;
-	int right;
-	int top;
-	int bottom;
+	auto left = INT_MAX;
+    auto right = INT_MIN;
+    auto top = INT_MAX;
+    auto bottom = INT_MIN;
 	while (pspan != nullptr)
 	{
-		if (pspan == surf->spans)
-		{
-			left = pspan->u;
-			right = left + pspan->count;
-			top = pspan->v;
-			bottom = pspan->v;
-		}
-		else
-		{
-			left = std::min(left, pspan->u);
-			right = std::max(right, left + pspan->count);
-			top = std::min(top, pspan->v);
-			bottom = std::max(bottom, pspan->v);
-		}
+        left = std::min(left, pspan->u);
+        right = std::max(right, left + pspan->count);
+        top = std::min(top, pspan->v);
+        bottom = std::max(bottom, pspan->v);
 		pspan = pspan->pnext;
 	}
 	left -= vid.width / 10;

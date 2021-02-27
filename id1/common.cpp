@@ -23,10 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define NUM_SAFE_ARGVS  7
 
-static char     *argvdummy = " ";
-static std::vector<char*> largv;
+static const char *argvdummy = " ";
+static std::vector<const char*> largv;
 
-static char     *safeargvs[NUM_SAFE_ARGVS] =
+static const char *safeargvs[NUM_SAFE_ARGVS] =
 	{"-stdvid", "-nolan", "-nosound", "-nocdaudio", "-nojoy", "-nomouse", "-dibonly"};
 
 cvar_t  registered = {"registered","0"};
@@ -48,7 +48,7 @@ void COM_InitFilesystem (void);
 
 std::string com_token;
 int		com_argc;
-char	**com_argv;
+const char **com_argv;
 
 std::string com_cmdline;
 
@@ -206,7 +206,7 @@ int Q_strlen (const char *str)
 	return count;
 }
 
-char *Q_strrchr(char *s, char c)
+const char *Q_strrchr(const char *s, char c)
 {
     int len = Q_strlen(s);
     s += len;
@@ -942,7 +942,7 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-char *COM_Parse (char *data)
+const char *COM_Parse (const char *data)
 {
 	int             c;
 	
@@ -1582,7 +1582,7 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-pack_t *COM_LoadPackFile (char *packfile)
+pack_t *COM_LoadPackFile (const char *packfile)
 {
 	dpackheader_t   header;
 	int                             i;
@@ -1671,7 +1671,7 @@ void COM_AddGameDirectory (char *dir)
 	for (i=0 ; ; i++)
 	{
         auto pakfile = std::string(dir) + "/pak" + std::to_string(i) + ".pak";
-		pak = COM_LoadPackFile ((char*)pakfile.c_str());
+		pak = COM_LoadPackFile (pakfile.c_str());
 		if (!pak)
 			break;
         search = new searchpath_t;

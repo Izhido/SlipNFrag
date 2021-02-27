@@ -760,7 +760,7 @@ void Mod_LoadEntities (lump_t *l)
     mod_pool.entities.emplace_back(l->filelen);
 	loadmodel->entities = mod_pool.entities.back().data();
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
-	auto data = loadmodel->entities;
+	const char* data = loadmodel->entities;
 	while (1)
 	{
 		data = COM_Parse (data);

@@ -127,7 +127,7 @@ int Q_memcmp (void *m1, void *m2, int count);
 void Q_strcpy (char *dest, const char *src);
 void Q_strncpy (char *dest, const char *src, int count);
 int Q_strlen (const char *str);
-char *Q_strrchr (char *s, char c);
+const char *Q_strrchr (const char *s, char c);
 void Q_strcat (char *dest, const char *src);
 int Q_strcmp (const char *s1, const char *s2);
 int Q_strncmp (const char *s1, const char *s2, int count);
@@ -141,11 +141,11 @@ float Q_atof (const char *str);
 extern std::string com_token;
 extern	qboolean	com_eof;
 
-char *COM_Parse (char *data);
+const char *COM_Parse (const char *data);
 
 
 extern	int		com_argc;
-extern	char	**com_argv;
+extern	const char **com_argv;
 
 int COM_CheckParm (const char *parm);
 void COM_Init (const char *path);

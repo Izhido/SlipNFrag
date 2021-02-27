@@ -202,7 +202,7 @@ void D_SpriteScanLeftEdge (void)
 	emitpoint_t	*pvert, *pnext;
 	sspan_t		*pspan;
 	float		du, dv, vtop, vbottom, slope;
-	fixed16_t	u, u_step;
+	long long	u, u_step;
 
 	pspan = sprite_spans;
 	i = minindex;
@@ -227,16 +227,16 @@ void D_SpriteScanLeftEdge (void)
 			du = pnext->u - pvert->u;
 			dv = pnext->v - pvert->v;
 			slope = du / dv;
-			u_step = (int)(slope * 0x10000);
+			u_step = slope * 0x10000;
 		// adjust u to ceil the integer portion
-			u = (int)((pvert->u + (slope * (vtop - pvert->v))) * 0x10000) +
+			u = ((pvert->u + (slope * (vtop - pvert->v))) * 0x10000) +
 					(0x10000 - 1);
 			itop = (int)vtop;
 			ibottom = (int)vbottom;
 
 			for (v=itop ; v<ibottom ; v++)
 			{
-				pspan->u = u >> 16;
+				pspan->u = (int)(u >> 16);
 				pspan->v = v;
 				u += u_step;
 				pspan++;
@@ -264,7 +264,7 @@ void D_SpriteScanRightEdge (void)
 	emitpoint_t	*pvert, *pnext;
 	sspan_t		*pspan;
 	float		du, dv, vtop, vbottom, slope, uvert, unext, vvert, vnext;
-	fixed16_t	u, u_step;
+	long long	u, u_step;
 
 	pspan = sprite_spans;
 	i = minindex;
@@ -307,16 +307,16 @@ void D_SpriteScanRightEdge (void)
 			du = unext - uvert;
 			dv = vnext - vvert;
 			slope = du / dv;
-			u_step = (int)(slope * 0x10000);
+			u_step = slope * 0x10000;
 		// adjust u to ceil the integer portion
-			u = (int)((uvert + (slope * (vtop - vvert))) * 0x10000) +
+			u = ((uvert + (slope * (vtop - vvert))) * 0x10000) +
 					(0x10000 - 1);
 			itop = (int)vtop;
 			ibottom = (int)vbottom;
 
 			for (v=itop ; v<ibottom ; v++)
 			{
-				pspan->count = (u >> 16) - pspan->u;
+				pspan->count = (int)(u >> 16) - pspan->u;
 				u += u_step;
 				pspan++;
 			}

@@ -768,7 +768,7 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 R_SetSkyBox
 ============
 */
-char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
+const char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 int	r_skysideimage[6] = {5, 2, 4, 1, 0, 3};
 
 void R_SetSkyBox (float rotate, vec3_t axis)

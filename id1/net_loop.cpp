@@ -175,7 +175,7 @@ int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	buffer += 3;
 
 	// message
-	Q_memcpy(buffer, data->data.data(), data->data.size());
+	memcpy(buffer, data->data.data(), data->data.size());
 
 	sock->canSend = false;
 	return 1;

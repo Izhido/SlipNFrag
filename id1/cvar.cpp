@@ -32,7 +32,9 @@ Cvar_FindVar
 */
 cvar_t *Cvar_FindVar (const char *var_name)
 {
-    auto entry = cvar_index.find(std::string(var_name));
+	static std::string key;
+	key = var_name;
+    auto entry = cvar_index.find(key);
     if (entry != cvar_index.end())
     {
         return entry->second;
@@ -45,7 +47,7 @@ cvar_t *Cvar_FindVar (const char *var_name)
 Cvar_VariableValue
 ============
 */
-float	Cvar_VariableValue (char *var_name)
+float	Cvar_VariableValue (const char *var_name)
 {
 	cvar_t	*var;
 	

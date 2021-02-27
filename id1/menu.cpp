@@ -441,8 +441,8 @@ int		loadable[MAX_SAVEGAMES];
 
 void M_ScanSaves (void)
 {
-	int		i, j;
-	char	name[81];
+	int		i;
+	char	name[MAX_OSPATH];
 	int	    f;
 	int		version;
 

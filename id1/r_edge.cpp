@@ -339,7 +339,7 @@ continue_search:
 
 newtop:
 	// emit a span (obscures current top)
-		iu = edge->u >> 20;
+		iu = (int)(edge->u >> 20);
 
 		if (iu > surf2->last_u)
 		{
@@ -385,7 +385,7 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 		if (surf == surfaces[1].next)
 		{
 		// emit a span (current top going away)
-			iu = edge->u >> 20;
+			iu = (int)(edge->u >> 20);
 			if (iu > surf->last_u)
 			{
 				span = span_p++;
@@ -510,7 +510,7 @@ continue_search:
 
 newtop:
 		// emit a span (obscures current top)
-			iu = edge->u >> 20;
+			iu = (int)(edge->u >> 20);
 
 			if (iu > surf2->last_u)
 			{
@@ -651,7 +651,7 @@ void R_ScanEdges (void)
 // clear active edges to just the background edges around the whole screen
 // FIXME: most of this only needs to be set up once
 	edge_head.u = ((fixed44p20_t)r_refdef.vrect.x) << 20;
-	edge_head_u_shift20 = edge_head.u >> 20;
+	edge_head_u_shift20 = (int)(edge_head.u >> 20);
 	edge_head.u_step = 0;
 	edge_head.prev = NULL;
 	edge_head.next = &edge_tail;
@@ -659,7 +659,7 @@ void R_ScanEdges (void)
 	edge_head.surfs[1] = 1;
 	
 	edge_tail.u = (((fixed44p20_t)r_refdef.vrectright) << 20) + 0xFFFFF;
-	edge_tail_u_shift20 = edge_tail.u >> 20;
+	edge_tail_u_shift20 = (int)(edge_tail.u >> 20);
 	edge_tail.u_step = 0;
 	edge_tail.prev = &edge_head;
 	edge_tail.next = &edge_aftertail;

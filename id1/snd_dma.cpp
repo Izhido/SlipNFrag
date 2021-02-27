@@ -513,7 +513,7 @@ void S_StopAllSounds(qboolean clear)
 
 	total_channels = MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS;	// no statics
 
-	Q_memset(channels.data(), 0, channels.size() * sizeof(channel_t));
+	memset(channels.data(), 0, channels.size() * sizeof(channel_t));
 
 	if (clear)
 		S_ClearBuffer ();

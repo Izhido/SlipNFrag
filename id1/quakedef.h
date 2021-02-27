@@ -77,6 +77,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #define	MAX_QPATH		64			// max length of a quake game pathname
+#define	MAX_OSPATH      128         // max length of a filesystem pathname
 
 #define	ON_EPSILON		0.1			// point on plane side epsilon
 
@@ -250,7 +251,7 @@ typedef struct
     std::string basedir;
 	char	*cachedir;		// for development over ISDN lines
 	int		argc;
-	char	**argv;
+	const char **argv;
 } quakeparms_t;
 
 

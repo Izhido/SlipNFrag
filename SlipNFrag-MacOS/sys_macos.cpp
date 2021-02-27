@@ -103,7 +103,7 @@ int Sys_FileRead(int handle, void* dest, int count)
     return (int)fread(dest, 1, count, sys_handles[handle]);
 }
 
-int Sys_FileWrite(int handle, void* data, int count)
+int Sys_FileWrite(int handle, const void* data, int count)
 {
     return (int)fwrite(data, count, 1, sys_handles[handle]);
 }

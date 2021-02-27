@@ -27,7 +27,7 @@ void runEngine(AppState* appState, struct android_app* app)
 				}
 				if (input.command.size() > 0)
 				{
-					Cmd_ExecuteString((char*)input.command.c_str(), src_command);
+					Cmd_ExecuteString(input.command.c_str(), src_command);
 				}
 			}
 			Input::lastInputQueueItem = -1;
