@@ -1834,16 +1834,15 @@ void android_main(struct android_app* app)
 			}
 			if (appState.Scene.skybox != VK_NULL_HANDLE)
 			{
-				const auto centerEyeViewMatrix = vrapi_GetViewMatrixFromPose(&appState.Tracking.HeadPose.Pose);
+				const auto view = vrapi_GetViewMatrixFromPose(&appState.Tracking.HeadPose.Pose);
 				const auto rotation = ovrMatrix4f_CreateRotation(0, M_PI / 2, 0);
-				const auto rotatedEyeViewMatrix = ovrMatrix4f_Multiply(&centerEyeViewMatrix, &rotation);
-				const auto cubeMatrix = ovrMatrix4f_TanAngleMatrixForCubeMap(&rotatedEyeViewMatrix);
+				const auto scale = ovrMatrix4f_CreateScale(-1, 1, 1);
+				const auto matrix1 = ovrMatrix4f_Multiply(&view, &rotation);
+				const auto matrix2 = ovrMatrix4f_Multiply(&matrix1, &scale);
+				const auto cubeMatrix = ovrMatrix4f_TanAngleMatrixForCubeMap(&matrix2);
 				auto skyboxLayer = vrapi_DefaultLayerCube2();
 				skyboxLayer.HeadPose = appState.Tracking.HeadPose;
 				skyboxLayer.TexCoordsFromTanAngles = cubeMatrix;
-				skyboxLayer.Offset.x = 0;
-				skyboxLayer.Offset.y = 0;
-				skyboxLayer.Offset.z = 0;
 				for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 				{
 					skyboxLayer.Textures[i].ColorSwapChain = appState.Scene.skybox;
