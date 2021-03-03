@@ -24,7 +24,7 @@ android {
         debug {
             externalNativeBuild {
                 cmake {
-                    arguments '-DDEBUG=1 -D_DEBUG=1 -DUSE_API_DUMP=1'
+                    cppFlags '-DDEBUG=1 -D_DEBUG=1 -DUSE_API_DUMP=1'
                 }
             }
         }
