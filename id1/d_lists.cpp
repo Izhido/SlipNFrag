@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -24,7 +24,8 @@ void D_ResetLists ()
 	d_lists.last_viewmodel = -1;
 	d_lists.last_sky = -1;
     d_lists.last_skybox = -1;
-	d_lists.last_surface_vertex = -1;
+	d_lists.last_surface_index16 = -1;
+	d_lists.last_surface_index32 = -1;
 	d_lists.last_textured_vertex = -1;
 	d_lists.last_textured_attribute = -1;
 	d_lists.last_colormapped_attribute = -1;
@@ -51,6 +52,8 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 	auto& surface = d_lists.surfaces[d_lists.last_surface];
 	surface.surface = face;
 	surface.entity = entity;
+	surface.vertexes = entity->model->vertexes;
+	surface.vertex_count = entity->model->numvertexes;
 	surface.created = (created ? 1: 0);
 	surface.width = cache->width;
 	surface.height = cache->height;
@@ -60,16 +63,21 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 		surface.data.resize(surface.size);
 	}
 	memcpy(surface.data.data(), cache->data, surface.size);
-	surface.first_vertex = (d_lists.last_surface_vertex + 1) / 3;
+	auto is_index16 = (entity->model->numvertexes <= 65520);
+	if (is_index16)
+	{
+		surface.first_index16 = d_lists.last_surface_index16 + 1;
+		surface.first_index32 = -1;
+	}
+	else
+	{
+		surface.first_index16 = -1;
+		surface.first_index32 = d_lists.last_surface_index32 + 1;
+	}
 	surface.count = face->numedges;
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
-	auto new_size = d_lists.last_surface_vertex + 1 + 3 * face->numedges;
-	if (d_lists.surface_vertices.size() < new_size)
-	{
-		d_lists.surface_vertices.resize(new_size);
-	}
 	auto texinfo = face->texinfo;
 	for (auto j = 0; j < 2; j++)
 	{
@@ -81,57 +89,97 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 		surface.extents[j] = face->extents[j];
 	}
 	auto edge = entity->model->surfedges[face->firstedge];
-	mvertex_t* vertex;
-	if (edge >= 0)
+	if (is_index16)
 	{
-		vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
+		auto new_size = d_lists.last_surface_index16 + 1 + face->numedges;
+		if (d_lists.surface_indices16.size() < new_size)
+		{
+			d_lists.surface_indices16.resize(new_size);
+		}
+		uint16_t index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		d_lists.last_surface_index16++;
+		d_lists.surface_indices16[d_lists.last_surface_index16] = index;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			if (use_back)
+			{
+				next_back--;
+				edge = entity->model->surfedges[face->firstedge + next_back];
+			}
+			else
+			{
+				next_front++;
+				edge = entity->model->surfedges[face->firstedge + next_front];
+			}
+			use_back = !use_back;
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			d_lists.last_surface_index16++;
+			d_lists.surface_indices16[d_lists.last_surface_index16] = index;
+		}
 	}
 	else
 	{
-		vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
-	}
-	auto x = vertex->position[0];
-	auto y = vertex->position[1];
-	auto z = vertex->position[2];
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
-	auto next_front = 0;
-	auto next_back = face->numedges;
-	auto use_back = false;
-	for (auto i = 1; i < face->numedges; i++)
-	{
-		if (use_back)
+		auto new_size = d_lists.last_surface_index32 + 1 + face->numedges;
+		if (d_lists.surface_indices32.size() < new_size)
 		{
-			next_back--;
-			edge = entity->model->surfedges[face->firstedge + next_back];
+			d_lists.surface_indices32.resize(new_size);
 		}
-		else
-		{
-			next_front++;
-			edge = entity->model->surfedges[face->firstedge + next_front];
-		}
-		use_back = !use_back;
+		uint32_t index;
 		if (edge >= 0)
 		{
-			vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
+			index = entity->model->edges[edge].v[0];
 		}
 		else
 		{
-			vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
+			index = entity->model->edges[-edge].v[1];
 		}
-		x = vertex->position[0];
-		y = vertex->position[1];
-		z = vertex->position[2];
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
+		d_lists.last_surface_index32++;
+		d_lists.surface_indices32[d_lists.last_surface_index32] = index;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			if (use_back)
+			{
+				next_back--;
+				edge = entity->model->surfedges[face->firstedge + next_back];
+			}
+			else
+			{
+				next_front++;
+				edge = entity->model->surfedges[face->firstedge + next_front];
+			}
+			use_back = !use_back;
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			d_lists.last_surface_index32++;
+			d_lists.surface_indices32[d_lists.last_surface_index32] = index;
+		}
 	}
 }
 
@@ -235,12 +283,24 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	auto texinfo = face->texinfo;
 	auto texture = texinfo->texture;
 	auto& turbulent = d_lists.turbulent[d_lists.last_turbulent];
+	turbulent.vertexes = entity->model->vertexes;
+	turbulent.vertex_count = entity->model->numvertexes;
 	turbulent.texture = texture;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
 	turbulent.size = turbulent.width * turbulent.height;
 	turbulent.data = (unsigned char*)texture + texture->offsets[0];
-	turbulent.first_vertex = (d_lists.last_surface_vertex + 1) / 3;
+	auto is_index16 = (entity->model->numvertexes <= 65520);
+	if (is_index16)
+	{
+		turbulent.first_index16 = d_lists.last_surface_index16 + 1;
+		turbulent.first_index32 = -1;
+	}
+	else
+	{
+		turbulent.first_index16 = -1;
+		turbulent.first_index32 = d_lists.last_surface_index32 + 1;
+	}
 	turbulent.count = face->numedges;
 	turbulent.origin_x = entity->origin[0];
 	turbulent.origin_y = entity->origin[1];
@@ -252,63 +312,98 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 			turbulent.vecs[j][i] = texinfo->vecs[j][i];
 		}
 	}
-	auto new_size = d_lists.last_surface_vertex + 1 + 3 * face->numedges;
-	if (d_lists.surface_vertices.size() < new_size)
-	{
-		d_lists.surface_vertices.resize(new_size);
-	}
 	auto edge = entity->model->surfedges[face->firstedge];
-	mvertex_t* vertex;
-	if (edge >= 0)
+	if (is_index16)
 	{
-		vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
+		auto new_size = d_lists.last_surface_index16 + 1 + face->numedges;
+		if (d_lists.surface_indices16.size() < new_size)
+		{
+			d_lists.surface_indices16.resize(new_size);
+		}
+		uint16_t index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		d_lists.last_surface_index16++;
+		d_lists.surface_indices16[d_lists.last_surface_index16] = index;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			if (use_back)
+			{
+				next_back--;
+				edge = entity->model->surfedges[face->firstedge + next_back];
+			}
+			else
+			{
+				next_front++;
+				edge = entity->model->surfedges[face->firstedge + next_front];
+			}
+			use_back = !use_back;
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			d_lists.last_surface_index16++;
+			d_lists.surface_indices16[d_lists.last_surface_index16] = index;
+		}
 	}
 	else
 	{
-		vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
-	}
-	auto x = vertex->position[0];
-	auto y = vertex->position[1];
-	auto z = vertex->position[2];
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
-	auto next_front = 0;
-	auto next_back = face->numedges;
-	auto use_back = false;
-	for (auto i = 1; i < face->numedges; i++)
-	{
-		if (use_back)
+		auto new_size = d_lists.last_surface_index32 + 1 + face->numedges;
+		if (d_lists.surface_indices32.size() < new_size)
 		{
-			next_back--;
-			edge = entity->model->surfedges[face->firstedge + next_back];
+			d_lists.surface_indices32.resize(new_size);
 		}
-		else
-		{
-			next_front++;
-			edge = entity->model->surfedges[face->firstedge + next_front];
-		}
-		use_back = !use_back;
+		uint32_t index;
 		if (edge >= 0)
 		{
-			vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
+			index = entity->model->edges[edge].v[0];
 		}
 		else
 		{
-			vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
+			index = entity->model->edges[-edge].v[1];
 		}
-		x = vertex->position[0];
-		y = vertex->position[1];
-		z = vertex->position[2];
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
+		d_lists.last_surface_index32++;
+		d_lists.surface_indices32[d_lists.last_surface_index32] = index;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			if (use_back)
+			{
+				next_back--;
+				edge = entity->model->surfedges[face->firstedge + next_back];
+			}
+			else
+			{
+				next_front++;
+				edge = entity->model->surfedges[face->firstedge + next_front];
+			}
+			use_back = !use_back;
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			d_lists.last_surface_index32++;
+			d_lists.surface_indices32[d_lists.last_surface_index32] = index;
+		}
 	}
 }
 
@@ -484,11 +579,11 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 		return;
 	}
 	d_lists.last_viewmodel++;
-	if (d_lists.last_viewmodel >= d_lists.viewmodel.size())
+	if (d_lists.last_viewmodel >= d_lists.viewmodels.size())
 	{
-		d_lists.viewmodel.emplace_back();
+		d_lists.viewmodels.emplace_back();
 	}
-	auto& view_model = d_lists.viewmodel[d_lists.last_viewmodel];
+	auto& view_model = d_lists.viewmodels[d_lists.last_viewmodel];
 	view_model.width = mdl->skinwidth;
 	view_model.height = mdl->skinheight;
 	view_model.size = view_model.width * view_model.height;

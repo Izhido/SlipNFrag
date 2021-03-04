@@ -58,6 +58,8 @@ struct Scene
 	Buffer matrices;
 	int numBuffers;
 	int hostClearCount;
+	Buffer* oldSurfaceVerticesPerModel;
+	std::unordered_map<void*, Buffer*> surfaceVerticesPerModel;
 	CachedBuffers colormappedBuffers;
 	int resetDescriptorSetsCount;
 	TextureFromAllocation* oldSurfaces;
@@ -101,7 +103,6 @@ struct Scene
 	VkDeviceSize colormapDescriptorSetCount;
 	VkDeviceSize aliasDescriptorSetCount;
 	VkDeviceSize viewmodelDescriptorSetCount;
-	VkDeviceSize surfaceVerticesSize;
 	VkDeviceSize floorVerticesSize;
 	VkDeviceSize texturedVerticesSize;
 	VkDeviceSize coloredVerticesSize;
@@ -114,9 +115,11 @@ struct Scene
 	VkDeviceSize vertexTransformSize;
 	VkDeviceSize attributesSize;
 	VkDeviceSize floorIndicesSize;
+	VkDeviceSize surfaceIndices16Size;
 	VkDeviceSize colormappedIndices16Size;
 	VkDeviceSize coloredIndices16Size;
 	VkDeviceSize indices16Size;
+	VkDeviceSize surfaceIndices32Size;
 	VkDeviceSize colormappedIndices32Size;
 	VkDeviceSize coloredIndices32Size;
 	VkDeviceSize indices32Size;

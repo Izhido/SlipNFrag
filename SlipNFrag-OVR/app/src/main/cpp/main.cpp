@@ -1301,6 +1301,29 @@ void android_main(struct android_app* app)
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.aliasTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.spriteTextures.oldTextures);
 		TextureFromAllocation::DeleteOld(appState, &appState.Scene.oldSurfaces);
+		for (Buffer** b = &appState.Scene.oldSurfaceVerticesPerModel; *b != nullptr; )
+		{
+			(*b)->unusedCount++;
+			if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
+			{
+				Buffer* next = (*b)->next;
+				if ((*b)->mapped != nullptr)
+				{
+					VC(appState.Device.vkUnmapMemory(appState.Device.device, (*b)->memory));
+				}
+				VC(appState.Device.vkDestroyBuffer(appState.Device.device, (*b)->buffer, nullptr));
+				if ((*b)->memory != VK_NULL_HANDLE)
+				{
+					VC(appState.Device.vkFreeMemory(appState.Device.device, (*b)->memory, nullptr));
+				}
+				delete *b;
+				*b = next;
+			}
+			else
+			{
+				b = &(*b)->next;
+			}
+		}
 		appState.Scene.colormappedBuffers.DeleteOld(appState);
 		{
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
@@ -2079,7 +2102,6 @@ void android_main(struct android_app* app)
 			perImage.cachedIndices16.Delete(appState);
 			perImage.cachedAttributes.Delete(appState);
 			perImage.cachedVertices.Delete(appState);
-			perImage.cachedSurfaceVertices.Delete(appState);
 			perImage.sceneMatricesStagingBuffers.Delete(appState);
 		}
 	}

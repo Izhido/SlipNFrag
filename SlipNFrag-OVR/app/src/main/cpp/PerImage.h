@@ -11,7 +11,6 @@ struct View;
 struct PerImage
 {
 	CachedBuffers sceneMatricesStagingBuffers;
-	CachedBuffers cachedSurfaceVertices;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
 	CachedBuffers cachedIndices16;
@@ -29,7 +28,6 @@ struct PerImage
 	Texture* palette;
 	Texture* host_colormap;
 	int hostClearCount;
-	Buffer* surfaceVertices;
 	Buffer* vertices;
 	Buffer* attributes;
 	Buffer* indices16;
@@ -51,7 +49,9 @@ struct PerImage
 	VkDeviceSize texturedAttributeBase;
 	VkDeviceSize colormappedAttributeBase;
 	VkDeviceSize vertexTransformBase;
+	VkDeviceSize surfaceIndex16Base;
 	VkDeviceSize colormappedIndex16Base;
+	VkDeviceSize colormappedIndex32Base;
 	VkDeviceSize coloredIndex16Base;
 	VkDeviceSize coloredIndex32Base;
 	VkCommandBuffer commandBuffer;
@@ -59,6 +59,7 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
+	void LoadSurfaceVertexes(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier, void* vertexes, int vertexCount);
 	void LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier);
 	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, int floorSize);

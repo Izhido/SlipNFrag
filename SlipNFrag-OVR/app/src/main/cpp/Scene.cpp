@@ -1019,7 +1019,6 @@ void Scene::ClearSizes()
 	colormapDescriptorSetCount = 0;
 	aliasDescriptorSetCount = 0;
 	viewmodelDescriptorSetCount = 0;
-	surfaceVerticesSize = 0;
 	floorVerticesSize = 0;
 	texturedVerticesSize = 0;
 	coloredVerticesSize = 0;
@@ -1079,4 +1078,11 @@ void Scene::Reset()
 		vrapi_DestroyTextureSwapChain(skybox);
 		skybox = VK_NULL_HANDLE;
 	}
+	for (auto entry = surfaceVerticesPerModel.begin(); entry != surfaceVerticesPerModel.end(); entry++)
+	{
+		auto b = entry->second;
+		b->next = oldSurfaceVerticesPerModel;
+		oldSurfaceVerticesPerModel = b;
+	}
+	surfaceVerticesPerModel.clear();
 }
