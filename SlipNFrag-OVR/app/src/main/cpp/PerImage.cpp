@@ -1,7 +1,5 @@
 #include "PerImage.h"
-#include "vid_ovr.h"
 #include "AppState.h"
-#include "d_lists.h"
 #include "VulkanCallWrappers.h"
 #include "VrApi_Helpers.h"
 #include "Constants.h"
@@ -49,9 +47,19 @@ void PerImage::LoadSurfaceVertexes(AppState& appState, VkBufferMemoryBarrier& bu
 void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier)
 {
 	void* previousVertexes = nullptr;
-	for (auto i = 0; i <= d_lists.last_surface; i++)
+	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
-		auto& surface = d_lists.surfaces[i];
+		auto& surface = d_lists.surfaces16[i];
+		auto vertexes = surface.vertexes;
+		if (previousVertexes != vertexes)
+		{
+			LoadSurfaceVertexes(appState, bufferMemoryBarrier, vertexes, surface.vertex_count);
+			previousVertexes = vertexes;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_surface32; i++)
+	{
+		auto& surface = d_lists.surfaces32[i];
 		auto vertexes = surface.vertexes;
 		if (previousVertexes != vertexes)
 		{
@@ -605,6 +613,90 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	}
 }
 
+void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedTextureFromAllocation& loadedTexture, VkDeviceSize& stagingBufferSize)
+{
+	auto entry = appState.Scene.surfaces.find({ surface.surface, surface.entity });
+	if (entry == appState.Scene.surfaces.end())
+	{
+		auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
+		auto texture = new TextureFromAllocation();
+		texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		texture->key.first = surface.surface;
+		texture->key.second = surface.entity;
+		appState.Scene.surfaces.insert({ texture->key, texture });
+		loadedTexture.texture = texture;
+		loadedTexture.offset = stagingBufferSize;
+		stagingBufferSize += surface.size;
+	}
+	else if (surface.created)
+	{
+		auto first = entry->second;
+		auto available = first->unusedCount >= view.framebuffer.swapChainLength;
+		if (first->next == nullptr || available)
+		{
+			if (available)
+			{
+				first->unusedCount = 0;
+				loadedTexture.texture = first;
+				loadedTexture.offset = stagingBufferSize;
+				stagingBufferSize += surface.size;
+			}
+			else
+			{
+				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
+				auto texture = new TextureFromAllocation();
+				texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				texture->key.first = surface.surface;
+				texture->key.second = surface.entity;
+				texture->next = first;
+				entry->second = texture;
+				loadedTexture.texture = texture;
+				loadedTexture.offset = stagingBufferSize;
+				stagingBufferSize += surface.size;
+			}
+		}
+		else
+		{
+			auto found = false;
+			for (auto previous = first, texture = first->next; texture != nullptr; previous = texture, texture = texture->next)
+			{
+				if (texture->unusedCount >= view.framebuffer.swapChainLength)
+				{
+					found = true;
+					texture->unusedCount = 0;
+					loadedTexture.texture = texture;
+					loadedTexture.offset = stagingBufferSize;
+					stagingBufferSize += surface.size;
+					previous->next = texture->next;
+					texture->next = first;
+					entry->second = texture;
+					break;
+				}
+			}
+			if (!found)
+			{
+				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
+				auto texture = new TextureFromAllocation();
+				texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				texture->key.first = surface.surface;
+				texture->key.second = surface.entity;
+				texture->next = entry->second;
+				entry->second = texture;
+				loadedTexture.texture = texture;
+				loadedTexture.offset = stagingBufferSize;
+				stagingBufferSize += surface.size;
+			}
+		}
+	}
+	else
+	{
+		auto texture = entry->second;
+		texture->unusedCount = 0;
+		loadedTexture.texture = texture;
+		loadedTexture.offset = -1;
+	}
+}
+
 void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize)
 {
 	paletteOffset = -1;
@@ -627,93 +719,23 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 		host_colormapOffset = stagingBufferSize;
 		stagingBufferSize += 16384;
 	}
-	if (d_lists.last_surface >= appState.Scene.surfaceList.size())
+	if (d_lists.last_surface16 >= appState.Scene.surface16List.size())
 	{
-		appState.Scene.surfaceList.resize(d_lists.last_surface + 1);
+		appState.Scene.surface16List.resize(d_lists.last_surface16 + 1);
 	}
-	for (auto i = 0; i <= d_lists.last_surface; i++)
+	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
-		auto& surface = d_lists.surfaces[i];
-		auto entry = appState.Scene.surfaces.find({ surface.surface, surface.entity });
-		if (entry == appState.Scene.surfaces.end())
-		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
-			auto texture = new TextureFromAllocation();
-			texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			texture->key.first = surface.surface;
-			texture->key.second = surface.entity;
-			appState.Scene.surfaces.insert({ texture->key, texture });
-			appState.Scene.surfaceList[i].texture = texture;
-			appState.Scene.surfaceList[i].offset = stagingBufferSize;
-			stagingBufferSize += surface.size;
-		}
-		else if (surface.created)
-		{
-			auto first = entry->second;
-			auto available = first->unusedCount >= view.framebuffer.swapChainLength;
-			if (first->next == nullptr || available)
-			{
-				if (available)
-				{
-					first->unusedCount = 0;
-					appState.Scene.surfaceList[i].texture = first;
-					appState.Scene.surfaceList[i].offset = stagingBufferSize;
-					stagingBufferSize += surface.size;
-				}
-				else
-				{
-					auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
-					auto texture = new TextureFromAllocation();
-					texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-					texture->key.first = surface.surface;
-					texture->key.second = surface.entity;
-					texture->next = first;
-					entry->second = texture;
-					appState.Scene.surfaceList[i].texture = texture;
-					appState.Scene.surfaceList[i].offset = stagingBufferSize;
-					stagingBufferSize += surface.size;
-				}
-			}
-			else
-			{
-				auto found = false;
-				for (auto previous = first, texture = first->next; texture != nullptr; previous = texture, texture = texture->next)
-				{
-					if (texture->unusedCount >= view.framebuffer.swapChainLength)
-					{
-						found = true;
-						texture->unusedCount = 0;
-						appState.Scene.surfaceList[i].texture = texture;
-						appState.Scene.surfaceList[i].offset = stagingBufferSize;
-						stagingBufferSize += surface.size;
-						previous->next = texture->next;
-						texture->next = first;
-						entry->second = texture;
-						break;
-					}
-				}
-				if (!found)
-				{
-					auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
-					auto texture = new TextureFromAllocation();
-					texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-					texture->key.first = surface.surface;
-					texture->key.second = surface.entity;
-					texture->next = entry->second;
-					entry->second = texture;
-					appState.Scene.surfaceList[i].texture = texture;
-					appState.Scene.surfaceList[i].offset = stagingBufferSize;
-					stagingBufferSize += surface.size;
-				}
-			}
-		}
-		else
-		{
-			auto texture = entry->second;
-			texture->unusedCount = 0;
-			appState.Scene.surfaceList[i].texture = texture;
-			appState.Scene.surfaceList[i].offset = -1;
-		}
+		auto& surface = d_lists.surfaces16[i];
+		GetSurfaceStagingBufferSize(appState, view, surface, appState.Scene.surface16List[i], stagingBufferSize);
+	}
+	if (d_lists.last_surface32 >= appState.Scene.surface32List.size())
+	{
+		appState.Scene.surface32List.resize(d_lists.last_surface32 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_surface32; i++)
+	{
+		auto& surface = d_lists.surfaces32[i];
+		GetSurfaceStagingBufferSize(appState, view, surface, appState.Scene.surface32List[i], stagingBufferSize);
 	}
 	if (d_lists.last_sprite >= appState.Scene.spriteList.size())
 	{
@@ -916,11 +938,20 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, ::host_colormap.data(), 16384);
 		offset += 16384;
 	}
-	for (auto i = 0; i <= d_lists.last_surface; i++)
+	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
-		if (appState.Scene.surfaceList[i].offset >= 0)
+		if (appState.Scene.surface16List[i].offset >= 0)
 		{
-			auto& surface = d_lists.surfaces[i];
+			auto& surface = d_lists.surfaces16[i];
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.data.data(), surface.size);
+			offset += surface.size;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_surface32; i++)
+	{
+		if (appState.Scene.surface32List[i].offset >= 0)
+		{
+			auto& surface = d_lists.surfaces32[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.data.data(), surface.size);
 			offset += surface.size;
 		}
@@ -1005,11 +1036,18 @@ void PerImage::FillTextures(AppState &appState, Buffer* stagingBuffer)
 	{
 		host_colormap->Fill(appState, stagingBuffer, host_colormapOffset, commandBuffer);
 	}
-	for (auto i = 0; i <= d_lists.last_surface; i++)
+	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
-		if (appState.Scene.surfaceList[i].offset >= 0)
+		if (appState.Scene.surface16List[i].offset >= 0)
 		{
-			appState.Scene.surfaceList[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.surfaceList[i].offset, commandBuffer);
+			appState.Scene.surface16List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.surface16List[i].offset, commandBuffer);
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_surface32; i++)
+	{
+		if (appState.Scene.surface32List[i].offset >= 0)
+		{
+			appState.Scene.surface32List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.surface32List[i].offset, commandBuffer);
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_sprite; i++)
@@ -1098,7 +1136,7 @@ void PerImage::FillTextures(AppState &appState, Buffer* stagingBuffer)
 
 void PerImage::Render(AppState& appState)
 {
-	if (d_lists.last_surface < 0 && appState.Scene.verticesSize == 0 && d_lists.last_alias < 0 && d_lists.last_viewmodel < 0)
+	if (d_lists.last_surface16 < 0 && d_lists.last_surface32 < 0 && appState.Scene.verticesSize == 0 && d_lists.last_alias < 0 && d_lists.last_viewmodel < 0)
 	{
 		return;
 	}
@@ -1184,14 +1222,14 @@ void PerImage::Render(AppState& appState)
 		descriptorPoolCreateInfo.poolSizeCount = 1;
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		writes[0].pImageInfo = textureInfo;
-		if (d_lists.last_surface < 0 && d_lists.last_turbulent < 0)
+		if (d_lists.last_surface16 < 0 && d_lists.last_surface32 < 0 && d_lists.last_turbulent < 0)
 		{
 			texturedResources.Delete(appState);
 		}
 		else
 		{
 			auto size = texturedResources.descriptorSets.size();
-			auto required = d_lists.last_surface + 1 + d_lists.last_turbulent + 1;
+			auto required = d_lists.last_surface16 + 1 + d_lists.last_surface32 + 1 + d_lists.last_turbulent + 1;
 			if (size < required || size > required * 2)
 			{
 				auto toCreate = std::max(16, required + required / 4);
@@ -1219,103 +1257,96 @@ void PerImage::Render(AppState& appState)
 			}
 		}
 		float pushConstants[24];
-		if (d_lists.last_surface >= 0)
+		if (d_lists.last_surface16 >= 0)
 		{
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 			void* previousVertexes = nullptr;
-			if (indices16 != nullptr)
+			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
+			for (auto i = 0; i <= d_lists.last_surface16; i++)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
-				for (auto i = 0; i <= d_lists.last_surface; i++)
+				auto& surface = d_lists.surfaces16[i];
+				if (previousVertexes != surface.vertexes)
 				{
-					auto& surface = d_lists.surfaces[i];
-					if (surface.first_index16 < 0)
-					{
-						continue;
-					}
-					if (previousVertexes != surface.vertexes)
-					{
-						auto vertexBuffer = appState.Scene.surfaceVerticesPerModel[surface.vertexes]->buffer;
-						VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
-						previousVertexes = surface.vertexes;
-					}
-					pushConstants[0] = surface.origin_x;
-					pushConstants[1] = surface.origin_y;
-					pushConstants[2] = surface.origin_z;
-					pushConstants[3] = surface.vecs[0][0];
-					pushConstants[4] = surface.vecs[0][1];
-					pushConstants[5] = surface.vecs[0][2];
-					pushConstants[6] = surface.vecs[0][3];
-					pushConstants[7] = surface.vecs[1][0];
-					pushConstants[8] = surface.vecs[1][1];
-					pushConstants[9] = surface.vecs[1][2];
-					pushConstants[10] = surface.vecs[1][3];
-					pushConstants[11] = surface.texturemins[0];
-					pushConstants[12] = surface.texturemins[1];
-					pushConstants[13] = surface.extents[0];
-					pushConstants[14] = surface.extents[1];
-					VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.textured.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
-					auto texture = appState.Scene.surfaceList[i].texture;
-					if (texturedResources.bound[descriptorSetIndex] != texture)
-					{
-						textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = texturedResources.descriptorSets[descriptorSetIndex];
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						texturedResources.bound[descriptorSetIndex] = texture;
-					}
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 1, 1, &texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-					descriptorSetIndex++;
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index16, 0, 0));
+					auto vertexBuffer = appState.Scene.surfaceVerticesPerModel[surface.vertexes]->buffer;
+					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
+					previousVertexes = surface.vertexes;
 				}
+				pushConstants[0] = surface.origin_x;
+				pushConstants[1] = surface.origin_y;
+				pushConstants[2] = surface.origin_z;
+				pushConstants[3] = surface.vecs[0][0];
+				pushConstants[4] = surface.vecs[0][1];
+				pushConstants[5] = surface.vecs[0][2];
+				pushConstants[6] = surface.vecs[0][3];
+				pushConstants[7] = surface.vecs[1][0];
+				pushConstants[8] = surface.vecs[1][1];
+				pushConstants[9] = surface.vecs[1][2];
+				pushConstants[10] = surface.vecs[1][3];
+				pushConstants[11] = surface.texturemins[0];
+				pushConstants[12] = surface.texturemins[1];
+				pushConstants[13] = surface.extents[0];
+				pushConstants[14] = surface.extents[1];
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.textured.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
+				auto texture = appState.Scene.surface16List[i].texture;
+				if (texturedResources.bound[descriptorSetIndex] != texture)
+				{
+					textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
+					textureInfo[0].imageView = texture->view;
+					writes[0].dstSet = texturedResources.descriptorSets[descriptorSetIndex];
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+					texturedResources.bound[descriptorSetIndex] = texture;
+				}
+				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 1, 1, &texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+				descriptorSetIndex++;
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index, 0, 0));
 			}
-			if (indices32 != nullptr)
+		}
+		if (d_lists.last_surface32 >= 0)
+		{
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
+			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipeline));
+			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+			void* previousVertexes = nullptr;
+			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+			for (auto i = 0; i <= d_lists.last_surface32; i++)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
-				for (auto i = 0; i <= d_lists.last_surface; i++)
+				auto& surface = d_lists.surfaces32[i];
+				if (previousVertexes != surface.vertexes)
 				{
-					auto& surface = d_lists.surfaces[i];
-					if (surface.first_index32 < 0)
-					{
-						continue;
-					}
-					if (previousVertexes != surface.vertexes)
-					{
-						auto vertexBuffer = appState.Scene.surfaceVerticesPerModel[surface.vertexes]->buffer;
-						VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
-						previousVertexes = surface.vertexes;
-					}
-					pushConstants[0] = surface.origin_x;
-					pushConstants[1] = surface.origin_y;
-					pushConstants[2] = surface.origin_z;
-					pushConstants[3] = surface.vecs[0][0];
-					pushConstants[4] = surface.vecs[0][1];
-					pushConstants[5] = surface.vecs[0][2];
-					pushConstants[6] = surface.vecs[0][3];
-					pushConstants[7] = surface.vecs[1][0];
-					pushConstants[8] = surface.vecs[1][1];
-					pushConstants[9] = surface.vecs[1][2];
-					pushConstants[10] = surface.vecs[1][3];
-					pushConstants[11] = surface.texturemins[0];
-					pushConstants[12] = surface.texturemins[1];
-					pushConstants[13] = surface.extents[0];
-					pushConstants[14] = surface.extents[1];
-					VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.textured.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
-					auto texture = appState.Scene.surfaceList[i].texture;
-					if (texturedResources.bound[descriptorSetIndex] != texture)
-					{
-						textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = texturedResources.descriptorSets[descriptorSetIndex];
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						texturedResources.bound[descriptorSetIndex] = texture;
-					}
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 1, 1, &texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-					descriptorSetIndex++;
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index32, 0, 0));
+					auto vertexBuffer = appState.Scene.surfaceVerticesPerModel[surface.vertexes]->buffer;
+					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
+					previousVertexes = surface.vertexes;
 				}
+				pushConstants[0] = surface.origin_x;
+				pushConstants[1] = surface.origin_y;
+				pushConstants[2] = surface.origin_z;
+				pushConstants[3] = surface.vecs[0][0];
+				pushConstants[4] = surface.vecs[0][1];
+				pushConstants[5] = surface.vecs[0][2];
+				pushConstants[6] = surface.vecs[0][3];
+				pushConstants[7] = surface.vecs[1][0];
+				pushConstants[8] = surface.vecs[1][1];
+				pushConstants[9] = surface.vecs[1][2];
+				pushConstants[10] = surface.vecs[1][3];
+				pushConstants[11] = surface.texturemins[0];
+				pushConstants[12] = surface.texturemins[1];
+				pushConstants[13] = surface.extents[0];
+				pushConstants[14] = surface.extents[1];
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.textured.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
+				auto texture = appState.Scene.surface32List[i].texture;
+				if (texturedResources.bound[descriptorSetIndex] != texture)
+				{
+					textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
+					textureInfo[0].imageView = texture->view;
+					writes[0].dstSet = texturedResources.descriptorSets[descriptorSetIndex];
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+					texturedResources.bound[descriptorSetIndex] = texture;
+				}
+				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 1, 1, &texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+				descriptorSetIndex++;
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index, 0, 0));
 			}
 		}
 		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || spriteResources.descriptorSets.size() < appState.Scene.spriteTextureCount)

@@ -65,6 +65,7 @@ struct Scene
 	TextureFromAllocation* oldSurfaces;
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
 	std::unordered_map<TwinKey, TextureFromAllocation*> surfaces;
+	std::vector<TwinKey> surfacesToDelete;
 	CachedSharedMemoryTextures spriteTextures;
 	int spriteTextureCount;
 	CachedSharedMemoryTextures aliasTextures;
@@ -77,7 +78,8 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> aliasPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> viewmodelsPerKey;
 	std::vector<BufferWithOffset> colormappedBufferList;
-	std::vector<LoadedTextureFromAllocation> surfaceList;
+	std::vector<LoadedTextureFromAllocation> surface16List;
+	std::vector<LoadedTextureFromAllocation> surface32List;
 	std::vector<LoadedSharedMemoryTexture> spriteList;
 	std::vector<LoadedTexture> turbulentList;
 	std::vector<LoadedColormappedTexture> aliasList;

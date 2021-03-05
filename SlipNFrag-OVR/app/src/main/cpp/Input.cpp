@@ -1,9 +1,7 @@
 #include "Input.h"
 #include "AppState.h"
 #include "VrApi_Input.h"
-#include "vid_ovr.h"
 #include "in_ovr.h"
-#include "d_lists.h"
 
 extern m_state_t m_state;
 

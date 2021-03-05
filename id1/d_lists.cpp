@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -17,7 +17,8 @@ extern vec3_t r_plightvec;
 
 void D_ResetLists ()
 {
-	d_lists.last_surface = -1;
+	d_lists.last_surface16 = -1;
+	d_lists.last_surface32 = -1;
 	d_lists.last_sprite = -1;
 	d_lists.last_turbulent = -1;
 	d_lists.last_alias = -1;
@@ -44,53 +45,43 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 	{
 		return;
 	}
-	d_lists.last_surface++;
-	if (d_lists.last_surface >= d_lists.surfaces.size())
+	if (entity->model->numvertexes <= 65520)
 	{
-		d_lists.surfaces.emplace_back();
-	}
-	auto& surface = d_lists.surfaces[d_lists.last_surface];
-	surface.surface = face;
-	surface.entity = entity;
-	surface.vertexes = entity->model->vertexes;
-	surface.vertex_count = entity->model->numvertexes;
-	surface.created = (created ? 1: 0);
-	surface.width = cache->width;
-	surface.height = cache->height;
-	surface.size = surface.width * surface.height;
-	if (surface.size > surface.data.size())
-	{
-		surface.data.resize(surface.size);
-	}
-	memcpy(surface.data.data(), cache->data, surface.size);
-	auto is_index16 = (entity->model->numvertexes <= 65520);
-	if (is_index16)
-	{
-		surface.first_index16 = d_lists.last_surface_index16 + 1;
-		surface.first_index32 = -1;
-	}
-	else
-	{
-		surface.first_index16 = -1;
-		surface.first_index32 = d_lists.last_surface_index32 + 1;
-	}
-	surface.count = face->numedges;
-	surface.origin_x = entity->origin[0];
-	surface.origin_y = entity->origin[1];
-	surface.origin_z = entity->origin[2];
-	auto texinfo = face->texinfo;
-	for (auto j = 0; j < 2; j++)
-	{
-		for (auto i = 0; i < 4; i++)
+		d_lists.last_surface16++;
+		if (d_lists.last_surface16 >= d_lists.surfaces16.size())
 		{
-			surface.vecs[j][i] = texinfo->vecs[j][i];
+			d_lists.surfaces16.emplace_back();
 		}
-		surface.texturemins[j] = face->texturemins[j];
-		surface.extents[j] = face->extents[j];
-	}
-	auto edge = entity->model->surfedges[face->firstedge];
-	if (is_index16)
-	{
+		auto& surface = d_lists.surfaces16[d_lists.last_surface16];
+		surface.surface = face;
+		surface.entity = entity;
+		surface.vertexes = entity->model->vertexes;
+		surface.vertex_count = entity->model->numvertexes;
+		surface.created = (created ? 1: 0);
+		surface.width = cache->width;
+		surface.height = cache->height;
+		surface.size = surface.width * surface.height;
+		if (surface.size > surface.data.size())
+		{
+			surface.data.resize(surface.size);
+		}
+		memcpy(surface.data.data(), cache->data, surface.size);
+		surface.first_index = d_lists.last_surface_index16 + 1;
+		surface.count = face->numedges;
+		surface.origin_x = entity->origin[0];
+		surface.origin_y = entity->origin[1];
+		surface.origin_z = entity->origin[2];
+		auto texinfo = face->texinfo;
+		for (auto j = 0; j < 2; j++)
+		{
+			for (auto i = 0; i < 4; i++)
+			{
+				surface.vecs[j][i] = texinfo->vecs[j][i];
+			}
+			surface.texturemins[j] = face->texturemins[j];
+			surface.extents[j] = face->extents[j];
+		}
+		auto edge = entity->model->surfedges[face->firstedge];
 		auto new_size = d_lists.last_surface_index16 + 1 + face->numedges;
 		if (d_lists.surface_indices16.size() < new_size)
 		{
@@ -137,6 +128,41 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 	}
 	else
 	{
+		d_lists.last_surface32++;
+		if (d_lists.last_surface32 >= d_lists.surfaces32.size())
+		{
+			d_lists.surfaces32.emplace_back();
+		}
+		auto& surface = d_lists.surfaces32[d_lists.last_surface32];
+		surface.surface = face;
+		surface.entity = entity;
+		surface.vertexes = entity->model->vertexes;
+		surface.vertex_count = entity->model->numvertexes;
+		surface.created = (created ? 1: 0);
+		surface.width = cache->width;
+		surface.height = cache->height;
+		surface.size = surface.width * surface.height;
+		if (surface.size > surface.data.size())
+		{
+			surface.data.resize(surface.size);
+		}
+		memcpy(surface.data.data(), cache->data, surface.size);
+		surface.first_index = d_lists.last_surface_index32 + 1;
+		surface.count = face->numedges;
+		surface.origin_x = entity->origin[0];
+		surface.origin_y = entity->origin[1];
+		surface.origin_z = entity->origin[2];
+		auto texinfo = face->texinfo;
+		for (auto j = 0; j < 2; j++)
+		{
+			for (auto i = 0; i < 4; i++)
+			{
+				surface.vecs[j][i] = texinfo->vecs[j][i];
+			}
+			surface.texturemins[j] = face->texturemins[j];
+			surface.extents[j] = face->extents[j];
+		}
+		auto edge = entity->model->surfedges[face->firstedge];
 		auto new_size = d_lists.last_surface_index32 + 1 + face->numedges;
 		if (d_lists.surface_indices32.size() < new_size)
 		{

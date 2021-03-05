@@ -5,6 +5,9 @@
 #include "PipelineDescriptorResources.h"
 #include "UpdatablePipelineDescriptorResources.h"
 #include "CachedPipelineDescriptorResources.h"
+#include "vid_ovr.h"
+#include "d_lists.h"
+#include "LoadedTextureFromAllocation.h"
 
 struct View;
 
@@ -61,6 +64,7 @@ struct PerImage
 	void Reset(AppState& appState);
 	void LoadSurfaceVertexes(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier, void* vertexes, int vertexCount);
 	void LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier);
+	void GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedTextureFromAllocation& loadedTexture, VkDeviceSize& stagingBufferSize);
 	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, int floorSize);
 	void FillTextures(AppState& appState, Buffer* stagingBuffer);

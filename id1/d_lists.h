@@ -11,8 +11,7 @@ struct dsurface_t
 	int height;
 	int size;
 	std::vector<unsigned char> data;
-	int first_index16;
-	int first_index32;
+	int first_index;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -85,7 +84,8 @@ struct dskybox_t
 
 struct dlists_t
 {
-	int last_surface;
+	int last_surface16;
+	int last_surface32;
 	int last_sprite;
 	int last_turbulent;
 	int last_alias;
@@ -104,7 +104,8 @@ struct dlists_t
 	int last_colored_index16;
 	int last_colored_index32;
 	int clear_color;
-	std::vector<dsurface_t> surfaces;
+	std::vector<dsurface_t> surfaces16;
+	std::vector<dsurface_t> surfaces32;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dturbulent_t> turbulent;
 	std::vector<dalias_t> alias;

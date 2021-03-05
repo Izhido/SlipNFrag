@@ -1,5 +1,4 @@
 #define VK_USE_PLATFORM_ANDROID_KHR
-#include "vid_ovr.h"
 #include "VrApi_Helpers.h"
 #include "VulkanCallWrappers.h"
 #include <android/log.h>
@@ -16,7 +15,6 @@
 #include "Input.h"
 #include "in_ovr.h"
 #include "EngineThread.h"
-#include "d_lists.h"
 #include "Constants.h"
 #include "DirectRect.h"
 
@@ -1248,54 +1246,36 @@ void android_main(struct android_app* app)
 				appState.PreviousMode = appState.Mode;
 			}
 		}
-		for (auto entry = appState.Scene.surfaces.begin(); entry != appState.Scene.surfaces.end(); )
+		appState.Scene.surfacesToDelete.clear();
+		for (auto entry : appState.Scene.surfaces)
 		{
-			auto texture = entry->second;
-			if (texture->next == nullptr)
+			auto total = 0;
+			auto erased = 0;
+			for (TextureFromAllocation** t = &entry.second; *t != nullptr; )
 			{
-				texture->unusedCount++;
-				if (texture->unusedCount >= MAX_UNUSED_COUNT)
+				(*t)->unusedCount++;
+				if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
 				{
-					entry = appState.Scene.surfaces.erase(entry);
-					texture->Delete(appState);
-					delete texture;
+					TextureFromAllocation *next = (*t)->next;
+					(*t)->next = appState.Scene.oldSurfaces;
+					appState.Scene.oldSurfaces = *t;
+					*t = next;
+					erased++;
 				}
 				else
 				{
-					entry++;
+					t = &(*t)->next;
 				}
+				total++;
 			}
-			else
+			if (total == erased)
 			{
-				auto inCache = texture;
-				for (TextureFromAllocation** t = &texture; *t != nullptr; )
-				{
-					(*t)->unusedCount++;
-					if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
-					{
-						TextureFromAllocation* next = (*t)->next;
-						(*t)->Delete(appState);
-						delete *t;
-						*t = next;
-					}
-					else
-					{
-						t = &(*t)->next;
-					}
-				}
-				if (texture == nullptr)
-				{
-					entry = appState.Scene.surfaces.erase(entry);
-				}
-				else
-				{
-					if (inCache != texture)
-					{
-						entry->second = texture;
-					}
-					entry++;
-				}
+				appState.Scene.surfacesToDelete.push_back(entry.first);
 			}
+		}
+		for (auto entry : appState.Scene.surfacesToDelete)
+		{
+			appState.Scene.surfaces.erase(entry);
 		}
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.viewmodelTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.aliasTextures.oldTextures);

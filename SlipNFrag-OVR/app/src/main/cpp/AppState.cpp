@@ -1,7 +1,5 @@
 #include "AppState.h"
 #include "VulkanCallWrappers.h"
-#include "vid_ovr.h"
-#include "d_lists.h"
 #include "Constants.h"
 #include "VrApi_Helpers.h"
 #include <android/log.h>
