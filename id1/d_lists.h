@@ -40,8 +40,7 @@ struct dturbulent_t
 	int height;
 	int size;
 	unsigned char* data;
-	int first_index16;
-	int first_index32;
+	int first_index;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -87,7 +86,8 @@ struct dlists_t
 	int last_surface16;
 	int last_surface32;
 	int last_sprite;
-	int last_turbulent;
+	int last_turbulent16;
+	int last_turbulent32;
 	int last_alias;
 	int last_viewmodel;
 	int last_sky;
@@ -107,7 +107,8 @@ struct dlists_t
 	std::vector<dsurface_t> surfaces16;
 	std::vector<dsurface_t> surfaces32;
 	std::vector<dspritedata_t> sprites;
-	std::vector<dturbulent_t> turbulent;
+	std::vector<dturbulent_t> turbulent16;
+	std::vector<dturbulent_t> turbulent32;
 	std::vector<dalias_t> alias;
 	std::vector<dalias_t> viewmodels;
 	std::vector<dsky_t> sky;

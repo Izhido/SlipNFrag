@@ -81,7 +81,8 @@ struct Scene
 	std::vector<LoadedTextureFromAllocation> surface16List;
 	std::vector<LoadedTextureFromAllocation> surface32List;
 	std::vector<LoadedSharedMemoryTexture> spriteList;
-	std::vector<LoadedTexture> turbulentList;
+	std::vector<LoadedTexture> turbulent16List;
+	std::vector<LoadedTexture> turbulent32List;
 	std::vector<LoadedColormappedTexture> aliasList;
 	std::vector<LoadedColormappedTexture> viewmodelList;
 	std::vector<int> newVertices;

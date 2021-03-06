@@ -67,9 +67,19 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			previousVertexes = vertexes;
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_turbulent; i++)
+	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 	{
-		auto& turbulent = d_lists.turbulent[i];
+		auto& turbulent = d_lists.turbulent16[i];
+		auto vertexes = turbulent.vertexes;
+		if (previousVertexes != vertexes)
+		{
+			LoadSurfaceVertexes(appState, bufferMemoryBarrier, vertexes, turbulent.vertex_count);
+			previousVertexes = vertexes;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_turbulent32; i++)
+	{
+		auto& turbulent = d_lists.turbulent32[i];
 		auto vertexes = turbulent.vertexes;
 		if (previousVertexes != vertexes)
 		{
@@ -697,6 +707,58 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 	}
 }
 
+void PerImage::GetTurbulentStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTexture& loadedTexture, VkDeviceSize& stagingBufferSize)
+{
+	auto entry = appState.Scene.turbulentPerKey.find(turbulent.texture);
+	if (hostClearCount == host_clearcount && entry != appState.Scene.turbulentPerKey.end())
+	{
+		loadedTexture.offset = -1;
+		loadedTexture.texture = entry->second;
+		entry->second->unusedCount = 0;
+	}
+	else if (hostClearCount == host_clearcount)
+	{
+		Texture* texture = nullptr;
+		for (Texture** t = &this->turbulent.oldTextures; *t != nullptr; t = &(*t)->next)
+		{
+			if ((*t)->key == turbulent.texture)
+			{
+				texture = *t;
+				*t = (*t)->next;
+				break;
+			}
+		}
+		if (texture == nullptr)
+		{
+			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
+			texture = new Texture();
+			texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->key = turbulent.texture;
+			loadedTexture.offset = stagingBufferSize;
+			stagingBufferSize += turbulent.size;
+		}
+		else
+		{
+			loadedTexture.offset = -1;
+		}
+		loadedTexture.texture = texture;
+		appState.Scene.turbulentPerKey.insert({ texture->key, texture });
+		this->turbulent.MoveToFront(texture);
+	}
+	else
+	{
+		auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
+		auto texture = new Texture();
+		texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		texture->key = turbulent.texture;
+		loadedTexture.offset = stagingBufferSize;
+		stagingBufferSize += turbulent.size;
+		this->turbulent.MoveToFront(texture);
+		loadedTexture.texture = texture;
+		appState.Scene.turbulentPerKey.insert({ texture->key, texture });
+	}
+}
+
 void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize)
 {
 	paletteOffset = -1;
@@ -764,62 +826,24 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			appState.Scene.spriteList[i].texture = entry->second;
 		}
 	}
-	if (d_lists.last_turbulent >= appState.Scene.turbulentList.size())
-	{
-		appState.Scene.turbulentList.resize(d_lists.last_turbulent + 1);
-	}
 	appState.Scene.turbulentPerKey.clear();
-	for (auto i = 0; i <= d_lists.last_turbulent; i++)
+	if (d_lists.last_turbulent16 >= appState.Scene.turbulent16List.size())
 	{
-		auto& turbulent = d_lists.turbulent[i];
-		auto entry = appState.Scene.turbulentPerKey.find(turbulent.texture);
-		if (hostClearCount == host_clearcount && entry != appState.Scene.turbulentPerKey.end())
-		{
-			appState.Scene.turbulentList[i].offset = -1;
-			appState.Scene.turbulentList[i].texture = entry->second;
-			entry->second->unusedCount = 0;
-		}
-		else if (hostClearCount == host_clearcount)
-		{
-			Texture* texture = nullptr;
-			for (Texture** t = &this->turbulent.oldTextures; *t != nullptr; t = &(*t)->next)
-			{
-				if ((*t)->key == turbulent.texture)
-				{
-					texture = *t;
-					*t = (*t)->next;
-					break;
-				}
-			}
-			if (texture == nullptr)
-			{
-				auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
-				texture = new Texture();
-				texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				texture->key = turbulent.texture;
-				appState.Scene.turbulentList[i].offset = stagingBufferSize;
-				stagingBufferSize += turbulent.size;
-			}
-			else
-			{
-				appState.Scene.turbulentList[i].offset = -1;
-			}
-			appState.Scene.turbulentList[i].texture = texture;
-			appState.Scene.turbulentPerKey.insert({ texture->key, texture });
-			this->turbulent.MoveToFront(texture);
-		}
-		else
-		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
-			auto texture = new Texture();
-			texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			texture->key = turbulent.texture;
-			appState.Scene.turbulentList[i].offset = stagingBufferSize;
-			stagingBufferSize += turbulent.size;
-			this->turbulent.MoveToFront(texture);
-			appState.Scene.turbulentList[i].texture = texture;
-			appState.Scene.turbulentPerKey.insert({ texture->key, texture });
-		}
+		appState.Scene.turbulent16List.resize(d_lists.last_turbulent16 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
+	{
+		auto& turbulent = d_lists.turbulent16[i];
+		GetTurbulentStagingBufferSize(appState, view, turbulent, appState.Scene.turbulent16List[i], stagingBufferSize);
+	}
+	if (d_lists.last_turbulent32 >= appState.Scene.turbulent32List.size())
+	{
+		appState.Scene.turbulent32List.resize(d_lists.last_turbulent32 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_turbulent32; i++)
+	{
+		auto& turbulent = d_lists.turbulent32[i];
+		GetTurbulentStagingBufferSize(appState, view, turbulent, appState.Scene.turbulent32List[i], stagingBufferSize);
 	}
 	if (d_lists.last_alias >= appState.Scene.aliasList.size())
 	{
@@ -965,11 +989,20 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 			offset += sprite.size;
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_turbulent; i++)
+	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 	{
-		if (appState.Scene.turbulentList[i].offset >= 0)
+		if (appState.Scene.turbulent16List[i].offset >= 0)
 		{
-			auto& turbulent = d_lists.turbulent[i];
+			auto& turbulent = d_lists.turbulent16[i];
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, turbulent.data, turbulent.size);
+			offset += turbulent.size;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_turbulent32; i++)
+	{
+		if (appState.Scene.turbulent32List[i].offset >= 0)
+		{
+			auto& turbulent = d_lists.turbulent32[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, turbulent.data, turbulent.size);
 			offset += turbulent.size;
 		}
@@ -1057,11 +1090,18 @@ void PerImage::FillTextures(AppState &appState, Buffer* stagingBuffer)
 			appState.Scene.spriteList[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.spriteList[i].offset, commandBuffer);
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_turbulent; i++)
+	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 	{
-		if (appState.Scene.turbulentList[i].offset >= 0)
+		if (appState.Scene.turbulent16List[i].offset >= 0)
 		{
-			appState.Scene.turbulentList[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.turbulentList[i].offset, commandBuffer);
+			appState.Scene.turbulent16List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.turbulent16List[i].offset, commandBuffer);
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_turbulent32; i++)
+	{
+		if (appState.Scene.turbulent32List[i].offset >= 0)
+		{
+			appState.Scene.turbulent32List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.turbulent32List[i].offset, commandBuffer);
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_alias; i++)
@@ -1222,14 +1262,14 @@ void PerImage::Render(AppState& appState)
 		descriptorPoolCreateInfo.poolSizeCount = 1;
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		writes[0].pImageInfo = textureInfo;
-		if (d_lists.last_surface16 < 0 && d_lists.last_surface32 < 0 && d_lists.last_turbulent < 0)
+		if (d_lists.last_surface16 < 0 && d_lists.last_surface32 < 0 && d_lists.last_turbulent16 < 0 && d_lists.last_turbulent32 < 0)
 		{
 			texturedResources.Delete(appState);
 		}
 		else
 		{
 			auto size = texturedResources.descriptorSets.size();
-			auto required = d_lists.last_surface16 + 1 + d_lists.last_surface32 + 1 + d_lists.last_turbulent + 1;
+			auto required = d_lists.last_surface16 + 1 + d_lists.last_surface32 + 1 + d_lists.last_turbulent16 + 1 + d_lists.last_turbulent32 + 1;
 			if (size < required || size > required * 2)
 			{
 				auto toCreate = std::max(16, required + required / 4);
@@ -1399,7 +1439,7 @@ void PerImage::Render(AppState& appState)
 				VC(appState.Device.vkCmdDraw(commandBuffer, sprite.count, 1, sprite.first_vertex, 0));
 			}
 		}
-		if (d_lists.last_turbulent >= 0)
+		if (d_lists.last_turbulent16 >= 0)
 		{
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline));
@@ -1408,93 +1448,89 @@ void PerImage::Render(AppState& appState)
 			pushConstants[12] = 0;
 			pushConstants[15] = (float)cl.time;
 			void* previousVertexes = nullptr;
-			if (indices16 != nullptr)
+			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
+			for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
-				for (auto i = 0; i <= d_lists.last_turbulent; i++)
+				auto& turbulent = d_lists.turbulent16[i];
+				if (previousVertexes != turbulent.vertexes)
 				{
-					auto& turbulent = d_lists.turbulent[i];
-					if (turbulent.first_index16 < 0)
-					{
-						continue;
-					}
-					if (previousVertexes != turbulent.vertexes)
-					{
-						auto vertexBuffer = appState.Scene.surfaceVerticesPerModel[turbulent.vertexes]->buffer;
-						VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
-						previousVertexes = turbulent.vertexes;
-					}
-					pushConstants[0] = turbulent.origin_x;
-					pushConstants[1] = turbulent.origin_y;
-					pushConstants[2] = turbulent.origin_z;
-					pushConstants[3] = turbulent.vecs[0][0];
-					pushConstants[4] = turbulent.vecs[0][1];
-					pushConstants[5] = turbulent.vecs[0][2];
-					pushConstants[6] = turbulent.vecs[0][3];
-					pushConstants[7] = turbulent.vecs[1][0];
-					pushConstants[8] = turbulent.vecs[1][1];
-					pushConstants[9] = turbulent.vecs[1][2];
-					pushConstants[10] = turbulent.vecs[1][3];
-					pushConstants[13] = turbulent.width;
-					pushConstants[14] = turbulent.height;
-					VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16 * sizeof(float), pushConstants));
-					auto texture = appState.Scene.turbulentList[i].texture;
-					if (texturedResources.bound[descriptorSetIndex] != texture)
-					{
-						textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = texturedResources.descriptorSets[descriptorSetIndex];
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						texturedResources.bound[descriptorSetIndex] = texture;
-					}
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-					descriptorSetIndex++;
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, turbulent.count, 1, turbulent.first_index16, 0, 0));
+					auto vertexBuffer = appState.Scene.surfaceVerticesPerModel[turbulent.vertexes]->buffer;
+					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
+					previousVertexes = turbulent.vertexes;
 				}
+				pushConstants[0] = turbulent.origin_x;
+				pushConstants[1] = turbulent.origin_y;
+				pushConstants[2] = turbulent.origin_z;
+				pushConstants[3] = turbulent.vecs[0][0];
+				pushConstants[4] = turbulent.vecs[0][1];
+				pushConstants[5] = turbulent.vecs[0][2];
+				pushConstants[6] = turbulent.vecs[0][3];
+				pushConstants[7] = turbulent.vecs[1][0];
+				pushConstants[8] = turbulent.vecs[1][1];
+				pushConstants[9] = turbulent.vecs[1][2];
+				pushConstants[10] = turbulent.vecs[1][3];
+				pushConstants[13] = turbulent.width;
+				pushConstants[14] = turbulent.height;
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16 * sizeof(float), pushConstants));
+				auto texture = appState.Scene.turbulent16List[i].texture;
+				if (texturedResources.bound[descriptorSetIndex] != texture)
+				{
+					textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
+					textureInfo[0].imageView = texture->view;
+					writes[0].dstSet = texturedResources.descriptorSets[descriptorSetIndex];
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+					texturedResources.bound[descriptorSetIndex] = texture;
+				}
+				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+				descriptorSetIndex++;
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, turbulent.count, 1, turbulent.first_index, 0, 0));
 			}
-			if (indices32 != nullptr)
+		}
+		if (d_lists.last_turbulent32 >= 0)
+		{
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
+			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline));
+			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+			pushConstants[11] = 0;
+			pushConstants[12] = 0;
+			pushConstants[15] = (float)cl.time;
+			void* previousVertexes = nullptr;
+			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+			for (auto i = 0; i <= d_lists.last_turbulent32; i++)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
-				for (auto i = 0; i <= d_lists.last_turbulent; i++)
+				auto& turbulent = d_lists.turbulent32[i];
+				if (previousVertexes != turbulent.vertexes)
 				{
-					auto& turbulent = d_lists.turbulent[i];
-					if (turbulent.first_index32 < 0)
-					{
-						continue;
-					}
-					if (previousVertexes != turbulent.vertexes)
-					{
-						auto vertexBuffer = appState.Scene.surfaceVerticesPerModel[turbulent.vertexes]->buffer;
-						VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
-						previousVertexes = turbulent.vertexes;
-					}
-					pushConstants[0] = turbulent.origin_x;
-					pushConstants[1] = turbulent.origin_y;
-					pushConstants[2] = turbulent.origin_z;
-					pushConstants[3] = turbulent.vecs[0][0];
-					pushConstants[4] = turbulent.vecs[0][1];
-					pushConstants[5] = turbulent.vecs[0][2];
-					pushConstants[6] = turbulent.vecs[0][3];
-					pushConstants[7] = turbulent.vecs[1][0];
-					pushConstants[8] = turbulent.vecs[1][1];
-					pushConstants[9] = turbulent.vecs[1][2];
-					pushConstants[10] = turbulent.vecs[1][3];
-					pushConstants[13] = turbulent.width;
-					pushConstants[14] = turbulent.height;
-					VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16 * sizeof(float), pushConstants));
-					auto texture = appState.Scene.turbulentList[i].texture;
-					if (texturedResources.bound[descriptorSetIndex] != texture)
-					{
-						textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = texturedResources.descriptorSets[descriptorSetIndex];
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						texturedResources.bound[descriptorSetIndex] = texture;
-					}
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-					descriptorSetIndex++;
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, turbulent.count, 1, turbulent.first_index32, 0, 0));
+					auto vertexBuffer = appState.Scene.surfaceVerticesPerModel[turbulent.vertexes]->buffer;
+					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
+					previousVertexes = turbulent.vertexes;
 				}
+				pushConstants[0] = turbulent.origin_x;
+				pushConstants[1] = turbulent.origin_y;
+				pushConstants[2] = turbulent.origin_z;
+				pushConstants[3] = turbulent.vecs[0][0];
+				pushConstants[4] = turbulent.vecs[0][1];
+				pushConstants[5] = turbulent.vecs[0][2];
+				pushConstants[6] = turbulent.vecs[0][3];
+				pushConstants[7] = turbulent.vecs[1][0];
+				pushConstants[8] = turbulent.vecs[1][1];
+				pushConstants[9] = turbulent.vecs[1][2];
+				pushConstants[10] = turbulent.vecs[1][3];
+				pushConstants[13] = turbulent.width;
+				pushConstants[14] = turbulent.height;
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16 * sizeof(float), pushConstants));
+				auto texture = appState.Scene.turbulent32List[i].texture;
+				if (texturedResources.bound[descriptorSetIndex] != texture)
+				{
+					textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
+					textureInfo[0].imageView = texture->view;
+					writes[0].dstSet = texturedResources.descriptorSets[descriptorSetIndex];
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+					texturedResources.bound[descriptorSetIndex] = texture;
+				}
+				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &texturedResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+				descriptorSetIndex++;
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, turbulent.count, 1, turbulent.first_index, 0, 0));
 			}
 		}
 		if (colormapCount == 0)
