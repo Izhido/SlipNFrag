@@ -637,8 +637,6 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 	}
 	R_ConcatTransforms (t2matrix, tmatrix, view_model.transform);
 	auto vertex = vertices;
-	auto texcoordsbase = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
-	auto texcoords = texcoordsbase;
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
 		// lighting
@@ -670,7 +668,6 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 		d_lists.last_colormapped_attribute++;
 		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
 		vertex++;
-		texcoords++;
 	}
 	view_model.count = mdl->numtris * 3;
 	if (is_index16)
