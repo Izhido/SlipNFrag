@@ -60,8 +60,7 @@ struct dalias_t
 	stvert_t* texture_coordinates;
 	int vertex_count;
 	int first_attribute;
-	int first_index16;
-	int first_index32;
+	int first_index;
 	int count;
 	float transform[3][4];
 };
@@ -88,8 +87,10 @@ struct dlists_t
 	int last_sprite;
 	int last_turbulent16;
 	int last_turbulent32;
-	int last_alias;
-	int last_viewmodel;
+	int last_alias16;
+	int last_alias32;
+	int last_viewmodel16;
+	int last_viewmodel32;
 	int last_sky;
     int last_skybox;
 	int last_surface_index16;
@@ -109,8 +110,10 @@ struct dlists_t
 	std::vector<dspritedata_t> sprites;
 	std::vector<dturbulent_t> turbulent16;
 	std::vector<dturbulent_t> turbulent32;
-	std::vector<dalias_t> alias;
-	std::vector<dalias_t> viewmodels;
+	std::vector<dalias_t> alias16;
+	std::vector<dalias_t> alias32;
+	std::vector<dalias_t> viewmodels16;
+	std::vector<dalias_t> viewmodels32;
 	std::vector<dsky_t> sky;
     std::vector<dskybox_t> skyboxes;
 	std::vector<uint16_t> surface_indices16;

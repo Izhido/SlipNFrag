@@ -141,47 +141,47 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		bufferMemoryBarrier.size = vertices->size;
 		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 	}
-	if (d_lists.last_alias >= 0 || d_lists.last_viewmodel >= 0)
+	if (d_lists.last_alias16 >= 0 || d_lists.last_alias32 >= 0 || d_lists.last_viewmodel16 >= 0 || d_lists.last_viewmodel32 >= 0)
 	{
-		if (d_lists.last_alias >= appState.Scene.aliasVerticesList.size())
+		if (d_lists.last_alias16 >= appState.Scene.aliasVertices16List.size())
 		{
-			appState.Scene.aliasVerticesList.resize(d_lists.last_alias + 1);
-			appState.Scene.aliasTexCoordsList.resize(d_lists.last_alias + 1);
+			appState.Scene.aliasVertices16List.resize(d_lists.last_alias16 + 1);
+			appState.Scene.aliasTexCoords16List.resize(d_lists.last_alias16 + 1);
 		}
 		appState.Scene.newVertices.clear();
 		appState.Scene.newTexCoords.clear();
 		VkDeviceSize verticesOffset = 0;
 		VkDeviceSize texCoordsOffset = 0;
-		for (auto i = 0; i <= d_lists.last_alias; i++)
+		for (auto i = 0; i <= d_lists.last_alias16; i++)
 		{
-			auto& alias = d_lists.alias[i];
+			auto& alias = d_lists.alias16[i];
 			auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(alias.vertices);
 			if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
 			{
 				auto lastIndex = appState.Scene.colormappedBufferList.size();
 				appState.Scene.colormappedBufferList.push_back({ verticesOffset });
-				auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ alias.vertices, lastIndex });
+				appState.Scene.colormappedVerticesPerKey.insert({ alias.vertices, lastIndex });
 				appState.Scene.newVertices.push_back(i);
-				appState.Scene.aliasVerticesList[i] = lastIndex;
+				appState.Scene.aliasVertices16List[i] = lastIndex;
 				verticesOffset += alias.vertex_count * 2 * 4 * sizeof(float);
 			}
 			else
 			{
-				appState.Scene.aliasVerticesList[i] = verticesEntry->second;
+				appState.Scene.aliasVertices16List[i] = verticesEntry->second;
 			}
 			auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(alias.texture_coordinates);
 			if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
 			{
 				auto lastIndex = appState.Scene.colormappedBufferList.size();
 				appState.Scene.colormappedBufferList.push_back({ texCoordsOffset });
-				auto newEntry = appState.Scene.colormappedTexCoordsPerKey.insert({ alias.texture_coordinates, lastIndex });
+				appState.Scene.colormappedTexCoordsPerKey.insert({ alias.texture_coordinates, lastIndex });
 				appState.Scene.newTexCoords.push_back(i);
-				appState.Scene.aliasTexCoordsList[i] = lastIndex;
+				appState.Scene.aliasTexCoords16List[i] = lastIndex;
 				texCoordsOffset += alias.vertex_count * 2 * 2 * sizeof(float);
 			}
 			else
 			{
-				appState.Scene.aliasTexCoordsList[i] = texCoordsEntry->second;
+				appState.Scene.aliasTexCoords16List[i] = texCoordsEntry->second;
 			}
 		}
 		if (verticesOffset > 0)
@@ -209,7 +209,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			auto mapped = (float*)buffer->mapped;
 			for (auto i : appState.Scene.newVertices)
 			{
-				auto& alias = d_lists.alias[i];
+				auto& alias = d_lists.alias16[i];
 				auto vertexFromModel = alias.vertices;
 				for (auto j = 0; j < alias.vertex_count; j++)
 				{
@@ -234,7 +234,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 					mapped++;
 					vertexFromModel++;
 				}
-				auto index = appState.Scene.aliasVerticesList[i];
+				auto index = appState.Scene.aliasVertices16List[i];
 				appState.Scene.colormappedBufferList[index].buffer = buffer;
 				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
 			}
@@ -272,7 +272,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			auto mapped = (float*)buffer->mapped;
 			for (auto i : appState.Scene.newTexCoords)
 			{
-				auto& alias = d_lists.alias[i];
+				auto& alias = d_lists.alias16[i];
 				auto texCoords = alias.texture_coordinates;
 				for (auto j = 0; j < alias.vertex_count; j++)
 				{
@@ -290,7 +290,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 					mapped++;
 					texCoords++;
 				}
-				auto index = appState.Scene.aliasTexCoordsList[i];
+				auto index = appState.Scene.aliasTexCoords16List[i];
 				appState.Scene.colormappedBufferList[index].buffer = buffer;
 				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
 			}
@@ -303,45 +303,50 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 			appState.Scene.usedInLatestColormappedBuffer += texCoordsOffset;
 		}
-		if (d_lists.last_viewmodel >= appState.Scene.viewmodelVerticesList.size())
+
+
+
+
+
+		if (d_lists.last_alias32 >= appState.Scene.aliasVertices32List.size())
 		{
-			appState.Scene.viewmodelVerticesList.resize(d_lists.last_viewmodel + 1);
-			appState.Scene.viewmodelTexCoordsList.resize(d_lists.last_viewmodel + 1);
+			appState.Scene.aliasVertices32List.resize(d_lists.last_alias32 + 1);
+			appState.Scene.aliasTexCoords32List.resize(d_lists.last_alias32 + 1);
 		}
 		appState.Scene.newVertices.clear();
 		appState.Scene.newTexCoords.clear();
 		verticesOffset = 0;
 		texCoordsOffset = 0;
-		for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+		for (auto i = 0; i <= d_lists.last_alias32; i++)
 		{
-			auto& viewmodel = d_lists.viewmodels[i];
-			auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(viewmodel.vertices);
+			auto& alias = d_lists.alias32[i];
+			auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(alias.vertices);
 			if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
 			{
 				auto lastIndex = appState.Scene.colormappedBufferList.size();
 				appState.Scene.colormappedBufferList.push_back({ verticesOffset });
-				auto newEntry = appState.Scene.colormappedVerticesPerKey.insert({ viewmodel.vertices, lastIndex });
+				appState.Scene.colormappedVerticesPerKey.insert({ alias.vertices, lastIndex });
 				appState.Scene.newVertices.push_back(i);
-				appState.Scene.viewmodelVerticesList[i] = lastIndex;
-				verticesOffset += viewmodel.vertex_count * 2 * 4 * sizeof(float);
+				appState.Scene.aliasVertices32List[i] = lastIndex;
+				verticesOffset += alias.vertex_count * 2 * 4 * sizeof(float);
 			}
 			else
 			{
-				appState.Scene.viewmodelVerticesList[i] = verticesEntry->second;
+				appState.Scene.aliasVertices32List[i] = verticesEntry->second;
 			}
-			auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(viewmodel.texture_coordinates);
+			auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(alias.texture_coordinates);
 			if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
 			{
 				auto lastIndex = appState.Scene.colormappedBufferList.size();
 				appState.Scene.colormappedBufferList.push_back({ texCoordsOffset });
-				auto newEntry = appState.Scene.colormappedTexCoordsPerKey.insert({ viewmodel.texture_coordinates, lastIndex });
+				appState.Scene.colormappedTexCoordsPerKey.insert({ alias.texture_coordinates, lastIndex });
 				appState.Scene.newTexCoords.push_back(i);
-				appState.Scene.viewmodelTexCoordsList[i] = lastIndex;
-				texCoordsOffset += viewmodel.vertex_count * 2 * 2 * sizeof(float);
+				appState.Scene.aliasTexCoords32List[i] = lastIndex;
+				texCoordsOffset += alias.vertex_count * 2 * 2 * sizeof(float);
 			}
 			else
 			{
-				appState.Scene.viewmodelTexCoordsList[i] = texCoordsEntry->second;
+				appState.Scene.aliasTexCoords32List[i] = texCoordsEntry->second;
 			}
 		}
 		if (verticesOffset > 0)
@@ -369,9 +374,9 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			auto mapped = (float*)buffer->mapped;
 			for (auto i : appState.Scene.newVertices)
 			{
-				auto& viewmodel = d_lists.viewmodels[i];
-				auto vertexFromModel = viewmodel.vertices;
-				for (auto j = 0; j < viewmodel.vertex_count; j++)
+				auto& alias = d_lists.alias32[i];
+				auto vertexFromModel = alias.vertices;
+				for (auto j = 0; j < alias.vertex_count; j++)
 				{
 					auto x = (float)(vertexFromModel->v[0]);
 					auto y = (float)(vertexFromModel->v[1]);
@@ -394,7 +399,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 					mapped++;
 					vertexFromModel++;
 				}
-				auto index = appState.Scene.viewmodelVerticesList[i];
+				auto index = appState.Scene.aliasVertices32List[i];
 				appState.Scene.colormappedBufferList[index].buffer = buffer;
 				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
 			}
@@ -432,7 +437,172 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			auto mapped = (float*)buffer->mapped;
 			for (auto i : appState.Scene.newTexCoords)
 			{
-				auto& viewmodel = d_lists.viewmodels[i];
+				auto& alias = d_lists.alias32[i];
+				auto texCoords = alias.texture_coordinates;
+				for (auto j = 0; j < alias.vertex_count; j++)
+				{
+					auto s = (float)(texCoords->s >> 16);
+					auto t = (float)(texCoords->t >> 16);
+					s /= alias.width;
+					t /= alias.height;
+					(*mapped) = s;
+					mapped++;
+					(*mapped) = t;
+					mapped++;
+					(*mapped) = s + 0.5;
+					mapped++;
+					(*mapped) = t;
+					mapped++;
+					texCoords++;
+				}
+				auto index = appState.Scene.aliasTexCoords32List[i];
+				appState.Scene.colormappedBufferList[index].buffer = buffer;
+				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+			buffer->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+			bufferMemoryBarrier.buffer = buffer->buffer;
+			bufferMemoryBarrier.size = buffer->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			appState.Scene.usedInLatestColormappedBuffer += texCoordsOffset;
+		}
+
+
+
+
+
+		if (d_lists.last_viewmodel16 >= appState.Scene.viewmodelVertices16List.size())
+		{
+			appState.Scene.viewmodelVertices16List.resize(d_lists.last_viewmodel16 + 1);
+			appState.Scene.viewmodelTexCoords16List.resize(d_lists.last_viewmodel16 + 1);
+		}
+		appState.Scene.newVertices.clear();
+		appState.Scene.newTexCoords.clear();
+		verticesOffset = 0;
+		texCoordsOffset = 0;
+		for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
+		{
+			auto& viewmodel = d_lists.viewmodels16[i];
+			auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(viewmodel.vertices);
+			if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
+			{
+				auto lastIndex = appState.Scene.colormappedBufferList.size();
+				appState.Scene.colormappedBufferList.push_back({ verticesOffset });
+				appState.Scene.colormappedVerticesPerKey.insert({ viewmodel.vertices, lastIndex });
+				appState.Scene.newVertices.push_back(i);
+				appState.Scene.viewmodelVertices16List[i] = lastIndex;
+				verticesOffset += viewmodel.vertex_count * 2 * 4 * sizeof(float);
+			}
+			else
+			{
+				appState.Scene.viewmodelVertices16List[i] = verticesEntry->second;
+			}
+			auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(viewmodel.texture_coordinates);
+			if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
+			{
+				auto lastIndex = appState.Scene.colormappedBufferList.size();
+				appState.Scene.colormappedBufferList.push_back({ texCoordsOffset });
+				appState.Scene.colormappedTexCoordsPerKey.insert({ viewmodel.texture_coordinates, lastIndex });
+				appState.Scene.newTexCoords.push_back(i);
+				appState.Scene.viewmodelTexCoords16List[i] = lastIndex;
+				texCoordsOffset += viewmodel.vertex_count * 2 * 2 * sizeof(float);
+			}
+			else
+			{
+				appState.Scene.viewmodelTexCoords16List[i] = texCoordsEntry->second;
+			}
+		}
+		if (verticesOffset > 0)
+		{
+			Buffer* buffer;
+			if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MEMORY_BLOCK_SIZE)
+			{
+				VkDeviceSize size = MEMORY_BLOCK_SIZE;
+				if (size < verticesOffset)
+				{
+					size = verticesOffset;
+				}
+				buffer = new Buffer();
+				buffer->CreateVertexBuffer(appState, size);
+				appState.Scene.colormappedBuffers.MoveToFront(buffer);
+				appState.Scene.latestColormappedBuffer = buffer;
+				appState.Scene.usedInLatestColormappedBuffer = 0;
+			}
+			else
+			{
+				buffer = appState.Scene.latestColormappedBuffer;
+			}
+			appState.Scene.colormappedVerticesSize += verticesOffset;
+			VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, verticesOffset, 0, &buffer->mapped));
+			auto mapped = (float*)buffer->mapped;
+			for (auto i : appState.Scene.newVertices)
+			{
+				auto& viewmodel = d_lists.viewmodels16[i];
+				auto vertexFromModel = viewmodel.vertices;
+				for (auto j = 0; j < viewmodel.vertex_count; j++)
+				{
+					auto x = (float)(vertexFromModel->v[0]);
+					auto y = (float)(vertexFromModel->v[1]);
+					auto z = (float)(vertexFromModel->v[2]);
+					(*mapped) = x;
+					mapped++;
+					(*mapped) = z;
+					mapped++;
+					(*mapped) = -y;
+					mapped++;
+					(*mapped) = 1;
+					mapped++;
+					(*mapped) = x;
+					mapped++;
+					(*mapped) = z;
+					mapped++;
+					(*mapped) = -y;
+					mapped++;
+					(*mapped) = 1;
+					mapped++;
+					vertexFromModel++;
+				}
+				auto index = appState.Scene.viewmodelVertices16List[i];
+				appState.Scene.colormappedBufferList[index].buffer = buffer;
+				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+			buffer->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+			bufferMemoryBarrier.buffer = buffer->buffer;
+			bufferMemoryBarrier.size = buffer->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			appState.Scene.usedInLatestColormappedBuffer += verticesOffset;
+		}
+		if (texCoordsOffset > 0)
+		{
+			Buffer* buffer;
+			if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MEMORY_BLOCK_SIZE)
+			{
+				VkDeviceSize size = MEMORY_BLOCK_SIZE;
+				if (size < texCoordsOffset)
+				{
+					size = texCoordsOffset;
+				}
+				buffer = new Buffer();
+				buffer->CreateVertexBuffer(appState, size);
+				appState.Scene.colormappedBuffers.MoveToFront(buffer);
+				appState.Scene.latestColormappedBuffer = buffer;
+				appState.Scene.usedInLatestColormappedBuffer = 0;
+			}
+			else
+			{
+				buffer = appState.Scene.latestColormappedBuffer;
+			}
+			appState.Scene.colormappedTexCoordsSize += texCoordsOffset;
+			VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, texCoordsOffset, 0, &buffer->mapped));
+			auto mapped = (float*)buffer->mapped;
+			for (auto i : appState.Scene.newTexCoords)
+			{
+				auto& viewmodel = d_lists.viewmodels16[i];
 				auto texCoords = viewmodel.texture_coordinates;
 				for (auto j = 0; j < viewmodel.vertex_count; j++)
 				{
@@ -450,7 +620,172 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 					mapped++;
 					texCoords++;
 				}
-				auto index = appState.Scene.viewmodelTexCoordsList[i];
+				auto index = appState.Scene.viewmodelTexCoords16List[i];
+				appState.Scene.colormappedBufferList[index].buffer = buffer;
+				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+			buffer->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+			bufferMemoryBarrier.buffer = buffer->buffer;
+			bufferMemoryBarrier.size = buffer->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			appState.Scene.usedInLatestColormappedBuffer += texCoordsOffset;
+		}
+
+
+
+
+
+		if (d_lists.last_viewmodel32 >= appState.Scene.viewmodelVertices32List.size())
+		{
+			appState.Scene.viewmodelVertices32List.resize(d_lists.last_viewmodel32 + 1);
+			appState.Scene.viewmodelTexCoords32List.resize(d_lists.last_viewmodel32 + 1);
+		}
+		appState.Scene.newVertices.clear();
+		appState.Scene.newTexCoords.clear();
+		verticesOffset = 0;
+		texCoordsOffset = 0;
+		for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
+		{
+			auto& viewmodel = d_lists.viewmodels32[i];
+			auto verticesEntry = appState.Scene.colormappedVerticesPerKey.find(viewmodel.vertices);
+			if (verticesEntry == appState.Scene.colormappedVerticesPerKey.end())
+			{
+				auto lastIndex = appState.Scene.colormappedBufferList.size();
+				appState.Scene.colormappedBufferList.push_back({ verticesOffset });
+				appState.Scene.colormappedVerticesPerKey.insert({ viewmodel.vertices, lastIndex });
+				appState.Scene.newVertices.push_back(i);
+				appState.Scene.viewmodelVertices32List[i] = lastIndex;
+				verticesOffset += viewmodel.vertex_count * 2 * 4 * sizeof(float);
+			}
+			else
+			{
+				appState.Scene.viewmodelVertices32List[i] = verticesEntry->second;
+			}
+			auto texCoordsEntry = appState.Scene.colormappedTexCoordsPerKey.find(viewmodel.texture_coordinates);
+			if (texCoordsEntry == appState.Scene.colormappedTexCoordsPerKey.end())
+			{
+				auto lastIndex = appState.Scene.colormappedBufferList.size();
+				appState.Scene.colormappedBufferList.push_back({ texCoordsOffset });
+				appState.Scene.colormappedTexCoordsPerKey.insert({ viewmodel.texture_coordinates, lastIndex });
+				appState.Scene.newTexCoords.push_back(i);
+				appState.Scene.viewmodelTexCoords32List[i] = lastIndex;
+				texCoordsOffset += viewmodel.vertex_count * 2 * 2 * sizeof(float);
+			}
+			else
+			{
+				appState.Scene.viewmodelTexCoords32List[i] = texCoordsEntry->second;
+			}
+		}
+		if (verticesOffset > 0)
+		{
+			Buffer* buffer;
+			if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + verticesOffset > MEMORY_BLOCK_SIZE)
+			{
+				VkDeviceSize size = MEMORY_BLOCK_SIZE;
+				if (size < verticesOffset)
+				{
+					size = verticesOffset;
+				}
+				buffer = new Buffer();
+				buffer->CreateVertexBuffer(appState, size);
+				appState.Scene.colormappedBuffers.MoveToFront(buffer);
+				appState.Scene.latestColormappedBuffer = buffer;
+				appState.Scene.usedInLatestColormappedBuffer = 0;
+			}
+			else
+			{
+				buffer = appState.Scene.latestColormappedBuffer;
+			}
+			appState.Scene.colormappedVerticesSize += verticesOffset;
+			VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, verticesOffset, 0, &buffer->mapped));
+			auto mapped = (float*)buffer->mapped;
+			for (auto i : appState.Scene.newVertices)
+			{
+				auto& viewmodel = d_lists.viewmodels32[i];
+				auto vertexFromModel = viewmodel.vertices;
+				for (auto j = 0; j < viewmodel.vertex_count; j++)
+				{
+					auto x = (float)(vertexFromModel->v[0]);
+					auto y = (float)(vertexFromModel->v[1]);
+					auto z = (float)(vertexFromModel->v[2]);
+					(*mapped) = x;
+					mapped++;
+					(*mapped) = z;
+					mapped++;
+					(*mapped) = -y;
+					mapped++;
+					(*mapped) = 1;
+					mapped++;
+					(*mapped) = x;
+					mapped++;
+					(*mapped) = z;
+					mapped++;
+					(*mapped) = -y;
+					mapped++;
+					(*mapped) = 1;
+					mapped++;
+					vertexFromModel++;
+				}
+				auto index = appState.Scene.viewmodelVertices32List[i];
+				appState.Scene.colormappedBufferList[index].buffer = buffer;
+				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
+			}
+			VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
+			buffer->mapped = nullptr;
+			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+			bufferMemoryBarrier.buffer = buffer->buffer;
+			bufferMemoryBarrier.size = buffer->size;
+			VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			appState.Scene.usedInLatestColormappedBuffer += verticesOffset;
+		}
+		if (texCoordsOffset > 0)
+		{
+			Buffer* buffer;
+			if (appState.Scene.latestColormappedBuffer == nullptr || appState.Scene.usedInLatestColormappedBuffer + texCoordsOffset > MEMORY_BLOCK_SIZE)
+			{
+				VkDeviceSize size = MEMORY_BLOCK_SIZE;
+				if (size < texCoordsOffset)
+				{
+					size = texCoordsOffset;
+				}
+				buffer = new Buffer();
+				buffer->CreateVertexBuffer(appState, size);
+				appState.Scene.colormappedBuffers.MoveToFront(buffer);
+				appState.Scene.latestColormappedBuffer = buffer;
+				appState.Scene.usedInLatestColormappedBuffer = 0;
+			}
+			else
+			{
+				buffer = appState.Scene.latestColormappedBuffer;
+			}
+			appState.Scene.colormappedTexCoordsSize += texCoordsOffset;
+			VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, texCoordsOffset, 0, &buffer->mapped));
+			auto mapped = (float*)buffer->mapped;
+			for (auto i : appState.Scene.newTexCoords)
+			{
+				auto& viewmodel = d_lists.viewmodels32[i];
+				auto texCoords = viewmodel.texture_coordinates;
+				for (auto j = 0; j < viewmodel.vertex_count; j++)
+				{
+					auto s = (float)(texCoords->s >> 16);
+					auto t = (float)(texCoords->t >> 16);
+					s /= viewmodel.width;
+					t /= viewmodel.height;
+					(*mapped) = s;
+					mapped++;
+					(*mapped) = t;
+					mapped++;
+					(*mapped) = s + 0.5;
+					mapped++;
+					(*mapped) = t;
+					mapped++;
+					texCoords++;
+				}
+				auto index = appState.Scene.viewmodelTexCoords32List[i];
 				appState.Scene.colormappedBufferList[index].buffer = buffer;
 				appState.Scene.colormappedBufferList[index].offset += appState.Scene.usedInLatestColormappedBuffer;
 			}
@@ -845,13 +1180,13 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 		auto& turbulent = d_lists.turbulent32[i];
 		GetTurbulentStagingBufferSize(appState, view, turbulent, appState.Scene.turbulent32List[i], stagingBufferSize);
 	}
-	if (d_lists.last_alias >= appState.Scene.aliasList.size())
+	if (d_lists.last_alias16 >= appState.Scene.alias16List.size())
 	{
-		appState.Scene.aliasList.resize(d_lists.last_alias + 1);
+		appState.Scene.alias16List.resize(d_lists.last_alias16 + 1);
 	}
-	for (auto i = 0; i <= d_lists.last_alias; i++)
+	for (auto i = 0; i <= d_lists.last_alias16; i++)
 	{
-		auto& alias = d_lists.alias[i];
+		auto& alias = d_lists.alias16[i];
 		auto entry = appState.Scene.aliasPerKey.find(alias.data);
 		if (entry == appState.Scene.aliasPerKey.end())
 		{
@@ -859,40 +1194,81 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.aliasList[i].texture.offset = stagingBufferSize;
+			appState.Scene.alias16List[i].texture.offset = stagingBufferSize;
 			stagingBufferSize += alias.size;
 			appState.Scene.aliasTextures.MoveToFront(texture);
 			appState.Scene.aliasTextureCount++;
 			appState.Scene.aliasPerKey.insert({ alias.data, texture });
-			appState.Scene.aliasList[i].texture.texture = texture;
+			appState.Scene.alias16List[i].texture.texture = texture;
 		}
 		else
 		{
-			appState.Scene.aliasList[i].texture.offset = -1;
-			appState.Scene.aliasList[i].texture.texture = entry->second;
+			appState.Scene.alias16List[i].texture.offset = -1;
+			appState.Scene.alias16List[i].texture.texture = entry->second;
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_alias; i++)
+	for (auto i = 0; i <= d_lists.last_alias16; i++)
 	{
-		auto& alias = d_lists.alias[i];
+		auto& alias = d_lists.alias16[i];
 		if (alias.is_host_colormap)
 		{
-			appState.Scene.aliasList[i].colormap.offset = -1;
-			appState.Scene.aliasList[i].colormap.texture = host_colormap;
+			appState.Scene.alias16List[i].colormap.offset = -1;
+			appState.Scene.alias16List[i].colormap.texture = host_colormap;
 		}
 		else
 		{
-			appState.Scene.aliasList[i].colormap.offset = stagingBufferSize;
+			appState.Scene.alias16List[i].colormap.offset = stagingBufferSize;
 			stagingBufferSize += 16384;
 		}
 	}
-	if (d_lists.last_viewmodel >= appState.Scene.viewmodelList.size())
+	if (d_lists.last_alias32 >= appState.Scene.alias32List.size())
 	{
-		appState.Scene.viewmodelList.resize(d_lists.last_viewmodel + 1);
+		appState.Scene.alias32List.resize(d_lists.last_alias32 + 1);
 	}
-	for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+	for (auto i = 0; i <= d_lists.last_alias32; i++)
 	{
-		auto& viewmodel = d_lists.viewmodels[i];
+		auto& alias = d_lists.alias32[i];
+		auto entry = appState.Scene.aliasPerKey.find(alias.data);
+		if (entry == appState.Scene.aliasPerKey.end())
+		{
+			SharedMemoryTexture* texture;
+			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
+			texture = new SharedMemoryTexture();
+			texture->Create(appState, commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			appState.Scene.alias32List[i].texture.offset = stagingBufferSize;
+			stagingBufferSize += alias.size;
+			appState.Scene.aliasTextures.MoveToFront(texture);
+			appState.Scene.aliasTextureCount++;
+			appState.Scene.aliasPerKey.insert({ alias.data, texture });
+			appState.Scene.alias32List[i].texture.texture = texture;
+		}
+		else
+		{
+			appState.Scene.alias32List[i].texture.offset = -1;
+			appState.Scene.alias32List[i].texture.texture = entry->second;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_alias32; i++)
+	{
+		auto& alias = d_lists.alias32[i];
+		if (alias.is_host_colormap)
+		{
+			appState.Scene.alias32List[i].colormap.offset = -1;
+			appState.Scene.alias32List[i].colormap.texture = host_colormap;
+		}
+		else
+		{
+			appState.Scene.alias32List[i].colormap.offset = stagingBufferSize;
+			stagingBufferSize += 16384;
+		}
+	}
+	if (d_lists.last_viewmodel16 >= appState.Scene.viewmodel16List.size())
+	{
+		appState.Scene.viewmodel16List.resize(d_lists.last_viewmodel16 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
+	{
+		auto& viewmodel = d_lists.viewmodels16[i];
 		auto entry = appState.Scene.viewmodelsPerKey.find(viewmodel.data);
 		if (entry == appState.Scene.viewmodelsPerKey.end())
 		{
@@ -900,30 +1276,71 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.viewmodelList[i].texture.offset = stagingBufferSize;
+			appState.Scene.viewmodel16List[i].texture.offset = stagingBufferSize;
 			stagingBufferSize += viewmodel.size;
 			appState.Scene.viewmodelTextures.MoveToFront(texture);
 			appState.Scene.viewmodelTextureCount++;
 			appState.Scene.viewmodelsPerKey.insert({ viewmodel.data, texture });
-			appState.Scene.viewmodelList[i].texture.texture = texture;
+			appState.Scene.viewmodel16List[i].texture.texture = texture;
 		}
 		else
 		{
-			appState.Scene.viewmodelList[i].texture.offset = -1;
-			appState.Scene.viewmodelList[i].texture.texture = entry->second;
+			appState.Scene.viewmodel16List[i].texture.offset = -1;
+			appState.Scene.viewmodel16List[i].texture.texture = entry->second;
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+	for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
 	{
-		auto& viewmodel = d_lists.viewmodels[i];
+		auto& viewmodel = d_lists.viewmodels16[i];
 		if (viewmodel.is_host_colormap)
 		{
-			appState.Scene.viewmodelList[i].colormap.offset = -1;
-			appState.Scene.viewmodelList[i].colormap.texture = host_colormap;
+			appState.Scene.viewmodel16List[i].colormap.offset = -1;
+			appState.Scene.viewmodel16List[i].colormap.texture = host_colormap;
 		}
 		else
 		{
-			appState.Scene.viewmodelList[i].colormap.offset = stagingBufferSize;
+			appState.Scene.viewmodel16List[i].colormap.offset = stagingBufferSize;
+			stagingBufferSize += 16384;
+		}
+	}
+	if (d_lists.last_viewmodel32 >= appState.Scene.viewmodel32List.size())
+	{
+		appState.Scene.viewmodel32List.resize(d_lists.last_viewmodel32 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
+	{
+		auto& viewmodel = d_lists.viewmodels32[i];
+		auto entry = appState.Scene.viewmodelsPerKey.find(viewmodel.data);
+		if (entry == appState.Scene.viewmodelsPerKey.end())
+		{
+			SharedMemoryTexture* texture;
+			auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
+			texture = new SharedMemoryTexture();
+			texture->Create(appState, commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			appState.Scene.viewmodel32List[i].texture.offset = stagingBufferSize;
+			stagingBufferSize += viewmodel.size;
+			appState.Scene.viewmodelTextures.MoveToFront(texture);
+			appState.Scene.viewmodelTextureCount++;
+			appState.Scene.viewmodelsPerKey.insert({ viewmodel.data, texture });
+			appState.Scene.viewmodel32List[i].texture.texture = texture;
+		}
+		else
+		{
+			appState.Scene.viewmodel32List[i].texture.offset = -1;
+			appState.Scene.viewmodel32List[i].texture.texture = entry->second;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
+	{
+		auto& viewmodel = d_lists.viewmodels32[i];
+		if (viewmodel.is_host_colormap)
+		{
+			appState.Scene.viewmodel32List[i].colormap.offset = -1;
+			appState.Scene.viewmodel32List[i].colormap.texture = host_colormap;
+		}
+		else
+		{
+			appState.Scene.viewmodel32List[i].colormap.offset = stagingBufferSize;
 			stagingBufferSize += 16384;
 		}
 	}
@@ -1007,10 +1424,10 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 			offset += turbulent.size;
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_alias; i++)
+	for (auto i = 0; i <= d_lists.last_alias16; i++)
 	{
-		auto& alias = d_lists.alias[i];
-		if (appState.Scene.aliasList[i].texture.offset >= 0)
+		auto& alias = d_lists.alias16[i];
+		if (appState.Scene.alias16List[i].texture.offset >= 0)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.data, alias.size);
 			offset += alias.size;
@@ -1021,10 +1438,38 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 			offset += 16384;
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+	for (auto i = 0; i <= d_lists.last_alias32; i++)
 	{
-		auto& viewmodel = d_lists.viewmodels[i];
-		if (appState.Scene.viewmodelList[i].texture.offset >= 0)
+		auto& alias = d_lists.alias32[i];
+		if (appState.Scene.alias32List[i].texture.offset >= 0)
+		{
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.data, alias.size);
+			offset += alias.size;
+		}
+		if (!alias.is_host_colormap)
+		{
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.colormap.data(), 16384);
+			offset += 16384;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
+	{
+		auto& viewmodel = d_lists.viewmodels16[i];
+		if (appState.Scene.viewmodel16List[i].texture.offset >= 0)
+		{
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, viewmodel.data, viewmodel.size);
+			offset += viewmodel.size;
+		}
+		if (!viewmodel.is_host_colormap)
+		{
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, viewmodel.colormap.data(), 16384);
+			offset += 16384;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
+	{
+		auto& viewmodel = d_lists.viewmodels32[i];
+		if (appState.Scene.viewmodel32List[i].texture.offset >= 0)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, viewmodel.data, viewmodel.size);
 			offset += viewmodel.size;
@@ -1104,12 +1549,12 @@ void PerImage::FillTextures(AppState &appState, Buffer* stagingBuffer)
 			appState.Scene.turbulent32List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.turbulent32List[i].offset, commandBuffer);
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_alias; i++)
+	for (auto i = 0; i <= d_lists.last_alias16; i++)
 	{
-		auto& alias = d_lists.alias[i];
-		if (appState.Scene.aliasList[i].texture.offset >= 0)
+		auto& alias = d_lists.alias16[i];
+		if (appState.Scene.alias16List[i].texture.offset >= 0)
 		{
-			appState.Scene.aliasList[i].texture.texture->FillMipmapped(appState, stagingBuffer, appState.Scene.aliasList[i].texture.offset, commandBuffer);
+			appState.Scene.alias16List[i].texture.texture->FillMipmapped(appState, stagingBuffer, appState.Scene.alias16List[i].texture.offset, commandBuffer);
 		}
 		if (!alias.is_host_colormap)
 		{
@@ -1124,18 +1569,44 @@ void PerImage::FillTextures(AppState &appState, Buffer* stagingBuffer)
 				texture = new Texture();
 				texture->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			}
-			texture->Fill(appState, stagingBuffer, appState.Scene.aliasList[i].colormap.offset, commandBuffer);
+			texture->Fill(appState, stagingBuffer, appState.Scene.alias16List[i].colormap.offset, commandBuffer);
 			colormaps.MoveToFront(texture);
-			appState.Scene.aliasList[i].colormap.texture = texture;
+			appState.Scene.alias16List[i].colormap.texture = texture;
 			colormapCount++;
 		}
 	}
-	for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+	for (auto i = 0; i <= d_lists.last_alias32; i++)
 	{
-		auto& viewmodel = d_lists.viewmodels[i];
-		if (appState.Scene.viewmodelList[i].texture.offset >= 0)
+		auto& alias = d_lists.alias32[i];
+		if (appState.Scene.alias32List[i].texture.offset >= 0)
 		{
-			appState.Scene.viewmodelList[i].texture.texture->FillMipmapped(appState, stagingBuffer, appState.Scene.viewmodelList[i].texture.offset, commandBuffer);
+			appState.Scene.alias32List[i].texture.texture->FillMipmapped(appState, stagingBuffer, appState.Scene.alias32List[i].texture.offset, commandBuffer);
+		}
+		if (!alias.is_host_colormap)
+		{
+			Texture* texture;
+			if (colormaps.oldTextures != nullptr)
+			{
+				texture = colormaps.oldTextures;
+				colormaps.oldTextures = texture->next;
+			}
+			else
+			{
+				texture = new Texture();
+				texture->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			}
+			texture->Fill(appState, stagingBuffer, appState.Scene.alias32List[i].colormap.offset, commandBuffer);
+			colormaps.MoveToFront(texture);
+			appState.Scene.alias32List[i].colormap.texture = texture;
+			colormapCount++;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
+	{
+		auto& viewmodel = d_lists.viewmodels16[i];
+		if (appState.Scene.viewmodel16List[i].texture.offset >= 0)
+		{
+			appState.Scene.viewmodel16List[i].texture.texture->FillMipmapped(appState, stagingBuffer, appState.Scene.viewmodel16List[i].texture.offset, commandBuffer);
 		}
 		if (!viewmodel.is_host_colormap)
 		{
@@ -1150,9 +1621,35 @@ void PerImage::FillTextures(AppState &appState, Buffer* stagingBuffer)
 				texture = new Texture();
 				texture->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			}
-			texture->Fill(appState, stagingBuffer, appState.Scene.viewmodelList[i].colormap.offset, commandBuffer);
+			texture->Fill(appState, stagingBuffer, appState.Scene.viewmodel16List[i].colormap.offset, commandBuffer);
 			colormaps.MoveToFront(texture);
-			appState.Scene.viewmodelList[i].colormap.texture = texture;
+			appState.Scene.viewmodel16List[i].colormap.texture = texture;
+			colormapCount++;
+		}
+	}
+	for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
+	{
+		auto& viewmodel = d_lists.viewmodels32[i];
+		if (appState.Scene.viewmodel32List[i].texture.offset >= 0)
+		{
+			appState.Scene.viewmodel32List[i].texture.texture->FillMipmapped(appState, stagingBuffer, appState.Scene.viewmodel32List[i].texture.offset, commandBuffer);
+		}
+		if (!viewmodel.is_host_colormap)
+		{
+			Texture* texture;
+			if (colormaps.oldTextures != nullptr)
+			{
+				texture = colormaps.oldTextures;
+				colormaps.oldTextures = texture->next;
+			}
+			else
+			{
+				texture = new Texture();
+				texture->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			}
+			texture->Fill(appState, stagingBuffer, appState.Scene.viewmodel32List[i].colormap.offset, commandBuffer);
+			colormaps.MoveToFront(texture);
+			appState.Scene.viewmodel32List[i].colormap.texture = texture;
 			colormapCount++;
 		}
 	}
@@ -1176,7 +1673,7 @@ void PerImage::FillTextures(AppState &appState, Buffer* stagingBuffer)
 
 void PerImage::Render(AppState& appState)
 {
-	if (d_lists.last_surface16 < 0 && d_lists.last_surface32 < 0 && appState.Scene.verticesSize == 0 && d_lists.last_alias < 0 && d_lists.last_viewmodel < 0)
+	if (d_lists.last_surface16 < 0 && d_lists.last_surface32 < 0 && appState.Scene.verticesSize == 0 && d_lists.last_alias16 < 0 && d_lists.last_alias32 < 0 && d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0)
 	{
 		return;
 	}
@@ -1587,7 +2084,7 @@ void PerImage::Render(AppState& appState)
 				aliasResources.created = true;
 			}
 		}
-		if (d_lists.last_alias >= 0)
+		if (d_lists.last_alias16 >= 0)
 		{
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 3, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipeline));
@@ -1596,145 +2093,141 @@ void PerImage::Render(AppState& appState)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			if (indices16 != nullptr)
+			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
+			for (auto i = 0; i <= d_lists.last_alias16; i++)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
-				for (auto i = 0; i <= d_lists.last_alias; i++)
+				auto& alias = d_lists.alias16[i];
+				auto index = appState.Scene.aliasVertices16List[i];
+				auto& vertices = appState.Scene.colormappedBufferList[index];
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
+				index = appState.Scene.aliasTexCoords16List[i];
+				auto& texCoords = appState.Scene.colormappedBufferList[index];
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
+				VkDeviceSize attributeOffset = colormappedAttributeBase + alias.first_attribute * sizeof(float);
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
+				pushConstants[0] = alias.transform[0][0];
+				pushConstants[1] = alias.transform[2][0];
+				pushConstants[2] = -alias.transform[1][0];
+				pushConstants[4] = alias.transform[0][2];
+				pushConstants[5] = alias.transform[2][2];
+				pushConstants[6] = -alias.transform[1][2];
+				pushConstants[8] = -alias.transform[0][1];
+				pushConstants[9] = -alias.transform[2][1];
+				pushConstants[10] = alias.transform[1][1];
+				pushConstants[12] = alias.transform[0][3];
+				pushConstants[13] = alias.transform[2][3];
+				pushConstants[14] = -alias.transform[1][3];
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants));
+				VkDescriptorSet descriptorSet;
+				auto texture = appState.Scene.alias16List[i].texture.texture;
+				auto entry = aliasResources.cache.find(texture);
+				if (entry == aliasResources.cache.end())
 				{
-					auto& alias = d_lists.alias[i];
-					if (alias.first_index16 < 0)
-					{
-						continue;
-					}
-					auto index = appState.Scene.aliasVerticesList[i];
-					auto& vertices = appState.Scene.colormappedBufferList[index];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
-					index = appState.Scene.aliasTexCoordsList[i];
-					auto& texCoords = appState.Scene.colormappedBufferList[index];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
-					VkDeviceSize attributeOffset = colormappedAttributeBase + alias.first_attribute * sizeof(float);
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-					pushConstants[0] = alias.transform[0][0];
-					pushConstants[1] = alias.transform[2][0];
-					pushConstants[2] = -alias.transform[1][0];
-					pushConstants[4] = alias.transform[0][2];
-					pushConstants[5] = alias.transform[2][2];
-					pushConstants[6] = -alias.transform[1][2];
-					pushConstants[8] = -alias.transform[0][1];
-					pushConstants[9] = -alias.transform[2][1];
-					pushConstants[10] = alias.transform[1][1];
-					pushConstants[12] = alias.transform[0][3];
-					pushConstants[13] = alias.transform[2][3];
-					pushConstants[14] = -alias.transform[1][3];
-					VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants));
-					VkDescriptorSet descriptorSet;
-					auto texture = appState.Scene.aliasList[i].texture.texture;
-					auto entry = aliasResources.cache.find(texture);
-					if (entry == aliasResources.cache.end())
-					{
-						descriptorSet = aliasResources.descriptorSets[aliasResources.index];
-						aliasResources.index++;
-						textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = descriptorSet;
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						aliasResources.cache.insert({ texture, descriptorSet });
-					}
-					else
-					{
-						descriptorSet = entry->second;
-					}
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					if (alias.is_host_colormap)
-					{
-						VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &host_colormapResources.descriptorSet, 0, nullptr));
-					}
-					else
-					{
-						auto colormap = appState.Scene.aliasList[i].colormap.texture;
-						if (colormapResources.bound[descriptorSetIndex] != colormap)
-						{
-							textureInfo[0].sampler = appState.Scene.samplers[colormap->mipCount];
-							textureInfo[0].imageView = colormap->view;
-							writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
-							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-							colormapResources.bound[descriptorSetIndex] = texture;
-						}
-						VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-						descriptorSetIndex++;
-					}
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, alias.count, 1, alias.first_index16, 0, 0));
+					descriptorSet = aliasResources.descriptorSets[aliasResources.index];
+					aliasResources.index++;
+					textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
+					textureInfo[0].imageView = texture->view;
+					writes[0].dstSet = descriptorSet;
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+					aliasResources.cache.insert({ texture, descriptorSet });
 				}
+				else
+				{
+					descriptorSet = entry->second;
+				}
+				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+				if (alias.is_host_colormap)
+				{
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &host_colormapResources.descriptorSet, 0, nullptr));
+				}
+				else
+				{
+					auto colormap = appState.Scene.alias16List[i].colormap.texture;
+					if (colormapResources.bound[descriptorSetIndex] != colormap)
+					{
+						textureInfo[0].sampler = appState.Scene.samplers[colormap->mipCount];
+						textureInfo[0].imageView = colormap->view;
+						writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
+						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						colormapResources.bound[descriptorSetIndex] = texture;
+					}
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+					descriptorSetIndex++;
+				}
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, alias.count, 1, alias.first_index, 0, 0));
 			}
-			if (indices32 != nullptr)
+		}
+		if (d_lists.last_alias32 >= 0)
+		{
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 3, 1, &attributes->buffer, &vertexTransformBase));
+			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipeline));
+			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+			pushConstants[3] = 0;
+			pushConstants[7] = 0;
+			pushConstants[11] = 0;
+			pushConstants[15] = 1;
+			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+			for (auto i = 0; i <= d_lists.last_alias32; i++)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
-				for (auto i = 0; i <= d_lists.last_alias; i++)
+				auto& alias = d_lists.alias32[i];
+				auto index = appState.Scene.aliasVertices32List[i];
+				auto& vertices = appState.Scene.colormappedBufferList[index];
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
+				index = appState.Scene.aliasTexCoords32List[i];
+				auto& texCoords = appState.Scene.colormappedBufferList[index];
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
+				VkDeviceSize attributeOffset = colormappedAttributeBase + alias.first_attribute * sizeof(float);
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
+				pushConstants[0] = alias.transform[0][0];
+				pushConstants[1] = alias.transform[2][0];
+				pushConstants[2] = -alias.transform[1][0];
+				pushConstants[4] = alias.transform[0][2];
+				pushConstants[5] = alias.transform[2][2];
+				pushConstants[6] = -alias.transform[1][2];
+				pushConstants[8] = -alias.transform[0][1];
+				pushConstants[9] = -alias.transform[2][1];
+				pushConstants[10] = alias.transform[1][1];
+				pushConstants[12] = alias.transform[0][3];
+				pushConstants[13] = alias.transform[2][3];
+				pushConstants[14] = -alias.transform[1][3];
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants));
+				VkDescriptorSet descriptorSet;
+				auto texture = appState.Scene.alias32List[i].texture.texture;
+				auto entry = aliasResources.cache.find(texture);
+				if (entry == aliasResources.cache.end())
 				{
-					auto& alias = d_lists.alias[i];
-					if (alias.first_index32 < 0)
-					{
-						continue;
-					}
-					auto index = appState.Scene.aliasVerticesList[i];
-					auto& vertices = appState.Scene.colormappedBufferList[index];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
-					index = appState.Scene.aliasTexCoordsList[i];
-					auto& texCoords = appState.Scene.colormappedBufferList[index];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
-					VkDeviceSize attributeOffset = colormappedAttributeBase + alias.first_attribute * sizeof(float);
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-					pushConstants[0] = alias.transform[0][0];
-					pushConstants[1] = alias.transform[2][0];
-					pushConstants[2] = -alias.transform[1][0];
-					pushConstants[4] = alias.transform[0][2];
-					pushConstants[5] = alias.transform[2][2];
-					pushConstants[6] = -alias.transform[1][2];
-					pushConstants[8] = -alias.transform[0][1];
-					pushConstants[9] = -alias.transform[2][1];
-					pushConstants[10] = alias.transform[1][1];
-					pushConstants[12] = alias.transform[0][3];
-					pushConstants[13] = alias.transform[2][3];
-					pushConstants[14] = -alias.transform[1][3];
-					VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants));
-					VkDescriptorSet descriptorSet;
-					auto texture = appState.Scene.aliasList[i].texture.texture;
-					auto entry = aliasResources.cache.find(texture);
-					if (entry == aliasResources.cache.end())
-					{
-						descriptorSet = aliasResources.descriptorSets[aliasResources.index];
-						aliasResources.index++;
-						textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = descriptorSet;
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						aliasResources.cache.insert({ texture, descriptorSet });
-					}
-					else
-					{
-						descriptorSet = entry->second;
-					}
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					if (alias.is_host_colormap)
-					{
-						VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &host_colormapResources.descriptorSet, 0, nullptr));
-					}
-					else
-					{
-						auto colormap = appState.Scene.aliasList[i].colormap.texture;
-						if (colormapResources.bound[descriptorSetIndex] != colormap)
-						{
-							textureInfo[0].sampler = appState.Scene.samplers[colormap->mipCount];
-							textureInfo[0].imageView = colormap->view;
-							writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
-							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-							colormapResources.bound[descriptorSetIndex] = texture;
-						}
-						VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-						descriptorSetIndex++;
-					}
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, alias.count, 1, alias.first_index32, 0, 0));
+					descriptorSet = aliasResources.descriptorSets[aliasResources.index];
+					aliasResources.index++;
+					textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
+					textureInfo[0].imageView = texture->view;
+					writes[0].dstSet = descriptorSet;
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+					aliasResources.cache.insert({ texture, descriptorSet });
 				}
+				else
+				{
+					descriptorSet = entry->second;
+				}
+				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+				if (alias.is_host_colormap)
+				{
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &host_colormapResources.descriptorSet, 0, nullptr));
+				}
+				else
+				{
+					auto colormap = appState.Scene.alias32List[i].colormap.texture;
+					if (colormapResources.bound[descriptorSetIndex] != colormap)
+					{
+						textureInfo[0].sampler = appState.Scene.samplers[colormap->mipCount];
+						textureInfo[0].imageView = colormap->view;
+						writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
+						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						colormapResources.bound[descriptorSetIndex] = texture;
+					}
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+					descriptorSetIndex++;
+				}
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, alias.count, 1, alias.first_index, 0, 0));
 			}
 		}
 		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || viewmodelResources.descriptorSets.size() < appState.Scene.viewmodelTextureCount)
@@ -1756,7 +2249,7 @@ void PerImage::Render(AppState& appState)
 				viewmodelResources.created = true;
 			}
 		}
-		if (d_lists.last_viewmodel >= 0)
+		if (d_lists.last_viewmodel16 >= 0)
 		{
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 3, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipeline));
@@ -1787,145 +2280,163 @@ void PerImage::Render(AppState& appState)
 				pushConstants[22] = 0;
 				pushConstants[23] = 0.7 + 0.3 * sin(cl.time * M_PI);
 			}
-			if (indices16 != nullptr)
+			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
+			for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
-				for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+				auto& viewmodel = d_lists.viewmodels16[i];
+				auto index = appState.Scene.viewmodelVertices16List[i];
+				auto& vertices = appState.Scene.colormappedBufferList[index];
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
+				index = appState.Scene.viewmodelTexCoords16List[i];
+				auto& texCoords = appState.Scene.colormappedBufferList[index];
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
+				VkDeviceSize attributeOffset = colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
+				pushConstants[0] = viewmodel.transform[0][0];
+				pushConstants[1] = viewmodel.transform[2][0];
+				pushConstants[2] = -viewmodel.transform[1][0];
+				pushConstants[4] = viewmodel.transform[0][2];
+				pushConstants[5] = viewmodel.transform[2][2];
+				pushConstants[6] = -viewmodel.transform[1][2];
+				pushConstants[8] = -viewmodel.transform[0][1];
+				pushConstants[9] = -viewmodel.transform[2][1];
+				pushConstants[10] = viewmodel.transform[1][1];
+				pushConstants[12] = viewmodel.transform[0][3];
+				pushConstants[13] = viewmodel.transform[2][3];
+				pushConstants[14] = -viewmodel.transform[1][3];
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants));
+				VkDescriptorSet descriptorSet;
+				auto texture = appState.Scene.viewmodel16List[i].texture.texture;
+				auto entry = viewmodelResources.cache.find(texture);
+				if (entry == viewmodelResources.cache.end())
 				{
-					auto& viewmodel = d_lists.viewmodels[i];
-					if (viewmodel.first_index16 < 0)
-					{
-						continue;
-					}
-					auto index = appState.Scene.viewmodelVerticesList[i];
-					auto& vertices = appState.Scene.colormappedBufferList[index];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
-					index = appState.Scene.viewmodelTexCoordsList[i];
-					auto& texCoords = appState.Scene.colormappedBufferList[index];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
-					VkDeviceSize attributeOffset = colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-					pushConstants[0] = viewmodel.transform[0][0];
-					pushConstants[1] = viewmodel.transform[2][0];
-					pushConstants[2] = -viewmodel.transform[1][0];
-					pushConstants[4] = viewmodel.transform[0][2];
-					pushConstants[5] = viewmodel.transform[2][2];
-					pushConstants[6] = -viewmodel.transform[1][2];
-					pushConstants[8] = -viewmodel.transform[0][1];
-					pushConstants[9] = -viewmodel.transform[2][1];
-					pushConstants[10] = viewmodel.transform[1][1];
-					pushConstants[12] = viewmodel.transform[0][3];
-					pushConstants[13] = viewmodel.transform[2][3];
-					pushConstants[14] = -viewmodel.transform[1][3];
-					VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants));
-					VkDescriptorSet descriptorSet;
-					auto texture = appState.Scene.viewmodelList[i].texture.texture;
-					auto entry = viewmodelResources.cache.find(texture);
-					if (entry == viewmodelResources.cache.end())
-					{
-						descriptorSet = viewmodelResources.descriptorSets[viewmodelResources.index];
-						viewmodelResources.index++;
-						textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = descriptorSet;
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						viewmodelResources.cache.insert({ texture, descriptorSet });
-					}
-					else
-					{
-						descriptorSet = entry->second;
-					}
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					if (viewmodel.is_host_colormap)
-					{
-						VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &host_colormapResources.descriptorSet, 0, nullptr));
-					}
-					else
-					{
-						auto colormap = appState.Scene.viewmodelList[i].colormap.texture;
-						if (colormapResources.bound[descriptorSetIndex] != colormap)
-						{
-							textureInfo[0].sampler = appState.Scene.samplers[colormap->mipCount];
-							textureInfo[0].imageView = colormap->view;
-							writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
-							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-							colormapResources.bound[descriptorSetIndex] = texture;
-						}
-						VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-						descriptorSetIndex++;
-					}
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, viewmodel.count, 1, viewmodel.first_index16, 0, 0));
+					descriptorSet = viewmodelResources.descriptorSets[viewmodelResources.index];
+					viewmodelResources.index++;
+					textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
+					textureInfo[0].imageView = texture->view;
+					writes[0].dstSet = descriptorSet;
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+					viewmodelResources.cache.insert({ texture, descriptorSet });
 				}
+				else
+				{
+					descriptorSet = entry->second;
+				}
+				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+				if (viewmodel.is_host_colormap)
+				{
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &host_colormapResources.descriptorSet, 0, nullptr));
+				}
+				else
+				{
+					auto colormap = appState.Scene.viewmodel16List[i].colormap.texture;
+					if (colormapResources.bound[descriptorSetIndex] != colormap)
+					{
+						textureInfo[0].sampler = appState.Scene.samplers[colormap->mipCount];
+						textureInfo[0].imageView = colormap->view;
+						writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
+						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						colormapResources.bound[descriptorSetIndex] = texture;
+					}
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+					descriptorSetIndex++;
+				}
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, viewmodel.count, 1, viewmodel.first_index, 0, 0));
 			}
-			if (indices32 != nullptr)
+		}
+		if (d_lists.last_viewmodel32 >= 0)
+		{
+			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 3, 1, &attributes->buffer, &vertexTransformBase));
+			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipeline));
+			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+			pushConstants[3] = 0;
+			pushConstants[7] = 0;
+			pushConstants[11] = 0;
+			pushConstants[15] = 1;
+			if (appState.NearViewModel)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
-				for (auto i = 0; i <= d_lists.last_viewmodel; i++)
+				pushConstants[16] = vpn[0] / appState.Scale;
+				pushConstants[17] = vpn[2] / appState.Scale;
+				pushConstants[18] = -vpn[1] / appState.Scale;
+				pushConstants[19] = 0;
+				pushConstants[20] = 1;
+				pushConstants[21] = 1;
+				pushConstants[22] = 1;
+				pushConstants[23] = 1;
+			}
+			else
+			{
+				pushConstants[16] = 1 / appState.Scale;
+				pushConstants[17] = 0;
+				pushConstants[18] = 0;
+				pushConstants[19] = 8;
+				pushConstants[20] = 1;
+				pushConstants[21] = 0;
+				pushConstants[22] = 0;
+				pushConstants[23] = 0.7 + 0.3 * sin(cl.time * M_PI);
+			}
+			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+			for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
+			{
+				auto& viewmodel = d_lists.viewmodels32[i];
+				auto index = appState.Scene.viewmodelVertices32List[i];
+				auto& vertices = appState.Scene.colormappedBufferList[index];
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
+				index = appState.Scene.viewmodelTexCoords32List[i];
+				auto& texCoords = appState.Scene.colormappedBufferList[index];
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
+				VkDeviceSize attributeOffset = colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
+				VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
+				pushConstants[0] = viewmodel.transform[0][0];
+				pushConstants[1] = viewmodel.transform[2][0];
+				pushConstants[2] = -viewmodel.transform[1][0];
+				pushConstants[4] = viewmodel.transform[0][2];
+				pushConstants[5] = viewmodel.transform[2][2];
+				pushConstants[6] = -viewmodel.transform[1][2];
+				pushConstants[8] = -viewmodel.transform[0][1];
+				pushConstants[9] = -viewmodel.transform[2][1];
+				pushConstants[10] = viewmodel.transform[1][1];
+				pushConstants[12] = viewmodel.transform[0][3];
+				pushConstants[13] = viewmodel.transform[2][3];
+				pushConstants[14] = -viewmodel.transform[1][3];
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants));
+				VkDescriptorSet descriptorSet;
+				auto texture = appState.Scene.viewmodel32List[i].texture.texture;
+				auto entry = viewmodelResources.cache.find(texture);
+				if (entry == viewmodelResources.cache.end())
 				{
-					auto& viewmodel = d_lists.viewmodels[i];
-					if (viewmodel.first_index32 < 0)
-					{
-						continue;
-					}
-					auto index = appState.Scene.viewmodelVerticesList[i];
-					auto& vertices = appState.Scene.colormappedBufferList[index];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer->buffer, &vertices.offset));
-					index = appState.Scene.viewmodelTexCoordsList[i];
-					auto& texCoords = appState.Scene.colormappedBufferList[index];
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords.buffer->buffer, &texCoords.offset));
-					VkDeviceSize attributeOffset = colormappedAttributeBase + viewmodel.first_attribute * sizeof(float);
-					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset));
-					pushConstants[0] = viewmodel.transform[0][0];
-					pushConstants[1] = viewmodel.transform[2][0];
-					pushConstants[2] = -viewmodel.transform[1][0];
-					pushConstants[4] = viewmodel.transform[0][2];
-					pushConstants[5] = viewmodel.transform[2][2];
-					pushConstants[6] = -viewmodel.transform[1][2];
-					pushConstants[8] = -viewmodel.transform[0][1];
-					pushConstants[9] = -viewmodel.transform[2][1];
-					pushConstants[10] = viewmodel.transform[1][1];
-					pushConstants[12] = viewmodel.transform[0][3];
-					pushConstants[13] = viewmodel.transform[2][3];
-					pushConstants[14] = -viewmodel.transform[1][3];
-					VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants));
-					VkDescriptorSet descriptorSet;
-					auto texture = appState.Scene.viewmodelList[i].texture.texture;
-					auto entry = viewmodelResources.cache.find(texture);
-					if (entry == viewmodelResources.cache.end())
-					{
-						descriptorSet = viewmodelResources.descriptorSets[viewmodelResources.index];
-						viewmodelResources.index++;
-						textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-						textureInfo[0].imageView = texture->view;
-						writes[0].dstSet = descriptorSet;
-						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-						viewmodelResources.cache.insert({ texture, descriptorSet });
-					}
-					else
-					{
-						descriptorSet = entry->second;
-					}
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					if (viewmodel.is_host_colormap)
-					{
-						VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &host_colormapResources.descriptorSet, 0, nullptr));
-					}
-					else
-					{
-						auto colormap = appState.Scene.viewmodelList[i].colormap.texture;
-						if (colormapResources.bound[descriptorSetIndex] != colormap)
-						{
-							textureInfo[0].sampler = appState.Scene.samplers[colormap->mipCount];
-							textureInfo[0].imageView = colormap->view;
-							writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
-							VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-							colormapResources.bound[descriptorSetIndex] = texture;
-						}
-						VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-						descriptorSetIndex++;
-					}
-					VC(appState.Device.vkCmdDrawIndexed(commandBuffer, viewmodel.count, 1, viewmodel.first_index32, 0, 0));
+					descriptorSet = viewmodelResources.descriptorSets[viewmodelResources.index];
+					viewmodelResources.index++;
+					textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
+					textureInfo[0].imageView = texture->view;
+					writes[0].dstSet = descriptorSet;
+					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+					viewmodelResources.cache.insert({ texture, descriptorSet });
 				}
+				else
+				{
+					descriptorSet = entry->second;
+				}
+				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+				if (viewmodel.is_host_colormap)
+				{
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &host_colormapResources.descriptorSet, 0, nullptr));
+				}
+				else
+				{
+					auto colormap = appState.Scene.viewmodel32List[i].colormap.texture;
+					if (colormapResources.bound[descriptorSetIndex] != colormap)
+					{
+						textureInfo[0].sampler = appState.Scene.samplers[colormap->mipCount];
+						textureInfo[0].imageView = colormap->view;
+						writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
+						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						colormapResources.bound[descriptorSetIndex] = texture;
+					}
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+					descriptorSetIndex++;
+				}
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, viewmodel.count, 1, viewmodel.first_index, 0, 0));
 			}
 		}
 		resetDescriptorSetsCount = appState.Scene.resetDescriptorSetsCount;

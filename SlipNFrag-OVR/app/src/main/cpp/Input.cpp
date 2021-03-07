@@ -270,12 +270,12 @@ void Input::Handle(AppState& appState)
 				}
 				if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
 				{
-					if (!appState.ControlsMessageClosed && appState.ControlsMessageDisplayed && (appState.NearViewModel || d_lists.last_viewmodel < 0))
+					if (!appState.ControlsMessageClosed && appState.ControlsMessageDisplayed && (appState.NearViewModel || (d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0)))
 					{
 						SCR_Interrupt();
 						appState.ControlsMessageClosed = true;
 					}
-					else if (appState.NearViewModel || d_lists.last_viewmodel < 0)
+					else if (appState.NearViewModel || (d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0))
 					{
 						AddCommandInput("+attack");
 					}
