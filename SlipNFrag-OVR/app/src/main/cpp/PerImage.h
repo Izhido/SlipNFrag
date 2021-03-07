@@ -9,6 +9,8 @@
 #include "d_lists.h"
 #include "LoadedTexture.h"
 #include "LoadedTextureFromAllocation.h"
+#include "LoadedSharedMemoryTexture.h"
+#include "LoadedColormappedTexture.h"
 
 struct View;
 
@@ -64,11 +66,16 @@ struct PerImage
 
 	void Reset(AppState& appState);
 	void LoadSurfaceVertexes(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier, void* vertexes, int vertexCount);
+	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords, VkBufferMemoryBarrier& bufferMemoryBarrier);
 	void LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier);
 	void GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedTextureFromAllocation& loadedTexture, VkDeviceSize& stagingBufferSize);
 	void GetTurbulentStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTexture& loadedTexture, VkDeviceSize& stagingBufferSize);
+	void GetAliasColormapStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
+	void GetAliasStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
+	void GetViewmodelStagingBufferSize(AppState& appState, int lastViewmodel, std::vector<dalias_t>& viewmodelList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, int floorSize);
+	void FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
 	void FillTextures(AppState& appState, Buffer* stagingBuffer);
 	void Render(AppState& appState);
 };

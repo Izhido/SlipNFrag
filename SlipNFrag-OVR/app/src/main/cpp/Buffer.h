@@ -19,4 +19,7 @@ struct Buffer
 	void CreateIndexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateStagingBuffer(AppState& appState, VkDeviceSize size);
 	void CreateStagingStorageBuffer(AppState& appState, VkDeviceSize size);
+	void Submit(AppState& appState, VkCommandBuffer commandBuffer, VkAccessFlags flags, VkBufferMemoryBarrier& bufferMemoryBarrier);
+	void SubmitVertexBuffer(AppState& appState, VkCommandBuffer commandBuffer, VkBufferMemoryBarrier& bufferMemoryBarrier);
+	void SubmitIndexBuffer(AppState& appState, VkCommandBuffer commandBuffer, VkBufferMemoryBarrier& bufferMemoryBarrier);
 };

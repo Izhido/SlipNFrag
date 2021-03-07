@@ -1499,11 +1499,7 @@ void android_main(struct android_app* app)
 			vertices->mapped = nullptr;
 			VkBufferMemoryBarrier bufferMemoryBarrier { };
 			bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			bufferMemoryBarrier.buffer = vertices->buffer;
-			bufferMemoryBarrier.size = vertices->size;
-			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			vertices->SubmitVertexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
 			Buffer* indices = nullptr;
 			if (perImage.indices.oldBuffers != nullptr)
 			{
@@ -1520,11 +1516,7 @@ void android_main(struct android_app* app)
 			memcpy(indices->mapped, appState.ConsoleIndices.data(), indices->size);
 			VC(appState.Device.vkUnmapMemory(appState.Device.device, indices->memory));
 			indices->mapped = nullptr;
-			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
-			bufferMemoryBarrier.buffer = indices->buffer;
-			bufferMemoryBarrier.size = indices->size;
-			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			indices->SubmitIndexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
 			auto stagingBufferSize = 0;
 			perImage.paletteOffset = -1;
 			if (perImage.palette == nullptr || perImage.paletteChanged != pal_changed)
