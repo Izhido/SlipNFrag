@@ -7,6 +7,7 @@ void CachedPipelineDescriptorResources::Delete(AppState& appState)
 	if (created)
 	{
 		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, descriptorPool, nullptr));
+		descriptorSetLayouts.clear();
 		descriptorSets.clear();
 		cache.clear();
 		index = 0;

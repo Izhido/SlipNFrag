@@ -1012,11 +1012,6 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 void Scene::ClearSizes()
 {
 	stagingBufferSize = 0;
-	texturedDescriptorSetCount = 0;
-	spriteDescriptorSetCount = 0;
-	colormapDescriptorSetCount = 0;
-	aliasDescriptorSetCount = 0;
-	viewmodelDescriptorSetCount = 0;
 	floorVerticesSize = 0;
 	texturedVerticesSize = 0;
 	coloredVerticesSize = 0;

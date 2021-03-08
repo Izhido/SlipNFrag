@@ -10,6 +10,7 @@ struct CachedPipelineDescriptorResources
 {
 	bool created;
 	VkDescriptorPool descriptorPool;
+	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	std::vector<VkDescriptorSet> descriptorSets;
 	std::unordered_map<void*, VkDescriptorSet> cache;
 	int index;

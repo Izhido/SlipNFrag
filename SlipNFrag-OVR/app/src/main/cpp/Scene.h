@@ -107,11 +107,6 @@ struct Scene
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	ovrTextureSwapChain* skybox;
 	VkDeviceSize stagingBufferSize;
-	VkDeviceSize texturedDescriptorSetCount;
-	VkDeviceSize spriteDescriptorSetCount;
-	VkDeviceSize colormapDescriptorSetCount;
-	VkDeviceSize aliasDescriptorSetCount;
-	VkDeviceSize viewmodelDescriptorSetCount;
 	VkDeviceSize floorVerticesSize;
 	VkDeviceSize texturedVerticesSize;
 	VkDeviceSize coloredVerticesSize;

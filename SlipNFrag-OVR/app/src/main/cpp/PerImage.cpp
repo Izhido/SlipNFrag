@@ -1154,28 +1154,23 @@ void PerImage::Render(AppState& appState)
 		{
 			auto size = texturedResources.descriptorSets.size();
 			auto required = d_lists.last_surface16 + 1 + d_lists.last_surface32 + 1 + d_lists.last_turbulent16 + 1 + d_lists.last_turbulent32 + 1;
-			if (size < required || size > required * 2)
+			if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || size < required || size > required * 2)
 			{
 				auto toCreate = std::max(16, required + required / 4);
 				if (toCreate != size)
 				{
-					appState.Scene.texturedDescriptorSetCount = toCreate;
-					if (texturedResources.created)
-					{
-						VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, texturedResources.descriptorPool, nullptr));
-					}
-					texturedResources.bound.clear();
+					texturedResources.Delete(appState);
 					poolSizes[0].descriptorCount = toCreate;
 					descriptorPoolCreateInfo.maxSets = toCreate;
 					VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &texturedResources.descriptorPool));
-					descriptorSetAllocateInfo.descriptorPool = texturedResources.descriptorPool;
-					descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+					texturedResources.descriptorSetLayouts.resize(toCreate);
 					texturedResources.descriptorSets.resize(toCreate);
 					texturedResources.bound.resize(toCreate);
-					for (auto i = 0; i < toCreate; i++)
-					{
-						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &texturedResources.descriptorSets[i]));
-					}
+					std::fill(texturedResources.descriptorSetLayouts.begin(), texturedResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
+					descriptorSetAllocateInfo.descriptorPool = texturedResources.descriptorPool;
+					descriptorSetAllocateInfo.descriptorSetCount = toCreate;
+					descriptorSetAllocateInfo.pSetLayouts = texturedResources.descriptorSetLayouts.data();
+					VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, texturedResources.descriptorSets.data()));
 					texturedResources.created = true;
 				}
 			}
@@ -1276,19 +1271,19 @@ void PerImage::Render(AppState& appState)
 		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || spriteResources.descriptorSets.size() < appState.Scene.spriteTextureCount)
 		{
 			spriteResources.Delete(appState);
-			appState.Scene.spriteDescriptorSetCount = appState.Scene.spriteTextureCount;
-			if (appState.Scene.spriteDescriptorSetCount > 0)
+			auto toCreate = appState.Scene.spriteTextureCount;
+			if (toCreate > 0)
 			{
-				poolSizes[0].descriptorCount = appState.Scene.spriteDescriptorSetCount;
-				descriptorPoolCreateInfo.maxSets = appState.Scene.spriteDescriptorSetCount;
+				poolSizes[0].descriptorCount = toCreate;
+				descriptorPoolCreateInfo.maxSets = toCreate;
 				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &spriteResources.descriptorPool));
+				spriteResources.descriptorSetLayouts.resize(toCreate);
+				spriteResources.descriptorSets.resize(toCreate);
+				std::fill(spriteResources.descriptorSetLayouts.begin(), spriteResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
 				descriptorSetAllocateInfo.descriptorPool = spriteResources.descriptorPool;
-				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
-				spriteResources.descriptorSets.resize(appState.Scene.spriteDescriptorSetCount);
-				for (auto i = 0; i < appState.Scene.spriteDescriptorSetCount; i++)
-				{
-					VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &spriteResources.descriptorSets[i]));
-				}
+				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
+				descriptorSetAllocateInfo.pSetLayouts = spriteResources.descriptorSetLayouts.data();
+				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, spriteResources.descriptorSets.data()));
 				spriteResources.created = true;
 			}
 		}
@@ -1430,23 +1425,18 @@ void PerImage::Render(AppState& appState)
 				auto toCreate = std::max(4, required + required / 4);
 				if (toCreate != size)
 				{
-					appState.Scene.colormapDescriptorSetCount = toCreate;
-					if (colormapResources.created)
-					{
-						VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, colormapResources.descriptorPool, nullptr));
-					}
-					texturedResources.bound.clear();
+					colormapResources.Delete(appState);
 					poolSizes[0].descriptorCount = toCreate;
 					descriptorPoolCreateInfo.maxSets = toCreate;
 					VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &colormapResources.descriptorPool));
-					descriptorSetAllocateInfo.descriptorPool = colormapResources.descriptorPool;
-					descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+					colormapResources.descriptorSetLayouts.resize(toCreate);
 					colormapResources.descriptorSets.resize(toCreate);
-					texturedResources.bound.resize(toCreate);
-					for (auto i = 0; i < toCreate; i++)
-					{
-						VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &colormapResources.descriptorSets[i]));
-					}
+					colormapResources.bound.resize(toCreate);
+					std::fill(colormapResources.descriptorSetLayouts.begin(), colormapResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
+					descriptorSetAllocateInfo.descriptorPool = colormapResources.descriptorPool;
+					descriptorSetAllocateInfo.descriptorSetCount = toCreate;
+					descriptorSetAllocateInfo.pSetLayouts = colormapResources.descriptorSetLayouts.data();
+					VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, colormapResources.descriptorSets.data()));
 					colormapResources.created = true;
 				}
 			}
@@ -1455,19 +1445,19 @@ void PerImage::Render(AppState& appState)
 		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || aliasResources.descriptorSets.size() < appState.Scene.aliasTextureCount)
 		{
 			aliasResources.Delete(appState);
-			appState.Scene.aliasDescriptorSetCount = appState.Scene.aliasTextureCount;
-			if (appState.Scene.aliasDescriptorSetCount > 0)
+			auto toCreate = appState.Scene.aliasTextureCount;
+			if (toCreate > 0)
 			{
-				poolSizes[0].descriptorCount = appState.Scene.aliasDescriptorSetCount;
-				descriptorPoolCreateInfo.maxSets = appState.Scene.aliasDescriptorSetCount;
+				poolSizes[0].descriptorCount = toCreate;
+				descriptorPoolCreateInfo.maxSets = toCreate;
 				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &aliasResources.descriptorPool));
+				aliasResources.descriptorSetLayouts.resize(toCreate);
+				aliasResources.descriptorSets.resize(toCreate);
+				std::fill(aliasResources.descriptorSetLayouts.begin(), aliasResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
 				descriptorSetAllocateInfo.descriptorPool = aliasResources.descriptorPool;
-				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
-				aliasResources.descriptorSets.resize(appState.Scene.aliasDescriptorSetCount);
-				for (auto i = 0; i < appState.Scene.aliasDescriptorSetCount; i++)
-				{
-					VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &aliasResources.descriptorSets[i]));
-				}
+				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
+				descriptorSetAllocateInfo.pSetLayouts = aliasResources.descriptorSetLayouts.data();
+				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, aliasResources.descriptorSets.data()));
 				aliasResources.created = true;
 			}
 		}
@@ -1620,19 +1610,19 @@ void PerImage::Render(AppState& appState)
 		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || viewmodelResources.descriptorSets.size() < appState.Scene.viewmodelTextureCount)
 		{
 			viewmodelResources.Delete(appState);
-			appState.Scene.viewmodelDescriptorSetCount = appState.Scene.viewmodelTextureCount;
-			if (appState.Scene.viewmodelDescriptorSetCount > 0)
+			auto toCreate = appState.Scene.viewmodelTextureCount;
+			if (toCreate > 0)
 			{
-				poolSizes[0].descriptorCount = appState.Scene.viewmodelDescriptorSetCount;
-				descriptorPoolCreateInfo.maxSets = appState.Scene.viewmodelDescriptorSetCount;
+				poolSizes[0].descriptorCount = toCreate;
+				descriptorPoolCreateInfo.maxSets = toCreate;
 				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &viewmodelResources.descriptorPool));
+				viewmodelResources.descriptorSetLayouts.resize(toCreate);
+				viewmodelResources.descriptorSets.resize(toCreate);
+				std::fill(viewmodelResources.descriptorSetLayouts.begin(), viewmodelResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
 				descriptorSetAllocateInfo.descriptorPool = viewmodelResources.descriptorPool;
-				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
-				viewmodelResources.descriptorSets.resize(appState.Scene.viewmodelDescriptorSetCount);
-				for (auto i = 0; i < appState.Scene.viewmodelDescriptorSetCount; i++)
-				{
-					VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &viewmodelResources.descriptorSets[i]));
-				}
+				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
+				descriptorSetAllocateInfo.pSetLayouts = viewmodelResources.descriptorSetLayouts.data();
+				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, viewmodelResources.descriptorSets.data()));
 				viewmodelResources.created = true;
 			}
 		}
@@ -1856,6 +1846,7 @@ void PerImage::Render(AppState& appState)
 			{
 				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &skyResources.descriptorPool));
 				descriptorSetAllocateInfo.descriptorPool = skyResources.descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
 				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &skyResources.descriptorSet));
 				textureInfo[0].sampler = appState.Scene.samplers[sky->mipCount];
@@ -1902,6 +1893,7 @@ void PerImage::Render(AppState& appState)
 			descriptorPoolCreateInfo.poolSizeCount = 1;
 			VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &floorResources.descriptorPool));
 			descriptorSetAllocateInfo.descriptorPool = floorResources.descriptorPool;
+			descriptorSetAllocateInfo.descriptorSetCount = 1;
 			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 			VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &floorResources.descriptorSet));
 			textureInfo[0].sampler = appState.Scene.samplers[appState.Scene.floorTexture->mipCount];
