@@ -115,7 +115,7 @@ void SCR_CenterPrint (char *str)
 	}
 }
 
-void SCR_InterruptableCenterPrint (char *str)
+void SCR_InterruptableCenterPrint (const char *str)
 {
 	if (scr_interrupted)
 	{

@@ -1,5 +1,4 @@
 #define VK_USE_PLATFORM_ANDROID_KHR
-#include "vid_ovr.h"
 #include "VrApi_Helpers.h"
 #include "VulkanCallWrappers.h"
 #include <android/log.h>
@@ -16,7 +15,6 @@
 #include "Input.h"
 #include "in_ovr.h"
 #include "EngineThread.h"
-#include "d_lists.h"
 #include "Constants.h"
 #include "DirectRect.h"
 
@@ -1248,59 +1246,64 @@ void android_main(struct android_app* app)
 				appState.PreviousMode = appState.Mode;
 			}
 		}
-		for (auto entry = appState.Scene.surfaces.begin(); entry != appState.Scene.surfaces.end(); )
+		appState.Scene.surfacesToDelete.clear();
+		for (auto entry : appState.Scene.surfaces)
 		{
-			auto texture = entry->second;
-			if (texture->next == nullptr)
+			auto total = 0;
+			auto erased = 0;
+			for (TextureFromAllocation** t = &entry.second; *t != nullptr; )
 			{
-				texture->unusedCount++;
-				if (texture->unusedCount >= MAX_UNUSED_COUNT)
+				(*t)->unusedCount++;
+				if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
 				{
-					entry = appState.Scene.surfaces.erase(entry);
-					texture->Delete(appState);
-					delete texture;
+					TextureFromAllocation *next = (*t)->next;
+					(*t)->next = appState.Scene.oldSurfaces;
+					appState.Scene.oldSurfaces = *t;
+					*t = next;
+					erased++;
 				}
 				else
 				{
-					entry++;
+					t = &(*t)->next;
 				}
+				total++;
 			}
-			else
+			if (total == erased)
 			{
-				auto inCache = texture;
-				for (TextureFromAllocation** t = &texture; *t != nullptr; )
-				{
-					(*t)->unusedCount++;
-					if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
-					{
-						TextureFromAllocation* next = (*t)->next;
-						(*t)->Delete(appState);
-						delete *t;
-						*t = next;
-					}
-					else
-					{
-						t = &(*t)->next;
-					}
-				}
-				if (texture == nullptr)
-				{
-					entry = appState.Scene.surfaces.erase(entry);
-				}
-				else
-				{
-					if (inCache != texture)
-					{
-						entry->second = texture;
-					}
-					entry++;
-				}
+				appState.Scene.surfacesToDelete.push_back(entry.first);
 			}
+		}
+		for (auto entry : appState.Scene.surfacesToDelete)
+		{
+			appState.Scene.surfaces.erase(entry);
 		}
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.viewmodelTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.aliasTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.spriteTextures.oldTextures);
 		TextureFromAllocation::DeleteOld(appState, &appState.Scene.oldSurfaces);
+		for (Buffer** b = &appState.Scene.oldSurfaceVerticesPerModel; *b != nullptr; )
+		{
+			(*b)->unusedCount++;
+			if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
+			{
+				Buffer* next = (*b)->next;
+				if ((*b)->mapped != nullptr)
+				{
+					VC(appState.Device.vkUnmapMemory(appState.Device.device, (*b)->memory));
+				}
+				VC(appState.Device.vkDestroyBuffer(appState.Device.device, (*b)->buffer, nullptr));
+				if ((*b)->memory != VK_NULL_HANDLE)
+				{
+					VC(appState.Device.vkFreeMemory(appState.Device.device, (*b)->memory, nullptr));
+				}
+				delete *b;
+				*b = next;
+			}
+			else
+			{
+				b = &(*b)->next;
+			}
+		}
 		appState.Scene.colormappedBuffers.DeleteOld(appState);
 		{
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
@@ -1496,11 +1499,7 @@ void android_main(struct android_app* app)
 			vertices->mapped = nullptr;
 			VkBufferMemoryBarrier bufferMemoryBarrier { };
 			bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			bufferMemoryBarrier.buffer = vertices->buffer;
-			bufferMemoryBarrier.size = vertices->size;
-			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			vertices->SubmitVertexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
 			Buffer* indices = nullptr;
 			if (perImage.indices.oldBuffers != nullptr)
 			{
@@ -1517,11 +1516,7 @@ void android_main(struct android_app* app)
 			memcpy(indices->mapped, appState.ConsoleIndices.data(), indices->size);
 			VC(appState.Device.vkUnmapMemory(appState.Device.device, indices->memory));
 			indices->mapped = nullptr;
-			bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-			bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
-			bufferMemoryBarrier.buffer = indices->buffer;
-			bufferMemoryBarrier.size = indices->size;
-			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+			indices->SubmitIndexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
 			auto stagingBufferSize = 0;
 			perImage.paletteOffset = -1;
 			if (perImage.palette == nullptr || perImage.paletteChanged != pal_changed)
@@ -1834,16 +1829,15 @@ void android_main(struct android_app* app)
 			}
 			if (appState.Scene.skybox != VK_NULL_HANDLE)
 			{
-				const auto centerEyeViewMatrix = vrapi_GetViewMatrixFromPose(&appState.Tracking.HeadPose.Pose);
+				const auto view = vrapi_GetViewMatrixFromPose(&appState.Tracking.HeadPose.Pose);
 				const auto rotation = ovrMatrix4f_CreateRotation(0, M_PI / 2, 0);
-				const auto rotatedEyeViewMatrix = ovrMatrix4f_Multiply(&centerEyeViewMatrix, &rotation);
-				const auto cubeMatrix = ovrMatrix4f_TanAngleMatrixForCubeMap(&rotatedEyeViewMatrix);
+				const auto scale = ovrMatrix4f_CreateScale(-1, 1, 1);
+				const auto matrix1 = ovrMatrix4f_Multiply(&view, &rotation);
+				const auto matrix2 = ovrMatrix4f_Multiply(&matrix1, &scale);
+				const auto cubeMatrix = ovrMatrix4f_TanAngleMatrixForCubeMap(&matrix2);
 				auto skyboxLayer = vrapi_DefaultLayerCube2();
 				skyboxLayer.HeadPose = appState.Tracking.HeadPose;
 				skyboxLayer.TexCoordsFromTanAngles = cubeMatrix;
-				skyboxLayer.Offset.x = 0;
-				skyboxLayer.Offset.y = 0;
-				skyboxLayer.Offset.z = 0;
 				for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 				{
 					skyboxLayer.Textures[i].ColorSwapChain = appState.Scene.skybox;
@@ -2080,7 +2074,6 @@ void android_main(struct android_app* app)
 			perImage.cachedIndices16.Delete(appState);
 			perImage.cachedAttributes.Delete(appState);
 			perImage.cachedVertices.Delete(appState);
-			perImage.cachedSurfaceVertices.Delete(appState);
 			perImage.sceneMatricesStagingBuffers.Delete(appState);
 		}
 	}

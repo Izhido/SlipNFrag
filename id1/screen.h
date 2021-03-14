@@ -28,7 +28,7 @@ void SCR_SizeUp (void);
 void SCR_SizeDown (void);
 void SCR_BringDownConsole (void);
 void SCR_CenterPrint (char *str);
-void SCR_InterruptableCenterPrint (char *str);
+void SCR_InterruptableCenterPrint (const char *str);
 void SCR_Interrupt ();
 
 void SCR_BeginLoadingPlaque (void);

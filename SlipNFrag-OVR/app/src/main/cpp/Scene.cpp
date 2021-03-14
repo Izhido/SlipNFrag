@@ -7,8 +7,6 @@
 #include "sys_ovr.h"
 #include "MemoryAllocateInfo.h"
 #include "stb_image.h"
-#include "vid_ovr.h"
-#include "d_lists.h"
 
 void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app)
 {
@@ -1014,12 +1012,6 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 void Scene::ClearSizes()
 {
 	stagingBufferSize = 0;
-	texturedDescriptorSetCount = 0;
-	spriteDescriptorSetCount = 0;
-	colormapDescriptorSetCount = 0;
-	aliasDescriptorSetCount = 0;
-	viewmodelDescriptorSetCount = 0;
-	surfaceVerticesSize = 0;
 	floorVerticesSize = 0;
 	texturedVerticesSize = 0;
 	coloredVerticesSize = 0;
@@ -1079,4 +1071,11 @@ void Scene::Reset()
 		vrapi_DestroyTextureSwapChain(skybox);
 		skybox = VK_NULL_HANDLE;
 	}
+	for (auto entry = surfaceVerticesPerModel.begin(); entry != surfaceVerticesPerModel.end(); entry++)
+	{
+		auto b = entry->second;
+		b->next = oldSurfaceVerticesPerModel;
+		oldSurfaceVerticesPerModel = b;
+	}
+	surfaceVerticesPerModel.clear();
 }

@@ -4,12 +4,14 @@ struct dsurface_t
 {
 	void* surface;
 	void* entity;
+	void* vertexes;
+	int vertex_count;
 	int created;
 	int width;
 	int height;
 	int size;
 	std::vector<unsigned char> data;
-	int first_vertex;
+	int first_index;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -31,12 +33,14 @@ struct dspritedata_t
 
 struct dturbulent_t
 {
+	void* vertexes;
+	int vertex_count;
 	void* texture;
 	int width;
 	int height;
 	int size;
 	unsigned char* data;
-	int first_vertex;
+	int first_index;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -56,8 +60,7 @@ struct dalias_t
 	stvert_t* texture_coordinates;
 	int vertex_count;
 	int first_attribute;
-	int first_index16;
-	int first_index32;
+	int first_index;
 	int count;
 	float transform[3][4];
 };
@@ -79,14 +82,19 @@ struct dskybox_t
 
 struct dlists_t
 {
-	int last_surface;
+	int last_surface16;
+	int last_surface32;
 	int last_sprite;
-	int last_turbulent;
-	int last_alias;
-	int last_viewmodel;
+	int last_turbulent16;
+	int last_turbulent32;
+	int last_alias16;
+	int last_alias32;
+	int last_viewmodel16;
+	int last_viewmodel32;
 	int last_sky;
     int last_skybox;
-    int last_surface_vertex;
+	int last_surface_index16;
+	int last_surface_index32;
 	int last_textured_vertex;
 	int last_textured_attribute;
 	int last_colormapped_attribute;
@@ -97,14 +105,19 @@ struct dlists_t
 	int last_colored_index16;
 	int last_colored_index32;
 	int clear_color;
-	std::vector<dsurface_t> surfaces;
+	std::vector<dsurface_t> surfaces16;
+	std::vector<dsurface_t> surfaces32;
 	std::vector<dspritedata_t> sprites;
-	std::vector<dturbulent_t> turbulent;
-	std::vector<dalias_t> alias;
-	std::vector<dalias_t> viewmodel;
+	std::vector<dturbulent_t> turbulent16;
+	std::vector<dturbulent_t> turbulent32;
+	std::vector<dalias_t> alias16;
+	std::vector<dalias_t> alias32;
+	std::vector<dalias_t> viewmodels16;
+	std::vector<dalias_t> viewmodels32;
 	std::vector<dsky_t> sky;
     std::vector<dskybox_t> skyboxes;
-	std::vector<float> surface_vertices;
+	std::vector<uint16_t> surface_indices16;
+	std::vector<uint32_t> surface_indices32;
 	std::vector<float> textured_vertices;
 	std::vector<float> textured_attributes;
 	std::vector<float> colormapped_attributes;

@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -17,14 +17,19 @@ extern vec3_t r_plightvec;
 
 void D_ResetLists ()
 {
-	d_lists.last_surface = -1;
+	d_lists.last_surface16 = -1;
+	d_lists.last_surface32 = -1;
 	d_lists.last_sprite = -1;
-	d_lists.last_turbulent = -1;
-	d_lists.last_alias = -1;
-	d_lists.last_viewmodel = -1;
+	d_lists.last_turbulent16 = -1;
+	d_lists.last_turbulent32 = -1;
+	d_lists.last_alias16 = -1;
+	d_lists.last_alias32 = -1;
+	d_lists.last_viewmodel16 = -1;
+	d_lists.last_viewmodel32 = -1;
 	d_lists.last_sky = -1;
     d_lists.last_skybox = -1;
-	d_lists.last_surface_vertex = -1;
+	d_lists.last_surface_index16 = -1;
+	d_lists.last_surface_index32 = -1;
 	d_lists.last_textured_vertex = -1;
 	d_lists.last_textured_attribute = -1;
 	d_lists.last_colormapped_attribute = -1;
@@ -37,68 +42,25 @@ void D_ResetLists ()
 	d_lists.clear_color = -1;
 }
 
-void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+void D_AddSurfaceIndices16ToLists (entity_t* entity, msurface_t* face)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
-	{
-		return;
-	}
-	d_lists.last_surface++;
-	if (d_lists.last_surface >= d_lists.surfaces.size())
-	{
-		d_lists.surfaces.emplace_back();
-	}
-	auto& surface = d_lists.surfaces[d_lists.last_surface];
-	surface.surface = face;
-	surface.entity = entity;
-	surface.created = (created ? 1: 0);
-	surface.width = cache->width;
-	surface.height = cache->height;
-	surface.size = surface.width * surface.height;
-	if (surface.size > surface.data.size())
-	{
-		surface.data.resize(surface.size);
-	}
-	memcpy(surface.data.data(), cache->data, surface.size);
-	surface.first_vertex = (d_lists.last_surface_vertex + 1) / 3;
-	surface.count = face->numedges;
-	surface.origin_x = entity->origin[0];
-	surface.origin_y = entity->origin[1];
-	surface.origin_z = entity->origin[2];
-	auto new_size = d_lists.last_surface_vertex + 1 + 3 * face->numedges;
-	if (d_lists.surface_vertices.size() < new_size)
-	{
-		d_lists.surface_vertices.resize(new_size);
-	}
-	auto texinfo = face->texinfo;
-	for (auto j = 0; j < 2; j++)
-	{
-		for (auto i = 0; i < 4; i++)
-		{
-			surface.vecs[j][i] = texinfo->vecs[j][i];
-		}
-		surface.texturemins[j] = face->texturemins[j];
-		surface.extents[j] = face->extents[j];
-	}
 	auto edge = entity->model->surfedges[face->firstedge];
-	mvertex_t* vertex;
+	auto new_size = d_lists.last_surface_index16 + 1 + face->numedges;
+	if (d_lists.surface_indices16.size() < new_size)
+	{
+		d_lists.surface_indices16.resize(new_size);
+	}
+	uint16_t index;
 	if (edge >= 0)
 	{
-		vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
+		index = entity->model->edges[edge].v[0];
 	}
 	else
 	{
-		vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
+		index = entity->model->edges[-edge].v[1];
 	}
-	auto x = vertex->position[0];
-	auto y = vertex->position[1];
-	auto z = vertex->position[2];
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
+	d_lists.last_surface_index16++;
+	d_lists.surface_indices16[d_lists.last_surface_index16] = index;
 	auto next_front = 0;
 	auto next_back = face->numedges;
 	auto use_back = false;
@@ -117,21 +79,146 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 		use_back = !use_back;
 		if (edge >= 0)
 		{
-			vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
+			index = entity->model->edges[edge].v[0];
 		}
 		else
 		{
-			vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
+			index = entity->model->edges[-edge].v[1];
 		}
-		x = vertex->position[0];
-		y = vertex->position[1];
-		z = vertex->position[2];
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
+		d_lists.last_surface_index16++;
+		d_lists.surface_indices16[d_lists.last_surface_index16] = index;
+	}
+}
+
+void D_AddSurfaceIndices32ToLists (entity_t* entity, msurface_t* face)
+{
+	auto edge = entity->model->surfedges[face->firstedge];
+	auto new_size = d_lists.last_surface_index32 + 1 + face->numedges;
+	if (d_lists.surface_indices32.size() < new_size)
+	{
+		d_lists.surface_indices32.resize(new_size);
+	}
+	uint32_t index;
+	if (edge >= 0)
+	{
+		index = entity->model->edges[edge].v[0];
+	}
+	else
+	{
+		index = entity->model->edges[-edge].v[1];
+	}
+	d_lists.last_surface_index32++;
+	d_lists.surface_indices32[d_lists.last_surface_index32] = index;
+	auto next_front = 0;
+	auto next_back = face->numedges;
+	auto use_back = false;
+	for (auto i = 1; i < face->numedges; i++)
+	{
+		if (use_back)
+		{
+			next_back--;
+			edge = entity->model->surfedges[face->firstedge + next_back];
+		}
+		else
+		{
+			next_front++;
+			edge = entity->model->surfedges[face->firstedge + next_front];
+		}
+		use_back = !use_back;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		d_lists.last_surface_index32++;
+		d_lists.surface_indices32[d_lists.last_surface_index32] = index;
+	}
+}
+
+void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	if (entity->model->numvertexes <= 65520)
+	{
+		d_lists.last_surface16++;
+		if (d_lists.last_surface16 >= d_lists.surfaces16.size())
+		{
+			d_lists.surfaces16.emplace_back();
+		}
+		auto& surface = d_lists.surfaces16[d_lists.last_surface16];
+		surface.surface = face;
+		surface.entity = entity;
+		surface.vertexes = entity->model->vertexes;
+		surface.vertex_count = entity->model->numvertexes;
+		surface.created = (created ? 1: 0);
+		surface.width = cache->width;
+		surface.height = cache->height;
+		surface.size = surface.width * surface.height;
+		if (surface.size > surface.data.size())
+		{
+			surface.data.resize(surface.size);
+		}
+		memcpy(surface.data.data(), cache->data, surface.size);
+		surface.first_index = d_lists.last_surface_index16 + 1;
+		surface.count = face->numedges;
+		surface.origin_x = entity->origin[0];
+		surface.origin_y = entity->origin[1];
+		surface.origin_z = entity->origin[2];
+		auto texinfo = face->texinfo;
+		for (auto j = 0; j < 2; j++)
+		{
+			for (auto i = 0; i < 4; i++)
+			{
+				surface.vecs[j][i] = texinfo->vecs[j][i];
+			}
+			surface.texturemins[j] = face->texturemins[j];
+			surface.extents[j] = face->extents[j];
+		}
+		D_AddSurfaceIndices16ToLists (entity, face);
+	}
+	else
+	{
+		d_lists.last_surface32++;
+		if (d_lists.last_surface32 >= d_lists.surfaces32.size())
+		{
+			d_lists.surfaces32.emplace_back();
+		}
+		auto& surface = d_lists.surfaces32[d_lists.last_surface32];
+		surface.surface = face;
+		surface.entity = entity;
+		surface.vertexes = entity->model->vertexes;
+		surface.vertex_count = entity->model->numvertexes;
+		surface.created = (created ? 1: 0);
+		surface.width = cache->width;
+		surface.height = cache->height;
+		surface.size = surface.width * surface.height;
+		if (surface.size > surface.data.size())
+		{
+			surface.data.resize(surface.size);
+		}
+		memcpy(surface.data.data(), cache->data, surface.size);
+		surface.first_index = d_lists.last_surface_index32 + 1;
+		surface.count = face->numedges;
+		surface.origin_x = entity->origin[0];
+		surface.origin_y = entity->origin[1];
+		surface.origin_z = entity->origin[2];
+		auto texinfo = face->texinfo;
+		for (auto j = 0; j < 2; j++)
+		{
+			for (auto i = 0; i < 4; i++)
+			{
+				surface.vecs[j][i] = texinfo->vecs[j][i];
+			}
+			surface.texturemins[j] = face->texturemins[j];
+			surface.extents[j] = face->extents[j];
+		}
+		D_AddSurfaceIndices32ToLists (entity, face);
 	}
 }
 
@@ -227,148 +314,127 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	{
 		return;
 	}
-	d_lists.last_turbulent++;
-	if (d_lists.last_turbulent >= d_lists.turbulent.size())
+	if (entity->model->numvertexes <= 65520)
 	{
-		d_lists.turbulent.emplace_back();
-	}
-	auto texinfo = face->texinfo;
-	auto texture = texinfo->texture;
-	auto& turbulent = d_lists.turbulent[d_lists.last_turbulent];
-	turbulent.texture = texture;
-	turbulent.width = texture->width;
-	turbulent.height = texture->height;
-	turbulent.size = turbulent.width * turbulent.height;
-	turbulent.data = (unsigned char*)texture + texture->offsets[0];
-	turbulent.first_vertex = (d_lists.last_surface_vertex + 1) / 3;
-	turbulent.count = face->numedges;
-	turbulent.origin_x = entity->origin[0];
-	turbulent.origin_y = entity->origin[1];
-	turbulent.origin_z = entity->origin[2];
-	for (auto j = 0; j < 2; j++)
-	{
-		for (auto i = 0; i < 4; i++)
+		d_lists.last_turbulent16++;
+		if (d_lists.last_turbulent16 >= d_lists.turbulent16.size())
 		{
-			turbulent.vecs[j][i] = texinfo->vecs[j][i];
+			d_lists.turbulent16.emplace_back();
 		}
-	}
-	auto new_size = d_lists.last_surface_vertex + 1 + 3 * face->numedges;
-	if (d_lists.surface_vertices.size() < new_size)
-	{
-		d_lists.surface_vertices.resize(new_size);
-	}
-	auto edge = entity->model->surfedges[face->firstedge];
-	mvertex_t* vertex;
-	if (edge >= 0)
-	{
-		vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
+		auto texinfo = face->texinfo;
+		auto texture = texinfo->texture;
+		auto& turbulent = d_lists.turbulent16[d_lists.last_turbulent16];
+		turbulent.vertexes = entity->model->vertexes;
+		turbulent.vertex_count = entity->model->numvertexes;
+		turbulent.texture = texture;
+		turbulent.width = texture->width;
+		turbulent.height = texture->height;
+		turbulent.size = turbulent.width * turbulent.height;
+		turbulent.data = (unsigned char*)texture + texture->offsets[0];
+		turbulent.first_index = d_lists.last_surface_index16 + 1;
+		turbulent.count = face->numedges;
+		turbulent.origin_x = entity->origin[0];
+		turbulent.origin_y = entity->origin[1];
+		turbulent.origin_z = entity->origin[2];
+		for (auto j = 0; j < 2; j++)
+		{
+			for (auto i = 0; i < 4; i++)
+			{
+				turbulent.vecs[j][i] = texinfo->vecs[j][i];
+			}
+		}
+		D_AddSurfaceIndices16ToLists (entity, face);
 	}
 	else
 	{
-		vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
-	}
-	auto x = vertex->position[0];
-	auto y = vertex->position[1];
-	auto z = vertex->position[2];
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
-	d_lists.last_surface_vertex++;
-	d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
-	auto next_front = 0;
-	auto next_back = face->numedges;
-	auto use_back = false;
-	for (auto i = 1; i < face->numedges; i++)
-	{
-		if (use_back)
+		d_lists.last_turbulent32++;
+		if (d_lists.last_turbulent32 >= d_lists.turbulent32.size())
 		{
-			next_back--;
-			edge = entity->model->surfedges[face->firstedge + next_back];
+			d_lists.turbulent32.emplace_back();
 		}
-		else
+		auto texinfo = face->texinfo;
+		auto texture = texinfo->texture;
+		auto& turbulent = d_lists.turbulent32[d_lists.last_turbulent32];
+		turbulent.vertexes = entity->model->vertexes;
+		turbulent.vertex_count = entity->model->numvertexes;
+		turbulent.texture = texture;
+		turbulent.width = texture->width;
+		turbulent.height = texture->height;
+		turbulent.size = turbulent.width * turbulent.height;
+		turbulent.data = (unsigned char*)texture + texture->offsets[0];
+		turbulent.first_index = d_lists.last_surface_index32 + 1;
+		turbulent.count = face->numedges;
+		turbulent.origin_x = entity->origin[0];
+		turbulent.origin_y = entity->origin[1];
+		turbulent.origin_z = entity->origin[2];
+		for (auto j = 0; j < 2; j++)
 		{
-			next_front++;
-			edge = entity->model->surfedges[face->firstedge + next_front];
+			for (auto i = 0; i < 4; i++)
+			{
+				turbulent.vecs[j][i] = texinfo->vecs[j][i];
+			}
 		}
-		use_back = !use_back;
-		if (edge >= 0)
-		{
-			vertex = &entity->model->vertexes[entity->model->edges[edge].v[0]];
-		}
-		else
-		{
-			vertex = &entity->model->vertexes[entity->model->edges[-edge].v[1]];
-		}
-		x = vertex->position[0];
-		y = vertex->position[1];
-		z = vertex->position[2];
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = x;
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = y;
-		d_lists.last_surface_vertex++;
-		d_lists.surface_vertices[d_lists.last_surface_vertex] = z;
+		D_AddSurfaceIndices32ToLists (entity, face);
 	}
 }
 
-void D_AddAliasIndicesToLists (dalias_t& alias, aliashdr_t* aliashdr, bool is_index16, mdl_t* mdl)
+void D_AddAliasIndices16ToLists (dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl)
 {
-	auto texcoordsbase = alias.texture_coordinates;
-	auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
-	if (is_index16)
+	auto new_size = d_lists.last_colormapped_index16 + 1 + 3 * mdl->numtris;
+	if (d_lists.colormapped_indices16.size() < new_size)
 	{
-		auto new_size = d_lists.last_colormapped_index16 + 1 + 3 * mdl->numtris;
-		if (d_lists.colormapped_indices16.size() < new_size)
-		{
-			d_lists.colormapped_indices16.resize(new_size);
-		}
-		for (auto i = 0; i < mdl->numtris; i++)
-		{
-			auto v0 = triangle->vertindex[0];
-			auto v1 = triangle->vertindex[1];
-			auto v2 = triangle->vertindex[2];
-			auto v0back = (((texcoordsbase[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-			auto v1back = (((texcoordsbase[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-			auto v2back = (((texcoordsbase[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-			v0 = v0 * 2 + (v0back ? 1 : 0);
-			v1 = v1 * 2 + (v1back ? 1 : 0);
-			v2 = v2 * 2 + (v2back ? 1 : 0);
-			d_lists.last_colormapped_index16++;
-			d_lists.colormapped_indices16[d_lists.last_colormapped_index16] = v0;
-			d_lists.last_colormapped_index16++;
-			d_lists.colormapped_indices16[d_lists.last_colormapped_index16] = v1;
-			d_lists.last_colormapped_index16++;
-			d_lists.colormapped_indices16[d_lists.last_colormapped_index16] = v2;
-			triangle++;
-		}
+		d_lists.colormapped_indices16.resize(new_size);
 	}
-	else
+	auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
+	auto texcoordsbase = alias.texture_coordinates;
+	for (auto i = 0; i < mdl->numtris; i++)
 	{
-		auto new_size = d_lists.last_colormapped_index32 + 1 + 3 * mdl->numtris;
-		if (d_lists.colormapped_indices32.size() < new_size)
-		{
-			d_lists.colormapped_indices32.resize(new_size);
-		}
-		for (auto i = 0; i < mdl->numtris; i++)
-		{
-			auto v0 = triangle->vertindex[0];
-			auto v1 = triangle->vertindex[1];
-			auto v2 = triangle->vertindex[2];
-			auto v0back = (((texcoordsbase[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-			auto v1back = (((texcoordsbase[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-			auto v2back = (((texcoordsbase[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-			v0 = v0 * 2 + (v0back ? 1 : 0);
-			v1 = v1 * 2 + (v1back ? 1 : 0);
-			v2 = v2 * 2 + (v2back ? 1 : 0);
-			d_lists.last_colormapped_index32++;
-			d_lists.colormapped_indices32[d_lists.last_colormapped_index32] = v0;
-			d_lists.last_colormapped_index32++;
-			d_lists.colormapped_indices32[d_lists.last_colormapped_index32] = v1;
-			d_lists.last_colormapped_index32++;
-			d_lists.colormapped_indices32[d_lists.last_colormapped_index32] = v2;
-			triangle++;
-		}
+		auto v0 = triangle->vertindex[0];
+		auto v1 = triangle->vertindex[1];
+		auto v2 = triangle->vertindex[2];
+		auto v0back = (((texcoordsbase[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+		auto v1back = (((texcoordsbase[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+		auto v2back = (((texcoordsbase[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+		v0 = v0 * 2 + (v0back ? 1 : 0);
+		v1 = v1 * 2 + (v1back ? 1 : 0);
+		v2 = v2 * 2 + (v2back ? 1 : 0);
+		d_lists.last_colormapped_index16++;
+		d_lists.colormapped_indices16[d_lists.last_colormapped_index16] = v0;
+		d_lists.last_colormapped_index16++;
+		d_lists.colormapped_indices16[d_lists.last_colormapped_index16] = v1;
+		d_lists.last_colormapped_index16++;
+		d_lists.colormapped_indices16[d_lists.last_colormapped_index16] = v2;
+		triangle++;
+	}
+}
+
+void D_AddAliasIndices32ToLists (dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl)
+{
+	auto new_size = d_lists.last_colormapped_index32 + 1 + 3 * mdl->numtris;
+	if (d_lists.colormapped_indices32.size() < new_size)
+	{
+		d_lists.colormapped_indices32.resize(new_size);
+	}
+	auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
+	auto texcoordsbase = alias.texture_coordinates;
+	for (auto i = 0; i < mdl->numtris; i++)
+	{
+		auto v0 = triangle->vertindex[0];
+		auto v1 = triangle->vertindex[1];
+		auto v2 = triangle->vertindex[2];
+		auto v0back = (((texcoordsbase[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+		auto v1back = (((texcoordsbase[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+		auto v2back = (((texcoordsbase[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+		v0 = v0 * 2 + (v0back ? 1 : 0);
+		v1 = v1 * 2 + (v1back ? 1 : 0);
+		v2 = v2 * 2 + (v2back ? 1 : 0);
+		d_lists.last_colormapped_index32++;
+		d_lists.colormapped_indices32[d_lists.last_colormapped_index32] = v0;
+		d_lists.last_colormapped_index32++;
+		d_lists.colormapped_indices32[d_lists.last_colormapped_index32] = v1;
+		d_lists.last_colormapped_index32++;
+		d_lists.colormapped_indices32[d_lists.last_colormapped_index32] = v2;
+		triangle++;
 	}
 }
 
@@ -379,205 +445,69 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 	{
 		return;
 	}
-	d_lists.last_alias++;
-	if (d_lists.last_alias >= d_lists.alias.size())
+	if (mdl->numverts * 2 <= 65520)
 	{
-		d_lists.alias.emplace_back();
-	}
-	auto& alias = d_lists.alias[d_lists.last_alias];
-	alias.width = mdl->skinwidth;
-	alias.height = mdl->skinheight;
-	alias.size = alias.width * alias.height;
-	alias.data = (byte *)aliashdr + skindesc->skin;
-	if (colormap == host_colormap.data())
-	{
-		alias.is_host_colormap = true;
-	}
-	else
-	{
-		alias.is_host_colormap = false;
-		if (alias.colormap.size() < 16384)
+		d_lists.last_alias16++;
+		if (d_lists.last_alias16 >= d_lists.alias16.size())
 		{
-			alias.colormap.resize(16384);
+			d_lists.alias16.emplace_back();
 		}
-		memcpy(alias.colormap.data(), colormap, 16384);
-	}
-	alias.vertices = vertices;
-	alias.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
-	alias.vertex_count = mdl->numverts;
-	auto is_index16 = (mdl->numverts * 2 <= 65520);
-	if (is_index16)
-	{
-		alias.first_index16 = d_lists.last_colormapped_index16 + 1;
-		alias.first_index32 = -1;
-	}
-	else
-	{
-		alias.first_index16 = -1;
-		alias.first_index32 = d_lists.last_colormapped_index32 + 1;
-	}
-	alias.first_attribute = d_lists.last_colormapped_attribute + 1;
-	auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
-	if (d_lists.colormapped_attributes.size() < new_size)
-	{
-		d_lists.colormapped_attributes.resize(new_size);
-	}
-	vec3_t angles;
-	angles[ROLL] = currententity->angles[ROLL];
-	angles[PITCH] = -currententity->angles[PITCH];
-	angles[YAW] = currententity->angles[YAW];
-	vec3_t forward, right, up;
-	AngleVectors (angles, forward, right, up);
-	float tmatrix[3][4] { };
-	tmatrix[0][0] = mdl->scale[0];
-	tmatrix[1][1] = mdl->scale[1];
-	tmatrix[2][2] = mdl->scale[2];
-	tmatrix[0][3] = mdl->scale_origin[0];
-	tmatrix[1][3] = mdl->scale_origin[1];
-	tmatrix[2][3] = mdl->scale_origin[2];
-	float t2matrix[3][4] { };
-	for (auto i = 0; i < 3; i++)
-	{
-		t2matrix[i][0] = forward[i];
-		t2matrix[i][1] = -right[i];
-		t2matrix[i][2] = up[i];
-	}
-	t2matrix[0][3] = currententity->origin[0];
-	t2matrix[1][3] = currententity->origin[1];
-	t2matrix[2][3] = currententity->origin[2];
-	R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
-	auto vertex = vertices;
-	for (auto i = 0; i < mdl->numverts; i++)
-	{
-		// lighting
-		auto plightnormal = r_avertexnormals[vertex->lightnormalindex];
-		auto lightcos = DotProduct (plightnormal, r_plightvec);
-		auto temp = r_ambientlight;
-
-		if (lightcos < 0)
+		auto& alias = d_lists.alias16[d_lists.last_alias16];
+		alias.width = mdl->skinwidth;
+		alias.height = mdl->skinheight;
+		alias.size = alias.width * alias.height;
+		alias.data = (byte *)aliashdr + skindesc->skin;
+		if (colormap == host_colormap.data())
 		{
-			temp += (int)(r_shadelight * lightcos);
-
-			// clamp; because we limited the minimum ambient and shading light, we
-			// don't have to clamp low light, just bright
-			if (temp < 0)
-				temp = 0;
-		}
-
-		float light = temp / 256;
-
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
-		vertex++;
-	}
-	alias.count = mdl->numtris * 3;
-	D_AddAliasIndicesToLists (alias, aliashdr, is_index16, mdl);
-}
-
-void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* vertices)
-{
-	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
-	if (mdl->numtris <= 0)
-	{
-		return;
-	}
-	d_lists.last_viewmodel++;
-	if (d_lists.last_viewmodel >= d_lists.viewmodel.size())
-	{
-		d_lists.viewmodel.emplace_back();
-	}
-	auto& view_model = d_lists.viewmodel[d_lists.last_viewmodel];
-	view_model.width = mdl->skinwidth;
-	view_model.height = mdl->skinheight;
-	view_model.size = view_model.width * view_model.height;
-	view_model.data = (byte *)aliashdr + skindesc->skin;
-	if (colormap == host_colormap.data())
-	{
-		view_model.is_host_colormap = true;
-	}
-	else
-	{
-		view_model.is_host_colormap = false;
-		if (view_model.colormap.size() < 16384)
-		{
-			view_model.colormap.resize(16384);
-		}
-		memcpy(view_model.colormap.data(), colormap, 16384);
-	}
-	view_model.vertices = vertices;
-	view_model.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
-	view_model.vertex_count = mdl->numverts;
-	auto is_index16 = (mdl->numverts * 2 <= 65520);
-	if (is_index16)
-	{
-		view_model.first_index16 = d_lists.last_colormapped_index16 + 1;
-		view_model.first_index32 = -1;
-	}
-	else
-	{
-		view_model.first_index16 = -1;
-		view_model.first_index32 = d_lists.last_colormapped_index32 + 1;
-	}
-	view_model.first_attribute = d_lists.last_colormapped_attribute + 1;
-	auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
-	if (d_lists.colormapped_attributes.size() < new_size)
-	{
-		d_lists.colormapped_attributes.resize(new_size);
-	}
-	vec3_t angles;
-	if (d_awayfromviewmodel)
-	{
-		angles[ROLL] = 0;
-		angles[PITCH] = 0;
-		angles[YAW] = 0;
-	}
-	else
-	{
-		angles[ROLL] = currententity->angles[ROLL];
-		angles[PITCH] = -currententity->angles[PITCH];
-		angles[YAW] = currententity->angles[YAW];
-	}
-	vec3_t forward, right, up;
-	AngleVectors (angles, forward, right, up);
-	float tmatrix[3][4] { };
-	tmatrix[0][0] = mdl->scale[0];
-	tmatrix[1][1] = mdl->scale[1];
-	tmatrix[2][2] = mdl->scale[2];
-	tmatrix[0][3] = mdl->scale_origin[0];
-	tmatrix[1][3] = mdl->scale_origin[1];
-	tmatrix[2][3] = mdl->scale_origin[2];
-	float t2matrix[3][4] { };
-	for (auto i = 0; i < 3; i++)
-	{
-		t2matrix[i][0] = forward[i];
-		t2matrix[i][1] = -right[i];
-		t2matrix[i][2] = up[i];
-	}
-	t2matrix[0][3] = currententity->origin[0];
-	t2matrix[1][3] = currententity->origin[1];
-	t2matrix[2][3] = currententity->origin[2];
-	if (d_awayfromviewmodel)
-	{
-		t2matrix[0][3] -= forward[0] * 8;
-		t2matrix[1][3] -= forward[1] * 8;
-		t2matrix[2][3] -= forward[2] * 8;
-	}
-	R_ConcatTransforms (t2matrix, tmatrix, view_model.transform);
-	auto vertex = vertices;
-	auto texcoordsbase = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
-	auto texcoords = texcoordsbase;
-	for (auto i = 0; i < mdl->numverts; i++)
-	{
-		// lighting
-		float light;
-		if (d_awayfromviewmodel)
-		{
-			light = 0;
+			alias.is_host_colormap = true;
 		}
 		else
 		{
+			alias.is_host_colormap = false;
+			if (alias.colormap.size() < 16384)
+			{
+				alias.colormap.resize(16384);
+			}
+			memcpy(alias.colormap.data(), colormap, 16384);
+		}
+		alias.vertices = vertices;
+		alias.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
+		alias.vertex_count = mdl->numverts;
+		alias.first_index = d_lists.last_colormapped_index16 + 1;
+		alias.first_attribute = d_lists.last_colormapped_attribute + 1;
+		auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
+		if (d_lists.colormapped_attributes.size() < new_size)
+		{
+			d_lists.colormapped_attributes.resize(new_size);
+		}
+		vec3_t angles;
+		angles[ROLL] = currententity->angles[ROLL];
+		angles[PITCH] = -currententity->angles[PITCH];
+		angles[YAW] = currententity->angles[YAW];
+		vec3_t forward, right, up;
+		AngleVectors (angles, forward, right, up);
+		float tmatrix[3][4] { };
+		tmatrix[0][0] = mdl->scale[0];
+		tmatrix[1][1] = mdl->scale[1];
+		tmatrix[2][2] = mdl->scale[2];
+		tmatrix[0][3] = mdl->scale_origin[0];
+		tmatrix[1][3] = mdl->scale_origin[1];
+		tmatrix[2][3] = mdl->scale_origin[2];
+		float t2matrix[3][4] { };
+		for (auto i = 0; i < 3; i++)
+		{
+			t2matrix[i][0] = forward[i];
+			t2matrix[i][1] = -right[i];
+			t2matrix[i][2] = up[i];
+		}
+		t2matrix[0][3] = currententity->origin[0];
+		t2matrix[1][3] = currententity->origin[1];
+		t2matrix[2][3] = currententity->origin[2];
+		R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
+		auto vertex = vertices;
+		for (auto i = 0; i < mdl->numverts; i++)
+		{
+			// lighting
 			auto plightnormal = r_avertexnormals[vertex->lightnormalindex];
 			auto lightcos = DotProduct (plightnormal, r_plightvec);
 			auto temp = r_ambientlight;
@@ -592,17 +522,334 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 					temp = 0;
 			}
 
-			light = temp / 256;
+			float light = temp / 256;
+
+			d_lists.last_colormapped_attribute++;
+			d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+			d_lists.last_colormapped_attribute++;
+			d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+			vertex++;
 		}
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
-		vertex++;
-		texcoords++;
+		alias.count = mdl->numtris * 3;
+		D_AddAliasIndices16ToLists (alias, aliashdr, mdl);
 	}
-	view_model.count = mdl->numtris * 3;
-	D_AddAliasIndicesToLists (view_model, aliashdr, is_index16, mdl);
+	else
+	{
+		d_lists.last_alias32++;
+		if (d_lists.last_alias32 >= d_lists.alias32.size())
+		{
+			d_lists.alias32.emplace_back();
+		}
+		auto& alias = d_lists.alias32[d_lists.last_alias32];
+		alias.width = mdl->skinwidth;
+		alias.height = mdl->skinheight;
+		alias.size = alias.width * alias.height;
+		alias.data = (byte *)aliashdr + skindesc->skin;
+		if (colormap == host_colormap.data())
+		{
+			alias.is_host_colormap = true;
+		}
+		else
+		{
+			alias.is_host_colormap = false;
+			if (alias.colormap.size() < 16384)
+			{
+				alias.colormap.resize(16384);
+			}
+			memcpy(alias.colormap.data(), colormap, 16384);
+		}
+		alias.vertices = vertices;
+		alias.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
+		alias.vertex_count = mdl->numverts;
+		alias.first_index = d_lists.last_colormapped_index32 + 1;
+		alias.first_attribute = d_lists.last_colormapped_attribute + 1;
+		auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
+		if (d_lists.colormapped_attributes.size() < new_size)
+		{
+			d_lists.colormapped_attributes.resize(new_size);
+		}
+		vec3_t angles;
+		angles[ROLL] = currententity->angles[ROLL];
+		angles[PITCH] = -currententity->angles[PITCH];
+		angles[YAW] = currententity->angles[YAW];
+		vec3_t forward, right, up;
+		AngleVectors (angles, forward, right, up);
+		float tmatrix[3][4] { };
+		tmatrix[0][0] = mdl->scale[0];
+		tmatrix[1][1] = mdl->scale[1];
+		tmatrix[2][2] = mdl->scale[2];
+		tmatrix[0][3] = mdl->scale_origin[0];
+		tmatrix[1][3] = mdl->scale_origin[1];
+		tmatrix[2][3] = mdl->scale_origin[2];
+		float t2matrix[3][4] { };
+		for (auto i = 0; i < 3; i++)
+		{
+			t2matrix[i][0] = forward[i];
+			t2matrix[i][1] = -right[i];
+			t2matrix[i][2] = up[i];
+		}
+		t2matrix[0][3] = currententity->origin[0];
+		t2matrix[1][3] = currententity->origin[1];
+		t2matrix[2][3] = currententity->origin[2];
+		R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
+		auto vertex = vertices;
+		for (auto i = 0; i < mdl->numverts; i++)
+		{
+			// lighting
+			auto plightnormal = r_avertexnormals[vertex->lightnormalindex];
+			auto lightcos = DotProduct (plightnormal, r_plightvec);
+			auto temp = r_ambientlight;
+
+			if (lightcos < 0)
+			{
+				temp += (int)(r_shadelight * lightcos);
+
+				// clamp; because we limited the minimum ambient and shading light, we
+				// don't have to clamp low light, just bright
+				if (temp < 0)
+					temp = 0;
+			}
+
+			float light = temp / 256;
+
+			d_lists.last_colormapped_attribute++;
+			d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+			d_lists.last_colormapped_attribute++;
+			d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+			vertex++;
+		}
+		alias.count = mdl->numtris * 3;
+		D_AddAliasIndices32ToLists (alias, aliashdr, mdl);
+	}
+}
+
+void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* vertices)
+{
+	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
+	if (mdl->numtris <= 0)
+	{
+		return;
+	}
+	if (mdl->numverts * 2 <= 65520)
+	{
+		d_lists.last_viewmodel16++;
+		if (d_lists.last_viewmodel16 >= d_lists.viewmodels16.size())
+		{
+			d_lists.viewmodels16.emplace_back();
+		}
+		auto& view_model = d_lists.viewmodels16[d_lists.last_viewmodel16];
+		view_model.width = mdl->skinwidth;
+		view_model.height = mdl->skinheight;
+		view_model.size = view_model.width * view_model.height;
+		view_model.data = (byte *)aliashdr + skindesc->skin;
+		if (colormap == host_colormap.data())
+		{
+			view_model.is_host_colormap = true;
+		}
+		else
+		{
+			view_model.is_host_colormap = false;
+			if (view_model.colormap.size() < 16384)
+			{
+				view_model.colormap.resize(16384);
+			}
+			memcpy(view_model.colormap.data(), colormap, 16384);
+		}
+		view_model.vertices = vertices;
+		view_model.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
+		view_model.vertex_count = mdl->numverts;
+		view_model.first_index = d_lists.last_colormapped_index16 + 1;
+		view_model.first_attribute = d_lists.last_colormapped_attribute + 1;
+		auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
+		if (d_lists.colormapped_attributes.size() < new_size)
+		{
+			d_lists.colormapped_attributes.resize(new_size);
+		}
+		vec3_t angles;
+		if (d_awayfromviewmodel)
+		{
+			angles[ROLL] = 0;
+			angles[PITCH] = 0;
+			angles[YAW] = 0;
+		}
+		else
+		{
+			angles[ROLL] = currententity->angles[ROLL];
+			angles[PITCH] = -currententity->angles[PITCH];
+			angles[YAW] = currententity->angles[YAW];
+		}
+		vec3_t forward, right, up;
+		AngleVectors (angles, forward, right, up);
+		float tmatrix[3][4] { };
+		tmatrix[0][0] = mdl->scale[0];
+		tmatrix[1][1] = mdl->scale[1];
+		tmatrix[2][2] = mdl->scale[2];
+		tmatrix[0][3] = mdl->scale_origin[0];
+		tmatrix[1][3] = mdl->scale_origin[1];
+		tmatrix[2][3] = mdl->scale_origin[2];
+		float t2matrix[3][4] { };
+		for (auto i = 0; i < 3; i++)
+		{
+			t2matrix[i][0] = forward[i];
+			t2matrix[i][1] = -right[i];
+			t2matrix[i][2] = up[i];
+		}
+		t2matrix[0][3] = currententity->origin[0];
+		t2matrix[1][3] = currententity->origin[1];
+		t2matrix[2][3] = currententity->origin[2];
+		if (d_awayfromviewmodel)
+		{
+			t2matrix[0][3] -= forward[0] * 8;
+			t2matrix[1][3] -= forward[1] * 8;
+			t2matrix[2][3] -= forward[2] * 8;
+		}
+		R_ConcatTransforms (t2matrix, tmatrix, view_model.transform);
+		auto vertex = vertices;
+		for (auto i = 0; i < mdl->numverts; i++)
+		{
+			// lighting
+			float light;
+			if (d_awayfromviewmodel)
+			{
+				light = 0;
+			}
+			else
+			{
+				auto plightnormal = r_avertexnormals[vertex->lightnormalindex];
+				auto lightcos = DotProduct (plightnormal, r_plightvec);
+				auto temp = r_ambientlight;
+
+				if (lightcos < 0)
+				{
+					temp += (int)(r_shadelight * lightcos);
+
+					// clamp; because we limited the minimum ambient and shading light, we
+					// don't have to clamp low light, just bright
+					if (temp < 0)
+						temp = 0;
+				}
+
+				light = temp / 256;
+			}
+			d_lists.last_colormapped_attribute++;
+			d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+			d_lists.last_colormapped_attribute++;
+			d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+			vertex++;
+		}
+		view_model.count = mdl->numtris * 3;
+		D_AddAliasIndices16ToLists (view_model, aliashdr, mdl);
+	}
+	else
+	{
+		d_lists.last_viewmodel32++;
+		if (d_lists.last_viewmodel32 >= d_lists.viewmodels32.size())
+		{
+			d_lists.viewmodels32.emplace_back();
+		}
+		auto& view_model = d_lists.viewmodels32[d_lists.last_viewmodel32];
+		view_model.width = mdl->skinwidth;
+		view_model.height = mdl->skinheight;
+		view_model.size = view_model.width * view_model.height;
+		view_model.data = (byte *)aliashdr + skindesc->skin;
+		if (colormap == host_colormap.data())
+		{
+			view_model.is_host_colormap = true;
+		}
+		else
+		{
+			view_model.is_host_colormap = false;
+			if (view_model.colormap.size() < 16384)
+			{
+				view_model.colormap.resize(16384);
+			}
+			memcpy(view_model.colormap.data(), colormap, 16384);
+		}
+		view_model.vertices = vertices;
+		view_model.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
+		view_model.vertex_count = mdl->numverts;
+		view_model.first_index = d_lists.last_colormapped_index32 + 1;
+		view_model.first_attribute = d_lists.last_colormapped_attribute + 1;
+		auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
+		if (d_lists.colormapped_attributes.size() < new_size)
+		{
+			d_lists.colormapped_attributes.resize(new_size);
+		}
+		vec3_t angles;
+		if (d_awayfromviewmodel)
+		{
+			angles[ROLL] = 0;
+			angles[PITCH] = 0;
+			angles[YAW] = 0;
+		}
+		else
+		{
+			angles[ROLL] = currententity->angles[ROLL];
+			angles[PITCH] = -currententity->angles[PITCH];
+			angles[YAW] = currententity->angles[YAW];
+		}
+		vec3_t forward, right, up;
+		AngleVectors (angles, forward, right, up);
+		float tmatrix[3][4] { };
+		tmatrix[0][0] = mdl->scale[0];
+		tmatrix[1][1] = mdl->scale[1];
+		tmatrix[2][2] = mdl->scale[2];
+		tmatrix[0][3] = mdl->scale_origin[0];
+		tmatrix[1][3] = mdl->scale_origin[1];
+		tmatrix[2][3] = mdl->scale_origin[2];
+		float t2matrix[3][4] { };
+		for (auto i = 0; i < 3; i++)
+		{
+			t2matrix[i][0] = forward[i];
+			t2matrix[i][1] = -right[i];
+			t2matrix[i][2] = up[i];
+		}
+		t2matrix[0][3] = currententity->origin[0];
+		t2matrix[1][3] = currententity->origin[1];
+		t2matrix[2][3] = currententity->origin[2];
+		if (d_awayfromviewmodel)
+		{
+			t2matrix[0][3] -= forward[0] * 8;
+			t2matrix[1][3] -= forward[1] * 8;
+			t2matrix[2][3] -= forward[2] * 8;
+		}
+		R_ConcatTransforms (t2matrix, tmatrix, view_model.transform);
+		auto vertex = vertices;
+		for (auto i = 0; i < mdl->numverts; i++)
+		{
+			// lighting
+			float light;
+			if (d_awayfromviewmodel)
+			{
+				light = 0;
+			}
+			else
+			{
+				auto plightnormal = r_avertexnormals[vertex->lightnormalindex];
+				auto lightcos = DotProduct (plightnormal, r_plightvec);
+				auto temp = r_ambientlight;
+
+				if (lightcos < 0)
+				{
+					temp += (int)(r_shadelight * lightcos);
+
+					// clamp; because we limited the minimum ambient and shading light, we
+					// don't have to clamp low light, just bright
+					if (temp < 0)
+						temp = 0;
+				}
+
+				light = temp / 256;
+			}
+			d_lists.last_colormapped_attribute++;
+			d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+			d_lists.last_colormapped_attribute++;
+			d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+			vertex++;
+		}
+		view_model.count = mdl->numtris * 3;
+		D_AddAliasIndices32ToLists (view_model, aliashdr, mdl);
+	}
 }
 
 void D_AddParticleToLists (particle_t* part)

@@ -9,6 +9,7 @@ struct UpdatablePipelineDescriptorResources
 {
 	bool created;
 	VkDescriptorPool descriptorPool;
+	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	std::vector<VkDescriptorSet> descriptorSets;
 	std::vector<void*> bound;
 

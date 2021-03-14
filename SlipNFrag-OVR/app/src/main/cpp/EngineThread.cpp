@@ -3,7 +3,6 @@
 #include "AppState.h"
 #include "Time.h"
 #include "sys_ovr.h"
-#include "d_lists.h"
 #include "Input.h"
 
 extern vec3_t r_modelorg_delta;

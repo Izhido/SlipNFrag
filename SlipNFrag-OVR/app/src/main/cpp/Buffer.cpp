@@ -40,3 +40,22 @@ void Buffer::CreateStagingStorageBuffer(AppState& appState, VkDeviceSize size)
 {
 	Create(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 }
+
+void Buffer::Submit(AppState& appState, VkCommandBuffer commandBuffer, VkAccessFlags flags, VkBufferMemoryBarrier& bufferMemoryBarrier)
+{
+	bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+	bufferMemoryBarrier.dstAccessMask = flags;
+	bufferMemoryBarrier.buffer = buffer;
+	bufferMemoryBarrier.size = size;
+	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
+}
+
+void Buffer::SubmitVertexBuffer(AppState& appState, VkCommandBuffer commandBuffer, VkBufferMemoryBarrier& bufferMemoryBarrier)
+{
+	Submit(appState, commandBuffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT, bufferMemoryBarrier);
+}
+
+void Buffer::SubmitIndexBuffer(AppState& appState, VkCommandBuffer commandBuffer, VkBufferMemoryBarrier& bufferMemoryBarrier)
+{
+	Submit(appState, commandBuffer, VK_ACCESS_INDEX_READ_BIT, bufferMemoryBarrier);
+}
