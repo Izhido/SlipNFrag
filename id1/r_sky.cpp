@@ -86,7 +86,6 @@ float	box_verts[8][3] = {
 		{1,1,1}
 };
 
-qboolean r_skybox_as_rgba;
 
 
 /*

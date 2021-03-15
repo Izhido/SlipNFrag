@@ -4,8 +4,7 @@
 #include "Time.h"
 #include "sys_ovr.h"
 #include "Input.h"
-
-extern vec3_t r_modelorg_delta;
+#include "r_local.h"
 
 void runEngine(AppState* appState, struct android_app* app)
 {

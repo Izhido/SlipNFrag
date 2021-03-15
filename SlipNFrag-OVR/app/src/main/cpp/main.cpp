@@ -17,15 +17,13 @@
 #include "EngineThread.h"
 #include "Constants.h"
 #include "DirectRect.h"
+#include "r_local.h"
 
 static const int queueCount = 1;
 static const int CPU_LEVEL = 2;
 static const int GPU_LEVEL = 3;
 
 extern m_state_t m_state;
-extern qboolean r_skip_fov_check;
-extern vec3_t r_modelorg_delta;
-extern qboolean r_skybox_as_rgba;
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallback(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
 {
