@@ -46,6 +46,7 @@ void SharedMemoryTexture::Create(AppState& appState, VkCommandBuffer commandBuff
 		appState.Scene.latestTextureSharedMemory = new SharedMemory { };
 		VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryBlockAllocateInfo, nullptr, &appState.Scene.latestTextureSharedMemory->memory));
 		appState.Scene.usedInLatestTextureSharedMemory = 0;
+		alignmentCorrection = 0;
 	}
 	VK(appState.Device.vkBindImageMemory(appState.Device.device, image, appState.Scene.latestTextureSharedMemory->memory, appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection));
 	appState.Scene.usedInLatestTextureSharedMemory += (alignmentCorrection + memoryAllocateInfo.allocationSize);
