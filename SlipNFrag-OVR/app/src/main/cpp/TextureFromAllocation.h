@@ -20,6 +20,8 @@ struct TextureFromAllocation
 	int allocationIndex = 0;
 	int allocatedIndex = 0;
 	VkImageView view = VK_NULL_HANDLE;
+	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+	static std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
 	void Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);
 	void FillMipmapped(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer);

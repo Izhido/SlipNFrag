@@ -4,6 +4,8 @@
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
+std::vector<VkDescriptorSetLayout> TextureFromAllocation::descriptorSetLayouts;
+
 void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage)
 {
 	this->width = width;
@@ -35,7 +37,6 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 		VkDeviceSize alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
 		allocationList.blockSize = memoryAllocateInfo.allocationSize + alignmentCorrection;
 	}
-	auto found = false;
 	for (auto j = 0; j < allocationList.allocations.size(); j++)
 	{
 		auto& allocation = allocationList.allocations[j];
@@ -45,20 +46,20 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 			{
 				if (!allocation.allocated[i])
 				{
-					found = true;
 					allocation.allocated[i] = true;
 					VK(appState.Device.vkBindImageMemory(appState.Device.device, image, allocation.memory, i * allocationList.blockSize));
 					this->allocationList = &allocationList;
 					allocationIndex = j;
 					allocatedIndex = i;
 					allocation.allocatedCount++;
+					descriptorSet = allocation.descriptorSets[i];
 					break;
 				}
 			}
 			break;
 		}
 	}
-	if (!found)
+	if (descriptorSet == VK_NULL_HANDLE)
 	{
 		allocationList.allocations.emplace_back();
 		auto& allocation = allocationList.allocations[allocationList.allocations.size() - 1];
@@ -72,11 +73,31 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 		VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryBlockAllocateInfo, nullptr, &allocation.memory));
 		auto count = size / allocationList.blockSize;
 		allocation.allocated.resize(count);
+		VkDescriptorPoolSize poolSizes { };
+		poolSizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes.descriptorCount = count;
+		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
+		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		descriptorPoolCreateInfo.maxSets = count;
+		descriptorPoolCreateInfo.pPoolSizes = &poolSizes;
+		descriptorPoolCreateInfo.poolSizeCount = 1;
+		VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &allocation.descriptorPool));
+		descriptorSetLayouts.resize(count);
+		allocation.descriptorSets.resize(count);
+		std::fill(descriptorSetLayouts.begin(), descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
+		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
+		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		descriptorSetAllocateInfo.descriptorSetCount = 1;
+		descriptorSetAllocateInfo.descriptorPool = allocation.descriptorPool;
+		descriptorSetAllocateInfo.descriptorSetCount = count;
+		descriptorSetAllocateInfo.pSetLayouts = descriptorSetLayouts.data();
+		VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, allocation.descriptorSets.data()));
 		allocation.allocated[0] = true;
 		VK(appState.Device.vkBindImageMemory(appState.Device.device, image, allocation.memory, 0));
 		this->allocationList = &allocationList;
 		allocationIndex = allocationList.allocations.size() - 1;
 		allocation.allocatedCount++;
+		descriptorSet = allocation.descriptorSets[0];
 	}
 	VkImageViewCreateInfo imageViewCreateInfo { };
 	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -108,6 +129,17 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 	{
 		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
 	}
+	VkDescriptorImageInfo textureInfo { };
+	textureInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	textureInfo.sampler = appState.Scene.samplers[mipCount];
+	textureInfo.imageView = view;
+	VkWriteDescriptorSet writes { };
+	writes.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writes.descriptorCount = 1;
+	writes.dstSet = descriptorSet;
+	writes.pImageInfo = &textureInfo;
+	writes.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, &writes, 0, nullptr));
 }
 
 void TextureFromAllocation::FillMipmapped(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
@@ -203,8 +235,19 @@ void TextureFromAllocation::Delete(AppState& appState)
 	allocation.allocatedCount--;
 	if (allocation.allocatedCount == 0 && allocationIndex == allocationList->allocations.size() - 1)
 	{
-		VC(appState.Device.vkFreeMemory(appState.Device.device, allocation.memory, nullptr));
-		allocationList->allocations.pop_back();
+		auto index = allocationIndex;
+		while (index > 0)
+		{
+			auto& toDelete = allocationList->allocations[index];
+			if (toDelete.allocatedCount > 0)
+			{
+				break;
+			}
+			VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, toDelete.descriptorPool, nullptr));
+			VC(appState.Device.vkFreeMemory(appState.Device.device, toDelete.memory, nullptr));
+			allocationList->allocations.pop_back();
+			index--;
+		}
 	}
 }
 
