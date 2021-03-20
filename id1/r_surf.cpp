@@ -24,10 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 drawsurf_t	r_drawsurf;
 
-long long       lightleft, lightright, lightleftstep, lightrightstep;
-int				sourcesstep, blocksize, sourcetstep;
+int				lightleft, sourcesstep, blocksize, sourcetstep;
 int				lightdelta, lightdeltastep;
-int				blockdivshift;
+int				lightright, lightleftstep, lightrightstep, blockdivshift;
 unsigned		blockdivmask;
 void			*prowdestbase;
 unsigned char	*pbasesource;
@@ -52,7 +51,7 @@ static void	(*surfmiptable[4])(void) = {
 
 
 
-unsigned		blocklights[18*18];
+std::vector<unsigned> blocklights(18*18);
 
 /*
 ===============
@@ -147,16 +146,19 @@ void R_BuildLightMap (void)
 	size = smax*tmax;
 	lightmap = surf->samples;
 
+	if (blocklights.size() < size + 2*2)
+	{
+		blocklights.resize(size + 2*2);
+	}
+
 	if (r_fullbright.value || !cl.worldmodel->lightdata)
 	{
-		for (i=0 ; i<size ; i++)
-			blocklights[i] = 0;
+		std::fill(blocklights.begin(), blocklights.end(), 0);
 		return;
 	}
 
 // clear to ambient
-	for (i=0 ; i<size ; i++)
-		blocklights[i] = r_refdef.ambientlight<<8;
+	std::fill(blocklights.begin(), blocklights.end(), r_refdef.ambientlight<<8);
 
 
 // add all the lightmaps
@@ -298,7 +300,7 @@ void R_DrawSurface (void)
 
 	for (u=0 ; u<r_numhblocks; u++)
 	{
-		r_lightptr = blocklights + u;
+		r_lightptr = blocklights.data() + u;
 
 		prowdestbase = pcolumndest;
 
@@ -326,8 +328,7 @@ R_DrawSurfaceBlock8_mip0
 */
 void R_DrawSurfaceBlock8_mip0 (void)
 {
-	int				v, i, b;
-    long long       lightstep, lighttemp, light;
+	int				v, i, b, lightstep, lighttemp, light;
 	unsigned char	pix, *psource, *prowdest;
 
 	psource = pbasesource;
@@ -377,8 +378,7 @@ R_DrawSurfaceBlock8_mip1
 */
 void R_DrawSurfaceBlock8_mip1 (void)
 {
-	int				v, i, b;
-    long long       lightstep, lighttemp, light;
+	int				v, i, b, lightstep, lighttemp, light;
 	unsigned char	pix, *psource, *prowdest;
 
 	psource = pbasesource;
@@ -428,8 +428,7 @@ R_DrawSurfaceBlock8_mip2
 */
 void R_DrawSurfaceBlock8_mip2 (void)
 {
-	int				v, i, b;
-    long long       lightstep, lighttemp, light;
+	int				v, i, b, lightstep, lighttemp, light;
 	unsigned char	pix, *psource, *prowdest;
 
 	psource = pbasesource;
@@ -479,8 +478,7 @@ R_DrawSurfaceBlock8_mip3
 */
 void R_DrawSurfaceBlock8_mip3 (void)
 {
-	int				v, i, b;
-    long long       lightstep, lighttemp, light;
+	int				v, i, b, lightstep, lighttemp, light;
 	unsigned char	pix, *psource, *prowdest;
 
 	psource = pbasesource;
@@ -534,7 +532,7 @@ void R_DrawSurfaceBlock16 (void)
 {
 	int				k;
 	unsigned char	*psource;
-	long long		lighttemp, lightstep, light;
+	int				lighttemp, lightstep, light;
 	unsigned short	*prowdest;
 
 	prowdest = (unsigned short *)prowdestbase;

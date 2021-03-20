@@ -303,9 +303,13 @@ void D_DrawSurfaces (void)
 
 				pface = (msurface_t*)s->data;
 			// FIXME: make this passed in to D_CacheSurface
+				pcurrentcache = nullptr;
 				auto created = D_CacheSurface (pface, d_minmip, &pcurrentcache);
 
-				D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+				if (pcurrentcache != nullptr)
+				{
+					D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+				}
 
 				if (s->insubmodel)
 				{
@@ -462,16 +466,20 @@ void D_DrawSurfaces (void)
 											   * pface->texinfo->mipadjust);
 
 				// FIXME: make this passed in to D_CacheSurface
+				pcurrentcache = nullptr;
 				D_CacheSurface (pface, miplevel, &pcurrentcache);
 
-				cacheblock = (pixel_t *)pcurrentcache->data;
-				cachewidth = pcurrentcache->width;
+				if (pcurrentcache != nullptr)
+				{
+					cacheblock = (pixel_t *)pcurrentcache->data;
+					cachewidth = pcurrentcache->width;
 
-				D_CalcGradients (pface);
+					D_CalcGradients (pface);
 
-				D_DrawSpans8 (s->spans);
+					D_DrawSpans8 (s->spans);
 
-				D_DrawZSpans (s->spans);
+					D_DrawZSpans (s->spans);
+				}
 
 				if (s->insubmodel)
 				{
