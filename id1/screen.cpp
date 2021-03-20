@@ -631,7 +631,7 @@ void WritePCXfile (char *filename, byte *data, int width, int height,
 	pcx_t	*pcx;
 	byte		*pack;
 	  
-    std::vector<byte> contents(width * height * 2 + 1000);
+    std::vector<byte> contents(width*height*2+1000);
     pcx = (pcx_t*)contents.data();
     
 	pcx->manufacturer = 0x0a;	// PCX id
@@ -781,7 +781,7 @@ qboolean	scr_drawdialog;
 
 void SCR_DrawNotifyString (void)
 {
-	const char	*start;
+	const char *start;
 	int		l;
 	int		j;
 	int		x, y;
@@ -821,9 +821,11 @@ keypress.
 */
 int SCR_ModalMessage (const char *text)
 {
+	// Since this code loops forever waiting for a keypress that won't ever come, just pretend the message was already displayed,
+	// that the user already pressed 'y', and return immediately:
     return true;
     
-	if (cls.state == ca_dedicated)
+	/*if (cls.state == ca_dedicated)
 		return true;
 
 	scr_notifystring = text;
@@ -845,7 +847,7 @@ int SCR_ModalMessage (const char *text)
 	scr_fullupdate = 0;
 	SCR_UpdateScreen ();
 
-	return key_lastpress == 'y';
+	return key_lastpress == 'y';*/
 }
 
 

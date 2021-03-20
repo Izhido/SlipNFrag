@@ -587,7 +587,7 @@ D_DrawZSpans
 void D_DrawZSpans (espan_t *pspan)
 {
 	int				count, doublecount;
-    long long       izistep, izi;
+    long long		izistep, izi;
 	short			*pdest;
     long long		ltemp;
 	double			zi;

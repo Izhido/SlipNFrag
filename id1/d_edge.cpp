@@ -396,7 +396,6 @@ void D_DrawSurfaces (void)
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
-                
 				pface = (msurface_t*)s->data;
 				miplevel = 0;
 				cacheblock = (pixel_t *)

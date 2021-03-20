@@ -494,9 +494,9 @@ void Draw_TransPic (int x, int y, qpic_t *pic)
  */
 void Draw_TransPicOnConsole (int x, int y, qpic_t *pic)
 {
-    byte    *dest, *source, tbyte;
-    unsigned short    *pusdest;
-    int                v, u;
+    byte	*dest, *source, tbyte;
+    unsigned short	*pusdest;
+    int				v, u;
     
     if (x < 0 || (unsigned)(x + pic->width) > vid.conwidth || y < 0 ||
         (unsigned)(y + pic->height) > vid.conheight)
@@ -511,7 +511,7 @@ void Draw_TransPicOnConsole (int x, int y, qpic_t *pic)
         dest = vid.conbuffer + y * vid.conrowbytes + x;
         
         if (pic->width & 7)
-        {    // general
+        {	// general
             for (v=0 ; v<pic->height ; v++)
             {
                 for (u=0 ; u<pic->width ; u++)
@@ -523,7 +523,7 @@ void Draw_TransPicOnConsole (int x, int y, qpic_t *pic)
             }
         }
         else
-        {    // unwound
+        {	// unwound
             for (v=0 ; v<pic->height ; v++)
             {
                 for (u=0 ; u<pic->width ; u+=8)
