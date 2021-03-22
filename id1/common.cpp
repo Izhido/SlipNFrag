@@ -1375,6 +1375,68 @@ void COM_CopyFile (char *netpath, char *cachepath)
 
 /*
 ===========
+COM_FindAllFiles
+
+Finds all files that match a path prefix and a specific extension in the first entry
+of the search path that contains at least one match.
+===========
+*/
+int COM_FindAllFiles (const char *prefix, const char *extension, void (find_in_path)(const char *path, const char *prefix, const char *extension, std::vector<std::string>& result), std::vector<std::string>& result)
+{
+	searchpath_t    *search;
+	std::string netpath;
+	std::string cachepath;
+	pack_t          *pak;
+	int                     i;
+	int                     findtime, cachetime;
+
+//
+// search through the path, one element at a time
+//
+	search = com_searchpaths;
+	auto extension_len = strlen(extension);
+
+	for ( ; search ; search = search->next)
+	{
+		// is the element a pak file?
+		if (search->pack)
+		{
+			// look through all the pak file elements
+			pak = search->pack;
+			for (i=0 ; i<pak->numfiles ; i++)
+			{
+				qboolean found = false;
+				auto file = pak->files[i].name.c_str();
+				auto file_len = strlen(file);
+				auto in_str = strcasestr (file, prefix);
+				if (in_str == file)
+				{
+					in_str = strcasestr (file + file_len - extension_len, extension);
+					found = (in_str != nullptr);
+				}
+				if (found)
+				{
+					result.push_back(file);
+				}
+			}
+		}
+		else
+		{
+			find_in_path (search->filename.c_str(), prefix, extension, result);
+		}
+		if (result.size() > 0)
+		{
+			return 0;
+		}
+	}
+
+	Sys_Printf ("FindAllFiles: can't find %s*.%s\n", prefix, extension);
+
+	return -1;
+}
+
+/*
+===========
 COM_FindFile
 
 Finds the file in the search path.

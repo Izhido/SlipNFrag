@@ -175,5 +175,6 @@ void SNDDMA_Shutdown(void)
 	if (audioEngineObject != nullptr)
 	{
 		(*audioEngineObject)->Destroy(audioEngineObject);
+		audioEngineObject = nullptr;
 	}
 }

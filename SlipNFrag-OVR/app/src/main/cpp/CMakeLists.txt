@@ -15,11 +15,10 @@ set_target_properties(vrapi PROPERTIES IMPORTED_LOCATION ../../../../../../${OVR
 file(GLOB SRC_FILES *.cpp)
 file(GLOB ID1_FILES ../../../../../id1/*.cpp)
 file(GLOB STB_FILES ../../../../../${OVR_SDK_MOBILE}/3rdParty/stb/src/*.c)
-set(SNF_FILES ../../../../../SlipNFrag/cd_null.cpp)
 
 list(FILTER ID1_FILES EXCLUDE REGEX "net_win")
 
-add_library(native-activity SHARED ${SRC_FILES} ${ID1_FILES} ${STB_FILES} ${SNF_FILES})
+add_library(native-activity SHARED ${SRC_FILES} ${ID1_FILES} ${STB_FILES})
 
 target_include_directories(native-activity PRIVATE ${ANDROID_NDK}/sources/android/native_app_glue)
 target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBILE}/VrApi/Include)
