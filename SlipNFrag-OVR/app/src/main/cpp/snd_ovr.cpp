@@ -27,6 +27,25 @@ void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 	}
 }
 
+void SNDDMA_DisposeBuffers()
+{
+	if (audioPlayerObject != nullptr)
+	{
+		(*audioPlayerObject)->Destroy(audioPlayerObject);
+		audioPlayerObject = nullptr;
+	}
+	if (audioOutputMixObject != nullptr)
+	{
+		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
+		audioOutputMixObject = nullptr;
+	}
+	if (audioEngineObject != nullptr)
+	{
+		(*audioEngineObject)->Destroy(audioEngineObject);
+		audioEngineObject = nullptr;
+	}
+}
+
 qboolean SNDDMA_Init(void)
 {
 	shm = new dma_t;
@@ -48,26 +67,25 @@ qboolean SNDDMA_Init(void)
 	result = (*audioEngineObject)->Realize(audioEngineObject, SL_BOOLEAN_FALSE);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	result = (*audioEngineObject)->GetInterface(audioEngineObject, SL_IID_ENGINE, &audioEngine);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	result = (*audioEngine)->CreateOutputMix(audioEngine, &audioOutputMixObject, 0, nullptr, nullptr);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	result = (*audioOutputMixObject)->Realize(audioOutputMixObject, SL_BOOLEAN_FALSE);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	SLDataLocator_AndroidSimpleBufferQueue bufferQueueLocator;
@@ -94,57 +112,44 @@ qboolean SNDDMA_Init(void)
 	result = (*audioEngine)->CreateAudioPlayer(audioEngine, &audioPlayerObject, &dataSource, &sink, 1, &interfaceId, &required);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	result = (*audioPlayerObject)->Realize(audioPlayerObject, SL_BOOLEAN_FALSE);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioPlayerObject)->Destroy(audioPlayerObject);
-		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	result = (*audioPlayerObject)->GetInterface(audioPlayerObject, SL_IID_PLAY, &audioPlayer);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioPlayerObject)->Destroy(audioPlayerObject);
-		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	result = (*audioPlayerObject)->GetInterface(audioPlayerObject, SL_IID_BUFFERQUEUE, &audioBufferQueue);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioPlayerObject)->Destroy(audioPlayerObject);
-		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	result = (*audioBufferQueue)->RegisterCallback(audioBufferQueue, SNDDMA_Callback, nullptr);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioPlayerObject)->Destroy(audioPlayerObject);
-		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	result = (*audioPlayer)->SetPlayState(audioPlayer, SL_PLAYSTATE_PLAYING);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioPlayerObject)->Destroy(audioPlayerObject);
-		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	snd_current_sample_pos = shm->samples >> 1;
 	result = (*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data() + (snd_current_sample_pos << 1), shm->samples >> 2);
 	if (result != SL_RESULT_SUCCESS)
 	{
-		(*audioPlayerObject)->Destroy(audioPlayerObject);
-		(*audioOutputMixObject)->Destroy(audioOutputMixObject);
-		(*audioEngineObject)->Destroy(audioEngineObject);
+		SNDDMA_DisposeBuffers();
 		return false;
 	}
 	return true;
