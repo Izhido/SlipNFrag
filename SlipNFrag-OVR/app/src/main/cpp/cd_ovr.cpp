@@ -7,7 +7,7 @@
 stb_vorbis* cdaudio_stream;
 stb_vorbis_info cdaudio_info;
 
-std::vector<std::string> cdaudioTracks;
+std::unordered_map<int, std::string> cdaudioTracks;
 std::vector<byte> cdaudioTrackContents;
 std::vector<short> cdaudioStagingBuffer;
 
@@ -17,6 +17,7 @@ SLObjectItf cdaudioOutputMixObject;
 SLObjectItf cdaudioPlayerObject;
 SLPlayItf cdaudioPlayer;
 SLAndroidSimpleBufferQueueItf cdaudioBufferQueue;
+int cdaudioLastCopied;
 
 static qboolean cdValid = false;
 static qboolean	playing = false;
@@ -26,47 +27,59 @@ static qboolean	enabled = false;
 static qboolean playLooping = false;
 static float	cdvolume;
 static byte		playTrack;
-static byte		maxTrack;
 
 void CDAudio_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 {
-	auto copied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudioStagingBuffer.data(), cdaudioStagingBuffer.size() >> 1);
-	if (copied == 0 && playLooping)
+	if (!enabled)
+		return;
+
+	if (!playing)
+		return;
+
+	if (cdaudio_stream == nullptr)
+		return;
+
+	if (cdaudioPlayer == nullptr)
+		return;
+
+	cdaudioLastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudioStagingBuffer.data(), cdaudioStagingBuffer.size() >> 1);
+	if (cdaudioLastCopied == 0 && playLooping)
 	{
 		stb_vorbis_seek_start(cdaudio_stream);
-		copied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudioStagingBuffer.data(), cdaudioStagingBuffer.size() >> 1);
+		cdaudioLastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudioStagingBuffer.data(), cdaudioStagingBuffer.size() >> 1);
 	}
-	if (copied > 0)
-	{
-		(*cdaudioBufferQueue)->Enqueue(cdaudioBufferQueue, cdaudioStagingBuffer.data(), copied << 2);
-	}
-	else
-	{
-		CDAudio_Stop();
-	}
+
+	if (cdaudioLastCopied == 0)
+		return;
+
+	(*cdaudioBufferQueue)->Enqueue(cdaudioBufferQueue, cdaudioStagingBuffer.data(), cdaudioLastCopied << 2);
 }
 
-void CDAudio_FindInPath (const char *path, const char *prefix, const char *extension, std::vector<std::string>& result)
+void CDAudio_FindInPath (const char *path, const char *directory, const char *prefix, const char *extension, std::vector<std::string>& result)
 {
 	auto extension_len = strlen(extension);
-	auto to_search = std::string(path) + "/" + prefix;
-	auto directory = opendir (to_search.c_str());
-	if (directory != nullptr)
+	auto to_search = std::string(path) + "/" + directory;
+	auto dir = opendir (to_search.c_str());
+	if (dir != nullptr)
 	{
 		struct dirent* entry;
-		while ((entry = readdir (directory)) != nullptr)
+		while ((entry = readdir (dir)) != nullptr)
 		{
 			if (entry->d_type == DT_REG)
 			{
 				char* file = entry->d_name;
-				auto in_str = strcasestr (file + strlen(file) - extension_len, extension);
-				if (in_str != nullptr)
+				auto in_str = strcasestr (file, prefix);
+				if (in_str == file)
 				{
-					result.push_back(std::string(prefix) + file);
+					in_str = strcasestr (file + strlen(file) - extension_len, extension);
+					if (in_str != nullptr)
+					{
+						result.push_back(std::string(directory) + file);
+					}
 				}
 			}
 		}
-		closedir (directory);
+		closedir (dir);
 	}
 }
 
@@ -74,18 +87,28 @@ static int CDAudio_GetAudioDiskInfo(void)
 {
 	cdValid = false;
 
-	COM_FindAllFiles("music/", ".ogg", &CDAudio_FindInPath, cdaudioTracks);
+	cdaudioTracks.clear();
 
-	if (cdaudioTracks.size() == 0)
+	std::vector<std::string> tracks;
+	COM_FindAllFiles("music/", "track", ".ogg", &CDAudio_FindInPath, tracks);
+
+	if (tracks.size() == 0)
 	{
 		Con_DPrintf("CDAudio: no music tracks\n");
 		return -1;
 	}
 
-	std::sort(cdaudioTracks.begin(), cdaudioTracks.end());
+	auto prefix_len = strlen("music/track");
+	for (auto& track : tracks)
+	{
+		auto number = atoi(track.c_str() + prefix_len);
+		if (number > 1)
+		{
+			cdaudioTracks.insert({ number, track });
+		}
+	}
 
 	cdValid = true;
-	maxTrack = cdaudioTracks.size() + 1;
 
 	return 0;
 }
@@ -95,6 +118,7 @@ void CDAudio_DisposeBuffers()
 	if (cdaudioPlayerObject != nullptr)
 	{
 		(*cdaudioPlayerObject)->Destroy(cdaudioPlayerObject);
+		cdaudioPlayer = nullptr;
 		cdaudioPlayerObject = nullptr;
 	}
 	if (cdaudioOutputMixObject != nullptr)
@@ -105,6 +129,7 @@ void CDAudio_DisposeBuffers()
 	if (cdaudioEngineObject != nullptr)
 	{
 		(*cdaudioEngineObject)->Destroy(cdaudioEngineObject);
+		cdaudioEngine = nullptr;
 		cdaudioEngineObject = nullptr;
 	}
 	if (cdaudio_stream != nullptr)
@@ -133,13 +158,14 @@ void CDAudio_Play(byte track, qboolean looping)
 		CDAudio_DisposeBuffers();
 	}
 
-	if (track < 2 || track > maxTrack)
+	auto entry = cdaudioTracks.find(track);
+	if (entry == cdaudioTracks.end())
 	{
-		Con_DPrintf("CDAudio: Bad track number %u.\n", track);
+		Con_Printf("CDAudio: Track %u not found.\n", track);
 		return;
 	}
 
-	COM_LoadFile(cdaudioTracks[track - 2].c_str(), cdaudioTrackContents);
+	COM_LoadFile(cdaudioTracks[track].c_str(), cdaudioTrackContents);
 	if (cdaudioTrackContents.size() == 0)
 	{
 		Con_DPrintf("CDAudio: Empty file for track %u.\n", track);
@@ -249,16 +275,18 @@ void CDAudio_Play(byte track, qboolean looping)
 			break;
 		}
 	}
-	auto copied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudioStagingBuffer.data(), cdaudioStagingBuffer.size() >> 1);
-	if (copied == 0)
+	cdaudioLastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudioStagingBuffer.data(), cdaudioStagingBuffer.size() >> 1);
+	if (cdaudioLastCopied == 0)
 	{
 		Con_DPrintf("CDAudio: Empty track %u.\n", track);
+		(*cdaudioPlayer)->SetPlayState(cdaudioPlayer, SL_PLAYSTATE_STOPPED);
 		CDAudio_DisposeBuffers();
 		return;
 	}
-	result = (*cdaudioBufferQueue)->Enqueue(cdaudioBufferQueue, cdaudioStagingBuffer.data(), copied << 2);
+	result = (*cdaudioBufferQueue)->Enqueue(cdaudioBufferQueue, cdaudioStagingBuffer.data(), cdaudioLastCopied << 2);
 	if (result != SL_RESULT_SUCCESS)
 	{
+		(*cdaudioPlayer)->SetPlayState(cdaudioPlayer, SL_PLAYSTATE_STOPPED);
 		CDAudio_DisposeBuffers();
 		return;
 	}
@@ -278,6 +306,11 @@ void CDAudio_Stop(void)
 
 	if (!playing)
 		return;
+
+	if (cdaudioPlayer != nullptr)
+	{
+		(*cdaudioPlayer)->SetPlayState(cdaudioPlayer, SL_PLAYSTATE_STOPPED);
+	}
 
 	CDAudio_DisposeBuffers();
 
@@ -409,7 +442,7 @@ static void CD_f (void)
 
 	if (Q_strcasecmp(command, "info") == 0)
 	{
-		Con_Printf("%u tracks\n", maxTrack);
+		Con_Printf("%u tracks\n", cdaudioTracks.size());
 		if (playing)
 			Con_Printf("Currently %s track %u\n", playLooping ? "looping" : "playing", playTrack);
 		else if (wasPlaying)
@@ -439,6 +472,11 @@ void CDAudio_Update(void)
 			cdvolume = bgmvolume.value;
 			CDAudio_Resume ();
 		}
+	}
+
+	if (cdaudioLastCopied == 0)
+	{
+		CDAudio_Stop();
 	}
 }
 

@@ -1377,11 +1377,10 @@ void COM_CopyFile (char *netpath, char *cachepath)
 ===========
 COM_FindAllFiles
 
-Finds all files that match a path prefix and a specific extension in the first entry
-of the search path that contains at least one match.
+Finds all files that match a directory, a file prefix and a specific extension in the search path.
 ===========
 */
-int COM_FindAllFiles (const char *prefix, const char *extension, void (find_in_path)(const char *path, const char *prefix, const char *extension, std::vector<std::string>& result), std::vector<std::string>& result)
+int COM_FindAllFiles (const char *directory, const char *prefix, const char *extension, void (find_in_path)(const char *path, const char *directory, const char *prefix, const char *extension, std::vector<std::string>& result), std::vector<std::string>& result)
 {
 	searchpath_t    *search;
 	std::string netpath;
@@ -1395,6 +1394,7 @@ int COM_FindAllFiles (const char *prefix, const char *extension, void (find_in_p
 //
 	search = com_searchpaths;
 	auto extension_len = strlen(extension);
+	auto full_prefix = std::string(directory) + prefix;
 
 	for ( ; search ; search = search->next)
 	{
@@ -1408,7 +1408,7 @@ int COM_FindAllFiles (const char *prefix, const char *extension, void (find_in_p
 				qboolean found = false;
 				auto file = pak->files[i].name.c_str();
 				auto file_len = strlen(file);
-				auto in_str = strcasestr (file, prefix);
+				auto in_str = strcasestr (file, full_prefix.c_str());
 				if (in_str == file)
 				{
 					in_str = strcasestr (file + file_len - extension_len, extension);
@@ -1422,7 +1422,7 @@ int COM_FindAllFiles (const char *prefix, const char *extension, void (find_in_p
 		}
 		else
 		{
-			find_in_path (search->filename.c_str(), prefix, extension, result);
+			find_in_path (search->filename.c_str(), directory, prefix, extension, result);
 		}
 		if (result.size() > 0)
 		{

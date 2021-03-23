@@ -14,6 +14,10 @@ qboolean snd_forceclear;
 
 void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 {
+	if (audioPlayer == nullptr)
+	{
+		return;
+	}
 	if (snd_forceclear)
 	{
 		S_ClearBuffer();
@@ -169,7 +173,9 @@ void SNDDMA_Shutdown(void)
 {
 	if (audioPlayerObject != nullptr)
 	{
+		(*audioPlayer)->SetPlayState(audioPlayer, SL_PLAYSTATE_STOPPED);
 		(*audioPlayerObject)->Destroy(audioPlayerObject);
+		audioPlayer = nullptr;
 		audioPlayerObject = nullptr;
 	}
 	if (audioOutputMixObject != nullptr)
@@ -180,6 +186,7 @@ void SNDDMA_Shutdown(void)
 	if (audioEngineObject != nullptr)
 	{
 		(*audioEngineObject)->Destroy(audioEngineObject);
+		audioEngine = nullptr;
 		audioEngineObject = nullptr;
 	}
 }

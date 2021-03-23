@@ -167,7 +167,7 @@ struct cache_user_s;
 
 extern std::string com_gamedir;
 
-int COM_FindAllFiles (const char *prefix, const char *extension, void (find_in_paths)(const char *path, const char *prefix, const char *extension, std::vector<std::string>& result), std::vector<std::string>& result);
+int COM_FindAllFiles (const char *directory, const char *prefix, const char *extension, void (find_in_path)(const char *path, const char *directory, const char *prefix, const char *extension, std::vector<std::string>& result), std::vector<std::string>& result);
 
 void COM_WriteFile (char *filename, void *data, int len);
 int COM_OpenFile (const char *filename, int *hndl);
