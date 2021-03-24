@@ -1393,8 +1393,9 @@ int COM_FindAllFiles (const char *directory, const char *prefix, const char *ext
 // search through the path, one element at a time
 //
 	search = com_searchpaths;
-	auto extension_len = strlen(extension);
+	auto extension_len = Q_strlen(extension);
 	auto full_prefix = std::string(directory) + prefix;
+	auto full_prefix_len = full_prefix.length();
 
 	for ( ; search ; search = search->next)
 	{
@@ -1407,12 +1408,12 @@ int COM_FindAllFiles (const char *directory, const char *prefix, const char *ext
 			{
 				qboolean found = false;
 				auto file = pak->files[i].name.c_str();
-				auto file_len = strlen(file);
-				auto in_str = strcasestr (file, full_prefix.c_str());
-				if (in_str == file)
+				auto file_len = Q_strlen(file);
+				auto match = Q_strncasecmp (file, full_prefix.c_str(), full_prefix_len);
+				if (match == 0)
 				{
-					in_str = strcasestr (file + file_len - extension_len, extension);
-					found = (in_str != nullptr);
+					match = Q_strncasecmp (file + file_len - extension_len, extension, extension_len);
+					found = (match == 0);
 				}
 				if (found)
 				{

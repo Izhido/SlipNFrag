@@ -57,7 +57,8 @@ void CDAudio_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 
 void CDAudio_FindInPath (const char *path, const char *directory, const char *prefix, const char *extension, std::vector<std::string>& result)
 {
-	auto extension_len = strlen(extension);
+	auto prefix_len = Q_strlen(prefix);
+	auto extension_len = Q_strlen(extension);
 	auto to_search = std::string(path) + "/" + directory;
 	auto dir = opendir (to_search.c_str());
 	if (dir != nullptr)
@@ -68,11 +69,11 @@ void CDAudio_FindInPath (const char *path, const char *directory, const char *pr
 			if (entry->d_type == DT_REG)
 			{
 				char* file = entry->d_name;
-				auto in_str = strcasestr (file, prefix);
-				if (in_str == file)
+				auto match = Q_strncasecmp (file, prefix, prefix_len);
+				if (match == 0)
 				{
-					in_str = strcasestr (file + strlen(file) - extension_len, extension);
-					if (in_str != nullptr)
+					match = Q_strncasecmp (file + strlen(file) - extension_len, extension, extension_len);
+					if (match == 0)
 					{
 						result.push_back(std::string(directory) + file);
 					}
