@@ -23,6 +23,10 @@ int sys_fileoperationindex;
 std::string sys_fileoperationname;
 byte* sys_fileoperationbuffer;
 int sys_fileoperationsize;
+std::string sys_fileoperationdirectory;
+std::string sys_fileoperationprefix;
+std::string sys_fileoperationextension;
+std::vector<std::string>* sys_fileoperationlist;
 std::string sys_fileoperationerror;
 int sys_fileoperationtime;
 std::mutex sys_iomutex;
@@ -44,6 +48,7 @@ int findhandle()
 fileoperation_t Sys_WaitForIOCompletion(fileoperation_t operation)
 {
 	auto start = Sys_FloatTime();
+	double finish;
 	fileoperation_t result = fo_idle;
 	do
 	{
@@ -52,7 +57,8 @@ fileoperation_t Sys_WaitForIOCompletion(fileoperation_t operation)
 			std::lock_guard lock(sys_iomutex);
 			result = sys_fileoperation;
 		}
-	} while (result == operation && Sys_FloatTime() - start < 5);
+		finish = Sys_FloatTime();
+	} while (result == operation && (finish - start) < 5);
 	return result;
 }
 
@@ -186,6 +192,24 @@ int Sys_FileTime(char* path)
 		return -1;
 	}
 	return sys_fileoperationtime;
+}
+
+void Sys_FindInPath(const char* path, const char* directory, const char* prefix, const char* extension, std::vector<std::string>& result)
+{
+	{
+		std::lock_guard lock(sys_iomutex);
+		sys_fileoperation = fo_findinpath;
+		sys_fileoperationname = path;
+		sys_fileoperationdirectory = directory;
+		sys_fileoperationprefix = prefix;
+		sys_fileoperationextension = extension;
+		sys_fileoperationlist = &result;
+	}
+	auto operation = Sys_WaitForIOCompletion(fo_findinpath);
+	if (operation == fo_findinpath)
+	{
+		Sys_Error("Sys_FindInPath timed out after 5 seconds");
+	}
 }
 
 void Sys_mkdir(char* path)

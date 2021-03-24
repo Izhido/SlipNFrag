@@ -7,8 +7,20 @@
 #include "virtualkeymap.h"
 #include "in_uwp.h"
 #include "snd_uwp.h"
+#define STB_VORBIS_HEADER_ONLY
+#include "stb_vorbis.c"
 
 extern qboolean snd_forceclear;
+
+extern stb_vorbis* cdaudio_stream;
+extern stb_vorbis_info cdaudio_info;
+
+extern int cdaudio_refcount;
+
+extern qboolean	cdaudio_playing;
+extern qboolean cdaudio_wasPlaying;
+extern qboolean	cdaudio_enabled;
+extern qboolean cdaudio_playLooping;
 
 #pragma comment(lib, "User32.lib")
 
@@ -34,6 +46,7 @@ using namespace Windows::Security::Cryptography;
 using namespace Windows::Storage;
 using namespace Windows::Storage::AccessCache;
 using namespace Windows::Storage::FileProperties;
+using namespace Windows::Storage::Search;
 using namespace Windows::Storage::Streams;
 using namespace Windows::System;
 using namespace Windows::System::Threading;
@@ -1320,6 +1333,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 			PIXEndEvent(commandQueue.get());
 			if (updated)
 			{
+				UpdateCD();
 				PIXBeginEvent(commandQueue.get(), 0, L"Render");
 				Render();
 				PIXEndEvent(commandQueue.get());
@@ -1688,6 +1702,92 @@ namespace winrt::SlipNFrag_Windows::implementation
 		consoleUpload->Unmap(0, nullptr);
 		previousTime = time;
 		return true;
+	}
+
+	void MainPage::UpdateCD()
+	{
+		if (cdaudioRefCount != cdaudio_refcount)
+		{
+			if (cdaudioInput != nullptr)
+			{
+				cdaudioInput.Stop();
+				cdaudioInput.RemoveOutgoingConnection(audioOutput);
+				cdaudioInput.Close();
+				cdaudioInput = nullptr;
+			}
+			audioInput.Stop();
+			audioGraph.Stop();
+			AudioEncodingProperties properties = AudioEncodingProperties::CreatePcm(cdaudio_info.sample_rate, cdaudio_info.channels, 16);
+			cdaudioInput = audioGraph.CreateFrameInputNode(properties);
+			cdaudioInput.AddOutgoingConnection(audioOutput);
+			cdaudioInput.Stop();
+			cdaudioInput.QuantumStarted([this](AudioFrameInputNode const&, FrameInputNodeQuantumStartedEventArgs const& e)
+				{
+					if (!cdaudio_enabled)
+						return;
+
+					if (!cdaudio_playing)
+						return;
+
+					if (cdaudio_stream == nullptr)
+						return;
+
+					auto samples = e.RequiredSamples();
+					if (samples > 0)
+					{
+						auto bufferSize = samples << 2;
+						AudioFrame frame(bufferSize);
+						{
+							auto buffer = frame.LockBuffer(AudioBufferAccessMode::Write);
+							auto reference = buffer.CreateReference();
+							auto byteAccess = reference.as<IMemoryBufferByteAccess>();
+							byte* data;
+							unsigned int capacity;
+							byteAccess->GetBuffer(&data, &capacity);
+
+							cdaudioLastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, (short*)data, samples << 1);
+							if (cdaudioLastCopied == 0 && cdaudio_playLooping)
+							{
+								stb_vorbis_seek_start(cdaudio_stream);
+								cdaudioLastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, (short*)data, samples << 1);
+							}
+
+							if (cdaudioLastCopied == 0)
+								return;
+						}
+						cdaudioInput.AddFrame(frame);
+					}
+				});
+			cdaudioLastCopied = -1;
+			audioGraph.Start();
+			audioInput.Start();
+			cdaudioInput.Start();
+			cdaudioRefCount = cdaudio_refcount;
+		}
+		if (cdaudioPlaying != cdaudio_playing || cdaudioWasPlaying != cdaudio_wasPlaying)
+		{
+			if (cdaudioInput != nullptr)
+			{
+				if (cdaudio_wasPlaying)
+				{
+					if (cdaudio_playing)
+					{
+						cdaudioLastCopied = -1;
+						cdaudioInput.Start();
+					}
+					else
+					{
+						cdaudioInput.Stop();
+					}
+				}
+			}
+			cdaudioPlaying = cdaudio_playing;
+			cdaudioWasPlaying = cdaudio_wasPlaying;
+		}
+		if (cdaudioLastCopied == 0 && cdaudioInput != nullptr)
+		{
+			cdaudioInput.Stop();
+		}
 	}
 
 	void MainPage::Render()
@@ -2071,7 +2171,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 										exitDialog.Content(box_value(L"Slip & Frag will now close. Run the application again to play with the new preferences."));
 										exitDialog.CloseButtonText(L"Exit");
 										auto task = exitDialog.ShowAsync();
-										task.Completed([](IAsyncOperation<ContentDialogResult> const& operation, AsyncStatus const&)
+										task.Completed([](IAsyncOperation<ContentDialogResult> const&, AsyncStatus const&)
 											{
 												Application::Current().Exit();
 											});
@@ -2142,6 +2242,10 @@ namespace winrt::SlipNFrag_Windows::implementation
 			{
 				GetFileTime();
 			}
+			else if (operation == fo_findinpath)
+			{
+				FindInPath();
+			}
 			{
 				std::lock_guard lock(sys_errormutex);
 				keepRunning = (!sys_errorcalled && !sys_quitcalled);
@@ -2187,7 +2291,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 				}
 				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
 				{
-					SignalFileOperationError("Filename is not a subpath of specified folder");
+					SignalFileOperationError("Filename is not a subpath of basepath");
 					return;
 				}
 				if (sys_fileoperationname[i] == '/' || sys_fileoperationname[i] == '\\')
@@ -2273,7 +2377,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 				}
 				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
 				{
-					SignalFileOperationError("Filename is not a subpath of specified folder");
+					SignalFileOperationError("Filename is not a subpath of basepath");
 					return;
 				}
 				if (sys_fileoperationname[i] == '/' || sys_fileoperationname[i] == '\\')
@@ -2348,7 +2452,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 				}
 				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
 				{
-					SignalFileOperationError("Filename is not a subpath of specified folder");
+					SignalFileOperationError("Filename is not a subpath of basepath");
 					return;
 				}
 				if (sys_fileoperationname[i] == '/' || sys_fileoperationname[i] == '\\')
@@ -2494,7 +2598,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 				}
 				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
 				{
-					SignalFileOperationError("Filename is not a subpath of specified folder");
+					SignalFileOperationError("Filename is not a subpath of basedir");
 					return;
 				}
 				if (sys_fileoperationname[i] == '/' || sys_fileoperationname[i] == '\\')
@@ -2534,6 +2638,113 @@ namespace winrt::SlipNFrag_Windows::implementation
 									std::lock_guard lock(sys_iomutex);
 									sys_fileoperation = fo_idle;
 									fileOperationRunning = false;
+								}
+							});
+					});
+			});
+	}
+
+	void MainPage::FindInPath()
+	{
+		if (!StorageApplicationPermissions::FutureAccessList().ContainsItem(L"basedir_text"))
+		{
+			sys_fileoperationerror = "basedir_text token not found in FutureAccessList";
+			sys_fileoperation = fo_error;
+			return;
+		}
+		fileOperationRunning = true;
+		auto task = StorageApplicationPermissions::FutureAccessList().GetFolderAsync(L"basedir_text");
+		task.Completed([this](IAsyncOperation<StorageFolder> const& operation, AsyncStatus const status)
+			{
+				if (status == AsyncStatus::Error)
+				{
+					SignalFileOperationError(std::to_string(operation.ErrorCode()));
+					return;
+				}
+				auto folder = operation.GetResults();
+				auto path = folder.Path();
+				auto i = 0;
+				for (; i < (int)sys_fileoperationname.length() && i < (int)path.size(); i++)
+				{
+					auto c = (wchar_t)sys_fileoperationname[i];
+					if (c != path[i])
+					{
+						break;
+					}
+				}
+				if (i != (int)path.size() || i >= (int)sys_fileoperationname.length())
+				{
+					SignalFileOperationError("Directory is not a subpath of basedir");
+					return;
+				}
+				std::wstring directory;
+				for (auto c : sys_fileoperationname)
+				{
+					if (c == '/')
+					{
+						c = '\\';
+					}
+					directory.push_back(c);
+				}
+				if (directory[directory.length() - 1] != '\\')
+				{
+					directory.push_back('\\');
+				}
+				auto directoryPrefixLength = directory.length();
+				for (auto c : sys_fileoperationdirectory)
+				{
+					if (c == '/')
+					{
+						c = '\\';
+					}
+					directory.push_back(c);
+				}
+				auto fullPrefix = sys_fileoperationdirectory + sys_fileoperationprefix;
+				auto task = StorageFolder::GetFolderFromPathAsync(hstring(directory));
+				task.Completed([this, directoryPrefixLength, fullPrefix](IAsyncOperation<StorageFolder> const& operation, AsyncStatus const status)
+					{
+						if (status == AsyncStatus::Error)
+						{
+							SignalFileOperationError(std::to_string(operation.ErrorCode()));
+							return;
+						}
+						auto folder = operation.GetResults();
+						auto task = folder.GetFilesAsync();
+						task.Completed([this, directoryPrefixLength, fullPrefix](IAsyncOperation<IVectorView<StorageFile>> const& operation, AsyncStatus const status)
+							{
+								if (status == AsyncStatus::Completed)
+								{
+									auto list = operation.GetResults();
+									for (auto& entry : list)
+									{
+										auto path = entry.Path();
+										std::string entryInList;
+										for (size_t i = directoryPrefixLength; i < path.size(); i++)
+										{
+											auto c = path[i];
+											if (c == '\\')
+											{
+												c = '/';
+											}
+											entryInList.push_back(c);
+										}
+										auto found = false;
+										auto match = Q_strncasecmp(entryInList.c_str(), fullPrefix.c_str(), fullPrefix.length());
+										if (match == 0)
+										{
+											match = Q_strncasecmp(entryInList.c_str() + entryInList.length() - sys_fileoperationextension.length(), sys_fileoperationextension.c_str(), sys_fileoperationextension.length());
+											found = (match == 0);
+										}
+										if (found)
+										{
+											sys_fileoperationlist->push_back(entryInList);
+										}
+									}
+									{
+										std::lock_guard lock(sys_iomutex);
+										sys_fileoperation = fo_idle;
+										fileOperationRunning = false;
+									}
 								}
 							});
 					});

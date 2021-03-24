@@ -93,6 +93,11 @@ namespace winrt::SlipNFrag_Windows::implementation
 		std::vector<int> joyButtonsAsKeys;
 		std::vector<std::string> joyButtonsAsCommands;
 		bool mlook_enabled = false;
+		int cdaudioRefCount;
+		winrt::Windows::Media::Audio::AudioFrameInputNode cdaudioInput = nullptr;
+		int cdaudioLastCopied;
+		int cdaudioPlaying;
+		int cdaudioWasPlaying;
 
 		MainPage();
 		void UpdateTitleBarLayout(Windows::ApplicationModel::Core::CoreApplicationViewTitleBar const& titleBar);
@@ -110,6 +115,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 		void DisplayContentsInvalidated(Windows::Graphics::Display::DisplayInformation const&, IInspectable const&);
 		void RenderLoop(Windows::Foundation::IAsyncAction const&);
 		bool Update();
+		void UpdateCD();
 		void Render();
 		void WaitForGPU(int frame, const char* timeoutError);
 		void UploadBufferToGPU(D3D12_SUBRESOURCE_DATA data, winrt::com_ptr<ID3D12Resource> const& buffer, winrt::com_ptr<ID3D12Resource> const& bufferUpload, D3D12_RESOURCE_DESC const& descriptor);
@@ -132,6 +138,7 @@ namespace winrt::SlipNFrag_Windows::implementation
 		void ReadFile();
 		void WriteToFile();
 		void GetFileTime();
+		void FindInPath();
 		void FullscreenButton_Click(winrt::Windows::Foundation::IInspectable const&, winrt::Windows::UI::Xaml::RoutedEventArgs const&);
 		void RegisterMouseMoved();
 		void UnregisterMouseMoved();

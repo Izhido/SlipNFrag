@@ -11,7 +11,8 @@ enum fileoperation_t
 	fo_openappend,
 	fo_read,
 	fo_write,
-	fo_time
+	fo_time,
+	fo_findinpath
 };
 
 struct file_t
@@ -31,6 +32,10 @@ extern int sys_fileoperationindex;
 extern std::string sys_fileoperationname;
 extern byte* sys_fileoperationbuffer;
 extern int sys_fileoperationsize;
+extern std::string sys_fileoperationdirectory;
+extern std::string sys_fileoperationprefix;
+extern std::string sys_fileoperationextension;
+extern std::vector<std::string>* sys_fileoperationlist;
 extern std::string sys_fileoperationerror;
 extern int sys_fileoperationtime;
 extern qboolean sys_errorcalled;

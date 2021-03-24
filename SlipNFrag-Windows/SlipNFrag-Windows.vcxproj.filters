@@ -184,9 +184,6 @@
     <ClCompile Include="..\id1\world.cpp">
       <Filter>id1</Filter>
     </ClCompile>
-    <ClCompile Include="..\SlipNFrag\cd_null.cpp">
-      <Filter>SlipNFrag</Filter>
-    </ClCompile>
     <ClCompile Include="vid_uwp.cpp" />
     <ClCompile Include="sys_uwp.cpp" />
     <ClCompile Include="App.cpp" />
@@ -217,6 +214,7 @@
     <ClCompile Include="..\id1\d_lists.cpp">
       <Filter>id1</Filter>
     </ClCompile>
+    <ClCompile Include="cd_uwp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -386,9 +384,6 @@
   <ItemGroup>
     <Filter Include="id1">
       <UniqueIdentifier>{70699967-de5f-4388-a6d2-2aeda45c8357}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SlipNFrag">
-      <UniqueIdentifier>{71c413a4-4264-491f-adc2-789070f1c79c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
