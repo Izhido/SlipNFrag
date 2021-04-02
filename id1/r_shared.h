@@ -78,10 +78,9 @@ typedef struct surf_s
 	void		*data;				// associated data like msurface_t
 	entity_t	*entity;
 	float		nearzi;				// nearest 1/z on surface, for mipmapping
-	qboolean	insubmodel;
-	float		d_ziorigin, d_zistepu, d_zistepv;
-
-	int			pad[2];				// to 64 bytes
+	int			insubmodel;
+	int			isfence;			// related texture contains "holes" (texels with value 255)
+	float		d_ziorigin, d_zistepu, d_zistepv;	// this should total 80 bytes in 64-bit platforms
 } surf_t;
 
 extern	surf_t	*surfaces, *surface_p, *surf_max;
@@ -115,6 +114,8 @@ extern void R_MakeSky (void);
 
 extern int	ubasestep, errorterm, erroradjustup, erroradjustdown;
 
+extern qboolean r_hasfences;
+
 // flags in finalvert_t.flags
 #define ALIAS_LEFT_CLIP				0x0001
 #define ALIAS_TOP_CLIP				0x0002
@@ -136,6 +137,7 @@ typedef struct edge_s
 	struct edge_s	*nextremove;
 	float			nearzi;
 	medge_t			*owner;
+	int				pad[2]; // to 64 bytes
 } edge_t;
 
 #endif	// _R_SHARED_H_

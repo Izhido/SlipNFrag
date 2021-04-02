@@ -62,6 +62,8 @@ edge_t	edge_tail;
 edge_t	edge_aftertail;
 edge_t	edge_sentinel;
 
+qboolean r_hasfences;
+
 float	fv;
 
 void R_GenerateSpans (void);
@@ -379,6 +381,13 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 // start edge yet)
 	if (--surf->spanstate == 0)
 	{
+		if (surf->isfence)
+		{
+			span = surf->spans;
+			span->count = (int)(edge->u >> 20) - span->u;
+			return;
+		}
+
 		if (surf->insubmodel)
 			r_bmodelactive--;
 
@@ -430,6 +439,17 @@ void R_LeadingEdge (edge_t *edge)
 	// end edge)
 		if (++surf->spanstate == 1)
 		{
+			if (surf->isfence)
+			{
+				span = span_p++;
+				span->u = (int)(edge->u >> 20);
+				span->v = current_iv;
+				span->count = 0;
+				span->pnext = surf->spans;
+				surf->spans = span;
+				return;
+			}
+
 			if (surf->insubmodel)
 				r_bmodelactive++;
 
@@ -570,6 +590,21 @@ void R_GenerateSpans (void)
 	}
 
 	R_CleanupSpan ();
+
+	if (r_hasfences)
+	{
+		for (surf = &surfaces[1] ; surf<surface_p ; surf++)
+		{
+			if (surf->isfence && surf->spanstate != 0)
+			{
+				surf->spanstate = 0;
+				if (surf->spans)
+				{
+					surf->spans->count = edge_tail_u_shift20 - surf->spans->u;
+				}
+			}
+		}
+	}
 }
 
 #endif	// !id386

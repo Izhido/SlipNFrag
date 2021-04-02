@@ -332,12 +332,11 @@ void D_DrawSurfaces (void)
 	}
 	else
 	{
+		// First, draw all non-fence-originated spans:
 		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
 			if (!s->spans)
 				continue;
-
-			r_drawnpolycount++;
 
 			d_zistepu = s->d_zistepu;
 			d_zistepv = s->d_zistepv;
@@ -345,6 +344,8 @@ void D_DrawSurfaces (void)
 
 			if (s->flags & SURF_DRAWSKY)
 			{
+				r_drawnpolycount++;
+
 				if (r_skyinitialized)
 				{
 					if (!r_skymade)
@@ -358,6 +359,8 @@ void D_DrawSurfaces (void)
 			}
 			else if (s->flags & SURF_DRAWSKYBOX)
 			{
+				r_drawnpolycount++;
+
 				pface = (msurface_t*)s->data;
 				miplevel = 0;
 				if (!pface->texinfo->texture)
@@ -385,6 +388,8 @@ void D_DrawSurfaces (void)
 			}
 			else if (s->flags & SURF_DRAWBACKGROUND)
 			{
+				r_drawnpolycount++;
+
 				// set up a gradient for the background surface that places it
 				// effectively at infinity distance from the viewpoint
 				d_zistepu = 0;
@@ -396,6 +401,8 @@ void D_DrawSurfaces (void)
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
+				r_drawnpolycount++;
+
 				pface = (msurface_t*)s->data;
 				miplevel = 0;
 				cacheblock = (pixel_t *)
@@ -447,6 +454,13 @@ void D_DrawSurfaces (void)
 			}
 			else
 			{
+				if (s->isfence)
+				{
+					continue;
+				}
+
+				r_drawnpolycount++;
+
 				if (s->insubmodel)
 				{
 					// FIXME: we don't want to do all this for every polygon!
@@ -496,6 +510,67 @@ void D_DrawSurfaces (void)
 					VectorCopy (base_modelorg, modelorg);
 					R_TransformFrustum ();
 				}
+			}
+		}
+		// Then, draw fence-originated spans:
+		for (s = &surfaces[1] ; s<surface_p ; s++)
+		{
+			if (!s->spans || !s->isfence)
+				continue;
+
+			r_drawnpolycount++;
+
+			d_zistepu = s->d_zistepu;
+			d_zistepv = s->d_zistepv;
+			d_ziorigin = s->d_ziorigin;
+
+			// Fence textures are assumed to be referenced only by regular surfaces:
+			if (s->insubmodel)
+			{
+				// FIXME: we don't want to do all this for every polygon!
+				// TODO: store once at start of frame
+				currententity = s->entity;	//FIXME: make this passed in to
+				// R_RotateBmodel ()
+				VectorSubtract (r_origin, currententity->origin, local_modelorg);
+				TransformVector (local_modelorg, transformed_modelorg);
+
+				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+				// make entity passed in
+			}
+
+			pface = (msurface_t*)s->data;
+			miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip
+										   * pface->texinfo->mipadjust);
+
+			// FIXME: make this passed in to D_CacheSurface
+			pcurrentcache = nullptr;
+			D_CacheSurface (pface, miplevel, &pcurrentcache);
+
+			if (pcurrentcache != nullptr)
+			{
+				cacheblock = (pixel_t *)pcurrentcache->data;
+				cachewidth = pcurrentcache->width;
+
+				D_CalcGradients (pface);
+
+				D_DrawFenceSpans8 (s->spans);
+			}
+
+			if (s->insubmodel)
+			{
+				//
+				// restore the old drawing state
+				// FIXME: we don't want to do this every time!
+				// TODO: speed up
+				//
+				currententity = &cl_entities[0];
+				VectorCopy (world_transformed_modelorg,
+							transformed_modelorg);
+				VectorCopy (base_vpn, vpn);
+				VectorCopy (base_vup, vup);
+				VectorCopy (base_vright, vright);
+				VectorCopy (base_modelorg, modelorg);
+				R_TransformFrustum ();
 			}
 		}
 	}

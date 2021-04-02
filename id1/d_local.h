@@ -79,6 +79,8 @@ void D_SpriteDrawSpans (sspan_t *pspan);
 void D_DrawSkyScans8 (espan_t *pspan);
 void D_DrawSkyScans16 (espan_t *pspan);
 
+void D_DrawFenceSpans8 (espan_t *pspans);
+
 void R_ShowSubDiv (void);
 
 extern void (*prealspandrawer)(void);
