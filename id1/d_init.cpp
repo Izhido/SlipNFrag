@@ -37,6 +37,9 @@ static float	basemip[NUM_MIPS-1] = {1.0, 0.5*0.8, 0.25*0.8};
 
 extern int			d_aflatcolor;
 
+void (*d_drawspans) (espan_t *pspan);
+void (*d_drawzspans) (espan_t *pspan);
+
 
 /*
 ===============
@@ -45,6 +48,17 @@ D_Init
 */
 void D_Init (void)
 {
+	if (bigendien)
+	{
+		d_drawspans = D_DrawBigSpans64;
+		d_drawzspans = D_DrawBigZSpans64;
+	}
+	else
+	{
+		d_drawspans = D_DrawLittleSpans64;
+		d_drawzspans = D_DrawLittleZSpans64;
+	}
+
     Draw_ResizeScanTables();
 
     r_skydirect = 1;

@@ -827,6 +827,7 @@ void R_DrawBEntitiesOnList (void)
 
 std::vector<std::vector<edge_t>> ledgestack;
 std::vector<std::vector<surf_t>> lsurfstack;
+std::vector<std::vector<int>> lfencestack;
 
 /*
 ================
@@ -858,12 +859,15 @@ void R_EdgeDrawing (void)
     if (r_ledgesurfstackindex >= lsurfstack.size())
     {
         lsurfstack.emplace_back(r_lsurfssize + ((CACHE_SIZE - 1) / sizeof(surf_t)) + 1);
+		lfencestack.emplace_back(r_lsurfssize + ((CACHE_SIZE - 1) / sizeof(int)) + 1);
     }
     else
     {
         lsurfstack[r_ledgesurfstackindex].resize(r_lsurfssize + ((CACHE_SIZE - 1) / sizeof(surf_t)) + 1);
+		lfencestack[r_ledgesurfstackindex].resize(r_lsurfssize + ((CACHE_SIZE - 1) / sizeof(int)) + 1);
     }
     surf_t* lsurfs = lsurfstack[r_ledgesurfstackindex].data();
+	int* lfences = lfencestack[r_ledgesurfstackindex].data();
 	{
 		r_edges =  (edge_t *)
 				(((size_t)&ledges[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
@@ -877,6 +881,10 @@ void R_EdgeDrawing (void)
 	// is used to indicate no edge attached to surface
 		surfaces--;
 		R_SurfacePatch ();
+		
+		r_fences =  (int *)
+				(((size_t)&lfences[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
+		r_fence_max = &r_fences[r_lsurfssize];
 	}
 
 	R_BeginEdgeFrame ();

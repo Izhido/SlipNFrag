@@ -589,6 +589,13 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 			ycenter * surface_p->d_zistepv;
 
 //JDC	VectorCopy (r_worldmodelorg, surface_p->modelorg);
+
+	if (surface_p->isfence)
+	{
+		*r_fence_p = (int)(surface_p - surfaces);
+		r_fence_p++;
+	}
+
 	surface_p++;
 }
 
@@ -707,6 +714,13 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 			ycenter * surface_p->d_zistepv;
 
 //JDC	VectorCopy (r_worldmodelorg, surface_p->modelorg);
+
+	if (surface_p->isfence)
+	{
+		*r_fence_p = (int)(surface_p - surfaces);
+		r_fence_p++;
+	}
+
 	surface_p++;
 }
 

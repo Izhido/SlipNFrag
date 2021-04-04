@@ -187,7 +187,7 @@ void D_DrawSurfaces (void)
             int data = (int)data_ptr & 0xFF;
 
 			D_DrawSolidSurface (s, data);
-			D_DrawZSpans (s->spans);
+			(*d_drawzspans) (s->spans);
 		}
 	}
 	else if (d_uselists)
@@ -354,7 +354,7 @@ void D_DrawSurfaces (void)
 					}
 
 					D_DrawSkyScans8 (s->spans);
-					D_DrawZSpans (s->spans);
+					(*d_drawzspans) (s->spans);
 				}
 			}
 			else if (s->flags & SURF_DRAWSKYBOX)
@@ -376,7 +376,7 @@ void D_DrawSurfaces (void)
 
 				D_CalcGradients (pface);
 
-				D_DrawSpans8 (s->spans);
+				(*d_drawspans) (s->spans);
 
 				// set up a gradient for the background surface that places it
 				// effectively at infinity distance from the viewpoint
@@ -384,7 +384,7 @@ void D_DrawSurfaces (void)
 				d_zistepv = 0;
 				d_ziorigin = -0.9;
 
-				D_DrawZSpans (s->spans);
+				(*d_drawzspans) (s->spans);
 			}
 			else if (s->flags & SURF_DRAWBACKGROUND)
 			{
@@ -397,7 +397,7 @@ void D_DrawSurfaces (void)
 				d_ziorigin = -0.9;
 
 				D_DrawSolidSurface (s, (int)r_clearcolor.value & 0xFF);
-				D_DrawZSpans (s->spans);
+				(*d_drawzspans) (s->spans);
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
@@ -433,7 +433,7 @@ void D_DrawSurfaces (void)
                 {
                     Turbulent8Non64 (s->spans);
                 }
-				D_DrawZSpans (s->spans);
+				(*d_drawzspans) (s->spans);
 
 				if (s->insubmodel)
 				{
@@ -489,9 +489,9 @@ void D_DrawSurfaces (void)
 
 					D_CalcGradients (pface);
 
-					D_DrawSpans8 (s->spans);
+					(*d_drawspans) (s->spans);
 
-					D_DrawZSpans (s->spans);
+					(*d_drawzspans) (s->spans);
 				}
 
 				if (s->insubmodel)
@@ -513,8 +513,10 @@ void D_DrawSurfaces (void)
 			}
 		}
 		// Then, draw fence-originated spans:
-		for (s = &surfaces[1] ; s<surface_p ; s++)
+		for (auto fence = r_fences ; fence < r_fence_p ; fence++)
 		{
+			s = &surfaces[*fence];
+
 			if (!s->spans || !s->isfence)
 				continue;
 

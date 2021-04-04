@@ -443,16 +443,195 @@ void Turbulent8 (espan_t *pspan)
 
 /*
 =============
-D_DrawSpans8
+D_DrawLittleSpans64
 =============
 */
-void D_DrawSpans8 (espan_t *pspan)
+void D_DrawLittleSpans64 (espan_t *pspan)
 {
 	int				count, spancount;
 	unsigned char	*pbase, *pdest;
 	fixed16_t		s, t, snext, tnext, sstep, tstep;
 	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float			sdivz8stepu, tdivz8stepu, zi8stepu;
+	uint64_t		ltemp;
+	
+	sstep = 0;	// keep compiler happy
+	tstep = 0;	// ditto
+
+	pbase = (unsigned char *)cacheblock;
+
+	sdivz8stepu = d_sdivzstepu * 8;
+	tdivz8stepu = d_tdivzstepu * 8;
+	zi8stepu = d_zistepu * 8;
+
+	do
+	{
+		pdest = (unsigned char *)((byte *)d_viewbuffer +
+				(screenwidth * pspan->v) + pspan->u);
+
+		count = pspan->count;
+
+	// calculate the initial s/z, t/z, 1/z, s, and t and clamp
+		du = (float)pspan->u;
+		dv = (float)pspan->v;
+
+		sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu;
+		tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu;
+		zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
+		z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
+
+		s = (int)(sdivz * z) + sadjust;
+		if (s > bbextents)
+			s = bbextents;
+		else if (s < 0)
+			s = 0;
+
+		t = (int)(tdivz * z) + tadjust;
+		if (t > bbextentt)
+			t = bbextentt;
+		else if (t < 0)
+			t = 0;
+
+		if (count >= 8)
+			spancount = 8;
+		else
+			spancount = count;
+
+		auto pad = (int)((uint64_t)pdest % 8);
+		if (pad > 0)
+		{
+			auto remaining = 8 - pad;
+			if (count >= remaining)
+			{
+				spancount = remaining;
+			}
+		}
+		
+		count -= spancount;
+
+		while (spancount > 0)
+		{
+		// calculate s and t at the far end of the span
+			if (spancount == 8)
+			{
+			// calculate s/z, t/z, zi->fixed s and t at far end of span,
+			// calculate s and t steps across span by shifting
+				sdivz += sdivz8stepu;
+				tdivz += tdivz8stepu;
+				zi += zi8stepu;
+				z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
+
+				snext = (int)(sdivz * z) + sadjust;
+				if (snext > bbextents)
+					snext = bbextents;
+				else if (snext < 8)
+					snext = 8;	// prevent round-off error on <0 steps from
+								//  from causing overstepping & running off the
+								//  edge of the texture
+
+				tnext = (int)(tdivz * z) + tadjust;
+				if (tnext > bbextentt)
+					tnext = bbextentt;
+				else if (tnext < 8)
+					tnext = 8;	// guard against round-off error on <0 steps
+
+				sstep = (snext - s) >> 3;
+				tstep = (tnext - t) >> 3;
+
+				ltemp = (*(pbase + (s >> 16) + (t >> 16) * cachewidth));
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 8;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 16;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 24;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 32;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 40;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 48;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 56;
+				s += sstep;
+				t += tstep;
+
+				*(uint64_t*)pdest = ltemp;
+				pdest += 8;
+			}
+			else
+			{
+			// calculate s/z, t/z, zi->fixed s and t at last pixel in span (so
+			// can't step off polygon), clamp, calculate s and t steps across
+			// span by division, biasing steps low so we don't run off the
+			// texture
+				spancountminus1 = (float)(spancount - 1);
+				sdivz += d_sdivzstepu * spancountminus1;
+				tdivz += d_tdivzstepu * spancountminus1;
+				zi += d_zistepu * spancountminus1;
+				z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
+				snext = (int)(sdivz * z) + sadjust;
+				if (snext > bbextents)
+					snext = bbextents;
+				else if (snext < 8)
+					snext = 8;	// prevent round-off error on <0 steps from
+								//  from causing overstepping & running off the
+								//  edge of the texture
+
+				tnext = (int)(tdivz * z) + tadjust;
+				if (tnext > bbextentt)
+					tnext = bbextentt;
+				else if (tnext < 8)
+					tnext = 8;	// guard against round-off error on <0 steps
+
+				if (spancount > 1)
+				{
+					sstep = (snext - s) / (spancount - 1);
+					tstep = (tnext - t) / (spancount - 1);
+				}
+
+				do
+				{
+					*pdest++ = *(pbase + (s >> 16) + (t >> 16) * cachewidth);
+					s += sstep;
+					t += tstep;
+				} while (--spancount > 0);
+			}
+
+			s = snext;
+			t = tnext;
+
+			if (count >= 8)
+				spancount = 8;
+			else
+				spancount = count;
+
+			count -= spancount;
+		}
+
+	} while ((pspan = pspan->pnext) != NULL);
+}
+
+/*
+=============
+D_DrawBigSpans64
+=============
+*/
+void D_DrawBigSpans64 (espan_t *pspan)
+{
+	int				count, spancount;
+	unsigned char	*pbase, *pdest;
+	fixed16_t		s, t, snext, tnext, sstep, tstep;
+	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
+	float			sdivz8stepu, tdivz8stepu, zi8stepu;
+	uint64_t		ltemp;
 
 	sstep = 0;	// keep compiler happy
 	tstep = 0;	// ditto
@@ -491,17 +670,27 @@ void D_DrawSpans8 (espan_t *pspan)
 		else if (t < 0)
 			t = 0;
 
-		do
+		if (count >= 8)
+			spancount = 8;
+		else
+			spancount = count;
+
+		auto pad = (int)((uint64_t)pdest % 8);
+		if (pad > 0)
+		{
+			auto remaining = 8 - pad;
+			if (count >= remaining)
+			{
+				spancount = remaining;
+			}
+		}
+		
+		count -= spancount;
+
+		while (spancount > 0)
 		{
 		// calculate s and t at the far end of the span
-			if (count >= 8)
-				spancount = 8;
-			else
-				spancount = count;
-
-			count -= spancount;
-
-			if (count)
+			if (spancount == 8)
 			{
 			// calculate s/z, t/z, zi->fixed s and t at far end of span,
 			// calculate s and t steps across span by shifting
@@ -526,6 +715,34 @@ void D_DrawSpans8 (espan_t *pspan)
 
 				sstep = (snext - s) >> 3;
 				tstep = (tnext - t) >> 3;
+
+				ltemp = (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 56;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 48;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 40;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 32;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 24;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 16;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth)) << 8;
+				s += sstep;
+				t += tstep;
+				ltemp |= (uint64_t)(*(pbase + (s >> 16) + (t >> 16) * cachewidth));
+				s += sstep;
+				t += tstep;
+
+				*(uint64_t*)pdest = ltemp;
+				pdest += 8;
 			}
 			else
 			{
@@ -557,19 +774,25 @@ void D_DrawSpans8 (espan_t *pspan)
 					sstep = (snext - s) / (spancount - 1);
 					tstep = (tnext - t) / (spancount - 1);
 				}
-			}
 
-			do
-			{
-				*pdest++ = *(pbase + (s >> 16) + (t >> 16) * cachewidth);
-				s += sstep;
-				t += tstep;
-			} while (--spancount > 0);
+				do
+				{
+					*pdest++ = *(pbase + (s >> 16) + (t >> 16) * cachewidth);
+					s += sstep;
+					t += tstep;
+				} while (--spancount > 0);
+			}
 
 			s = snext;
 			t = tnext;
 
-		} while (count > 0);
+			if (count >= 8)
+				spancount = 8;
+			else
+				spancount = count;
+
+			count -= spancount;
+		}
 
 	} while ((pspan = pspan->pnext) != NULL);
 }
@@ -581,15 +804,15 @@ void D_DrawSpans8 (espan_t *pspan)
 
 /*
 =============
-D_DrawZSpans
+D_DrawLittleZSpans64
 =============
 */
-void D_DrawZSpans (espan_t *pspan)
+void D_DrawLittleZSpans64 (espan_t *pspan)
 {
-	int				count, doublecount;
+	int				count, spancount;
     long long		izistep, izi;
 	short			*pdest;
-    long long		ltemp;
+    uint64_t		ltemp;
 	double			zi;
 	float			du, dv;
 
@@ -611,28 +834,140 @@ void D_DrawZSpans (espan_t *pspan)
 	// we count on FP exceptions being turned off to avoid range problems
 		izi = zi * 0x8000 * 0x10000;
 
-		if ((size_t)pdest & 0x02)
-		{
-			*pdest++ = (short)(izi >> 16);
-			izi += izistep;
-			count--;
-		}
+		if (count >= 4)
+			spancount = 4;
+		else
+			spancount = count;
 
-		if ((doublecount = count >> 1) > 0)
+		auto pad = (int)((uint64_t)pdest % 8);
+		if (pad > 0)
 		{
-			do
+			auto remaining = (8 - pad) >> 1;
+			if (count >= remaining)
 			{
-				ltemp = izi >> 16;
+				spancount = remaining;
+			}
+		}
+		
+		count -= spancount;
+
+		while (spancount > 0)
+		{
+			if (spancount == 4)
+			{
+				ltemp = (uint64_t)((uint16_t)(izi >> 16));
 				izi += izistep;
-				ltemp |= izi & 0xFFFFFFFFFFFF0000;
+				ltemp |= (uint64_t)((uint16_t)(izi >> 16)) << 16;
 				izi += izistep;
-				*(int *)pdest = (int)ltemp;
-				pdest += 2;
-			} while (--doublecount > 0);
+				ltemp |= (uint64_t)((uint16_t)(izi >> 16)) << 32;
+				izi += izistep;
+				ltemp |= (uint64_t)((uint16_t)(izi >> 16)) << 48;
+				izi += izistep;
+
+				*(uint64_t*)pdest = ltemp;
+				pdest += 4;
+			}
+			else
+			{
+				do
+				{
+					*pdest++ = (short)(izi >> 16);
+					izi += izistep;
+				} while (--spancount > 0);
+			}
+
+			if (count >= 4)
+				spancount = 4;
+			else
+				spancount = count;
+
+			count -= spancount;
 		}
 
-		if (count & 1)
-			*pdest = (short)(izi >> 16);
+	} while ((pspan = pspan->pnext) != NULL);
+}
+
+/*
+=============
+D_DrawBigZSpans64
+=============
+*/
+void D_DrawBigZSpans64 (espan_t *pspan)
+{
+	int				count, spancount;
+	long long		izistep, izi;
+	short			*pdest;
+	uint64_t		ltemp;
+	double			zi;
+	float			du, dv;
+
+// FIXME: check for clamping/range problems
+// we count on FP exceptions being turned off to avoid range problems
+	izistep = d_zistepu * 0x8000 * 0x10000;
+
+	do
+	{
+		pdest = d_pzbuffer + (d_zwidth * pspan->v) + pspan->u;
+
+		count = pspan->count;
+
+	// calculate the initial 1/z
+		du = (float)pspan->u;
+		dv = (float)pspan->v;
+
+		zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
+	// we count on FP exceptions being turned off to avoid range problems
+		izi = zi * 0x8000 * 0x10000;
+
+		if (count >= 4)
+			spancount = 4;
+		else
+			spancount = count;
+
+		auto pad = (int)((uint64_t)pdest % 8);
+		if (pad > 0)
+		{
+			auto remaining = (8 - pad) >> 1;
+			if (count >= remaining)
+			{
+				spancount = remaining;
+			}
+		}
+
+		count -= spancount;
+
+		while (spancount > 0)
+		{
+			if (spancount == 4)
+			{
+				ltemp = (uint64_t)((uint16_t)(izi >> 16)) << 48;
+				izi += izistep;
+				ltemp |= (uint64_t)((uint16_t)(izi >> 16)) << 32;
+				izi += izistep;
+				ltemp |= (uint64_t)((uint16_t)(izi >> 16)) << 16;
+				izi += izistep;
+				ltemp |= (uint64_t)((uint16_t)(izi >> 16));
+				izi += izistep;
+
+				*(uint64_t*)pdest = ltemp;
+				pdest += 4;
+			}
+			else
+			{
+				do
+				{
+					*pdest++ = (short)(izi >> 16);
+					izi += izistep;
+				} while (--spancount > 0);
+			}
+
+			if (count >= 8)
+				spancount = 8;
+			else
+				spancount = count;
+
+			count -= spancount;
+		}
 
 	} while ((pspan = pspan->pnext) != NULL);
 }

@@ -215,7 +215,6 @@ Mod_ClearAll
 void Mod_ClearAll (void)
 {
     mod_pool.Clear();
-	r_hasfences = false;
     for (auto& mod : mod_known) {
 		mod.needload = NL_UNREFERENCED;
 		if (mod.type == mod_sprite) mod.extradata = NULL;
@@ -605,7 +604,6 @@ void Mod_LoadTextures (lump_t *l)
         }
         else if (tx->name[0] == '{')
         {
-			r_hasfences = true;
             memcpy ( tx+1, mt+1, mt->width*mt->height);
             Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
         }

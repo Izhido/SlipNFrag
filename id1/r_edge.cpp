@@ -38,6 +38,8 @@ edge_t	*r_edges, *edge_p, *edge_max;
 
 surf_t	*surfaces, *surface_p, *surf_max;
 
+int		*r_fences, *r_fence_p, *r_fence_max;
+
 // surfaces are generated in back to front order by the bsp, so if a surf
 // pointer is greater than another one, it should be drawn in front
 // surfaces[1] is the background, and is used as the active surface stack
@@ -61,8 +63,6 @@ edge_t	edge_head;
 edge_t	edge_tail;
 edge_t	edge_aftertail;
 edge_t	edge_sentinel;
-
-qboolean r_hasfences;
 
 float	fv;
 
@@ -93,6 +93,8 @@ void R_BeginEdgeFrame (void)
 								//  surface 0 is a dummy
 	surfaces[1].spans = NULL;	// no background spans yet
 	surfaces[1].flags = SURF_DRAWBACKGROUND;
+
+	r_fence_p = r_fences;
 
 // put the background behind everything in the world
 	if (r_draworder.value)
@@ -591,17 +593,15 @@ void R_GenerateSpans (void)
 
 	R_CleanupSpan ();
 
-	if (r_hasfences)
+	for (auto fence = r_fences ; fence < r_fence_p ; fence++)
 	{
-		for (surf = &surfaces[1] ; surf<surface_p ; surf++)
+		surf = &surfaces[*fence];
+		if (surf->spanstate != 0)
 		{
-			if (surf->isfence && surf->spanstate != 0)
+			surf->spanstate = 0;
+			if (surf->spans)
 			{
-				surf->spanstate = 0;
-				if (surf->spans)
-				{
-					surf->spans->count = edge_tail_u_shift20 - surf->spans->u;
-				}
+				surf->spans->count = edge_tail_u_shift20 - surf->spans->u;
 			}
 		}
 	}

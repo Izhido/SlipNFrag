@@ -70,8 +70,10 @@ extern fixed16_t	sadjust, tadjust;
 extern fixed16_t	bbextents, bbextentt;
 
 
-void D_DrawSpans8 (espan_t *pspans);
-void D_DrawZSpans (espan_t *pspans);
+void D_DrawLittleSpans64 (espan_t *pspans);
+void D_DrawBigSpans64 (espan_t *pspans);
+void D_DrawLittleZSpans64 (espan_t *pspans);
+void D_DrawBigZSpans64 (espan_t *pspans);
 void Turbulent8 (espan_t *pspan);
 void Turbulent8Non64 (espan_t *pspan);
 void D_SpriteDrawSpans (sspan_t *pspan);
@@ -112,4 +114,7 @@ extern std::vector<short*> zspantable;
 
 extern int		d_minmip;
 extern float	d_scalemip[3];
+
+extern void (*d_drawspans) (espan_t *pspan);
+extern void (*d_drawzspans) (espan_t *pspan);
 

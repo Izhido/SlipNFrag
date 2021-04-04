@@ -91,6 +91,8 @@ extern	surf_t	*surfaces, *surface_p, *surf_max;
 // surfaces[0] is a dummy, because index 0 is used to indicate no surface
 //  attached to an edge_t
 
+extern	int		*r_fences, *r_fence_p, *r_fence_max;
+
 //===================================================================
 
 extern vec3_t	sxformaxis[4];	// s axis transformed into viewspace
@@ -113,8 +115,6 @@ extern int	r_skymade;
 extern void R_MakeSky (void);
 
 extern int	ubasestep, errorterm, erroradjustup, erroradjustdown;
-
-extern qboolean r_hasfences;
 
 // flags in finalvert_t.flags
 #define ALIAS_LEFT_CLIP				0x0001
