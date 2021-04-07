@@ -21,8 +21,8 @@ list(FILTER ID1_FILES EXCLUDE REGEX "net_win")
 add_library(native-activity SHARED ${SRC_FILES} ${ID1_FILES} ${STB_FILES})
 
 target_include_directories(native-activity PRIVATE ${ANDROID_NDK}/sources/android/native_app_glue)
+target_include_directories(native-activity PRIVATE ${ANDROID_NDK}/sources/third_party/vulkan/src/include)
 target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBILE}/VrApi/Include)
-target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBILE}/3rdParty/khronos/vulkan_1.1.100.0)
 target_include_directories(native-activity PRIVATE ../../../../../id1)
 target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBILE}/3rdParty/stb/src)
 

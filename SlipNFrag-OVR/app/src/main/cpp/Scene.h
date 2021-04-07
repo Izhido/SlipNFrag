@@ -18,10 +18,10 @@
 struct Scene
 {
 	bool createdScene;
-	VkShaderModule texturedVertex;
-	VkShaderModule texturedFragment;
 	VkShaderModule surfaceVertex;
-	VkShaderModule spritesFragment;
+	VkShaderModule surfaceFragment;
+	VkShaderModule spriteVertex;
+	VkShaderModule spriteFragment;
 	VkShaderModule turbulentFragment;
 	VkShaderModule aliasVertex;
 	VkShaderModule aliasFragment;
@@ -39,7 +39,8 @@ struct Scene
 	VkDescriptorSetLayout bufferAndImageLayout;
 	VkDescriptorSetLayout singleImageLayout;
 	VkDescriptorSetLayout doubleImageLayout;
-	Pipeline textured;
+	Pipeline surfaces;
+	Pipeline fences;
 	Pipeline sprites;
 	Pipeline turbulent;
 	Pipeline alias;
@@ -49,7 +50,7 @@ struct Scene
 	Pipeline floor;
 	Pipeline console;
 	PipelineAttributes surfaceAttributes;
-	PipelineAttributes texturedAttributes;
+	PipelineAttributes spriteAttributes;
 	PipelineAttributes colormappedAttributes;
 	PipelineAttributes coloredAttributes;
 	PipelineAttributes skyAttributes;
@@ -64,7 +65,7 @@ struct Scene
 	int resetDescriptorSetsCount;
 	TextureFromAllocation* oldSurfaces;
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
-	std::unordered_map<TwinKey, TextureFromAllocation*> surfaces;
+	std::unordered_map<TwinKey, TextureFromAllocation*> loadedSurfaces;
 	std::vector<TwinKey> surfacesToDelete;
 	CachedSharedMemoryTextures spriteTextures;
 	int spriteTextureCount;
@@ -80,6 +81,8 @@ struct Scene
 	std::vector<BufferWithOffset> colormappedBufferList;
 	std::vector<LoadedTextureFromAllocation> surface16List;
 	std::vector<LoadedTextureFromAllocation> surface32List;
+	std::vector<LoadedTextureFromAllocation> fence16List;
+	std::vector<LoadedTextureFromAllocation> fence32List;
 	std::vector<LoadedSharedMemoryTexture> spriteList;
 	std::vector<LoadedTexture> turbulent16List;
 	std::vector<LoadedTexture> turbulent32List;

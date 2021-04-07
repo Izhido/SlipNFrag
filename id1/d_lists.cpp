@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -19,6 +19,8 @@ void D_ResetLists ()
 {
 	d_lists.last_surface16 = -1;
 	d_lists.last_surface32 = -1;
+	d_lists.last_fence16 = -1;
+	d_lists.last_fence32 = -1;
 	d_lists.last_sprite = -1;
 	d_lists.last_turbulent16 = -1;
 	d_lists.last_turbulent32 = -1;
@@ -217,6 +219,90 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 			}
 			surface.texturemins[j] = face->texturemins[j];
 			surface.extents[j] = face->extents[j];
+		}
+		D_AddSurfaceIndices32ToLists (entity, face);
+	}
+}
+
+void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	if (entity->model->numvertexes <= 65520)
+	{
+		d_lists.last_fence16++;
+		if (d_lists.last_fence16 >= d_lists.fences16.size())
+		{
+			d_lists.fences16.emplace_back();
+		}
+		auto& fence = d_lists.fences16[d_lists.last_fence16];
+		fence.surface = face;
+		fence.entity = entity;
+		fence.vertexes = entity->model->vertexes;
+		fence.vertex_count = entity->model->numvertexes;
+		fence.created = (created ? 1: 0);
+		fence.width = cache->width;
+		fence.height = cache->height;
+		fence.size = fence.width * fence.height;
+		if (fence.size > fence.data.size())
+		{
+			fence.data.resize(fence.size);
+		}
+		memcpy(fence.data.data(), cache->data, fence.size);
+		fence.first_index = d_lists.last_surface_index16 + 1;
+		fence.count = face->numedges;
+		fence.origin_x = entity->origin[0];
+		fence.origin_y = entity->origin[1];
+		fence.origin_z = entity->origin[2];
+		auto texinfo = face->texinfo;
+		for (auto j = 0; j < 2; j++)
+		{
+			for (auto i = 0; i < 4; i++)
+			{
+				fence.vecs[j][i] = texinfo->vecs[j][i];
+			}
+			fence.texturemins[j] = face->texturemins[j];
+			fence.extents[j] = face->extents[j];
+		}
+		D_AddSurfaceIndices16ToLists (entity, face);
+	}
+	else
+	{
+		d_lists.last_fence32++;
+		if (d_lists.last_fence32 >= d_lists.fences32.size())
+		{
+			d_lists.fences32.emplace_back();
+		}
+		auto& fence = d_lists.fences32[d_lists.last_fence32];
+		fence.surface = face;
+		fence.entity = entity;
+		fence.vertexes = entity->model->vertexes;
+		fence.vertex_count = entity->model->numvertexes;
+		fence.created = (created ? 1: 0);
+		fence.width = cache->width;
+		fence.height = cache->height;
+		fence.size = fence.width * fence.height;
+		if (fence.size > fence.data.size())
+		{
+			fence.data.resize(fence.size);
+		}
+		memcpy(fence.data.data(), cache->data, fence.size);
+		fence.first_index = d_lists.last_surface_index32 + 1;
+		fence.count = face->numedges;
+		fence.origin_x = entity->origin[0];
+		fence.origin_y = entity->origin[1];
+		fence.origin_z = entity->origin[2];
+		auto texinfo = face->texinfo;
+		for (auto j = 0; j < 2; j++)
+		{
+			for (auto i = 0; i < 4; i++)
+			{
+				fence.vecs[j][i] = texinfo->vecs[j][i];
+			}
+			fence.texturemins[j] = face->texturemins[j];
+			fence.extents[j] = face->extents[j];
 		}
 		D_AddSurfaceIndices32ToLists (entity, face);
 	}

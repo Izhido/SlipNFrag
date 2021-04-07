@@ -43,8 +43,8 @@ struct PerImage
 	PipelineDescriptorResources host_colormapResources;
 	PipelineDescriptorResources sceneMatricesResources;
 	PipelineDescriptorResources sceneMatricesAndPaletteResources;
-	UpdatablePipelineDescriptorResources texturedResources;
 	CachedPipelineDescriptorResources spriteResources;
+	UpdatablePipelineDescriptorResources turbulentResources;
 	UpdatablePipelineDescriptorResources colormapResources;
 	CachedPipelineDescriptorResources aliasResources;
 	CachedPipelineDescriptorResources viewmodelResources;

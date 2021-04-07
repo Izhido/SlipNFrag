@@ -84,6 +84,8 @@ struct dlists_t
 {
 	int last_surface16;
 	int last_surface32;
+	int last_fence16;
+	int last_fence32;
 	int last_sprite;
 	int last_turbulent16;
 	int last_turbulent32;
@@ -107,6 +109,8 @@ struct dlists_t
 	int clear_color;
 	std::vector<dsurface_t> surfaces16;
 	std::vector<dsurface_t> surfaces32;
+	std::vector<dsurface_t> fences16;
+	std::vector<dsurface_t> fences32;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dturbulent_t> turbulent16;
 	std::vector<dturbulent_t> turbulent32;
@@ -136,6 +140,7 @@ extern qboolean d_awayfromviewmodel;
 
 void D_ResetLists ();
 void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
+void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* vertices);

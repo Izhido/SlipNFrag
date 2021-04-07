@@ -308,7 +308,10 @@ void D_DrawSurfaces (void)
 
 				if (pcurrentcache != nullptr)
 				{
-					D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+					if (s->isfence)
+						D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+					else
+						D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
 				}
 
 				if (s->insubmodel)
