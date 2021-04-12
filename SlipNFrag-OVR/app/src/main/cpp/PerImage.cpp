@@ -495,8 +495,12 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 		texture->key.second = surface.entity;
 		appState.Scene.loadedSurfaces.insert({ texture->key, texture });
 		loadedTexture.texture = texture;
-		loadedTexture.offset = stagingBufferSize;
-		stagingBufferSize += surface.size;
+		loadedTexture.size = surface.size;
+		if (loadedTexture.size % 4 != 0)
+		{
+			loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
+		}
+		stagingBufferSize += loadedTexture.size;
 	}
 	else if (surface.created)
 	{
@@ -508,8 +512,12 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			{
 				first->unusedCount = 0;
 				loadedTexture.texture = first;
-				loadedTexture.offset = stagingBufferSize;
-				stagingBufferSize += surface.size;
+				loadedTexture.size = surface.size;
+				if (loadedTexture.size % 4 != 0)
+				{
+					loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
+				}
+				stagingBufferSize += loadedTexture.size;
 			}
 			else
 			{
@@ -521,8 +529,12 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 				texture->next = first;
 				entry->second = texture;
 				loadedTexture.texture = texture;
-				loadedTexture.offset = stagingBufferSize;
-				stagingBufferSize += surface.size;
+				loadedTexture.size = surface.size;
+				if (loadedTexture.size % 4 != 0)
+				{
+					loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
+				}
+				stagingBufferSize += loadedTexture.size;
 			}
 		}
 		else
@@ -535,8 +547,12 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 					found = true;
 					texture->unusedCount = 0;
 					loadedTexture.texture = texture;
-					loadedTexture.offset = stagingBufferSize;
-					stagingBufferSize += surface.size;
+					loadedTexture.size = surface.size;
+					if (loadedTexture.size % 4 != 0)
+					{
+						loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
+					}
+					stagingBufferSize += loadedTexture.size;
 					previous->next = texture->next;
 					texture->next = first;
 					entry->second = texture;
@@ -553,8 +569,12 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 				texture->next = entry->second;
 				entry->second = texture;
 				loadedTexture.texture = texture;
-				loadedTexture.offset = stagingBufferSize;
-				stagingBufferSize += surface.size;
+				loadedTexture.size = surface.size;
+				if (loadedTexture.size % 4 != 0)
+				{
+					loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
+				}
+				stagingBufferSize += loadedTexture.size;
 			}
 		}
 	}
@@ -563,7 +583,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 		auto texture = entry->second;
 		texture->unusedCount = 0;
 		loadedTexture.texture = texture;
-		loadedTexture.offset = -1;
+		loadedTexture.size = 0;
 	}
 }
 
@@ -572,7 +592,7 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, View& view, dtu
 	auto entry = appState.Scene.turbulentPerKey.find(turbulent.texture);
 	if (hostClearCount == host_clearcount && entry != appState.Scene.turbulentPerKey.end())
 	{
-		loadedTexture.offset = -1;
+		loadedTexture.size = 0;
 		loadedTexture.texture = entry->second;
 		entry->second->unusedCount = 0;
 	}
@@ -594,12 +614,12 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, View& view, dtu
 			texture = new Texture();
 			texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			texture->key = turbulent.texture;
-			loadedTexture.offset = stagingBufferSize;
-			stagingBufferSize += turbulent.size;
+			loadedTexture.size = turbulent.size;
+			stagingBufferSize += loadedTexture.size;
 		}
 		else
 		{
-			loadedTexture.offset = -1;
+			loadedTexture.size = 0;
 		}
 		loadedTexture.texture = texture;
 		appState.Scene.turbulentPerKey.insert({ texture->key, texture });
@@ -611,8 +631,8 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, View& view, dtu
 		auto texture = new Texture();
 		texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		texture->key = turbulent.texture;
-		loadedTexture.offset = stagingBufferSize;
-		stagingBufferSize += turbulent.size;
+		loadedTexture.size = turbulent.size;
+		stagingBufferSize += loadedTexture.size;
 		this->turbulent.MoveToFront(texture);
 		loadedTexture.texture = texture;
 		appState.Scene.turbulentPerKey.insert({ texture->key, texture });
@@ -626,13 +646,13 @@ void PerImage::GetAliasColormapStagingBufferSize(AppState& appState, int lastAli
 		auto& alias = aliasList[i];
 		if (alias.is_host_colormap)
 		{
-			textures[i].colormap.offset = -1;
+			textures[i].colormap.size = 0;
 			textures[i].colormap.texture = host_colormap;
 		}
 		else
 		{
-			textures[i].colormap.offset = stagingBufferSize;
-			stagingBufferSize += 16384;
+			textures[i].colormap.size = 16384;
+			stagingBufferSize += textures[i].colormap.size;
 		}
 	}
 }
@@ -648,8 +668,8 @@ void PerImage::GetAliasStagingBufferSize(AppState& appState, int lastAlias, std:
 			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 			auto texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			textures[i].texture.offset = stagingBufferSize;
-			stagingBufferSize += alias.size;
+			textures[i].texture.size = alias.size;
+			stagingBufferSize += textures[i].texture.size;
 			appState.Scene.aliasTextures.MoveToFront(texture);
 			appState.Scene.aliasTextureCount++;
 			appState.Scene.aliasPerKey.insert({ alias.data, texture });
@@ -657,7 +677,7 @@ void PerImage::GetAliasStagingBufferSize(AppState& appState, int lastAlias, std:
 		}
 		else
 		{
-			textures[i].texture.offset = -1;
+			textures[i].texture.size = 0;
 			textures[i].texture.texture = entry->second;
 		}
 	}
@@ -675,8 +695,8 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 			auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
 			auto texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			textures[i].texture.offset = stagingBufferSize;
-			stagingBufferSize += viewmodel.size;
+			textures[i].texture.size = viewmodel.size;
+			stagingBufferSize += textures[i].texture.size;
 			appState.Scene.viewmodelTextures.MoveToFront(texture);
 			appState.Scene.viewmodelTextureCount++;
 			appState.Scene.viewmodelsPerKey.insert({ viewmodel.data, texture });
@@ -684,7 +704,7 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 		}
 		else
 		{
-			textures[i].texture.offset = -1;
+			textures[i].texture.size = 0;
 			textures[i].texture.texture = entry->second;
 		}
 	}
@@ -763,8 +783,8 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.spriteList[i].offset = stagingBufferSize;
-			stagingBufferSize += sprite.size;
+			appState.Scene.spriteList[i].size = sprite.size;
+			stagingBufferSize += appState.Scene.spriteList[i].size;
 			appState.Scene.spriteTextures.MoveToFront(texture);
 			appState.Scene.spriteTextureCount++;
 			appState.Scene.spritesPerKey.insert({ sprite.data, texture });
@@ -772,7 +792,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 		}
 		else
 		{
-			appState.Scene.spriteList[i].offset = -1;
+			appState.Scene.spriteList[i].size = 0;
 			appState.Scene.spriteList[i].texture = entry->second;
 		}
 	}
@@ -864,74 +884,82 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 	}
 	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
-		if (appState.Scene.surface16List[i].offset >= 0)
+		auto size = appState.Scene.surface16List[i].size;
+		if (size > 0)
 		{
 			auto& surface = d_lists.surfaces16[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.data.data(), surface.size);
-			offset += surface.size;
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_surface32; i++)
 	{
-		if (appState.Scene.surface32List[i].offset >= 0)
+		auto size = appState.Scene.surface32List[i].size;
+		if (size > 0)
 		{
 			auto& surface = d_lists.surfaces32[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.data.data(), surface.size);
-			offset += surface.size;
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_fence16; i++)
 	{
-		if (appState.Scene.fence16List[i].offset >= 0)
+		auto size = appState.Scene.fence16List[i].size;
+		if (size > 0)
 		{
 			auto& fence = d_lists.fences16[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, fence.data.data(), fence.size);
-			offset += fence.size;
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_fence32; i++)
 	{
-		if (appState.Scene.fence32List[i].offset >= 0)
+		auto size = appState.Scene.fence32List[i].size;
+		if (size > 0)
 		{
 			auto& fence = d_lists.fences32[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, fence.data.data(), fence.size);
-			offset += fence.size;
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_sprite; i++)
 	{
-		if (appState.Scene.spriteList[i].offset >= 0)
+		auto size = appState.Scene.spriteList[i].size;
+		if (size > 0)
 		{
 			auto& sprite = d_lists.sprites[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, sprite.data, sprite.size);
-			offset += sprite.size;
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 	{
-		if (appState.Scene.turbulent16List[i].offset >= 0)
+		auto size = appState.Scene.turbulent16List[i].size;
+		if (size > 0)
 		{
 			auto& turbulent = d_lists.turbulent16[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, turbulent.data, turbulent.size);
-			offset += turbulent.size;
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_turbulent32; i++)
 	{
-		if (appState.Scene.turbulent32List[i].offset >= 0)
+		auto size = appState.Scene.turbulent32List[i].size;
+		if (size > 0)
 		{
 			auto& turbulent = d_lists.turbulent32[i];
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, turbulent.data, turbulent.size);
-			offset += turbulent.size;
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_alias16; i++)
 	{
 		auto& alias = d_lists.alias16[i];
-		if (appState.Scene.alias16List[i].texture.offset >= 0)
+		auto size = appState.Scene.alias16List[i].texture.size;
+		if (size > 0)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.data, alias.size);
-			offset += alias.size;
+			offset += size;
 		}
 		if (!alias.is_host_colormap)
 		{
@@ -942,10 +970,11 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 	for (auto i = 0; i <= d_lists.last_alias32; i++)
 	{
 		auto& alias = d_lists.alias32[i];
-		if (appState.Scene.alias32List[i].texture.offset >= 0)
+		auto size = appState.Scene.alias32List[i].texture.size;
+		if (size > 0)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.data, alias.size);
-			offset += alias.size;
+			offset += size;
 		}
 		if (!alias.is_host_colormap)
 		{
@@ -956,10 +985,11 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 	for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
 	{
 		auto& viewmodel = d_lists.viewmodels16[i];
-		if (appState.Scene.viewmodel16List[i].texture.offset >= 0)
+		auto size = appState.Scene.viewmodel16List[i].texture.size;
+		if (size > 0)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, viewmodel.data, viewmodel.size);
-			offset += viewmodel.size;
+			offset += size;
 		}
 		if (!viewmodel.is_host_colormap)
 		{
@@ -970,10 +1000,11 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 	for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
 	{
 		auto& viewmodel = d_lists.viewmodels32[i];
-		if (appState.Scene.viewmodel32List[i].texture.offset >= 0)
+		auto size = appState.Scene.viewmodel32List[i].texture.size;
+		if (size > 0)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, viewmodel.data, viewmodel.size);
-			offset += viewmodel.size;
+			offset += size;
 		}
 		if (!viewmodel.is_host_colormap)
 		{
@@ -1005,11 +1036,12 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 	stagingBuffer->mapped = nullptr;
 }
 
-void PerImage::FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias)
+void PerImage::FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias, int& offset)
 {
-	if (loadedTexture.texture.offset >= 0)
+	if (loadedTexture.texture.size > 0)
 	{
-		loadedTexture.texture.texture->FillMipmapped(appState, stagingBuffer, loadedTexture.texture.offset, commandBuffer);
+		loadedTexture.texture.texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+		offset += loadedTexture.texture.size;
 	}
 	if (!alias.is_host_colormap)
 	{
@@ -1024,7 +1056,8 @@ void PerImage::FillAliasTextures(AppState& appState, Buffer* stagingBuffer, Load
 			texture = new Texture();
 			texture->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
-		texture->Fill(appState, stagingBuffer, loadedTexture.colormap.offset, commandBuffer);
+		texture->Fill(appState, stagingBuffer, offset, commandBuffer);
+		offset += 16384;
 		colormaps.MoveToFront(texture);
 		loadedTexture.colormap.texture = texture;
 		colormapCount++;
@@ -1033,82 +1066,99 @@ void PerImage::FillAliasTextures(AppState& appState, Buffer* stagingBuffer, Load
 
 void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer)
 {
+	auto offset = 0;
 	if (paletteOffset >= 0)
 	{
 		palette->Fill(appState, stagingBuffer, paletteOffset, commandBuffer);
+		offset += 1024;
 	}
 	if (host_colormapOffset >= 0)
 	{
 		host_colormap->Fill(appState, stagingBuffer, host_colormapOffset, commandBuffer);
+		offset += 16384;
 	}
 	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
-		if (appState.Scene.surface16List[i].offset >= 0)
+		auto size = appState.Scene.surface16List[i].size;
+		if (size > 0)
 		{
-			appState.Scene.surface16List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.surface16List[i].offset, commandBuffer);
+			appState.Scene.surface16List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_surface32; i++)
 	{
-		if (appState.Scene.surface32List[i].offset >= 0)
+		auto size = appState.Scene.surface32List[i].size;
+		if (size > 0)
 		{
-			appState.Scene.surface32List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.surface32List[i].offset, commandBuffer);
+			appState.Scene.surface32List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_fence16; i++)
 	{
-		if (appState.Scene.fence16List[i].offset >= 0)
+		auto size = appState.Scene.fence16List[i].size;
+		if (size > 0)
 		{
-			appState.Scene.fence16List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.fence16List[i].offset, commandBuffer);
+			appState.Scene.fence16List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_fence32; i++)
 	{
-		if (appState.Scene.fence32List[i].offset >= 0)
+		auto size = appState.Scene.fence32List[i].size;
+		if (size > 0)
 		{
-			appState.Scene.fence32List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.fence32List[i].offset, commandBuffer);
+			appState.Scene.fence32List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_sprite; i++)
 	{
-		if (appState.Scene.spriteList[i].offset >= 0)
+		auto size = appState.Scene.spriteList[i].size;
+		if (size > 0)
 		{
-			appState.Scene.spriteList[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.spriteList[i].offset, commandBuffer);
+			appState.Scene.spriteList[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 	{
-		if (appState.Scene.turbulent16List[i].offset >= 0)
+		auto size = appState.Scene.turbulent16List[i].size;
+		if (size > 0)
 		{
-			appState.Scene.turbulent16List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.turbulent16List[i].offset, commandBuffer);
+			appState.Scene.turbulent16List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_turbulent32; i++)
 	{
-		if (appState.Scene.turbulent32List[i].offset >= 0)
+		auto size = appState.Scene.turbulent32List[i].size;
+		if (size > 0)
 		{
-			appState.Scene.turbulent32List[i].texture->FillMipmapped(appState, stagingBuffer, appState.Scene.turbulent32List[i].offset, commandBuffer);
+			appState.Scene.turbulent32List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+			offset += size;
 		}
 	}
 	for (auto i = 0; i <= d_lists.last_alias16; i++)
 	{
 		auto& alias = d_lists.alias16[i];
-		FillAliasTextures(appState, stagingBuffer, appState.Scene.alias16List[i], alias);
+		FillAliasTextures(appState, stagingBuffer, appState.Scene.alias16List[i], alias, offset);
 	}
 	for (auto i = 0; i <= d_lists.last_alias32; i++)
 	{
 		auto& alias = d_lists.alias32[i];
-		FillAliasTextures(appState, stagingBuffer, appState.Scene.alias32List[i], alias);
+		FillAliasTextures(appState, stagingBuffer, appState.Scene.alias32List[i], alias, offset);
 	}
 	for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
 	{
 		auto& viewmodel = d_lists.viewmodels16[i];
-		FillAliasTextures(appState, stagingBuffer, appState.Scene.viewmodel16List[i], viewmodel);
+		FillAliasTextures(appState, stagingBuffer, appState.Scene.viewmodel16List[i], viewmodel, offset);
 	}
 	for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
 	{
 		auto& viewmodel = d_lists.viewmodels32[i];
-		FillAliasTextures(appState, stagingBuffer, appState.Scene.viewmodel32List[i], viewmodel);
+		FillAliasTextures(appState, stagingBuffer, appState.Scene.viewmodel32List[i], viewmodel, offset);
 	}
 	if (d_lists.last_sky >= 0)
 	{
@@ -1126,6 +1176,44 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer)
 		appState.Scene.floorTexture->Create(appState, commandBuffer, appState.FloorWidth, appState.FloorHeight, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		appState.Scene.floorTexture->Fill(appState, stagingBuffer, appState.Scene.floorOffset, commandBuffer);
 	}
+}
+
+void PerImage::SetPushConstants(AppState& appState, dsurface_t& surface, float pushConstants[])
+{
+	pushConstants[0] = surface.origin_x;
+	pushConstants[1] = surface.origin_y;
+	pushConstants[2] = surface.origin_z;
+	pushConstants[3] = surface.vecs[0][0];
+	pushConstants[4] = surface.vecs[0][1];
+	pushConstants[5] = surface.vecs[0][2];
+	pushConstants[6] = surface.vecs[0][3];
+	pushConstants[7] = surface.vecs[1][0];
+	pushConstants[8] = surface.vecs[1][1];
+	pushConstants[9] = surface.vecs[1][2];
+	pushConstants[10] = surface.vecs[1][3];
+	pushConstants[11] = surface.texturemins[0];
+	pushConstants[12] = surface.texturemins[1];
+	pushConstants[13] = surface.extents[0];
+	pushConstants[14] = surface.extents[1];
+	VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
+}
+
+void PerImage::SetPushConstants(AppState& appState, dturbulent_t& turbulent, float pushConstants[])
+{
+	pushConstants[0] = turbulent.origin_x;
+	pushConstants[1] = turbulent.origin_y;
+	pushConstants[2] = turbulent.origin_z;
+	pushConstants[3] = turbulent.vecs[0][0];
+	pushConstants[4] = turbulent.vecs[0][1];
+	pushConstants[5] = turbulent.vecs[0][2];
+	pushConstants[6] = turbulent.vecs[0][3];
+	pushConstants[7] = turbulent.vecs[1][0];
+	pushConstants[8] = turbulent.vecs[1][1];
+	pushConstants[9] = turbulent.vecs[1][2];
+	pushConstants[10] = turbulent.vecs[1][3];
+	pushConstants[11] = turbulent.width;
+	pushConstants[12] = turbulent.height;
+	VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 14 * sizeof(float), pushConstants));
 }
 
 void PerImage::Render(AppState& appState)
@@ -1227,22 +1315,7 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
 					previousVertexes = surface.vertexes;
 				}
-				pushConstants[0] = surface.origin_x;
-				pushConstants[1] = surface.origin_y;
-				pushConstants[2] = surface.origin_z;
-				pushConstants[3] = surface.vecs[0][0];
-				pushConstants[4] = surface.vecs[0][1];
-				pushConstants[5] = surface.vecs[0][2];
-				pushConstants[6] = surface.vecs[0][3];
-				pushConstants[7] = surface.vecs[1][0];
-				pushConstants[8] = surface.vecs[1][1];
-				pushConstants[9] = surface.vecs[1][2];
-				pushConstants[10] = surface.vecs[1][3];
-				pushConstants[11] = surface.texturemins[0];
-				pushConstants[12] = surface.texturemins[1];
-				pushConstants[13] = surface.extents[0];
-				pushConstants[14] = surface.extents[1];
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
+				SetPushConstants(appState, surface, pushConstants);
 				auto texture = appState.Scene.surface16List[i].texture;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index, 0, 0));
@@ -1264,22 +1337,7 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
 					previousVertexes = surface.vertexes;
 				}
-				pushConstants[0] = surface.origin_x;
-				pushConstants[1] = surface.origin_y;
-				pushConstants[2] = surface.origin_z;
-				pushConstants[3] = surface.vecs[0][0];
-				pushConstants[4] = surface.vecs[0][1];
-				pushConstants[5] = surface.vecs[0][2];
-				pushConstants[6] = surface.vecs[0][3];
-				pushConstants[7] = surface.vecs[1][0];
-				pushConstants[8] = surface.vecs[1][1];
-				pushConstants[9] = surface.vecs[1][2];
-				pushConstants[10] = surface.vecs[1][3];
-				pushConstants[11] = surface.texturemins[0];
-				pushConstants[12] = surface.texturemins[1];
-				pushConstants[13] = surface.extents[0];
-				pushConstants[14] = surface.extents[1];
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
+				SetPushConstants(appState, surface, pushConstants);
 				auto texture = appState.Scene.surface32List[i].texture;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index, 0, 0));
@@ -1301,22 +1359,7 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
 					previousVertexes = fence.vertexes;
 				}
-				pushConstants[0] = fence.origin_x;
-				pushConstants[1] = fence.origin_y;
-				pushConstants[2] = fence.origin_z;
-				pushConstants[3] = fence.vecs[0][0];
-				pushConstants[4] = fence.vecs[0][1];
-				pushConstants[5] = fence.vecs[0][2];
-				pushConstants[6] = fence.vecs[0][3];
-				pushConstants[7] = fence.vecs[1][0];
-				pushConstants[8] = fence.vecs[1][1];
-				pushConstants[9] = fence.vecs[1][2];
-				pushConstants[10] = fence.vecs[1][3];
-				pushConstants[11] = fence.texturemins[0];
-				pushConstants[12] = fence.texturemins[1];
-				pushConstants[13] = fence.extents[0];
-				pushConstants[14] = fence.extents[1];
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
+				SetPushConstants(appState, fence, pushConstants);
 				auto texture = appState.Scene.fence16List[i].texture;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, fence.count, 1, fence.first_index, 0, 0));
@@ -1338,22 +1381,7 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
 					previousVertexes = fence.vertexes;
 				}
-				pushConstants[0] = fence.origin_x;
-				pushConstants[1] = fence.origin_y;
-				pushConstants[2] = fence.origin_z;
-				pushConstants[3] = fence.vecs[0][0];
-				pushConstants[4] = fence.vecs[0][1];
-				pushConstants[5] = fence.vecs[0][2];
-				pushConstants[6] = fence.vecs[0][3];
-				pushConstants[7] = fence.vecs[1][0];
-				pushConstants[8] = fence.vecs[1][1];
-				pushConstants[9] = fence.vecs[1][2];
-				pushConstants[10] = fence.vecs[1][3];
-				pushConstants[11] = fence.texturemins[0];
-				pushConstants[12] = fence.texturemins[1];
-				pushConstants[13] = fence.extents[0];
-				pushConstants[14] = fence.extents[1];
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 15 * sizeof(float), pushConstants));
+				SetPushConstants(appState, fence, pushConstants);
 				auto texture = appState.Scene.fence32List[i].texture;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, fence.count, 1, fence.first_index, 0, 0));
@@ -1449,9 +1477,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-			pushConstants[11] = 0;
-			pushConstants[12] = 0;
-			pushConstants[15] = (float)cl.time;
+			pushConstants[13] = (float)cl.time;
 			void* previousVertexes = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
 			for (auto i = 0; i <= d_lists.last_turbulent16; i++)
@@ -1463,20 +1489,7 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
 					previousVertexes = turbulent.vertexes;
 				}
-				pushConstants[0] = turbulent.origin_x;
-				pushConstants[1] = turbulent.origin_y;
-				pushConstants[2] = turbulent.origin_z;
-				pushConstants[3] = turbulent.vecs[0][0];
-				pushConstants[4] = turbulent.vecs[0][1];
-				pushConstants[5] = turbulent.vecs[0][2];
-				pushConstants[6] = turbulent.vecs[0][3];
-				pushConstants[7] = turbulent.vecs[1][0];
-				pushConstants[8] = turbulent.vecs[1][1];
-				pushConstants[9] = turbulent.vecs[1][2];
-				pushConstants[10] = turbulent.vecs[1][3];
-				pushConstants[13] = turbulent.width;
-				pushConstants[14] = turbulent.height;
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16 * sizeof(float), pushConstants));
+				SetPushConstants(appState, turbulent, pushConstants);
 				auto texture = appState.Scene.turbulent16List[i].texture;
 				if (turbulentResources.bound[descriptorSetIndex] != texture)
 				{
@@ -1496,9 +1509,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-			pushConstants[11] = 0;
-			pushConstants[12] = 0;
-			pushConstants[15] = (float)cl.time;
+			pushConstants[13] = (float)cl.time;
 			void* previousVertexes = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 			for (auto i = 0; i <= d_lists.last_turbulent32; i++)
@@ -1510,20 +1521,7 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &appState.NoOffset));
 					previousVertexes = turbulent.vertexes;
 				}
-				pushConstants[0] = turbulent.origin_x;
-				pushConstants[1] = turbulent.origin_y;
-				pushConstants[2] = turbulent.origin_z;
-				pushConstants[3] = turbulent.vecs[0][0];
-				pushConstants[4] = turbulent.vecs[0][1];
-				pushConstants[5] = turbulent.vecs[0][2];
-				pushConstants[6] = turbulent.vecs[0][3];
-				pushConstants[7] = turbulent.vecs[1][0];
-				pushConstants[8] = turbulent.vecs[1][1];
-				pushConstants[9] = turbulent.vecs[1][2];
-				pushConstants[10] = turbulent.vecs[1][3];
-				pushConstants[13] = turbulent.width;
-				pushConstants[14] = turbulent.height;
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16 * sizeof(float), pushConstants));
+				SetPushConstants(appState, turbulent, pushConstants);
 				auto texture = appState.Scene.turbulent32List[i].texture;
 				if (turbulentResources.bound[descriptorSetIndex] != texture)
 				{

@@ -1125,7 +1125,7 @@ void android_main(struct android_app* app)
 			{
 				if (appState.PreviousMode == AppStartupMode)
 				{
-					sys_version = "OVR 1.0.6";
+					sys_version = "OVR 1.0.7";
 					const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag/files";
 					std::vector<std::string> arguments;
 					arguments.emplace_back("SlipNFrag");
@@ -2166,6 +2166,7 @@ void android_main(struct android_app* app)
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.aliasFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.aliasVertex, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.turbulentFragment, nullptr));
+	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.turbulentVertex, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.spriteFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.spriteVertex, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.surfaceFragment, nullptr));

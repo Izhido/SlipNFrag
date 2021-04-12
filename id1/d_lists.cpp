@@ -140,6 +140,38 @@ void D_AddSurfaceIndices32ToLists (entity_t* entity, msurface_t* face)
 	}
 }
 
+void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+{
+	surface.surface = face;
+	surface.entity = entity;
+	surface.vertexes = entity->model->vertexes;
+	surface.vertex_count = entity->model->numvertexes;
+	surface.created = (created ? 1: 0);
+	auto texture = R_TextureAnimation(face->texinfo->texture);
+	surface.width = cache->width;
+	surface.height = cache->height;
+	surface.size = surface.width * surface.height;
+	if (surface.data.size() < surface.size)
+	{
+		surface.data.resize(surface.size);
+	}
+	memcpy(surface.data.data(), cache->data, surface.size);
+	surface.count = face->numedges;
+	surface.origin_x = entity->origin[0];
+	surface.origin_y = entity->origin[1];
+	surface.origin_z = entity->origin[2];
+	auto texinfo = face->texinfo;
+	for (auto j = 0; j < 2; j++)
+	{
+		for (auto i = 0; i < 4; i++)
+		{
+			surface.vecs[j][i] = texinfo->vecs[j][i];
+		}
+		surface.texturemins[j] = face->texturemins[j];
+		surface.extents[j] = face->extents[j];
+	}
+}
+
 void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
@@ -154,34 +186,8 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 			d_lists.surfaces16.emplace_back();
 		}
 		auto& surface = d_lists.surfaces16[d_lists.last_surface16];
-		surface.surface = face;
-		surface.entity = entity;
-		surface.vertexes = entity->model->vertexes;
-		surface.vertex_count = entity->model->numvertexes;
-		surface.created = (created ? 1: 0);
-		surface.width = cache->width;
-		surface.height = cache->height;
-		surface.size = surface.width * surface.height;
-		if (surface.size > surface.data.size())
-		{
-			surface.data.resize(surface.size);
-		}
-		memcpy(surface.data.data(), cache->data, surface.size);
+		D_FillSurfaceData(surface, face, cache, entity, created);
 		surface.first_index = d_lists.last_surface_index16 + 1;
-		surface.count = face->numedges;
-		surface.origin_x = entity->origin[0];
-		surface.origin_y = entity->origin[1];
-		surface.origin_z = entity->origin[2];
-		auto texinfo = face->texinfo;
-		for (auto j = 0; j < 2; j++)
-		{
-			for (auto i = 0; i < 4; i++)
-			{
-				surface.vecs[j][i] = texinfo->vecs[j][i];
-			}
-			surface.texturemins[j] = face->texturemins[j];
-			surface.extents[j] = face->extents[j];
-		}
 		D_AddSurfaceIndices16ToLists (entity, face);
 	}
 	else
@@ -192,34 +198,8 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 			d_lists.surfaces32.emplace_back();
 		}
 		auto& surface = d_lists.surfaces32[d_lists.last_surface32];
-		surface.surface = face;
-		surface.entity = entity;
-		surface.vertexes = entity->model->vertexes;
-		surface.vertex_count = entity->model->numvertexes;
-		surface.created = (created ? 1: 0);
-		surface.width = cache->width;
-		surface.height = cache->height;
-		surface.size = surface.width * surface.height;
-		if (surface.size > surface.data.size())
-		{
-			surface.data.resize(surface.size);
-		}
-		memcpy(surface.data.data(), cache->data, surface.size);
+		D_FillSurfaceData(surface, face, cache, entity, created);
 		surface.first_index = d_lists.last_surface_index32 + 1;
-		surface.count = face->numedges;
-		surface.origin_x = entity->origin[0];
-		surface.origin_y = entity->origin[1];
-		surface.origin_z = entity->origin[2];
-		auto texinfo = face->texinfo;
-		for (auto j = 0; j < 2; j++)
-		{
-			for (auto i = 0; i < 4; i++)
-			{
-				surface.vecs[j][i] = texinfo->vecs[j][i];
-			}
-			surface.texturemins[j] = face->texturemins[j];
-			surface.extents[j] = face->extents[j];
-		}
 		D_AddSurfaceIndices32ToLists (entity, face);
 	}
 }
@@ -238,34 +218,8 @@ void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, 
 			d_lists.fences16.emplace_back();
 		}
 		auto& fence = d_lists.fences16[d_lists.last_fence16];
-		fence.surface = face;
-		fence.entity = entity;
-		fence.vertexes = entity->model->vertexes;
-		fence.vertex_count = entity->model->numvertexes;
-		fence.created = (created ? 1: 0);
-		fence.width = cache->width;
-		fence.height = cache->height;
-		fence.size = fence.width * fence.height;
-		if (fence.size > fence.data.size())
-		{
-			fence.data.resize(fence.size);
-		}
-		memcpy(fence.data.data(), cache->data, fence.size);
+		D_FillSurfaceData(fence, face, cache, entity, created);
 		fence.first_index = d_lists.last_surface_index16 + 1;
-		fence.count = face->numedges;
-		fence.origin_x = entity->origin[0];
-		fence.origin_y = entity->origin[1];
-		fence.origin_z = entity->origin[2];
-		auto texinfo = face->texinfo;
-		for (auto j = 0; j < 2; j++)
-		{
-			for (auto i = 0; i < 4; i++)
-			{
-				fence.vecs[j][i] = texinfo->vecs[j][i];
-			}
-			fence.texturemins[j] = face->texturemins[j];
-			fence.extents[j] = face->extents[j];
-		}
 		D_AddSurfaceIndices16ToLists (entity, face);
 	}
 	else
@@ -276,34 +230,8 @@ void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, 
 			d_lists.fences32.emplace_back();
 		}
 		auto& fence = d_lists.fences32[d_lists.last_fence32];
-		fence.surface = face;
-		fence.entity = entity;
-		fence.vertexes = entity->model->vertexes;
-		fence.vertex_count = entity->model->numvertexes;
-		fence.created = (created ? 1: 0);
-		fence.width = cache->width;
-		fence.height = cache->height;
-		fence.size = fence.width * fence.height;
-		if (fence.size > fence.data.size())
-		{
-			fence.data.resize(fence.size);
-		}
-		memcpy(fence.data.data(), cache->data, fence.size);
+		D_FillSurfaceData(fence, face, cache, entity, created);
 		fence.first_index = d_lists.last_surface_index32 + 1;
-		fence.count = face->numedges;
-		fence.origin_x = entity->origin[0];
-		fence.origin_y = entity->origin[1];
-		fence.origin_z = entity->origin[2];
-		auto texinfo = face->texinfo;
-		for (auto j = 0; j < 2; j++)
-		{
-			for (auto i = 0; i < 4; i++)
-			{
-				fence.vecs[j][i] = texinfo->vecs[j][i];
-			}
-			fence.texturemins[j] = face->texturemins[j];
-			fence.extents[j] = face->extents[j];
-		}
 		D_AddSurfaceIndices32ToLists (entity, face);
 	}
 }

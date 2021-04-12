@@ -5,5 +5,5 @@
 struct LoadedTextureFromAllocation
 {
 	TextureFromAllocation* texture;
-	int offset;
+	int size;
 };

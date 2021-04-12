@@ -513,6 +513,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/surface.frag.spv", &appState.Scene.surfaceFragment);
 	CreateShader(appState, app, (isMultiview ? "shaders/sprite_multiview.vert.spv" : "shaders/sprite.vert.spv"), &appState.Scene.spriteVertex);
 	CreateShader(appState, app, "shaders/sprite.frag.spv", &appState.Scene.spriteFragment);
+	CreateShader(appState, app, (isMultiview ? "shaders/turbulent_multiview.vert.spv" : "shaders/turbulent.vert.spv"), &appState.Scene.turbulentVertex);
 	CreateShader(appState, app, "shaders/turbulent.frag.spv", &appState.Scene.turbulentFragment);
 	CreateShader(appState, app, (isMultiview ? "shaders/alias_multiview.vert.spv" : "shaders/alias.vert.spv"), &appState.Scene.aliasVertex);
 	CreateShader(appState, app, "shaders/alias.frag.spv", &appState.Scene.aliasFragment);
@@ -859,14 +860,14 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Scene.turbulent.stages.resize(2);
 	appState.Scene.turbulent.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	appState.Scene.turbulent.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	appState.Scene.turbulent.stages[0].module = appState.Scene.surfaceVertex;
+	appState.Scene.turbulent.stages[0].module = appState.Scene.turbulentVertex;
 	appState.Scene.turbulent.stages[0].pName = "main";
 	appState.Scene.turbulent.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	appState.Scene.turbulent.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	appState.Scene.turbulent.stages[1].module = appState.Scene.turbulentFragment;
 	appState.Scene.turbulent.stages[1].pName = "main";
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 16 * sizeof(float);
+	pushConstantInfo.size = 14 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &appState.Scene.turbulent.pipelineLayout));

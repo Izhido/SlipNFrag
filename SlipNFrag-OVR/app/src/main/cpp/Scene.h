@@ -22,6 +22,7 @@ struct Scene
 	VkShaderModule surfaceFragment;
 	VkShaderModule spriteVertex;
 	VkShaderModule spriteFragment;
+	VkShaderModule turbulentVertex;
 	VkShaderModule turbulentFragment;
 	VkShaderModule aliasVertex;
 	VkShaderModule aliasFragment;

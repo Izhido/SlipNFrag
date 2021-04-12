@@ -5,5 +5,5 @@
 struct LoadedSharedMemoryTexture
 {
 	SharedMemoryTexture* texture;
-	int offset;
+	int size;
 };

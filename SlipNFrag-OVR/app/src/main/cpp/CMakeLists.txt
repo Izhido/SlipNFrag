@@ -12,6 +12,9 @@ set (OVR_SDK_MOBILE "ovr_sdk_mobile_1.42.0")
 add_library(vrapi SHARED IMPORTED)
 set_target_properties(vrapi PROPERTIES IMPORTED_LOCATION ../../../../../../${OVR_SDK_MOBILE}/VrApi/Libs/Android/${ANDROID_ABI}/Release/libvrapi.so)
 
+add_library(validation SHARED IMPORTED)
+set_target_properties(validation PROPERTIES IMPORTED_LOCATION ${ANDROID_NDK}/sources/third_party/vulkan/src/build-android/jniLibs/${ANDROID_ABI}/libVkLayer_khronos_validation.so)
+
 file(GLOB SRC_FILES *.cpp)
 file(GLOB ID1_FILES ../../../../../id1/*.cpp)
 file(GLOB STB_FILES ../../../../../${OVR_SDK_MOBILE}/3rdParty/stb/src/*.c)
@@ -26,4 +29,4 @@ target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBI
 target_include_directories(native-activity PRIVATE ../../../../../id1)
 target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBILE}/3rdParty/stb/src)
 
-target_link_libraries(native-activity android native_app_glue log vrapi OpenSLES)
+target_link_libraries(native-activity android native_app_glue log vrapi OpenSLES validation)
