@@ -490,7 +490,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 	{
 		auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
 		auto texture = new TextureFromAllocation();
-		texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		texture->key.first = surface.surface;
 		texture->key.second = surface.entity;
 		appState.Scene.loadedSurfaces.insert({ texture->key, texture });
@@ -523,7 +523,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			{
 				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
 				auto texture = new TextureFromAllocation();
-				texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				texture->key.first = surface.surface;
 				texture->key.second = surface.entity;
 				texture->next = first;
@@ -563,7 +563,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			{
 				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
 				auto texture = new TextureFromAllocation();
-				texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				texture->Create(appState, commandBuffer, surface.width, surface.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				texture->key.first = surface.surface;
 				texture->key.second = surface.entity;
 				texture->next = entry->second;
@@ -612,7 +612,7 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, View& view, dtu
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 			texture = new Texture();
-			texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			texture->key = turbulent.texture;
 			loadedTexture.size = turbulent.size;
 			stagingBufferSize += loadedTexture.size;
@@ -629,7 +629,7 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, View& view, dtu
 	{
 		auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 		auto texture = new Texture();
-		texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		texture->Create(appState, commandBuffer, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		texture->key = turbulent.texture;
 		loadedTexture.size = turbulent.size;
 		stagingBufferSize += loadedTexture.size;
@@ -667,7 +667,7 @@ void PerImage::GetAliasStagingBufferSize(AppState& appState, int lastAlias, std:
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 			auto texture = new SharedMemoryTexture();
-			texture->Create(appState, commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->Create(appState, commandBuffer, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			textures[i].texture.size = alias.size;
 			stagingBufferSize += textures[i].texture.size;
 			appState.Scene.aliasTextures.MoveToFront(texture);
@@ -694,7 +694,7 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
 			auto texture = new SharedMemoryTexture();
-			texture->Create(appState, commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->Create(appState, commandBuffer, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			textures[i].texture.size = viewmodel.size;
 			stagingBufferSize += textures[i].texture.size;
 			appState.Scene.viewmodelTextures.MoveToFront(texture);
@@ -729,7 +729,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	if (::host_colormap.size() > 0 && host_colormap == nullptr)
 	{
 		host_colormap = new Texture();
-		host_colormap->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		host_colormap->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		host_colormapOffset = stagingBufferSize;
 		stagingBufferSize += 16384;
 	}
@@ -782,7 +782,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			SharedMemoryTexture* texture;
 			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 			texture = new SharedMemoryTexture();
-			texture->Create(appState, commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->Create(appState, commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			appState.Scene.spriteList[i].size = sprite.size;
 			stagingBufferSize += appState.Scene.spriteList[i].size;
 			appState.Scene.spriteTextures.MoveToFront(texture);
@@ -1054,7 +1054,7 @@ void PerImage::FillAliasTextures(AppState& appState, Buffer* stagingBuffer, Load
 		else
 		{
 			texture = new Texture();
-			texture->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->Create(appState, commandBuffer, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
 		texture->Fill(appState, stagingBuffer, offset, commandBuffer);
 		offset += 16384;
@@ -1166,7 +1166,7 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer)
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(128, 128)))) + 1;
 			sky = new Texture();
-			sky->Create(appState, commandBuffer, 128, 128, VK_FORMAT_R8_UNORM, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			sky->Create(appState, commandBuffer, 128, 128, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
 		sky->FillMipmapped(appState, stagingBuffer, skyOffset, commandBuffer);
 	}

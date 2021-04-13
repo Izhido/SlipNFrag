@@ -7,8 +7,8 @@ precision mediump float;
 precision mediump int;
 
 layout(set = 0, binding = 1) uniform sampler2D fragmentPalette;
-layout(set = 1, binding = 0) uniform sampler2D fragmentTexture;
-layout(set = 2, binding = 0) uniform sampler2D fragmentColormap;
+layout(set = 1, binding = 0) uniform usampler2D fragmentTexture;
+layout(set = 2, binding = 0) uniform usampler2D fragmentColormap;
 
 layout(push_constant) uniform Tint
 {
@@ -28,12 +28,12 @@ void main()
 	vec2 level = textureQueryLod(fragmentTexture, fragmentTexCoords);
 	float lowMip = floor(level.y);
 	float highMip = ceil(level.y);
-	vec4 lowEntry = textureLod(fragmentTexture, fragmentTexCoords, lowMip);
-	vec4 highEntry = textureLod(fragmentTexture, fragmentTexCoords, highMip);
-	vec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowEntry.x * 255.0, fragmentLight), 0);
-	vec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x * 255.0, fragmentLight), 0);
-	vec4 lowColor = texelFetch(fragmentPalette, ivec2(lowColormapped.x * 255.0, 0), 0);
-	vec4 highColor = texelFetch(fragmentPalette, ivec2(highColormapped.x * 255.0, 0), 0);
+	uvec4 lowEntry = textureLod(fragmentTexture, fragmentTexCoords, lowMip);
+	uvec4 highEntry = textureLod(fragmentTexture, fragmentTexCoords, highMip);
+	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowEntry.x, fragmentLight), 0);
+	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x, fragmentLight), 0);
+	vec4 lowColor = texelFetch(fragmentPalette, ivec2(lowColormapped.x, 0), 0);
+	vec4 highColor = texelFetch(fragmentPalette, ivec2(highColormapped.x, 0), 0);
 	float delta = level.y - lowMip;
 	float r = lowColor.x + delta * (highColor.x - lowColor.x);
 	float g = lowColor.y + delta * (highColor.y - lowColor.y);

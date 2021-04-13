@@ -1536,7 +1536,7 @@ void android_main(struct android_app* app)
 			if (perImage.texture == nullptr)
 			{
 				perImage.texture = new Texture();
-				perImage.texture->Create(appState, perImage.commandBuffer, appState.ConsoleWidth, appState.ConsoleHeight, VK_FORMAT_R8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				perImage.texture->Create(appState, perImage.commandBuffer, appState.ConsoleWidth, appState.ConsoleHeight, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			}
 			perImage.textureOffset = stagingBufferSize;
 			stagingBufferSize += con_buffer.size();
