@@ -6,6 +6,6 @@ struct LoadedTextureFromAllocation
 {
 	TextureFromAllocation* texture;
 	VkDeviceSize size;
-	unsigned char* source;
+	float* source;
 	LoadedTextureFromAllocation* next;
 };

@@ -51,7 +51,11 @@ static void	(*surfmiptable[4])(void) = {
 
 
 
-std::vector<unsigned> blocklights(18*18);
+std::vector<unsigned>	r_blocklights_base(18*18);
+unsigned*				blocklights;
+int 					r_blocklights_smax;
+int 					r_blocklights_tmax;
+int 					r_blocklights_size;
 
 /*
 ===============
@@ -67,12 +71,9 @@ void R_AddDynamicLights (void)
 	vec3_t		impact, local;
 	int			s, t;
 	int			i;
-	int			smax, tmax;
 	mtexinfo_t	*tex;
 
 	surf = r_drawsurf.surf;
-	smax = (surf->extents[0]>>4)+1;
-	tmax = (surf->extents[1]>>4)+1;
 	tex = surf->texinfo;
 
 	for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
@@ -101,12 +102,12 @@ void R_AddDynamicLights (void)
 		local[0] -= surf->texturemins[0];
 		local[1] -= surf->texturemins[1];
 		
-		for (t = 0 ; t<tmax ; t++)
+		for (t = 0 ; t<r_blocklights_tmax ; t++)
 		{
 			td = local[1] - t*16;
 			if (td < 0)
 				td = -td;
-			for (s=0 ; s<smax ; s++)
+			for (s=0 ; s<r_blocklights_smax ; s++)
 			{
 				sd = local[0] - s*16;
 				if (sd < 0)
@@ -116,7 +117,7 @@ void R_AddDynamicLights (void)
 				else
 					dist = td + (sd>>1);
 				if (dist < minlight)
-					blocklights[t*smax + s] += (rad - dist)*256;
+					blocklights[t*r_blocklights_smax + s] += (rad - dist)*256;
 			}
 		}
 	}
@@ -131,9 +132,8 @@ Combine and scale multiple lightmaps into the 8.8 format in blocklights
 */
 void R_BuildLightMap (void)
 {
-	int			smax, tmax;
 	int			t;
-	int			i, size;
+	int			i;
 	byte		*lightmap;
 	unsigned	scale;
 	int			maps;
@@ -141,24 +141,18 @@ void R_BuildLightMap (void)
 
 	surf = r_drawsurf.surf;
 
-	smax = (surf->extents[0]>>4)+1;
-	tmax = (surf->extents[1]>>4)+1;
-	size = smax*tmax;
 	lightmap = surf->samples;
-
-	if (blocklights.size() < size + 2*2)
-	{
-		blocklights.resize(size + 2*2);
-	}
 
 	if (r_fullbright.value || !cl.worldmodel->lightdata)
 	{
-		std::fill(blocklights.begin(), blocklights.end(), 0);
+		for (i=0 ; i<r_blocklights_size ; i++)
+			blocklights[i] = 0;
 		return;
 	}
 
 // clear to ambient
-	std::fill(blocklights.begin(), blocklights.end(), r_refdef.ambientlight<<8);
+	for (i=0 ; i<r_blocklights_size ; i++)
+		blocklights[i] = r_refdef.ambientlight<<8;
 
 
 // add all the lightmaps
@@ -167,9 +161,9 @@ void R_BuildLightMap (void)
 			 maps++)
 		{
 			scale = r_drawsurf.lightadj[maps];	// 8.8 fraction		
-			for (i=0 ; i<size ; i++)
+			for (i=0 ; i<r_blocklights_size ; i++)
 				blocklights[i] += lightmap[i] * scale;
-			lightmap += size;	// skip to next lightmap
+			lightmap += r_blocklights_size;	// skip to next lightmap
 		}
 
 // add all the dynamic lights
@@ -177,7 +171,7 @@ void R_BuildLightMap (void)
 		R_AddDynamicLights ();
 
 // bound, invert, and shift
-	for (i=0 ; i<size ; i++)
+	for (i=0 ; i<r_blocklights_size ; i++)
 	{
 		t = (255*256 - (int)blocklights[i]) >> (8 - VID_CBITS);
 
@@ -300,7 +294,7 @@ void R_DrawSurface (void)
 
 	for (u=0 ; u<r_numhblocks; u++)
 	{
-		r_lightptr = blocklights.data() + u;
+		r_lightptr = blocklights + u;
 
 		prowdestbase = pcolumndest;
 

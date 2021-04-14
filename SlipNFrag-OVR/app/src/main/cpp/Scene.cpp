@@ -511,6 +511,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Scene.numBuffers = (isMultiview) ? VRAPI_FRAME_LAYER_EYE_MAX : 1;
 	CreateShader(appState, app, (isMultiview ? "shaders/surface_multiview.vert.spv" : "shaders/surface.vert.spv"), &appState.Scene.surfaceVertex);
 	CreateShader(appState, app, "shaders/surface.frag.spv", &appState.Scene.surfaceFragment);
+	CreateShader(appState, app, "shaders/fence.frag.spv", &appState.Scene.fenceFragment);
 	CreateShader(appState, app, (isMultiview ? "shaders/sprite_multiview.vert.spv" : "shaders/sprite.vert.spv"), &appState.Scene.spriteVertex);
 	CreateShader(appState, app, "shaders/sprite.frag.spv", &appState.Scene.spriteFragment);
 	CreateShader(appState, app, (isMultiview ? "shaders/turbulent_multiview.vert.spv" : "shaders/turbulent.vert.spv"), &appState.Scene.turbulentVertex);
@@ -796,16 +797,18 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 2;
 	VK(appState.Device.vkCreateDescriptorSetLayout(appState.Device.device, &descriptorSetLayoutCreateInfo, nullptr, &appState.Scene.doubleImageLayout));
-	VkDescriptorSetLayout descriptorSetLayouts[3] { };
+	VkDescriptorSetLayout descriptorSetLayouts[4] { };
 	descriptorSetLayouts[0] = appState.Scene.bufferAndImageLayout;
 	descriptorSetLayouts[1] = appState.Scene.singleImageLayout;
+	descriptorSetLayouts[2] = appState.Scene.singleImageLayout;
+	descriptorSetLayouts[3] = appState.Scene.singleImageLayout;
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo { };
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutCreateInfo.setLayoutCount = 2;
+	pipelineLayoutCreateInfo.setLayoutCount = 4;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	VkPushConstantRange pushConstantInfo { };
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	pushConstantInfo.size = 15 * sizeof(float);
+	pushConstantInfo.size = 17 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &appState.Scene.surfaces.pipelineLayout));
@@ -832,7 +835,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Scene.fences.stages[0].pName = "main";
 	appState.Scene.fences.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	appState.Scene.fences.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	appState.Scene.fences.stages[1].module = appState.Scene.spriteFragment;
+	appState.Scene.fences.stages[1].module = appState.Scene.fenceFragment;
 	appState.Scene.fences.stages[1].pName = "main";
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &appState.Scene.fences.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = appState.Scene.fences.stages.size();
@@ -850,6 +853,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Scene.sprites.stages[1].pName = "main";
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &appState.Scene.sprites.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = appState.Scene.sprites.stages.size();
 	graphicsPipelineCreateInfo.pStages = appState.Scene.sprites.stages.data();
@@ -890,7 +894,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pushConstantInfo.size = 16 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
-	descriptorSetLayouts[2] = appState.Scene.singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &appState.Scene.alias.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = appState.Scene.alias.stages.size();
@@ -927,7 +930,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	pipelineLayoutCreateInfo.setLayoutCount = 1;
-	pipelineLayoutCreateInfo.pSetLayouts = &appState.Scene.bufferAndImageLayout;
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &appState.Scene.colored.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = appState.Scene.colored.stages.size();
 	graphicsPipelineCreateInfo.pStages = appState.Scene.colored.stages.data();
@@ -948,7 +950,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pushConstantInfo.size = 13 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
-	descriptorSetLayouts[1] = appState.Scene.singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &appState.Scene.sky.pipelineLayout));
@@ -1062,10 +1063,14 @@ void Scene::Reset()
 	colormappedTexCoordsPerKey.clear();
 	colormappedVerticesPerKey.clear();
 	spritesPerKey.clear();
+	fenceTexturesPerKey.clear();
+	surfaceTexturesPerKey.clear();
 	viewmodelTextures.DisposeFront();
 	aliasTextures.DisposeFront();
 	spriteTextures.DisposeFront();
-	for (auto entry = loadedSurfaces.begin(); entry != loadedSurfaces.end(); entry++)
+	fenceTextures.DisposeFront();
+	surfaceTextures.DisposeFront();
+	for (auto entry = surfaceLightmaps.begin(); entry != surfaceLightmaps.end(); entry++)
 	{
 		for (TextureFromAllocation** t = &entry->second; *t != nullptr; )
 		{
@@ -1075,11 +1080,12 @@ void Scene::Reset()
 			*t = next;
 		}
 	}
-	loadedSurfaces.clear();
+	surfaceLightmaps.clear();
 	colormappedBuffers.DisposeFront();
 	viewmodelTextureCount = 0;
 	aliasTextureCount = 0;
 	spriteTextureCount = 0;
+	surfaceTextureCount = 0;
 	resetDescriptorSetsCount++;
 	if (skybox != VK_NULL_HANDLE)
 	{

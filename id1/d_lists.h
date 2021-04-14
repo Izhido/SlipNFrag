@@ -7,10 +7,14 @@ struct dsurface_t
 	void* vertexes;
 	int vertex_count;
 	int created;
-	int width;
-	int height;
-	int size;
-	std::vector<unsigned char> data;
+	int texture_width;
+	int texture_height;
+	int texture_size;
+	unsigned char* texture;
+	int lightmap_width;
+	int lightmap_height;
+	int lightmap_size;
+	std::vector<float> lightmap;
 	int first_index;
 	int count;
 	float origin_x;

@@ -44,7 +44,7 @@ typedef struct surfcache_s
 	unsigned			width;
 	unsigned			height;		// DEBUG only needed for debug
 	float				mipscale;
-	texture_t*			texture;	// checked for animating textures
+	void*				texture;	// checked for animating textures
 	byte				data[4];	// width*height elements
 } surfcache_t;
 
@@ -88,6 +88,7 @@ void R_ShowSubDiv (void);
 extern void (*prealspandrawer)(void);
 
 qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result);
+qboolean D_CacheLightmap (msurface_t *surface, int miplevel, surfcache_t **result);
 
 extern int D_MipLevelForScale (float scale);
 

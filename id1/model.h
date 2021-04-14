@@ -114,7 +114,8 @@ typedef struct msurface_s
 	int			numedges;	// are backwards edges
 	
 // surface generation data
-	struct surfcache_s	*cachespots[MIPLEVELS];
+	struct surfcache_s	*surfcachespots[MIPLEVELS];
+	struct surfcache_s	*lightmapcachespots[MIPLEVELS];
 
 	int			texturemins[2];
 	int			extents[2];
@@ -379,7 +380,7 @@ typedef struct model_s
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
-void Mod_ClearCacheSurfaces();
+void	Mod_ClearCacheSurfaces();
 model_t *Mod_ForName (const char *name, qboolean crash);
 void	*Mod_Extradata (model_t *mod);	// handles caching
 void	Mod_TouchModel (char *name);

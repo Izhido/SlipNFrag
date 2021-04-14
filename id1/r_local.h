@@ -254,6 +254,14 @@ extern mnode_t	*r_pefragtopnode;
 extern int		r_clipflags;
 extern int		r_dlightframecount;
 
+extern std::vector<unsigned>	r_blocklights_base;
+extern unsigned*				blocklights;
+extern int 						r_blocklights_smax;
+extern int 						r_blocklights_tmax;
+extern int 						r_blocklights_size;
+
+void R_BuildLightMap (void);
+
 extern qboolean r_skip_fov_check;
 extern qboolean	r_fov_greater_than_90;
 extern vec3_t 	r_modelorg_delta;

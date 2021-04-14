@@ -304,7 +304,7 @@ void D_DrawSurfaces (void)
 				pface = (msurface_t*)s->data;
 			// FIXME: make this passed in to D_CacheSurface
 				pcurrentcache = nullptr;
-				auto created = D_CacheSurface (pface, d_minmip, &pcurrentcache);
+				auto created = D_CacheLightmap (pface, d_minmip, &pcurrentcache);
 
 				if (pcurrentcache != nullptr)
 				{

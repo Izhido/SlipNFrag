@@ -43,6 +43,8 @@ struct PerImage
 	PipelineDescriptorResources host_colormapResources;
 	PipelineDescriptorResources sceneMatricesResources;
 	PipelineDescriptorResources sceneMatricesAndPaletteResources;
+	CachedPipelineDescriptorResources surfaceTextureResources;
+	CachedPipelineDescriptorResources fenceTextureResources;
 	CachedPipelineDescriptorResources spriteResources;
 	UpdatablePipelineDescriptorResources turbulentResources;
 	UpdatablePipelineDescriptorResources colormapResources;
@@ -80,5 +82,6 @@ struct PerImage
 	void FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceSize floorSize);
 	void SetPushConstants(AppState& appState, dsurface_t& surface, float pushConstants[]);
 	void SetPushConstants(AppState& appState, dturbulent_t& turbulent, float pushConstants[]);
+	void SetDescriptorSets(AppState& appState, SharedMemoryTexture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[], TextureFromAllocation* lightmap);
 	void Render(AppState& appState);
 };

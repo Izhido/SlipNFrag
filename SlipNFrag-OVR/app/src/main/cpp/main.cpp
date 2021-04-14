@@ -1244,8 +1244,8 @@ void android_main(struct android_app* app)
 				appState.PreviousMode = appState.Mode;
 			}
 		}
-		appState.Scene.surfacesToDelete.clear();
-		for (auto entry : appState.Scene.loadedSurfaces)
+		appState.Scene.surfaceLightmapsToDelete.clear();
+		for (auto entry : appState.Scene.surfaceLightmaps)
 		{
 			auto total = 0;
 			auto erased = 0;
@@ -1268,16 +1268,18 @@ void android_main(struct android_app* app)
 			}
 			if (total == erased)
 			{
-				appState.Scene.surfacesToDelete.push_back(entry.first);
+				appState.Scene.surfaceLightmapsToDelete.push_back(entry.first);
 			}
 		}
-		for (auto entry : appState.Scene.surfacesToDelete)
+		for (auto entry : appState.Scene.surfaceLightmapsToDelete)
 		{
-			appState.Scene.loadedSurfaces.erase(entry);
+			appState.Scene.surfaceLightmaps.erase(entry);
 		}
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.viewmodelTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.aliasTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.spriteTextures.oldTextures);
+		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.fenceTextures.oldTextures);
+		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.surfaceTextures.oldTextures);
 		TextureFromAllocation::DeleteOld(appState, &appState.Scene.oldSurfaces);
 		for (Buffer** b = &appState.Scene.oldSurfaceVerticesPerModel; *b != nullptr; )
 		{
@@ -1639,10 +1641,10 @@ void android_main(struct android_app* app)
 				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.descriptorResources.descriptorSet));
 				VkDescriptorImageInfo textureInfo[2] { };
 				textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureInfo[0].sampler = appState.Scene.samplers[perImage.texture->mipCount];
+				textureInfo[0].sampler = appState.Scene.textureSamplers[perImage.texture->mipCount];
 				textureInfo[0].imageView = perImage.texture->view;
 				textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureInfo[1].sampler = appState.Scene.samplers[perImage.palette->mipCount];
+				textureInfo[1].sampler = appState.Scene.textureSamplers[perImage.palette->mipCount];
 				textureInfo[1].imageView = perImage.palette->view;
 				VkWriteDescriptorSet writes[2] { };
 				writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2049,6 +2051,8 @@ void android_main(struct android_app* app)
 			perImage.aliasResources.Delete(appState);
 			perImage.turbulentResources.Delete(appState);
 			perImage.spriteResources.Delete(appState);
+			perImage.fenceTextureResources.Delete(appState);
+			perImage.surfaceTextureResources.Delete(appState);
 			perImage.sceneMatricesAndPaletteResources.Delete(appState);
 			perImage.sceneMatricesResources.Delete(appState);
 			perImage.host_colormapResources.Delete(appState);
@@ -2120,9 +2124,13 @@ void android_main(struct android_app* app)
 	vrapi_DestroyTextureSwapChain(appState.Console.SwapChain);
 	VC(appState.Device.vkDestroyRenderPass(appState.Device.device, appState.RenderPass, nullptr));
 	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
-	for (auto i = 0; i < appState.Scene.samplers.size(); i++)
+	for (auto i = 0; i < appState.Scene.textureFromAllocationSamplers.size(); i++)
 	{
-		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.samplers[i], nullptr));
+		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.textureFromAllocationSamplers[i], nullptr));
+	}
+	for (auto i = 0; i < appState.Scene.textureSamplers.size(); i++)
+	{
+		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.textureSamplers[i], nullptr));
 	}
 	if (appState.Scene.floorTexture != nullptr)
 	{
@@ -2131,6 +2139,8 @@ void android_main(struct android_app* app)
 	appState.Scene.viewmodelTextures.Delete(appState);
 	appState.Scene.aliasTextures.Delete(appState);
 	appState.Scene.spriteTextures.Delete(appState);
+	appState.Scene.fenceTextures.Delete(appState);
+	appState.Scene.surfaceTextures.Delete(appState);
 	for (auto& entry : appState.Scene.allocations)
 	{
 		for (auto& list : entry.second.allocations)
@@ -2169,6 +2179,7 @@ void android_main(struct android_app* app)
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.turbulentVertex, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.spriteFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.spriteVertex, nullptr));
+	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.fenceFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.surfaceFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.surfaceVertex, nullptr));
 	if (appState.Scene.matrices.mapped != nullptr)

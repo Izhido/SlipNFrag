@@ -47,17 +47,16 @@ void Texture::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t
 	imageMemoryBarrier.subresourceRange.levelCount = mipCount;
 	imageMemoryBarrier.subresourceRange.layerCount = layerCount;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	VkSamplerCreateInfo samplerCreateInfo { };
-	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerCreateInfo.maxLod = mipCount;
-	samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-	if (appState.Scene.samplers.size() <= mipCount)
+	if (appState.Scene.textureSamplers.size() <= mipCount)
 	{
-		appState.Scene.samplers.resize(mipCount + 1);
+		appState.Scene.textureSamplers.resize(mipCount + 1);
 	}
-	if (appState.Scene.samplers[mipCount] == VK_NULL_HANDLE)
+	if (appState.Scene.textureSamplers[mipCount] == VK_NULL_HANDLE)
 	{
-		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
+		VkSamplerCreateInfo samplerCreateInfo { };
+		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerCreateInfo.maxLod = mipCount;
+		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.textureSamplers[mipCount]));
 	}
 }
 

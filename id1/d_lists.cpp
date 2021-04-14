@@ -148,14 +148,23 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	surface.vertex_count = entity->model->numvertexes;
 	surface.created = (created ? 1: 0);
 	auto texture = R_TextureAnimation(face->texinfo->texture);
-	surface.width = cache->width;
-	surface.height = cache->height;
-	surface.size = surface.width * surface.height;
-	if (surface.data.size() < surface.size)
+	surface.texture_width = texture->width;
+	surface.texture_height = texture->height;
+	surface.texture_size = surface.texture_width * surface.texture_height;
+	surface.texture = (unsigned char *)(texture + 1);
+	surface.lightmap_width = cache->width / sizeof(float);
+	surface.lightmap_height = cache->height;
+	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
+	if (surface.lightmap.size() < surface.lightmap_size)
 	{
-		surface.data.resize(surface.size);
+		surface.lightmap.resize(surface.lightmap_size);
 	}
-	memcpy(surface.data.data(), cache->data, surface.size);
+	auto source = (unsigned*)&cache->data[0];
+	auto target = surface.lightmap.data();
+	for (auto i = 0; i < surface.lightmap_size; i++)
+	{
+		*target++ = (float)(*source++);
+	}
 	surface.count = face->numedges;
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];

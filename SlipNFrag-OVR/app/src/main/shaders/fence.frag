@@ -25,7 +25,15 @@ void main()
 	vec4 lightmapEntry = texture(fragmentLightmap, fragmentLightmapCoords);
 	uint light = (uint(lightmapEntry.x) / 256) % 64;
 	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, light), 0);
+	if (lowColormapped.x == 255)
+	{
+		discard;
+	}
 	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highTexEntry.x, light), 0);
+	if (highColormapped.x == 255)
+	{
+		discard;
+	}
 	vec4 lowColor = texelFetch(fragmentPalette, ivec2(lowColormapped.x, 0), 0);
 	vec4 highColor = texelFetch(fragmentPalette, ivec2(highColormapped.x, 0), 0);
 	float delta = texLevel.y - lowTexMip;

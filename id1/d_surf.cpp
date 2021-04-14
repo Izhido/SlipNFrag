@@ -302,7 +302,7 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 //
 // see if the cache holds apropriate data
 //
-	cache = surface->cachespots[miplevel];
+	cache = surface->surfcachespots[miplevel];
 
 	if (cache && !cache->dlight && surface->dlightframe != r_framecount
 			&& cache->texture == r_drawsurf.texture
@@ -334,8 +334,8 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 		{
 			return false;
 		}
-		surface->cachespots[miplevel] = cache;
-		cache->owner = &surface->cachespots[miplevel];
+		surface->surfcachespots[miplevel] = cache;
+		cache->owner = &surface->surfcachespots[miplevel];
 		cache->mipscale = surfscale;
 	}
 	
@@ -357,10 +357,110 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 //
 	r_drawsurf.surf = surface;
 
+	r_blocklights_smax = (surface->extents[0]>>4)+1;
+	r_blocklights_tmax = (surface->extents[1]>>4)+1;
+	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax;
+	if (r_blocklights_base.size() < r_blocklights_size + 2*2)
+	{
+		r_blocklights_base.resize(r_blocklights_size + 2*2);
+	}
+	blocklights = r_blocklights_base.data();
+
 	c_surf++;
 	R_DrawSurface ();
 
-	(*result) = surface->cachespots[miplevel];
+	(*result) = surface->surfcachespots[miplevel];
+	return true;
+}
+
+//=============================================================================
+
+/*
+================
+D_CacheLightmap
+================
+*/
+qboolean D_CacheLightmap (msurface_t *surface, int miplevel, surfcache_t **result)
+{
+	surfcache_t     *cache;
+
+//
+// if the surface is animating or flashing, flush the cache
+//
+	r_drawsurf.texture = surface->texinfo->texture;
+	r_drawsurf.lightadj[0] = d_lightstylevalue[surface->styles[0]];
+	r_drawsurf.lightadj[1] = d_lightstylevalue[surface->styles[1]];
+	r_drawsurf.lightadj[2] = d_lightstylevalue[surface->styles[2]];
+	r_drawsurf.lightadj[3] = d_lightstylevalue[surface->styles[3]];
+
+//
+// see if the cache holds apropriate data
+//
+	cache = surface->lightmapcachespots[miplevel];
+
+	if (cache && !cache->dlight && surface->dlightframe != r_framecount
+		&& cache->texture == r_drawsurf.texture
+		&& cache->lightadj[0] == r_drawsurf.lightadj[0]
+		&& cache->lightadj[1] == r_drawsurf.lightadj[1]
+		&& cache->lightadj[2] == r_drawsurf.lightadj[2]
+		&& cache->lightadj[3] == r_drawsurf.lightadj[3] )
+	{
+		(*result) = cache;
+		return false;
+	}
+//
+// determine shape of surface
+//
+	r_blocklights_smax = (surface->extents[0]>>4)+1;
+	r_blocklights_tmax = (surface->extents[1]>>4)+1;
+
+	surfscale = 1.0 / (1<<miplevel);
+	r_drawsurf.surfmip = miplevel;
+	r_drawsurf.surfwidth = r_blocklights_smax >> miplevel;
+	r_drawsurf.rowbytes = r_drawsurf.surfwidth;
+	r_drawsurf.surfheight = r_blocklights_tmax >> miplevel;
+
+//
+// allocate memory if needed
+//
+	if (!cache)     // if a texture just animated, don't reallocate it
+	{
+		cache = D_SCAlloc (r_drawsurf.surfwidth * sizeof(unsigned),
+						   r_drawsurf.surfwidth * sizeof(unsigned) * r_drawsurf.surfheight);
+		if (cache == nullptr)
+		{
+			return false;
+		}
+		surface->lightmapcachespots[miplevel] = cache;
+		cache->owner = &surface->lightmapcachespots[miplevel];
+		cache->mipscale = surfscale;
+	}
+
+	if (surface->dlightframe == r_framecount)
+		cache->dlight = 1;
+	else
+		cache->dlight = 0;
+
+	r_drawsurf.surfdat = (pixel_t *)cache->data;
+
+	cache->texture = r_drawsurf.texture;
+	cache->lightadj[0] = r_drawsurf.lightadj[0];
+	cache->lightadj[1] = r_drawsurf.lightadj[1];
+	cache->lightadj[2] = r_drawsurf.lightadj[2];
+	cache->lightadj[3] = r_drawsurf.lightadj[3];
+
+//
+// draw and light the surface texture
+//
+	r_drawsurf.surf = surface;
+
+	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax;
+	blocklights = (unsigned*)&(cache->data[0]);
+
+	c_surf++;
+	R_BuildLightMap ();
+
+	(*result) = surface->lightmapcachespots[miplevel];
 	return true;
 }
 

@@ -3,6 +3,9 @@
 #extension GL_EXT_shader_io_blocks : enable
 #extension GL_ARB_enhanced_layouts : enable
 
+precision highp float;
+precision mediump int;
+
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
 	layout(offset = 0) mat4 ViewMatrix;
@@ -26,11 +29,14 @@ layout(push_constant) uniform Transforms
 	layout(offset = 48) float texturemins1;
 	layout(offset = 52) float extents0;
 	layout(offset = 56) float extents1;
+	layout(offset = 60) float width;
+	layout(offset = 64) float height;
 };
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in mat4 vertexTransform;
-layout(location = 0) out mediump vec2 fragmentTexCoords;
+layout(location = 0) out vec2 fragmentLightmapCoords;
+layout(location = 1) out vec2 fragmentTexCoords;
 
 out gl_PerVertex
 {
@@ -42,5 +48,6 @@ void main(void)
 	gl_Position = ProjectionMatrix * (ViewMatrix * (vertexTransform * vec4(vertexPosition.x + originX, vertexPosition.z + originZ, -vertexPosition.y - originY, 1)));
 	float s = vertexPosition.x * vecs00 + vertexPosition.y * vecs01 + vertexPosition.z * vecs02 + vecs03;
 	float t = vertexPosition.x * vecs10 + vertexPosition.y * vecs11 + vertexPosition.z * vecs12 + vecs13;
-	fragmentTexCoords = vec2((s - texturemins0) / extents0, (t - texturemins1) / extents1);
+	fragmentLightmapCoords = vec2((s - texturemins0) / extents0, (t - texturemins1) / extents1);
+	fragmentTexCoords = vec2(s / width, t / height);
 }
