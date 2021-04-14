@@ -80,6 +80,8 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> aliasPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> viewmodelsPerKey;
 	std::vector<BufferWithOffset> colormappedBufferList;
+	LoadedTextureFromAllocation* firstTextureFromAllocationToCreate;
+	LoadedTextureFromAllocation* currentTextureFromAllocationToCreate;
 	std::vector<LoadedTextureFromAllocation> surface16List;
 	std::vector<LoadedTextureFromAllocation> surface32List;
 	std::vector<LoadedTextureFromAllocation> fence16List;

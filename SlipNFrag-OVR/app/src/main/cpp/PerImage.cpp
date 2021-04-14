@@ -483,6 +483,27 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	}
 }
 
+void PerImage::SetupLoadedTextureFromAllocation(AppState& appState, dsurface_t& surface, LoadedTextureFromAllocation& loadedTexture, VkDeviceSize& stagingBufferSize)
+{
+	loadedTexture.size = surface.size;
+	if (loadedTexture.size % 4 != 0)
+	{
+		loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
+	}
+	stagingBufferSize += loadedTexture.size;
+	loadedTexture.source = surface.data.data();
+	loadedTexture.next = nullptr;
+	if (appState.Scene.currentTextureFromAllocationToCreate == nullptr)
+	{
+		appState.Scene.firstTextureFromAllocationToCreate = &loadedTexture;
+	}
+	else
+	{
+		appState.Scene.currentTextureFromAllocationToCreate->next = &loadedTexture;
+	}
+	appState.Scene.currentTextureFromAllocationToCreate = &loadedTexture;
+}
+
 void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedTextureFromAllocation& loadedTexture, VkDeviceSize& stagingBufferSize)
 {
 	auto entry = appState.Scene.loadedSurfaces.find({ surface.surface, surface.entity });
@@ -495,12 +516,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 		texture->key.second = surface.entity;
 		appState.Scene.loadedSurfaces.insert({ texture->key, texture });
 		loadedTexture.texture = texture;
-		loadedTexture.size = surface.size;
-		if (loadedTexture.size % 4 != 0)
-		{
-			loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
-		}
-		stagingBufferSize += loadedTexture.size;
+		SetupLoadedTextureFromAllocation(appState, surface, loadedTexture, stagingBufferSize);
 	}
 	else if (surface.created)
 	{
@@ -512,12 +528,6 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			{
 				first->unusedCount = 0;
 				loadedTexture.texture = first;
-				loadedTexture.size = surface.size;
-				if (loadedTexture.size % 4 != 0)
-				{
-					loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
-				}
-				stagingBufferSize += loadedTexture.size;
 			}
 			else
 			{
@@ -529,12 +539,6 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 				texture->next = first;
 				entry->second = texture;
 				loadedTexture.texture = texture;
-				loadedTexture.size = surface.size;
-				if (loadedTexture.size % 4 != 0)
-				{
-					loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
-				}
-				stagingBufferSize += loadedTexture.size;
 			}
 		}
 		else
@@ -546,16 +550,10 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 				{
 					found = true;
 					texture->unusedCount = 0;
-					loadedTexture.texture = texture;
-					loadedTexture.size = surface.size;
-					if (loadedTexture.size % 4 != 0)
-					{
-						loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
-					}
-					stagingBufferSize += loadedTexture.size;
 					previous->next = texture->next;
 					texture->next = first;
 					entry->second = texture;
+					loadedTexture.texture = texture;
 					break;
 				}
 			}
@@ -569,14 +567,9 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 				texture->next = entry->second;
 				entry->second = texture;
 				loadedTexture.texture = texture;
-				loadedTexture.size = surface.size;
-				if (loadedTexture.size % 4 != 0)
-				{
-					loadedTexture.size = ((loadedTexture.size >> 2) + 1) << 2;
-				}
-				stagingBufferSize += loadedTexture.size;
 			}
 		}
+		SetupLoadedTextureFromAllocation(appState, surface, loadedTexture, stagingBufferSize);
 	}
 	else
 	{
@@ -733,6 +726,8 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 		host_colormapSize = 16384;
 		stagingBufferSize += host_colormapSize;
 	}
+	appState.Scene.firstTextureFromAllocationToCreate = nullptr;
+	appState.Scene.currentTextureFromAllocationToCreate = nullptr;
 	if (d_lists.last_surface16 >= appState.Scene.surface16List.size())
 	{
 		appState.Scene.surface16List.resize(d_lists.last_surface16 + 1);
@@ -883,45 +878,12 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, ::host_colormap.data(), host_colormapSize);
 		offset += host_colormapSize;
 	}
-	for (auto i = 0; i <= d_lists.last_surface16; i++)
+	auto texture = appState.Scene.firstTextureFromAllocationToCreate;
+	while (texture != nullptr)
 	{
-		auto size = appState.Scene.surface16List[i].size;
-		if (size > 0)
-		{
-			auto& surface = d_lists.surfaces16[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.data.data(), surface.size);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_surface32; i++)
-	{
-		auto size = appState.Scene.surface32List[i].size;
-		if (size > 0)
-		{
-			auto& surface = d_lists.surfaces32[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.data.data(), surface.size);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence16; i++)
-	{
-		auto size = appState.Scene.fence16List[i].size;
-		if (size > 0)
-		{
-			auto& fence = d_lists.fences16[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, fence.data.data(), fence.size);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence32; i++)
-	{
-		auto size = appState.Scene.fence32List[i].size;
-		if (size > 0)
-		{
-			auto& fence = d_lists.fences32[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, fence.data.data(), fence.size);
-			offset += size;
-		}
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, texture->source, texture->size);
+		offset += texture->size;
+		texture = texture->next;
 	}
 	for (auto i = 0; i <= d_lists.last_sprite; i++)
 	{
@@ -1078,41 +1040,12 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceS
 		host_colormap->Fill(appState, stagingBuffer, offset, commandBuffer);
 		offset += host_colormapSize;
 	}
-	for (auto i = 0; i <= d_lists.last_surface16; i++)
+	auto texture = appState.Scene.firstTextureFromAllocationToCreate;
+	while (texture != nullptr)
 	{
-		auto size = appState.Scene.surface16List[i].size;
-		if (size > 0)
-		{
-			appState.Scene.surface16List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_surface32; i++)
-	{
-		auto size = appState.Scene.surface32List[i].size;
-		if (size > 0)
-		{
-			appState.Scene.surface32List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence16; i++)
-	{
-		auto size = appState.Scene.fence16List[i].size;
-		if (size > 0)
-		{
-			appState.Scene.fence16List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence32; i++)
-	{
-		auto size = appState.Scene.fence32List[i].size;
-		if (size > 0)
-		{
-			appState.Scene.fence32List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
+		texture->texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+		offset += texture->size;
+		texture = texture->next;
 	}
 	for (auto i = 0; i <= d_lists.last_sprite; i++)
 	{
