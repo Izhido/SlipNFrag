@@ -5,5 +5,5 @@
 struct LoadedSharedMemoryTexture
 {
 	SharedMemoryTexture* texture;
-	int size;
+	VkDeviceSize size;
 };

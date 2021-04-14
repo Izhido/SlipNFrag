@@ -73,7 +73,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		{
 			stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, Scene.stagingBufferSize);
 			perImage.LoadStagingBuffer(*this, stagingBuffer, Scene.stagingBufferSize, Scene.floorSize);
-			perImage.FillTextures(*this, stagingBuffer);
+			perImage.FillTextures(*this, stagingBuffer, Scene.floorSize);
 		}
 		double clearR;
 		double clearG;

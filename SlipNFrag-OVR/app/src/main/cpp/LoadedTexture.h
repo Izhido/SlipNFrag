@@ -5,5 +5,5 @@
 struct LoadedTexture
 {
 	Texture* texture;
-	int size;
+	VkDeviceSize size;
 };

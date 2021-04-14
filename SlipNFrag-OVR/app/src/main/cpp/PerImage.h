@@ -27,9 +27,9 @@ struct PerImage
 	CachedTextures colormaps;
 	int colormapCount;
 	int resetDescriptorSetsCount;
-	int paletteOffset;
-	int host_colormapOffset;
-	int skyOffset;
+	VkDeviceSize paletteSize;
+	VkDeviceSize host_colormapSize;
+	VkDeviceSize skySize;
 	int paletteChanged;
 	Texture* palette;
 	Texture* host_colormap;
@@ -74,9 +74,9 @@ struct PerImage
 	void GetAliasStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetViewmodelStagingBufferSize(AppState& appState, int lastViewmodel, std::vector<dalias_t>& viewmodelList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize);
-	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, int floorSize);
-	void FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias, int& offset);
-	void FillTextures(AppState& appState, Buffer* stagingBuffer);
+	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, VkDeviceSize floorSize);
+	void FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias, VkDeviceSize& offset);
+	void FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceSize floorSize);
 	void SetPushConstants(AppState& appState, dsurface_t& surface, float pushConstants[]);
 	void SetPushConstants(AppState& appState, dturbulent_t& turbulent, float pushConstants[]);
 	void Render(AppState& appState);

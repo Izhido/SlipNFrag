@@ -102,7 +102,6 @@ struct Scene
 	std::vector<int> viewmodelTexCoords16List;
 	std::vector<int> viewmodelTexCoords32List;
 	std::unordered_map<void*, Texture*> turbulentPerKey;
-	int floorOffset;
 	Texture* floorTexture;
 	std::vector<VkSampler> samplers;
 	Buffer* latestColormappedBuffer;
