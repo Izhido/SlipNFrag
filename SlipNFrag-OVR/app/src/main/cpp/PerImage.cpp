@@ -487,7 +487,7 @@ void PerImage::SetupLoadedTextureFromAllocation(AppState& appState, dsurface_t& 
 {
 	loadedTexture.size = surface.lightmap_size * sizeof(float);
 	stagingBufferSize += loadedTexture.size;
-	loadedTexture.source = surface.lightmap.data();
+	loadedTexture.source = surface.lightmap;
 	loadedTexture.next = nullptr;
 	if (appState.Scene.currentTextureFromAllocationToCreate == nullptr)
 	{

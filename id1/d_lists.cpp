@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -41,6 +41,7 @@ void D_ResetLists ()
 	d_lists.last_colored_attribute = -1;
 	d_lists.last_colored_index16 = -1;
 	d_lists.last_colored_index32 = -1;
+	d_lists.last_lightmap_texel = -1;
 	d_lists.clear_color = -1;
 }
 
@@ -155,12 +156,14 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	surface.lightmap_width = cache->width / sizeof(float);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (surface.lightmap.size() < surface.lightmap_size)
+	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
 	{
-		surface.lightmap.resize(surface.lightmap_size);
+		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 256 * 1024);
 	}
+	surface.lightmap = d_lists.lightmap_texels.data() + d_lists.last_lightmap_texel + 1;
+	d_lists.last_lightmap_texel += surface.lightmap_size;
 	auto source = (unsigned*)&cache->data[0];
-	auto target = surface.lightmap.data();
+	auto target = surface.lightmap;
 	for (auto i = 0; i < surface.lightmap_size; i++)
 	{
 		*target++ = (float)(*source++);

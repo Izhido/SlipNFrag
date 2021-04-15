@@ -14,7 +14,7 @@ struct dsurface_t
 	int lightmap_width;
 	int lightmap_height;
 	int lightmap_size;
-	std::vector<float> lightmap;
+	float* lightmap;
 	int first_index;
 	int count;
 	float origin_x;
@@ -110,6 +110,7 @@ struct dlists_t
 	int last_colored_attribute;
 	int last_colored_index16;
 	int last_colored_index32;
+	int last_lightmap_texel;
 	int clear_color;
 	std::vector<dsurface_t> surfaces16;
 	std::vector<dsurface_t> surfaces32;
@@ -135,6 +136,7 @@ struct dlists_t
 	std::vector<float> colored_attributes;
 	std::vector<uint16_t> colored_indices16;
 	std::vector<uint32_t> colored_indices32;
+	std::vector<float> lightmap_texels;
 };
 
 extern dlists_t d_lists;
