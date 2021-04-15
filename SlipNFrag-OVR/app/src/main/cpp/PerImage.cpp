@@ -566,6 +566,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			}
 		}
 		SetupLoadedTextureFromAllocation(appState, surface, loadedTexture, stagingBufferSize);
+		surface.created = 0;
 	}
 	else
 	{

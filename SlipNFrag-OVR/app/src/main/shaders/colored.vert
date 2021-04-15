@@ -3,6 +3,9 @@
 #extension GL_EXT_shader_io_blocks : enable
 #extension GL_ARB_enhanced_layouts : enable
 
+precision mediump float;
+precision mediump int;
+
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
 	layout(offset = 0) mat4 ViewMatrix;

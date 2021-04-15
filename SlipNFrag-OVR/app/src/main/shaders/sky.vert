@@ -3,6 +3,9 @@
 #extension GL_EXT_shader_io_blocks : enable
 #extension GL_ARB_enhanced_layouts : enable
 
+precision highp float;
+precision highp int;
+
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
 	layout(offset = 0) mat4 ViewMatrix;
@@ -11,7 +14,7 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
-layout(location = 0) out mediump vec2 fragmentTexCoords;
+layout(location = 0) out vec2 fragmentTexCoords;
 
 out gl_PerVertex
 {
