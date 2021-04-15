@@ -158,7 +158,7 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
 	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
 	{
-		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 256 * 1024);
+		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}
 	surface.lightmap = d_lists.lightmap_texels.data() + d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
