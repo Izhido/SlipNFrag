@@ -72,15 +72,15 @@ void CL_WriteDemoMessage (void)
 	len = LittleLong (net_message.data.size());
     std::vector<byte> to_write(net_message.data.size() + 16);
     auto to_write_ptr = to_write.data();
-	Q_memcpy(to_write_ptr, &len, 4);
+	memcpy(to_write_ptr, &len, 4);
     to_write_ptr += 4;
 	for (i=0 ; i<3 ; i++)
 	{
 		f = LittleFloat (cl.viewangles[i]);
-        Q_memcpy(to_write_ptr, &f, 4);
+        memcpy(to_write_ptr, &f, 4);
         to_write_ptr += 4;
 	}
-    Q_memcpy(to_write_ptr, net_message.data.data(), net_message.data.size());
+    memcpy(to_write_ptr, net_message.data.data(), net_message.data.size());
     Sys_FileWrite (cls.demofile, to_write.data(), to_write.size());
 }
 

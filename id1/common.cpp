@@ -813,7 +813,7 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 
 void SZ_Write (sizebuf_t *buf, const void *data, int length)
 {
-	Q_memcpy (SZ_GetSpace(buf,length),data,length);         
+	memcpy (SZ_GetSpace(buf,length),data,length);
 }
 
 void SZ_Print (sizebuf_t *buf, const char *data)
@@ -824,9 +824,9 @@ void SZ_Print (sizebuf_t *buf, const char *data)
 
 // byte * cast to keep VC++ happy
 	if (buf->data[buf->data.size()-1])
-		Q_memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
+		memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
 	else
-		Q_memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
+		memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
 }
 
 

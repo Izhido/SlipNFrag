@@ -142,7 +142,7 @@ int Loop_GetMessage (qsocket_t *sock)
 	sock->receiveMessageLength -= length;
 
 	if (sock->receiveMessageLength)
-		Q_memcpy(sock->receiveMessage.data(), sock->receiveMessage.data() + length, sock->receiveMessageLength);
+		memcpy(sock->receiveMessage.data(), sock->receiveMessage.data() + length, sock->receiveMessageLength);
 
 	if (sock->driverdata && ret == 1)
 		((qsocket_t *)sock->driverdata)->canSend = true;
@@ -221,7 +221,7 @@ int Loop_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
     buffer += 3;
 
 	// message
-	Q_memcpy(buffer, data->data.data(), data->data.size());
+	memcpy(buffer, data->data.data(), data->data.size());
 	*bufferLength = alignedBufferLength;
 	return 1;
 }

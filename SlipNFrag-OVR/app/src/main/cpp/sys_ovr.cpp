@@ -136,7 +136,7 @@ void Sys_Error(const char* error, ...)
         }
         string.resize(needed + 1);
     }
-    __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, "Sys_Error: %s", string.data());
+    __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Sys_Error: %s", string.data());
     sys_errormessage = string.data();
     Host_Shutdown();
     throw std::runtime_error("Sys_Error called");

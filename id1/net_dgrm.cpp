@@ -182,7 +182,7 @@ int Datagram_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	{
 		sock->sendMessage.resize(data->data.size());
 	}
-	Q_memcpy(sock->sendMessage.data(), data->data.data(), data->data.size());
+	memcpy(sock->sendMessage.data(), data->data.data(), data->data.size());
 	sock->sendMessageLength = data->data.size();
 
 	if (data->data.size() <= MAX_DATAGRAM)
@@ -200,8 +200,8 @@ int Datagram_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	packetHeader.length = BigLong(packetLen | (NETFLAG_DATA | eom));
 	packetHeader.sequence = BigLong(sock->sendSequence++);
     packetBuffer.resize(sizeof(packetHeader) + dataLen);
-	Q_memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
-    Q_memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
+	memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
+    memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
 
 	sock->canSend = false;
 
@@ -235,8 +235,8 @@ int SendMessageNext (qsocket_t *sock)
 	packetHeader.length = BigLong(packetLen | (NETFLAG_DATA | eom));
 	packetHeader.sequence = BigLong(sock->sendSequence++);
     packetBuffer.resize(sizeof(packetHeader) + dataLen);
-    Q_memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
-    Q_memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
+    memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
+    memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
 
 	sock->sendNext = false;
 
@@ -270,8 +270,8 @@ int ReSendMessage (qsocket_t *sock)
 	packetHeader.length = BigLong(packetLen | (NETFLAG_DATA | eom));
 	packetHeader.sequence = BigLong(sock->sendSequence - 1);
     packetBuffer.resize(sizeof(packetHeader) + dataLen);
-    Q_memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
-    Q_memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
+    memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
+    memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
 
 	sock->sendNext = false;
 
@@ -374,7 +374,7 @@ int	Datagram_GetMessage (qsocket_t *sock)
 			continue;
 		}
 
-        Q_memcpy(&packetHeader, packetBuffer.data(), sizeof(packetHeader));
+        memcpy(&packetHeader, packetBuffer.data(), sizeof(packetHeader));
 		length = BigLong(packetHeader.length);
 		flags = length & (~NETFLAG_LENGTH_MASK);
 		length &= NETFLAG_LENGTH_MASK;
@@ -431,7 +431,7 @@ int	Datagram_GetMessage (qsocket_t *sock)
 			sock->sendMessageLength -= MAX_DATAGRAM;
 			if (sock->sendMessageLength > 0)
 			{
-				Q_memcpy(sock->sendMessage.data(), sock->sendMessage.data()+MAX_DATAGRAM, sock->sendMessageLength);
+				memcpy(sock->sendMessage.data(), sock->sendMessage.data()+MAX_DATAGRAM, sock->sendMessageLength);
 				sock->sendNext = true;
 			}
 			else
@@ -473,7 +473,7 @@ int	Datagram_GetMessage (qsocket_t *sock)
 			{
 				sock->receiveMessage.resize(new_size);
 			}
-			Q_memcpy(sock->receiveMessage.data() + sock->receiveMessageLength, packetBuffer.data() + sizeof(packetHeader), length);
+			memcpy(sock->receiveMessage.data() + sock->receiveMessageLength, packetBuffer.data() + sizeof(packetHeader), length);
 			sock->receiveMessageLength += length;
 			continue;
 		}
