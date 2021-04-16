@@ -134,10 +134,12 @@ typedef struct qsocket_s
 	unsigned int	ackSequence;
 	unsigned int	sendSequence;
 	unsigned int	unreliableSendSequence;
+	int				sendMessageLength;
     std::vector<byte> sendMessage;
 
 	unsigned int	receiveSequence;
 	unsigned int	unreliableReceiveSequence;
+	int				receiveMessageLength;
 	std::vector<byte> receiveMessage;
 
 	struct qsockaddr	addr;

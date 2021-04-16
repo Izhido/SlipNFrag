@@ -178,7 +178,12 @@ int Datagram_SendMessage (qsocket_t *sock, sizebuf_t *data)
 		Sys_Error("SendMessage: called with canSend == false\n");
 #endif
 
-	sock->sendMessage = data->data;
+	if (sock->sendMessage.size() < data->data.size())
+	{
+		sock->sendMessage.resize(data->data.size());
+	}
+	Q_memcpy(sock->sendMessage.data(), data->data.data(), data->data.size());
+	sock->sendMessageLength = data->data.size();
 
 	if (data->data.size() <= MAX_DATAGRAM)
 	{
@@ -215,9 +220,9 @@ int SendMessageNext (qsocket_t *sock)
 	unsigned int	dataLen;
 	unsigned int	eom;
 
-	if (sock->sendMessage.size() <= MAX_DATAGRAM)
+	if (sock->sendMessageLength <= MAX_DATAGRAM)
 	{
-		dataLen = sock->sendMessage.size();
+		dataLen = sock->sendMessageLength;
 		eom = NETFLAG_EOM;
 	}
 	else
@@ -250,9 +255,9 @@ int ReSendMessage (qsocket_t *sock)
 	unsigned int	dataLen;
 	unsigned int	eom;
 
-	if (sock->sendMessage.size() <= MAX_DATAGRAM)
+	if (sock->sendMessageLength <= MAX_DATAGRAM)
 	{
-		dataLen = sock->sendMessage.size();
+		dataLen = sock->sendMessageLength;
 		eom = NETFLAG_EOM;
 	}
 	else
@@ -423,16 +428,15 @@ int	Datagram_GetMessage (qsocket_t *sock)
 				Con_DPrintf("Duplicate ACK received\n");
 				continue;
 			}
-            auto remaining = (int)sock->sendMessage.size() - MAX_DATAGRAM;
-			if (remaining > 0)
+			sock->sendMessageLength -= MAX_DATAGRAM;
+			if (sock->sendMessageLength > 0)
 			{
-				Q_memcpy(sock->sendMessage.data(), sock->sendMessage.data()+MAX_DATAGRAM, remaining);
-                sock->sendMessage.resize(remaining);
+				Q_memcpy(sock->sendMessage.data(), sock->sendMessage.data()+MAX_DATAGRAM, sock->sendMessageLength);
 				sock->sendNext = true;
 			}
 			else
 			{
-                sock->sendMessage.clear();
+                sock->sendMessageLength = 0;
 				sock->canSend = true;
 			}
 			continue;
@@ -456,17 +460,21 @@ int	Datagram_GetMessage (qsocket_t *sock)
 			if (flags & NETFLAG_EOM)
 			{
 				SZ_Clear(&net_message);
-				SZ_Write(&net_message, sock->receiveMessage.data(), sock->receiveMessage.size());
+				SZ_Write(&net_message, sock->receiveMessage.data(), sock->receiveMessageLength);
 				SZ_Write(&net_message, packetBuffer.data() + sizeof(packetHeader), length);
-				sock->receiveMessage.clear();
+				sock->receiveMessageLength = 0;
 
 				ret = 1;
 				break;
 			}
 
-            auto previous_size = sock->receiveMessage.size();
-            sock->receiveMessage.resize(previous_size + length);
-			Q_memcpy(sock->receiveMessage.data() + previous_size, packetBuffer.data() + sizeof(packetHeader), length);
+			auto new_size = sock->receiveMessageLength + length;
+			if (sock->receiveMessage.size() < new_size)
+			{
+				sock->receiveMessage.resize(new_size);
+			}
+			Q_memcpy(sock->receiveMessage.data() + sock->receiveMessageLength, packetBuffer.data() + sizeof(packetHeader), length);
+			sock->receiveMessageLength += length;
 			continue;
 		}
 	}

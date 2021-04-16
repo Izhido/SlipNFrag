@@ -133,10 +133,10 @@ qsocket_t *NET_NewQSocket (void)
 	sock->ackSequence = 0;
 	sock->sendSequence = 0;
 	sock->unreliableSendSequence = 0;
-    sock->sendMessage.clear();
+    sock->sendMessageLength = 0;
 	sock->receiveSequence = 0;
 	sock->unreliableReceiveSequence = 0;
-	sock->receiveMessage.clear();
+	sock->receiveMessageLength = 0;
 
 	return sock;
 }

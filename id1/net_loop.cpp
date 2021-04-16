@@ -78,8 +78,8 @@ qsocket_t *Loop_Connect (const char *host)
 		}
 		loop_client->address = "localhost";
 	}
-    loop_client->receiveMessage.clear();
-	loop_client->sendMessage.clear();
+    loop_client->receiveMessageLength = 0;
+	loop_client->sendMessageLength = 0;
 	loop_client->canSend = true;
 
 	if (!loop_server)
@@ -91,8 +91,8 @@ qsocket_t *Loop_Connect (const char *host)
 		}
 		loop_server->address = "LOCAL";
 	}
-	loop_server->receiveMessage.clear();
-	loop_server->sendMessage.clear();
+	loop_server->receiveMessageLength = 0;
+	loop_server->sendMessageLength = 0;
 	loop_server->canSend = true;
 
 	loop_client->driverdata = (void *)loop_server;
@@ -108,11 +108,11 @@ qsocket_t *Loop_CheckNewConnections (void)
 		return NULL;
 
 	localconnectpending = false;
-	loop_server->sendMessage.clear();
-	loop_server->receiveMessage.clear();
+	loop_server->sendMessageLength = 0;
+	loop_server->receiveMessageLength = 0;
 	loop_server->canSend = true;
-	loop_client->sendMessage.clear();
-	loop_client->receiveMessage.clear();
+	loop_client->sendMessageLength = 0;
+	loop_client->receiveMessageLength = 0;
 	loop_client->canSend = true;
 	return loop_server;
 }
@@ -129,7 +129,7 @@ int Loop_GetMessage (qsocket_t *sock)
 	int		ret;
 	int		length;
 
-	if (sock->receiveMessage.size() == 0)
+	if (sock->receiveMessageLength == 0)
 		return 0;
 
 	ret = sock->receiveMessage[0];
@@ -139,7 +139,10 @@ int Loop_GetMessage (qsocket_t *sock)
 	SZ_Write (&net_message, &sock->receiveMessage[8], length);
 
 	length = IntAlign(length + 8);
-    sock->receiveMessage.erase(sock->receiveMessage.begin(), sock->receiveMessage.begin() + length);
+	sock->receiveMessageLength -= length;
+
+	if (sock->receiveMessageLength)
+		Q_memcpy(sock->receiveMessage.data(), sock->receiveMessage.data() + length, sock->receiveMessageLength);
 
 	if (sock->driverdata && ret == 1)
 		((qsocket_t *)sock->driverdata)->canSend = true;
@@ -151,16 +154,20 @@ int Loop_GetMessage (qsocket_t *sock)
 int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 {
 	byte *buffer;
-	int bufferLength;
+	int  *bufferLength;
 
 	if (!sock->driverdata)
 		return -1;
 
-	bufferLength = ((qsocket_t *)sock->driverdata)->receiveMessage.size();
+	bufferLength = &((qsocket_t *)sock->driverdata)->receiveMessageLength;
 
-	((qsocket_t *)sock->driverdata)->receiveMessage.resize(IntAlign(bufferLength + data->data.size() + 8));
+	auto alignedBufferLength = IntAlign(*bufferLength + data->data.size() + 8);
+	if (((qsocket_t *)sock->driverdata)->receiveMessage.size() < alignedBufferLength)
+	{
+		((qsocket_t *)sock->driverdata)->receiveMessage.resize(alignedBufferLength);
+	}
 
-	buffer = ((qsocket_t *)sock->driverdata)->receiveMessage.data() + bufferLength;
+	buffer = ((qsocket_t *)sock->driverdata)->receiveMessage.data() + *bufferLength;
 
 	// message type
 	*buffer++ = 1;
@@ -176,6 +183,7 @@ int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 
 	// message
 	memcpy(buffer, data->data.data(), data->data.size());
+	*bufferLength = alignedBufferLength;
 
 	sock->canSend = false;
 	return 1;
@@ -185,16 +193,20 @@ int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 int Loop_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 {
 	byte *buffer;
-    int bufferLength;
+    int  *bufferLength;
 
 	if (!sock->driverdata)
 		return -1;
 
-	bufferLength = ((qsocket_t *)sock->driverdata)->receiveMessage.size();
+	bufferLength = &((qsocket_t *)sock->driverdata)->receiveMessageLength;
 
-    ((qsocket_t *)sock->driverdata)->receiveMessage.resize(IntAlign(bufferLength + data->data.size() + 8));
+	auto alignedBufferLength = IntAlign(*bufferLength + data->data.size() + 8);
+	if (((qsocket_t *)sock->driverdata)->receiveMessage.size() < alignedBufferLength)
+	{
+		((qsocket_t *)sock->driverdata)->receiveMessage.resize(alignedBufferLength);
+	}
 
-    buffer = ((qsocket_t *)sock->driverdata)->receiveMessage.data() + bufferLength;
+    buffer = ((qsocket_t *)sock->driverdata)->receiveMessage.data() + *bufferLength;
 
 	// message type
 	*buffer++ = 2;
@@ -210,6 +222,7 @@ int Loop_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 
 	// message
 	Q_memcpy(buffer, data->data.data(), data->data.size());
+	*bufferLength = alignedBufferLength;
 	return 1;
 }
 
@@ -241,8 +254,8 @@ void Loop_Close (qsocket_t *sock)
 {
 	if (sock->driverdata)
 		((qsocket_t *)sock->driverdata)->driverdata = NULL;
-	sock->receiveMessage.clear();
-	sock->sendMessage.clear();
+	sock->receiveMessageLength = 0;
+	sock->sendMessageLength = 0;
 	sock->canSend = true;
 	if (sock == loop_client)
 		loop_client = NULL;
