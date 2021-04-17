@@ -147,7 +147,7 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 	VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, &writes, 0, nullptr));
 }
 
-void TextureFromAllocation::FillMipmapped(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
+void TextureFromAllocation::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
 {
 	VkImageMemoryBarrier imageMemoryBarrier { };
 	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -169,60 +169,10 @@ void TextureFromAllocation::FillMipmapped(AppState& appState, Buffer* buffer, Vk
 	region.imageExtent.depth = 1;
 	VC(appState.Device.vkCmdCopyBufferToImage(commandBuffer, buffer->buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
 	imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	auto width = this->width;
-	auto height = this->height;
-	VkImageBlit blit { };
-	blit.srcOffsets[1].x = width;
-	blit.srcOffsets[1].y = height;
-	blit.srcOffsets[1].z = 1;
-	blit.dstOffsets[1].z = 1;
-	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	blit.srcSubresource.mipLevel = 0;
-	blit.srcSubresource.layerCount = 1;
-	for (auto i = 1; i < mipCount; i++)
-	{
-		imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageMemoryBarrier.subresourceRange.baseMipLevel = i;
-		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-		width /= 2;
-		if (width < 1)
-		{
-			width = 1;
-		}
-		height /= 2;
-		if (height < 1)
-		{
-			height = 1;
-		}
-		blit.dstOffsets[1].x = width;
-		blit.dstOffsets[1].y = height;
-		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blit.dstSubresource.mipLevel = i;
-		blit.dstSubresource.layerCount = 1;
-		VC(appState.Device.vkCmdBlitImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST));
-	}
-	imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
-	imageMemoryBarrier.subresourceRange.levelCount = 1;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	if (mipCount > 1)
-	{
-		imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageMemoryBarrier.subresourceRange.baseMipLevel = 1;
-		imageMemoryBarrier.subresourceRange.levelCount = mipCount - 1;
-		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	}
 }
 
 void TextureFromAllocation::Delete(AppState& appState)

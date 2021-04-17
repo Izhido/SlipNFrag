@@ -505,9 +505,8 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 	auto entry = appState.Scene.surfaceLightmaps.find({ surface.surface, surface.entity });
 	if (entry == appState.Scene.surfaceLightmaps.end())
 	{
-		auto mipCount = (int)(std::floor(std::log2(std::max(surface.lightmap_width, surface.lightmap_height)))) + 1;
 		auto texture = new TextureFromAllocation();
-		texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		texture->key.first = surface.surface;
 		texture->key.second = surface.entity;
 		appState.Scene.surfaceLightmaps.insert({ texture->key, texture });
@@ -527,9 +526,8 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			}
 			else
 			{
-				auto mipCount = (int)(std::floor(std::log2(std::max(surface.lightmap_width, surface.lightmap_height)))) + 1;
 				auto texture = new TextureFromAllocation();
-				texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				texture->key.first = surface.surface;
 				texture->key.second = surface.entity;
 				texture->next = first;
@@ -555,9 +553,8 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			}
 			if (!found)
 			{
-				auto mipCount = (int)(std::floor(std::log2(std::max(surface.lightmap_width, surface.lightmap_height)))) + 1;
 				auto texture = new TextureFromAllocation();
-				texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				texture->key.first = surface.surface;
 				texture->key.second = surface.entity;
 				texture->next = entry->second;
@@ -1188,7 +1185,7 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceS
 	auto texture = appState.Scene.firstTextureFromAllocationToCreate;
 	while (texture != nullptr)
 	{
-		texture->texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+		texture->texture->Fill(appState, stagingBuffer, offset, commandBuffer);
 		offset += texture->size;
 		texture = texture->next;
 	}
