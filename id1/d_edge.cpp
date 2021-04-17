@@ -302,6 +302,9 @@ void D_DrawSurfaces (void)
 				}
 
 				pface = (msurface_t*)s->data;
+				miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip
+											   * pface->texinfo->mipadjust);
+
 			// FIXME: make this passed in to D_CacheSurface
 				pcurrentcache = nullptr;
 				auto created = D_CacheLightmap (pface, d_minmip, &pcurrentcache);
@@ -481,7 +484,7 @@ void D_DrawSurfaces (void)
 				miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip
 											   * pface->texinfo->mipadjust);
 
-				// FIXME: make this passed in to D_CacheSurface
+			// FIXME: make this passed in to D_CacheSurface
 				pcurrentcache = nullptr;
 				D_CacheSurface (pface, miplevel, &pcurrentcache);
 
