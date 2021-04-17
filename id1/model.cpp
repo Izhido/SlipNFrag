@@ -235,7 +235,7 @@ void Mod_ClearCacheSurfaces()
 			for (auto i = 0; i < MIPLEVELS; i++)
 			{
 				surface.surfcachespots[i] = nullptr;
-				surface.lightmapcachespots[i] = nullptr;
+				surface.lightmapcachespot = nullptr;
 			}
 		}
 	}

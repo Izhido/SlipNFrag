@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "d_local.h"
 #include "r_local.h"
 
-float           surfscale;
 qboolean        r_cache_thrash;         // set if surface cache is thrashing
 
 int                                     sc_size;
@@ -317,7 +316,7 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 //
 // determine shape of surface
 //
-	surfscale = 1.0 / (1<<miplevel);
+	float surfscale = 1.0 / (1<<miplevel);
 	r_drawsurf.surfmip = miplevel;
 	r_drawsurf.surfwidth = surface->extents[0] >> miplevel;
 	r_drawsurf.rowbytes = r_drawsurf.surfwidth;
@@ -380,7 +379,7 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 D_CacheLightmap
 ================
 */
-qboolean D_CacheLightmap (msurface_t *surface, int miplevel, surfcache_t **result)
+qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 {
 	surfcache_t     *cache;
 
@@ -396,7 +395,7 @@ qboolean D_CacheLightmap (msurface_t *surface, int miplevel, surfcache_t **resul
 //
 // see if the cache holds apropriate data
 //
-	cache = surface->lightmapcachespots[miplevel];
+	cache = surface->lightmapcachespot;
 
 	if (cache && !cache->dlight && surface->dlightframe != r_framecount
 		&& cache->texture == r_drawsurf.texture
@@ -414,26 +413,19 @@ qboolean D_CacheLightmap (msurface_t *surface, int miplevel, surfcache_t **resul
 	r_blocklights_smax = (surface->extents[0]>>4)+1;
 	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 
-	surfscale = 1.0 / (1<<miplevel);
-	r_drawsurf.surfmip = miplevel;
-	r_drawsurf.surfwidth = r_blocklights_smax >> miplevel;
-	r_drawsurf.rowbytes = r_drawsurf.surfwidth;
-	r_drawsurf.surfheight = r_blocklights_tmax >> miplevel;
-
 //
 // allocate memory if needed
 //
 	if (!cache)     // if a texture just animated, don't reallocate it
 	{
-		cache = D_SCAlloc (r_drawsurf.surfwidth * sizeof(unsigned),
-						   r_drawsurf.surfwidth * sizeof(unsigned) * r_drawsurf.surfheight);
+		cache = D_SCAlloc (r_blocklights_smax * sizeof(unsigned),
+						   r_blocklights_smax * sizeof(unsigned) * r_blocklights_tmax);
 		if (cache == nullptr)
 		{
 			return false;
 		}
-		surface->lightmapcachespots[miplevel] = cache;
-		cache->owner = &surface->lightmapcachespots[miplevel];
-		cache->mipscale = surfscale;
+		surface->lightmapcachespot = cache;
+		cache->owner = &surface->lightmapcachespot;
 	}
 
 	if (surface->dlightframe == r_framecount)
@@ -460,7 +452,7 @@ qboolean D_CacheLightmap (msurface_t *surface, int miplevel, surfcache_t **resul
 	c_surf++;
 	R_BuildLightMap ();
 
-	(*result) = surface->lightmapcachespots[miplevel];
+	(*result) = surface->lightmapcachespot;
 	return true;
 }
 

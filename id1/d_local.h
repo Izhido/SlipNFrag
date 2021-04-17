@@ -88,7 +88,7 @@ void R_ShowSubDiv (void);
 extern void (*prealspandrawer)(void);
 
 qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result);
-qboolean D_CacheLightmap (msurface_t *surface, int miplevel, surfcache_t **result);
+qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result);
 
 extern int D_MipLevelForScale (float scale);
 
