@@ -69,8 +69,8 @@ void CL_WriteDemoMessage (void)
 	int		i;
 	float	f;
 
-	len = LittleLong (net_message.data.size());
-    std::vector<byte> to_write(net_message.data.size() + 16);
+	len = LittleLong (net_message.cursize);
+    std::vector<byte> to_write(net_message.cursize + 16);
     auto to_write_ptr = to_write.data();
 	memcpy(to_write_ptr, &len, 4);
     to_write_ptr += 4;
@@ -80,7 +80,7 @@ void CL_WriteDemoMessage (void)
         memcpy(to_write_ptr, &f, 4);
         to_write_ptr += 4;
 	}
-    memcpy(to_write_ptr, net_message.data.data(), net_message.data.size());
+    memcpy(to_write_ptr, net_message.data.data(), net_message.cursize);
     Sys_FileWrite (cls.demofile, to_write.data(), to_write.size());
 }
 
@@ -132,11 +132,14 @@ int CL_GetMessage (void)
 			cl.mviewangles[0][i] = LittleFloat (f);
 		}
 		
-        size = LittleLong(size);
-        net_message.data.resize(size);
-		if (size > MAX_MSGLEN)
+        net_message.cursize = LittleLong(size);
+		if (net_message.data.size() < net_message.cursize)
+		{
+			net_message.data.resize(net_message.cursize);
+		}
+		if (net_message.cursize > MAX_MSGLEN)
 			Sys_Error ("Demo message > MAX_MSGLEN");
-		r = Sys_FileRead (cls.demofile, net_message.data.data(), size);
+		r = Sys_FileRead (cls.demofile, net_message.data.data(), net_message.cursize);
 		if (r != size)
 		{
 			CL_StopPlayback ();
@@ -154,7 +157,7 @@ int CL_GetMessage (void)
 			return r;
 	
 	// discard nop keepalive message
-		if (net_message.data.size() == 1 && net_message.data[0] == svc_nop)
+		if (net_message.cursize == 1 && net_message.data[0] == svc_nop)
 			Con_Printf ("<-- server to client keepalive\n");
 		else
 			break;

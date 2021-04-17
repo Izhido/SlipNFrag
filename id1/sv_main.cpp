@@ -126,7 +126,7 @@ void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
 {
 	int		i, v;
 
-	if (sv.datagram.maxsize > 0 && sv.datagram.data.size() > MAX_DATAGRAM-16)
+	if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
 		return;	
 	MSG_WriteByte (&sv.datagram, svc_particle);
 	MSG_WriteCoord (&sv.datagram, org[0]);
@@ -177,7 +177,7 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
 
-	if (sv.datagram.maxsize > 0 && sv.datagram.data.size() > MAX_DATAGRAM-16)
+	if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
 		return;	
 
 // find precache number for sound
@@ -258,7 +258,7 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteString (&client->message,version_message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
-	auto protocol_offset = client->message.data.size();
+	auto protocol_offset = client->message.cursize;
     MSG_WriteLong (&client->message, sv_protocol_version);
 	MSG_WriteByte (&client->message, svs.maxclients);
 
@@ -291,7 +291,7 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteByte (&client->message, svc_signonnum);
 	MSG_WriteByte (&client->message, 1);
 
-	if (sv_protocol_version == PROTOCOL_VERSION && client->message.data.size() < MAX_MSGLEN - 64)
+	if (sv_protocol_version == PROTOCOL_VERSION && client->message.cursize < MAX_MSGLEN - 64)
 	{
 		host_client->message.maxsize = MAX_MSGLEN;
 	}
@@ -529,7 +529,7 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 				continue;		// not visible
 		}
 
-        if (msg->maxsize > 0 && sv_protocol_version == PROTOCOL_VERSION && msg->maxsize - msg->data.size() < 16)
+        if (msg->maxsize > 0 && sv_protocol_version == PROTOCOL_VERSION && msg->maxsize - msg->cursize < 16)
 		{
 			Con_Printf ("packet overflow\n");
             sv_request_protocol_version_upgrade = true;
@@ -584,7 +584,7 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 	//
         if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
         {
-            auto oldsize = msg->data.size();
+            auto oldsize = msg->cursize;
             auto oldmaxsize = msg->maxsize;
             msg->maxsize = 0;
             
@@ -618,7 +618,7 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
                 MSG_WriteAngle(msg, ent->v.angles[2]);
 
             msg->maxsize = oldmaxsize;
-            if (oldmaxsize > 0 && msg->data.size() > oldmaxsize)
+            if (oldmaxsize > 0 && msg->cursize > oldmaxsize)
             {
                 msg->data.resize(oldsize);
                 Con_Printf ("packet overflow\n");
@@ -881,9 +881,10 @@ SV_SendClientDatagram
 */
 qboolean SV_SendClientDatagram (client_t *client)
 {
-	sizebuf_t	msg;
+	static sizebuf_t	msg;
 	
     msg.maxsize = MAX_DATAGRAM;
+    msg.cursize = 0;
     if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
     {
         int size = NET_MaxUnreliableMessageSize(client->netconnection);
@@ -900,8 +901,8 @@ qboolean SV_SendClientDatagram (client_t *client)
 	SV_WriteEntitiesToClient (client->edict, &msg);
 
 // copy the server datagram if there is space
-	if (msg.maxsize == 0 || msg.data.size() + sv.datagram.data.size() < msg.maxsize)
-		SZ_Write (&msg, (void*)sv.datagram.data.data(), sv.datagram.data.size());
+	if (msg.maxsize == 0 || msg.cursize + sv.datagram.cursize < msg.maxsize)
+		SZ_Write (&msg, (void*)sv.datagram.data.data(), sv.datagram.cursize);
 
 // send the datagram
 	if (NET_SendUnreliableMessage (client->netconnection, &msg) == -1)
@@ -945,7 +946,7 @@ void SV_UpdateToReliableMessages (void)
 	{
 		if (!client->active)
 			continue;
-		SZ_Write (&client->message, (void*)sv.reliable_datagram.data.data(), sv.reliable_datagram.data.size());
+		SZ_Write (&client->message, (void*)sv.reliable_datagram.data.data(), sv.reliable_datagram.cursize);
 	}
 
 	SZ_Clear (&sv.reliable_datagram);
@@ -962,9 +963,10 @@ message buffer
 */
 void SV_SendNop (client_t *client)
 {
-	sizebuf_t	msg;
+	static sizebuf_t	msg;
 	
 	msg.maxsize = 4;
+	msg.cursize = 0;
 
 	MSG_WriteChar (&msg, svc_nop);
 
@@ -1021,7 +1023,7 @@ void SV_SendClientMessages (void)
 			continue;
 		}
 			
-		if (host_client->message.data.size() || host_client->dropasap)
+		if (host_client->message.cursize || host_client->dropasap)
 		{
 			if (!NET_CanSendMessage (host_client->netconnection))
 			{
@@ -1157,16 +1159,17 @@ Tell all the clients that the server is changing levels
 */
 void SV_SendReconnect (void)
 {
-	sizebuf_t	msg;
+	static sizebuf_t	msg;
 
 	msg.maxsize = 128;
+	msg.cursize = 0;
 
 	MSG_WriteChar (&msg, svc_stufftext);
 	MSG_WriteString (&msg, "reconnect\n");
 	NET_SendToAll (&msg, 5);
 	
 	if (cls.state != ca_dedicated)
-		Cbuf_InsertText ("reconnect\n");
+		Cmd_ExecuteString ("reconnect\n", src_command);
 }
 
 
@@ -1267,13 +1270,13 @@ void SV_SpawnServer (char *server)
     sv.edicts_reallocation_sequence++;
 
 	sv.datagram.maxsize = 0;
-    sv.datagram.data.clear();
-	
+	sv.datagram.cursize = 0;
+
 	sv.reliable_datagram.maxsize = 0;
-	sv.reliable_datagram.data.clear();
+	sv.reliable_datagram.cursize = 0;
 	
 	sv.signon.maxsize = 0;
-	sv.signon.data.clear();
+	sv.signon.cursize = 0;
 	
     pr_string_temp = ED_NewString(128);
     

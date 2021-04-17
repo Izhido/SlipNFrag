@@ -1049,7 +1049,7 @@ void Host_PreSpawn_f (void)
 		return;
 	}
 	
-	SZ_Write (&host_client->message, sv.signon.data.data(), sv.signon.data.size());
+	SZ_Write (&host_client->message, sv.signon.data.data(), sv.signon.cursize);
 	MSG_WriteByte (&host_client->message, svc_signonnum);
 	MSG_WriteByte (&host_client->message, 2);
 	host_client->sendsignon = true;

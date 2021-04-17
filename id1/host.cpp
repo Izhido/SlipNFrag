@@ -456,7 +456,7 @@ void Host_ShutdownServer(qboolean crash)
 		count = 0;
 		for (i=0, host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
 		{
-			if (host_client->active && host_client->message.data.size())
+			if (host_client->active && host_client->message.cursize)
 			{
 				if (NET_CanSendMessage (host_client->netconnection))
 				{
@@ -477,6 +477,7 @@ void Host_ShutdownServer(qboolean crash)
 
 // make sure all the clients know we're disconnecting
 	buf.maxsize = 4;
+	buf.cursize = 0;
 	MSG_WriteByte(&buf, svc_disconnect);
 	count = NET_SendToAll(&buf, 5);
 	if (count)

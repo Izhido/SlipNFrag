@@ -165,17 +165,6 @@ void Q_memcpy (void *dest, const void *src, int count)
 			((byte *)dest)[i] = ((byte *)src)[i];
 }
 
-int Q_memcmp (void *m1, void *m2, int count)
-{
-	while(count)
-	{
-		count--;
-		if (((byte *)m1)[count] != ((byte *)m2)[count])
-			return -1;
-	}
-	return 0;
-}
-
 void Q_strcpy (char *dest, const char *src)
 {
 	while (*src)
@@ -624,7 +613,7 @@ int MSG_ReadChar (void)
 {
 	int     c;
 	
-	if (msg_readcount+1 > net_message.data.size())
+	if (msg_readcount+1 > net_message.cursize)
 	{
 		msg_badread = true;
 		return -1;
@@ -640,7 +629,7 @@ int MSG_ReadByte (void)
 {
 	int     c;
 	
-	if (msg_readcount+1 > net_message.data.size())
+	if (msg_readcount+1 > net_message.cursize)
 	{
 		msg_badread = true;
 		return -1;
@@ -656,7 +645,7 @@ int MSG_ReadShort (void)
 {
 	int     c;
 	
-	if (msg_readcount+2 > net_message.data.size())
+	if (msg_readcount+2 > net_message.cursize)
 	{
 		msg_badread = true;
 		return -1;
@@ -674,7 +663,7 @@ int MSG_ReadLong (void)
 {
 	int     c;
 	
-	if (msg_readcount+4 > net_message.data.size())
+	if (msg_readcount+4 > net_message.cursize)
 	{
 		msg_badread = true;
 		return -1;
@@ -692,7 +681,7 @@ int MSG_ReadLong (void)
 
 float MSG_ReadFloat (void)
 {
-    if (msg_readcount + 4 > net_message.data.size())
+    if (msg_readcount + 4 > net_message.cursize)
     {
         msg_badread = true;
         return -1;
@@ -765,34 +754,38 @@ void sizebuf_t::Clear()
 {
     allowoverflow = false;
     overflowed = false;
-    data.clear();
     maxsize = 0;
+    cursize = 0;
 }
 
 void SZ_Alloc (sizebuf_t *buf, int startsize)
 {
 	if (startsize < 256)
 		startsize = 256;
-    buf->data.clear();
+	if (buf->data.size() < startsize)
+	{
+		buf->data.resize(startsize);
+	}
 	buf->maxsize = startsize;
+	buf->cursize = 0;
 }
 
 
 void SZ_Free (sizebuf_t *buf)
 {
-    buf->data.clear();
+	buf->cursize = 0;
 }
 
 void SZ_Clear (sizebuf_t *buf)
 {
-	buf->data.clear();
+	buf->cursize = 0;
 }
 
 void *SZ_GetSpace (sizebuf_t *buf, int length)
 {
 	void    *data;
 	
-	if (buf->maxsize > 0 && buf->data.size() + length > buf->maxsize)
+	if (buf->maxsize > 0 && buf->cursize + length > buf->maxsize)
 	{
 		if (!buf->allowoverflow)
 			Sys_Error ("SZ_GetSpace: overflow without allowoverflow set");
@@ -804,9 +797,14 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 		Con_Printf ("SZ_GetSpace: overflow\n");
 		SZ_Clear (buf); 
     }
-	buf->data.resize(buf->data.size() + length);
 
-	data = buf->data.data() + buf->data.size() - length;
+	if (buf->data.size() < buf->cursize + length)
+	{
+		buf->data.resize(buf->cursize + std::max(length, MAX_DATAGRAM));
+	}
+
+	data = buf->data.data() + buf->cursize;
+	buf->cursize += length;
 	
 	return data;
 }
@@ -823,7 +821,7 @@ void SZ_Print (sizebuf_t *buf, const char *data)
 	len = Q_strlen(data)+1;
 
 // byte * cast to keep VC++ happy
-	if (buf->data[buf->data.size()-1])
+	if (buf->data[buf->cursize-1])
 		memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
 	else
 		memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0

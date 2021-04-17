@@ -728,7 +728,7 @@ void CL_SendCmd (void)
 	}
 	
 // send the reliable message
-	if (!cls.message.data.size())
+	if (!cls.message.cursize)
 		return;		// no message at all
 	
 	if (!NET_CanSendMessage (cls.netcon))
@@ -745,7 +745,7 @@ void CL_SendCmd (void)
 
 void CL_SendAckExpandedProtocol(usercmd_t* cmd)
 {
-    sizebuf_t    buf;
+    static sizebuf_t	buf;
     
     buf.maxsize = 4;
     

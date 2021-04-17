@@ -161,7 +161,7 @@ int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 
 	bufferLength = &((qsocket_t *)sock->driverdata)->receiveMessageLength;
 
-	auto alignedBufferLength = IntAlign(*bufferLength + data->data.size() + 8);
+	auto alignedBufferLength = IntAlign(*bufferLength + data->cursize + 8);
 	if (((qsocket_t *)sock->driverdata)->receiveMessage.size() < alignedBufferLength)
 	{
 		((qsocket_t *)sock->driverdata)->receiveMessage.resize(alignedBufferLength);
@@ -173,16 +173,16 @@ int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	*buffer++ = 1;
 
 	// length
-	*buffer++ = data->data.size() & 0xff;
-	*buffer++ = (data->data.size() >> 8) & 0xff;
-    *buffer++ = (data->data.size() >> 16) & 0xff;
-    *buffer++ = (data->data.size() >> 24) & 0xff;
+	*buffer++ = data->cursize & 0xff;
+	*buffer++ = (data->cursize >> 8) & 0xff;
+    *buffer++ = (data->cursize >> 16) & 0xff;
+    *buffer++ = (data->cursize >> 24) & 0xff;
 
 	// align
 	buffer += 3;
 
 	// message
-	memcpy(buffer, data->data.data(), data->data.size());
+	memcpy(buffer, data->data.data(), data->cursize);
 	*bufferLength = alignedBufferLength;
 
 	sock->canSend = false;
@@ -200,7 +200,7 @@ int Loop_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 
 	bufferLength = &((qsocket_t *)sock->driverdata)->receiveMessageLength;
 
-	auto alignedBufferLength = IntAlign(*bufferLength + data->data.size() + 8);
+	auto alignedBufferLength = IntAlign(*bufferLength + data->cursize + 8);
 	if (((qsocket_t *)sock->driverdata)->receiveMessage.size() < alignedBufferLength)
 	{
 		((qsocket_t *)sock->driverdata)->receiveMessage.resize(alignedBufferLength);
@@ -212,16 +212,16 @@ int Loop_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 	*buffer++ = 2;
 
 	// length
-    *buffer++ = data->data.size() & 0xff;
-    *buffer++ = (data->data.size() >> 8) & 0xff;
-    *buffer++ = (data->data.size() >> 16) & 0xff;
-    *buffer++ = (data->data.size() >> 24) & 0xff;
+    *buffer++ = data->cursize & 0xff;
+    *buffer++ = (data->cursize >> 8) & 0xff;
+    *buffer++ = (data->cursize >> 16) & 0xff;
+    *buffer++ = (data->cursize >> 24) & 0xff;
 
 	// align
     buffer += 3;
 
 	// message
-	memcpy(buffer, data->data.data(), data->data.size());
+	memcpy(buffer, data->data.data(), data->cursize);
 	*bufferLength = alignedBufferLength;
 	return 1;
 }

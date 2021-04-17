@@ -330,10 +330,10 @@ void CL_SendMove (usercmd_t *cmd)
 {
 	int		i;
 	int		bits;
-	sizebuf_t	buf;
+	static sizebuf_t	buf;
 	
 	buf.maxsize = 128;
-	
+	buf.cursize = 0;
 	cl.cmd = *cmd;
 
 //

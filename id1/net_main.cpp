@@ -580,9 +580,9 @@ int	NET_GetMessage (qsocket_t *sock)
 			vcrGetMessage.op = VCR_OP_GETMESSAGE;
 			vcrGetMessage.session = (long)sock;
 			vcrGetMessage.ret = ret;
-			vcrGetMessage.len = net_message.data.size();
+			vcrGetMessage.len = net_message.cursize;
 			Sys_FileWrite (vcrFile, &vcrGetMessage, 24);
-			Sys_FileWrite (vcrFile, net_message.data.data(), net_message.data.size());
+			Sys_FileWrite (vcrFile, net_message.data.data(), net_message.cursize);
 		}
 	}
 	else
