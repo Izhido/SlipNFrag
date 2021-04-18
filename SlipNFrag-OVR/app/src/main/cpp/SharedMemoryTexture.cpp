@@ -179,16 +179,16 @@ void SharedMemoryTexture::Delete(AppState& appState)
 	}
 }
 
-void SharedMemoryTexture::DeleteOld(AppState& appState, SharedMemoryTexture** oldTextures)
+void SharedMemoryTexture::DeleteOld(AppState& appState, SharedMemoryTexture** old)
 {
-	if (oldTextures != nullptr)
+	if (old != nullptr)
 	{
-		for (SharedMemoryTexture** t = oldTextures; *t != nullptr; )
+		for (auto t = old; *t != nullptr; )
 		{
 			(*t)->unusedCount++;
 			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
 			{
-				SharedMemoryTexture* next = (*t)->next;
+				auto next = (*t)->next;
 				(*t)->Delete(appState);
 				delete *t;
 				*t = next;

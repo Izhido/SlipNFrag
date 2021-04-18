@@ -483,35 +483,35 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	}
 }
 
-void PerImage::SetupLoadedTextureFromAllocation(AppState& appState, dsurface_t& surface, LoadedTextureFromAllocation& loadedTexture, VkDeviceSize& stagingBufferSize)
+void PerImage::SetupLoadedLightmap(AppState& appState, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize)
 {
-	loadedTexture.size = surface.lightmap_size * sizeof(float);
-	stagingBufferSize += loadedTexture.size;
-	loadedTexture.source = surface.lightmap;
-	loadedTexture.next = nullptr;
-	if (appState.Scene.currentTextureFromAllocationToCreate == nullptr)
+	lightmap.size = surface.lightmap_size * sizeof(float);
+	stagingBufferSize += lightmap.size;
+	lightmap.source = surface.lightmap;
+	lightmap.next = nullptr;
+	if (appState.Scene.currentLightmapToCreate == nullptr)
 	{
-		appState.Scene.firstTextureFromAllocationToCreate = &loadedTexture;
+		appState.Scene.firstLightmapToCreate = &lightmap;
 	}
 	else
 	{
-		appState.Scene.currentTextureFromAllocationToCreate->next = &loadedTexture;
+		appState.Scene.currentLightmapToCreate->next = &lightmap;
 	}
-	appState.Scene.currentTextureFromAllocationToCreate = &loadedTexture;
+	appState.Scene.currentLightmapToCreate = &lightmap;
 }
 
-void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedTextureFromAllocation& loadedTexture, VkDeviceSize& stagingBufferSize)
+void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize)
 {
-	auto entry = appState.Scene.surfaceLightmaps.find({ surface.surface, surface.entity });
-	if (entry == appState.Scene.surfaceLightmaps.end())
+	auto entry = appState.Scene.lightmaps.find({ surface.surface, surface.entity });
+	if (entry == appState.Scene.lightmaps.end())
 	{
-		auto texture = new TextureFromAllocation();
-		texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		texture->key.first = surface.surface;
-		texture->key.second = surface.entity;
-		appState.Scene.surfaceLightmaps.insert({ texture->key, texture });
-		loadedTexture.texture = texture;
-		SetupLoadedTextureFromAllocation(appState, surface, loadedTexture, stagingBufferSize);
+		auto lightmap = new Lightmap();
+		lightmap->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->key.first = surface.surface;
+		lightmap->key.second = surface.entity;
+		appState.Scene.lightmaps.insert({ lightmap->key, lightmap });
+		loadedLightmap.lightmap = lightmap;
+		SetupLoadedLightmap(appState, surface, loadedLightmap, stagingBufferSize);
 	}
 	else if (surface.created)
 	{
@@ -522,55 +522,55 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			if (available)
 			{
 				first->unusedCount = 0;
-				loadedTexture.texture = first;
+				loadedLightmap.lightmap = first;
 			}
 			else
 			{
-				auto texture = new TextureFromAllocation();
-				texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				texture->key.first = surface.surface;
-				texture->key.second = surface.entity;
-				texture->next = first;
-				entry->second = texture;
-				loadedTexture.texture = texture;
+				auto lightmap = new Lightmap();
+				lightmap->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				lightmap->key.first = surface.surface;
+				lightmap->key.second = surface.entity;
+				lightmap->next = first;
+				entry->second = lightmap;
+				loadedLightmap.lightmap = lightmap;
 			}
 		}
 		else
 		{
 			auto found = false;
-			for (auto previous = first, texture = first->next; texture != nullptr; previous = texture, texture = texture->next)
+			for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
 			{
-				if (texture->unusedCount >= view.framebuffer.swapChainLength)
+				if (lightmap->unusedCount >= view.framebuffer.swapChainLength)
 				{
 					found = true;
-					texture->unusedCount = 0;
-					previous->next = texture->next;
-					texture->next = first;
-					entry->second = texture;
-					loadedTexture.texture = texture;
+					lightmap->unusedCount = 0;
+					previous->next = lightmap->next;
+					lightmap->next = first;
+					entry->second = lightmap;
+					loadedLightmap.lightmap = lightmap;
 					break;
 				}
 			}
 			if (!found)
 			{
-				auto texture = new TextureFromAllocation();
-				texture->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				texture->key.first = surface.surface;
-				texture->key.second = surface.entity;
-				texture->next = entry->second;
-				entry->second = texture;
-				loadedTexture.texture = texture;
+				auto lightmap = new Lightmap();
+				lightmap->Create(appState, commandBuffer, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				lightmap->key.first = surface.surface;
+				lightmap->key.second = surface.entity;
+				lightmap->next = entry->second;
+				entry->second = lightmap;
+				loadedLightmap.lightmap = lightmap;
 			}
 		}
-		SetupLoadedTextureFromAllocation(appState, surface, loadedTexture, stagingBufferSize);
+		SetupLoadedLightmap(appState, surface, loadedLightmap, stagingBufferSize);
 		surface.created = 0;
 	}
 	else
 	{
-		auto texture = entry->second;
-		texture->unusedCount = 0;
-		loadedTexture.texture = texture;
-		loadedTexture.size = 0;
+		auto lightmap = entry->second;
+		lightmap->unusedCount = 0;
+		loadedLightmap.lightmap = lightmap;
+		loadedLightmap.size = 0;
 	}
 }
 
@@ -586,7 +586,7 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, View& view, dtu
 	else if (hostClearCount == host_clearcount)
 	{
 		Texture* texture = nullptr;
-		for (Texture** t = &this->turbulent.oldTextures; *t != nullptr; t = &(*t)->next)
+		for (auto t = &this->turbulent.oldTextures; *t != nullptr; t = &(*t)->next)
 		{
 			if ((*t)->key == turbulent.texture)
 			{
@@ -720,8 +720,8 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 		host_colormapSize = 16384;
 		stagingBufferSize += host_colormapSize;
 	}
-	appState.Scene.firstTextureFromAllocationToCreate = nullptr;
-	appState.Scene.currentTextureFromAllocationToCreate = nullptr;
+	appState.Scene.firstLightmapToCreate = nullptr;
+	appState.Scene.currentLightmapToCreate = nullptr;
 	if (d_lists.last_surface16 >= appState.Scene.surfaceLightmap16List.size())
 	{
 		appState.Scene.surfaceLightmap16List.resize(d_lists.last_surface16 + 1);
@@ -980,12 +980,12 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, ::host_colormap.data(), host_colormapSize);
 		offset += host_colormapSize;
 	}
-	auto texture = appState.Scene.firstTextureFromAllocationToCreate;
-	while (texture != nullptr)
+	auto lightmap = appState.Scene.firstLightmapToCreate;
+	while (lightmap != nullptr)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, texture->source, texture->size);
-		offset += texture->size;
-		texture = texture->next;
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, lightmap->source, lightmap->size);
+		offset += lightmap->size;
+		lightmap = lightmap->next;
 	}
 	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
@@ -1182,12 +1182,12 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceS
 		host_colormap->Fill(appState, stagingBuffer, offset, commandBuffer);
 		offset += host_colormapSize;
 	}
-	auto texture = appState.Scene.firstTextureFromAllocationToCreate;
-	while (texture != nullptr)
+	auto lightmap = appState.Scene.firstLightmapToCreate;
+	while (lightmap != nullptr)
 	{
-		texture->texture->Fill(appState, stagingBuffer, offset, commandBuffer);
-		offset += texture->size;
-		texture = texture->next;
+		lightmap->lightmap->Fill(appState, stagingBuffer, offset, commandBuffer);
+		offset += lightmap->size;
+		lightmap = lightmap->next;
 	}
 	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
@@ -1323,7 +1323,7 @@ void PerImage::SetPushConstants(AppState& appState, dturbulent_t& turbulent, flo
 	VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 14 * sizeof(float), pushConstants));
 }
 
-void PerImage::SetDescriptorSets(AppState& appState, SharedMemoryTexture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[], TextureFromAllocation* lightmap)
+void PerImage::SetDescriptorSets(AppState& appState, SharedMemoryTexture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[], Lightmap* lightmap)
 {
 	VkDescriptorSet descriptorSet;
 	auto entry = resources.cache.find(texture);
@@ -1471,7 +1471,7 @@ void PerImage::Render(AppState& appState)
 				}
 				SetPushConstants(appState, surface, pushConstants);
 				auto texture = appState.Scene.surfaceTexture16List[i].texture;
-				auto lightmap = appState.Scene.surfaceLightmap16List[i].texture;
+				auto lightmap = appState.Scene.surfaceLightmap16List[i].lightmap;
 				SetDescriptorSets(appState, texture, surfaceTextureResources, textureInfo, writes, lightmap);
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index, 0, 0));
 			}
@@ -1495,7 +1495,7 @@ void PerImage::Render(AppState& appState)
 				}
 				SetPushConstants(appState, surface, pushConstants);
 				auto texture = appState.Scene.surfaceTexture32List[i].texture;
-				auto lightmap = appState.Scene.surfaceLightmap32List[i].texture;
+				auto lightmap = appState.Scene.surfaceLightmap32List[i].lightmap;
 				SetDescriptorSets(appState, texture, surfaceTextureResources, textureInfo, writes, lightmap);
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index, 0, 0));
 			}
@@ -1538,7 +1538,7 @@ void PerImage::Render(AppState& appState)
 				}
 				SetPushConstants(appState, fence, pushConstants);
 				auto texture = appState.Scene.fenceTexture16List[i].texture;
-				auto lightmap = appState.Scene.fenceLightmap16List[i].texture;
+				auto lightmap = appState.Scene.fenceLightmap16List[i].lightmap;
 				SetDescriptorSets(appState, texture, fenceTextureResources, textureInfo, writes, lightmap);
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, fence.count, 1, fence.first_index, 0, 0));
 			}
@@ -1562,7 +1562,7 @@ void PerImage::Render(AppState& appState)
 				}
 				SetPushConstants(appState, fence, pushConstants);
 				auto texture = appState.Scene.fenceTexture32List[i].texture;
-				auto lightmap = appState.Scene.fenceLightmap32List[i].texture;
+				auto lightmap = appState.Scene.fenceLightmap32List[i].lightmap;
 				SetDescriptorSets(appState, texture, fenceTextureResources, textureInfo, writes, lightmap);
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, fence.count, 1, fence.first_index, 0, 0));
 			}

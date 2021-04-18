@@ -1,16 +1,15 @@
-#include "TextureFromAllocation.h"
+#include "Lightmap.h"
 #include "AppState.h"
 #include "VulkanCallWrappers.h"
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-std::vector<VkDescriptorSetLayout> TextureFromAllocation::descriptorSetLayouts;
+std::vector<VkDescriptorSetLayout> Lightmap::descriptorSetLayouts;
 
-void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage)
+void Lightmap::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage)
 {
 	this->width = width;
 	this->height = height;
-	this->mipCount = mipCount;
 	this->layerCount = 1;
 	VkImageCreateInfo imageCreateInfo { };
 	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -19,7 +18,7 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 	imageCreateInfo.extent.width = width;
 	imageCreateInfo.extent.height = height;
 	imageCreateInfo.extent.depth = 1;
-	imageCreateInfo.mipLevels = mipCount;
+	imageCreateInfo.mipLevels = 1;
 	imageCreateInfo.arrayLayers = layerCount;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -105,7 +104,7 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	imageViewCreateInfo.format = imageCreateInfo.format;
 	imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageViewCreateInfo.subresourceRange.levelCount = mipCount;
+	imageViewCreateInfo.subresourceRange.levelCount = 1;
 	imageViewCreateInfo.subresourceRange.layerCount = layerCount;
 	VK(appState.Device.vkCreateImageView(appState.Device.device, &imageViewCreateInfo, nullptr, &view));
 	VkImageMemoryBarrier imageMemoryBarrier { };
@@ -114,29 +113,25 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageMemoryBarrier.image = image;
 	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageMemoryBarrier.subresourceRange.levelCount = mipCount;
+	imageMemoryBarrier.subresourceRange.levelCount = 1;
 	imageMemoryBarrier.subresourceRange.layerCount = layerCount;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	if (appState.Scene.textureFromAllocationSamplers.size() <= mipCount)
-	{
-		appState.Scene.textureFromAllocationSamplers.resize(mipCount + 1);
-	}
-	if (appState.Scene.textureFromAllocationSamplers[mipCount] == VK_NULL_HANDLE)
+	if (appState.Scene.lightmapSampler == VK_NULL_HANDLE)
 	{
 		VkSamplerCreateInfo samplerCreateInfo { };
 		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerCreateInfo.maxLod = mipCount;
+		samplerCreateInfo.maxLod = 1;
 		samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
 		samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
 		samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.textureFromAllocationSamplers[mipCount]));
+		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.lightmapSampler));
 	}
 	VkDescriptorImageInfo textureInfo { };
 	textureInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	textureInfo.sampler = appState.Scene.textureFromAllocationSamplers[mipCount];
+	textureInfo.sampler = appState.Scene.lightmapSampler;
 	textureInfo.imageView = view;
 	VkWriteDescriptorSet writes { };
 	writes.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -147,7 +142,7 @@ void TextureFromAllocation::Create(AppState& appState, VkCommandBuffer commandBu
 	VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, &writes, 0, nullptr));
 }
 
-void TextureFromAllocation::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
+void Lightmap::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
 {
 	VkImageMemoryBarrier imageMemoryBarrier { };
 	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -175,7 +170,7 @@ void TextureFromAllocation::Fill(AppState& appState, Buffer* buffer, VkDeviceSiz
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 }
 
-void TextureFromAllocation::Delete(AppState& appState)
+void Lightmap::Delete(AppState& appState)
 {
 	if (view != VK_NULL_HANDLE)
 	{
@@ -206,23 +201,23 @@ void TextureFromAllocation::Delete(AppState& appState)
 	}
 }
 
-void TextureFromAllocation::DeleteOld(AppState& appState, TextureFromAllocation** oldTextures)
+void Lightmap::DeleteOld(AppState& appState, Lightmap** old)
 {
-	if (oldTextures != nullptr)
+	if (old != nullptr)
 	{
-		for (TextureFromAllocation** t = oldTextures; *t != nullptr; )
+		for (auto l = old; *l != nullptr; )
 		{
-			(*t)->unusedCount++;
-			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
+			(*l)->unusedCount++;
+			if ((*l)->unusedCount >= MAX_UNUSED_COUNT)
 			{
-				TextureFromAllocation* next = (*t)->next;
-				(*t)->Delete(appState);
-				delete *t;
-				*t = next;
+				auto next = (*l)->next;
+				(*l)->Delete(appState);
+				delete *l;
+				*l = next;
 			}
 			else
 			{
-				t = &(*t)->next;
+				l = &(*l)->next;
 			}
 		}
 	}

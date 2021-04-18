@@ -1070,17 +1070,17 @@ void Scene::Reset()
 	spriteTextures.DisposeFront();
 	fenceTextures.DisposeFront();
 	surfaceTextures.DisposeFront();
-	for (auto entry = surfaceLightmaps.begin(); entry != surfaceLightmaps.end(); entry++)
+	for (auto entry = lightmaps.begin(); entry != lightmaps.end(); entry++)
 	{
-		for (TextureFromAllocation** t = &entry->second; *t != nullptr; )
+		for (auto l = &entry->second; *l != nullptr; )
 		{
-			TextureFromAllocation* next = (*t)->next;
-			(*t)->next = oldSurfaces;
-			oldSurfaces = *t;
-			*t = next;
+			auto next = (*l)->next;
+			(*l)->next = oldSurfaces;
+			oldSurfaces = *l;
+			*l = next;
 		}
 	}
-	surfaceLightmaps.clear();
+	lightmaps.clear();
 	colormappedBuffers.DisposeFront();
 	viewmodelTextureCount = 0;
 	aliasTextureCount = 0;

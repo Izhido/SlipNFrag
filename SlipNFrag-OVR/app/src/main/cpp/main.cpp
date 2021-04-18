@@ -1244,43 +1244,43 @@ void android_main(struct android_app* app)
 				appState.PreviousMode = appState.Mode;
 			}
 		}
-		appState.Scene.surfaceLightmapsToDelete.clear();
-		for (auto entry : appState.Scene.surfaceLightmaps)
+		appState.Scene.lightmapsToDelete.clear();
+		for (auto entry : appState.Scene.lightmaps)
 		{
 			auto total = 0;
 			auto erased = 0;
-			for (TextureFromAllocation** t = &entry.second; *t != nullptr; )
+			for (auto l = &entry.second; *l != nullptr; )
 			{
-				(*t)->unusedCount++;
-				if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
+				(*l)->unusedCount++;
+				if ((*l)->unusedCount >= MAX_UNUSED_COUNT)
 				{
-					TextureFromAllocation *next = (*t)->next;
-					(*t)->next = appState.Scene.oldSurfaces;
-					appState.Scene.oldSurfaces = *t;
-					*t = next;
+					auto next = (*l)->next;
+					(*l)->next = appState.Scene.oldSurfaces;
+					appState.Scene.oldSurfaces = *l;
+					*l = next;
 					erased++;
 				}
 				else
 				{
-					t = &(*t)->next;
+					l = &(*l)->next;
 				}
 				total++;
 			}
 			if (total == erased)
 			{
-				appState.Scene.surfaceLightmapsToDelete.push_back(entry.first);
+				appState.Scene.lightmapsToDelete.push_back(entry.first);
 			}
 		}
-		for (auto entry : appState.Scene.surfaceLightmapsToDelete)
+		for (auto entry : appState.Scene.lightmapsToDelete)
 		{
-			appState.Scene.surfaceLightmaps.erase(entry);
+			appState.Scene.lightmaps.erase(entry);
 		}
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.viewmodelTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.aliasTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.spriteTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.fenceTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.surfaceTextures.oldTextures);
-		TextureFromAllocation::DeleteOld(appState, &appState.Scene.oldSurfaces);
+		Lightmap::DeleteOld(appState, &appState.Scene.oldSurfaces);
 		for (Buffer** b = &appState.Scene.oldSurfaceVerticesPerModel; *b != nullptr; )
 		{
 			(*b)->unusedCount++;
@@ -2124,10 +2124,7 @@ void android_main(struct android_app* app)
 	vrapi_DestroyTextureSwapChain(appState.Console.SwapChain);
 	VC(appState.Device.vkDestroyRenderPass(appState.Device.device, appState.RenderPass, nullptr));
 	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
-	for (auto i = 0; i < appState.Scene.textureFromAllocationSamplers.size(); i++)
-	{
-		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.textureFromAllocationSamplers[i], nullptr));
-	}
+	VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.lightmapSampler, nullptr));
 	for (auto i = 0; i < appState.Scene.textureSamplers.size(); i++)
 	{
 		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.textureSamplers[i], nullptr));

@@ -4,11 +4,11 @@
 #include "Pipeline.h"
 #include "PipelineAttributes.h"
 #include "CachedBuffers.h"
-#include "TextureFromAllocation.h"
+#include "Lightmap.h"
 #include <unordered_map>
 #include "CachedSharedMemoryTextures.h"
 #include "BufferWithOffset.h"
-#include "LoadedTextureFromAllocation.h"
+#include "LoadedLightmap.h"
 #include "LoadedSharedMemoryTexture.h"
 #include "LoadedTexture.h"
 #include "LoadedColormappedTexture.h"
@@ -65,10 +65,10 @@ struct Scene
 	std::unordered_map<void*, Buffer*> surfaceVerticesPerModel;
 	CachedBuffers colormappedBuffers;
 	int resetDescriptorSetsCount;
-	TextureFromAllocation* oldSurfaces;
+	Lightmap* oldSurfaces;
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
-	std::unordered_map<TwinKey, TextureFromAllocation*> surfaceLightmaps;
-	std::vector<TwinKey> surfaceLightmapsToDelete;
+	std::unordered_map<TwinKey, Lightmap*> lightmaps;
+	std::vector<TwinKey> lightmapsToDelete;
 	CachedSharedMemoryTextures surfaceTextures;
 	int surfaceTextureCount;
 	CachedSharedMemoryTextures fenceTextures;
@@ -87,14 +87,14 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> aliasPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> viewmodelsPerKey;
 	std::vector<BufferWithOffset> colormappedBufferList;
-	LoadedTextureFromAllocation* firstTextureFromAllocationToCreate;
-	LoadedTextureFromAllocation* currentTextureFromAllocationToCreate;
-	std::vector<LoadedTextureFromAllocation> surfaceLightmap16List;
-	std::vector<LoadedTextureFromAllocation> surfaceLightmap32List;
+	LoadedLightmap* firstLightmapToCreate;
+	LoadedLightmap* currentLightmapToCreate;
+	std::vector<LoadedLightmap> surfaceLightmap16List;
+	std::vector<LoadedLightmap> surfaceLightmap32List;
 	std::vector<LoadedSharedMemoryTexture> surfaceTexture16List;
 	std::vector<LoadedSharedMemoryTexture> surfaceTexture32List;
-	std::vector<LoadedTextureFromAllocation> fenceLightmap16List;
-	std::vector<LoadedTextureFromAllocation> fenceLightmap32List;
+	std::vector<LoadedLightmap> fenceLightmap16List;
+	std::vector<LoadedLightmap> fenceLightmap32List;
 	std::vector<LoadedSharedMemoryTexture> fenceTexture16List;
 	std::vector<LoadedSharedMemoryTexture> fenceTexture32List;
 	std::vector<LoadedSharedMemoryTexture> spriteList;
@@ -117,7 +117,7 @@ struct Scene
 	std::unordered_map<void*, Texture*> turbulentPerKey;
 	Texture* floorTexture;
 	std::vector<VkSampler> textureSamplers;
-	std::vector<VkSampler> textureFromAllocationSamplers;
+	VkSampler lightmapSampler;
 	Buffer* latestColormappedBuffer;
 	VkDeviceSize usedInLatestColormappedBuffer;
 	SharedMemory* latestTextureSharedMemory;
