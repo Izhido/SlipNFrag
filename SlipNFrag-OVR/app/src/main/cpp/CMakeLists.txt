@@ -7,7 +7,7 @@ add_library(native_app_glue STATIC ${ANDROID_NDK}/sources/android/native_app_glu
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 
-set (OVR_SDK_MOBILE "ovr_sdk_mobile_1.42.0")
+set (OVR_SDK_MOBILE "ovr_sdk_mobile_1.44.0")
 
 add_library(vrapi SHARED IMPORTED)
 set_target_properties(vrapi PROPERTIES IMPORTED_LOCATION ../../../../../../${OVR_SDK_MOBILE}/VrApi/Libs/Android/${ANDROID_ABI}/Release/libvrapi.so)
