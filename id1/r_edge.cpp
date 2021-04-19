@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_local.h"
+#include "d_lists.h"
 
 #if 0
 // FIXME
@@ -683,6 +684,8 @@ void R_ScanEdges (void)
 
 	span_p = basespan_p;
 
+	r_drawnsurfaces.clear();
+
 // clear active edges to just the background edges around the whole screen
 // FIXME: most of this only needs to be set up once
 	edge_head.u = ((fixed44p20_t)r_refdef.vrect.x) << 20;
@@ -737,7 +740,10 @@ void R_ScanEdges (void)
 			VID_UnlockBuffer ();
 			S_ExtraUpdate ();	// don't let sound get messed up if going slow
 			VID_LockBuffer ();
-		
+
+			if (d_uselists)
+				D_DrawSurfacesToListsIfNeeded();
+			else
 				D_DrawSurfaces ();
 
 		// clear the surface span pointers
@@ -769,7 +775,21 @@ void R_ScanEdges (void)
 	(*pdrawfunc) ();
 
 // draw whatever's left in the span list
+	if (d_uselists)
+	{
+		if (r_drawnsurfaces.size() == 0)
+		{
+			D_DrawSurfacesToLists();
+		}
+		else
+		{
+			D_DrawSurfacesToListsIfNeeded();
+		}
+	}
+	else
+	{
 		D_DrawSurfaces ();
+	}
     
     basespan_stack_index--;
 }

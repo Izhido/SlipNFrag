@@ -39,6 +39,8 @@ vec3_t		transformed_modelorg;
 extern qboolean r_skyinitialized;
 extern mtexinfo_t r_skytexinfo[6];
 
+std::unordered_set<surf_t*> r_drawnsurfaces;
+
 /*
 =============
 D_MipLevelForScale
@@ -190,149 +192,6 @@ void D_DrawSurfaces (void)
 			(*d_drawzspans) (s->spans);
 		}
 	}
-	else if (d_uselists)
-	{
-		for (s = &surfaces[1] ; s<surface_p ; s++)
-		{
-			if (s->flags & SURF_DRAWSKY)
-			{
-				if (!s->spans)
-					continue;
-
-				r_drawnpolycount++;
-
-				if (r_skyinitialized)
-                {
-                    if (!r_skymade)
-                    {
-                        R_MakeSky ();
-                    }
-
-					D_AddSkyToLists(s);
-                }
-			}
-            else if (s->flags & SURF_DRAWSKYBOX)
-            {
-				if (!s->spans)
-					continue;
-
-				r_drawnpolycount++;
-
-				D_AddSkyboxToLists(r_skytexinfo);
-            }
-			else if (s->flags & SURF_DRAWBACKGROUND)
-			{
-				if (!s->spans)
-					continue;
-
-				r_drawnpolycount++;
-
-				d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
-			}
-			else if (s->flags & SURF_DRAWTURB)
-			{
-				if (!s->spans)
-					continue;
-
-				r_drawnpolycount++;
-
-				d_zistepu = s->d_zistepu;
-				d_zistepv = s->d_zistepv;
-				d_ziorigin = s->d_ziorigin;
-
-				pface = (msurface_t*)s->data;
-				miplevel = 0;
-				cacheblock = (pixel_t *)
-						((byte *)pface->texinfo->texture +
-						pface->texinfo->texture->offsets[0]);
-				cachewidth = pface->texinfo->texture->width;
-
-				if (s->insubmodel)
-				{
-				// FIXME: we don't want to do all this for every polygon!
-				// TODO: store once at start of frame
-					currententity = s->entity;	//FIXME: make this passed in to
-												// R_RotateBmodel ()
-					VectorSubtract (r_origin, currententity->origin,
-							local_modelorg);
-					TransformVector (local_modelorg, transformed_modelorg);
-
-					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-										// make entity passed in
-				}
-
-				D_AddTurbulentToLists (pface, currententity);
-
-				if (s->insubmodel)
-				{
-				//
-				// restore the old drawing state
-				// FIXME: we don't want to do this every time!
-				// TODO: speed up
-				//
-					currententity = &cl_entities[0];
-					VectorCopy (world_transformed_modelorg,
-								transformed_modelorg);
-					VectorCopy (base_vpn, vpn);
-					VectorCopy (base_vup, vup);
-					VectorCopy (base_vright, vright);
-					VectorCopy (base_modelorg, modelorg);
-					R_TransformFrustum ();
-				}
-			}
-			else if (s->spans)
-			{
-				r_drawnpolycount++;
-
-				d_zistepu = s->d_zistepu;
-				d_zistepv = s->d_zistepv;
-				d_ziorigin = s->d_ziorigin;
-
-				if (s->insubmodel)
-				{
-				// FIXME: we don't want to do all this for every polygon!
-				// TODO: store once at start of frame
-					currententity = s->entity;	//FIXME: make this passed in to
-												// R_RotateBmodel ()
-					VectorSubtract (r_origin, currententity->origin, local_modelorg);
-					TransformVector (local_modelorg, transformed_modelorg);
-
-					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-										// make entity passed in
-				}
-
-				pface = (msurface_t*)s->data;
-
-				pcurrentcache = nullptr;
-				auto created = D_CacheLightmap (pface, &pcurrentcache);
-
-				if (pcurrentcache != nullptr)
-				{
-					if (s->isfence)
-						D_AddFenceToLists (pface, pcurrentcache, currententity, created);
-					else
-						D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
-				}
-
-				if (s->insubmodel)
-				{
-				//
-				// restore the old drawing state
-				// FIXME: we don't want to do this every time!
-				// TODO: speed up
-				//
-					currententity = &cl_entities[0];
-					VectorCopy (world_transformed_modelorg,
-								transformed_modelorg);
-					VectorCopy (base_vpn, vpn);
-					VectorCopy (base_vup, vup);
-					VectorCopy (base_vright, vright);
-					VectorCopy (base_modelorg, modelorg);
-					R_TransformFrustum ();
-				}
-			}
-		}
-	}
 	else
 	{
 		// First, draw all non-fence-originated spans:
@@ -455,13 +314,8 @@ void D_DrawSurfaces (void)
 					R_TransformFrustum ();
 				}
 			}
-			else
+			else if (!s->isfence)
 			{
-				if (s->isfence)
-				{
-					continue;
-				}
-
 				r_drawnpolycount++;
 
 				if (s->insubmodel)
@@ -568,6 +422,297 @@ void D_DrawSurfaces (void)
 				// FIXME: we don't want to do this every time!
 				// TODO: speed up
 				//
+				currententity = &cl_entities[0];
+				VectorCopy (world_transformed_modelorg,
+							transformed_modelorg);
+				VectorCopy (base_vpn, vpn);
+				VectorCopy (base_vup, vup);
+				VectorCopy (base_vright, vright);
+				VectorCopy (base_modelorg, modelorg);
+				R_TransformFrustum ();
+			}
+		}
+	}
+}
+
+
+/*
+==============
+D_DrawSurfacesToLists
+==============
+*/
+void D_DrawSurfacesToLists (void)
+{
+	surf_t			*s;
+	msurface_t		*pface;
+	surfcache_t		*pcurrentcache;
+	vec3_t			world_transformed_modelorg;
+	vec3_t			local_modelorg;
+
+	currententity = &cl_entities[0];
+	TransformVector (modelorg, transformed_modelorg);
+	VectorCopy (transformed_modelorg, world_transformed_modelorg);
+
+	for (s = &surfaces[1] ; s<surface_p ; s++)
+	{
+		if (!s->spans)
+			continue;
+
+		r_drawnpolycount++;
+
+		if (s->flags & SURF_DRAWSKY)
+		{
+			if (r_skyinitialized)
+			{
+				if (!r_skymade)
+				{
+					R_MakeSky ();
+				}
+
+				D_AddSkyToLists(s);
+			}
+		}
+		else if (s->flags & SURF_DRAWSKYBOX)
+		{
+			D_AddSkyboxToLists(r_skytexinfo);
+		}
+		else if (s->flags & SURF_DRAWBACKGROUND)
+		{
+			d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+		}
+		else if (s->flags & SURF_DRAWTURB)
+		{
+			d_zistepu = s->d_zistepu;
+			d_zistepv = s->d_zistepv;
+			d_ziorigin = s->d_ziorigin;
+
+			pface = (msurface_t*)s->data;
+			miplevel = 0;
+			cacheblock = (pixel_t *)
+					((byte *)pface->texinfo->texture +
+					pface->texinfo->texture->offsets[0]);
+			cachewidth = pface->texinfo->texture->width;
+
+			if (s->insubmodel)
+			{
+			// FIXME: we don't want to do all this for every polygon!
+			// TODO: store once at start of frame
+				currententity = s->entity;	//FIXME: make this passed in to
+											// R_RotateBmodel ()
+				VectorSubtract (r_origin, currententity->origin,
+						local_modelorg);
+				TransformVector (local_modelorg, transformed_modelorg);
+
+				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+									// make entity passed in
+			}
+
+			D_AddTurbulentToLists (pface, currententity);
+
+			if (s->insubmodel)
+			{
+			//
+			// restore the old drawing state
+			// FIXME: we don't want to do this every time!
+			// TODO: speed up
+			//
+				currententity = &cl_entities[0];
+				VectorCopy (world_transformed_modelorg,
+							transformed_modelorg);
+				VectorCopy (base_vpn, vpn);
+				VectorCopy (base_vup, vup);
+				VectorCopy (base_vright, vright);
+				VectorCopy (base_modelorg, modelorg);
+				R_TransformFrustum ();
+			}
+		}
+		else
+		{
+			d_zistepu = s->d_zistepu;
+			d_zistepv = s->d_zistepv;
+			d_ziorigin = s->d_ziorigin;
+
+			if (s->insubmodel)
+			{
+			// FIXME: we don't want to do all this for every polygon!
+			// TODO: store once at start of frame
+				currententity = s->entity;	//FIXME: make this passed in to
+											// R_RotateBmodel ()
+				VectorSubtract (r_origin, currententity->origin, local_modelorg);
+				TransformVector (local_modelorg, transformed_modelorg);
+
+				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+									// make entity passed in
+			}
+
+			pface = (msurface_t*)s->data;
+
+			pcurrentcache = nullptr;
+			auto created = D_CacheLightmap (pface, &pcurrentcache);
+
+			if (pcurrentcache != nullptr)
+			{
+				if (s->isfence)
+					D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+				else
+					D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+			}
+
+			if (s->insubmodel)
+			{
+			//
+			// restore the old drawing state
+			// FIXME: we don't want to do this every time!
+			// TODO: speed up
+			//
+				currententity = &cl_entities[0];
+				VectorCopy (world_transformed_modelorg,
+							transformed_modelorg);
+				VectorCopy (base_vpn, vpn);
+				VectorCopy (base_vup, vup);
+				VectorCopy (base_vright, vright);
+				VectorCopy (base_modelorg, modelorg);
+				R_TransformFrustum ();
+			}
+		}
+	}
+}
+
+
+/*
+==============
+D_DrawSurfacesToListsIfNeeded
+==============
+*/
+void D_DrawSurfacesToListsIfNeeded (void)
+{
+	surf_t			*s;
+	msurface_t		*pface;
+	surfcache_t		*pcurrentcache;
+	vec3_t			world_transformed_modelorg;
+	vec3_t			local_modelorg;
+
+	currententity = &cl_entities[0];
+	TransformVector (modelorg, transformed_modelorg);
+	VectorCopy (transformed_modelorg, world_transformed_modelorg);
+
+	for (s = &surfaces[1] ; s<surface_p ; s++)
+	{
+		if (r_drawnsurfaces.find(s) != r_drawnsurfaces.end())
+			continue;
+
+		r_drawnsurfaces.insert(s);
+
+		if (!s->spans)
+			continue;
+
+		r_drawnpolycount++;
+
+		if (s->flags & SURF_DRAWSKY)
+		{
+			if (r_skyinitialized)
+			{
+				if (!r_skymade)
+				{
+					R_MakeSky ();
+				}
+
+				D_AddSkyToLists(s);
+			}
+		}
+		else if (s->flags & SURF_DRAWSKYBOX)
+		{
+			D_AddSkyboxToLists(r_skytexinfo);
+		}
+		else if (s->flags & SURF_DRAWBACKGROUND)
+		{
+			d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+		}
+		else if (s->flags & SURF_DRAWTURB)
+		{
+			d_zistepu = s->d_zistepu;
+			d_zistepv = s->d_zistepv;
+			d_ziorigin = s->d_ziorigin;
+
+			pface = (msurface_t*)s->data;
+			miplevel = 0;
+			cacheblock = (pixel_t *)
+					((byte *)pface->texinfo->texture +
+					pface->texinfo->texture->offsets[0]);
+			cachewidth = pface->texinfo->texture->width;
+
+			if (s->insubmodel)
+			{
+			// FIXME: we don't want to do all this for every polygon!
+			// TODO: store once at start of frame
+				currententity = s->entity;	//FIXME: make this passed in to
+											// R_RotateBmodel ()
+				VectorSubtract (r_origin, currententity->origin,
+						local_modelorg);
+				TransformVector (local_modelorg, transformed_modelorg);
+
+				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+									// make entity passed in
+			}
+
+			D_AddTurbulentToLists (pface, currententity);
+
+			if (s->insubmodel)
+			{
+			//
+			// restore the old drawing state
+			// FIXME: we don't want to do this every time!
+			// TODO: speed up
+			//
+				currententity = &cl_entities[0];
+				VectorCopy (world_transformed_modelorg,
+							transformed_modelorg);
+				VectorCopy (base_vpn, vpn);
+				VectorCopy (base_vup, vup);
+				VectorCopy (base_vright, vright);
+				VectorCopy (base_modelorg, modelorg);
+				R_TransformFrustum ();
+			}
+		}
+		else
+		{
+			d_zistepu = s->d_zistepu;
+			d_zistepv = s->d_zistepv;
+			d_ziorigin = s->d_ziorigin;
+
+			if (s->insubmodel)
+			{
+			// FIXME: we don't want to do all this for every polygon!
+			// TODO: store once at start of frame
+				currententity = s->entity;	//FIXME: make this passed in to
+											// R_RotateBmodel ()
+				VectorSubtract (r_origin, currententity->origin, local_modelorg);
+				TransformVector (local_modelorg, transformed_modelorg);
+
+				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+									// make entity passed in
+			}
+
+			pface = (msurface_t*)s->data;
+
+			pcurrentcache = nullptr;
+			auto created = D_CacheLightmap (pface, &pcurrentcache);
+
+			if (pcurrentcache != nullptr)
+			{
+				if (s->isfence)
+					D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+				else
+					D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+			}
+
+			if (s->insubmodel)
+			{
+			//
+			// restore the old drawing state
+			// FIXME: we don't want to do this every time!
+			// TODO: speed up
+			//
 				currententity = &cl_entities[0];
 				VectorCopy (world_transformed_modelorg,
 							transformed_modelorg);

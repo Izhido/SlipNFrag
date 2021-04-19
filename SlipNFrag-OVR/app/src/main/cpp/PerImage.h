@@ -80,8 +80,9 @@ struct PerImage
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, VkDeviceSize floorSize);
 	void FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias, VkDeviceSize& offset);
 	void FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceSize floorSize);
-	void SetPushConstants(AppState& appState, dsurface_t& surface, float pushConstants[]);
-	void SetPushConstants(AppState& appState, dturbulent_t& turbulent, float pushConstants[]);
-	void SetDescriptorSets(AppState& appState, SharedMemoryTexture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[], Lightmap* lightmap);
+	void SetPushConstants(dsurface_t& surface, float pushConstants[]);
+	void SetPushConstants(dturbulent_t& turbulent, float pushConstants[]);
+	void SetPushConstants(dalias_t& alias, float pushConstants[]);
+	VkDescriptorSet GetDescriptorSet(AppState& appState, SharedMemoryTexture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[]);
 	void Render(AppState& appState);
 };

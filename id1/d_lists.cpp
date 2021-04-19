@@ -45,6 +45,49 @@ void D_ResetLists ()
 	d_lists.clear_color = -1;
 }
 
+void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+{
+	surface.surface = face;
+	surface.entity = entity;
+	surface.vertexes = entity->model->vertexes;
+	surface.vertex_count = entity->model->numvertexes;
+	surface.created = (created ? 1: 0);
+	auto texture = R_TextureAnimation(face->texinfo->texture);
+	surface.texture_width = texture->width;
+	surface.texture_height = texture->height;
+	surface.texture_size = surface.texture_width * surface.texture_height;
+	surface.texture = (unsigned char *)(texture + 1);
+	surface.lightmap_width = cache->width / sizeof(float);
+	surface.lightmap_height = cache->height;
+	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
+	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
+	{
+		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
+	}
+	surface.lightmap = d_lists.lightmap_texels.data() + d_lists.last_lightmap_texel + 1;
+	d_lists.last_lightmap_texel += surface.lightmap_size;
+	auto source = (unsigned*)&cache->data[0];
+	auto target = surface.lightmap;
+	for (auto i = 0; i < surface.lightmap_size; i++)
+	{
+		*target++ = (float)(*source++);
+	}
+	surface.count = face->numedges;
+	surface.origin_x = entity->origin[0];
+	surface.origin_y = entity->origin[1];
+	surface.origin_z = entity->origin[2];
+	auto texinfo = face->texinfo;
+	for (auto j = 0; j < 2; j++)
+	{
+		for (auto i = 0; i < 4; i++)
+		{
+			surface.vecs[j][i] = texinfo->vecs[j][i];
+		}
+		surface.texturemins[j] = face->texturemins[j];
+		surface.extents[j] = face->extents[j];
+	}
+}
+
 void D_AddSurfaceIndices16ToLists (entity_t* entity, msurface_t* face)
 {
 	auto edge = entity->model->surfedges[face->firstedge];
@@ -138,49 +181,6 @@ void D_AddSurfaceIndices32ToLists (entity_t* entity, msurface_t* face)
 		}
 		d_lists.last_surface_index32++;
 		d_lists.surface_indices32[d_lists.last_surface_index32] = index;
-	}
-}
-
-void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
-{
-	surface.surface = face;
-	surface.entity = entity;
-	surface.vertexes = entity->model->vertexes;
-	surface.vertex_count = entity->model->numvertexes;
-	surface.created = (created ? 1: 0);
-	auto texture = R_TextureAnimation(face->texinfo->texture);
-	surface.texture_width = texture->width;
-	surface.texture_height = texture->height;
-	surface.texture_size = surface.texture_width * surface.texture_height;
-	surface.texture = (unsigned char *)(texture + 1);
-	surface.lightmap_width = cache->width / sizeof(float);
-	surface.lightmap_height = cache->height;
-	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
-	{
-		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
-	}
-	surface.lightmap = d_lists.lightmap_texels.data() + d_lists.last_lightmap_texel + 1;
-	d_lists.last_lightmap_texel += surface.lightmap_size;
-	auto source = (unsigned*)&cache->data[0];
-	auto target = surface.lightmap;
-	for (auto i = 0; i < surface.lightmap_size; i++)
-	{
-		*target++ = (float)(*source++);
-	}
-	surface.count = face->numedges;
-	surface.origin_x = entity->origin[0];
-	surface.origin_y = entity->origin[1];
-	surface.origin_z = entity->origin[2];
-	auto texinfo = face->texinfo;
-	for (auto j = 0; j < 2; j++)
-	{
-		for (auto i = 0; i < 4; i++)
-		{
-			surface.vecs[j][i] = texinfo->vecs[j][i];
-		}
-		surface.texturemins[j] = face->texturemins[j];
-		surface.extents[j] = face->extents[j];
 	}
 }
 

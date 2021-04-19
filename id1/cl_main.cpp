@@ -48,7 +48,8 @@ std::list<efrag_t> cl_efrags;
 std::vector<entity_t> cl_entities;
 std::list<entity_t> cl_static_entities;
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
-std::vector<dlight_t> cl_dlights; std::unordered_map<int, int> cl_dlight_index;
+std::vector<dlight_t> cl_dlights;
+std::unordered_map<int, int> cl_dlight_index;
 
 int cl_protocol_version_from_server;
 int cl_protocol_version_upgrade_requested;

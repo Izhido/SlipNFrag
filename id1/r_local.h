@@ -110,6 +110,8 @@ extern	float	xOrigin, yOrigin;
 
 extern	int		r_visframecount;
 
+extern std::unordered_set<surf_t*> r_drawnsurfaces;
+
 //=============================================================================
 
 //
@@ -147,6 +149,8 @@ void R_AliasDrawModel (alight_t *plighting);
 void R_BeginEdgeFrame (void);
 void R_ScanEdges (void);
 void D_DrawSurfaces (void);
+void D_DrawSurfacesToLists (void);
+void D_DrawSurfacesToListsIfNeeded (void);
 void R_InsertNewEdges (edge_t *edgestoadd, edge_t *edgelist);
 void R_StepActiveU (edge_t *pedge);
 void R_RemoveEdges (edge_t *pedge);
