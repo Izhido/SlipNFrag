@@ -586,14 +586,35 @@ void MSG_WriteAngle (sizebuf_t *sb, float f)
 
 void MSG_WriteLongAsString(sizebuf_t* sb, int value)
 {
-    std::string text = std::to_string(value);
-    SZ_Write(sb, text.c_str(), (int)text.length() + 1);
-}
-
-void MSG_WriteFloatAsString(sizebuf_t* sb, float value)
-{
-    std::string text = std::to_string(value);
-    SZ_Write(sb, text.c_str(), (int)text.length() + 1);
+	static byte number[16];
+	auto negative = (value < 0);
+	if (negative)
+	{
+		value = -value;
+	}
+	auto i = 0;
+	while (value > 0)
+	{
+		number[i] = value % 10;
+		value /= 10;
+		i++;
+	}
+	byte* target;
+	if (negative)
+	{
+		target = (byte*)SZ_GetSpace(sb, i + 2);
+		*target++ = '-';
+	}
+	else
+	{
+		target = (byte*)SZ_GetSpace(sb, i + 1);
+	}
+	while (i > 0)
+	{
+		i--;
+		*target++ = '0' + number[i];
+	}
+	*target = 0;
 }
 
 //
@@ -726,14 +747,38 @@ char *MSG_ReadString (void)
 
 int MSG_ReadLongFromString ()
 {
-    auto string = MSG_ReadString();
-    return Q_atoi(string);
-}
-
-float MSG_ReadFloatFromString ()
-{
-    auto string = MSG_ReadString();
-    return Q_atof(string);
+	auto result = 0;
+	auto negative = false;
+	auto c = MSG_ReadChar ();
+	if (c == '-')
+	{
+		negative = true;
+	}
+	else if (c <= 0)
+	{
+		return 0;
+	}
+	else
+	{
+		result = c - '0';
+	}
+	while (true)
+	{
+		auto c = MSG_ReadChar ();
+		if (c <= 0)
+		{
+			break;
+		}
+		else
+		{
+			result = result * 10 + (c - '0');
+		}
+	}
+	if (negative)
+	{
+		return -result;
+	}
+	return result;
 }
 
 float MSG_ReadCoord (void)
