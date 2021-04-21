@@ -466,8 +466,8 @@ void SCR_DrawPause (void)
 		return;
 
 	pic = Draw_CachePic ("gfx/pause.lmp");
-	Draw_Pic ( (vid.width - pic->width)/2, 
-		(vid.height - 48 - pic->height)/2, pic);
+	Draw_PicOnConsole ( (vid.conwidth - pic->width)/2,
+		(vid.conheight - 48 - pic->height)/2, pic);
 }
 
 
@@ -485,8 +485,8 @@ void SCR_DrawLoading (void)
 		return;
 		
 	pic = Draw_CachePic ("gfx/loading.lmp");
-	Draw_Pic ( (vid.width - pic->width)/2, 
-		(vid.height - 48 - pic->height)/2, pic);
+	Draw_PicOnConsole ( (vid.conwidth - pic->width)/2,
+		(vid.conheight - 48 - pic->height)/2, pic);
 }
 
 

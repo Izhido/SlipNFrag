@@ -1112,7 +1112,7 @@ void android_main(struct android_app* app)
 			std::lock_guard<std::mutex> lock(appState.ModeChangeMutex);
 			if (appState.Mode != AppStartupMode && appState.Mode != AppNoGameDataMode)
 			{
-				if (cls.demoplayback || cl.intermission || con_forcedup)
+				if (cls.demoplayback || cl.intermission || con_forcedup || scr_disabled_for_loading)
 				{
 					appState.Mode = AppScreenMode;
 				}
