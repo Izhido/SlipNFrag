@@ -69,7 +69,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <PackageCertificateThumbprint>887FBA3DAA7A1B3F166E4C75AB39709BAFFAF9A9</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>147F00E5D83B6C042EC2F8738003225F270AF139</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <AppxPackageDir>C:\Projects\Releases\SlipNFrag</AppxPackageDir>
