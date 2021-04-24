@@ -61,17 +61,15 @@ void runEngine(AppState* appState, struct android_app* app)
 				ANativeActivity_finish(app->activity);
 				break;
 			}
+			if (updated)
 			{
 				std::lock_guard<std::mutex> lock(appState->RenderMutex);
-				if (updated)
+				if (appState->Scene.hostClearCount != host_clearcount)
 				{
-					Host_FrameRender();
-					if (appState->Scene.hostClearCount != host_clearcount)
-					{
-						appState->Scene.Reset();
-						appState->Scene.hostClearCount = host_clearcount;
-					}
+					appState->Scene.Reset();
+					appState->Scene.hostClearCount = host_clearcount;
 				}
+				Host_FrameRender();
 			}
 			Host_FrameFinish(updated);
 		}
@@ -117,27 +115,28 @@ void runEngine(AppState* appState, struct android_app* app)
 				ANativeActivity_finish(app->activity);
 				break;
 			}
+			if (updated)
 			{
 				std::lock_guard<std::mutex> lock(appState->RenderMutex);
-				if (updated)
+				if (appState->Scene.hostClearCount != host_clearcount)
 				{
-					r_modelorg_delta[0] = tracking.HeadPose.Pose.Position.x / scale;
-					r_modelorg_delta[1] = -tracking.HeadPose.Pose.Position.z / scale;
-					r_modelorg_delta[2] = tracking.HeadPose.Pose.Position.y / scale;
-					auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
-					appState->NearViewModel = (distanceSquared < 12 * 12);
-					d_awayfromviewmodel = !appState->NearViewModel;
-					D_ResetLists();
-					auto nodrift = cl.nodrift;
-					cl.nodrift = true;
-					Host_FrameRender();
-					cl.nodrift = nodrift;
-					if (appState->Scene.hostClearCount != host_clearcount)
-					{
-						appState->Scene.Reset();
-						appState->Scene.hostClearCount = host_clearcount;
-					}
+					appState->Scene.Reset();
+					appState->Scene.hostClearCount = host_clearcount;
 				}
+				else
+				{
+					D_ResetLists();
+				}
+				r_modelorg_delta[0] = tracking.HeadPose.Pose.Position.x / scale;
+				r_modelorg_delta[1] = -tracking.HeadPose.Pose.Position.z / scale;
+				r_modelorg_delta[2] = tracking.HeadPose.Pose.Position.y / scale;
+				auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
+				appState->NearViewModel = (distanceSquared < 12 * 12);
+				d_awayfromviewmodel = !appState->NearViewModel;
+				auto nodrift = cl.nodrift;
+				cl.nodrift = true;
+				Host_FrameRender();
+				cl.nodrift = nodrift;
 			}
 			Host_FrameFinish(updated);
 		}

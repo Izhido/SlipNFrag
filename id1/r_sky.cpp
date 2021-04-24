@@ -659,8 +659,8 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 		{
 			texture = (texture_t*)new byte[sizeof(texture_t) + pixels];
 		}
-		Q_memset(texture, 0, sizeof(texture_t));
-        Q_strcpy(texture->name, prefix.c_str());
+		memset(texture, 0, sizeof(texture_t));
+        strcpy(texture->name, prefix.c_str());
 		texture->width = width;
 		texture->height = height;
 		texture->offsets[0] = sizeof(texture_t);

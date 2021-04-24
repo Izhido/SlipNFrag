@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_local.h"
+#include "d_lists.h"
 
 // only the refresh window will be updated unless these variables are flagged 
 int			scr_copytop;
@@ -753,7 +754,8 @@ void SCR_BeginLoadingPlaque (void)
 	scr_drawloading = true;
 	scr_fullupdate = 0;
 	Sbar_Changed ();
-	SCR_UpdateScreen ();
+	if (!d_uselists)
+		SCR_UpdateScreen ();
 	scr_drawloading = false;
 
 	scr_disabled_for_loading = true;

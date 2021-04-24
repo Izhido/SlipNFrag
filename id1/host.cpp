@@ -346,7 +346,7 @@ Send text over to the client to be executed
 void Host_ClientCommands (const char *fmt, ...)
 {
 	va_list		argptr;
-	std::vector<char> string(1024);
+	static std::vector<char> string(1024);
 	
     while (true)
     {

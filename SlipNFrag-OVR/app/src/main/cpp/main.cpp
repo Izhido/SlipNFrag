@@ -1244,7 +1244,6 @@ void android_main(struct android_app* app)
 				appState.PreviousMode = appState.Mode;
 			}
 		}
-		appState.Scene.lightmapsToDelete.clear();
 		for (auto entry : appState.Scene.lightmaps)
 		{
 			auto total = 0;
@@ -1275,6 +1274,7 @@ void android_main(struct android_app* app)
 		{
 			appState.Scene.lightmaps.erase(entry);
 		}
+		appState.Scene.lightmapsToDelete.clear();
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.viewmodelTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.aliasTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.spriteTextures.oldTextures);

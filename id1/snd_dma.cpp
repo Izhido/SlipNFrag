@@ -537,7 +537,7 @@ void S_ClearBuffer (void)
 		clear = 0;
 
 	{
-		Q_memset(shm->buffer.data(), clear, shm->samples * shm->samplebits/8);
+		memset(shm->buffer.data(), clear, shm->samples * shm->samplebits/8);
 	}
 }
 
