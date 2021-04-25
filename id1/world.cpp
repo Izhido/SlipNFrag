@@ -347,15 +347,25 @@ void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node)
 
 	if ( node->contents < 0)
 	{
+		if (ent->leafnums == nullptr)
+		{
+			ent->leafnums = new int[MAX_ENT_LEAFS];
+			ent->leaf_size += MAX_ENT_LEAFS;
+		}
+		else if (ent->leaf_size <= ent->num_leafs)
+		{
+			auto previous = ent->leafnums;
+			ent->leafnums = new int[ent->leaf_size + MAX_ENT_LEAFS];
+			memcpy(ent->leafnums, previous, ent->leaf_size * sizeof(int));
+			delete[] previous;
+			ent->leaf_size += MAX_ENT_LEAFS;
+		}
+
 		leaf = (mleaf_t *)node;
 		leafnum = leaf - sv.worldmodel->leafs - 1;
 
-		if (ent->leafnums == nullptr)
-		{
-			ent->leafnums = new std::vector<int>();
-			ent->leafnums->reserve(MAX_ENT_LEAFS);
-		}
-		ent->leafnums->push_back(leafnum);
+		ent->leafnums[ent->num_leafs] = leafnum;
+		ent->num_leafs++;
 		return;
 	}
 	
@@ -421,10 +431,7 @@ void SV_LinkEdict (edict_t *ent, qboolean touch_triggers)
 	}
 	
 // link to PVS leafs
-	if (ent->leafnums != nullptr)
-	{
-		ent->leafnums->clear();
-	}
+	ent->num_leafs = 0;
 	if (ent->v.modelindex)
 		SV_FindTouchedLeafs (ent, sv.worldmodel->nodes);
 

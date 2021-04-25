@@ -516,16 +516,11 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 			if (ent->leafnums == nullptr || !ent->v.modelindex || !pr_strings[ent->v.model])
 				continue;
 
-			auto pleaf = ent->leafnums->data();
-			auto leafcount = ent->leafnums->size();
-			for (i=0 ; i < leafcount ; i++)
-			{
-				auto leafnum = *pleaf++;
-				if (pvs[leafnum >> 3] & (1 << (leafnum&7) ))
+			for (i=0 ; i < ent->num_leafs ; i++)
+				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
 					break;
-			}
 
-			if (i == leafcount)
+			if (i == ent->num_leafs)
 				continue;		// not visible
 		}
 
@@ -1405,7 +1400,7 @@ void SV_DeleteEdictLeafs(size_t start, size_t end)
 	while (index < end)
 	{
 		auto e = (edict_t*)(data + index);
-		delete e->leafnums;
+		delete[] e->leafnums;
 		index += pr_edict_size;
 	}
 }

@@ -36,8 +36,10 @@ typedef struct edict_s
 {
 	qboolean	free;
 	link_t		area;				// linked to a division node or leaf
-	
-	std::vector<int>* leafnums;
+
+	int			num_leafs;
+	int*		leafnums;
+	int 		leaf_size;
 
 	entity_state_t	baseline;
 	

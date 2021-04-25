@@ -1161,7 +1161,8 @@ void CL_ParseServerMessage (void)
 		if (cmd & 128)
 		{
 			SHOWNET("fast update");
-            if (cl_protocol_version_from_server == EXPANDED_PROTOCOL_VERSION) CL_ParseExpandedUpdate(cmd & 127);
+            if (cl_protocol_version_from_server == EXPANDED_PROTOCOL_VERSION)
+            	CL_ParseExpandedUpdate(cmd&127);
             else
                 CL_ParseUpdate (cmd&127);
 			continue;
