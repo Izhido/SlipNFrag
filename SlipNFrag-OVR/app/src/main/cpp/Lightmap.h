@@ -16,7 +16,7 @@ struct Lightmap
 	int layerCount = 0;
 	VkImage image = VK_NULL_HANDLE;
 	AllocationList* allocationList = nullptr;
-	int allocationIndex = 0;
+	std::list<Allocation>::iterator allocation;
 	int allocatedIndex = 0;
 	VkImageView view = VK_NULL_HANDLE;
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;

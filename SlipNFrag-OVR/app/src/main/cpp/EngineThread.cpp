@@ -12,6 +12,7 @@ void runEngine(AppState* appState, struct android_app* app)
 	{
 		if (!host_initialized)
 		{
+			std::this_thread::yield();
 			continue;
 		}
 		{
@@ -140,6 +141,6 @@ void runEngine(AppState* appState, struct android_app* app)
 			}
 			Host_FrameFinish(updated);
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		std::this_thread::yield();
 	}
 }
