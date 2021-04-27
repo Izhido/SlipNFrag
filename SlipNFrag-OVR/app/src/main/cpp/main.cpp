@@ -1226,8 +1226,8 @@ void android_main(struct android_app* app)
 					Cvar_SetValue("joyadvaxisz", AxisNada);
 					Cvar_SetValue("joyadvaxisr", AxisNada);
 					Joy_AdvancedUpdate_f();
-					vid_width = appState.ScreenWidth;
-					vid_height = appState.ScreenWidth; // to force a square screen for VR, and to get better results for FOV angle calculations
+					vid_width = appState.EyeTextureMaxDimension;
+					vid_height = appState.EyeTextureMaxDimension;
 					con_width = appState.ConsoleWidth;
 					con_height = appState.ConsoleHeight;
 					Cvar_SetValue("fov", appState.FOV);

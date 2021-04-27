@@ -446,12 +446,8 @@ void D_DrawSurfacesToLists (void)
 	surf_t			*s;
 	msurface_t		*pface;
 	surfcache_t		*pcurrentcache;
-	vec3_t			world_transformed_modelorg;
-	vec3_t			local_modelorg;
 
 	currententity = &cl_entities[0];
-	TransformVector (modelorg, transformed_modelorg);
-	VectorCopy (transformed_modelorg, world_transformed_modelorg);
 
 	for (s = &surfaces[1] ; s<surface_p ; s++)
 	{
@@ -482,10 +478,6 @@ void D_DrawSurfacesToLists (void)
 		}
 		else if (s->flags & SURF_DRAWTURB)
 		{
-			d_zistepu = s->d_zistepu;
-			d_zistepv = s->d_zistepv;
-			d_ziorigin = s->d_ziorigin;
-
 			pface = (msurface_t*)s->data;
 			miplevel = 0;
 			cacheblock = (pixel_t *)
@@ -499,12 +491,6 @@ void D_DrawSurfacesToLists (void)
 			// TODO: store once at start of frame
 				currententity = s->entity;	//FIXME: make this passed in to
 											// R_RotateBmodel ()
-				VectorSubtract (r_origin, currententity->origin,
-						local_modelorg);
-				TransformVector (local_modelorg, transformed_modelorg);
-
-				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-									// make entity passed in
 			}
 
 			D_AddTurbulentToLists (pface, currententity);
@@ -517,32 +503,16 @@ void D_DrawSurfacesToLists (void)
 			// TODO: speed up
 			//
 				currententity = &cl_entities[0];
-				VectorCopy (world_transformed_modelorg,
-							transformed_modelorg);
-				VectorCopy (base_vpn, vpn);
-				VectorCopy (base_vup, vup);
-				VectorCopy (base_vright, vright);
-				VectorCopy (base_modelorg, modelorg);
-				R_TransformFrustum ();
 			}
 		}
 		else
 		{
-			d_zistepu = s->d_zistepu;
-			d_zistepv = s->d_zistepv;
-			d_ziorigin = s->d_ziorigin;
-
 			if (s->insubmodel)
 			{
 			// FIXME: we don't want to do all this for every polygon!
 			// TODO: store once at start of frame
 				currententity = s->entity;	//FIXME: make this passed in to
 											// R_RotateBmodel ()
-				VectorSubtract (r_origin, currententity->origin, local_modelorg);
-				TransformVector (local_modelorg, transformed_modelorg);
-
-				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-									// make entity passed in
 			}
 
 			pface = (msurface_t*)s->data;
@@ -566,13 +536,6 @@ void D_DrawSurfacesToLists (void)
 			// TODO: speed up
 			//
 				currententity = &cl_entities[0];
-				VectorCopy (world_transformed_modelorg,
-							transformed_modelorg);
-				VectorCopy (base_vpn, vpn);
-				VectorCopy (base_vup, vup);
-				VectorCopy (base_vright, vright);
-				VectorCopy (base_modelorg, modelorg);
-				R_TransformFrustum ();
 			}
 		}
 	}
@@ -589,12 +552,8 @@ void D_DrawSurfacesToListsIfNeeded (void)
 	surf_t			*s;
 	msurface_t		*pface;
 	surfcache_t		*pcurrentcache;
-	vec3_t			world_transformed_modelorg;
-	vec3_t			local_modelorg;
 
 	currententity = &cl_entities[0];
-	TransformVector (modelorg, transformed_modelorg);
-	VectorCopy (transformed_modelorg, world_transformed_modelorg);
 
 	for (s = &surfaces[1] ; s<surface_p ; s++)
 	{
@@ -630,10 +589,6 @@ void D_DrawSurfacesToListsIfNeeded (void)
 		}
 		else if (s->flags & SURF_DRAWTURB)
 		{
-			d_zistepu = s->d_zistepu;
-			d_zistepv = s->d_zistepv;
-			d_ziorigin = s->d_ziorigin;
-
 			pface = (msurface_t*)s->data;
 			miplevel = 0;
 			cacheblock = (pixel_t *)
@@ -647,12 +602,6 @@ void D_DrawSurfacesToListsIfNeeded (void)
 			// TODO: store once at start of frame
 				currententity = s->entity;	//FIXME: make this passed in to
 											// R_RotateBmodel ()
-				VectorSubtract (r_origin, currententity->origin,
-						local_modelorg);
-				TransformVector (local_modelorg, transformed_modelorg);
-
-				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-									// make entity passed in
 			}
 
 			D_AddTurbulentToLists (pface, currententity);
@@ -665,32 +614,16 @@ void D_DrawSurfacesToListsIfNeeded (void)
 			// TODO: speed up
 			//
 				currententity = &cl_entities[0];
-				VectorCopy (world_transformed_modelorg,
-							transformed_modelorg);
-				VectorCopy (base_vpn, vpn);
-				VectorCopy (base_vup, vup);
-				VectorCopy (base_vright, vright);
-				VectorCopy (base_modelorg, modelorg);
-				R_TransformFrustum ();
 			}
 		}
 		else
 		{
-			d_zistepu = s->d_zistepu;
-			d_zistepv = s->d_zistepv;
-			d_ziorigin = s->d_ziorigin;
-
 			if (s->insubmodel)
 			{
 			// FIXME: we don't want to do all this for every polygon!
 			// TODO: store once at start of frame
 				currententity = s->entity;	//FIXME: make this passed in to
 											// R_RotateBmodel ()
-				VectorSubtract (r_origin, currententity->origin, local_modelorg);
-				TransformVector (local_modelorg, transformed_modelorg);
-
-				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-									// make entity passed in
 			}
 
 			pface = (msurface_t*)s->data;
@@ -714,13 +647,6 @@ void D_DrawSurfacesToListsIfNeeded (void)
 			// TODO: speed up
 			//
 				currententity = &cl_entities[0];
-				VectorCopy (world_transformed_modelorg,
-							transformed_modelorg);
-				VectorCopy (base_vpn, vpn);
-				VectorCopy (base_vup, vup);
-				VectorCopy (base_vright, vright);
-				VectorCopy (base_modelorg, modelorg);
-				R_TransformFrustum ();
 			}
 		}
 	}
