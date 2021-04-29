@@ -29,32 +29,34 @@ void Lightmap::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 	VC(appState.Device.vkGetImageMemoryRequirements(appState.Device.device, image, &memoryRequirements));
 	VkMemoryAllocateInfo memoryAllocateInfo { };
 	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
-	auto& allocationList = appState.Scene.allocations[memoryAllocateInfo.allocationSize];
-	if (allocationList.blockSize == 0)
+	VkDeviceSize blockSize = memoryAllocateInfo.allocationSize;
+	if (blockSize == 0)
 	{
 		VkDeviceSize alignmentCorrection = 0;
-		VkDeviceSize alignmentExcess = memoryAllocateInfo.allocationSize % memoryRequirements.alignment;
+		VkDeviceSize alignmentExcess = blockSize % memoryRequirements.alignment;
 		if (alignmentExcess > 0)
 		{
 			alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
 		}
-		allocationList.blockSize = memoryAllocateInfo.allocationSize + alignmentCorrection;
+		blockSize = memoryAllocateInfo.allocationSize + alignmentCorrection;
 	}
+	auto& allocationList = appState.Scene.allocations[blockSize];
 	for (auto allocation = allocationList.allocations.begin(); allocation != allocationList.allocations.end(); allocation++)
 	{
 		if (allocation->allocatedCount < allocation->allocated.size())
 		{
-			for (auto i = 0; i < allocation->allocated.size(); i++)
+			for (auto i = allocation->firstFreeCandidate; i < allocation->allocated.size(); i++)
 			{
 				if (!allocation->allocated[i])
 				{
 					allocation->allocated[i] = true;
-					VK(appState.Device.vkBindImageMemory(appState.Device.device, image, allocation->memory, i * allocationList.blockSize));
+					VK(appState.Device.vkBindImageMemory(appState.Device.device, image, allocation->memory, i * blockSize));
 					this->allocationList = &allocationList;
 					this->allocation = allocation;
 					allocatedIndex = i;
 					allocation->allocatedCount++;
 					descriptorSet = allocation->descriptorSets[i];
+					allocation->firstFreeCandidate = i + 1;
 					break;
 				}
 			}
@@ -67,14 +69,14 @@ void Lightmap::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		allocation = allocationList.allocations.end();
 		allocation--;
 		VkDeviceSize size = MEMORY_BLOCK_SIZE;
-		if (size < allocationList.blockSize)
+		if (size < blockSize)
 		{
-			size = allocationList.blockSize;
+			size = blockSize;
 		}
 		auto memoryBlockAllocateInfo = memoryAllocateInfo;
 		memoryBlockAllocateInfo.allocationSize = size;
 		VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryBlockAllocateInfo, nullptr, &allocation->memory));
-		auto count = size / allocationList.blockSize;
+		auto count = size / blockSize;
 		allocation->allocated.resize(count);
 		VkDescriptorPoolSize poolSizes { };
 		poolSizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -185,6 +187,10 @@ void Lightmap::Delete(AppState& appState)
 	}
 	allocation->allocated[allocatedIndex] = false;
 	allocation->allocatedCount--;
+	if (allocation->firstFreeCandidate > allocatedIndex)
+	{
+		allocation->firstFreeCandidate = allocatedIndex;
+	}
 	if (allocation->allocatedCount == 0)
 	{
 		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, allocation->descriptorPool, nullptr));
