@@ -43,6 +43,7 @@ struct PerImage
 	PipelineDescriptorResources host_colormapResources;
 	PipelineDescriptorResources sceneMatricesResources;
 	PipelineDescriptorResources sceneMatricesAndPaletteResources;
+	PipelineDescriptorResources sceneMatricesAndColormapResources;
 	CachedPipelineDescriptorResources surfaceTextureResources;
 	CachedPipelineDescriptorResources fenceTextureResources;
 	CachedPipelineDescriptorResources spriteResources;

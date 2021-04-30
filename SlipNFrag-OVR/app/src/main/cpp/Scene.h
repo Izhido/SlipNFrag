@@ -39,6 +39,7 @@ struct Scene
 	VkShaderModule consoleFragment;
 	VkDescriptorSetLayout singleBufferLayout;
 	VkDescriptorSetLayout bufferAndImageLayout;
+	VkDescriptorSetLayout bufferAndTwoImagesLayout;
 	VkDescriptorSetLayout singleImageLayout;
 	VkDescriptorSetLayout doubleImageLayout;
 	Pipeline surfaces;

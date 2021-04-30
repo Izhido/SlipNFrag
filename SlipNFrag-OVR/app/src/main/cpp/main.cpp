@@ -2053,6 +2053,7 @@ void android_main(struct android_app* app)
 			perImage.spriteResources.Delete(appState);
 			perImage.fenceTextureResources.Delete(appState);
 			perImage.surfaceTextureResources.Delete(appState);
+			perImage.sceneMatricesAndColormapResources.Delete(appState);
 			perImage.sceneMatricesAndPaletteResources.Delete(appState);
 			perImage.sceneMatricesResources.Delete(appState);
 			perImage.host_colormapResources.Delete(appState);
@@ -2158,6 +2159,7 @@ void android_main(struct android_app* app)
 	appState.Scene.surfaces.Delete(appState);
 	VC(appState.Device.vkDestroyDescriptorSetLayout(appState.Device.device, appState.Scene.doubleImageLayout, nullptr));
 	VC(appState.Device.vkDestroyDescriptorSetLayout(appState.Device.device, appState.Scene.singleImageLayout, nullptr));
+	VC(appState.Device.vkDestroyDescriptorSetLayout(appState.Device.device, appState.Scene.bufferAndTwoImagesLayout, nullptr));
 	VC(appState.Device.vkDestroyDescriptorSetLayout(appState.Device.device, appState.Scene.bufferAndImageLayout, nullptr));
 	VC(appState.Device.vkDestroyDescriptorSetLayout(appState.Device.device, appState.Scene.singleBufferLayout, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.consoleFragment, nullptr));

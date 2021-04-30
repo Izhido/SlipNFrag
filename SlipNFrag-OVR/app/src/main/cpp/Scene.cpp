@@ -772,8 +772,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Scene.surfaces.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	appState.Scene.surfaces.stages[1].module = appState.Scene.surfaceFragment;
 	appState.Scene.surfaces.stages[1].pName = "main";
-	VkDescriptorSetLayoutBinding descriptorSetBindings[2] { };
+	VkDescriptorSetLayoutBinding descriptorSetBindings[3] { };
 	descriptorSetBindings[1].binding = 1;
+	descriptorSetBindings[2].binding = 2;
 	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo { };
 	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	descriptorSetLayoutCreateInfo.pBindings = descriptorSetBindings;
@@ -787,6 +788,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 2;
 	VK(appState.Device.vkCreateDescriptorSetLayout(appState.Device.device, &descriptorSetLayoutCreateInfo, nullptr, &appState.Scene.bufferAndImageLayout));
+	descriptorSetBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorSetBindings[2].descriptorCount = 1;
+	descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	descriptorSetLayoutCreateInfo.bindingCount = 3;
+	VK(appState.Device.vkCreateDescriptorSetLayout(appState.Device.device, &descriptorSetLayoutCreateInfo, nullptr, &appState.Scene.bufferAndTwoImagesLayout));
 	descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorSetBindings[0].descriptorCount = 1;
 	descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -797,14 +803,13 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 2;
 	VK(appState.Device.vkCreateDescriptorSetLayout(appState.Device.device, &descriptorSetLayoutCreateInfo, nullptr, &appState.Scene.doubleImageLayout));
-	VkDescriptorSetLayout descriptorSetLayouts[4] { };
-	descriptorSetLayouts[0] = appState.Scene.bufferAndImageLayout;
+	VkDescriptorSetLayout descriptorSetLayouts[3] { };
+	descriptorSetLayouts[0] = appState.Scene.bufferAndTwoImagesLayout;
 	descriptorSetLayouts[1] = appState.Scene.singleImageLayout;
 	descriptorSetLayouts[2] = appState.Scene.singleImageLayout;
-	descriptorSetLayouts[3] = appState.Scene.singleImageLayout;
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo { };
 	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutCreateInfo.setLayoutCount = 4;
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	VkPushConstantRange pushConstantInfo { };
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -853,6 +858,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Scene.sprites.stages[1].pName = "main";
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+	descriptorSetLayouts[0] = appState.Scene.bufferAndImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &appState.Scene.sprites.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = appState.Scene.sprites.stages.size();

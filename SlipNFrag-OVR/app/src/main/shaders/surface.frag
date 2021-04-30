@@ -7,9 +7,9 @@ precision highp float;
 precision mediump int;
 
 layout(set = 0, binding = 1) uniform sampler2D fragmentPalette;
-layout(set = 1, binding = 0) uniform usampler2D fragmentColormap;
-layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
-layout(set = 3, binding = 0) uniform sampler2D fragmentLightmap;
+layout(set = 0, binding = 2) uniform usampler2D fragmentColormap;
+layout(set = 1, binding = 0) uniform usampler2D fragmentTexture;
+layout(set = 2, binding = 0) uniform sampler2D fragmentLightmap;
 
 layout(location = 0) in vec2 fragmentLightmapCoords;
 layout(location = 1) in vec2 fragmentTexCoords;
