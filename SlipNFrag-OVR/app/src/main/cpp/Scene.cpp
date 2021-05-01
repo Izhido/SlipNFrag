@@ -10,6 +10,8 @@
 
 void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app)
 {
+	vrapi_WaitFrame(appState.Ovr, appState.FrameIndex);
+	vrapi_BeginFrame(appState.Ovr, appState.FrameIndex);
 	int frameFlags = 0;
 	frameFlags |= VRAPI_FRAME_FLAG_FLUSH;
 	ovrLayerProjection2 blackLayer = vrapi_DefaultLayerBlackProjection2();
