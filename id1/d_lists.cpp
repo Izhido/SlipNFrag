@@ -4,6 +4,8 @@
 #include "r_local.h"
 #include "d_local.h"
 
+#define UPPER_16BIT_LIMIT 65520
+
 dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
@@ -91,11 +93,6 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 void D_AddSurfaceIndices16ToLists (entity_t* entity, msurface_t* face)
 {
 	auto edge = entity->model->surfedges[face->firstedge];
-	auto new_size = d_lists.last_surface_index16 + 1 + face->numedges;
-	if (d_lists.surface_indices16.size() < new_size)
-	{
-		d_lists.surface_indices16.resize(new_size);
-	}
 	uint16_t index;
 	if (edge >= 0)
 	{
@@ -104,6 +101,11 @@ void D_AddSurfaceIndices16ToLists (entity_t* entity, msurface_t* face)
 	else
 	{
 		index = entity->model->edges[-edge].v[1];
+	}
+	auto new_size = d_lists.last_surface_index16 + 1 + face->numedges;
+	if (d_lists.surface_indices16.size() < new_size)
+	{
+		d_lists.surface_indices16.resize(new_size);
 	}
 	d_lists.last_surface_index16++;
 	d_lists.surface_indices16[d_lists.last_surface_index16] = index;
@@ -136,30 +138,21 @@ void D_AddSurfaceIndices16ToLists (entity_t* entity, msurface_t* face)
 	}
 }
 
-void D_AddSurfaceIndices32ToLists (entity_t* entity, msurface_t* face)
+void D_AddSurfaceIndices32ToLists (uint32_t first_index, entity_t* entity, msurface_t* face)
 {
-	auto edge = entity->model->surfedges[face->firstedge];
 	auto new_size = d_lists.last_surface_index32 + 1 + face->numedges;
 	if (d_lists.surface_indices32.size() < new_size)
 	{
 		d_lists.surface_indices32.resize(new_size);
 	}
-	uint32_t index;
-	if (edge >= 0)
-	{
-		index = entity->model->edges[edge].v[0];
-	}
-	else
-	{
-		index = entity->model->edges[-edge].v[1];
-	}
 	d_lists.last_surface_index32++;
-	d_lists.surface_indices32[d_lists.last_surface_index32] = index;
+	d_lists.surface_indices32[d_lists.last_surface_index32] = first_index;
 	auto next_front = 0;
 	auto next_back = face->numedges;
 	auto use_back = false;
 	for (auto i = 1; i < face->numedges; i++)
 	{
+		int edge;
 		if (use_back)
 		{
 			next_back--;
@@ -171,6 +164,7 @@ void D_AddSurfaceIndices32ToLists (entity_t* entity, msurface_t* face)
 			edge = entity->model->surfedges[face->firstedge + next_front];
 		}
 		use_back = !use_back;
+		uint32_t index;
 		if (edge >= 0)
 		{
 			index = entity->model->edges[edge].v[0];
@@ -190,7 +184,7 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 	{
 		return;
 	}
-	if (entity->model->numvertexes <= 65520)
+	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
 	{
 		d_lists.last_surface16++;
 		if (d_lists.last_surface16 >= d_lists.surfaces16.size())
@@ -201,6 +195,91 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 		D_FillSurfaceData(surface, face, cache, entity, created);
 		surface.first_index = d_lists.last_surface_index16 + 1;
 		D_AddSurfaceIndices16ToLists (entity, face);
+		return;
+	}
+	auto edge = entity->model->surfedges[face->firstedge];
+	uint32_t first_index;
+	if (edge >= 0)
+	{
+		first_index = entity->model->edges[edge].v[0];
+	}
+	else
+	{
+		first_index = entity->model->edges[-edge].v[1];
+	}
+	if (first_index > UPPER_16BIT_LIMIT)
+	{
+		d_lists.last_surface32++;
+		if (d_lists.last_surface32 >= d_lists.surfaces32.size())
+		{
+			d_lists.surfaces32.emplace_back();
+		}
+		auto& surface = d_lists.surfaces32[d_lists.last_surface32];
+		D_FillSurfaceData(surface, face, cache, entity, created);
+		surface.first_index = d_lists.last_surface_index32 + 1;
+		D_AddSurfaceIndices32ToLists (first_index, entity, face);
+		return;
+	}
+	auto new_size = d_lists.last_surface_index32 + 1 + face->numedges;
+	if (d_lists.surface_indices32.size() < new_size)
+	{
+		d_lists.surface_indices32.resize(new_size);
+	}
+	auto cursor = d_lists.last_surface_index32 + 1;
+	d_lists.surface_indices32[cursor] = first_index;
+	auto next_front = 0;
+	auto next_back = face->numedges;
+	auto use_back = false;
+	auto within_16bit = true;
+	for (auto i = 1; i < face->numedges; i++)
+	{
+		int edge;
+		if (use_back)
+		{
+			next_back--;
+			edge = entity->model->surfedges[face->firstedge + next_back];
+		}
+		else
+		{
+			next_front++;
+			edge = entity->model->surfedges[face->firstedge + next_front];
+		}
+		use_back = !use_back;
+		uint32_t index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		cursor++;
+		d_lists.surface_indices32[cursor] = index;
+		within_16bit = within_16bit && (index <= UPPER_16BIT_LIMIT);
+	}
+	if (within_16bit)
+	{
+		d_lists.last_surface16++;
+		if (d_lists.last_surface16 >= d_lists.surfaces16.size())
+		{
+			d_lists.surfaces16.emplace_back();
+		}
+		auto& surface = d_lists.surfaces16[d_lists.last_surface16];
+		D_FillSurfaceData(surface, face, cache, entity, created);
+		surface.first_index = d_lists.last_surface_index16 + 1;
+		new_size = d_lists.last_surface_index16 + 1 + face->numedges;
+		if (d_lists.surface_indices16.size() < new_size)
+		{
+			d_lists.surface_indices16.resize(new_size);
+		}
+		cursor = d_lists.last_surface_index32;
+		for (auto i = 0; i < face->numedges; i++)
+		{
+			cursor++;
+			d_lists.last_surface_index16++;
+			d_lists.surface_indices16[d_lists.last_surface_index16] = (uint16_t)d_lists.surface_indices32[cursor];
+		}
 	}
 	else
 	{
@@ -212,7 +291,7 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 		auto& surface = d_lists.surfaces32[d_lists.last_surface32];
 		D_FillSurfaceData(surface, face, cache, entity, created);
 		surface.first_index = d_lists.last_surface_index32 + 1;
-		D_AddSurfaceIndices32ToLists (entity, face);
+		d_lists.last_surface_index32 = cursor;
 	}
 }
 
@@ -222,7 +301,7 @@ void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, 
 	{
 		return;
 	}
-	if (entity->model->numvertexes <= 65520)
+	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
 	{
 		d_lists.last_fence16++;
 		if (d_lists.last_fence16 >= d_lists.fences16.size())
@@ -233,6 +312,91 @@ void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, 
 		D_FillSurfaceData(fence, face, cache, entity, created);
 		fence.first_index = d_lists.last_surface_index16 + 1;
 		D_AddSurfaceIndices16ToLists (entity, face);
+		return;
+	}
+	auto edge = entity->model->surfedges[face->firstedge];
+	uint32_t first_index;
+	if (edge >= 0)
+	{
+		first_index = entity->model->edges[edge].v[0];
+	}
+	else
+	{
+		first_index = entity->model->edges[-edge].v[1];
+	}
+	if (first_index > UPPER_16BIT_LIMIT)
+	{
+		d_lists.last_fence32++;
+		if (d_lists.last_fence32 >= d_lists.fences32.size())
+		{
+			d_lists.fences32.emplace_back();
+		}
+		auto& fence = d_lists.fences32[d_lists.last_fence32];
+		D_FillSurfaceData(fence, face, cache, entity, created);
+		fence.first_index = d_lists.last_surface_index32 + 1;
+		D_AddSurfaceIndices32ToLists (first_index, entity, face);
+		return;
+	}
+	auto new_size = d_lists.last_surface_index32 + 1 + face->numedges;
+	if (d_lists.surface_indices32.size() < new_size)
+	{
+		d_lists.surface_indices32.resize(new_size);
+	}
+	auto cursor = d_lists.last_surface_index32 + 1;
+	d_lists.surface_indices32[cursor] = first_index;
+	auto next_front = 0;
+	auto next_back = face->numedges;
+	auto use_back = false;
+	auto within_16bit = true;
+	for (auto i = 1; i < face->numedges; i++)
+	{
+		int edge;
+		if (use_back)
+		{
+			next_back--;
+			edge = entity->model->surfedges[face->firstedge + next_back];
+		}
+		else
+		{
+			next_front++;
+			edge = entity->model->surfedges[face->firstedge + next_front];
+		}
+		use_back = !use_back;
+		uint32_t index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		cursor++;
+		d_lists.surface_indices32[cursor] = index;
+		within_16bit = within_16bit && (index <= UPPER_16BIT_LIMIT);
+	}
+	if (within_16bit)
+	{
+		d_lists.last_fence16++;
+		if (d_lists.last_fence16 >= d_lists.fences16.size())
+		{
+			d_lists.fences16.emplace_back();
+		}
+		auto& fence = d_lists.fences16[d_lists.last_fence16];
+		D_FillSurfaceData(fence, face, cache, entity, created);
+		fence.first_index = d_lists.last_surface_index16 + 1;
+		new_size = d_lists.last_surface_index16 + 1 + face->numedges;
+		if (d_lists.surface_indices16.size() < new_size)
+		{
+			d_lists.surface_indices16.resize(new_size);
+		}
+		cursor = d_lists.last_surface_index32;
+		for (auto i = 0; i < face->numedges; i++)
+		{
+			cursor++;
+			d_lists.last_surface_index16++;
+			d_lists.surface_indices16[d_lists.last_surface_index16] = (uint16_t)d_lists.surface_indices32[cursor];
+		}
 	}
 	else
 	{
@@ -244,7 +408,7 @@ void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, 
 		auto& fence = d_lists.fences32[d_lists.last_fence32];
 		D_FillSurfaceData(fence, face, cache, entity, created);
 		fence.first_index = d_lists.last_surface_index32 + 1;
-		D_AddSurfaceIndices32ToLists (entity, face);
+		d_lists.last_surface_index32 = cursor;
 	}
 }
 
@@ -334,42 +498,132 @@ void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
 }
 
+void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity)
+{
+	auto texinfo = face->texinfo;
+	auto texture = texinfo->texture;
+	turbulent.vertexes = entity->model->vertexes;
+	turbulent.vertex_count = entity->model->numvertexes;
+	turbulent.texture = texture;
+	turbulent.width = texture->width;
+	turbulent.height = texture->height;
+	turbulent.size = turbulent.width * turbulent.height;
+	turbulent.data = (unsigned char*)texture + texture->offsets[0];
+	turbulent.count = face->numedges;
+	turbulent.origin_x = entity->origin[0];
+	turbulent.origin_y = entity->origin[1];
+	turbulent.origin_z = entity->origin[2];
+	for (auto j = 0; j < 2; j++)
+	{
+		for (auto i = 0; i < 4; i++)
+		{
+			turbulent.vecs[j][i] = texinfo->vecs[j][i];
+		}
+	}
+}
+
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 {
 	if (face->numedges < 3)
 	{
 		return;
 	}
-	if (entity->model->numvertexes <= 65520)
+	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
 	{
 		d_lists.last_turbulent16++;
 		if (d_lists.last_turbulent16 >= d_lists.turbulent16.size())
 		{
 			d_lists.turbulent16.emplace_back();
 		}
-		auto texinfo = face->texinfo;
-		auto texture = texinfo->texture;
 		auto& turbulent = d_lists.turbulent16[d_lists.last_turbulent16];
-		turbulent.vertexes = entity->model->vertexes;
-		turbulent.vertex_count = entity->model->numvertexes;
-		turbulent.texture = texture;
-		turbulent.width = texture->width;
-		turbulent.height = texture->height;
-		turbulent.size = turbulent.width * turbulent.height;
-		turbulent.data = (unsigned char*)texture + texture->offsets[0];
+		D_FillTurbulentData(turbulent, face, entity);
 		turbulent.first_index = d_lists.last_surface_index16 + 1;
-		turbulent.count = face->numedges;
-		turbulent.origin_x = entity->origin[0];
-		turbulent.origin_y = entity->origin[1];
-		turbulent.origin_z = entity->origin[2];
-		for (auto j = 0; j < 2; j++)
-		{
-			for (auto i = 0; i < 4; i++)
-			{
-				turbulent.vecs[j][i] = texinfo->vecs[j][i];
-			}
-		}
 		D_AddSurfaceIndices16ToLists (entity, face);
+		return;
+	}
+	auto edge = entity->model->surfedges[face->firstedge];
+	uint32_t first_index;
+	if (edge >= 0)
+	{
+		first_index = entity->model->edges[edge].v[0];
+	}
+	else
+	{
+		first_index = entity->model->edges[-edge].v[1];
+	}
+	if (first_index > UPPER_16BIT_LIMIT)
+	{
+		d_lists.last_turbulent32++;
+		if (d_lists.last_turbulent32 >= d_lists.turbulent32.size())
+		{
+			d_lists.turbulent32.emplace_back();
+		}
+		auto& turbulent = d_lists.turbulent32[d_lists.last_turbulent32];
+		D_FillTurbulentData(turbulent, face, entity);
+		turbulent.first_index = d_lists.last_surface_index32 + 1;
+		D_AddSurfaceIndices32ToLists (first_index, entity, face);
+		return;
+	}
+	auto new_size = d_lists.last_surface_index32 + 1 + face->numedges;
+	if (d_lists.surface_indices32.size() < new_size)
+	{
+		d_lists.surface_indices32.resize(new_size);
+	}
+	auto cursor = d_lists.last_surface_index32 + 1;
+	d_lists.surface_indices32[cursor] = first_index;
+	auto next_front = 0;
+	auto next_back = face->numedges;
+	auto use_back = false;
+	auto within_16bit = true;
+	for (auto i = 1; i < face->numedges; i++)
+	{
+		int edge;
+		if (use_back)
+		{
+			next_back--;
+			edge = entity->model->surfedges[face->firstedge + next_back];
+		}
+		else
+		{
+			next_front++;
+			edge = entity->model->surfedges[face->firstedge + next_front];
+		}
+		use_back = !use_back;
+		uint32_t index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		cursor++;
+		d_lists.surface_indices32[cursor] = index;
+		within_16bit = within_16bit && (index <= UPPER_16BIT_LIMIT);
+	}
+	if (within_16bit)
+	{
+		d_lists.last_turbulent16++;
+		if (d_lists.last_turbulent16 >= d_lists.turbulent16.size())
+		{
+			d_lists.turbulent16.emplace_back();
+		}
+		auto& turbulent = d_lists.turbulent16[d_lists.last_turbulent16];
+		D_FillTurbulentData(turbulent, face, entity);
+		turbulent.first_index = d_lists.last_surface_index16 + 1;
+		new_size = d_lists.last_surface_index16 + 1 + face->numedges;
+		if (d_lists.surface_indices16.size() < new_size)
+		{
+			d_lists.surface_indices16.resize(new_size);
+		}
+		cursor = d_lists.last_surface_index32;
+		for (auto i = 0; i < face->numedges; i++)
+		{
+			cursor++;
+			d_lists.last_surface_index16++;
+			d_lists.surface_indices16[d_lists.last_surface_index16] = (uint16_t)d_lists.surface_indices32[cursor];
+		}
 	}
 	else
 	{
@@ -378,29 +632,10 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 		{
 			d_lists.turbulent32.emplace_back();
 		}
-		auto texinfo = face->texinfo;
-		auto texture = texinfo->texture;
 		auto& turbulent = d_lists.turbulent32[d_lists.last_turbulent32];
-		turbulent.vertexes = entity->model->vertexes;
-		turbulent.vertex_count = entity->model->numvertexes;
-		turbulent.texture = texture;
-		turbulent.width = texture->width;
-		turbulent.height = texture->height;
-		turbulent.size = turbulent.width * turbulent.height;
-		turbulent.data = (unsigned char*)texture + texture->offsets[0];
+		D_FillTurbulentData(turbulent, face, entity);
 		turbulent.first_index = d_lists.last_surface_index32 + 1;
-		turbulent.count = face->numedges;
-		turbulent.origin_x = entity->origin[0];
-		turbulent.origin_y = entity->origin[1];
-		turbulent.origin_z = entity->origin[2];
-		for (auto j = 0; j < 2; j++)
-		{
-			for (auto i = 0; i < 4; i++)
-			{
-				turbulent.vecs[j][i] = texinfo->vecs[j][i];
-			}
-		}
-		D_AddSurfaceIndices32ToLists (entity, face);
+		d_lists.last_surface_index32 = cursor;
 	}
 }
 
@@ -471,7 +706,7 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 	{
 		return;
 	}
-	if (mdl->numverts * 2 <= 65520)
+	if (mdl->numverts * 2 <= UPPER_16BIT_LIMIT)
 	{
 		d_lists.last_alias16++;
 		if (d_lists.last_alias16 >= d_lists.alias16.size())
@@ -656,7 +891,7 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 	{
 		return;
 	}
-	if (mdl->numverts * 2 <= 65520)
+	if (mdl->numverts * 2 <= UPPER_16BIT_LIMIT)
 	{
 		d_lists.last_viewmodel16++;
 		if (d_lists.last_viewmodel16 >= d_lists.viewmodels16.size())
@@ -935,7 +1170,7 @@ void D_AddParticleToLists (particle_t* part)
 	d_lists.last_colored_attribute++;
 	d_lists.colored_attributes[d_lists.last_colored_attribute] = part->color;
 	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
-	if (first_vertex + 4 <= 65520)
+	if (first_vertex + 4 <= UPPER_16BIT_LIMIT)
 	{
 		new_size = d_lists.last_colored_index16 + 1 + 6;
 		if (d_lists.colored_indices16.size() < new_size)
