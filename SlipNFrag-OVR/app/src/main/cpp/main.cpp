@@ -186,9 +186,6 @@ void android_main(struct android_app* app)
 #if defined(_DEBUG)
 		"VK_LAYER_KHRONOS_validation"
 #endif
-#if USE_API_DUMP == 1
-		,"VK_LAYER_LUNARG_api_dump"
-#endif
 	};
 	const uint32_t requestedCount = sizeof(requestedLayers) / sizeof(requestedLayers[0]);
 	std::vector<const char *> enabledLayerNames;
@@ -949,6 +946,7 @@ void android_main(struct android_app* app)
 					ovrModeParmsVulkan parms = vrapi_DefaultModeParmsVulkan(&appState.Java, (unsigned long long)appState.Context.queue);
 					parms.ModeParms.Flags &= ~VRAPI_MODE_FLAG_RESET_WINDOW_FULLSCREEN;
 					parms.ModeParms.Flags |= VRAPI_MODE_FLAG_NATIVE_WINDOW;
+					parms.ModeParms.Flags |= VRAPI_MODE_FLAG_PHASE_SYNC;
 					parms.ModeParms.WindowSurface = (size_t)appState.NativeWindow;
 					parms.ModeParms.Display = 0;
 					parms.ModeParms.ShareContext = 0;
@@ -1105,6 +1103,7 @@ void android_main(struct android_app* app)
 		}
 		appState.FrameIndex++;
 		appState.NoOffset = 0;
+		vrapi_WaitFrame(appState.Ovr, appState.FrameIndex);
 		const double predictedDisplayTime = vrapi_GetPredictedDisplayTime(appState.Ovr, appState.FrameIndex);
 		appState.Tracking = vrapi_GetPredictedTracking2(appState.Ovr, predictedDisplayTime);
 		appState.DisplayTime = predictedDisplayTime;
@@ -1359,6 +1358,7 @@ void android_main(struct android_app* app)
 			}
 			appState.Scale = -appState.Scene.pose.Position.y / playerHeight;
 		}
+		vrapi_BeginFrame(appState.Ovr, appState.FrameIndex);
 		appState.RenderScene(commandBufferBeginInfo);
 		if (appState.Mode == AppScreenMode)
 		{

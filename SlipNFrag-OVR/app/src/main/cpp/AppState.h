@@ -26,7 +26,7 @@ struct AppState
 	int DefaultFOV;
 	int FOV;
 	Scene Scene;
-	long long FrameIndex;
+	uint64_t FrameIndex;
 	double DisplayTime;
 	int SwapInterval;
 	int CpuLevel;
