@@ -87,9 +87,16 @@ void Lightmap::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		descriptorPoolCreateInfo.pPoolSizes = &poolSizes;
 		descriptorPoolCreateInfo.poolSizeCount = 1;
 		VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &allocation->descriptorPool));
-		descriptorSetLayouts.resize(count);
+		if (descriptorSetLayouts.size() < count)
+		{
+			auto start = descriptorSetLayouts.size();
+			descriptorSetLayouts.resize(count);
+			for (auto i = start; i < count; i++)
+			{
+				descriptorSetLayouts[i] = appState.Scene.singleImageLayout;
+			}
+		}
 		allocation->descriptorSets.resize(count);
-		std::fill(descriptorSetLayouts.begin(), descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
 		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		descriptorSetAllocateInfo.descriptorSetCount = 1;
@@ -121,19 +128,6 @@ void Lightmap::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 	imageMemoryBarrier.subresourceRange.levelCount = 1;
 	imageMemoryBarrier.subresourceRange.layerCount = layerCount;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	if (appState.Scene.lightmapSampler == VK_NULL_HANDLE)
-	{
-		VkSamplerCreateInfo samplerCreateInfo { };
-		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerCreateInfo.maxLod = 1;
-		samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
-		samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-		samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.lightmapSampler));
-	}
 	VkDescriptorImageInfo textureInfo { };
 	textureInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	textureInfo.sampler = appState.Scene.lightmapSampler;
