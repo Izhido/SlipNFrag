@@ -92,10 +92,12 @@ struct Scene
 	LoadedLightmap* currentLightmapToCreate;
 	std::vector<LoadedLightmap> surfaceLightmap16List;
 	std::vector<LoadedLightmap> surfaceLightmap32List;
-	std::vector<LoadedSharedMemoryTexture> surfaceTexture16List;
-	std::vector<LoadedSharedMemoryTexture> surfaceTexture32List;
 	std::vector<LoadedLightmap> fenceLightmap16List;
 	std::vector<LoadedLightmap> fenceLightmap32List;
+	LoadedSharedMemoryTexture* firstSharedMemoryTextureToCreate;
+	LoadedSharedMemoryTexture* currentSharedMemoryTextureToCreate;
+	std::vector<LoadedSharedMemoryTexture> surfaceTexture16List;
+	std::vector<LoadedSharedMemoryTexture> surfaceTexture32List;
 	std::vector<LoadedSharedMemoryTexture> fenceTexture16List;
 	std::vector<LoadedSharedMemoryTexture> fenceTexture32List;
 	std::vector<LoadedSharedMemoryTexture> spriteList;

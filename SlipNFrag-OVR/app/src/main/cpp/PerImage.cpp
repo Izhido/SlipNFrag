@@ -500,6 +500,20 @@ void PerImage::SetupLoadedLightmap(AppState& appState, dsurface_t& surface, Load
 	appState.Scene.currentLightmapToCreate = &lightmap;
 }
 
+void PerImage::SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture)
+{
+	sharedMemoryTexture.next = nullptr;
+	if (appState.Scene.currentSharedMemoryTextureToCreate == nullptr)
+	{
+		appState.Scene.firstSharedMemoryTextureToCreate = &sharedMemoryTexture;
+	}
+	else
+	{
+		appState.Scene.currentSharedMemoryTextureToCreate->next = &sharedMemoryTexture;
+	}
+	appState.Scene.currentSharedMemoryTextureToCreate = &sharedMemoryTexture;
+}
+
 void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize)
 {
 	auto entry = appState.Scene.lightmaps.find({ surface.surface, surface.entity });
@@ -758,6 +772,8 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 		auto& fence = d_lists.fences32[i];
 		GetSurfaceStagingBufferSize(appState, view, fence, appState.Scene.fenceLightmap32List[i], stagingBufferSize);
 	}
+	appState.Scene.firstSharedMemoryTextureToCreate = nullptr;
+	appState.Scene.currentSharedMemoryTextureToCreate = nullptr;
 	if (d_lists.last_surface16 >= appState.Scene.surfaceTexture16List.size())
 	{
 		appState.Scene.surfaceTexture16List.resize(d_lists.last_surface16 + 1);
@@ -765,6 +781,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
 		auto& surface = d_lists.surfaces16[i];
+		auto& surfaceFromList = appState.Scene.surfaceTexture16List[i];
 		auto entry = appState.Scene.surfaceTexturesPerKey.find(surface.texture);
 		if (entry == appState.Scene.surfaceTexturesPerKey.end())
 		{
@@ -772,17 +789,19 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			auto mipCount = (int)(std::floor(std::log2(std::max(surface.texture_width, surface.texture_height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, surface.texture_width, surface.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.surfaceTexture16List[i].size = surface.texture_size;
-			stagingBufferSize += appState.Scene.surfaceTexture16List[i].size;
+			surfaceFromList.size = surface.texture_size;
+			stagingBufferSize += surfaceFromList.size;
 			appState.Scene.surfaceTextures.MoveToFront(texture);
 			appState.Scene.surfaceTextureCount++;
 			appState.Scene.surfaceTexturesPerKey.insert({ surface.texture, texture });
-			appState.Scene.surfaceTexture16List[i].texture = texture;
+			surfaceFromList.texture = texture;
+			surfaceFromList.source = surface.texture;
+			SetupLoadedSharedMemoryTexture(appState, surfaceFromList);
 		}
 		else
 		{
-			appState.Scene.surfaceTexture16List[i].size = 0;
-			appState.Scene.surfaceTexture16List[i].texture = entry->second;
+			surfaceFromList.size = 0;
+			surfaceFromList.texture = entry->second;
 		}
 	}
 	if (d_lists.last_surface32 >= appState.Scene.surfaceTexture32List.size())
@@ -792,6 +811,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_surface32; i++)
 	{
 		auto& surface = d_lists.surfaces32[i];
+		auto& surfaceFromList = appState.Scene.surfaceTexture32List[i];
 		auto entry = appState.Scene.surfaceTexturesPerKey.find(surface.texture);
 		if (entry == appState.Scene.surfaceTexturesPerKey.end())
 		{
@@ -799,17 +819,19 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			auto mipCount = (int)(std::floor(std::log2(std::max(surface.texture_width, surface.texture_height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, surface.texture_width, surface.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.surfaceTexture32List[i].size = surface.texture_size;
-			stagingBufferSize += appState.Scene.surfaceTexture32List[i].size;
+			surfaceFromList.size = surface.texture_size;
+			stagingBufferSize += surfaceFromList.size;
 			appState.Scene.surfaceTextures.MoveToFront(texture);
 			appState.Scene.surfaceTextureCount++;
 			appState.Scene.surfaceTexturesPerKey.insert({ surface.texture, texture });
-			appState.Scene.surfaceTexture32List[i].texture = texture;
+			surfaceFromList.texture = texture;
+			surfaceFromList.source = surface.texture;
+			SetupLoadedSharedMemoryTexture(appState, surfaceFromList);
 		}
 		else
 		{
-			appState.Scene.surfaceTexture32List[i].size = 0;
-			appState.Scene.surfaceTexture32List[i].texture = entry->second;
+			surfaceFromList.size = 0;
+			surfaceFromList.texture = entry->second;
 		}
 	}
 	if (d_lists.last_fence16 >= appState.Scene.fenceTexture16List.size())
@@ -819,6 +841,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_fence16; i++)
 	{
 		auto& fence = d_lists.fences16[i];
+		auto& fenceFromList = appState.Scene.fenceTexture16List[i];
 		auto entry = appState.Scene.fenceTexturesPerKey.find(fence.texture);
 		if (entry == appState.Scene.fenceTexturesPerKey.end())
 		{
@@ -826,17 +849,19 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			auto mipCount = (int)(std::floor(std::log2(std::max(fence.texture_width, fence.texture_height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, fence.texture_width, fence.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.fenceTexture16List[i].size = fence.texture_size;
-			stagingBufferSize += appState.Scene.fenceTexture16List[i].size;
+			fenceFromList.size = fence.texture_size;
+			stagingBufferSize += fenceFromList.size;
 			appState.Scene.fenceTextures.MoveToFront(texture);
 			appState.Scene.fenceTextureCount++;
 			appState.Scene.fenceTexturesPerKey.insert({ fence.texture, texture });
-			appState.Scene.fenceTexture16List[i].texture = texture;
+			fenceFromList.texture = texture;
+			fenceFromList.source = fence.texture;
+			SetupLoadedSharedMemoryTexture(appState, fenceFromList);
 		}
 		else
 		{
-			appState.Scene.fenceTexture16List[i].size = 0;
-			appState.Scene.fenceTexture16List[i].texture = entry->second;
+			fenceFromList.size = 0;
+			fenceFromList.texture = entry->second;
 		}
 	}
 	if (d_lists.last_fence32 >= appState.Scene.fenceTexture32List.size())
@@ -846,6 +871,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_fence32; i++)
 	{
 		auto& fence = d_lists.fences32[i];
+		auto& fenceFromList = appState.Scene.fenceTexture32List[i];
 		auto entry = appState.Scene.fenceTexturesPerKey.find(fence.texture);
 		if (entry == appState.Scene.fenceTexturesPerKey.end())
 		{
@@ -853,17 +879,19 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			auto mipCount = (int)(std::floor(std::log2(std::max(fence.texture_width, fence.texture_height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, fence.texture_width, fence.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.fenceTexture32List[i].size = fence.texture_size;
-			stagingBufferSize += appState.Scene.fenceTexture32List[i].size;
+			fenceFromList.size = fence.texture_size;
+			stagingBufferSize += fenceFromList.size;
 			appState.Scene.fenceTextures.MoveToFront(texture);
 			appState.Scene.fenceTextureCount++;
 			appState.Scene.fenceTexturesPerKey.insert({ fence.texture, texture });
-			appState.Scene.fenceTexture32List[i].texture = texture;
+			fenceFromList.texture = texture;
+			fenceFromList.source = fence.texture;
+			SetupLoadedSharedMemoryTexture(appState, fenceFromList);
 		}
 		else
 		{
-			appState.Scene.fenceTexture32List[i].size = 0;
-			appState.Scene.fenceTexture32List[i].texture = entry->second;
+			fenceFromList.size = 0;
+			fenceFromList.texture = entry->second;
 		}
 	}
 	if (d_lists.last_sprite >= appState.Scene.spriteList.size())
@@ -873,6 +901,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_sprite; i++)
 	{
 		auto& sprite = d_lists.sprites[i];
+		auto& spriteFromList = appState.Scene.spriteList[i];
 		auto entry = appState.Scene.spritesPerKey.find(sprite.data);
 		if (entry == appState.Scene.spritesPerKey.end())
 		{
@@ -880,17 +909,19 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, commandBuffer, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.spriteList[i].size = sprite.size;
-			stagingBufferSize += appState.Scene.spriteList[i].size;
+			spriteFromList.size = sprite.size;
+			stagingBufferSize += spriteFromList.size;
 			appState.Scene.spriteTextures.MoveToFront(texture);
 			appState.Scene.spriteTextureCount++;
 			appState.Scene.spritesPerKey.insert({ sprite.data, texture });
-			appState.Scene.spriteList[i].texture = texture;
+			spriteFromList.texture = texture;
+			spriteFromList.source = sprite.data;
+			SetupLoadedSharedMemoryTexture(appState, spriteFromList);
 		}
 		else
 		{
-			appState.Scene.spriteList[i].size = 0;
-			appState.Scene.spriteList[i].texture = entry->second;
+			spriteFromList.size = 0;
+			spriteFromList.texture = entry->second;
 		}
 	}
 	appState.Scene.turbulentPerKey.clear();
@@ -987,55 +1018,12 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 		offset += lightmap->size;
 		lightmap = lightmap->next;
 	}
-	for (auto i = 0; i <= d_lists.last_surface16; i++)
+	auto sharedMemoryTexture = appState.Scene.firstSharedMemoryTextureToCreate;
+	while (sharedMemoryTexture != nullptr)
 	{
-		auto size = appState.Scene.surfaceTexture16List[i].size;
-		if (size > 0)
-		{
-			auto& surface = d_lists.surfaces16[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.texture, surface.texture_size);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_surface32; i++)
-	{
-		auto size = appState.Scene.surfaceTexture32List[i].size;
-		if (size > 0)
-		{
-			auto& surface = d_lists.surfaces32[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, surface.texture, surface.texture_size);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence16; i++)
-	{
-		auto size = appState.Scene.fenceTexture16List[i].size;
-		if (size > 0)
-		{
-			auto& fence = d_lists.fences16[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, fence.texture, fence.texture_size);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence32; i++)
-	{
-		auto size = appState.Scene.fenceTexture32List[i].size;
-		if (size > 0)
-		{
-			auto& fence = d_lists.fences32[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, fence.texture, fence.texture_size);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_sprite; i++)
-	{
-		auto size = appState.Scene.spriteList[i].size;
-		if (size > 0)
-		{
-			auto& sprite = d_lists.sprites[i];
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, sprite.data, sprite.size);
-			offset += size;
-		}
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, sharedMemoryTexture->source, sharedMemoryTexture->size);
+		offset += sharedMemoryTexture->size;
+		sharedMemoryTexture = sharedMemoryTexture->next;
 	}
 	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 	{
@@ -1189,50 +1177,12 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceS
 		offset += lightmap->size;
 		lightmap = lightmap->next;
 	}
-	for (auto i = 0; i <= d_lists.last_surface16; i++)
+	auto sharedMemoryTexture = appState.Scene.firstSharedMemoryTextureToCreate;
+	while (sharedMemoryTexture != nullptr)
 	{
-		auto size = appState.Scene.surfaceTexture16List[i].size;
-		if (size > 0)
-		{
-			appState.Scene.surfaceTexture16List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_surface32; i++)
-	{
-		auto size = appState.Scene.surfaceTexture32List[i].size;
-		if (size > 0)
-		{
-			appState.Scene.surfaceTexture32List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence16; i++)
-	{
-		auto size = appState.Scene.fenceTexture16List[i].size;
-		if (size > 0)
-		{
-			appState.Scene.fenceTexture16List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence32; i++)
-	{
-		auto size = appState.Scene.fenceTexture32List[i].size;
-		if (size > 0)
-		{
-			appState.Scene.fenceTexture32List[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_sprite; i++)
-	{
-		auto size = appState.Scene.spriteList[i].size;
-		if (size > 0)
-		{
-			appState.Scene.spriteList[i].texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
-			offset += size;
-		}
+		sharedMemoryTexture->texture->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
+		offset += sharedMemoryTexture->size;
+		sharedMemoryTexture = sharedMemoryTexture->next;
 	}
 	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 	{
