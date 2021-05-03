@@ -1441,7 +1441,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr));
 			void* previousVertexes = nullptr;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
 			for (auto i = 0; i <= d_lists.last_surface16; i++)
 			{
@@ -1455,11 +1455,11 @@ void PerImage::Render(AppState& appState)
 				SetPushConstants(surface, pushConstants);
 				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 17 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.surfaceTexture16List[i].texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, surfaceTextureResources, textureInfo, writes);
-				if (previousTextureDescriptorSet != descriptorSet)
+				if (previousTexture != texture)
 				{
+					auto descriptorSet = GetDescriptorSet(appState, texture, surfaceTextureResources, textureInfo, writes);
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					previousTextureDescriptorSet = descriptorSet;
+					previousTexture = texture;
 				}
 				auto lightmap = appState.Scene.surfaceLightmap16List[i].lightmap;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &lightmap->descriptorSet, 0, nullptr));
@@ -1472,7 +1472,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr));
 			void* previousVertexes = nullptr;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 			for (auto i = 0; i <= d_lists.last_surface32; i++)
 			{
@@ -1486,11 +1486,11 @@ void PerImage::Render(AppState& appState)
 				SetPushConstants(surface, pushConstants);
 				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 17 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.surfaceTexture32List[i].texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, surfaceTextureResources, textureInfo, writes);
-				if (previousTextureDescriptorSet != descriptorSet)
+				if (previousTexture != texture)
 				{
+					auto descriptorSet = GetDescriptorSet(appState, texture, surfaceTextureResources, textureInfo, writes);
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					previousTextureDescriptorSet = descriptorSet;
+					previousTexture = texture;
 				}
 				auto lightmap = appState.Scene.surfaceLightmap32List[i].lightmap;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &lightmap->descriptorSet, 0, nullptr));
@@ -1522,7 +1522,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr));
 			void* previousVertexes = nullptr;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
 			for (auto i = 0; i <= d_lists.last_fence16; i++)
 			{
@@ -1536,11 +1536,11 @@ void PerImage::Render(AppState& appState)
 				SetPushConstants(fence, pushConstants);
 				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 17 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.fenceTexture16List[i].texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, fenceTextureResources, textureInfo, writes);
-				if (previousTextureDescriptorSet != descriptorSet)
+				if (previousTexture != texture)
 				{
+					auto descriptorSet = GetDescriptorSet(appState, texture, fenceTextureResources, textureInfo, writes);
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					previousTextureDescriptorSet = descriptorSet;
+					previousTexture = texture;
 				}
 				auto lightmap = appState.Scene.fenceLightmap16List[i].lightmap;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 2, 1, &lightmap->descriptorSet, 0, nullptr));
@@ -1553,7 +1553,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr));
 			void* previousVertexes = nullptr;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 			for (auto i = 0; i <= d_lists.last_fence32; i++)
 			{
@@ -1567,11 +1567,11 @@ void PerImage::Render(AppState& appState)
 				SetPushConstants(fence, pushConstants);
 				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 17 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.fenceTexture32List[i].texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, fenceTextureResources, textureInfo, writes);
-				if (previousTextureDescriptorSet != descriptorSet)
+				if (previousTexture != texture)
 				{
+					auto descriptorSet = GetDescriptorSet(appState, texture, fenceTextureResources, textureInfo, writes);
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
-					previousTextureDescriptorSet = descriptorSet;
+					previousTexture = texture;
 				}
 				auto lightmap = appState.Scene.fenceLightmap32List[i].lightmap;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 2, 1, &lightmap->descriptorSet, 0, nullptr));
@@ -1650,6 +1650,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 			pushConstants[13] = (float)cl.time;
 			void* previousVertexes = nullptr;
+			Texture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
 			for (auto i = 0; i <= d_lists.last_turbulent16; i++)
 			{
@@ -1663,16 +1664,20 @@ void PerImage::Render(AppState& appState)
 				SetPushConstants(turbulent, pushConstants);
 				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 14 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.turbulent16List[i].texture;
-				if (turbulentResources.bound[descriptorSetIndex] != texture)
+				if (previousTexture != texture)
 				{
-					textureInfo[0].sampler = appState.Scene.textureSamplers[texture->mipCount];
-					textureInfo[0].imageView = texture->view;
-					writes[0].dstSet = turbulentResources.descriptorSets[descriptorSetIndex];
-					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-					turbulentResources.bound[descriptorSetIndex] = texture;
+					if (turbulentResources.bound[descriptorSetIndex] != texture)
+					{
+						textureInfo[0].sampler = appState.Scene.textureSamplers[texture->mipCount];
+						textureInfo[0].imageView = texture->view;
+						writes[0].dstSet = turbulentResources.descriptorSets[descriptorSetIndex];
+						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						turbulentResources.bound[descriptorSetIndex] = texture;
+					}
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &turbulentResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+					descriptorSetIndex++;
+					previousTexture = texture;
 				}
-				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &turbulentResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-				descriptorSetIndex++;
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, turbulent.count, 1, turbulent.first_index, 0, 0));
 			}
 		}
@@ -1683,6 +1688,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 			pushConstants[13] = (float)cl.time;
 			void* previousVertexes = nullptr;
+			Texture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 			for (auto i = 0; i <= d_lists.last_turbulent32; i++)
 			{
@@ -1696,16 +1702,20 @@ void PerImage::Render(AppState& appState)
 				SetPushConstants(turbulent, pushConstants);
 				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 14 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.turbulent32List[i].texture;
-				if (turbulentResources.bound[descriptorSetIndex] != texture)
+				if (previousTexture != texture)
 				{
-					textureInfo[0].sampler = appState.Scene.textureSamplers[texture->mipCount];
-					textureInfo[0].imageView = texture->view;
-					writes[0].dstSet = turbulentResources.descriptorSets[descriptorSetIndex];
-					VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-					turbulentResources.bound[descriptorSetIndex] = texture;
+					if (turbulentResources.bound[descriptorSetIndex] != texture)
+					{
+						textureInfo[0].sampler = appState.Scene.textureSamplers[texture->mipCount];
+						textureInfo[0].imageView = texture->view;
+						writes[0].dstSet = turbulentResources.descriptorSets[descriptorSetIndex];
+						VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+						turbulentResources.bound[descriptorSetIndex] = texture;
+					}
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &turbulentResources.descriptorSets[descriptorSetIndex], 0, nullptr));
+					descriptorSetIndex++;
+					previousTexture = texture;
 				}
-				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &turbulentResources.descriptorSets[descriptorSetIndex], 0, nullptr));
-				descriptorSetIndex++;
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, turbulent.count, 1, turbulent.first_index, 0, 0));
 			}
 		}
