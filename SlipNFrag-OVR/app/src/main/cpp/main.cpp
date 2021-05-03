@@ -965,7 +965,7 @@ void android_main(struct android_app* app)
 						std::vector<float> refreshRates(refreshRateCount);
 						vrapi_GetSystemPropertyFloatArray(&appState.Java, VRAPI_SYS_PROP_SUPPORTED_DISPLAY_REFRESH_RATES, refreshRates.data(), refreshRateCount);
 						float highestRefreshRate = 0;
-						for (auto entry : refreshRates)
+						for (auto& entry : refreshRates)
 						{
 							highestRefreshRate = std::max(highestRefreshRate, entry);
 						}
@@ -1243,7 +1243,7 @@ void android_main(struct android_app* app)
 				appState.PreviousMode = appState.Mode;
 			}
 		}
-		for (auto entry : appState.Scene.lightmaps)
+		for (auto& entry : appState.Scene.lightmaps)
 		{
 			auto total = 0;
 			auto erased = 0;
@@ -1269,7 +1269,7 @@ void android_main(struct android_app* app)
 				appState.Scene.lightmapsToDelete.push_back(entry.first);
 			}
 		}
-		for (auto entry : appState.Scene.lightmapsToDelete)
+		for (auto& entry : appState.Scene.lightmapsToDelete)
 		{
 			appState.Scene.lightmaps.erase(entry);
 		}

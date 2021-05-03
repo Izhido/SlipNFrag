@@ -7,8 +7,8 @@ precision mediump float;
 precision mediump int;
 
 layout(set = 0, binding = 1) uniform sampler2D fragmentPalette;
-layout(set = 1, binding = 0) uniform usampler2D fragmentTexture;
-layout(set = 2, binding = 0) uniform usampler2D fragmentColormap;
+layout(set = 1, binding = 0) uniform usampler2D fragmentColormap;
+layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
 
 layout(push_constant) uniform Tint
 {
