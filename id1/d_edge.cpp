@@ -185,6 +185,7 @@ void D_DrawSurfaces (void)
 			d_zistepu = s->d_zistepu;
 			d_zistepv = s->d_zistepv;
             d_ziorigin = s->d_ziorigin;
+
 			auto data_ptr = (size_t)s->data;
             int data = (int)data_ptr & 0xFF;
 
@@ -449,93 +450,114 @@ void D_DrawSurfacesToLists (void)
 
 	currententity = &cl_entities[0];
 
-	for (s = &surfaces[1] ; s<surface_p ; s++)
+	if (r_drawflat.value)
 	{
-		if (!s->spans)
-			continue;
-
-		r_drawnpolycount++;
-
-		if (s->flags & SURF_DRAWSKY)
+		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
-			if (r_skyinitialized)
+			if (!s->spans || s->flags & SURF_DRAWSKYBOX)
+				continue;
+
+			auto data_ptr = (size_t)s->data;
+			int data = (int)data_ptr & 0xFF;
+
+			pface = (msurface_t*)s->data;
+
+			if (pface == nullptr)
+				continue;
+
+			D_AddColoredSurfaceToLists (pface, currententity, data);
+		}
+	}
+	else
+	{
+		for (s = &surfaces[1] ; s<surface_p ; s++)
+		{
+			if (!s->spans)
+				continue;
+
+			r_drawnpolycount++;
+
+			if (s->flags & SURF_DRAWSKY)
 			{
-				if (!r_skymade)
+				if (r_skyinitialized)
 				{
-					R_MakeSky ();
+					if (!r_skymade)
+					{
+						R_MakeSky ();
+					}
+
+					D_AddSkyToLists(s);
+				}
+			}
+			else if (s->flags & SURF_DRAWSKYBOX)
+			{
+				D_AddSkyboxToLists(r_skytexinfo);
+			}
+			else if (s->flags & SURF_DRAWBACKGROUND)
+			{
+				d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+			}
+			else if (s->flags & SURF_DRAWTURB)
+			{
+				pface = (msurface_t*)s->data;
+				miplevel = 0;
+				cacheblock = (pixel_t *)
+						((byte *)pface->texinfo->texture +
+						pface->texinfo->texture->offsets[0]);
+				cachewidth = pface->texinfo->texture->width;
+
+				if (s->insubmodel)
+				{
+				// FIXME: we don't want to do all this for every polygon!
+				// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+												// R_RotateBmodel ()
 				}
 
-				D_AddSkyToLists(s);
+				D_AddTurbulentToLists (pface, currententity);
+
+				if (s->insubmodel)
+				{
+				//
+				// restore the old drawing state
+				// FIXME: we don't want to do this every time!
+				// TODO: speed up
+				//
+					currententity = &cl_entities[0];
+				}
 			}
-		}
-		else if (s->flags & SURF_DRAWSKYBOX)
-		{
-			D_AddSkyboxToLists(r_skytexinfo);
-		}
-		else if (s->flags & SURF_DRAWBACKGROUND)
-		{
-			d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
-		}
-		else if (s->flags & SURF_DRAWTURB)
-		{
-			pface = (msurface_t*)s->data;
-			miplevel = 0;
-			cacheblock = (pixel_t *)
-					((byte *)pface->texinfo->texture +
-					pface->texinfo->texture->offsets[0]);
-			cachewidth = pface->texinfo->texture->width;
-
-			if (s->insubmodel)
+			else
 			{
-			// FIXME: we don't want to do all this for every polygon!
-			// TODO: store once at start of frame
-				currententity = s->entity;	//FIXME: make this passed in to
-											// R_RotateBmodel ()
-			}
+				if (s->insubmodel)
+				{
+				// FIXME: we don't want to do all this for every polygon!
+				// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+												// R_RotateBmodel ()
+				}
 
-			D_AddTurbulentToLists (pface, currententity);
+				pface = (msurface_t*)s->data;
 
-			if (s->insubmodel)
-			{
-			//
-			// restore the old drawing state
-			// FIXME: we don't want to do this every time!
-			// TODO: speed up
-			//
-				currententity = &cl_entities[0];
-			}
-		}
-		else
-		{
-			if (s->insubmodel)
-			{
-			// FIXME: we don't want to do all this for every polygon!
-			// TODO: store once at start of frame
-				currententity = s->entity;	//FIXME: make this passed in to
-											// R_RotateBmodel ()
-			}
+				pcurrentcache = nullptr;
+				auto created = D_CacheLightmap (pface, &pcurrentcache);
 
-			pface = (msurface_t*)s->data;
+				if (pcurrentcache != nullptr)
+				{
+					if (s->isfence)
+						D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+					else
+						D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+				}
 
-			pcurrentcache = nullptr;
-			auto created = D_CacheLightmap (pface, &pcurrentcache);
-
-			if (pcurrentcache != nullptr)
-			{
-				if (s->isfence)
-					D_AddFenceToLists (pface, pcurrentcache, currententity, created);
-				else
-					D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
-			}
-
-			if (s->insubmodel)
-			{
-			//
-			// restore the old drawing state
-			// FIXME: we don't want to do this every time!
-			// TODO: speed up
-			//
-				currententity = &cl_entities[0];
+				if (s->insubmodel)
+				{
+				//
+				// restore the old drawing state
+				// FIXME: we don't want to do this every time!
+				// TODO: speed up
+				//
+					currententity = &cl_entities[0];
+				}
 			}
 		}
 	}
@@ -555,98 +577,124 @@ void D_DrawSurfacesToListsIfNeeded (void)
 
 	currententity = &cl_entities[0];
 
-	for (s = &surfaces[1] ; s<surface_p ; s++)
+	if (r_drawflat.value)
 	{
-		if (r_drawnsurfaces.find(s) != r_drawnsurfaces.end())
-			continue;
-
-		r_drawnsurfaces.insert(s);
-
-		if (!s->spans)
-			continue;
-
-		r_drawnpolycount++;
-
-		if (s->flags & SURF_DRAWSKY)
+		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
-			if (r_skyinitialized)
+			if (r_drawnsurfaces.find(s) != r_drawnsurfaces.end())
+				continue;
+
+			r_drawnsurfaces.insert(s);
+
+			if (!s->spans || s->flags & SURF_DRAWSKYBOX)
+				continue;
+
+			auto data_ptr = (size_t)s->data;
+			int data = (int)data_ptr & 0xFF;
+
+			pface = (msurface_t*)s->data;
+
+			if (pface == nullptr)
+				continue;
+
+			D_AddColoredSurfaceToLists (pface, currententity, data);
+		}
+	}
+	else
+	{
+		for (s = &surfaces[1] ; s<surface_p ; s++)
+		{
+			if (r_drawnsurfaces.find(s) != r_drawnsurfaces.end())
+				continue;
+
+			r_drawnsurfaces.insert(s);
+
+			if (!s->spans)
+				continue;
+
+			r_drawnpolycount++;
+
+			if (s->flags & SURF_DRAWSKY)
 			{
-				if (!r_skymade)
+				if (r_skyinitialized)
 				{
-					R_MakeSky ();
+					if (!r_skymade)
+					{
+						R_MakeSky ();
+					}
+
+					D_AddSkyToLists(s);
+				}
+			}
+			else if (s->flags & SURF_DRAWSKYBOX)
+			{
+				D_AddSkyboxToLists(r_skytexinfo);
+			}
+			else if (s->flags & SURF_DRAWBACKGROUND)
+			{
+				d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+			}
+			else if (s->flags & SURF_DRAWTURB)
+			{
+				pface = (msurface_t*)s->data;
+				miplevel = 0;
+				cacheblock = (pixel_t *)
+						((byte *)pface->texinfo->texture +
+						pface->texinfo->texture->offsets[0]);
+				cachewidth = pface->texinfo->texture->width;
+
+				if (s->insubmodel)
+				{
+				// FIXME: we don't want to do all this for every polygon!
+				// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+												// R_RotateBmodel ()
 				}
 
-				D_AddSkyToLists(s);
+				D_AddTurbulentToLists (pface, currententity);
+
+				if (s->insubmodel)
+				{
+				//
+				// restore the old drawing state
+				// FIXME: we don't want to do this every time!
+				// TODO: speed up
+				//
+					currententity = &cl_entities[0];
+				}
 			}
-		}
-		else if (s->flags & SURF_DRAWSKYBOX)
-		{
-			D_AddSkyboxToLists(r_skytexinfo);
-		}
-		else if (s->flags & SURF_DRAWBACKGROUND)
-		{
-			d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
-		}
-		else if (s->flags & SURF_DRAWTURB)
-		{
-			pface = (msurface_t*)s->data;
-			miplevel = 0;
-			cacheblock = (pixel_t *)
-					((byte *)pface->texinfo->texture +
-					pface->texinfo->texture->offsets[0]);
-			cachewidth = pface->texinfo->texture->width;
-
-			if (s->insubmodel)
+			else
 			{
-			// FIXME: we don't want to do all this for every polygon!
-			// TODO: store once at start of frame
-				currententity = s->entity;	//FIXME: make this passed in to
-											// R_RotateBmodel ()
-			}
+				if (s->insubmodel)
+				{
+				// FIXME: we don't want to do all this for every polygon!
+				// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+												// R_RotateBmodel ()
+				}
 
-			D_AddTurbulentToLists (pface, currententity);
+				pface = (msurface_t*)s->data;
 
-			if (s->insubmodel)
-			{
-			//
-			// restore the old drawing state
-			// FIXME: we don't want to do this every time!
-			// TODO: speed up
-			//
-				currententity = &cl_entities[0];
-			}
-		}
-		else
-		{
-			if (s->insubmodel)
-			{
-			// FIXME: we don't want to do all this for every polygon!
-			// TODO: store once at start of frame
-				currententity = s->entity;	//FIXME: make this passed in to
-											// R_RotateBmodel ()
-			}
+				pcurrentcache = nullptr;
+				auto created = D_CacheLightmap (pface, &pcurrentcache);
 
-			pface = (msurface_t*)s->data;
+				if (pcurrentcache != nullptr)
+				{
+					if (s->isfence)
+						D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+					else
+						D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+				}
 
-			pcurrentcache = nullptr;
-			auto created = D_CacheLightmap (pface, &pcurrentcache);
-
-			if (pcurrentcache != nullptr)
-			{
-				if (s->isfence)
-					D_AddFenceToLists (pface, pcurrentcache, currententity, created);
-				else
-					D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
-			}
-
-			if (s->insubmodel)
-			{
-			//
-			// restore the old drawing state
-			// FIXME: we don't want to do this every time!
-			// TODO: speed up
-			//
-				currententity = &cl_entities[0];
+				if (s->insubmodel)
+				{
+				//
+				// restore the old drawing state
+				// FIXME: we don't want to do this every time!
+				// TODO: speed up
+				//
+					currententity = &cl_entities[0];
+				}
 			}
 		}
 	}

@@ -1405,3 +1405,204 @@ void D_AddSkyboxToLists (mtexinfo_t* textures)
         sky.textures = textures;
     }
 }
+
+void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
+{
+	if (face->numedges < 3)
+	{
+		return;
+	}
+	auto new_size = d_lists.last_colored_vertex + 1 + 3 * face->numedges;
+	if (d_lists.colored_vertices.size() < new_size)
+	{
+		d_lists.colored_vertices.resize(new_size);
+	}
+	new_size = d_lists.last_colored_attribute + 1 + face->numedges;
+	if (d_lists.colored_attributes.size() < new_size)
+	{
+		d_lists.colored_attributes.resize(new_size);
+	}
+	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
+	if (first_vertex + face->numedges <= UPPER_16BIT_LIMIT)
+	{
+		auto edge = entity->model->surfedges[face->firstedge];
+		unsigned int index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		new_size = d_lists.last_colored_index16 + 1 + (face->numedges - 2) * 3;
+		if (d_lists.colored_indices16.size() < new_size)
+		{
+			d_lists.colored_indices16.resize(new_size);
+		}
+		auto& vertex = entity->model->vertexes[index];
+		auto x = vertex.position[0];
+		auto y = vertex.position[1];
+		auto z = vertex.position[2];
+		auto target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1;
+		*target++ = x;
+		*target++ = z;
+		*target = -y;
+		target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1;
+		*target = color;
+		d_lists.last_colored_index16++;
+		d_lists.colored_indices16[d_lists.last_colored_index16] = first_vertex;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		uint16_t previous_index = 0;
+		uint16_t before_previous_index;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			uint16_t current_index;
+			if (use_back)
+			{
+				next_back--;
+				current_index = next_back;
+			}
+			else
+			{
+				next_front++;
+				current_index = next_front;
+			}
+			edge = entity->model->surfedges[face->firstedge + current_index];
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			use_back = !use_back;
+			auto& vertex = entity->model->vertexes[index];
+			x = vertex.position[0];
+			y = vertex.position[1];
+			z = vertex.position[2];
+			target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1 + current_index * 3;
+			*target++ = x;
+			*target++ = z;
+			*target = -y;
+			target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1 + current_index;
+			*target = color;
+			if (i >= 3)
+			{
+				if (use_back)
+				{
+					d_lists.last_colored_index16++;
+					d_lists.colored_indices16[d_lists.last_colored_index16] = first_vertex + previous_index;
+					d_lists.last_colored_index16++;
+					d_lists.colored_indices16[d_lists.last_colored_index16] = first_vertex + before_previous_index;
+				}
+				else
+				{
+					d_lists.last_colored_index16++;
+					d_lists.colored_indices16[d_lists.last_colored_index16] = first_vertex + before_previous_index;
+					d_lists.last_colored_index16++;
+					d_lists.colored_indices16[d_lists.last_colored_index16] = first_vertex + previous_index;
+				}
+			}
+			d_lists.last_colored_index16++;
+			d_lists.colored_indices16[d_lists.last_colored_index16] = first_vertex + current_index;
+			before_previous_index = previous_index;
+			previous_index = current_index;
+		}
+	}
+	else
+	{
+		auto edge = entity->model->surfedges[face->firstedge];
+		unsigned int index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		new_size = d_lists.last_colored_index32 + 1 + (face->numedges - 2) * 3;
+		if (d_lists.colored_indices32.size() < new_size)
+		{
+			d_lists.colored_indices32.resize(new_size);
+		}
+		auto& vertex = entity->model->vertexes[index];
+		auto x = vertex.position[0];
+		auto y = vertex.position[1];
+		auto z = vertex.position[2];
+		auto target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1;
+		*target++ = x;
+		*target++ = z;
+		*target = -y;
+		target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1;
+		*target = color;
+		d_lists.last_colored_index32++;
+		d_lists.colored_indices32[d_lists.last_colored_index32] = first_vertex;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		uint32_t previous_index = first_vertex;
+		uint32_t before_previous_index;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			uint32_t current_index;
+			if (use_back)
+			{
+				next_back--;
+				current_index = next_back;
+			}
+			else
+			{
+				next_front++;
+				current_index = next_front;
+			}
+			edge = entity->model->surfedges[face->firstedge + current_index];
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			use_back = !use_back;
+			auto& vertex = entity->model->vertexes[index];
+			x = vertex.position[0];
+			y = vertex.position[1];
+			z = vertex.position[2];
+			target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1 + current_index * 3;
+			*target++ = x;
+			*target++ = z;
+			*target = -y;
+			target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1 + current_index;
+			*target = color;
+			if (i >= 3)
+			{
+				if (use_back)
+				{
+					d_lists.last_colored_index32++;
+					d_lists.colored_indices32[d_lists.last_colored_index32] = first_vertex + previous_index;
+					d_lists.last_colored_index32++;
+					d_lists.colored_indices32[d_lists.last_colored_index32] = first_vertex + before_previous_index;
+				}
+				else
+				{
+					d_lists.last_colored_index32++;
+					d_lists.colored_indices32[d_lists.last_colored_index32] = first_vertex + before_previous_index;
+					d_lists.last_colored_index32++;
+					d_lists.colored_indices32[d_lists.last_colored_index32] = first_vertex + previous_index;
+				}
+			}
+			d_lists.last_colored_index32++;
+			d_lists.colored_indices32[d_lists.last_colored_index32] = first_vertex + current_index;
+			before_previous_index = previous_index;
+			previous_index = current_index;
+		}
+	}
+	d_lists.last_colored_vertex += 3 * face->numedges;
+	d_lists.last_colored_attribute += face->numedges;
+}

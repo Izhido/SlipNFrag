@@ -154,3 +154,4 @@ void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 void D_AddParticleToLists (particle_t* part);
 void D_AddSkyToLists (surf_t* surf);
 void D_AddSkyboxToLists (mtexinfo_t* textures);
+void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color);
