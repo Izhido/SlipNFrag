@@ -444,8 +444,30 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &setupCommandBuffer));
 	auto consoleBottom = (float)(appState.ConsoleHeight - SBAR_HEIGHT - 24) / appState.ConsoleHeight;
 	auto statusBarTop = (float)(appState.ScreenHeight - SBAR_HEIGHT - 24) / appState.ScreenHeight;
-	appState.ConsoleVertices.assign({ -1, consoleBottom * 2 - 1, 0, 0, consoleBottom, 1, consoleBottom * 2 - 1, 0, 1, consoleBottom, 1, -1, 0, 1, 0, -1, -1, 0, 0, 0, -1, 1, 0, 0, 1, -1.0 / 3.0, 1, 0, 1, 1, -1.0 / 3.0, statusBarTop * 2 - 1, 0, 1, consoleBottom, -1, statusBarTop * 2 - 1, 0, 0, consoleBottom });
-	appState.ConsoleIndices.assign({ 0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4 });
+	appState.ConsoleVertices.assign(
+	{
+		-1, consoleBottom * 2 - 1, 0, 0, consoleBottom,
+		1, consoleBottom * 2 - 1, 0, 1, consoleBottom,
+		1, -1, 0, 1, 0,
+		-1, -1, 0, 0, 0,
+		-1, 1, 0, 0, 1,
+		-1.0 / 3.0, 1, 0, 1, 1,
+		-1.0 / 3.0, statusBarTop * 2 - 1, 0, 1, consoleBottom,
+		-1, statusBarTop * 2 - 1, 0, 0, consoleBottom,
+		-1, 1, 0, 0, 1,
+		1, 1, 0, 1, 1,
+		1, 0, 0, 1, 0,
+		-1, 0, 0, 0, 0
+	});
+	appState.ConsoleIndices.assign(
+	{
+		0, 1, 2,
+		2, 3, 0,
+		4, 5, 6,
+		6, 7, 4,
+		8, 9, 10,
+		10, 11, 8
+	});
 	imageFile = AAssetManager_open(app->activity->assetManager, "floor.png", AASSET_MODE_BUFFER);
 	imageFileLength = AAsset_getLength(imageFile);
 	imageSource.resize(imageFileLength);
@@ -1023,6 +1045,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &lightmapSampler));
+	appState.Keyboard.Create(appState);
 }
 
 void Scene::CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule)

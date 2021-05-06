@@ -922,6 +922,7 @@ void android_main(struct android_app* app)
 			VK(appState.Device.vkCreateFence(appState.Device.device, &fenceCreateInfo, nullptr, &perImage.fence));
 		}
 	}
+	appState.NoOffset = 0;
 	app->userData = &appState;
 	app->onAppCmd = appHandleCommands;
 	while (app->destroyRequested == 0)
@@ -1019,14 +1020,19 @@ void android_main(struct android_app* app)
 				__android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, "android_main(): vrapi_PollEvent() returned %s", eventName.c_str());
 			}
 		}
+		appState.FrameIndex++;
+		vrapi_WaitFrame(appState.Ovr, appState.FrameIndex);
+		const double predictedDisplayTime = vrapi_GetPredictedDisplayTime(appState.Ovr, appState.FrameIndex);
+		appState.Tracking = vrapi_GetPredictedTracking2(appState.Ovr, predictedDisplayTime);
+		appState.DisplayTime = predictedDisplayTime;
 		auto leftRemoteFound = false;
 		auto rightRemoteFound = false;
-		appState.LeftButtons = 0;
-		appState.RightButtons = 0;
-		appState.LeftJoystick.x = 0;
-		appState.LeftJoystick.y = 0;
-		appState.RightJoystick.x = 0;
-		appState.RightJoystick.y = 0;
+		appState.LeftController.Buttons = 0;
+		appState.RightController.Buttons = 0;
+		appState.LeftController.Joystick.x = 0;
+		appState.LeftController.Joystick.y = 0;
+		appState.RightController.Joystick.x = 0;
+		appState.RightController.Joystick.y = 0;
 		for (auto i = 0; ; i++)
 		{
 			ovrInputCapabilityHeader cap;
@@ -1049,14 +1055,16 @@ void android_main(struct android_app* app)
 						if ((trCap->ControllerCapabilities & ovrControllerCaps_LeftHand) != 0)
 						{
 							leftRemoteFound = true;
-							appState.LeftButtons = trackedRemoteState.Buttons;
-							appState.LeftJoystick = trackedRemoteState.Joystick;
+							appState.LeftController.Buttons = trackedRemoteState.Buttons;
+							appState.LeftController.Joystick = trackedRemoteState.Joystick;
+							appState.LeftController.TrackingResult = vrapi_GetInputTrackingState(appState.Ovr, cap.DeviceID, predictedDisplayTime, &appState.LeftController.Tracking);
 						}
 						else if ((trCap->ControllerCapabilities & ovrControllerCaps_RightHand) != 0)
 						{
 							rightRemoteFound = true;
-							appState.RightButtons = trackedRemoteState.Buttons;
-							appState.RightJoystick = trackedRemoteState.Joystick;
+							appState.RightController.Buttons = trackedRemoteState.Buttons;
+							appState.RightController.Joystick = trackedRemoteState.Joystick;
+							appState.RightController.TrackingResult = vrapi_GetInputTrackingState(appState.Ovr, cap.DeviceID, predictedDisplayTime, &appState.RightController.Tracking);
 						}
 					}
 				}
@@ -1064,7 +1072,10 @@ void android_main(struct android_app* app)
 		}
 		if (leftRemoteFound && rightRemoteFound)
 		{
-			Input::Handle(appState);
+			if (!appState.Keyboard.Handle(appState))
+			{
+				Input::Handle(appState);
+			}
 		}
 		else
 		{
@@ -1072,25 +1083,25 @@ void android_main(struct android_app* app)
 		}
 		if (leftRemoteFound)
 		{
-			appState.PreviousLeftButtons = appState.LeftButtons;
-			appState.PreviousLeftJoystick = appState.LeftJoystick;
+			appState.LeftController.PreviousButtons = appState.LeftController.Buttons;
+			appState.LeftController.PreviousJoystick = appState.LeftController.Joystick;
 		}
 		else
 		{
-			appState.PreviousLeftButtons = 0;
-			appState.PreviousLeftJoystick.x = 0;
-			appState.PreviousLeftJoystick.y = 0;
+			appState.LeftController.PreviousButtons = 0;
+			appState.LeftController.PreviousJoystick.x = 0;
+			appState.LeftController.PreviousJoystick.y = 0;
 		}
 		if (rightRemoteFound)
 		{
-			appState.PreviousRightButtons = appState.RightButtons;
-			appState.PreviousRightJoystick = appState.RightJoystick;
+			appState.RightController.PreviousButtons = appState.RightController.Buttons;
+			appState.RightController.PreviousJoystick = appState.RightController.Joystick;
 		}
 		else
 		{
-			appState.PreviousRightButtons = 0;
-			appState.PreviousRightJoystick.x = 0;
-			appState.PreviousRightJoystick.y = 0;
+			appState.RightController.PreviousButtons = 0;
+			appState.RightController.PreviousJoystick.x = 0;
+			appState.RightController.PreviousJoystick.y = 0;
 		}
 		if (appState.Ovr == nullptr)
 		{
@@ -1101,12 +1112,6 @@ void android_main(struct android_app* app)
 			appState.Scene.Create(appState, commandBufferAllocateInfo, setupCommandBuffer, commandBufferBeginInfo, setupSubmitInfo, instance, fenceCreateInfo, app);
 			appState.Scene.createdScene = true;
 		}
-		appState.FrameIndex++;
-		appState.NoOffset = 0;
-		vrapi_WaitFrame(appState.Ovr, appState.FrameIndex);
-		const double predictedDisplayTime = vrapi_GetPredictedDisplayTime(appState.Ovr, appState.FrameIndex);
-		appState.Tracking = vrapi_GetPredictedTracking2(appState.Ovr, predictedDisplayTime);
-		appState.DisplayTime = predictedDisplayTime;
 		{
 			std::lock_guard<std::mutex> lock(appState.ModeChangeMutex);
 			if (appState.Mode != AppStartupMode && appState.Mode != AppNoGameDataMode)
@@ -1183,8 +1188,8 @@ void android_main(struct android_app* app)
 							exit(0);
 						}
 					}
-					appState.PreviousLeftButtons = 0;
-					appState.PreviousRightButtons = 0;
+					appState.LeftController.PreviousButtons = 0;
+					appState.RightController.PreviousButtons = 0;
 					appState.DefaultFOV = (int)Cvar_VariableValue("fov");
 					r_skybox_as_rgba = true;
 					appState.EngineThread = std::thread(runEngine, &appState, app);
@@ -1517,6 +1522,7 @@ void android_main(struct android_app* app)
 			VC(appState.Device.vkUnmapMemory(appState.Device.device, indices->memory));
 			indices->mapped = nullptr;
 			indices->SubmitIndexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
+			auto keyboardDrawn = appState.Keyboard.Draw(appState);
 			auto stagingBufferSize = 0;
 			perImage.paletteOffset = -1;
 			if (perImage.palette == nullptr || perImage.paletteChanged != pal_changed)
@@ -1542,6 +1548,17 @@ void android_main(struct android_app* app)
 			}
 			perImage.textureOffset = stagingBufferSize;
 			stagingBufferSize += con_buffer.size();
+			if (appState.Keyboard.texture == nullptr && keyboardDrawn)
+			{
+				appState.Keyboard.texture = new Texture();
+				appState.Keyboard.texture->Create(appState, perImage.commandBuffer, appState.ConsoleWidth, appState.ConsoleHeight / 2, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			}
+			appState.Keyboard.textureOffset = -1;
+			if (keyboardDrawn)
+			{
+				appState.Keyboard.textureOffset = stagingBufferSize;
+				stagingBufferSize += appState.Keyboard.buffer.size();
+			}
 			auto stagingBuffer = perImage.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
 			VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
 			auto offset = 0;
@@ -1561,6 +1578,7 @@ void android_main(struct android_app* app)
 				{
 					std::lock_guard<std::mutex> lock(appState.RenderMutex);
 					memcpy(((unsigned char*)stagingBuffer->mapped) + offset, con_buffer.data(), con_buffer.size());
+					offset += con_buffer.size();
 				}
 				{
 					std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
@@ -1587,6 +1605,10 @@ void android_main(struct android_app* app)
 					}
 				}
 			}
+			if (appState.Keyboard.textureOffset >= 0)
+			{
+				memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.Keyboard.buffer.data(), appState.Keyboard.buffer.size());
+			}
 			VkMappedMemoryRange mappedMemoryRange { };
 			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 			mappedMemoryRange.memory = stagingBuffer->memory;
@@ -1600,6 +1622,10 @@ void android_main(struct android_app* app)
 			if (perImage.textureOffset >= 0)
 			{
 				perImage.texture->Fill(appState, stagingBuffer, perImage.textureOffset, perImage.commandBuffer);
+			}
+			if (appState.Keyboard.textureOffset >= 0)
+			{
+				appState.Keyboard.texture->Fill(appState, stagingBuffer, appState.Keyboard.textureOffset, perImage.commandBuffer);
 			}
 			VkClearValue clearValues[3] { };
 			VkRenderPassBeginInfo renderPassBeginInfo { };
@@ -1661,9 +1687,53 @@ void android_main(struct android_app* app)
 				VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
 				perImage.descriptorResources.created = true;
 			}
+			if (!appState.Keyboard.descriptorResources.created && keyboardDrawn)
+			{
+				VkDescriptorPoolSize poolSize;
+				poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				poolSize.descriptorCount = 2;
+				VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
+				descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+				descriptorPoolCreateInfo.maxSets = 1;
+				descriptorPoolCreateInfo.poolSizeCount = 1;
+				descriptorPoolCreateInfo.pPoolSizes = &poolSize;
+				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &appState.Keyboard.descriptorResources.descriptorPool));
+				VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
+				descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+				descriptorSetAllocateInfo.descriptorPool = appState.Keyboard.descriptorResources.descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.doubleImageLayout;
+				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &appState.Keyboard.descriptorResources.descriptorSet));
+				VkDescriptorImageInfo textureInfo[2] { };
+				textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				textureInfo[0].sampler = appState.Scene.textureSamplers[appState.Keyboard.texture->mipCount];
+				textureInfo[0].imageView = appState.Keyboard.texture->view;
+				textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				textureInfo[1].sampler = appState.Scene.textureSamplers[perImage.palette->mipCount];
+				textureInfo[1].imageView = perImage.palette->view;
+				VkWriteDescriptorSet writes[2] { };
+				writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writes[0].dstSet = appState.Keyboard.descriptorResources.descriptorSet;
+				writes[0].descriptorCount = 1;
+				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[0].pImageInfo = textureInfo;
+				writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writes[1].dstBinding = 1;
+				writes[1].dstSet = appState.Keyboard.descriptorResources.descriptorSet;
+				writes[1].descriptorCount = 1;
+				writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[1].pImageInfo = textureInfo + 1;
+				VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
+				appState.Keyboard.descriptorResources.created = true;
+			}
 			VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices->buffer, appState.NoOffset, VK_INDEX_TYPE_UINT16));
 			VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipelineLayout, 0, 1, &perImage.descriptorResources.descriptorSet, 0, nullptr));
-			VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, appState.ConsoleIndices.size(), 1, 0, 0, 0));
+			VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, appState.ConsoleIndices.size() - 6, 1, 0, 0, 0));
+			if (keyboardDrawn)
+			{
+				VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipelineLayout, 0, 1, &appState.Keyboard.descriptorResources.descriptorSet, 0, nullptr));
+				VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, 6, 1, appState.ConsoleIndices.size() - 6, 0, 0));
+			}
 			VC(appState.Device.vkCmdEndRenderPass(perImage.commandBuffer));
 			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.Console.View.framebuffer.endBarriers[appState.Console.View.index]));
 			VK(appState.Device.vkEndCommandBuffer(perImage.commandBuffer));

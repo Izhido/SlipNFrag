@@ -9,7 +9,9 @@
 #include "Panel.h"
 #include "Screen.h"
 #include "Console.h"
+#include "Controller.h"
 #include <thread>
+#include "Keyboard.h"
 
 struct AppState
 {
@@ -63,14 +65,8 @@ struct AppState
 	std::vector<uint32_t> NoGameDataData;
 	double PreviousTime;
 	double CurrentTime;
-	uint32_t PreviousLeftButtons;
-	uint32_t PreviousRightButtons;
-	uint32_t LeftButtons;
-	uint32_t RightButtons;
-	ovrVector2f PreviousLeftJoystick;
-	ovrVector2f PreviousRightJoystick;
-	ovrVector2f LeftJoystick;
-	ovrVector2f RightJoystick;
+	Controller LeftController;
+	Controller RightController;
 	bool NearViewModel;
 	double TimeInWorldMode;
 	bool ControlsMessageDisplayed;
@@ -81,6 +77,7 @@ struct AppState
 	std::mutex RenderMutex;
 	std::thread EngineThread;
 	bool EngineThreadStopped;
+	Keyboard Keyboard;
 
 	void RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo);
 };

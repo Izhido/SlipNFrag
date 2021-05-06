@@ -10,22 +10,22 @@ int Input::lastInputQueueItem = -1;
 
 bool Input::LeftButtonIsDown(AppState& appState, uint32_t button)
 {
-	return ((appState.LeftButtons & button) != 0 && (appState.PreviousLeftButtons & button) == 0);
+	return ((appState.LeftController.Buttons & button) != 0 && (appState.LeftController.PreviousButtons & button) == 0);
 }
 
 bool Input::LeftButtonIsUp(AppState& appState, uint32_t button)
 {
-	return ((appState.LeftButtons & button) == 0 && (appState.PreviousLeftButtons & button) != 0);
+	return ((appState.LeftController.Buttons & button) == 0 && (appState.LeftController.PreviousButtons & button) != 0);
 }
 
 bool Input::RightButtonIsDown(AppState& appState, uint32_t button)
 {
-	return ((appState.RightButtons & button) != 0 && (appState.PreviousRightButtons & button) == 0);
+	return ((appState.RightController.Buttons & button) != 0 && (appState.RightController.PreviousButtons & button) == 0);
 }
 
 bool Input::RightButtonIsUp(AppState& appState, uint32_t button)
 {
-	return ((appState.RightButtons & button) == 0 && (appState.PreviousRightButtons & button) != 0);
+	return ((appState.RightController.Buttons & button) == 0 && (appState.RightController.PreviousButtons & button) != 0);
 }
 
 void Input::AddKeyInput(int key, int down)
@@ -65,13 +65,13 @@ void Input::Handle(AppState& appState)
 	{
 		if (appState.StartupButtonsPressed)
 		{
-			if ((appState.LeftButtons & ovrButton_X) == 0 && (appState.RightButtons & ovrButton_A) == 0)
+			if ((appState.LeftController.Buttons & ovrButton_X) == 0 && (appState.RightController.Buttons & ovrButton_A) == 0)
 			{
 				appState.Mode = AppWorldMode;
 				appState.StartupButtonsPressed = false;
 			}
 		}
-		else if ((appState.LeftButtons & ovrButton_X) != 0 && (appState.RightButtons & ovrButton_A) != 0)
+		else if ((appState.LeftController.Buttons & ovrButton_X) != 0 && (appState.RightController.Buttons & ovrButton_A) != 0)
 		{
 			appState.StartupButtonsPressed = true;
 		}
@@ -93,10 +93,10 @@ void Input::Handle(AppState& appState)
 				if (joy_initialized)
 				{
 					joy_avail = true;
-					pdwRawValue[JOY_AXIS_X] = -appState.LeftJoystick.x;
-					pdwRawValue[JOY_AXIS_Y] = -appState.LeftJoystick.y;
-					pdwRawValue[JOY_AXIS_Z] = appState.RightJoystick.x;
-					pdwRawValue[JOY_AXIS_R] = appState.RightJoystick.y;
+					pdwRawValue[JOY_AXIS_X] = -appState.LeftController.Joystick.x;
+					pdwRawValue[JOY_AXIS_Y] = -appState.LeftController.Joystick.y;
+					pdwRawValue[JOY_AXIS_Z] = appState.RightController.Joystick.x;
+					pdwRawValue[JOY_AXIS_R] = appState.RightController.Joystick.y;
 				}
 				if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
 				{
@@ -167,35 +167,35 @@ void Input::Handle(AppState& appState)
 			}
 			else
 			{
-				if ((appState.LeftJoystick.y > 0.5 && appState.PreviousLeftJoystick.y <= 0.5) || (appState.RightJoystick.y > 0.5 && appState.PreviousRightJoystick.y <= 0.5))
+				if ((appState.LeftController.Joystick.y > 0.5 && appState.LeftController.PreviousJoystick.y <= 0.5) || (appState.RightController.Joystick.y > 0.5 && appState.RightController.PreviousJoystick.y <= 0.5))
 				{
 					AddKeyInput(K_UPARROW, true);
 				}
-				if ((appState.LeftJoystick.y <= 0.5 && appState.PreviousLeftJoystick.y > 0.5) || (appState.RightJoystick.y <= 0.5 && appState.PreviousRightJoystick.y > 0.5))
+				if ((appState.LeftController.Joystick.y <= 0.5 && appState.LeftController.PreviousJoystick.y > 0.5) || (appState.RightController.Joystick.y <= 0.5 && appState.RightController.PreviousJoystick.y > 0.5))
 				{
 					AddKeyInput(K_UPARROW, false);
 				}
-				if ((appState.LeftJoystick.y < -0.5 && appState.PreviousLeftJoystick.y >= -0.5) || (appState.RightJoystick.y < -0.5 && appState.PreviousRightJoystick.y >= -0.5))
+				if ((appState.LeftController.Joystick.y < -0.5 && appState.LeftController.PreviousJoystick.y >= -0.5) || (appState.RightController.Joystick.y < -0.5 && appState.RightController.PreviousJoystick.y >= -0.5))
 				{
 					AddKeyInput(K_DOWNARROW, true);
 				}
-				if ((appState.LeftJoystick.y >= -0.5 && appState.PreviousLeftJoystick.y < -0.5) || (appState.RightJoystick.y >= -0.5 && appState.PreviousRightJoystick.y < -0.5))
+				if ((appState.LeftController.Joystick.y >= -0.5 && appState.LeftController.PreviousJoystick.y < -0.5) || (appState.RightController.Joystick.y >= -0.5 && appState.RightController.PreviousJoystick.y < -0.5))
 				{
 					AddKeyInput(K_DOWNARROW, false);
 				}
-				if ((appState.LeftJoystick.x > 0.5 && appState.PreviousLeftJoystick.x <= 0.5) || (appState.RightJoystick.x > 0.5 && appState.PreviousRightJoystick.x <= 0.5))
+				if ((appState.LeftController.Joystick.x > 0.5 && appState.LeftController.PreviousJoystick.x <= 0.5) || (appState.RightController.Joystick.x > 0.5 && appState.RightController.PreviousJoystick.x <= 0.5))
 				{
 					AddKeyInput(K_RIGHTARROW, true);
 				}
-				if ((appState.LeftJoystick.x <= 0.5 && appState.PreviousLeftJoystick.x > 0.5) || (appState.RightJoystick.x <= 0.5 && appState.PreviousRightJoystick.x > 0.5))
+				if ((appState.LeftController.Joystick.x <= 0.5 && appState.LeftController.PreviousJoystick.x > 0.5) || (appState.RightController.Joystick.x <= 0.5 && appState.RightController.PreviousJoystick.x > 0.5))
 				{
 					AddKeyInput(K_RIGHTARROW, false);
 				}
-				if ((appState.LeftJoystick.x < -0.5 && appState.PreviousLeftJoystick.x >= -0.5) || (appState.RightJoystick.x < -0.5 && appState.PreviousRightJoystick.x >= -0.5))
+				if ((appState.LeftController.Joystick.x < -0.5 && appState.LeftController.PreviousJoystick.x >= -0.5) || (appState.RightController.Joystick.x < -0.5 && appState.RightController.PreviousJoystick.x >= -0.5))
 				{
 					AddKeyInput(K_LEFTARROW, true);
 				}
-				if ((appState.LeftJoystick.x >= -0.5 && appState.PreviousLeftJoystick.x < -0.5) || (appState.RightJoystick.x >= -0.5 && appState.PreviousRightJoystick.x < -0.5))
+				if ((appState.LeftController.Joystick.x >= -0.5 && appState.LeftController.PreviousJoystick.x < -0.5) || (appState.RightController.Joystick.x >= -0.5 && appState.RightController.PreviousJoystick.x < -0.5))
 				{
 					AddKeyInput(K_LEFTARROW, false);
 				}
@@ -265,8 +265,8 @@ void Input::Handle(AppState& appState)
 				if (joy_initialized)
 				{
 					joy_avail = true;
-					pdwRawValue[JOY_AXIS_X] = -appState.LeftJoystick.x - appState.RightJoystick.x;
-					pdwRawValue[JOY_AXIS_Y] = -appState.LeftJoystick.y - appState.RightJoystick.y;
+					pdwRawValue[JOY_AXIS_X] = -appState.LeftController.Joystick.x - appState.RightController.Joystick.x;
+					pdwRawValue[JOY_AXIS_Y] = -appState.LeftController.Joystick.y - appState.RightController.Joystick.y;
 				}
 				if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
 				{
@@ -337,35 +337,35 @@ void Input::Handle(AppState& appState)
 			}
 			else
 			{
-				if ((appState.LeftJoystick.y > 0.5 && appState.PreviousLeftJoystick.y <= 0.5) || (appState.RightJoystick.y > 0.5 && appState.PreviousRightJoystick.y <= 0.5))
+				if ((appState.LeftController.Joystick.y > 0.5 && appState.LeftController.PreviousJoystick.y <= 0.5) || (appState.RightController.Joystick.y > 0.5 && appState.RightController.PreviousJoystick.y <= 0.5))
 				{
 					AddKeyInput(K_UPARROW, true);
 				}
-				if ((appState.LeftJoystick.y <= 0.5 && appState.PreviousLeftJoystick.y > 0.5) || (appState.RightJoystick.y <= 0.5 && appState.PreviousRightJoystick.y > 0.5))
+				if ((appState.LeftController.Joystick.y <= 0.5 && appState.LeftController.PreviousJoystick.y > 0.5) || (appState.RightController.Joystick.y <= 0.5 && appState.RightController.PreviousJoystick.y > 0.5))
 				{
 					AddKeyInput(K_UPARROW, false);
 				}
-				if ((appState.LeftJoystick.y < -0.5 && appState.PreviousLeftJoystick.y >= -0.5) || (appState.RightJoystick.y < -0.5 && appState.PreviousRightJoystick.y >= -0.5))
+				if ((appState.LeftController.Joystick.y < -0.5 && appState.LeftController.PreviousJoystick.y >= -0.5) || (appState.RightController.Joystick.y < -0.5 && appState.RightController.PreviousJoystick.y >= -0.5))
 				{
 					AddKeyInput(K_DOWNARROW, true);
 				}
-				if ((appState.LeftJoystick.y >= -0.5 && appState.PreviousLeftJoystick.y < -0.5) || (appState.RightJoystick.y >= -0.5 && appState.PreviousRightJoystick.y < -0.5))
+				if ((appState.LeftController.Joystick.y >= -0.5 && appState.LeftController.PreviousJoystick.y < -0.5) || (appState.RightController.Joystick.y >= -0.5 && appState.RightController.PreviousJoystick.y < -0.5))
 				{
 					AddKeyInput(K_DOWNARROW, false);
 				}
-				if ((appState.LeftJoystick.x > 0.5 && appState.PreviousLeftJoystick.x <= 0.5) || (appState.RightJoystick.x > 0.5 && appState.PreviousRightJoystick.x <= 0.5))
+				if ((appState.LeftController.Joystick.x > 0.5 && appState.LeftController.PreviousJoystick.x <= 0.5) || (appState.RightController.Joystick.x > 0.5 && appState.RightController.PreviousJoystick.x <= 0.5))
 				{
 					AddKeyInput(K_RIGHTARROW, true);
 				}
-				if ((appState.LeftJoystick.x <= 0.5 && appState.PreviousLeftJoystick.x > 0.5) || (appState.RightJoystick.x <= 0.5 && appState.PreviousRightJoystick.x > 0.5))
+				if ((appState.LeftController.Joystick.x <= 0.5 && appState.LeftController.PreviousJoystick.x > 0.5) || (appState.RightController.Joystick.x <= 0.5 && appState.RightController.PreviousJoystick.x > 0.5))
 				{
 					AddKeyInput(K_RIGHTARROW, false);
 				}
-				if ((appState.LeftJoystick.x < -0.5 && appState.PreviousLeftJoystick.x >= -0.5) || (appState.RightJoystick.x < -0.5 && appState.PreviousRightJoystick.x >= -0.5))
+				if ((appState.LeftController.Joystick.x < -0.5 && appState.LeftController.PreviousJoystick.x >= -0.5) || (appState.RightController.Joystick.x < -0.5 && appState.RightController.PreviousJoystick.x >= -0.5))
 				{
 					AddKeyInput(K_LEFTARROW, true);
 				}
-				if ((appState.LeftJoystick.x >= -0.5 && appState.PreviousLeftJoystick.x < -0.5) || (appState.RightJoystick.x >= -0.5 && appState.PreviousRightJoystick.x < -0.5))
+				if ((appState.LeftController.Joystick.x >= -0.5 && appState.LeftController.PreviousJoystick.x < -0.5) || (appState.RightController.Joystick.x >= -0.5 && appState.RightController.PreviousJoystick.x < -0.5))
 				{
 					AddKeyInput(K_LEFTARROW, false);
 				}
