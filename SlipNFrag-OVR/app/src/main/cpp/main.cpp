@@ -1291,15 +1291,7 @@ void android_main(struct android_app* app)
 			if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
 			{
 				Buffer* next = (*b)->next;
-				if ((*b)->mapped != nullptr)
-				{
-					VC(appState.Device.vkUnmapMemory(appState.Device.device, (*b)->memory));
-				}
-				VC(appState.Device.vkDestroyBuffer(appState.Device.device, (*b)->buffer, nullptr));
-				if ((*b)->memory != VK_NULL_HANDLE)
-				{
-					VC(appState.Device.vkFreeMemory(appState.Device.device, (*b)->memory, nullptr));
-				}
+				(*b)->Destroy(appState);
 				delete *b;
 				*b = next;
 			}
@@ -2238,12 +2230,7 @@ void android_main(struct android_app* app)
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.fenceFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.surfaceFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.surfaceVertex, nullptr));
-	if (appState.Scene.matrices.mapped != nullptr)
-	{
-		VC(appState.Device.vkUnmapMemory(appState.Device.device, appState.Scene.matrices.memory));
-	}
-	VC(appState.Device.vkDestroyBuffer(appState.Device.device, appState.Scene.matrices.buffer, nullptr));
-	VC(appState.Device.vkFreeMemory(appState.Device.device, appState.Scene.matrices.memory, nullptr));
+	appState.Scene.matrices.Destroy(appState);
 	vrapi_DestroySystemVulkan();
 	if (appState.Context.device != nullptr)
 	{

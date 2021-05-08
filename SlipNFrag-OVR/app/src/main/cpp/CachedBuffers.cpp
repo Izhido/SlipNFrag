@@ -77,15 +77,7 @@ void CachedBuffers::DeleteOld(AppState& appState)
 		if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
 		{
 			Buffer* next = (*b)->next;
-			if ((*b)->mapped != nullptr)
-			{
-				VC(appState.Device.vkUnmapMemory(appState.Device.device, (*b)->memory));
-			}
-			VC(appState.Device.vkDestroyBuffer(appState.Device.device, (*b)->buffer, nullptr));
-			if ((*b)->memory != VK_NULL_HANDLE)
-			{
-				VC(appState.Device.vkFreeMemory(appState.Device.device, (*b)->memory, nullptr));
-			}
+			(*b)->Destroy(appState);
 			delete *b;
 			*b = next;
 		}
@@ -125,29 +117,13 @@ void CachedBuffers::Delete(AppState& appState)
 	for (Buffer* b = buffers, *next = nullptr; b != nullptr; b = next)
 	{
 		next = b->next;
-		if (b->mapped != nullptr)
-		{
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, b->memory));
-		}
-		VC(appState.Device.vkDestroyBuffer(appState.Device.device, b->buffer, nullptr));
-		if (b->buffer != VK_NULL_HANDLE)
-		{
-			VC(appState.Device.vkFreeMemory(appState.Device.device, b->memory, nullptr));
-		}
+		b->Destroy(appState);
 		delete b;
 	}
 	for (Buffer* b = oldBuffers, *next = nullptr; b != nullptr; b = next)
 	{
 		next = b->next;
-		if (b->mapped != nullptr)
-		{
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, b->memory));
-		}
-		VC(appState.Device.vkDestroyBuffer(appState.Device.device, b->buffer, nullptr));
-		if (b->buffer != VK_NULL_HANDLE)
-		{
-			VC(appState.Device.vkFreeMemory(appState.Device.device, b->memory, nullptr));
-		}
+		b->Destroy(appState);
 		delete b;
 	}
 }

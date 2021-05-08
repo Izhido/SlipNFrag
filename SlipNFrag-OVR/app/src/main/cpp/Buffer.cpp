@@ -41,6 +41,11 @@ void Buffer::CreateStagingStorageBuffer(AppState& appState, VkDeviceSize size)
 	Create(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 }
 
+void Buffer::CreateUniformBuffer(AppState& appState, VkDeviceSize size)
+{
+	Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+}
+
 void Buffer::Submit(AppState& appState, VkCommandBuffer commandBuffer, VkAccessFlags flags, VkBufferMemoryBarrier& bufferMemoryBarrier)
 {
 	bufferMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
@@ -58,4 +63,20 @@ void Buffer::SubmitVertexBuffer(AppState& appState, VkCommandBuffer commandBuffe
 void Buffer::SubmitIndexBuffer(AppState& appState, VkCommandBuffer commandBuffer, VkBufferMemoryBarrier& bufferMemoryBarrier)
 {
 	Submit(appState, commandBuffer, VK_ACCESS_INDEX_READ_BIT, bufferMemoryBarrier);
+}
+
+void Buffer::Destroy(AppState& appState)
+{
+	if (mapped != nullptr)
+	{
+		VC(appState.Device.vkUnmapMemory(appState.Device.device, memory));
+	}
+	if (buffer != VK_NULL_HANDLE)
+	{
+		VC(appState.Device.vkDestroyBuffer(appState.Device.device, buffer, nullptr));
+	}
+	if (memory != VK_NULL_HANDLE)
+	{
+		VC(appState.Device.vkFreeMemory(appState.Device.device, memory, nullptr));
+	}
 }
