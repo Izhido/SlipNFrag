@@ -268,7 +268,6 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	if (appState.Scene.verticesSize > 0)
 	{
 		vertices = cachedVertices.GetVertexBuffer(appState, appState.Scene.verticesSize);
-		VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, appState.Scene.verticesSize, 0, &vertices->mapped));
 		if (appState.Scene.floorVerticesSize > 0)
 		{
 			auto mapped = (float*)vertices->mapped;
@@ -300,8 +299,6 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		memcpy((unsigned char*)vertices->mapped + texturedVertexBase, d_lists.textured_vertices.data(), appState.Scene.texturedVerticesSize);
 		coloredVertexBase = texturedVertexBase + appState.Scene.texturedVerticesSize;
 		memcpy((unsigned char*)vertices->mapped + coloredVertexBase, d_lists.colored_vertices.data(), appState.Scene.coloredVerticesSize);
-		VC(appState.Device.vkUnmapMemory(appState.Device.device, vertices->memory));
-		vertices->mapped = nullptr;
 		vertices->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
 	if (d_lists.last_alias16 >= 0)
@@ -353,7 +350,6 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	appState.Scene.vertexTransformSize = 16 * sizeof(float);
 	appState.Scene.attributesSize = appState.Scene.floorAttributesSize + appState.Scene.texturedAttributesSize + appState.Scene.colormappedLightsSize + appState.Scene.vertexTransformSize;
 	attributes = cachedAttributes.GetVertexBuffer(appState, appState.Scene.attributesSize);
-	VK(appState.Device.vkMapMemory(appState.Device.device, attributes->memory, 0, appState.Scene.attributesSize, 0, &attributes->mapped));
 	if (appState.Scene.floorAttributesSize > 0)
 	{
 		auto mapped = (float*)attributes->mapped;
@@ -410,8 +406,6 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	(*mapped) = r_refdef.vieworg[1] * appState.Scale;
 	mapped++;
 	(*mapped) = 1;
-	VC(appState.Device.vkUnmapMemory(appState.Device.device, attributes->memory));
-	attributes->mapped = nullptr;
 	attributes->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	if (appState.Mode != AppWorldMode)
 	{
@@ -428,7 +422,6 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	if (appState.Scene.indices16Size > 0)
 	{
 		indices16 = cachedIndices16.GetIndexBuffer(appState, appState.Scene.indices16Size);
-		VK(appState.Device.vkMapMemory(appState.Device.device, indices16->memory, 0, appState.Scene.indices16Size, 0, &indices16->mapped));
 		if (appState.Scene.floorIndicesSize > 0)
 		{
 			auto mapped = (uint16_t*)indices16->mapped;
@@ -450,8 +443,6 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		memcpy((unsigned char*)indices16->mapped + colormappedIndex16Base, d_lists.colormapped_indices16.data(), appState.Scene.colormappedIndices16Size);
 		coloredIndex16Base = colormappedIndex16Base + appState.Scene.colormappedIndices16Size;
 		memcpy((unsigned char*)indices16->mapped + coloredIndex16Base, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
-		VC(appState.Device.vkUnmapMemory(appState.Device.device, indices16->memory));
-		indices16->mapped = nullptr;
 		indices16->SubmitIndexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
 	appState.Scene.surfaceIndices32Size = (d_lists.last_surface_index32 + 1) * sizeof(uint32_t);
@@ -461,24 +452,18 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	if (appState.Scene.indices32Size > 0)
 	{
 		indices32 = cachedIndices32.GetIndexBuffer(appState, appState.Scene.indices32Size);
-		VK(appState.Device.vkMapMemory(appState.Device.device, indices32->memory, 0, appState.Scene.indices32Size, 0, &indices32->mapped));
 		memcpy(indices32->mapped, d_lists.surface_indices32.data(), appState.Scene.surfaceIndices32Size);
 		colormappedIndex32Base = appState.Scene.surfaceIndices32Size;
 		memcpy((unsigned char*)indices32->mapped + colormappedIndex32Base, d_lists.colormapped_indices32.data(), appState.Scene.colormappedIndices32Size);
 		coloredIndex32Base = colormappedIndex32Base + appState.Scene.colormappedIndices32Size;
 		memcpy((unsigned char*)indices32->mapped + coloredIndex32Base, d_lists.colored_indices32.data(), appState.Scene.coloredIndices32Size);
-		VC(appState.Device.vkUnmapMemory(appState.Device.device, indices32->memory));
-		indices32->mapped = nullptr;
 		indices32->SubmitIndexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
 	appState.Scene.colorsSize = (d_lists.last_colored_attribute + 1) * sizeof(float);
 	if (appState.Scene.colorsSize > 0)
 	{
 		colors = cachedColors.GetVertexBuffer(appState, appState.Scene.colorsSize);
-		VK(appState.Device.vkMapMemory(appState.Device.device, colors->memory, 0, appState.Scene.colorsSize, 0, &colors->mapped));
 		memcpy(colors->mapped, d_lists.colored_attributes.data(), appState.Scene.colorsSize);
-		VC(appState.Device.vkUnmapMemory(appState.Device.device, colors->memory));
-		colors->mapped = nullptr;
 		colors->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
 }
@@ -999,7 +984,6 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 
 void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, VkDeviceSize floorSize)
 {
-	VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
 	auto offset = 0;
 	if (paletteSize > 0)
 	{
@@ -1125,8 +1109,6 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 	mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 	mappedMemoryRange.memory = stagingBuffer->memory;
 	VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
-	VC(appState.Device.vkUnmapMemory(appState.Device.device, stagingBuffer->memory));
-	stagingBuffer->mapped = nullptr;
 }
 
 void PerImage::FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias, VkDeviceSize& offset)

@@ -1450,10 +1450,7 @@ void android_main(struct android_app* app)
 					}
 				}
 			}
-			VK(appState.Device.vkMapMemory(appState.Device.device, appState.Screen.Buffer.memory, 0, appState.Screen.Buffer.size, 0, &appState.Screen.Buffer.mapped));
 			memcpy(appState.Screen.Buffer.mapped, appState.Screen.Data.data(), appState.Screen.Data.size() * sizeof(uint32_t));
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, appState.Screen.Buffer.memory));
-			appState.Screen.Buffer.mapped = nullptr;
 			VK(appState.Device.vkBeginCommandBuffer(appState.Screen.CommandBuffer, &commandBufferBeginInfo));
 			VkBufferImageCopy region { };
 			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1496,12 +1493,10 @@ void android_main(struct android_app* app)
 			{
 				vertices = new Buffer();
 				vertices->CreateVertexBuffer(appState, appState.ConsoleVertices.size() * sizeof(float));
+				VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, VK_WHOLE_SIZE, 0, &vertices->mapped));
 			}
 			perImage.vertices.MoveToFront(vertices);
-			VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, vertices->size, 0, &vertices->mapped));
 			memcpy(vertices->mapped, appState.ConsoleVertices.data(), vertices->size);
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, vertices->memory));
-			vertices->mapped = nullptr;
 			VkBufferMemoryBarrier bufferMemoryBarrier { };
 			bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
 			vertices->SubmitVertexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
@@ -1515,12 +1510,10 @@ void android_main(struct android_app* app)
 			{
 				indices = new Buffer();
 				indices->CreateIndexBuffer(appState, appState.ConsoleIndices.size() * sizeof(uint16_t));
+				VK(appState.Device.vkMapMemory(appState.Device.device, indices->memory, 0, VK_WHOLE_SIZE, 0, &indices->mapped));
 			}
 			perImage.indices.MoveToFront(indices);
-			VK(appState.Device.vkMapMemory(appState.Device.device, indices->memory, 0, indices->size, 0, &indices->mapped));
 			memcpy(indices->mapped, appState.ConsoleIndices.data(), indices->size);
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, indices->memory));
-			indices->mapped = nullptr;
 			indices->SubmitIndexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
 			auto keyboardDrawn = appState.Keyboard.Draw(appState);
 			auto stagingBufferSize = 0;
@@ -1560,7 +1553,6 @@ void android_main(struct android_app* app)
 				stagingBufferSize += appState.Keyboard.buffer.size();
 			}
 			auto stagingBuffer = perImage.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
-			VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer->memory, 0, stagingBufferSize, 0, &stagingBuffer->mapped));
 			auto offset = 0;
 			if (perImage.paletteOffset >= 0)
 			{
@@ -1613,8 +1605,6 @@ void android_main(struct android_app* app)
 			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 			mappedMemoryRange.memory = stagingBuffer->memory;
 			VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, stagingBuffer->memory));
-			stagingBuffer->mapped = nullptr;
 			if (perImage.paletteOffset >= 0)
 			{
 				perImage.palette->Fill(appState, stagingBuffer, perImage.paletteOffset, perImage.commandBuffer);
@@ -1746,10 +1736,7 @@ void android_main(struct android_app* app)
 		}
 		else if (appState.Mode == AppNoGameDataMode)
 		{
-			VK(appState.Device.vkMapMemory(appState.Device.device, appState.Screen.Buffer.memory, 0, appState.Screen.Buffer.size, 0, &appState.Screen.Buffer.mapped));
 			memcpy(appState.Screen.Buffer.mapped, appState.NoGameDataData.data(), appState.NoGameDataData.size() * sizeof(uint32_t));
-			VC(appState.Device.vkUnmapMemory(appState.Device.device, appState.Screen.Buffer.memory));
-			appState.Screen.Buffer.mapped = nullptr;
 			VK(appState.Device.vkBeginCommandBuffer(appState.Screen.CommandBuffer, &commandBufferBeginInfo));
 			VkBufferImageCopy region { };
 			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

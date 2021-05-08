@@ -304,14 +304,12 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	createMemoryAllocateInfo(appState, memoryRequirements, appState.Screen.Buffer.flags, memoryAllocateInfo);
 	VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &appState.Screen.Buffer.memory));
 	VK(appState.Device.vkBindBufferMemory(appState.Device.device, appState.Screen.Buffer.buffer, appState.Screen.Buffer.memory, 0));
-	VK(appState.Device.vkMapMemory(appState.Device.device, appState.Screen.Buffer.memory, 0, memoryRequirements.size, 0, &appState.Screen.Buffer.mapped));
+	VK(appState.Device.vkMapMemory(appState.Device.device, appState.Screen.Buffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.Buffer.mapped));
 	memcpy(appState.Screen.Buffer.mapped, appState.Screen.Data.data(), appState.Screen.Buffer.size);
 	VkMappedMemoryRange mappedMemoryRange { };
 	mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 	mappedMemoryRange.memory = appState.Screen.Buffer.memory;
 	VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
-	VC(appState.Device.vkUnmapMemory(appState.Device.device, appState.Screen.Buffer.memory));
-	appState.Screen.Buffer.mapped = nullptr;
 	VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
 	VK(appState.Device.vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 	imageMemoryBarrier.srcAccessMask = 0;

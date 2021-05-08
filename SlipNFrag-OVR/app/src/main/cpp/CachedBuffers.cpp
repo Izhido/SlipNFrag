@@ -24,6 +24,7 @@ Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 	{
 		buffer = new Buffer();
 		buffer->CreateVertexBuffer(appState, size * 5 / 4);
+		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
 	return buffer;
@@ -36,6 +37,7 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 	{
 		buffer = new Buffer();
 		buffer->CreateIndexBuffer(appState, size * 5 / 4);
+		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
 	return buffer;
@@ -47,7 +49,8 @@ Buffer* CachedBuffers::GetStagingBuffer(AppState& appState, VkDeviceSize size)
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateStagingBuffer(appState, size);
+		buffer->CreateStagingBuffer(appState, size * 5 / 4);
+		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
 	return buffer;
@@ -60,6 +63,7 @@ Buffer* CachedBuffers::GetStagingStorageBuffer(AppState& appState, VkDeviceSize 
 	{
 		buffer = new Buffer();
 		buffer->CreateStagingStorageBuffer(appState, size * 5 / 4);
+		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
 	return buffer;
