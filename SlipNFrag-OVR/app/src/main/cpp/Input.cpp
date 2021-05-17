@@ -58,7 +58,7 @@ void Input::AddCommandInput(const char* command)
 	}
 }
 
-void Input::Handle(AppState& appState)
+void Input::Handle(AppState& appState, bool triggerHandled)
 {
 	std::lock_guard<std::mutex> lock(appState.InputMutex);
 	if (appState.Mode == AppStartupMode)
@@ -98,13 +98,16 @@ void Input::Handle(AppState& appState)
 					pdwRawValue[JOY_AXIS_Z] = appState.RightController.Joystick.x;
 					pdwRawValue[JOY_AXIS_R] = appState.RightController.Joystick.y;
 				}
-				if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
+				if (!triggerHandled)
 				{
-					AddCommandInput("+attack");
-				}
-				if (LeftButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_Trigger))
-				{
-					AddCommandInput("-attack");
+					if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
+					{
+						AddCommandInput("+attack");
+					}
+					if (LeftButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_Trigger))
+					{
+						AddCommandInput("-attack");
+					}
 				}
 				if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger))
 				{
@@ -199,11 +202,11 @@ void Input::Handle(AppState& appState)
 				{
 					AddKeyInput(K_LEFTARROW, false);
 				}
-				if (LeftButtonIsDown(appState, ovrButton_Trigger) || LeftButtonIsDown(appState, ovrButton_X) || RightButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_A))
+				if ((LeftButtonIsDown(appState, ovrButton_Trigger) && !triggerHandled) || LeftButtonIsDown(appState, ovrButton_X) || (RightButtonIsDown(appState, ovrButton_Trigger) && !triggerHandled) || RightButtonIsDown(appState, ovrButton_A))
 				{
 					AddKeyInput(K_ENTER, true);
 				}
-				if (LeftButtonIsUp(appState, ovrButton_Trigger) || LeftButtonIsUp(appState, ovrButton_X) || RightButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_A))
+				if ((LeftButtonIsUp(appState, ovrButton_Trigger) && !triggerHandled) || LeftButtonIsUp(appState, ovrButton_X) || (RightButtonIsUp(appState, ovrButton_Trigger) && !triggerHandled) || RightButtonIsUp(appState, ovrButton_A))
 				{
 					AddKeyInput(K_ENTER, false);
 				}
@@ -268,21 +271,24 @@ void Input::Handle(AppState& appState)
 					pdwRawValue[JOY_AXIS_X] = -appState.LeftController.Joystick.x - appState.RightController.Joystick.x;
 					pdwRawValue[JOY_AXIS_Y] = -appState.LeftController.Joystick.y - appState.RightController.Joystick.y;
 				}
-				if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
+				if (!triggerHandled)
 				{
-					if (!appState.ControlsMessageClosed && appState.ControlsMessageDisplayed && (appState.NearViewModel || (d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0)))
+					if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
 					{
-						SCR_Interrupt();
-						appState.ControlsMessageClosed = true;
+						if (!appState.ControlsMessageClosed && appState.ControlsMessageDisplayed && (appState.NearViewModel || (d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0)))
+						{
+							SCR_Interrupt();
+							appState.ControlsMessageClosed = true;
+						}
+						else if (appState.NearViewModel || (d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0))
+						{
+							AddCommandInput("+attack");
+						}
 					}
-					else if (appState.NearViewModel || (d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0))
+					if (LeftButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_Trigger))
 					{
-						AddCommandInput("+attack");
+						AddCommandInput("-attack");
 					}
-				}
-				if (LeftButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_Trigger))
-				{
-					AddCommandInput("-attack");
 				}
 				if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger))
 				{
@@ -369,11 +375,11 @@ void Input::Handle(AppState& appState)
 				{
 					AddKeyInput(K_LEFTARROW, false);
 				}
-				if (LeftButtonIsDown(appState, ovrButton_Trigger) || LeftButtonIsDown(appState, ovrButton_X) || RightButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_A))
+				if ((LeftButtonIsDown(appState, ovrButton_Trigger) && !triggerHandled) || LeftButtonIsDown(appState, ovrButton_X) || (RightButtonIsDown(appState, ovrButton_Trigger) && !triggerHandled) || RightButtonIsDown(appState, ovrButton_A))
 				{
 					AddKeyInput(K_ENTER, true);
 				}
-				if (LeftButtonIsUp(appState, ovrButton_Trigger) || LeftButtonIsUp(appState, ovrButton_X) || RightButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_A))
+				if ((LeftButtonIsUp(appState, ovrButton_Trigger) && !triggerHandled) || LeftButtonIsUp(appState, ovrButton_X) || (RightButtonIsUp(appState, ovrButton_Trigger) && !triggerHandled) || RightButtonIsUp(appState, ovrButton_A))
 				{
 					AddKeyInput(K_ENTER, false);
 				}

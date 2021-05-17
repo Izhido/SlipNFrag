@@ -18,6 +18,7 @@
 #include "Constants.h"
 #include "DirectRect.h"
 #include "r_local.h"
+#include "CylinderProjection.h"
 
 static const int queueCount = 1;
 static const int CPU_LEVEL = 2;
@@ -1072,10 +1073,8 @@ void android_main(struct android_app* app)
 		}
 		if (leftRemoteFound && rightRemoteFound)
 		{
-			if (!appState.Keyboard.Handle(appState))
-			{
-				Input::Handle(appState);
-			}
+			auto triggerHandled = appState.Keyboard.Handle(appState);
+			Input::Handle(appState, triggerHandled);
 		}
 		else
 		{
@@ -1895,148 +1894,28 @@ void android_main(struct android_app* app)
 				skyboxLayers.push_back(skyboxLayer);
 			}
 			auto console = vrapi_DefaultLayerCylinder2();
-			console.Header.ColorScale.x = 1;
-			console.Header.ColorScale.y = 1;
-			console.Header.ColorScale.z = 1;
-			console.Header.ColorScale.w = 1;
-			console.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
-			console.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
-			console.HeadPose = appState.Tracking.HeadPose;
-			const float density = 4500;
-			float rotateYaw = appState.Yaw;
-			float rotatePitch = appState.Pitch;
-			const float radius = 1;
-			const ovrVector3f translation = { appState.Tracking.HeadPose.Pose.Position.x, appState.Tracking.HeadPose.Pose.Position.y, appState.Tracking.HeadPose.Pose.Position.z };
-			const ovrMatrix4f scaleMatrix = ovrMatrix4f_CreateScale(radius, radius * (float) appState.ScreenHeight * VRAPI_PI / density, radius);
-			const ovrMatrix4f transMatrix = ovrMatrix4f_CreateTranslation(translation.x, translation.y, translation.z);
-			const ovrMatrix4f rotXMatrix = ovrMatrix4f_CreateRotation(rotatePitch, 0, 0);
-			const ovrMatrix4f rotYMatrix = ovrMatrix4f_CreateRotation(0, rotateYaw, 0);
+			CylinderProjection::Setup(appState, console); // First setup - rendering variables
+			const ovrMatrix4f scaleMatrix = ovrMatrix4f_CreateScale(CylinderProjection::radius, CylinderProjection::radius * (float) appState.ScreenHeight * VRAPI_PI / CylinderProjection::density, CylinderProjection::radius);
+			const ovrVector3f& position = appState.Tracking.HeadPose.Pose.Position;
+			const ovrMatrix4f transMatrix = ovrMatrix4f_CreateTranslation(position.x, position.y, position.z);
+			const ovrMatrix4f rotXMatrix = ovrMatrix4f_CreateRotation(appState.Pitch, 0, 0);
+			const ovrMatrix4f rotYMatrix = ovrMatrix4f_CreateRotation(0, appState.Yaw, 0);
 			const ovrMatrix4f m0 = ovrMatrix4f_Multiply(&rotXMatrix, &scaleMatrix);
 			const ovrMatrix4f m1 = ovrMatrix4f_Multiply(&rotYMatrix, &m0);
-			ovrMatrix4f cylinderTransform = ovrMatrix4f_Multiply(&transMatrix, &m1);
-			float circScale = density * 0.5 / appState.ScreenWidth;
-			float circBias = -circScale * (0.5 * (1 - 1 / circScale));
-			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
-			{
-				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&appState.Tracking.Eye[i].ViewMatrix, &cylinderTransform);
-				console.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_Inverse(&modelViewMatrix);
-				console.Textures[i].ColorSwapChain = appState.Console.SwapChain;
-				console.Textures[i].SwapChainIndex = appState.Console.View.index;
-				const float texScaleX = circScale;
-				const float texBiasX = circBias;
-				const float texScaleY = 0.5;
-				const float texBiasY = -texScaleY * (0.5 * (1 - 1 / texScaleY));
-				console.Textures[i].TextureMatrix.M[0][0] = texScaleX;
-				console.Textures[i].TextureMatrix.M[0][2] = texBiasX;
-				console.Textures[i].TextureMatrix.M[1][1] = texScaleY;
-				console.Textures[i].TextureMatrix.M[1][2] = texBiasY;
-				console.Textures[i].TextureRect.width = 1;
-				console.Textures[i].TextureRect.height = 1;
-			}
+			const ovrMatrix4f transform = ovrMatrix4f_Multiply(&transMatrix, &m1);
+			CylinderProjection::Setup(appState, console, &transform, appState.Console.SwapChain, appState.Console.View.index); // Second setup - transforms for each eye
 			cylinderLayers.push_back(console);
 		}
 		else
 		{
 			auto screen = vrapi_DefaultLayerCylinder2();
-			screen.Header.ColorScale.x = 1;
-			screen.Header.ColorScale.y = 1;
-			screen.Header.ColorScale.z = 1;
-			screen.Header.ColorScale.w = 1;
-			screen.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
-			screen.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
-			screen.HeadPose = appState.Tracking.HeadPose;
-			const float density = 4500;
-			float rotateYaw = 0;
-			float rotatePitch = 0;
-			const float radius = 1;
-			ovrMatrix4f scaleMatrix = ovrMatrix4f_CreateScale(radius, radius * (float) appState.ScreenHeight * VRAPI_PI / density, radius);
-			ovrMatrix4f rotXMatrix = ovrMatrix4f_CreateRotation(rotatePitch, 0.0f, 0.0f);
-			ovrMatrix4f rotYMatrix = ovrMatrix4f_CreateRotation(0.0f, rotateYaw, 0.0f);
-			ovrMatrix4f m0 = ovrMatrix4f_Multiply(&rotXMatrix, &scaleMatrix);
-			ovrMatrix4f cylinderTransform = ovrMatrix4f_Multiply(&rotYMatrix, &m0);
-			float circScale = density * 0.5f / appState.ScreenWidth;
-			float circBias = -circScale * (0.5f * (1.0f - 1.0f / circScale));
-			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
-			{
-				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&appState.Tracking.Eye[i].ViewMatrix, &cylinderTransform);
-				screen.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_Inverse(&modelViewMatrix);
-				screen.Textures[i].ColorSwapChain = appState.Screen.SwapChain;
-				screen.Textures[i].SwapChainIndex = 0;
-				const float texScaleX = circScale;
-				const float texBiasX = circBias;
-				const float texScaleY = 0.5;
-				const float texBiasY = -texScaleY * (0.5 * (1 - 1 / texScaleY));
-				screen.Textures[i].TextureMatrix.M[0][0] = texScaleX;
-				screen.Textures[i].TextureMatrix.M[0][2] = texBiasX;
-				screen.Textures[i].TextureMatrix.M[1][1] = texScaleY;
-				screen.Textures[i].TextureMatrix.M[1][2] = texBiasY;
-				screen.Textures[i].TextureRect.width = 1;
-				screen.Textures[i].TextureRect.height = 1;
-			}
+			CylinderProjection::Setup(appState, screen, 0, appState.Screen.SwapChain);
 			cylinderLayers.push_back(screen);
 			auto leftArrows = vrapi_DefaultLayerCylinder2();
-			leftArrows.Header.ColorScale.x = 1;
-			leftArrows.Header.ColorScale.y = 1;
-			leftArrows.Header.ColorScale.z = 1;
-			leftArrows.Header.ColorScale.w = 1;
-			leftArrows.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
-			leftArrows.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
-			leftArrows.HeadPose = appState.Tracking.HeadPose;
-			rotateYaw = 2 * M_PI / 3;
-			scaleMatrix = ovrMatrix4f_CreateScale(radius, radius * (float) appState.ScreenHeight * VRAPI_PI / density, radius);
-			rotXMatrix = ovrMatrix4f_CreateRotation(rotatePitch, 0.0f, 0.0f);
-			rotYMatrix = ovrMatrix4f_CreateRotation(0.0f, rotateYaw, 0.0f);
-			m0 = ovrMatrix4f_Multiply(&rotXMatrix, &scaleMatrix);
-			cylinderTransform = ovrMatrix4f_Multiply(&rotYMatrix, &m0);
-			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
-			{
-				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&appState.Tracking.Eye[i].ViewMatrix, &cylinderTransform);
-				leftArrows.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_Inverse(&modelViewMatrix);
-				leftArrows.Textures[i].ColorSwapChain = appState.LeftArrows.SwapChain;
-				leftArrows.Textures[i].SwapChainIndex = 0;
-				const float texScaleX = circScale;
-				const float texBiasX = circBias;
-				const float texScaleY = 0.5;
-				const float texBiasY = -texScaleY * (0.5 * (1 - 1 / texScaleY));
-				leftArrows.Textures[i].TextureMatrix.M[0][0] = texScaleX;
-				leftArrows.Textures[i].TextureMatrix.M[0][2] = texBiasX;
-				leftArrows.Textures[i].TextureMatrix.M[1][1] = texScaleY;
-				leftArrows.Textures[i].TextureMatrix.M[1][2] = texBiasY;
-				leftArrows.Textures[i].TextureRect.width = 1;
-				leftArrows.Textures[i].TextureRect.height = 1;
-			}
+			CylinderProjection::Setup(appState, leftArrows, 2 * M_PI / 3, appState.LeftArrows.SwapChain);
 			cylinderLayers.push_back(leftArrows);
 			auto rightArrows = vrapi_DefaultLayerCylinder2();
-			rightArrows.Header.ColorScale.x = 1;
-			rightArrows.Header.ColorScale.y = 1;
-			rightArrows.Header.ColorScale.z = 1;
-			rightArrows.Header.ColorScale.w = 1;
-			rightArrows.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
-			rightArrows.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
-			rightArrows.HeadPose = appState.Tracking.HeadPose;
-			rotateYaw = -2 * M_PI / 3;
-			scaleMatrix = ovrMatrix4f_CreateScale(radius, radius * (float) appState.ScreenHeight * VRAPI_PI / density, radius);
-			rotXMatrix = ovrMatrix4f_CreateRotation(rotatePitch, 0.0f, 0.0f);
-			rotYMatrix = ovrMatrix4f_CreateRotation(0.0f, rotateYaw, 0.0f);
-			m0 = ovrMatrix4f_Multiply(&rotXMatrix, &scaleMatrix);
-			cylinderTransform = ovrMatrix4f_Multiply(&rotYMatrix, &m0);
-			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
-			{
-				ovrMatrix4f modelViewMatrix = ovrMatrix4f_Multiply(&appState.Tracking.Eye[i].ViewMatrix, &cylinderTransform);
-				rightArrows.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_Inverse(&modelViewMatrix);
-				rightArrows.Textures[i].ColorSwapChain = appState.RightArrows.SwapChain;
-				rightArrows.Textures[i].SwapChainIndex = 0;
-				const float texScaleX = circScale;
-				const float texBiasX = circBias;
-				const float texScaleY = 0.5;
-				const float texBiasY = -texScaleY * (0.5 * (1 - 1 / texScaleY));
-				rightArrows.Textures[i].TextureMatrix.M[0][0] = texScaleX;
-				rightArrows.Textures[i].TextureMatrix.M[0][2] = texBiasX;
-				rightArrows.Textures[i].TextureMatrix.M[1][1] = texScaleY;
-				rightArrows.Textures[i].TextureMatrix.M[1][2] = texBiasY;
-				rightArrows.Textures[i].TextureRect.width = 1;
-				rightArrows.Textures[i].TextureRect.height = 1;
-			}
+			CylinderProjection::Setup(appState, rightArrows, -2 * M_PI / 3, appState.RightArrows.SwapChain);
 			cylinderLayers.push_back(rightArrows);
 		}
 		std::vector<ovrLayerHeader2*> layers;

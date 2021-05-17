@@ -1,5 +1,6 @@
 #include "Keyboard.h"
 #include "AppState.h"
+#include "CylinderProjection.h"
 
 extern byte* draw_chars;
 
@@ -257,6 +258,48 @@ bool Keyboard::Handle(AppState& appState)
 	if (draw_chars == nullptr || key_dest != key_console)
 	{
 		return false;
+	}
+	leftHighlighted = -1;
+	if (appState.LeftController.TrackingResult == ovrSuccess)
+	{
+		float x;
+		float y;
+		if (CylinderProjection::HitPoint(appState, appState.LeftController.Tracking, x, y))
+		{
+			auto horizontal = (int)(x * appState.ConsoleWidth);
+			auto vertical = (int)(y * appState.ConsoleHeight) - appState.ConsoleHeight / 2;
+			auto& source = cells[(int)layout];
+			for (auto i = 0; i < source.size(); i++)
+			{
+				auto& cell = source[i];
+				if (horizontal >= cell.left && horizontal < cell.left + cell.width && vertical >= cell.top && vertical < cell.top + cell.height)
+				{
+					leftHighlighted = i;
+					break;
+				}
+			}
+		}
+	}
+	rightHighlighted = -1;
+	if (appState.RightController.TrackingResult == ovrSuccess)
+	{
+		float x;
+		float y;
+		if (CylinderProjection::HitPoint(appState, appState.RightController.Tracking, x, y))
+		{
+			auto horizontal = (int)(x * appState.ConsoleWidth);
+			auto vertical = (int)(y * appState.ConsoleHeight) - appState.ConsoleHeight / 2;
+			auto& source = cells[(int)layout];
+			for (auto i = 0; i < source.size(); i++)
+			{
+				auto& cell = source[i];
+				if (horizontal >= cell.left && horizontal < cell.left + cell.width && vertical >= cell.top && vertical < cell.top + cell.height)
+				{
+					rightHighlighted = i;
+					break;
+				}
+			}
+		}
 	}
 	return false;
 }

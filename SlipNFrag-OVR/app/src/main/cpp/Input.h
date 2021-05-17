@@ -19,5 +19,5 @@ struct Input
 	static bool RightButtonIsUp(AppState& appState, uint32_t button);
 	static void AddKeyInput(int key, int down);
 	static void AddCommandInput(const char* command);
-	static void Handle(AppState& appState);
+	static void Handle(AppState& appState, bool triggerHandled);
 };
