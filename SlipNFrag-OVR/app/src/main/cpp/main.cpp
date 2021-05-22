@@ -2058,10 +2058,7 @@ void android_main(struct android_app* app)
 	{
 		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.textureSamplers[i], nullptr));
 	}
-	if (appState.Scene.floorTexture != nullptr)
-	{
-		appState.Scene.floorTexture->Delete(appState);
-	}
+	appState.Scene.floorTexture.Delete(appState);
 	appState.Scene.viewmodelTextures.Delete(appState);
 	appState.Scene.aliasTextures.Delete(appState);
 	appState.Scene.spriteTextures.Delete(appState);

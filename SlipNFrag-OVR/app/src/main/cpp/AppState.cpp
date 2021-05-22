@@ -66,14 +66,14 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0, nullptr));
 		Scene.ClearSizes();
 		perImage.LoadBuffers(*this, bufferMemoryBarrier);
-		perImage.GetStagingBufferSize(*this, view, Scene.stagingBufferSize, Scene.floorSize);
+		perImage.GetStagingBufferSize(*this, view, Scene.stagingBufferSize);
 		perImage.hostClearCount = host_clearcount;
 		stagingBuffer = nullptr;
 		if (Scene.stagingBufferSize > 0)
 		{
 			stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, Scene.stagingBufferSize);
-			perImage.LoadStagingBuffer(*this, stagingBuffer, Scene.stagingBufferSize, Scene.floorSize);
-			perImage.FillTextures(*this, stagingBuffer, Scene.floorSize);
+			perImage.LoadStagingBuffer(*this, stagingBuffer, Scene.stagingBufferSize);
+			perImage.FillTextures(*this, stagingBuffer);
 		}
 		double clearR;
 		double clearG;

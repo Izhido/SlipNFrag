@@ -118,7 +118,7 @@ struct Scene
 	std::vector<int> viewmodelTexCoords16List;
 	std::vector<int> viewmodelTexCoords32List;
 	std::unordered_map<void*, Texture*> turbulentPerKey;
-	Texture* floorTexture;
+	Texture floorTexture;
 	std::vector<VkSampler> textureSamplers;
 	VkSampler lightmapSampler;
 	Buffer* latestColormappedBuffer;
@@ -128,7 +128,6 @@ struct Scene
 	ovrTextureSwapChain* skybox;
 	VkDeviceSize stagingBufferSize;
 	VkDeviceSize verticesSize;
-	VkDeviceSize floorSize;
 	ovrQuatf orientation;
 	ovrPosef pose;
 

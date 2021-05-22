@@ -698,7 +698,7 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 	GetAliasColormapStagingBufferSize(appState, lastViewmodel, viewmodelList, textures, stagingBufferSize);
 }
 
-void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize)
+void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize)
 {
 	paletteSize = 0;
 	if (palette == nullptr || paletteChanged != pal_changed)
@@ -973,17 +973,9 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 		skySize = 16384;
 		stagingBufferSize += skySize;
 	}
-	floorSize = 0;
-	if (appState.Scene.floorTexture == nullptr)
-	{
-		appState.Scene.floorTexture = new Texture();
-		appState.Scene.floorTexture->Create(appState, commandBuffer, appState.FloorWidth, appState.FloorHeight, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		floorSize = appState.FloorWidth * appState.FloorHeight * sizeof(uint32_t);
-		stagingBufferSize += floorSize;
-	}
 }
 
-void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, VkDeviceSize floorSize)
+void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize)
 {
 	auto offset = 0;
 	if (paletteSize > 0)
@@ -1102,10 +1094,6 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDe
 		}
 		offset += skySize;
 	}
-	if (floorSize > 0)
-	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.FloorData.data(), floorSize);
-	}
 	VkMappedMemoryRange mappedMemoryRange { };
 	mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 	mappedMemoryRange.memory = stagingBuffer->memory;
@@ -1140,7 +1128,7 @@ void PerImage::FillAliasTextures(AppState& appState, Buffer* stagingBuffer, Load
 	}
 }
 
-void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceSize floorSize)
+void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer)
 {
 	VkDeviceSize offset = 0;
 	if (paletteSize > 0)
@@ -1209,10 +1197,6 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceS
 	{
 		sky->FillMipmapped(appState, stagingBuffer, offset, commandBuffer);
 		offset += skySize;
-	}
-	if (floorSize > 0)
-	{
-		appState.Scene.floorTexture->Fill(appState, stagingBuffer, offset, commandBuffer);
 	}
 }
 
@@ -2126,8 +2110,8 @@ void PerImage::Render(AppState& appState)
 			descriptorSetAllocateInfo.descriptorSetCount = 1;
 			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 			VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &floorResources.descriptorSet));
-			textureInfo[0].sampler = appState.Scene.textureSamplers[appState.Scene.floorTexture->mipCount];
-			textureInfo[0].imageView = appState.Scene.floorTexture->view;
+			textureInfo[0].sampler = appState.Scene.textureSamplers[appState.Scene.floorTexture.mipCount];
+			textureInfo[0].imageView = appState.Scene.floorTexture.view;
 			writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[0].pImageInfo = textureInfo;
 			writes[0].dstSet = floorResources.descriptorSet;

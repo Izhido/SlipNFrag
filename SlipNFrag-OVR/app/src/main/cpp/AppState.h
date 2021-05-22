@@ -59,9 +59,6 @@ struct AppState
 	Console Console;
 	std::vector<float> ConsoleVertices;
 	std::vector<uint16_t> ConsoleIndices;
-	int FloorWidth;
-	int FloorHeight;
-	std::vector<uint32_t> FloorData;
 	std::vector<uint32_t> NoGameDataData;
 	double PreviousTime;
 	double CurrentTime;

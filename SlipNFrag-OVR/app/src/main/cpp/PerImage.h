@@ -78,10 +78,10 @@ struct PerImage
 	void GetViewmodelStagingBufferSize(AppState& appState, int lastViewmodel, std::vector<dalias_t>& viewmodelList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void SetupLoadedLightmap(AppState& appState, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize);
 	void SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture);
-	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize, VkDeviceSize& floorSize);
-	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize, VkDeviceSize floorSize);
+	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize);
+	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
 	void FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias, VkDeviceSize& offset);
-	void FillTextures(AppState& appState, Buffer* stagingBuffer, VkDeviceSize floorSize);
+	void FillTextures(AppState& appState, Buffer* stagingBuffer);
 	void SetPushConstants(dsurface_t& surface, float pushConstants[]);
 	void SetPushConstants(dturbulent_t& turbulent, float pushConstants[]);
 	void SetPushConstants(dalias_t& alias, float pushConstants[]);
