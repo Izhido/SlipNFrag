@@ -132,6 +132,8 @@ struct Scene
 	ovrQuatf orientation;
 	ovrPosef pose;
 
+	void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
+	void AddBorder(AppState& appState, std::vector<uint32_t>& target);
 	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app);
 	void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void ClearSizes();

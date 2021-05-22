@@ -8,6 +8,53 @@
 #include "MemoryAllocateInfo.h"
 #include "stb_image.h"
 
+void Scene::CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height)
+{
+	for (auto y = 0; y < height; y++)
+	{
+		for (auto x = 0; x < width; x++)
+		{
+			auto r = *source++;
+			auto g = *source++;
+			auto b = *source++;
+			auto a = *source++;
+			auto factor = (double)a / 255;
+			r = (unsigned char)((double)r * factor);
+			g = (unsigned char)((double)g * factor);
+			b = (unsigned char)((double)b * factor);
+			*target++ = ((uint32_t)255 << 24) | ((uint32_t)b << 16) | ((uint32_t)g << 8) | r;
+		}
+		target += appState.ScreenWidth - width;
+	}
+}
+
+void Scene::AddBorder(AppState& appState, std::vector<uint32_t>& target)
+{
+	for (auto b = 0; b < 5; b++)
+	{
+		auto i = (unsigned char)(192.0 * sin(M_PI / (double)(b - 1)));
+		auto color = ((uint32_t)255 << 24) | ((uint32_t)i << 16) | ((uint32_t)i << 8) | i;
+		auto texTopIndex = b * appState.ScreenWidth + b;
+		auto texBottomIndex = (appState.ScreenHeight - 1 - b) * appState.ScreenWidth + b;
+		for (auto x = 0; x < appState.ScreenWidth - b - b; x++)
+		{
+			target[texTopIndex] = color;
+			texTopIndex++;
+			target[texBottomIndex] = color;
+			texBottomIndex++;
+		}
+		auto texLeftIndex = (b + 1) * appState.ScreenWidth + b;
+		auto texRightIndex = (b + 1) * appState.ScreenWidth + appState.ScreenWidth - 1 - b;
+		for (auto y = 0; y < appState.ScreenHeight - b - 1 - b - 1; y++)
+		{
+			target[texLeftIndex] = color;
+			texLeftIndex += appState.ScreenWidth;
+			target[texRightIndex] = color;
+			texRightIndex += appState.ScreenWidth;
+		}
+	}
+}
+
 void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app)
 {
 	vrapi_WaitFrame(appState.Ovr, appState.FrameIndex);
@@ -229,53 +276,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	int imageHeight;
 	int imageComponents;
 	auto image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	auto texIndex = ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2;
-	auto index = 0;
-	for (auto y = 0; y < imageHeight; y++)
-	{
-		for (auto x = 0; x < imageWidth; x++)
-		{
-			auto r = image[index];
-			index++;
-			auto g = image[index];
-			index++;
-			auto b = image[index];
-			index++;
-			auto a = image[index];
-			index++;
-			auto factor = (double)a / 255;
-			r = (unsigned char)((double)r * factor);
-			g = (unsigned char)((double)g * factor);
-			b = (unsigned char)((double)b * factor);
-			appState.Screen.Data[texIndex] = ((uint32_t)255 << 24) | ((uint32_t)b << 16) | ((uint32_t)g << 8) | r;
-			texIndex++;
-		}
-		texIndex += appState.ScreenWidth - imageWidth;
-	}
+	CopyImage(appState, image, appState.Screen.Data.data() + ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2, imageWidth, imageHeight);
 	stbi_image_free(image);
-	for (auto b = 0; b < 5; b++)
-	{
-		auto i = (unsigned char)(192.0 * sin(M_PI / (double)(b - 1)));
-		auto color = ((uint32_t)255 << 24) | ((uint32_t)i << 16) | ((uint32_t)i << 8) | i;
-		auto texTopIndex = b * appState.ScreenWidth + b;
-		auto texBottomIndex = (appState.ScreenHeight - 1 - b) * appState.ScreenWidth + b;
-		for (auto x = 0; x < appState.ScreenWidth - b - b; x++)
-		{
-			appState.Screen.Data[texTopIndex] = color;
-			texTopIndex++;
-			appState.Screen.Data[texBottomIndex] = color;
-			texBottomIndex++;
-		}
-		auto texLeftIndex = (b + 1) * appState.ScreenWidth + b;
-		auto texRightIndex = (b + 1) * appState.ScreenWidth + appState.ScreenWidth - 1 - b;
-		for (auto y = 0; y < appState.ScreenHeight - b - 1 - b - 1; y++)
-		{
-			appState.Screen.Data[texLeftIndex] = color;
-			texLeftIndex += appState.ScreenWidth;
-			appState.Screen.Data[texRightIndex] = color;
-			texRightIndex += appState.ScreenWidth;
-		}
-	}
+	AddBorder(appState, appState.Screen.Data);
 	appState.Screen.Buffer.CreateStagingBuffer(appState, appState.Screen.Data.size() * sizeof(uint32_t));
 	VK(appState.Device.vkMapMemory(appState.Device.device, appState.Screen.Buffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.Buffer.mapped));
 	memcpy(appState.Screen.Buffer.mapped, appState.Screen.Data.data(), appState.Screen.Buffer.size);
@@ -310,29 +313,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	imageSource.resize(imageFileLength);
 	AAsset_read(imageFile, imageSource.data(), imageFileLength);
 	image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	texIndex = ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2;
-	index = 0;
-	for (auto y = 0; y < imageHeight; y++)
-	{
-		for (auto x = 0; x < imageWidth; x++)
-		{
-			auto r = image[index];
-			index++;
-			auto g = image[index];
-			index++;
-			auto b = image[index];
-			index++;
-			auto a = image[index];
-			index++;
-			auto factor = (double)a / 255;
-			r = (unsigned char)((double)r * factor);
-			g = (unsigned char)((double)g * factor);
-			b = (unsigned char)((double)b * factor);
-			arrowsData[texIndex] = ((uint32_t)255 << 24) | ((uint32_t)b << 16) | ((uint32_t)g << 8) | r;
-			texIndex++;
-		}
-		texIndex += appState.ScreenWidth - imageWidth;
-	}
+	CopyImage(appState, image, arrowsData.data() + ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2, imageWidth, imageHeight);
 	stbi_image_free(image);
 	Buffer leftArrowsBuffer;
 	leftArrowsBuffer.CreateStagingBuffer(appState, arrowsData.size() * sizeof(uint32_t));
@@ -356,29 +337,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	imageSource.resize(imageFileLength);
 	AAsset_read(imageFile, imageSource.data(), imageFileLength);
 	image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	texIndex = ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2;
-	index = 0;
-	for (auto y = 0; y < imageHeight; y++)
-	{
-		for (auto x = 0; x < imageWidth; x++)
-		{
-			auto r = image[index];
-			index++;
-			auto g = image[index];
-			index++;
-			auto b = image[index];
-			index++;
-			auto a = image[index];
-			index++;
-			auto factor = (double)a / 255;
-			r = (unsigned char)((double)r * factor);
-			g = (unsigned char)((double)g * factor);
-			b = (unsigned char)((double)b * factor);
-			arrowsData[texIndex] = ((uint32_t)255 << 24) | ((uint32_t)b << 16) | ((uint32_t)g << 8) | r;
-			texIndex++;
-		}
-		texIndex += appState.ScreenWidth - imageWidth;
-	}
+	CopyImage(appState, image, arrowsData.data() + ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2, imageWidth, imageHeight);
 	stbi_image_free(image);
 	Buffer rightArrowsBuffer;
 	rightArrowsBuffer.CreateStagingBuffer(appState, arrowsData.size() * sizeof(uint32_t));
@@ -443,53 +402,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	imageSource.resize(imageFileLength);
 	AAsset_read(imageFile, imageSource.data(), imageFileLength);
 	image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	texIndex = ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2;
-	index = 0;
-	for (auto y = 0; y < imageHeight; y++)
-	{
-		for (auto x = 0; x < imageWidth; x++)
-		{
-			auto r = image[index];
-			index++;
-			auto g = image[index];
-			index++;
-			auto b = image[index];
-			index++;
-			auto a = image[index];
-			index++;
-			auto factor = (double)a / 255;
-			r = (unsigned char)((double)r * factor);
-			g = (unsigned char)((double)g * factor);
-			b = (unsigned char)((double)b * factor);
-			appState.NoGameDataData[texIndex] = ((uint32_t)255 << 24) | ((uint32_t)b << 16) | ((uint32_t)g << 8) | r;
-			texIndex++;
-		}
-		texIndex += appState.ScreenWidth - imageWidth;
-	}
+	CopyImage(appState, image, appState.NoGameDataData.data() + ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2, imageWidth, imageHeight);
 	stbi_image_free(image);
-	for (auto b = 0; b < 5; b++)
-	{
-		auto i = (unsigned char)(192.0 * sin(M_PI / (double)(b - 1)));
-		auto color = ((uint32_t)255 << 24) | ((uint32_t)i << 16) | ((uint32_t)i << 8) | i;
-		auto texTopIndex = b * appState.ScreenWidth + b;
-		auto texBottomIndex = (appState.ScreenHeight - 1 - b) * appState.ScreenWidth + b;
-		for (auto x = 0; x < appState.ScreenWidth - b - b; x++)
-		{
-			appState.NoGameDataData[texTopIndex] = color;
-			texTopIndex++;
-			appState.NoGameDataData[texBottomIndex] = color;
-			texBottomIndex++;
-		}
-		auto texLeftIndex = (b + 1) * appState.ScreenWidth + b;
-		auto texRightIndex = (b + 1) * appState.ScreenWidth + appState.ScreenWidth - 1 - b;
-		for (auto y = 0; y < appState.ScreenHeight - b - 1 - b - 1; y++)
-		{
-			appState.NoGameDataData[texLeftIndex] = color;
-			texLeftIndex += appState.ScreenWidth;
-			appState.NoGameDataData[texRightIndex] = color;
-			texRightIndex += appState.ScreenWidth;
-		}
-	}
+	AddBorder(appState, appState.NoGameDataData);
 	auto isMultiview = appState.Device.supportsMultiview;
 	numBuffers = (isMultiview) ? VRAPI_FRAME_LAYER_EYE_MAX : 1;
 	CreateShader(appState, app, (isMultiview ? "shaders/surface_multiview.vert.spv" : "shaders/surface.vert.spv"), &surfaceVertex);
