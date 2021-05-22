@@ -85,6 +85,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Console.View.framebuffer.framebuffers.resize(appState.Console.View.framebuffer.swapChainLength);
 	appState.Console.View.framebuffer.width = appState.ScreenWidth;
 	appState.Console.View.framebuffer.height = appState.ScreenHeight;
+	VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
+	VK(appState.Device.vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 	for (auto i = 0; i < appState.Console.View.framebuffer.swapChainLength; i++)
 	{
 		auto& texture = appState.Console.View.framebuffer.colorTextures[i];
@@ -92,8 +94,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		texture.height = appState.ScreenHeight;
 		texture.layerCount = 1;
 		texture.image = appState.Console.View.colorSwapChain.ColorTextures[i];
-		VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
-		VK(appState.Device.vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 		VkImageMemoryBarrier imageMemoryBarrier { };
 		imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -103,10 +103,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		imageMemoryBarrier.subresourceRange.levelCount = 1;
 		imageMemoryBarrier.subresourceRange.layerCount = texture.layerCount;
 		VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-		VK(appState.Device.vkEndCommandBuffer(setupCommandBuffer));
-		VK(appState.Device.vkQueueSubmit(appState.Context.queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
-		VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
-		VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &setupCommandBuffer));
 		VkImageViewCreateInfo imageViewCreateInfo { };
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		imageViewCreateInfo.image = texture.image;
@@ -174,8 +170,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	createMemoryAllocateInfo(appState, memoryRequirements, memFlags, memoryAllocateInfo);
 	VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &texture.memory));
 	VK(appState.Device.vkBindImageMemory(appState.Device.device, texture.image, texture.memory, 0));
-	VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
-	VK(appState.Device.vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 	VkImageMemoryBarrier imageMemoryBarrier { };
 	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -185,10 +179,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	imageMemoryBarrier.subresourceRange.levelCount = 1;
 	imageMemoryBarrier.subresourceRange.layerCount = texture.layerCount;
 	VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	VK(appState.Device.vkEndCommandBuffer(setupCommandBuffer));
-	VK(appState.Device.vkQueueSubmit(appState.Context.queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
-	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
-	VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &setupCommandBuffer));
 	VkImageViewCreateInfo imageViewCreateInfo { };
 	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	imageViewCreateInfo.image = texture.image;
@@ -198,8 +188,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	imageViewCreateInfo.subresourceRange.levelCount = 1;
 	imageViewCreateInfo.subresourceRange.layerCount = texture.layerCount;
 	VK(appState.Device.vkCreateImageView(appState.Device.device, &imageViewCreateInfo, nullptr, &texture.view));
-	VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
-	VK(appState.Device.vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -208,10 +196,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	imageMemoryBarrier.image = texture.image;
 	imageMemoryBarrier.subresourceRange.layerCount = texture.layerCount;
 	VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	VK(appState.Device.vkEndCommandBuffer(setupCommandBuffer));
-	VK(appState.Device.vkQueueSubmit(appState.Context.queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
-	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
-	VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &setupCommandBuffer));
 	for (auto i = 0; i < appState.Console.View.framebuffer.swapChainLength; i++)
 	{
 		uint32_t attachmentCount = 0;
@@ -299,8 +283,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 	mappedMemoryRange.memory = appState.Screen.Buffer.memory;
 	VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
-	VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &setupCommandBuffer));
-	VK(appState.Device.vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 	imageMemoryBarrier.srcAccessMask = 0;
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -1038,25 +1020,7 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 void Scene::ClearSizes()
 {
 	stagingBufferSize = 0;
-	floorVerticesSize = 0;
-	texturedVerticesSize = 0;
-	coloredVerticesSize = 0;
 	verticesSize = 0;
-	colormappedVerticesSize = 0;
-	colormappedTexCoordsSize = 0;
-	floorAttributesSize = 0;
-	texturedAttributesSize = 0;
-	colormappedLightsSize = 0;
-	vertexTransformSize = 0;
-	attributesSize = 0;
-	floorIndicesSize = 0;
-	colormappedIndices16Size = 0;
-	coloredIndices16Size = 0;
-	indices16Size = 0;
-	colormappedIndices32Size = 0;
-	coloredIndices32Size = 0;
-	indices32Size = 0;
-	colorsSize = 0;
 	floorSize = 0;
 }
 

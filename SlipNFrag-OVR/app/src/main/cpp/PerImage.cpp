@@ -98,7 +98,6 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 		{
 			buffer = appState.Scene.latestColormappedBuffer;
 		}
-		appState.Scene.colormappedVerticesSize += verticesOffset;
 		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, verticesOffset, 0, &buffer->mapped));
 		auto mapped = (float*)buffer->mapped;
 		for (auto i : appState.Scene.newVertices)
@@ -157,7 +156,6 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 		{
 			buffer = appState.Scene.latestColormappedBuffer;
 		}
-		appState.Scene.colormappedTexCoordsSize += texCoordsOffset;
 		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, appState.Scene.usedInLatestColormappedBuffer, texCoordsOffset, 0, &buffer->mapped));
 		auto mapped = (float*)buffer->mapped;
 		for (auto i : appState.Scene.newTexCoords)
@@ -254,21 +252,22 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			previousVertexes = vertexes;
 		}
 	}
+	VkDeviceSize floorVerticesSize;
 	if (appState.Mode != AppWorldMode)
 	{
-		appState.Scene.floorVerticesSize = 3 * 4 * sizeof(float);
+		floorVerticesSize = 3 * 4 * sizeof(float);
 	}
 	else
 	{
-		appState.Scene.floorVerticesSize = 0;
+		floorVerticesSize = 0;
 	}
-	appState.Scene.texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
-	appState.Scene.coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-	appState.Scene.verticesSize = appState.Scene.texturedVerticesSize + appState.Scene.coloredVerticesSize + appState.Scene.floorVerticesSize;
+	VkDeviceSize texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
+	VkDeviceSize coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
+	appState.Scene.verticesSize = texturedVerticesSize + coloredVerticesSize + floorVerticesSize;
 	if (appState.Scene.verticesSize > 0)
 	{
 		vertices = cachedVertices.GetVertexBuffer(appState, appState.Scene.verticesSize);
-		if (appState.Scene.floorVerticesSize > 0)
+		if (floorVerticesSize > 0)
 		{
 			auto mapped = (float*)vertices->mapped;
 			(*mapped) = -0.5;
@@ -295,10 +294,10 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			mapped++;
 			(*mapped) = 0.5;
 		}
-		texturedVertexBase = appState.Scene.floorVerticesSize;
-		memcpy((unsigned char*)vertices->mapped + texturedVertexBase, d_lists.textured_vertices.data(), appState.Scene.texturedVerticesSize);
-		coloredVertexBase = texturedVertexBase + appState.Scene.texturedVerticesSize;
-		memcpy((unsigned char*)vertices->mapped + coloredVertexBase, d_lists.colored_vertices.data(), appState.Scene.coloredVerticesSize);
+		texturedVertexBase = floorVerticesSize;
+		memcpy((unsigned char*)vertices->mapped + texturedVertexBase, d_lists.textured_vertices.data(), texturedVerticesSize);
+		coloredVertexBase = texturedVertexBase + texturedVerticesSize;
+		memcpy((unsigned char*)vertices->mapped + coloredVertexBase, d_lists.colored_vertices.data(), coloredVerticesSize);
 		vertices->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
 	if (d_lists.last_alias16 >= 0)
@@ -337,20 +336,21 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		}
 		LoadAliasBuffers(appState, d_lists.last_viewmodel32, d_lists.viewmodels32, appState.Scene.viewmodelVertices32List, appState.Scene.viewmodelTexCoords32List, bufferMemoryBarrier);
 	}
+	VkDeviceSize floorAttributesSize;
 	if (appState.Mode != AppWorldMode)
 	{
-		appState.Scene.floorAttributesSize = 2 * 4 * sizeof(float);
+		floorAttributesSize = 2 * 4 * sizeof(float);
 	}
 	else
 	{
-		appState.Scene.floorAttributesSize = 0;
+		floorAttributesSize = 0;
 	}
-	appState.Scene.texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
-	appState.Scene.colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
-	appState.Scene.vertexTransformSize = 16 * sizeof(float);
-	appState.Scene.attributesSize = appState.Scene.floorAttributesSize + appState.Scene.texturedAttributesSize + appState.Scene.colormappedLightsSize + appState.Scene.vertexTransformSize;
-	attributes = cachedAttributes.GetVertexBuffer(appState, appState.Scene.attributesSize);
-	if (appState.Scene.floorAttributesSize > 0)
+	VkDeviceSize texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
+	VkDeviceSize colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
+	VkDeviceSize vertexTransformSize = 16 * sizeof(float);
+	VkDeviceSize attributesSize = floorAttributesSize + texturedAttributesSize + colormappedLightsSize + vertexTransformSize;
+	attributes = cachedAttributes.GetVertexBuffer(appState, attributesSize);
+	if (floorAttributesSize > 0)
 	{
 		auto mapped = (float*)attributes->mapped;
 		(*mapped) = 0;
@@ -369,11 +369,11 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		mapped++;
 		(*mapped) = 1;
 	}
-	texturedAttributeBase = appState.Scene.floorAttributesSize;
-	memcpy((unsigned char*)attributes->mapped + texturedAttributeBase, d_lists.textured_attributes.data(), appState.Scene.texturedAttributesSize);
-	colormappedAttributeBase = texturedAttributeBase + appState.Scene.texturedAttributesSize;
-	memcpy((unsigned char*)attributes->mapped + colormappedAttributeBase, d_lists.colormapped_attributes.data(), appState.Scene.colormappedLightsSize);
-	vertexTransformBase = colormappedAttributeBase + appState.Scene.colormappedLightsSize;
+	texturedAttributeBase = floorAttributesSize;
+	memcpy((unsigned char*)attributes->mapped + texturedAttributeBase, d_lists.textured_attributes.data(), texturedAttributesSize);
+	colormappedAttributeBase = texturedAttributeBase + texturedAttributesSize;
+	memcpy((unsigned char*)attributes->mapped + colormappedAttributeBase, d_lists.colormapped_attributes.data(), colormappedLightsSize);
+	vertexTransformBase = colormappedAttributeBase + colormappedLightsSize;
 	auto mapped = (float*)attributes->mapped + vertexTransformBase / sizeof(float);
 	(*mapped) = appState.Scale;
 	mapped++;
@@ -407,22 +407,23 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	mapped++;
 	(*mapped) = 1;
 	attributes->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+	VkDeviceSize floorIndicesSize;
 	if (appState.Mode != AppWorldMode)
 	{
-		appState.Scene.floorIndicesSize = 6 * sizeof(uint16_t);
+		floorIndicesSize = 6 * sizeof(uint16_t);
 	}
 	else
 	{
-		appState.Scene.floorIndicesSize = 0;
+		floorIndicesSize = 0;
 	}
-	appState.Scene.surfaceIndices16Size = (d_lists.last_surface_index16 + 1) * sizeof(uint16_t);
-	appState.Scene.colormappedIndices16Size = (d_lists.last_colormapped_index16 + 1) * sizeof(uint16_t);
-	appState.Scene.coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
-	appState.Scene.indices16Size = appState.Scene.floorIndicesSize + appState.Scene.surfaceIndices16Size + appState.Scene.colormappedIndices16Size + appState.Scene.coloredIndices16Size;
-	if (appState.Scene.indices16Size > 0)
+	VkDeviceSize surfaceIndices16Size = (d_lists.last_surface_index16 + 1) * sizeof(uint16_t);
+	VkDeviceSize colormappedIndices16Size = (d_lists.last_colormapped_index16 + 1) * sizeof(uint16_t);
+	VkDeviceSize coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
+	VkDeviceSize indices16Size = floorIndicesSize + surfaceIndices16Size + colormappedIndices16Size + coloredIndices16Size;
+	if (indices16Size > 0)
 	{
-		indices16 = cachedIndices16.GetIndexBuffer(appState, appState.Scene.indices16Size);
-		if (appState.Scene.floorIndicesSize > 0)
+		indices16 = cachedIndices16.GetIndexBuffer(appState, indices16Size);
+		if (floorIndicesSize > 0)
 		{
 			auto mapped = (uint16_t*)indices16->mapped;
 			(*mapped) = 0;
@@ -437,33 +438,33 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			mapped++;
 			(*mapped) = 0;
 		}
-		surfaceIndex16Base = appState.Scene.floorIndicesSize;
-		memcpy((unsigned char*)indices16->mapped + surfaceIndex16Base, d_lists.surface_indices16.data(), appState.Scene.surfaceIndices16Size);
-		colormappedIndex16Base = surfaceIndex16Base + appState.Scene.surfaceIndices16Size;
-		memcpy((unsigned char*)indices16->mapped + colormappedIndex16Base, d_lists.colormapped_indices16.data(), appState.Scene.colormappedIndices16Size);
-		coloredIndex16Base = colormappedIndex16Base + appState.Scene.colormappedIndices16Size;
-		memcpy((unsigned char*)indices16->mapped + coloredIndex16Base, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
+		surfaceIndex16Base = floorIndicesSize;
+		memcpy((unsigned char*)indices16->mapped + surfaceIndex16Base, d_lists.surface_indices16.data(), surfaceIndices16Size);
+		colormappedIndex16Base = surfaceIndex16Base + surfaceIndices16Size;
+		memcpy((unsigned char*)indices16->mapped + colormappedIndex16Base, d_lists.colormapped_indices16.data(), colormappedIndices16Size);
+		coloredIndex16Base = colormappedIndex16Base + colormappedIndices16Size;
+		memcpy((unsigned char*)indices16->mapped + coloredIndex16Base, d_lists.colored_indices16.data(), coloredIndices16Size);
 		indices16->SubmitIndexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
-	appState.Scene.surfaceIndices32Size = (d_lists.last_surface_index32 + 1) * sizeof(uint32_t);
-	appState.Scene.colormappedIndices32Size = (d_lists.last_colormapped_index32 + 1) * sizeof(uint32_t);
-	appState.Scene.coloredIndices32Size = (d_lists.last_colored_index32 + 1) * sizeof(uint32_t);
-	appState.Scene.indices32Size = appState.Scene.surfaceIndices32Size + appState.Scene.colormappedIndices32Size + appState.Scene.coloredIndices32Size;
-	if (appState.Scene.indices32Size > 0)
+	VkDeviceSize surfaceIndices32Size = (d_lists.last_surface_index32 + 1) * sizeof(uint32_t);
+	VkDeviceSize colormappedIndices32Size = (d_lists.last_colormapped_index32 + 1) * sizeof(uint32_t);
+	VkDeviceSize coloredIndices32Size = (d_lists.last_colored_index32 + 1) * sizeof(uint32_t);
+	VkDeviceSize indices32Size = surfaceIndices32Size + colormappedIndices32Size + coloredIndices32Size;
+	if (indices32Size > 0)
 	{
-		indices32 = cachedIndices32.GetIndexBuffer(appState, appState.Scene.indices32Size);
-		memcpy(indices32->mapped, d_lists.surface_indices32.data(), appState.Scene.surfaceIndices32Size);
-		colormappedIndex32Base = appState.Scene.surfaceIndices32Size;
-		memcpy((unsigned char*)indices32->mapped + colormappedIndex32Base, d_lists.colormapped_indices32.data(), appState.Scene.colormappedIndices32Size);
-		coloredIndex32Base = colormappedIndex32Base + appState.Scene.colormappedIndices32Size;
-		memcpy((unsigned char*)indices32->mapped + coloredIndex32Base, d_lists.colored_indices32.data(), appState.Scene.coloredIndices32Size);
+		indices32 = cachedIndices32.GetIndexBuffer(appState, indices32Size);
+		memcpy(indices32->mapped, d_lists.surface_indices32.data(), surfaceIndices32Size);
+		colormappedIndex32Base = surfaceIndices32Size;
+		memcpy((unsigned char*)indices32->mapped + colormappedIndex32Base, d_lists.colormapped_indices32.data(), colormappedIndices32Size);
+		coloredIndex32Base = colormappedIndex32Base + colormappedIndices32Size;
+		memcpy((unsigned char*)indices32->mapped + coloredIndex32Base, d_lists.colored_indices32.data(), coloredIndices32Size);
 		indices32->SubmitIndexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
-	appState.Scene.colorsSize = (d_lists.last_colored_attribute + 1) * sizeof(float);
-	if (appState.Scene.colorsSize > 0)
+	VkDeviceSize colorsSize = (d_lists.last_colored_attribute + 1) * sizeof(float);
+	if (colorsSize > 0)
 	{
-		colors = cachedColors.GetVertexBuffer(appState, appState.Scene.colorsSize);
-		memcpy(colors->mapped, d_lists.colored_attributes.data(), appState.Scene.colorsSize);
+		colors = cachedColors.GetVertexBuffer(appState, colorsSize);
+		memcpy(colors->mapped, d_lists.colored_attributes.data(), colorsSize);
 		colors->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
 }
