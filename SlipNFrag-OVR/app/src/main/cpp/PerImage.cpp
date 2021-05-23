@@ -109,22 +109,14 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 				auto x = (float)(vertexFromModel->v[0]);
 				auto y = (float)(vertexFromModel->v[1]);
 				auto z = (float)(vertexFromModel->v[2]);
-				(*mapped) = x;
-				mapped++;
-				(*mapped) = z;
-				mapped++;
-				(*mapped) = -y;
-				mapped++;
-				(*mapped) = 1;
-				mapped++;
-				(*mapped) = x;
-				mapped++;
-				(*mapped) = z;
-				mapped++;
-				(*mapped) = -y;
-				mapped++;
-				(*mapped) = 1;
-				mapped++;
+				*mapped++ = x;
+				*mapped++ = z;
+				*mapped++ = -y;
+				*mapped++ = 1;
+				*mapped++ = x;
+				*mapped++ = z;
+				*mapped++ = -y;
+				*mapped++ = 1;
 				vertexFromModel++;
 			}
 			auto index = aliasVertices[i];
@@ -168,14 +160,10 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 				auto t = (float)(texCoords->t >> 16);
 				s /= alias.width;
 				t /= alias.height;
-				(*mapped) = s;
-				mapped++;
-				(*mapped) = t;
-				mapped++;
-				(*mapped) = s + 0.5;
-				mapped++;
-				(*mapped) = t;
-				mapped++;
+				*mapped++ = s;
+				*mapped++ = t;
+				*mapped++ = s + 0.5;
+				*mapped++ = t;
 				texCoords++;
 			}
 			auto index = aliasTexCoords[i];
@@ -263,41 +251,55 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	}
 	VkDeviceSize texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
 	VkDeviceSize coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-	appState.Scene.verticesSize = texturedVerticesSize + coloredVerticesSize + floorVerticesSize;
+	appState.Scene.controllerVerticesSize = 0;
+	if (appState.Mode != AppWorldMode || key_dest == key_console)
+	{
+		if (appState.LeftController.TrackingResult == ovrSuccess)
+		{
+			appState.Scene.controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
+		}
+		if (appState.RightController.TrackingResult == ovrSuccess)
+		{
+			appState.Scene.controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
+		}
+	}
+	appState.Scene.verticesSize = floorVerticesSize + texturedVerticesSize + coloredVerticesSize + appState.Scene.controllerVerticesSize;
 	if (appState.Scene.verticesSize > 0)
 	{
 		vertices = cachedVertices.GetVertexBuffer(appState, appState.Scene.verticesSize);
 		if (floorVerticesSize > 0)
 		{
 			auto mapped = (float*)vertices->mapped;
-			(*mapped) = -0.5;
-			mapped++;
-			(*mapped) = appState.Scene.pose.Position.y;
-			mapped++;
-			(*mapped) = -0.5;
-			mapped++;
-			(*mapped) = 0.5;
-			mapped++;
-			(*mapped) = appState.Scene.pose.Position.y;
-			mapped++;
-			(*mapped) = -0.5;
-			mapped++;
-			(*mapped) = 0.5;
-			mapped++;
-			(*mapped) = appState.Scene.pose.Position.y;
-			mapped++;
-			(*mapped) = 0.5;
-			mapped++;
-			(*mapped) = -0.5;
-			mapped++;
-			(*mapped) = appState.Scene.pose.Position.y;
-			mapped++;
-			(*mapped) = 0.5;
+			*mapped++ = -0.5;
+			*mapped++ = appState.Scene.pose.Position.y;
+			*mapped++ = -0.5;
+			*mapped++ = 0.5;
+			*mapped++ = appState.Scene.pose.Position.y;
+			*mapped++ = -0.5;
+			*mapped++ = 0.5;
+			*mapped++ = appState.Scene.pose.Position.y;
+			*mapped++ = 0.5;
+			*mapped++ = -0.5;
+			*mapped++ = appState.Scene.pose.Position.y;
+			*mapped++ = 0.5;
 		}
 		texturedVertexBase = floorVerticesSize;
 		memcpy((unsigned char*)vertices->mapped + texturedVertexBase, d_lists.textured_vertices.data(), texturedVerticesSize);
 		coloredVertexBase = texturedVertexBase + texturedVerticesSize;
 		memcpy((unsigned char*)vertices->mapped + coloredVertexBase, d_lists.colored_vertices.data(), coloredVerticesSize);
+		controllerVertexBase = coloredVertexBase + coloredVerticesSize;
+		if (appState.Scene.controllerVerticesSize > 0)
+		{
+			auto mapped = (float*)vertices->mapped + controllerVertexBase / sizeof(float);
+			if (appState.LeftController.TrackingResult == ovrSuccess)
+			{
+				mapped = appState.LeftController.WriteVertices(mapped);
+			}
+			if (appState.RightController.TrackingResult == ovrSuccess)
+			{
+				mapped = appState.RightController.WriteVertices(mapped);
+			}
+		}
 		vertices->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
 	if (d_lists.last_alias16 >= 0)
@@ -348,26 +350,31 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	VkDeviceSize texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
 	VkDeviceSize colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
 	VkDeviceSize vertexTransformSize = 16 * sizeof(float);
-	VkDeviceSize attributesSize = floorAttributesSize + texturedAttributesSize + colormappedLightsSize + vertexTransformSize;
+	VkDeviceSize controllerAttributesSize = 0;
+	if (appState.Scene.controllerVerticesSize > 0)
+	{
+		if (appState.LeftController.TrackingResult == ovrSuccess)
+		{
+			controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
+		}
+		if (appState.RightController.TrackingResult == ovrSuccess)
+		{
+			controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
+		}
+	}
+	VkDeviceSize attributesSize = floorAttributesSize + texturedAttributesSize + colormappedLightsSize + vertexTransformSize + controllerAttributesSize;
 	attributes = cachedAttributes.GetVertexBuffer(appState, attributesSize);
 	if (floorAttributesSize > 0)
 	{
 		auto mapped = (float*)attributes->mapped;
-		(*mapped) = 0;
-		mapped++;
-		(*mapped) = 0;
-		mapped++;
-		(*mapped) = 1;
-		mapped++;
-		(*mapped) = 0;
-		mapped++;
-		(*mapped) = 1;
-		mapped++;
-		(*mapped) = 1;
-		mapped++;
-		(*mapped) = 0;
-		mapped++;
-		(*mapped) = 1;
+		*mapped++ = 0;
+		*mapped++ = 0;
+		*mapped++ = 1;
+		*mapped++ = 0;
+		*mapped++ = 1;
+		*mapped++ = 1;
+		*mapped++ = 0;
+		*mapped++ = 1;
 	}
 	texturedAttributeBase = floorAttributesSize;
 	memcpy((unsigned char*)attributes->mapped + texturedAttributeBase, d_lists.textured_attributes.data(), texturedAttributesSize);
@@ -375,37 +382,34 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	memcpy((unsigned char*)attributes->mapped + colormappedAttributeBase, d_lists.colormapped_attributes.data(), colormappedLightsSize);
 	vertexTransformBase = colormappedAttributeBase + colormappedLightsSize;
 	auto mapped = (float*)attributes->mapped + vertexTransformBase / sizeof(float);
-	(*mapped) = appState.Scale;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = appState.Scale;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = appState.Scale;
-	mapped++;
-	(*mapped) = 0;
-	mapped++;
-	(*mapped) = -r_refdef.vieworg[0] * appState.Scale;
-	mapped++;
-	(*mapped) = -r_refdef.vieworg[2] * appState.Scale;
-	mapped++;
-	(*mapped) = r_refdef.vieworg[1] * appState.Scale;
-	mapped++;
-	(*mapped) = 1;
+	*mapped++ = appState.Scale;
+	*mapped++ = 0;
+	*mapped++ = 0;
+	*mapped++ = 0;
+	*mapped++ = 0;
+	*mapped++ = appState.Scale;
+	*mapped++ = 0;
+	*mapped++ = 0;
+	*mapped++ = 0;
+	*mapped++ = 0;
+	*mapped++ = appState.Scale;
+	*mapped++ = 0;
+	*mapped++ = -r_refdef.vieworg[0] * appState.Scale;
+	*mapped++ = -r_refdef.vieworg[2] * appState.Scale;
+	*mapped++ = r_refdef.vieworg[1] * appState.Scale;
+	*mapped++ = 1;
+	controllerAttributeBase = vertexTransformBase + 16 * sizeof(float);
+	if (controllerAttributesSize > 0)
+	{
+		if (appState.LeftController.TrackingResult == ovrSuccess)
+		{
+			mapped = appState.LeftController.WriteAttributes(mapped);
+		}
+		if (appState.RightController.TrackingResult == ovrSuccess)
+		{
+			mapped = appState.RightController.WriteAttributes(mapped);
+		}
+	}
 	attributes->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	VkDeviceSize floorIndicesSize;
 	if (appState.Mode != AppWorldMode)
@@ -419,24 +423,31 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 	VkDeviceSize surfaceIndices16Size = (d_lists.last_surface_index16 + 1) * sizeof(uint16_t);
 	VkDeviceSize colormappedIndices16Size = (d_lists.last_colormapped_index16 + 1) * sizeof(uint16_t);
 	VkDeviceSize coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
-	VkDeviceSize indices16Size = floorIndicesSize + surfaceIndices16Size + colormappedIndices16Size + coloredIndices16Size;
+	VkDeviceSize controllerIndices16Size = 0;
+	if (appState.Scene.controllerVerticesSize > 0)
+	{
+		if (appState.LeftController.TrackingResult == ovrSuccess)
+		{
+			controllerIndices16Size += 2 * 36 * sizeof(uint16_t);
+		}
+		if (appState.RightController.TrackingResult == ovrSuccess)
+		{
+			controllerIndices16Size += 2 * 36 * sizeof(uint16_t);
+		}
+	}
+	VkDeviceSize indices16Size = floorIndicesSize + surfaceIndices16Size + colormappedIndices16Size + coloredIndices16Size + controllerIndices16Size;
 	if (indices16Size > 0)
 	{
 		indices16 = cachedIndices16.GetIndexBuffer(appState, indices16Size);
 		if (floorIndicesSize > 0)
 		{
 			auto mapped = (uint16_t*)indices16->mapped;
-			(*mapped) = 0;
-			mapped++;
-			(*mapped) = 1;
-			mapped++;
-			(*mapped) = 2;
-			mapped++;
-			(*mapped) = 2;
-			mapped++;
-			(*mapped) = 3;
-			mapped++;
-			(*mapped) = 0;
+			*mapped++ = 0;
+			*mapped++ = 1;
+			*mapped++ = 2;
+			*mapped++ = 2;
+			*mapped++ = 3;
+			*mapped++ = 0;
 		}
 		surfaceIndex16Base = floorIndicesSize;
 		memcpy((unsigned char*)indices16->mapped + surfaceIndex16Base, d_lists.surface_indices16.data(), surfaceIndices16Size);
@@ -444,6 +455,25 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		memcpy((unsigned char*)indices16->mapped + colormappedIndex16Base, d_lists.colormapped_indices16.data(), colormappedIndices16Size);
 		coloredIndex16Base = colormappedIndex16Base + colormappedIndices16Size;
 		memcpy((unsigned char*)indices16->mapped + coloredIndex16Base, d_lists.colored_indices16.data(), coloredIndices16Size);
+		controllerIndex16Base = coloredIndex16Base + coloredIndices16Size;
+		if (controllerIndices16Size > 0)
+		{
+			auto mapped = (uint16_t*)indices16->mapped + controllerIndex16Base / sizeof(uint16_t);
+			auto offset = 0;
+			if (appState.LeftController.TrackingResult == ovrSuccess)
+			{
+				mapped = appState.LeftController.WriteIndices(mapped, offset);
+				offset += 8;
+				mapped = appState.LeftController.WriteIndices(mapped, offset);
+				offset += 8;
+			}
+			if (appState.RightController.TrackingResult == ovrSuccess)
+			{
+				mapped = appState.RightController.WriteIndices(mapped, offset);
+				offset += 8;
+				mapped = appState.RightController.WriteIndices(mapped, offset);
+			}
+		}
 		indices16->SubmitIndexBuffer(appState, commandBuffer, bufferMemoryBarrier);
 	}
 	VkDeviceSize surfaceIndices32Size = (d_lists.last_surface_index32 + 1) * sizeof(uint32_t);
@@ -2124,5 +2154,44 @@ void PerImage::Render(AppState& appState)
 		VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr));
 		VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, 0, VK_INDEX_TYPE_UINT16));
 		VC(appState.Device.vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0));
+	}
+	if (appState.Scene.controllerVerticesSize > 0)
+	{
+		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &controllerVertexBase));
+		VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &controllerAttributeBase));
+		VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipeline));
+		if (!controllerResources.created)
+		{
+			poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			poolSizes[0].descriptorCount = 1;
+			descriptorPoolCreateInfo.poolSizeCount = 1;
+			VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &controllerResources.descriptorPool));
+			descriptorSetAllocateInfo.descriptorPool = controllerResources.descriptorPool;
+			descriptorSetAllocateInfo.descriptorSetCount = 1;
+			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+			VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &controllerResources.descriptorSet));
+			textureInfo[0].sampler = appState.Scene.textureSamplers[appState.Scene.controllerTexture.mipCount];
+			textureInfo[0].imageView = appState.Scene.controllerTexture.view;
+			writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writes[0].pImageInfo = textureInfo;
+			writes[0].dstSet = controllerResources.descriptorSet;
+			VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
+			controllerResources.created = true;
+		}
+		VkDescriptorSet descriptorSets[2];
+		descriptorSets[0] = sceneMatricesResources.descriptorSet;
+		descriptorSets[1] = controllerResources.descriptorSet;
+		VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr));
+		VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllerIndex16Base, VK_INDEX_TYPE_UINT16));
+		VkDeviceSize size = 0;
+		if (appState.LeftController.TrackingResult == ovrSuccess)
+		{
+			size += 2 * 36;
+		}
+		if (appState.RightController.TrackingResult == ovrSuccess)
+		{
+			size += 2 * 36;
+		}
+		VC(appState.Device.vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0));
 	}
 }

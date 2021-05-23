@@ -6,7 +6,7 @@
 #include <android/log.h>
 #include "sys_ovr.h"
 #include "MemoryAllocateInfo.h"
-#include "stb_image.h"
+#include "ImageAsset.h"
 
 void Scene::CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height)
 {
@@ -268,16 +268,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Screen.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
 	appState.Screen.Data.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
 	appState.Screen.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.Screen.SwapChain, 0);
-	auto imageFile = AAssetManager_open(app->activity->assetManager, "play.png", AASSET_MODE_BUFFER);
-	auto imageFileLength = AAsset_getLength(imageFile);
-	std::vector<stbi_uc> imageSource(imageFileLength);
-	AAsset_read(imageFile, imageSource.data(), imageFileLength);
-	int imageWidth;
-	int imageHeight;
-	int imageComponents;
-	auto image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	CopyImage(appState, image, appState.Screen.Data.data() + ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2, imageWidth, imageHeight);
-	stbi_image_free(image);
+	ImageAsset play;
+	play.Open("play.png", app);
+	CopyImage(appState, play.image, appState.Screen.Data.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);
+	play.Close();
 	AddBorder(appState, appState.Screen.Data);
 	appState.Screen.Buffer.CreateStagingBuffer(appState, appState.Screen.Data.size() * sizeof(uint32_t));
 	VK(appState.Device.vkMapMemory(appState.Device.device, appState.Screen.Buffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.Buffer.mapped));
@@ -304,47 +298,49 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Screen.SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	appState.Screen.SubmitInfo.commandBufferCount = 1;
 	appState.Screen.SubmitInfo.pCommandBuffers = &appState.Screen.CommandBuffer;
-	imageFile = AAssetManager_open(app->activity->assetManager, "floor.png", AASSET_MODE_BUFFER);
-	imageFileLength = AAsset_getLength(imageFile);
-	imageSource.resize(imageFileLength);
-	AAsset_read(imageFile, imageSource.data(), imageFileLength);
-	image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	appState.Scene.floorTexture.Create(appState, setupCommandBuffer, imageWidth, imageHeight, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	ImageAsset floorImage;
+	floorImage.Open("floor.png", app);
+	appState.Scene.floorTexture.Create(appState, setupCommandBuffer, floorImage.width, floorImage.height, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	ImageAsset controller;
+	controller.Open("controller.png", app);
+	appState.Scene.controllerTexture.Create(appState, setupCommandBuffer, controller.width, controller.height, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controller.width * controller.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
 	Buffer stagingBuffer;
-	stagingBuffer.CreateStagingBuffer(appState, imageWidth * imageHeight * sizeof(uint32_t) + 2 * appState.ScreenWidth * appState.ScreenHeight * sizeof(uint32_t));
+	stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);
 	VK(appState.Device.vkMapMemory(appState.Device.device, stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer.mapped));
-	memcpy(stagingBuffer.mapped, image, imageWidth * imageHeight * sizeof(uint32_t));
-	stbi_image_free(image);
-	size_t offset = imageWidth * imageHeight;
+	memcpy(stagingBuffer.mapped, floorImage.image, floorImage.width * floorImage.height * sizeof(uint32_t));
+	floorImage.Close();
+	size_t offset = floorImage.width * floorImage.height;
+	memcpy((uint32_t*)stagingBuffer.mapped + offset, controller.image, controller.width * controller.height * sizeof(uint32_t));
+	offset += controller.width * controller.height;
+	ImageAsset leftArrows;
+	leftArrows.Open("leftarrows.png", app);
 	appState.LeftArrows.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
 	appState.LeftArrows.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.LeftArrows.SwapChain, 0);
-	imageFile = AAssetManager_open(app->activity->assetManager, "leftarrows.png", AASSET_MODE_BUFFER);
-	imageFileLength = AAsset_getLength(imageFile);
-	imageSource.resize(imageFileLength);
-	AAsset_read(imageFile, imageSource.data(), imageFileLength);
-	image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	CopyImage(appState, image, (uint32_t*)stagingBuffer.mapped + offset + ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2, imageWidth, imageHeight);
-	stbi_image_free(image);
+	CopyImage(appState, leftArrows.image, (uint32_t*)stagingBuffer.mapped + offset + ((appState.ScreenHeight - leftArrows.height) * appState.ScreenWidth + appState.ScreenWidth - leftArrows.width) / 2, leftArrows.width, leftArrows.height);
+	leftArrows.Close();
 	offset += appState.ScreenWidth * appState.ScreenHeight;
+	ImageAsset rightArrows;
+	rightArrows.Open("rightarrows.png", app);
 	appState.RightArrows.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
 	appState.RightArrows.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.RightArrows.SwapChain, 0);
-	imageFile = AAssetManager_open(app->activity->assetManager, "rightarrows.png", AASSET_MODE_BUFFER);
-	imageFileLength = AAsset_getLength(imageFile);
-	imageSource.resize(imageFileLength);
-	AAsset_read(imageFile, imageSource.data(), imageFileLength);
-	image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	CopyImage(appState, image, (uint32_t*)stagingBuffer.mapped + offset + ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2, imageWidth, imageHeight);
-	stbi_image_free(image);
+	CopyImage(appState, rightArrows.image, (uint32_t*)stagingBuffer.mapped + offset + ((appState.ScreenHeight - rightArrows.height) * appState.ScreenWidth + appState.ScreenWidth - rightArrows.width) / 2, rightArrows.width, rightArrows.height);
+	rightArrows.Close();
 	mappedMemoryRange.memory = stagingBuffer.memory;
 	VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
-	appState.Scene.floorTexture.Fill(appState, &stagingBuffer, 0, setupCommandBuffer);
+	offset = 0;
+	appState.Scene.floorTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
+	offset += floorImage.width * floorImage.height * sizeof(uint32_t);
+	appState.Scene.controllerTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
+	offset += controller.width * controller.height * sizeof(uint32_t);
 	imageMemoryBarrier.image = appState.LeftArrows.Image;
 	VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	region.bufferOffset = (appState.Scene.floorTexture.width * appState.Scene.floorTexture.height) * sizeof(uint32_t);
+	region.bufferOffset = offset;
 	VC(appState.Device.vkCmdCopyBufferToImage(setupCommandBuffer, stagingBuffer.buffer, appState.LeftArrows.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+	offset += appState.ScreenWidth * appState.ScreenHeight * sizeof(uint32_t);
 	imageMemoryBarrier.image = appState.RightArrows.Image;
 	VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	region.bufferOffset += appState.ScreenWidth * appState.ScreenHeight * sizeof(uint32_t);
+	region.bufferOffset = offset;
 	VC(appState.Device.vkCmdCopyBufferToImage(setupCommandBuffer, stagingBuffer.buffer, appState.RightArrows.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
 	VK(appState.Device.vkEndCommandBuffer(setupCommandBuffer));
 	VK(appState.Device.vkQueueSubmit(appState.Context.queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
@@ -378,13 +374,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		10, 11, 8
 	});
 	appState.NoGameDataData.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
-	imageFile = AAssetManager_open(app->activity->assetManager, "nogamedata.png", AASSET_MODE_BUFFER);
-	imageFileLength = AAsset_getLength(imageFile);
-	imageSource.resize(imageFileLength);
-	AAsset_read(imageFile, imageSource.data(), imageFileLength);
-	image = stbi_load_from_memory(imageSource.data(), imageFileLength, &imageWidth, &imageHeight, &imageComponents, 4);
-	CopyImage(appState, image, appState.NoGameDataData.data() + ((appState.ScreenHeight - imageHeight) * appState.ScreenWidth + appState.ScreenWidth - imageWidth) / 2, imageWidth, imageHeight);
-	stbi_image_free(image);
+	ImageAsset noGameData;
+	noGameData.Open("nogamedata.png", app);
+	CopyImage(appState, noGameData.image, appState.NoGameDataData.data() + ((appState.ScreenHeight - noGameData.height) * appState.ScreenWidth + appState.ScreenWidth - noGameData.width) / 2, noGameData.width, noGameData.height);
+	noGameData.Close();
 	AddBorder(appState, appState.NoGameDataData);
 	auto isMultiview = appState.Device.supportsMultiview;
 	numBuffers = (isMultiview) ? VRAPI_FRAME_LAYER_EYE_MAX : 1;
@@ -917,6 +910,7 @@ void Scene::ClearSizes()
 {
 	stagingBufferSize = 0;
 	verticesSize = 0;
+	controllerVerticesSize = 0;
 }
 
 void Scene::Reset()

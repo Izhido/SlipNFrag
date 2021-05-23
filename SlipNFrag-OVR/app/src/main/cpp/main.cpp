@@ -1973,6 +1973,7 @@ void android_main(struct android_app* app)
 		{
 			VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &perImage.commandBuffer));
 			VC(appState.Device.vkDestroyFence(appState.Device.device, perImage.fence, nullptr));
+			perImage.controllerResources.Delete(appState);
 			perImage.floorResources.Delete(appState);
 			perImage.skyResources.Delete(appState);
 			perImage.viewmodelResources.Delete(appState);
@@ -2058,6 +2059,7 @@ void android_main(struct android_app* app)
 	{
 		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.textureSamplers[i], nullptr));
 	}
+	appState.Scene.controllerTexture.Delete(appState);
 	appState.Scene.floorTexture.Delete(appState);
 	appState.Scene.viewmodelTextures.Delete(appState);
 	appState.Scene.aliasTextures.Delete(appState);
