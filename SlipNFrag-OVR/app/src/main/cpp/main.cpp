@@ -1749,7 +1749,7 @@ void android_main(struct android_app* app)
 			worldLayer.Textures[i].SwapChainIndex = appState.Views[view].index;
 			worldLayer.Textures[i].TexCoordsFromTanAngles = ovrMatrix4f_TanAngleMatrixFromProjection(&appState.Tracking.Eye[i].ProjectionMatrix);
 		}
-		if (appState.Scene.skybox != VK_NULL_HANDLE)
+		if (appState.Mode != AppWorldMode || appState.Scene.skybox != VK_NULL_HANDLE)
 		{
 			worldLayer.Header.SrcBlend = VRAPI_FRAME_LAYER_BLEND_SRC_ALPHA;
 			worldLayer.Header.DstBlend = VRAPI_FRAME_LAYER_BLEND_ONE_MINUS_SRC_ALPHA;
@@ -1923,10 +1923,17 @@ void android_main(struct android_app* app)
 		{
 			layers.push_back((ovrLayerHeader2*)&layer.Header);
 		}
-		layers.push_back(&worldLayer.Header);
+		if (appState.Mode == AppWorldMode)
+		{
+			layers.push_back(&worldLayer.Header);
+		}
 		for (auto& layer : cylinderLayers)
 		{
 			layers.push_back((ovrLayerHeader2*)&layer.Header);
+		}
+		if (appState.Mode != AppWorldMode)
+		{
+			layers.push_back(&worldLayer.Header);
 		}
 		ovrSubmitFrameDescription2 frameDesc = { };
 		frameDesc.SwapInterval = appState.SwapInterval;

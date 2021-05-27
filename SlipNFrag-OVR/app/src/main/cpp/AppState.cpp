@@ -79,7 +79,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		double clearG;
 		double clearB;
 		double clearA;
-		if (Scene.skybox != VK_NULL_HANDLE)
+		if (Mode != AppWorldMode || Scene.skybox != VK_NULL_HANDLE)
 		{
 			clearR = 0;
 			clearG = 0;
