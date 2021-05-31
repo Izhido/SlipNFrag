@@ -55,17 +55,17 @@ void CylinderProjection::Setup(AppState& appState, ovrLayerCylinder2& layer, con
 	}
 }
 
-bool CylinderProjection::HitPoint(AppState& appState, ovrTracking& controller, float& x, float& y)
+bool CylinderProjection::HitPoint(AppState& appState, Controller& controller, float& x, float& y)
 {
-	// First attempt at finding intersection with the console cylinder projection layer. Needs more work.
-	/*auto controllerTransform = ovrMatrix4f_CreateFromQuaternion(&controller.HeadPose.Pose.Orientation);
-	ovrVector4f controllerDirection { 0, 0, 1, 0 };
+	auto controllerTransform = ovrMatrix4f_CreateFromQuaternion(&controller.Tracking.HeadPose.Pose.Orientation);
+	ovrVector4f controllerDirection { 0, 0, -1, 0 };
 	controllerDirection = ovrVector4f_MultiplyMatrix4f(&controllerTransform, &controllerDirection);
 	auto transform = vrapi_GetViewMatrixFromPose(&appState.Tracking.HeadPose.Pose);
-	auto& controllerOrigin3d = controller.HeadPose.Pose.Position;
-	ovrVector4f controllerOrigin { controllerOrigin3d.x, controllerOrigin3d.y, controllerOrigin3d.z, 0 };
+	auto& origin3d = appState.Tracking.HeadPose.Pose.Position;
+	auto& controllerOrigin3d = controller.Tracking.HeadPose.Pose.Position;
+	ovrVector4f controllerOrigin { controllerOrigin3d.x - origin3d.x, controllerOrigin3d.y - origin3d.y, controllerOrigin3d.z - origin3d.z, 0 };
 	controllerOrigin = ovrVector4f_MultiplyMatrix4f(&transform, &controllerOrigin);
-	ovrVector4f controllerTip { controllerOrigin3d.x + controllerDirection.x, controllerOrigin3d.y + controllerDirection.y, controllerOrigin3d.z + controllerDirection.z, 0 };
+	ovrVector4f controllerTip { controllerOrigin3d.x - origin3d.x + controllerDirection.x, controllerOrigin3d.y - origin3d.y + controllerDirection.y, controllerOrigin3d.z - origin3d.z + controllerDirection.z, 0 };
 	controllerTip = ovrVector4f_MultiplyMatrix4f(&transform, &controllerTip);
 	controllerDirection.x = controllerTip.x - controllerOrigin.x;
 	controllerDirection.y = controllerTip.y - controllerOrigin.y;
@@ -87,17 +87,12 @@ bool CylinderProjection::HitPoint(AppState& appState, ovrTracking& controller, f
 	auto distanceToHitPoint = sqrt(radius * radius - rejection2d * rejection2d);
 	ovrVector2f hitPoint2d { projected2d.x + controllerDirection2d.x * distanceToHitPoint, projected2d.y + controllerDirection2d.y * distanceToHitPoint };
 	auto angle = atan2(hitPoint2d.y, hitPoint2d.x);
-	if (angle < M_PI / 2 - horizontalAngle / 2 || angle >= M_PI / 2 + horizontalAngle / 2)
+	if (angle < -M_PI / 2 - horizontalAngle / 2 || angle >= -M_PI / 2 + horizontalAngle / 2)
 	{
 		return false;
 	}
 	auto vertical = controllerOrigin.y + controllerDirection.y * (projection2d + distanceToHitPoint) / length2d;
-	if (vertical < -radius * verticalAngle / 2 || vertical >= radius * verticalAngle / 2)
-	{
-		return false;
-	}
-	x = (angle - M_PI / 2 + horizontalAngle / 2) / horizontalAngle;
-	y = (vertical + radius * verticalAngle / 2) / (radius * verticalAngle) + 0.5;
-	return true;*/
-	return false;
+	x = (angle + M_PI / 2 + horizontalAngle / 2) / horizontalAngle;
+	y = (radius * verticalAngle / 2 - vertical) / (radius * verticalAngle);
+	return true;
 }

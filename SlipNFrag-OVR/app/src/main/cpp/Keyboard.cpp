@@ -264,7 +264,7 @@ bool Keyboard::Handle(AppState& appState)
 	{
 		float x;
 		float y;
-		if (CylinderProjection::HitPoint(appState, appState.LeftController.Tracking, x, y))
+		if (CylinderProjection::HitPoint(appState, appState.LeftController, x, y))
 		{
 			auto horizontal = (int)(x * appState.ConsoleWidth);
 			auto vertical = (int)(y * appState.ConsoleHeight) - appState.ConsoleHeight / 2;
@@ -285,7 +285,7 @@ bool Keyboard::Handle(AppState& appState)
 	{
 		float x;
 		float y;
-		if (CylinderProjection::HitPoint(appState, appState.RightController.Tracking, x, y))
+		if (CylinderProjection::HitPoint(appState, appState.RightController, x, y))
 		{
 			auto horizontal = (int)(x * appState.ConsoleWidth);
 			auto vertical = (int)(y * appState.ConsoleHeight) - appState.ConsoleHeight / 2;
