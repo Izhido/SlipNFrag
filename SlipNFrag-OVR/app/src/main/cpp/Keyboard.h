@@ -22,6 +22,7 @@ struct Keyboard
 	PipelineDescriptorResources descriptorResources;
 
 	void Create(AppState& appState);
+	void AddKeyInput(int key, bool down);
 	bool Handle(AppState& appState);
 	void Fill(AppState& appState, KeyboardCell& cell, unsigned char color);
 	void Print(AppState& appState, KeyboardCell& cell, bool upper);

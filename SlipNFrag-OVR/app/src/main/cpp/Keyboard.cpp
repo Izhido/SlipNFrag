@@ -1,6 +1,8 @@
 #include "Keyboard.h"
 #include "AppState.h"
 #include "CylinderProjection.h"
+#include "VrApi_Input.h"
+#include "Input.h"
 
 extern byte* draw_chars;
 
@@ -253,10 +255,99 @@ void Keyboard::Create(AppState& appState)
 	buffer.resize(appState.ConsoleWidth * appState.ConsoleHeight / 2);
 }
 
+void Keyboard::AddKeyInput(int key, bool down)
+{
+	auto& source = cells[(int)layout];
+	auto& cell = source[key];
+	auto text = cell.text;
+	if (text[1] == 0)
+	{
+		Input::AddKeyInput(text[0], down);
+	}
+	else if (strcmp(text, "Bksp") == 0)
+	{
+		Input::AddKeyInput(K_BACKSPACE, down);
+	}
+	else if (strcmp(text, "Tab") == 0)
+	{
+		Input::AddKeyInput(K_TAB, down);
+	}
+	else if (strcmp(text, "Entr") == 0)
+	{
+		Input::AddKeyInput(K_ENTER, down);
+	}
+	else if (strcmp(text, "Ctrl") == 0)
+	{
+		Input::AddKeyInput(K_CTRL, down);
+	}
+	else if (strcmp(text, "Alt") == 0)
+	{
+		Input::AddKeyInput(K_ALT, down);
+	}
+	else if (strcmp(text, "Space") == 0)
+	{
+		Input::AddKeyInput(K_SPACE, down);
+	}
+	else if (strcmp(text, "Caps") == 0 || strcmp(text, "CAPS") == 0)
+	{
+		if (down)
+		{
+			if (layout == RegularKeys)
+			{
+				layout = CapsKeys;
+			}
+			else if (layout == CapsKeys)
+			{
+				layout = RegularKeys;
+			}
+			else if (layout == ShiftKeys)
+			{
+				layout = CapsShiftKeys;
+			}
+			else
+			{
+				layout = ShiftKeys;
+			}
+		}
+	}
+	else if (strcmp(text, "Shift") == 0 || strcmp(text, "SHIFT") == 0)
+	{
+		if (down)
+		{
+			if (layout == RegularKeys)
+			{
+				layout = ShiftKeys;
+			}
+			else if (layout == ShiftKeys)
+			{
+				layout = RegularKeys;
+			}
+			else if (layout == CapsKeys)
+			{
+				layout = CapsShiftKeys;
+			}
+			else
+			{
+				layout = CapsKeys;
+			}
+		}
+	}
+}
+
 bool Keyboard::Handle(AppState& appState)
 {
 	if (draw_chars == nullptr || key_dest != key_console)
 	{
+		if (leftPressed >= 0)
+		{
+			AddKeyInput(leftPressed, false);
+			leftPressed = -1;
+		}
+		if (rightPressed >= 0)
+		{
+			AddKeyInput(rightPressed, false);
+			rightPressed = -1;
+		}
 		return false;
 	}
 	leftHighlighted = -1;
@@ -301,7 +392,44 @@ bool Keyboard::Handle(AppState& appState)
 			}
 		}
 	}
-	return false;
+	auto triggerHandled = false;
+	if (Input::LeftButtonIsDown(appState, ovrButton_Trigger))
+	{
+		if (leftPressed < 0)
+		{
+			leftPressed = leftHighlighted;
+			AddKeyInput(leftPressed, true);
+			triggerHandled = true;
+		}
+	}
+	else if (Input::LeftButtonIsUp(appState, ovrButton_Trigger))
+	{
+		if (leftPressed >= 0)
+		{
+			AddKeyInput(leftPressed, false);
+			leftPressed = -1;
+			triggerHandled = true;
+		}
+	}
+	if (Input::RightButtonIsDown(appState, ovrButton_Trigger))
+	{
+		if (rightPressed < 0)
+		{
+			rightPressed = rightHighlighted;
+			AddKeyInput(rightPressed, true);
+			triggerHandled = true;
+		}
+	}
+	else if (Input::RightButtonIsUp(appState, ovrButton_Trigger))
+	{
+		if (rightPressed >= 0)
+		{
+			AddKeyInput(rightPressed, false);
+			rightPressed = -1;
+			triggerHandled = true;
+		}
+	}
+	return triggerHandled;
 }
 
 void Keyboard::Fill(AppState& appState, KeyboardCell& cell, unsigned char color)
@@ -360,28 +488,48 @@ bool Keyboard::Draw(AppState& appState)
 	for (auto i = 0; i < source.size(); i++)
 	{
 		auto& cell = source[i];
-		if (i == leftHighlighted)
-		{
-			Fill(appState, cell, 3);
-		}
-		if (i == rightHighlighted)
-		{
-			Fill(appState, cell, 3);
-		}
 		if (i == leftPressed)
 		{
 			Fill(appState, cell, 15);
 			Print(appState, cell, true);
+			continue;
 		}
-		else if (i == rightPressed)
+		if (i == rightPressed)
 		{
 			Fill(appState, cell, 15);
 			Print(appState, cell, true);
+			continue;
 		}
-		else
+		if (i == leftHighlighted && leftPressed == -1)
 		{
+			Fill(appState, cell, 3);
 			Print(appState, cell, false);
+			continue;
 		}
+		if (i == rightHighlighted && rightPressed == -1)
+		{
+			Fill(appState, cell, 3);
+			Print(appState, cell, false);
+			continue;
+		}
+		if (layout != RegularKeys)
+		{
+			auto& cell = source[i];
+			auto text = cell.text;
+			if ((layout == CapsKeys || layout == CapsShiftKeys) && (strcmp(text, "Caps") == 0 || strcmp(text, "CAPS") == 0))
+			{
+				Fill(appState, cell, 7);
+				Print(appState, cell, false);
+				continue;
+			}
+			else if ((layout == ShiftKeys || layout == CapsShiftKeys) && (strcmp(text, "Shift") == 0 || strcmp(text, "SHIFT") == 0))
+			{
+				Fill(appState, cell, 7);
+				Print(appState, cell, false);
+				continue;
+			}
+		}
+		Print(appState, cell, false);
 	}
 	return true;
 }
