@@ -1235,20 +1235,23 @@ void PerImage::SetPushConstants(dsurface_t& surface, float pushConstants[])
 	pushConstants[0] = surface.origin_x;
 	pushConstants[1] = surface.origin_y;
 	pushConstants[2] = surface.origin_z;
-	pushConstants[3] = surface.vecs[0][0];
-	pushConstants[4] = surface.vecs[0][1];
-	pushConstants[5] = surface.vecs[0][2];
-	pushConstants[6] = surface.vecs[0][3];
-	pushConstants[7] = surface.vecs[1][0];
-	pushConstants[8] = surface.vecs[1][1];
-	pushConstants[9] = surface.vecs[1][2];
-	pushConstants[10] = surface.vecs[1][3];
-	pushConstants[11] = surface.texturemins[0];
-	pushConstants[12] = surface.texturemins[1];
-	pushConstants[13] = surface.extents[0];
-	pushConstants[14] = surface.extents[1];
-	pushConstants[15] = surface.texture_width;
-	pushConstants[16] = surface.texture_height;
+	pushConstants[3] = surface.yaw;
+	pushConstants[4] = surface.pitch;
+	pushConstants[5] = surface.roll;
+	pushConstants[6] = surface.vecs[0][0];
+	pushConstants[7] = surface.vecs[0][1];
+	pushConstants[8] = surface.vecs[0][2];
+	pushConstants[9] = surface.vecs[0][3];
+	pushConstants[10] = surface.vecs[1][0];
+	pushConstants[11] = surface.vecs[1][1];
+	pushConstants[12] = surface.vecs[1][2];
+	pushConstants[13] = surface.vecs[1][3];
+	pushConstants[14] = surface.texturemins[0];
+	pushConstants[15] = surface.texturemins[1];
+	pushConstants[16] = surface.extents[0];
+	pushConstants[17] = surface.extents[1];
+	pushConstants[18] = surface.texture_width;
+	pushConstants[19] = surface.texture_height;
 }
 
 void PerImage::SetPushConstants(dturbulent_t& turbulent, float pushConstants[])
@@ -1256,16 +1259,19 @@ void PerImage::SetPushConstants(dturbulent_t& turbulent, float pushConstants[])
 	pushConstants[0] = turbulent.origin_x;
 	pushConstants[1] = turbulent.origin_y;
 	pushConstants[2] = turbulent.origin_z;
-	pushConstants[3] = turbulent.vecs[0][0];
-	pushConstants[4] = turbulent.vecs[0][1];
-	pushConstants[5] = turbulent.vecs[0][2];
-	pushConstants[6] = turbulent.vecs[0][3];
-	pushConstants[7] = turbulent.vecs[1][0];
-	pushConstants[8] = turbulent.vecs[1][1];
-	pushConstants[9] = turbulent.vecs[1][2];
-	pushConstants[10] = turbulent.vecs[1][3];
-	pushConstants[11] = turbulent.width;
-	pushConstants[12] = turbulent.height;
+	pushConstants[3] = turbulent.yaw;
+	pushConstants[4] = turbulent.pitch;
+	pushConstants[5] = turbulent.roll;
+	pushConstants[6] = turbulent.vecs[0][0];
+	pushConstants[7] = turbulent.vecs[0][1];
+	pushConstants[8] = turbulent.vecs[0][2];
+	pushConstants[9] = turbulent.vecs[0][3];
+	pushConstants[10] = turbulent.vecs[1][0];
+	pushConstants[11] = turbulent.vecs[1][1];
+	pushConstants[12] = turbulent.vecs[1][2];
+	pushConstants[13] = turbulent.vecs[1][3];
+	pushConstants[14] = turbulent.width;
+	pushConstants[15] = turbulent.height;
 }
 
 void PerImage::SetPushConstants(dalias_t& alias, float pushConstants[])
@@ -1450,7 +1456,7 @@ void PerImage::Render(AppState& appState)
 					previousVertexes = surface.vertexes;
 				}
 				SetPushConstants(surface, pushConstants);
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 17 * sizeof(float), pushConstants));
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 20 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.surfaceTexture16List[i].texture;
 				if (previousTexture != texture)
 				{
@@ -1481,7 +1487,7 @@ void PerImage::Render(AppState& appState)
 					previousVertexes = surface.vertexes;
 				}
 				SetPushConstants(surface, pushConstants);
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 17 * sizeof(float), pushConstants));
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 20 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.surfaceTexture32List[i].texture;
 				if (previousTexture != texture)
 				{
@@ -1531,7 +1537,7 @@ void PerImage::Render(AppState& appState)
 					previousVertexes = fence.vertexes;
 				}
 				SetPushConstants(fence, pushConstants);
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 17 * sizeof(float), pushConstants));
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 20 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.fenceTexture16List[i].texture;
 				if (previousTexture != texture)
 				{
@@ -1562,7 +1568,7 @@ void PerImage::Render(AppState& appState)
 					previousVertexes = fence.vertexes;
 				}
 				SetPushConstants(fence, pushConstants);
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 17 * sizeof(float), pushConstants));
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 20 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.fenceTexture32List[i].texture;
 				if (previousTexture != texture)
 				{
@@ -1645,7 +1651,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-			pushConstants[13] = (float)cl.time;
+			pushConstants[16] = (float)cl.time;
 			void* previousVertexes = nullptr;
 			Texture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, surfaceIndex16Base, VK_INDEX_TYPE_UINT16));
@@ -1659,7 +1665,7 @@ void PerImage::Render(AppState& appState)
 					previousVertexes = turbulent.vertexes;
 				}
 				SetPushConstants(turbulent, pushConstants);
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 14 * sizeof(float), pushConstants));
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 17 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.turbulent16List[i].texture;
 				if (previousTexture != texture)
 				{
@@ -1683,7 +1689,7 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
-			pushConstants[13] = (float)cl.time;
+			pushConstants[16] = (float)cl.time;
 			void* previousVertexes = nullptr;
 			Texture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
@@ -1697,7 +1703,7 @@ void PerImage::Render(AppState& appState)
 					previousVertexes = turbulent.vertexes;
 				}
 				SetPushConstants(turbulent, pushConstants);
-				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 14 * sizeof(float), pushConstants));
+				VC(appState.Device.vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 17 * sizeof(float), pushConstants));
 				auto texture = appState.Scene.turbulent32List[i].texture;
 				if (previousTexture != texture)
 				{

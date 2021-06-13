@@ -11,7 +11,7 @@ layout(set = 1, binding = 0) uniform usampler2D fragmentTexture;
 
 layout(push_constant) uniform Time
 {
-	layout(offset = 52) float time;
+	layout(offset = 64) float time;
 };
 
 layout(location = 0) in vec2 fragmentTexCoords;

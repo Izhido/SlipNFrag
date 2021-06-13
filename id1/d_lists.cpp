@@ -78,6 +78,9 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
+	surface.yaw = entity->angles[YAW];
+	surface.pitch = entity->angles[PITCH];
+	surface.roll = entity->angles[ROLL];
 	auto texinfo = face->texinfo;
 	for (auto j = 0; j < 2; j++)
 	{
@@ -513,6 +516,9 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	turbulent.origin_x = entity->origin[0];
 	turbulent.origin_y = entity->origin[1];
 	turbulent.origin_z = entity->origin[2];
+	turbulent.yaw = entity->angles[YAW];
+	turbulent.pitch = entity->angles[PITCH];
+	turbulent.roll = entity->angles[ROLL];
 	for (auto j = 0; j < 2; j++)
 	{
 		for (auto i = 0; i < 4; i++)

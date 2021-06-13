@@ -29,4 +29,5 @@ target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBI
 target_include_directories(native-activity PRIVATE ../../../../../id1)
 target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBILE}/3rdParty/stb/src)
 
-target_link_libraries(native-activity android native_app_glue log vrapi OpenSLES validation)
+target_link_libraries(native-activity android native_app_glue log vrapi OpenSLES)
+target_link_libraries(native-activity debug validation)

@@ -395,7 +395,7 @@ bool Keyboard::Handle(AppState& appState)
 	auto triggerHandled = false;
 	if (Input::LeftButtonIsDown(appState, ovrButton_Trigger))
 	{
-		if (leftPressed < 0)
+		if (leftHighlighted >= 0 && leftPressed < 0)
 		{
 			leftPressed = leftHighlighted;
 			AddKeyInput(leftPressed, true);
@@ -413,7 +413,7 @@ bool Keyboard::Handle(AppState& appState)
 	}
 	if (Input::RightButtonIsDown(appState, ovrButton_Trigger))
 	{
-		if (rightPressed < 0)
+		if (rightHighlighted >= 0 && rightPressed < 0)
 		{
 			rightPressed = rightHighlighted;
 			AddKeyInput(rightPressed, true);
