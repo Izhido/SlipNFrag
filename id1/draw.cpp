@@ -774,8 +774,8 @@ void Draw_CharToConback (int num, byte *dest, int width, int height)
 	}
 	else
 	{
-		auto xinc = vid.conwidth*0x10000/width;
-		auto yinc = vid.conheight*0x10000/height;
+		auto xinc = 320*0x10000/width;
+		auto yinc = 200*0x10000/height;
 
 		auto ypos = 0;
 
@@ -829,8 +829,8 @@ void Draw_ConsoleBackground (int lines)
 
 	conback = Draw_CachePic ("gfx/conback.lmp");
 
-	auto scalex = conback->width / vid.conwidth;
-	auto scaley = conback->height / vid.conheight;
+	auto scalex = conback->width / 320;
+	auto scaley = conback->height / 200;
 
 // hack the version number directly into the pic
 	if (sys_version.size() > 0)
