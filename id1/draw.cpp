@@ -748,7 +748,7 @@ void Draw_TransPicTranslateOnConsole (int x, int y, qpic_t *pic, byte *translati
 }
 
 
-void Draw_CharToConback (int num, byte *dest)
+void Draw_CharToConback (int num, byte *dest, int width, int height)
 {
 	int		row, col;
 	byte	*source;
@@ -761,13 +761,53 @@ void Draw_CharToConback (int num, byte *dest)
 
 	drawline = 8;
 
-	while (drawline--)
+	if (width == 320 && height == 200)
 	{
-		for (x=0 ; x<8 ; x++)
-			if (source[x])
-				dest[x] = 0x60 + source[x];
-		source += 128;
-		dest += 320;
+		while (drawline--)
+		{
+			for (x=0 ; x<8 ; x++)
+				if (source[x])
+					dest[x] = 0x60 + source[x];
+			source += 128;
+			dest += 320;
+		}
+	}
+	else
+	{
+		auto xinc = vid.conwidth*0x10000/width;
+		auto yinc = vid.conheight*0x10000/height;
+
+		auto ypos = 0;
+
+		while (drawline > 0)
+		{
+			auto xpos = 0;
+			auto destp = dest;
+
+			for (x=0 ; x<8 ; )
+			{
+				if (source[x])
+					*destp = 0x60 + source[x];
+				destp++;
+
+				auto newxpos = xpos + xinc;
+				if (xpos >> 16 != newxpos >> 16)
+				{
+					x++;
+				}
+				xpos = newxpos;
+			}
+
+			auto newypos = ypos + yinc;
+			if (ypos >> 16 != newypos >> 16)
+			{
+				source += 128;
+				drawline--;
+			}
+			ypos = newypos;
+
+			dest += width;
+		}
 	}
 
 }
@@ -789,31 +829,34 @@ void Draw_ConsoleBackground (int lines)
 
 	conback = Draw_CachePic ("gfx/conback.lmp");
 
+	auto scalex = conback->width / vid.conwidth;
+	auto scaley = conback->height / vid.conheight;
+
 // hack the version number directly into the pic
 	if (sys_version.size() > 0)
 	{
 		sprintf (ver, "%s", sys_version.c_str());
-		dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+		dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
 	}
 	else
 	{
 #ifdef _WIN32
 	sprintf (ver, "(WinQuake) %4.2f", (float)VERSION);
-	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+	dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
 #elif defined(X11)
 	sprintf (ver, "(X11 Quake %2.2f) %4.2f", (float)X11_VERSION, (float)VERSION);
-	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+	dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
 #elif defined(__linux__)
 	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
-	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+	dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
 #else
-	dest = conback->data + 320 - 43 + 320*186;
+	dest = conback->data + conback->width - 43 * scalex + conback->width*(conback->height - 14 * scaley);
 	sprintf (ver, "%4.2f", VERSION);
 #endif
 	}
 
 	for (x=0 ; x<strlen(ver) ; x++)
-		Draw_CharToConback (ver[x], dest+(x<<3));
+		Draw_CharToConback (ver[x], dest+(x<<3)*scalex, conback->width, conback->height);
 	
 // draw the pic
     auto width = vid.conwidth - vid.conwidth % 3;
@@ -823,14 +866,14 @@ void Draw_ConsoleBackground (int lines)
 
 		for (y=0 ; y<lines ; y++, dest += vid.conrowbytes)
 		{
-			v = (vid.conheight - lines + y)*200/vid.conheight;
-			src = conback->data + v*320;
-			if (vid.conwidth == 320)
+			v = (vid.conheight - lines + y)*conback->height/vid.conheight;
+			src = conback->data + v*conback->width;
+			if (vid.conwidth == conback->width)
 				memcpy (dest, src, vid.conwidth);
 			else
 			{
 				f = 0;
-				fstep = 320*0x10000/vid.conwidth;
+				fstep = conback->width*0x10000/vid.conwidth;
 				for (x=0 ; x<width ; x+=4)
 				{
 					dest[x] = src[f>>16];
@@ -858,10 +901,10 @@ void Draw_ConsoleBackground (int lines)
 		{
 		// FIXME: pre-expand to native format?
 		// FIXME: does the endian switching go away in production?
-			v = (vid.conheight - lines + y)*200/vid.conheight;
-			src = conback->data + v*320;
+			v = (vid.conheight - lines + y)*conback->height/vid.conheight;
+			src = conback->data + v*conback->width;
 			f = 0;
-			fstep = 320*0x10000/vid.conwidth;
+			fstep = conback->width*0x10000/vid.conwidth;
 			for (x=0 ; x<width ; x+=4)
 			{
 				pusdest[x] = d_8to16table[src[f>>16]];

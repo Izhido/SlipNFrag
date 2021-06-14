@@ -49,14 +49,13 @@ out gl_PerVertex
 
 void main(void)
 {
-	mat4 translation = mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, originX, originZ, -originY, 1);
-	float yawRadians = yaw * 3.14159 / 180;
-	mat4 yawRotation = mat4(cos(yawRadians), 0, sin(yawRadians), 0, 0, 1, 0, 0, -sin(yawRadians), 0, cos(yawRadians), 0, 0, 0, 0, 1);
-	float pitchRadians = pitch * 3.14159 / 180;
-	mat4 pitchRotation = mat4(cos(pitchRadians), -sin(pitchRadians), 0, 0, sin(pitchRadians), cos(pitchRadians), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-	float rollRadians = -roll * 3.14159 / 180;
-	mat4 rollRotation = mat4(1, 0, 0, 0, 0, cos(rollRadians), -sin(rollRadians), 0, 0, sin(rollRadians), cos(rollRadians), 0, 0, 0, 0, 1);
 	vec4 position = vec4(vertexPosition.x, vertexPosition.z, -vertexPosition.y, 1);
+	mat4 translation = mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, originX, originZ, -originY, 1);
+	vec3 sine = vec3(sin(yaw), sin(pitch), sin(roll));
+	vec3 cosine = vec3(cos(yaw), cos(pitch), cos(roll));
+	mat4 yawRotation = mat4(cosine.x, 0, sine.x, 0, 0, 1, 0, 0, -sine.x, 0, cosine.x, 0, 0, 0, 0, 1);
+	mat4 pitchRotation = mat4(cosine.y, -sine.y, 0, 0, sine.y, cosine.y, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+	mat4 rollRotation = mat4(1, 0, 0, 0, 0, cosine.z, -sine.z, 0, 0, sine.z, cosine.z, 0, 0, 0, 0, 1);
 	gl_Position = ProjectionMatrix[gl_ViewID_OVR] * ViewMatrix[gl_ViewID_OVR] * vertexTransform * translation * rollRotation * pitchRotation * yawRotation * position;
 	float s = vertexPosition.x * vecs00 + vertexPosition.y * vecs01 + vertexPosition.z * vecs02 + vecs03;
 	float t = vertexPosition.x * vecs10 + vertexPosition.y * vecs11 + vertexPosition.z * vecs12 + vecs13;
