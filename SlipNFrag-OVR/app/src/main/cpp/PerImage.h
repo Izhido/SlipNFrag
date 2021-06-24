@@ -84,7 +84,7 @@ struct PerImage
 	void SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture);
 	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
-	void FillAliasTextures(AppState& appState, Buffer* stagingBuffer, LoadedColormappedTexture& loadedTexture, dalias_t& alias, VkDeviceSize& offset);
+	void FillAliasTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
 	void FillTextures(AppState& appState, Buffer* stagingBuffer);
 	void SetPushConstants(dsurface_t& surface, float pushConstants[]);
 	void SetPushConstants(dturbulent_t& turbulent, float pushConstants[]);

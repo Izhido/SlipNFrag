@@ -14,6 +14,7 @@
 #include "LoadedColormappedTexture.h"
 #include "VrApi.h"
 #include "Instance.h"
+#include "StagingBuffer.h"
 
 struct Scene
 {
@@ -132,6 +133,7 @@ struct Scene
 	VkDeviceSize controllerVerticesSize;
 	ovrQuatf orientation;
 	ovrPosef pose;
+	StagingBuffer stagingBuffer;
 
 	void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	void AddBorder(AppState& appState, std::vector<uint32_t>& target);
