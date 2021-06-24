@@ -71,12 +71,12 @@ void Texture::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCo
 	imageMemoryBarrier.image = image;
 	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	imageMemoryBarrier.subresourceRange.levelCount = 1;
-	imageMemoryBarrier.subresourceRange.layerCount = 1;
+	imageMemoryBarrier.subresourceRange.layerCount = layerCount;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 	VkBufferImageCopy region { };
 	region.bufferOffset = offset;
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.layerCount = 1;
+	region.imageSubresource.layerCount = layerCount;
 	region.imageExtent.width = width;
 	region.imageExtent.height = height;
 	region.imageExtent.depth = 1;
@@ -98,13 +98,13 @@ void Texture::FillMipmapped(AppState& appState, Buffer* buffer, VkDeviceSize off
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	imageMemoryBarrier.image = image;
 	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageMemoryBarrier.subresourceRange.levelCount = 1;
-	imageMemoryBarrier.subresourceRange.layerCount = 1;
+	imageMemoryBarrier.subresourceRange.levelCount = mipCount;
+	imageMemoryBarrier.subresourceRange.layerCount = layerCount;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 	VkBufferImageCopy region { };
 	region.bufferOffset = offset;
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.layerCount = 1;
+	region.imageSubresource.layerCount = layerCount;
 	region.imageExtent.width = width;
 	region.imageExtent.height = height;
 	region.imageExtent.depth = 1;
@@ -113,6 +113,7 @@ void Texture::FillMipmapped(AppState& appState, Buffer* buffer, VkDeviceSize off
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	imageMemoryBarrier.subresourceRange.levelCount = 1;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 	auto width = this->width;
 	auto height = this->height;
@@ -123,15 +124,9 @@ void Texture::FillMipmapped(AppState& appState, Buffer* buffer, VkDeviceSize off
 	blit.dstOffsets[1].z = 1;
 	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	blit.srcSubresource.mipLevel = 0;
-	blit.srcSubresource.layerCount = 1;
+	blit.srcSubresource.layerCount = layerCount;
 	for (auto i = 1; i < mipCount; i++)
 	{
-		imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageMemoryBarrier.subresourceRange.baseMipLevel = i;
-		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 		width /= 2;
 		if (width < 1)
 		{
@@ -146,14 +141,13 @@ void Texture::FillMipmapped(AppState& appState, Buffer* buffer, VkDeviceSize off
 		blit.dstOffsets[1].y = height;
 		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		blit.dstSubresource.mipLevel = i;
-		blit.dstSubresource.layerCount = 1;
+		blit.dstSubresource.layerCount = layerCount;
 		VC(appState.Device.vkCmdBlitImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST));
 	}
 	imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
 	imageMemoryBarrier.subresourceRange.levelCount = 1;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 	if (mipCount > 1)
