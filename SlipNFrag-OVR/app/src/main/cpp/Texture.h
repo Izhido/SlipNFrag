@@ -18,6 +18,7 @@ struct Texture
 
 	void Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);
 	void Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer);
+	void Fill(AppState& appState, StagingBuffer& buffer);
 	void FillMipmapped(AppState& appState, StagingBuffer& buffer);
 	void Delete(AppState& appState);
 };

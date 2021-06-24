@@ -1166,18 +1166,18 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer)
 	appState.Scene.stagingBuffer.lastBarrier = -1;
 	if (paletteSize > 0)
 	{
-		palette->Fill(appState, stagingBuffer, appState.Scene.stagingBuffer.offset, commandBuffer);
+		palette->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += paletteSize;
 	}
 	if (host_colormapSize > 0)
 	{
-		host_colormap->Fill(appState, stagingBuffer, appState.Scene.stagingBuffer.offset, commandBuffer);
+		host_colormap->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += host_colormapSize;
 	}
 	auto lightmap = appState.Scene.firstLightmapToCreate;
 	while (lightmap != nullptr)
 	{
-		lightmap->lightmap->Fill(appState, stagingBuffer, appState.Scene.stagingBuffer.offset, commandBuffer);
+		lightmap->lightmap->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += lightmap->size;
 		lightmap = lightmap->next;
 	}

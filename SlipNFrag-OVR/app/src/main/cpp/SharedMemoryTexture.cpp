@@ -98,6 +98,7 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = mipCount;
 	barrier.subresourceRange.layerCount = layerCount;
 	VC(appState.Device.vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier));

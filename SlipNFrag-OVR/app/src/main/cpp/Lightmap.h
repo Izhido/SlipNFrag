@@ -3,6 +3,7 @@
 #include "TwinKey.h"
 #include "AllocationList.h"
 #include "Buffer.h"
+#include "StagingBuffer.h"
 
 struct AppState;
 
@@ -23,7 +24,7 @@ struct Lightmap
 	static std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
 	void Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
-	void Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer);
+	void Fill(AppState& appState, StagingBuffer& buffer);
 	void Delete(AppState& appState);
 	static void DeleteOld(AppState& appState, Lightmap** old);
 };
