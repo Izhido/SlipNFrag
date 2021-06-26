@@ -536,7 +536,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 	if (entry == appState.Scene.lightmaps.end())
 	{
 		auto lightmap = new Lightmap();
-		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		lightmap->key.first = surface.surface;
 		lightmap->key.second = surface.entity;
 		appState.Scene.lightmaps.insert({ lightmap->key, lightmap });
@@ -557,7 +557,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			else
 			{
 				auto lightmap = new Lightmap();
-				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				lightmap->key.first = surface.surface;
 				lightmap->key.second = surface.entity;
 				lightmap->next = first;
@@ -584,7 +584,7 @@ void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurf
 			if (!found)
 			{
 				auto lightmap = new Lightmap();
-				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				lightmap->key.first = surface.surface;
 				lightmap->key.second = surface.entity;
 				lightmap->next = entry->second;
@@ -1150,7 +1150,7 @@ void PerImage::FillAliasTextures(AppState& appState, LoadedColormappedTexture& l
 			texture = new Texture();
 			texture->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
-		texture->Fill(appState, appState.Scene.stagingBuffer.buffer, appState.Scene.stagingBuffer.offset, commandBuffer);
+		texture->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += 16384;
 		colormaps.MoveToFront(texture);
 		loadedTexture.colormap.texture = texture;
