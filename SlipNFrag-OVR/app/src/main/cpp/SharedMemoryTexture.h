@@ -15,8 +15,9 @@ struct SharedMemoryTexture
 	VkImage image = VK_NULL_HANDLE;
 	SharedMemory* sharedMemory = nullptr;
 	VkImageView view = VK_NULL_HANDLE;
+	bool filled;
 
-	void Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);
+	void Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);
 	void FillMipmapped(AppState& appState, StagingBuffer& buffer);
 	void Delete(AppState& appState);
 	static void DeleteOld(AppState& appState, SharedMemoryTexture** old);

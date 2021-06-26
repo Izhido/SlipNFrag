@@ -3,7 +3,7 @@
 #include "VulkanCallWrappers.h"
 #include "MemoryAllocateInfo.h"
 
-void Texture::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage)
+void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage)
 {
 	this->width = width;
 	this->height = height;
@@ -38,15 +38,6 @@ void Texture::Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t
 	imageViewCreateInfo.subresourceRange.levelCount = mipCount;
 	imageViewCreateInfo.subresourceRange.layerCount = layerCount;
 	VK(appState.Device.vkCreateImageView(appState.Device.device, &imageViewCreateInfo, nullptr, &view));
-	VkImageMemoryBarrier imageMemoryBarrier { };
-	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageMemoryBarrier.image = image;
-	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageMemoryBarrier.subresourceRange.levelCount = mipCount;
-	imageMemoryBarrier.subresourceRange.layerCount = layerCount;
-	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 	if (appState.Scene.textureSamplers.size() <= mipCount)
 	{
 		appState.Scene.textureSamplers.resize(mipCount + 1);
@@ -64,9 +55,12 @@ void Texture::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCo
 {
 	VkImageMemoryBarrier imageMemoryBarrier { };
 	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	if (filled)
+	{
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	imageMemoryBarrier.image = image;
 	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -86,6 +80,7 @@ void Texture::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCo
 	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+	filled = true;
 }
 
 void Texture::Fill(AppState& appState, StagingBuffer& buffer)
@@ -97,9 +92,17 @@ void Texture::Fill(AppState& appState, StagingBuffer& buffer)
 	}
 	auto& barrier = buffer.barriers[buffer.lastBarrier];
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	if (filled)
+	{
+		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+	else
+	{
+		barrier.srcAccessMask = 0;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	}
 	barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -119,6 +122,7 @@ void Texture::Fill(AppState& appState, StagingBuffer& buffer)
 	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	filled = true;
 }
 
 void Texture::FillMipmapped(AppState& appState, StagingBuffer& buffer)
@@ -130,9 +134,17 @@ void Texture::FillMipmapped(AppState& appState, StagingBuffer& buffer)
 	}
 	auto& barrier = buffer.barriers[buffer.lastBarrier];
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	if (filled)
+	{
+		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+	else
+	{
+		barrier.srcAccessMask = 0;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	}
 	barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -202,6 +214,7 @@ void Texture::FillMipmapped(AppState& appState, StagingBuffer& buffer)
 		writeBarrier.subresourceRange.baseMipLevel = 1;
 		writeBarrier.subresourceRange.levelCount = mipCount - 1;
 	}
+	filled = true;
 }
 
 void Texture::Delete(AppState& appState)

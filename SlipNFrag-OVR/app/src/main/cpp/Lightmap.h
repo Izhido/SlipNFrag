@@ -22,8 +22,9 @@ struct Lightmap
 	VkImageView view = VK_NULL_HANDLE;
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 	static std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+	bool filled;
 
-	void Create(AppState& appState, VkCommandBuffer commandBuffer, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
+	void Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
 	void Fill(AppState& appState, StagingBuffer& buffer);
 	void Delete(AppState& appState);
 	static void DeleteOld(AppState& appState, Lightmap** old);

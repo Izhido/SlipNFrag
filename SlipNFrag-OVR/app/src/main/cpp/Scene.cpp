@@ -300,10 +300,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Screen.SubmitInfo.pCommandBuffers = &appState.Screen.CommandBuffer;
 	ImageAsset floorImage;
 	floorImage.Open("floor.png", app);
-	appState.Scene.floorTexture.Create(appState, setupCommandBuffer, floorImage.width, floorImage.height, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	appState.Scene.floorTexture.Create(appState, floorImage.width, floorImage.height, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	ImageAsset controller;
 	controller.Open("controller.png", app);
-	appState.Scene.controllerTexture.Create(appState, setupCommandBuffer, controller.width, controller.height, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	appState.Scene.controllerTexture.Create(appState, controller.width, controller.height, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controller.width * controller.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
 	Buffer stagingBuffer;
 	stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);

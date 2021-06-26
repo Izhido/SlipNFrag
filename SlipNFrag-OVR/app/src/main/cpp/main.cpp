@@ -1514,7 +1514,7 @@ void android_main(struct android_app* app)
 				if (perImage.palette == nullptr)
 				{
 					perImage.palette = new Texture();
-					perImage.palette->Create(appState, perImage.commandBuffer, 256, 1, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+					perImage.palette->Create(appState, 256, 1, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 					perImage.paletteOffset = stagingBufferSize;
 					stagingBufferSize += 1024;
 				}
@@ -1528,14 +1528,14 @@ void android_main(struct android_app* app)
 			if (perImage.texture == nullptr)
 			{
 				perImage.texture = new Texture();
-				perImage.texture->Create(appState, perImage.commandBuffer, appState.ConsoleWidth, appState.ConsoleHeight, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				perImage.texture->Create(appState, appState.ConsoleWidth, appState.ConsoleHeight, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			}
 			perImage.textureOffset = stagingBufferSize;
 			stagingBufferSize += con_buffer.size();
 			if (appState.Keyboard.texture == nullptr && keyboardDrawn)
 			{
 				appState.Keyboard.texture = new Texture();
-				appState.Keyboard.texture->Create(appState, perImage.commandBuffer, appState.ConsoleWidth, appState.ConsoleHeight / 2, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				appState.Keyboard.texture->Create(appState, appState.ConsoleWidth, appState.ConsoleHeight / 2, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			}
 			appState.Keyboard.textureOffset = -1;
 			if (keyboardDrawn)
