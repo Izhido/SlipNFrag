@@ -94,7 +94,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	attachments[attachmentCount].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[attachmentCount].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[attachmentCount].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[attachmentCount].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	attachments[attachmentCount].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	attachmentCount++;
 	attachments[attachmentCount].format = VK_FORMAT_R8G8B8A8_UNORM;
@@ -103,7 +102,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	attachments[attachmentCount].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[attachmentCount].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[attachmentCount].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[attachmentCount].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	attachments[attachmentCount].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	attachmentCount++;
 	VkAttachmentReference colorAttachmentReference;
@@ -217,15 +215,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	createMemoryAllocateInfo(appState, memoryRequirements, memFlags, memoryAllocateInfo);
 	VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &texture.memory));
 	VK(appState.Device.vkBindImageMemory(appState.Device.device, texture.image, texture.memory, 0));
-	VkImageMemoryBarrier imageMemoryBarrier { };
-	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageMemoryBarrier.image = texture.image;
-	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageMemoryBarrier.subresourceRange.levelCount = 1;
-	imageMemoryBarrier.subresourceRange.layerCount = texture.layerCount;
-	VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 	VkImageViewCreateInfo imageViewCreateInfo { };
 	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	imageViewCreateInfo.image = texture.image;
@@ -235,14 +224,15 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	imageViewCreateInfo.subresourceRange.levelCount = 1;
 	imageViewCreateInfo.subresourceRange.layerCount = texture.layerCount;
 	VK(appState.Device.vkCreateImageView(appState.Device.device, &imageViewCreateInfo, nullptr, &texture.view));
+	VkImageMemoryBarrier imageMemoryBarrier { };
 	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	imageMemoryBarrier.image = texture.image;
+	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageMemoryBarrier.subresourceRange.levelCount = 1;
 	imageMemoryBarrier.subresourceRange.layerCount = texture.layerCount;
-	VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+	VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
 	for (auto i = 0; i < appState.Console.View.framebuffer.swapChainLength; i++)
 	{
 		uint32_t attachmentCount = 0;
