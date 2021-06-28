@@ -59,12 +59,6 @@ bool Device::Bind(AppState& appState, Instance& instance)
 		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Device::Bind(): vkGetDeviceProcAddr() could not find vkUnmapMemory.");
 		return false;
 	}
-	appState.Device.vkFlushMappedMemoryRanges = (PFN_vkFlushMappedMemoryRanges)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkFlushMappedMemoryRanges"));
-	if (appState.Device.vkFlushMappedMemoryRanges == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Device::Bind(): vkGetDeviceProcAddr() could not find vkFlushMappedMemoryRanges.");
-		return false;
-	}
 	appState.Device.vkBindBufferMemory = (PFN_vkBindBufferMemory)(instance.vkGetDeviceProcAddr(appState.Device.device, "vkBindBufferMemory"));
 	if (appState.Device.vkBindBufferMemory == nullptr)
 	{

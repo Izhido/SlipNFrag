@@ -33,7 +33,6 @@ struct Device
 	PFN_vkFreeMemory vkFreeMemory;
 	PFN_vkMapMemory vkMapMemory;
 	PFN_vkUnmapMemory vkUnmapMemory;
-	PFN_vkFlushMappedMemoryRanges vkFlushMappedMemoryRanges;
 	PFN_vkBindBufferMemory vkBindBufferMemory;
 	PFN_vkBindImageMemory vkBindImageMemory;
 	PFN_vkGetBufferMemoryRequirements vkGetBufferMemoryRequirements;

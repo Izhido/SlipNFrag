@@ -276,10 +276,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Screen.Buffer.CreateStagingBuffer(appState, appState.Screen.Data.size() * sizeof(uint32_t));
 	VK(appState.Device.vkMapMemory(appState.Device.device, appState.Screen.Buffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.Buffer.mapped));
 	memcpy(appState.Screen.Buffer.mapped, appState.Screen.Data.data(), appState.Screen.Buffer.size);
-	VkMappedMemoryRange mappedMemoryRange { };
-	mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-	mappedMemoryRange.memory = appState.Screen.Buffer.memory;
-	VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
 	imageMemoryBarrier.srcAccessMask = 0;
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -326,8 +322,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.RightArrows.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.RightArrows.SwapChain, 0);
 	CopyImage(appState, rightArrows.image, (uint32_t*)stagingBuffer.mapped + offset + ((appState.ScreenHeight - rightArrows.height) * appState.ScreenWidth + appState.ScreenWidth - rightArrows.width) / 2, rightArrows.width, rightArrows.height);
 	rightArrows.Close();
-	mappedMemoryRange.memory = stagingBuffer.memory;
-	VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
 	offset = 0;
 	appState.Scene.floorTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
 	offset += floorImage.width * floorImage.height * sizeof(uint32_t);

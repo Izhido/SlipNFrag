@@ -1592,10 +1592,6 @@ void android_main(struct android_app* app)
 			{
 				memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.Keyboard.buffer.data(), appState.Keyboard.buffer.size());
 			}
-			VkMappedMemoryRange mappedMemoryRange { };
-			mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-			mappedMemoryRange.memory = stagingBuffer->memory;
-			VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
 			if (perImage.paletteOffset >= 0)
 			{
 				perImage.palette->Fill(appState, stagingBuffer, perImage.paletteOffset, perImage.commandBuffer);
@@ -1796,8 +1792,6 @@ void android_main(struct android_app* app)
 					VkMemoryRequirements memoryRequirements;
 					VkMemoryAllocateInfo memoryAllocateInfo { };
 					std::vector<VkDeviceMemory> memoryBlocks(6);
-					VkMappedMemoryRange mappedMemoryRange { };
-					mappedMemoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 					VkImageMemoryBarrier imageMemoryBarrier { };
 					imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 					imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -1856,8 +1850,6 @@ void android_main(struct android_app* app)
 							index++;
 						}
 						memcpy(mapped, (byte*)skybox.textures[index].texture + sizeof(texture_t) + width * height, width * height * 4);
-						mappedMemoryRange.memory = memoryBlocks[i];
-						VC(appState.Device.vkFlushMappedMemoryRanges(appState.Device.device, 1, &mappedMemoryRange));
 						VC(appState.Device.vkUnmapMemory(appState.Device.device, memoryBlocks[i]));
 						imageMemoryBarrier.subresourceRange.baseArrayLayer = i;
 						VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
