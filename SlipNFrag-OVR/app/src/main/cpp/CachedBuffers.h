@@ -8,6 +8,7 @@ struct CachedBuffers
 	Buffer* oldBuffers = nullptr;
 
 	Buffer* Get(AppState& appState, VkDeviceSize size);
+	VkDeviceSize MinimumAllocationFor(VkDeviceSize size);
 	Buffer* GetVertexBuffer(AppState& appState, VkDeviceSize size);
 	Buffer* GetIndexBuffer(AppState& appState, VkDeviceSize size);
 	Buffer* GetStagingBuffer(AppState& appState, VkDeviceSize size);

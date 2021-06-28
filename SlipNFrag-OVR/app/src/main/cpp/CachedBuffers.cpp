@@ -3,18 +3,45 @@
 #include "AppState.h"
 #include "VulkanCallWrappers.h"
 
+#define MINIMUM_ALLOCATION 4096
+
 Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
 {
-	for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
+	if (size <= MINIMUM_ALLOCATION)
 	{
-		if ((*b)->size >= size && (*b)->size < size * 2)
+		for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
 		{
-			auto buffer = *b;
-			*b = (*b)->next;
-			return buffer;
+			if ((*b)->size >= size)
+			{
+				auto buffer = *b;
+				*b = (*b)->next;
+				return buffer;
+			}
+		}
+	}
+	else
+	{
+		for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
+		{
+			if ((*b)->size >= size && (*b)->size < size * 2)
+			{
+				auto buffer = *b;
+				*b = (*b)->next;
+				return buffer;
+			}
 		}
 	}
 	return nullptr;
+}
+
+VkDeviceSize CachedBuffers::MinimumAllocationFor(VkDeviceSize size)
+{
+	VkDeviceSize result = size * 5 / 4;
+	if (result < MINIMUM_ALLOCATION)
+	{
+		result = MINIMUM_ALLOCATION;
+	}
+	return result;
 }
 
 Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
@@ -23,7 +50,7 @@ Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateVertexBuffer(appState, size * 5 / 4);
+		buffer->CreateVertexBuffer(appState, MinimumAllocationFor(size));
 		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
@@ -36,7 +63,7 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateIndexBuffer(appState, size * 5 / 4);
+		buffer->CreateIndexBuffer(appState, MinimumAllocationFor(size));
 		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
@@ -49,7 +76,7 @@ Buffer* CachedBuffers::GetStagingBuffer(AppState& appState, VkDeviceSize size)
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateStagingBuffer(appState, size * 5 / 4);
+		buffer->CreateStagingBuffer(appState, MinimumAllocationFor(size));
 		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
@@ -62,7 +89,7 @@ Buffer* CachedBuffers::GetStagingStorageBuffer(AppState& appState, VkDeviceSize 
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateStagingStorageBuffer(appState, size * 5 / 4);
+		buffer->CreateStagingStorageBuffer(appState, MinimumAllocationFor(size));
 		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
