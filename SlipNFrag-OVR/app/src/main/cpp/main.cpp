@@ -618,7 +618,7 @@ void android_main(struct android_app* app)
 	attachments[attachmentCount].format = VK_FORMAT_R8G8B8A8_UNORM;
 	attachments[attachmentCount].samples = VK_SAMPLE_COUNT_1_BIT;
 	attachments[attachmentCount].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[attachmentCount].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[attachmentCount].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[attachmentCount].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[attachmentCount].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[attachmentCount].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
