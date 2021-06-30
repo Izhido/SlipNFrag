@@ -17,20 +17,16 @@ layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
+	vec4 lightmapEntry = texture(fragmentLightmap, fragmentLightmapCoords);
+	uint light = (uint(lightmapEntry.x) / 256) % 64;
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentTexCoords);
 	float lowTexMip = floor(texLevel.y);
 	float highTexMip = ceil(texLevel.y);
 	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentTexCoords, lowTexMip);
 	uvec4 highTexEntry = textureLod(fragmentTexture, fragmentTexCoords, highTexMip);
-	vec4 lightmapEntry = texture(fragmentLightmap, fragmentLightmapCoords);
-	uint light = (uint(lightmapEntry.x) / 256) % 64;
 	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, light), 0);
-	if (lowColormapped.x == 255)
-	{
-		discard;
-	}
 	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highTexEntry.x, light), 0);
-	if (highColormapped.x == 255)
+	if (lowColormapped.x == 255 || highColormapped.x == 255)
 	{
 		discard;
 	}

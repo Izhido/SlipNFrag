@@ -46,7 +46,7 @@ void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkForm
 	{
 		VkSamplerCreateInfo samplerCreateInfo { };
 		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerCreateInfo.maxLod = mipCount;
+		samplerCreateInfo.maxLod = mipCount - 1;
 		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.textureSamplers[mipCount]));
 	}
 }

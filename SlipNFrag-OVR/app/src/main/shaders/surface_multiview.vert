@@ -59,6 +59,10 @@ void main(void)
 	gl_Position = ProjectionMatrix[gl_ViewID_OVR] * ViewMatrix[gl_ViewID_OVR] * vertexTransform * translation * rollRotation * pitchRotation * yawRotation * position;
 	float s = vertexPosition.x * vecs00 + vertexPosition.y * vecs01 + vertexPosition.z * vecs02 + vecs03;
 	float t = vertexPosition.x * vecs10 + vertexPosition.y * vecs11 + vertexPosition.z * vecs12 + vecs13;
-	fragmentLightmapCoords = vec2((s - texturemins0) / extents0, (t - texturemins1) / extents1);
+	float lightmapWidth = (int(extents0) >> 4) + 1;
+	float lightmapHeight = (int(extents1) >> 4) + 1;
+	float lightmapS = (((s - texturemins0) * (lightmapWidth - 1) / extents0) + 0.5) / lightmapWidth;
+	float lightmapT = (((t - texturemins1) * (lightmapHeight - 1) / extents1) + 0.5) / lightmapHeight;
+	fragmentLightmapCoords = vec2(lightmapS, lightmapT);
 	fragmentTexCoords = vec2(s / width, t / height);
 }

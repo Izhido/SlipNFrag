@@ -861,7 +861,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	matrices.CreateUniformBuffer(appState, numBuffers * 2 * sizeof(ovrMatrix4f));
 	VkSamplerCreateInfo samplerCreateInfo { };
 	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerCreateInfo.maxLod = 1;
+	samplerCreateInfo.maxLod = 0;
 	samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
 	samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
 	samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;

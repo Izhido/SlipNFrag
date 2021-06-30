@@ -19,18 +19,12 @@ void main()
 	float highMip = ceil(level.y);
 	uvec4 lowEntry = textureLod(fragmentTexture, fragmentTexCoords, lowMip);
 	uvec4 highEntry = textureLod(fragmentTexture, fragmentTexCoords, highMip);
-	vec4 lowColor;
-	if (lowEntry.x == 255)
+	if (lowEntry.x == 255 || highEntry.x == 255)
 	{
 		discard;
 	}
-	lowColor = texelFetch(fragmentPalette, ivec2(lowEntry.x, 0), 0);
-	vec4 highColor;
-	if (highEntry.x == 255)
-	{
-		discard;
-	}
-	highColor = texelFetch(fragmentPalette, ivec2(highEntry.x, 0), 0);
+	vec4 lowColor = texelFetch(fragmentPalette, ivec2(lowEntry.x, 0), 0);
+	vec4 highColor = texelFetch(fragmentPalette, ivec2(highEntry.x, 0), 0);
 	float delta = level.y - lowMip;
 	float r = lowColor.x + delta * (highColor.x - lowColor.x);
 	float g = lowColor.y + delta * (highColor.y - lowColor.y);
