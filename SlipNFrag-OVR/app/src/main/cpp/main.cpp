@@ -1468,9 +1468,7 @@ void android_main(struct android_app* app)
 			}
 			perImage.vertices.MoveToFront(vertices);
 			memcpy(vertices->mapped, appState.ConsoleVertices.data(), vertices->size);
-			VkBufferMemoryBarrier bufferMemoryBarrier { };
-			bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-			vertices->SubmitVertexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
+			vertices->SubmitVertexBuffer(appState, perImage.commandBuffer);
 			Buffer* indices = nullptr;
 			if (perImage.indices.oldBuffers != nullptr)
 			{
@@ -1485,7 +1483,7 @@ void android_main(struct android_app* app)
 			}
 			perImage.indices.MoveToFront(indices);
 			memcpy(indices->mapped, appState.ConsoleIndices.data(), indices->size);
-			indices->SubmitIndexBuffer(appState, perImage.commandBuffer, bufferMemoryBarrier);
+			indices->SubmitIndexBuffer(appState, perImage.commandBuffer);
 			auto keyboardDrawn = appState.Keyboard.Draw(appState);
 			auto stagingBufferSize = 0;
 			perImage.paletteOffset = -1;

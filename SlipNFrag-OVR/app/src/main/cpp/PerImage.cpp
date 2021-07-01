@@ -23,7 +23,7 @@ void PerImage::Reset(AppState& appState)
 	colors = nullptr;
 }
 
-void PerImage::LoadSurfaceVertexes(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier, void* vertexes, int vertexCount)
+void PerImage::LoadSurfaceVertexes(AppState& appState, void* vertexes, int vertexCount)
 {
 	auto entry = appState.Scene.surfaceVerticesPerModel.find(vertexes);
 	if (entry == appState.Scene.surfaceVerticesPerModel.end())
@@ -36,11 +36,11 @@ void PerImage::LoadSurfaceVertexes(AppState& appState, VkBufferMemoryBarrier& bu
 		memcpy(surfaceVertices->mapped, vertexes, surfaceVertexSize);
 		VC(appState.Device.vkUnmapMemory(appState.Device.device, surfaceVertices->memory));
 		surfaceVertices->mapped = nullptr;
-		surfaceVertices->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+		surfaceVertices->SubmitVertexBuffer(appState, commandBuffer);
 	}
 }
 
-void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords, VkBufferMemoryBarrier& bufferMemoryBarrier)
+void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords)
 {
 	VkDeviceSize verticesOffset = 0;
 	VkDeviceSize texCoordsOffset = 0;
@@ -125,7 +125,7 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 		}
 		VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
 		buffer->mapped = nullptr;
-		buffer->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+		buffer->SubmitVertexBuffer(appState, commandBuffer);
 		appState.Scene.usedInLatestColormappedBuffer += verticesOffset;
 	}
 	if (texCoordsOffset > 0)
@@ -172,12 +172,12 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 		}
 		VC(appState.Device.vkUnmapMemory(appState.Device.device, buffer->memory));
 		buffer->mapped = nullptr;
-		buffer->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+		buffer->SubmitVertexBuffer(appState, commandBuffer);
 		appState.Scene.usedInLatestColormappedBuffer += texCoordsOffset;
 	}
 }
 
-void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier)
+void PerImage::LoadBuffers(AppState& appState)
 {
 	void* previousVertexes = nullptr;
 	for (auto i = 0; i <= d_lists.last_surface16; i++)
@@ -186,7 +186,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		auto vertexes = surface.vertexes;
 		if (previousVertexes != vertexes)
 		{
-			LoadSurfaceVertexes(appState, bufferMemoryBarrier, vertexes, surface.vertex_count);
+			LoadSurfaceVertexes(appState, vertexes, surface.vertex_count);
 			previousVertexes = vertexes;
 		}
 	}
@@ -196,7 +196,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		auto vertexes = surface.vertexes;
 		if (previousVertexes != vertexes)
 		{
-			LoadSurfaceVertexes(appState, bufferMemoryBarrier, vertexes, surface.vertex_count);
+			LoadSurfaceVertexes(appState, vertexes, surface.vertex_count);
 			previousVertexes = vertexes;
 		}
 	}
@@ -206,7 +206,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		auto vertexes = fence.vertexes;
 		if (previousVertexes != vertexes)
 		{
-			LoadSurfaceVertexes(appState, bufferMemoryBarrier, vertexes, fence.vertex_count);
+			LoadSurfaceVertexes(appState, vertexes, fence.vertex_count);
 			previousVertexes = vertexes;
 		}
 	}
@@ -216,7 +216,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		auto vertexes = fence.vertexes;
 		if (previousVertexes != vertexes)
 		{
-			LoadSurfaceVertexes(appState, bufferMemoryBarrier, vertexes, fence.vertex_count);
+			LoadSurfaceVertexes(appState, vertexes, fence.vertex_count);
 			previousVertexes = vertexes;
 		}
 	}
@@ -226,7 +226,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		auto vertexes = turbulent.vertexes;
 		if (previousVertexes != vertexes)
 		{
-			LoadSurfaceVertexes(appState, bufferMemoryBarrier, vertexes, turbulent.vertex_count);
+			LoadSurfaceVertexes(appState, vertexes, turbulent.vertex_count);
 			previousVertexes = vertexes;
 		}
 	}
@@ -236,7 +236,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		auto vertexes = turbulent.vertexes;
 		if (previousVertexes != vertexes)
 		{
-			LoadSurfaceVertexes(appState, bufferMemoryBarrier, vertexes, turbulent.vertex_count);
+			LoadSurfaceVertexes(appState, vertexes, turbulent.vertex_count);
 			previousVertexes = vertexes;
 		}
 	}
@@ -300,7 +300,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 				mapped = appState.RightController.WriteVertices(mapped);
 			}
 		}
-		vertices->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+		vertices->SubmitVertexBuffer(appState, commandBuffer);
 	}
 	if (d_lists.last_alias16 >= 0)
 	{
@@ -309,7 +309,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			appState.Scene.aliasVertices16List.resize(d_lists.last_alias16 + 1);
 			appState.Scene.aliasTexCoords16List.resize(d_lists.last_alias16 + 1);
 		}
-		LoadAliasBuffers(appState, d_lists.last_alias16, d_lists.alias16, appState.Scene.aliasVertices16List, appState.Scene.aliasTexCoords16List, bufferMemoryBarrier);
+		LoadAliasBuffers(appState, d_lists.last_alias16, d_lists.alias16, appState.Scene.aliasVertices16List, appState.Scene.aliasTexCoords16List);
 	}
 	if (d_lists.last_alias32 >= 0)
 	{
@@ -318,7 +318,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			appState.Scene.aliasVertices32List.resize(d_lists.last_alias32 + 1);
 			appState.Scene.aliasTexCoords32List.resize(d_lists.last_alias32 + 1);
 		}
-		LoadAliasBuffers(appState, d_lists.last_alias32, d_lists.alias32, appState.Scene.aliasVertices32List, appState.Scene.aliasTexCoords32List, bufferMemoryBarrier);
+		LoadAliasBuffers(appState, d_lists.last_alias32, d_lists.alias32, appState.Scene.aliasVertices32List, appState.Scene.aliasTexCoords32List);
 	}
 	if (d_lists.last_viewmodel16 >= 0)
 	{
@@ -327,7 +327,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			appState.Scene.viewmodelVertices16List.resize(d_lists.last_viewmodel16 + 1);
 			appState.Scene.viewmodelTexCoords16List.resize(d_lists.last_viewmodel16 + 1);
 		}
-		LoadAliasBuffers(appState, d_lists.last_viewmodel16, d_lists.viewmodels16, appState.Scene.viewmodelVertices16List, appState.Scene.viewmodelTexCoords16List, bufferMemoryBarrier);
+		LoadAliasBuffers(appState, d_lists.last_viewmodel16, d_lists.viewmodels16, appState.Scene.viewmodelVertices16List, appState.Scene.viewmodelTexCoords16List);
 	}
 	if (d_lists.last_viewmodel32 >= 0)
 	{
@@ -336,7 +336,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			appState.Scene.viewmodelVertices32List.resize(d_lists.last_viewmodel32 + 1);
 			appState.Scene.viewmodelTexCoords32List.resize(d_lists.last_viewmodel32 + 1);
 		}
-		LoadAliasBuffers(appState, d_lists.last_viewmodel32, d_lists.viewmodels32, appState.Scene.viewmodelVertices32List, appState.Scene.viewmodelTexCoords32List, bufferMemoryBarrier);
+		LoadAliasBuffers(appState, d_lists.last_viewmodel32, d_lists.viewmodels32, appState.Scene.viewmodelVertices32List, appState.Scene.viewmodelTexCoords32List);
 	}
 	VkDeviceSize floorAttributesSize;
 	if (appState.Mode != AppWorldMode)
@@ -410,7 +410,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 			mapped = appState.RightController.WriteAttributes(mapped);
 		}
 	}
-	attributes->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+	attributes->SubmitVertexBuffer(appState, commandBuffer);
 	VkDeviceSize floorIndicesSize;
 	if (appState.Mode != AppWorldMode)
 	{
@@ -474,7 +474,7 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 				mapped = appState.RightController.WriteIndices(mapped, offset);
 			}
 		}
-		indices16->SubmitIndexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+		indices16->SubmitIndexBuffer(appState, commandBuffer);
 	}
 	VkDeviceSize surfaceIndices32Size = (d_lists.last_surface_index32 + 1) * sizeof(uint32_t);
 	VkDeviceSize colormappedIndices32Size = (d_lists.last_colormapped_index32 + 1) * sizeof(uint32_t);
@@ -488,14 +488,14 @@ void PerImage::LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemo
 		memcpy((unsigned char*)indices32->mapped + colormappedIndex32Base, d_lists.colormapped_indices32.data(), colormappedIndices32Size);
 		coloredIndex32Base = colormappedIndex32Base + colormappedIndices32Size;
 		memcpy((unsigned char*)indices32->mapped + coloredIndex32Base, d_lists.colored_indices32.data(), coloredIndices32Size);
-		indices32->SubmitIndexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+		indices32->SubmitIndexBuffer(appState, commandBuffer);
 	}
 	VkDeviceSize colorsSize = (d_lists.last_colored_attribute + 1) * sizeof(float);
 	if (colorsSize > 0)
 	{
 		colors = cachedColors.GetVertexBuffer(appState, colorsSize);
 		memcpy(colors->mapped, d_lists.colored_attributes.data(), colorsSize);
-		colors->SubmitVertexBuffer(appState, commandBuffer, bufferMemoryBarrier);
+		colors->SubmitVertexBuffer(appState, commandBuffer);
 	}
 }
 

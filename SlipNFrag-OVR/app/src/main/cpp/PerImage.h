@@ -72,9 +72,9 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
-	void LoadSurfaceVertexes(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier, void* vertexes, int vertexCount);
-	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords, VkBufferMemoryBarrier& bufferMemoryBarrier);
-	void LoadBuffers(AppState& appState, VkBufferMemoryBarrier& bufferMemoryBarrier);
+	void LoadSurfaceVertexes(AppState& appState, void* vertexes, int vertexCount);
+	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
+	void LoadBuffers(AppState& appState);
 	void GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize);
 	void GetTurbulentStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTexture& loadedTexture, VkDeviceSize& stagingBufferSize);
 	void GetAliasColormapStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
