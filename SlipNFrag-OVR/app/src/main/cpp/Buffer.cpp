@@ -6,7 +6,6 @@
 void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
 	this->size = size;
-	this->properties = properties;
 	VkBufferCreateInfo bufferCreateInfo { };
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferCreateInfo.size = size;
@@ -72,7 +71,7 @@ void Buffer::SubmitIndexBuffer(AppState& appState, VkCommandBuffer commandBuffer
 	Submit(appState, commandBuffer, VK_ACCESS_INDEX_READ_BIT);
 }
 
-void Buffer::Destroy(AppState& appState)
+void Buffer::Delete(AppState& appState)
 {
 	if (mapped != nullptr)
 	{

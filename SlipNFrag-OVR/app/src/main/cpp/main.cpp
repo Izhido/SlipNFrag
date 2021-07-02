@@ -1264,22 +1264,8 @@ void android_main(struct android_app* app)
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.fenceTextures.oldTextures);
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.surfaceTextures.oldTextures);
 		Lightmap::DeleteOld(appState, &appState.Scene.oldSurfaces);
-		for (Buffer** b = &appState.Scene.oldSurfaceVerticesPerModel; *b != nullptr; )
-		{
-			(*b)->unusedCount++;
-			if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
-			{
-				Buffer* next = (*b)->next;
-				(*b)->Destroy(appState);
-				delete *b;
-				*b = next;
-			}
-			else
-			{
-				b = &(*b)->next;
-			}
-		}
 		appState.Scene.colormappedBuffers.DeleteOld(appState);
+		SharedMemoryBuffer::DeleteOld(appState, &appState.Scene.surfaceVertices.oldBuffers);
 		{
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
@@ -1600,9 +1586,9 @@ void android_main(struct android_app* app)
 			viewport.maxDepth = 1.0f;
 			VC(appState.Device.vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport));
 			VC(appState.Device.vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect));
+			VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipeline));
 			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset));
 			VC(appState.Device.vkCmdBindVertexBuffers(perImage.commandBuffer, 1, 1, &vertices->buffer, &appState.NoOffset));
-			VC(appState.Device.vkCmdBindPipeline(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipeline));
 			if (!perImage.descriptorResources.created)
 			{
 				VkDescriptorPoolSize poolSize;
@@ -2051,6 +2037,7 @@ void android_main(struct android_app* app)
 		}
 	}
 	appState.Scene.colormappedBuffers.Delete(appState);
+	appState.Scene.surfaceVertices.Delete(appState);
 	appState.Scene.console.Delete(appState);
 	appState.Scene.floor.Delete(appState);
 	appState.Scene.sky.Delete(appState);
@@ -2085,7 +2072,7 @@ void android_main(struct android_app* app)
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.fenceFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.surfaceFragment, nullptr));
 	VC(appState.Device.vkDestroyShaderModule(appState.Device.device, appState.Scene.surfaceVertex, nullptr));
-	appState.Scene.matrices.Destroy(appState);
+	appState.Scene.matrices.Delete(appState);
 	vrapi_DestroySystemVulkan();
 	if (appState.Context.device != nullptr)
 	{

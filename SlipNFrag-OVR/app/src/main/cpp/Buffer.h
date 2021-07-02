@@ -8,8 +8,7 @@ struct Buffer
 {
 	Buffer* next = nullptr;
 	int unusedCount = 0;
-	size_t size = 0;
-	VkMemoryPropertyFlags properties = 0;
+	VkDeviceSize size = 0;
 	VkBuffer buffer = VK_NULL_HANDLE;
 	VkDeviceMemory memory = VK_NULL_HANDLE;
 	void* mapped = nullptr;
@@ -24,5 +23,5 @@ struct Buffer
 	void Submit(AppState& appState, VkCommandBuffer commandBuffer, VkAccessFlags access);
 	void SubmitVertexBuffer(AppState& appState, VkCommandBuffer commandBuffer);
 	void SubmitIndexBuffer(AppState& appState, VkCommandBuffer commandBuffer);
-	void Destroy(AppState& appState);
+	void Delete(AppState& appState);
 };

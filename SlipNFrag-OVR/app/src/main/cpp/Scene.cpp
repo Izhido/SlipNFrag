@@ -330,7 +330,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	VK(appState.Device.vkQueueSubmit(appState.Context.queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
 	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
 	VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &setupCommandBuffer));
-	stagingBuffer.Destroy(appState);
+	stagingBuffer.Delete(appState);
 	auto consoleBottom = (float)(appState.ConsoleHeight - SBAR_HEIGHT - 24) / appState.ConsoleHeight;
 	auto statusBarTop = (float)(appState.ScreenHeight - SBAR_HEIGHT - 24) / appState.ScreenHeight;
 	appState.ConsoleVertices.assign(
@@ -905,6 +905,8 @@ void Scene::Reset()
 	usedInLatestTextureSharedMemory = 0;
 	latestColormappedBuffer = nullptr;
 	usedInLatestColormappedBuffer = 0;
+	latestBufferSharedMemory = nullptr;
+	usedInLatestBufferSharedMemory = 0;
 	colormappedBufferList.clear();
 	colormappedTexCoordsPerKey.clear();
 	colormappedVerticesPerKey.clear();
@@ -928,21 +930,17 @@ void Scene::Reset()
 	}
 	lightmaps.clear();
 	colormappedBuffers.DisposeFront();
+	surfaceVertices.DisposeFront();
 	viewmodelTextureCount = 0;
 	aliasTextureCount = 0;
 	spriteTextureCount = 0;
 	surfaceTextureCount = 0;
+	surfaceVerticesCount = 0;
 	resetDescriptorSetsCount++;
 	if (skybox != VK_NULL_HANDLE)
 	{
 		vrapi_DestroyTextureSwapChain(skybox);
 		skybox = VK_NULL_HANDLE;
-	}
-	for (auto entry = surfaceVerticesPerModel.begin(); entry != surfaceVerticesPerModel.end(); entry++)
-	{
-		auto b = entry->second;
-		b->next = oldSurfaceVerticesPerModel;
-		oldSurfaceVerticesPerModel = b;
 	}
 	surfaceVerticesPerModel.clear();
 }

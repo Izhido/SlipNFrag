@@ -3,7 +3,8 @@
 #include <vulkan/vulkan.h>
 #include "Pipeline.h"
 #include "PipelineAttributes.h"
-#include "LoadedBuffer.h"
+#include "CachedSharedMemoryBuffers.h"
+#include "LoadedSharedMemoryBuffer.h"
 #include "CachedBuffers.h"
 #include "Lightmap.h"
 #include <unordered_map>
@@ -64,16 +65,17 @@ struct Scene
 	Buffer matrices;
 	int numBuffers;
 	int hostClearCount;
-	Buffer* oldSurfaceVerticesPerModel;
-	std::unordered_map<void*, Buffer*> surfaceVerticesPerModel;
-	LoadedBuffer* firstVertexListToCreate;
-	LoadedBuffer* currentVertexListToCreate;
-	std::vector<LoadedBuffer> surfaceVertex16List;
-	std::vector<LoadedBuffer> surfaceVertex32List;
-	std::vector<LoadedBuffer> fenceVertex16List;
-	std::vector<LoadedBuffer> fenceVertex32List;
-	std::vector<LoadedBuffer> turbulentVertex16List;
-	std::vector<LoadedBuffer> turbulentVertex32List;
+	CachedSharedMemoryBuffers surfaceVertices;
+	int surfaceVerticesCount;
+	std::unordered_map<void*, SharedMemoryBuffer*> surfaceVerticesPerModel;
+	LoadedSharedMemoryBuffer* firstVertexListToCreate;
+	LoadedSharedMemoryBuffer* currentVertexListToCreate;
+	std::vector<LoadedSharedMemoryBuffer> surfaceVertex16List;
+	std::vector<LoadedSharedMemoryBuffer> surfaceVertex32List;
+	std::vector<LoadedSharedMemoryBuffer> fenceVertex16List;
+	std::vector<LoadedSharedMemoryBuffer> fenceVertex32List;
+	std::vector<LoadedSharedMemoryBuffer> turbulentVertex16List;
+	std::vector<LoadedSharedMemoryBuffer> turbulentVertex32List;
 	CachedBuffers colormappedBuffers;
 	int resetDescriptorSetsCount;
 	Lightmap* oldSurfaces;
@@ -132,6 +134,8 @@ struct Scene
 	Texture controllerTexture;
 	std::vector<VkSampler> textureSamplers;
 	VkSampler lightmapSampler;
+	SharedMemory* latestBufferSharedMemory;
+	VkDeviceSize usedInLatestBufferSharedMemory;
 	Buffer* latestColormappedBuffer;
 	VkDeviceSize usedInLatestColormappedBuffer;
 	SharedMemory* latestTextureSharedMemory;

@@ -88,8 +88,8 @@ void CachedBuffers::DeleteOld(AppState& appState)
 		(*b)->unusedCount++;
 		if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
 		{
-			Buffer* next = (*b)->next;
-			(*b)->Destroy(appState);
+			auto next = (*b)->next;
+			(*b)->Delete(appState);
 			delete *b;
 			*b = next;
 		}
@@ -129,13 +129,13 @@ void CachedBuffers::Delete(AppState& appState)
 	for (Buffer* b = buffers, *next = nullptr; b != nullptr; b = next)
 	{
 		next = b->next;
-		b->Destroy(appState);
+		b->Delete(appState);
 		delete b;
 	}
 	for (Buffer* b = oldBuffers, *next = nullptr; b != nullptr; b = next)
 	{
 		next = b->next;
-		b->Destroy(appState);
+		b->Delete(appState);
 		delete b;
 	}
 }

@@ -7,7 +7,7 @@
 #include "CachedPipelineDescriptorResources.h"
 #include "vid_ovr.h"
 #include "d_lists.h"
-#include "LoadedBuffer.h"
+#include "LoadedSharedMemoryBuffer.h"
 #include "LoadedTexture.h"
 #include "LoadedLightmap.h"
 #include "LoadedSharedMemoryTexture.h"
@@ -73,8 +73,8 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
-	void GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize);
-	void GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize);
+	void GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize);
+	void GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize);
 	void GetBuffersStagingBufferSize(AppState& appState, VkDeviceSize& stagingBufferSize);
 	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
 	void LoadBuffersStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
