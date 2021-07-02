@@ -135,11 +135,11 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 void Lightmap::Fill(AppState& appState, StagingBuffer& buffer)
 {
 	buffer.lastBarrier++;
-	if (buffer.barriers.size() <= buffer.lastBarrier)
+	if (buffer.imageBarriers.size() <= buffer.lastBarrier)
 	{
-		buffer.barriers.emplace_back();
+		buffer.imageBarriers.emplace_back();
 	}
-	auto& barrier = buffer.barriers[buffer.lastBarrier];
+	auto& barrier = buffer.imageBarriers[buffer.lastBarrier];
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	if (filled)
 	{

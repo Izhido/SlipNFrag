@@ -72,7 +72,7 @@ void PerImage::GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulen
 		{
 			loadedBuffer.size = turbulent.vertex_count * 3 * sizeof(float);
 			loadedBuffer.buffer = new Buffer();
-			loadedBuffer.buffer->CreateHostVisibleVertexBuffer(appState, loadedBuffer.size);
+			loadedBuffer.buffer->CreateVertexBuffer(appState, loadedBuffer.size);
 			appState.Scene.surfaceVerticesPerModel.insert({ vertexes, loadedBuffer.buffer });
 			stagingBufferSize += loadedBuffer.size;
 			loadedBuffer.source = turbulent.vertexes;
@@ -314,19 +314,27 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 
 void PerImage::FillBuffers(AppState& appState, Buffer* stagingBuffer)
 {
+	appState.Scene.stagingBuffer.lastBarrier = -1;
 	VkBufferCopy bufferCopy { };
 	auto loadedBuffer = appState.Scene.firstVertexListToCreate;
 	while (loadedBuffer != nullptr)
 	{
-		VkBufferMemoryBarrier barrier { };
+		appState.Scene.stagingBuffer.lastBarrier++;
+		if (appState.Scene.stagingBuffer.bufferBarriers.size() <= appState.Scene.stagingBuffer.lastBarrier)
+		{
+			appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
+		}
+		auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
 		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.buffer = loadedBuffer->buffer->buffer;
 		barrier.size = loadedBuffer->size;
 		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr));
 		bufferCopy.size = loadedBuffer->size;
 		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedBuffer->buffer->buffer, 1, &bufferCopy));
-		loadedBuffer->buffer->SubmitVertexBuffer(appState, commandBuffer);
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 		bufferCopy.dstOffset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
 	}
@@ -586,6 +594,10 @@ void PerImage::FillBuffers(AppState& appState, Buffer* stagingBuffer)
 		colors = cachedColors.GetVertexBuffer(appState, colorsSize);
 		memcpy(colors->mapped, d_lists.colored_attributes.data(), colorsSize);
 		colors->SubmitVertexBuffer(appState, commandBuffer);
+	}
+	if (appState.Scene.stagingBuffer.lastBarrier >= 0)
+	{
+		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastBarrier + 1, appState.Scene.stagingBuffer.bufferBarriers.data(), 0, nullptr));
 	}
 }
 
@@ -1319,7 +1331,7 @@ void PerImage::FillTextures(AppState& appState, Buffer* stagingBuffer)
 	}
 	if (appState.Scene.stagingBuffer.lastBarrier >= 0)
 	{
-		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, appState.Scene.stagingBuffer.lastBarrier + 1, appState.Scene.stagingBuffer.barriers.data()));
+		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, appState.Scene.stagingBuffer.lastBarrier + 1, appState.Scene.stagingBuffer.imageBarriers.data()));
 	}
 }
 

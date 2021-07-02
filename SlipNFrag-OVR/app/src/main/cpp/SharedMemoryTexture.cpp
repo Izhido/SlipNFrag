@@ -77,11 +77,11 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer)
 {
 	buffer.lastBarrier++;
-	if (buffer.barriers.size() <= buffer.lastBarrier)
+	if (buffer.imageBarriers.size() <= buffer.lastBarrier)
 	{
-		buffer.barriers.emplace_back();
+		buffer.imageBarriers.emplace_back();
 	}
-	auto& barrier = buffer.barriers[buffer.lastBarrier];
+	auto& barrier = buffer.imageBarriers[buffer.lastBarrier];
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	if (filled)
 	{
@@ -152,11 +152,11 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	if (mipCount > 1)
 	{
 		buffer.lastBarrier++;
-		if (buffer.barriers.size() <= buffer.lastBarrier)
+		if (buffer.imageBarriers.size() <= buffer.lastBarrier)
 		{
-			buffer.barriers.emplace_back();
+			buffer.imageBarriers.emplace_back();
 		}
-		auto& writeBarrier = buffer.barriers[buffer.lastBarrier];
+		auto& writeBarrier = buffer.imageBarriers[buffer.lastBarrier];
 		writeBarrier = barrier;
 		writeBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		writeBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
