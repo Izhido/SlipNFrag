@@ -7,6 +7,7 @@
 #include "CachedPipelineDescriptorResources.h"
 #include "vid_ovr.h"
 #include "d_lists.h"
+#include "LoadedBuffer.h"
 #include "LoadedTexture.h"
 #include "LoadedLightmap.h"
 #include "LoadedSharedMemoryTexture.h"
@@ -72,18 +73,21 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
-	void LoadSurfaceVertexes(AppState& appState, void* vertexes, int vertexCount);
+	void GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize);
+	void GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize);
+	void GetBuffersStagingBufferSize(AppState& appState, VkDeviceSize& stagingBufferSize);
 	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
-	void LoadBuffers(AppState& appState);
-	void GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize);
+	void LoadBuffersStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
+	void FillBuffers(AppState& appState, Buffer* stagingBuffer);
+	void GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize);
 	void GetTurbulentStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTexture& loadedTexture, VkDeviceSize& stagingBufferSize);
 	void GetAliasColormapStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetAliasStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetViewmodelStagingBufferSize(AppState& appState, int lastViewmodel, std::vector<dalias_t>& viewmodelList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void SetupLoadedLightmap(AppState& appState, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize);
 	void SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture);
-	void GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize);
-	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
+	void GetTexturesStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize);
+	void LoadTexturesStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
 	void FillAliasTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
 	void FillTextures(AppState& appState, Buffer* stagingBuffer);
 	void SetPushConstants(dsurface_t& surface, float pushConstants[]);

@@ -892,7 +892,6 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 
 void Scene::ClearSizes()
 {
-	stagingBufferSize = 0;
 	verticesSize = 0;
 	controllerVerticesSize = 0;
 }

@@ -23,20 +23,155 @@ void PerImage::Reset(AppState& appState)
 	colors = nullptr;
 }
 
-void PerImage::LoadSurfaceVertexes(AppState& appState, void* vertexes, int vertexCount)
+void PerImage::GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize)
 {
-	auto entry = appState.Scene.surfaceVerticesPerModel.find(vertexes);
-	if (entry == appState.Scene.surfaceVerticesPerModel.end())
+	auto vertexes = surface.vertexes;
+	if (previousVertexes != vertexes)
 	{
-		auto surfaceVertexSize = vertexCount * 3 * sizeof(float);
-		auto surfaceVertices = new Buffer();
-		surfaceVertices->CreateVertexBuffer(appState, surfaceVertexSize);
-		appState.Scene.surfaceVerticesPerModel.insert({ vertexes, surfaceVertices });
-		VK(appState.Device.vkMapMemory(appState.Device.device, surfaceVertices->memory, 0, surfaceVertexSize, 0, &surfaceVertices->mapped));
-		memcpy(surfaceVertices->mapped, vertexes, surfaceVertexSize);
-		VC(appState.Device.vkUnmapMemory(appState.Device.device, surfaceVertices->memory));
-		surfaceVertices->mapped = nullptr;
-		surfaceVertices->SubmitVertexBuffer(appState, commandBuffer);
+		auto entry = appState.Scene.surfaceVerticesPerModel.find(vertexes);
+		if (entry == appState.Scene.surfaceVerticesPerModel.end())
+		{
+			loadedBuffer.size = surface.vertex_count * 3 * sizeof(float);
+			loadedBuffer.buffer = new Buffer();
+			loadedBuffer.buffer->CreateVertexBuffer(appState, loadedBuffer.size);
+			appState.Scene.surfaceVerticesPerModel.insert({ vertexes, loadedBuffer.buffer });
+			stagingBufferSize += loadedBuffer.size;
+			loadedBuffer.source = surface.vertexes;
+			loadedBuffer.next = nullptr;
+			if (appState.Scene.currentVertexListToCreate == nullptr)
+			{
+				appState.Scene.firstVertexListToCreate = &loadedBuffer;
+			}
+			else
+			{
+				appState.Scene.currentVertexListToCreate->next = &loadedBuffer;
+			}
+			appState.Scene.currentVertexListToCreate = &loadedBuffer;
+		}
+		else
+		{
+			loadedBuffer.size = 0;
+			loadedBuffer.buffer = nullptr;
+		}
+		previousVertexes = vertexes;
+	}
+	else
+	{
+		loadedBuffer.size = 0;
+		loadedBuffer.buffer = nullptr;
+	}
+}
+
+void PerImage::GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize)
+{
+	auto vertexes = turbulent.vertexes;
+	if (previousVertexes != vertexes)
+	{
+		auto entry = appState.Scene.surfaceVerticesPerModel.find(vertexes);
+		if (entry == appState.Scene.surfaceVerticesPerModel.end())
+		{
+			loadedBuffer.size = turbulent.vertex_count * 3 * sizeof(float);
+			loadedBuffer.buffer = new Buffer();
+			loadedBuffer.buffer->CreateHostVisibleVertexBuffer(appState, loadedBuffer.size);
+			appState.Scene.surfaceVerticesPerModel.insert({ vertexes, loadedBuffer.buffer });
+			stagingBufferSize += loadedBuffer.size;
+			loadedBuffer.source = turbulent.vertexes;
+			loadedBuffer.next = nullptr;
+			if (appState.Scene.currentVertexListToCreate == nullptr)
+			{
+				appState.Scene.firstVertexListToCreate = &loadedBuffer;
+			}
+			else
+			{
+				appState.Scene.currentVertexListToCreate->next = &loadedBuffer;
+			}
+			appState.Scene.currentVertexListToCreate = &loadedBuffer;
+		}
+		else
+		{
+			loadedBuffer.size = 0;
+			loadedBuffer.buffer = nullptr;
+		}
+		previousVertexes = vertexes;
+	}
+	else
+	{
+		loadedBuffer.size = 0;
+		loadedBuffer.buffer = nullptr;
+	}
+}
+
+void PerImage::GetBuffersStagingBufferSize(AppState& appState, VkDeviceSize& stagingBufferSize)
+{
+	appState.Scene.firstVertexListToCreate = nullptr;
+	appState.Scene.currentVertexListToCreate = nullptr;
+	void* previousVertexes = nullptr;
+	if (d_lists.last_surface16 >= appState.Scene.surfaceVertex16List.size())
+	{
+		appState.Scene.surfaceVertex16List.resize(d_lists.last_surface16 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_surface16; i++)
+	{
+		auto& surface = d_lists.surfaces16[i];
+		GetSurfaceVertexStagingBufferSize(appState, surface, appState.Scene.surfaceVertex16List[i], previousVertexes, stagingBufferSize);
+	}
+	if (d_lists.last_surface32 >= appState.Scene.surfaceVertex32List.size())
+	{
+		appState.Scene.surfaceVertex32List.resize(d_lists.last_surface32 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_surface32; i++)
+	{
+		auto& surface = d_lists.surfaces32[i];
+		GetSurfaceVertexStagingBufferSize(appState, surface, appState.Scene.surfaceVertex32List[i], previousVertexes, stagingBufferSize);
+	}
+	if (d_lists.last_fence16 >= appState.Scene.fenceVertex16List.size())
+	{
+		appState.Scene.fenceVertex16List.resize(d_lists.last_fence16 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_fence16; i++)
+	{
+		auto& fence = d_lists.fences16[i];
+		GetSurfaceVertexStagingBufferSize(appState, fence, appState.Scene.fenceVertex16List[i], previousVertexes, stagingBufferSize);
+	}
+	if (d_lists.last_fence32 >= appState.Scene.fenceVertex32List.size())
+	{
+		appState.Scene.fenceVertex32List.resize(d_lists.last_fence32 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_fence32; i++)
+	{
+		auto& fence = d_lists.fences32[i];
+		GetSurfaceVertexStagingBufferSize(appState, fence, appState.Scene.fenceVertex32List[i], previousVertexes, stagingBufferSize);
+	}
+	if (d_lists.last_turbulent16 >= appState.Scene.turbulentVertex16List.size())
+	{
+		appState.Scene.turbulentVertex16List.resize(d_lists.last_turbulent16 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
+	{
+		auto& turbulent = d_lists.turbulent16[i];
+		GetTurbulentVertexStagingBufferSize(appState, turbulent, appState.Scene.turbulentVertex16List[i], previousVertexes, stagingBufferSize);
+	}
+	if (d_lists.last_turbulent32 >= appState.Scene.turbulentVertex32List.size())
+	{
+		appState.Scene.turbulentVertex32List.resize(d_lists.last_turbulent32 + 1);
+	}
+	for (auto i = 0; i <= d_lists.last_turbulent32; i++)
+	{
+		auto& turbulent = d_lists.turbulent32[i];
+		GetTurbulentVertexStagingBufferSize(appState, turbulent, appState.Scene.turbulentVertex16List[i], previousVertexes, stagingBufferSize);
+	}
+	stagingBufferSize += 4096;
+}
+
+void PerImage::LoadBuffersStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize)
+{
+	VkDeviceSize offset = 0;
+	auto loadedBuffer = appState.Scene.firstVertexListToCreate;
+	while (loadedBuffer != nullptr)
+	{
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedBuffer->source, loadedBuffer->size);
+		offset += loadedBuffer->size;
+		loadedBuffer = loadedBuffer->next;
 	}
 }
 
@@ -89,7 +224,7 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 				size = verticesOffset;
 			}
 			buffer = new Buffer();
-			buffer->CreateVertexBuffer(appState, size);
+			buffer->CreateHostVisibleVertexBuffer(appState, size);
 			appState.Scene.colormappedBuffers.MoveToFront(buffer);
 			appState.Scene.latestColormappedBuffer = buffer;
 			appState.Scene.usedInLatestColormappedBuffer = 0;
@@ -139,7 +274,7 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 				size = texCoordsOffset;
 			}
 			buffer = new Buffer();
-			buffer->CreateVertexBuffer(appState, size);
+			buffer->CreateHostVisibleVertexBuffer(appState, size);
 			appState.Scene.colormappedBuffers.MoveToFront(buffer);
 			appState.Scene.latestColormappedBuffer = buffer;
 			appState.Scene.usedInLatestColormappedBuffer = 0;
@@ -177,68 +312,23 @@ void PerImage::LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<d
 	}
 }
 
-void PerImage::LoadBuffers(AppState& appState)
+void PerImage::FillBuffers(AppState& appState, Buffer* stagingBuffer)
 {
-	void* previousVertexes = nullptr;
-	for (auto i = 0; i <= d_lists.last_surface16; i++)
+	VkBufferCopy bufferCopy { };
+	auto loadedBuffer = appState.Scene.firstVertexListToCreate;
+	while (loadedBuffer != nullptr)
 	{
-		auto& surface = d_lists.surfaces16[i];
-		auto vertexes = surface.vertexes;
-		if (previousVertexes != vertexes)
-		{
-			LoadSurfaceVertexes(appState, vertexes, surface.vertex_count);
-			previousVertexes = vertexes;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_surface32; i++)
-	{
-		auto& surface = d_lists.surfaces32[i];
-		auto vertexes = surface.vertexes;
-		if (previousVertexes != vertexes)
-		{
-			LoadSurfaceVertexes(appState, vertexes, surface.vertex_count);
-			previousVertexes = vertexes;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence16; i++)
-	{
-		auto& fence = d_lists.fences16[i];
-		auto vertexes = fence.vertexes;
-		if (previousVertexes != vertexes)
-		{
-			LoadSurfaceVertexes(appState, vertexes, fence.vertex_count);
-			previousVertexes = vertexes;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_fence32; i++)
-	{
-		auto& fence = d_lists.fences32[i];
-		auto vertexes = fence.vertexes;
-		if (previousVertexes != vertexes)
-		{
-			LoadSurfaceVertexes(appState, vertexes, fence.vertex_count);
-			previousVertexes = vertexes;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_turbulent16; i++)
-	{
-		auto& turbulent = d_lists.turbulent16[i];
-		auto vertexes = turbulent.vertexes;
-		if (previousVertexes != vertexes)
-		{
-			LoadSurfaceVertexes(appState, vertexes, turbulent.vertex_count);
-			previousVertexes = vertexes;
-		}
-	}
-	for (auto i = 0; i <= d_lists.last_turbulent32; i++)
-	{
-		auto& turbulent = d_lists.turbulent32[i];
-		auto vertexes = turbulent.vertexes;
-		if (previousVertexes != vertexes)
-		{
-			LoadSurfaceVertexes(appState, vertexes, turbulent.vertex_count);
-			previousVertexes = vertexes;
-		}
+		VkBufferMemoryBarrier barrier { };
+		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		barrier.buffer = loadedBuffer->buffer->buffer;
+		barrier.size = loadedBuffer->size;
+		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr));
+		bufferCopy.size = loadedBuffer->size;
+		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedBuffer->buffer->buffer, 1, &bufferCopy));
+		loadedBuffer->buffer->SubmitVertexBuffer(appState, commandBuffer);
+		bufferCopy.dstOffset += loadedBuffer->size;
+		loadedBuffer = loadedBuffer->next;
 	}
 	VkDeviceSize floorVerticesSize;
 	if (appState.Mode != AppWorldMode)
@@ -530,7 +620,7 @@ void PerImage::SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMe
 	appState.Scene.currentSharedMemoryTextureToCreate = &sharedMemoryTexture;
 }
 
-void PerImage::GetSurfaceStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize)
+void PerImage::GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize)
 {
 	auto entry = appState.Scene.lightmaps.find({ surface.surface, surface.entity });
 	if (entry == appState.Scene.lightmaps.end())
@@ -728,7 +818,7 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 	GetAliasColormapStagingBufferSize(appState, lastViewmodel, viewmodelList, textures, stagingBufferSize);
 }
 
-void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize)
+void PerImage::GetTexturesStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize)
 {
 	paletteSize = 0;
 	if (palette == nullptr || paletteChanged != pal_changed)
@@ -759,7 +849,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_surface16; i++)
 	{
 		auto& surface = d_lists.surfaces16[i];
-		GetSurfaceStagingBufferSize(appState, view, surface, appState.Scene.surfaceLightmap16List[i], stagingBufferSize);
+		GetSurfaceLightmapStagingBufferSize(appState, view, surface, appState.Scene.surfaceLightmap16List[i], stagingBufferSize);
 	}
 	if (d_lists.last_surface32 >= appState.Scene.surfaceLightmap32List.size())
 	{
@@ -768,7 +858,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_surface32; i++)
 	{
 		auto& surface = d_lists.surfaces32[i];
-		GetSurfaceStagingBufferSize(appState, view, surface, appState.Scene.surfaceLightmap32List[i], stagingBufferSize);
+		GetSurfaceLightmapStagingBufferSize(appState, view, surface, appState.Scene.surfaceLightmap32List[i], stagingBufferSize);
 	}
 	if (d_lists.last_fence16 >= appState.Scene.fenceLightmap16List.size())
 	{
@@ -777,7 +867,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_fence16; i++)
 	{
 		auto& fence = d_lists.fences16[i];
-		GetSurfaceStagingBufferSize(appState, view, fence, appState.Scene.fenceLightmap16List[i], stagingBufferSize);
+		GetSurfaceLightmapStagingBufferSize(appState, view, fence, appState.Scene.fenceLightmap16List[i], stagingBufferSize);
 	}
 	if (d_lists.last_fence32 >= appState.Scene.fenceLightmap32List.size())
 	{
@@ -786,7 +876,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	for (auto i = 0; i <= d_lists.last_fence32; i++)
 	{
 		auto& fence = d_lists.fences32[i];
-		GetSurfaceStagingBufferSize(appState, view, fence, appState.Scene.fenceLightmap32List[i], stagingBufferSize);
+		GetSurfaceLightmapStagingBufferSize(appState, view, fence, appState.Scene.fenceLightmap32List[i], stagingBufferSize);
 	}
 	appState.Scene.firstSharedMemoryTextureToCreate = nullptr;
 	appState.Scene.currentSharedMemoryTextureToCreate = nullptr;
@@ -1005,7 +1095,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, View& view, VkDeviceSize
 	}
 }
 
-void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize)
+void PerImage::LoadTexturesStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize)
 {
 	auto offset = 0;
 	if (paletteSize > 0)

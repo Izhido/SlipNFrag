@@ -7,28 +7,13 @@
 
 Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
 {
-	if (size <= MINIMUM_ALLOCATION)
+	for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
 	{
-		for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
+		if ((*b)->size >= size && (*b)->size < size * 2)
 		{
-			if ((*b)->size >= size)
-			{
-				auto buffer = *b;
-				*b = (*b)->next;
-				return buffer;
-			}
-		}
-	}
-	else
-	{
-		for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
-		{
-			if ((*b)->size >= size && (*b)->size < size * 2)
-			{
-				auto buffer = *b;
-				*b = (*b)->next;
-				return buffer;
-			}
+			auto buffer = *b;
+			*b = (*b)->next;
+			return buffer;
 		}
 	}
 	return nullptr;
@@ -50,7 +35,7 @@ Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateVertexBuffer(appState, MinimumAllocationFor(size));
+		buffer->CreateHostVisibleVertexBuffer(appState, MinimumAllocationFor(size));
 		VK(appState.Device.vkMapMemory(appState.Device.device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);

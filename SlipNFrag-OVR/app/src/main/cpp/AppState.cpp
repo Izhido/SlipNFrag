@@ -65,16 +65,23 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		barrier.size = Scene.matrices.size;
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr));
 		Scene.ClearSizes();
-		perImage.LoadBuffers(*this);
-		perImage.GetStagingBufferSize(*this, view, Scene.stagingBufferSize);
-		perImage.hostClearCount = host_clearcount;
-		stagingBuffer = nullptr;
-		if (Scene.stagingBufferSize > 0)
+		VkDeviceSize stagingBufferSize = 0;
+		perImage.GetBuffersStagingBufferSize(*this, stagingBufferSize);
+		if (stagingBufferSize > 0)
 		{
-			stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, Scene.stagingBufferSize);
-			perImage.LoadStagingBuffer(*this, stagingBuffer, Scene.stagingBufferSize);
+			stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, stagingBufferSize);
+			perImage.LoadBuffersStagingBuffer(*this, stagingBuffer, stagingBufferSize);
+			perImage.FillBuffers(*this, stagingBuffer);
+		}
+		stagingBufferSize = 0;
+		perImage.GetTexturesStagingBufferSize(*this, view, stagingBufferSize);
+		if (stagingBufferSize > 0)
+		{
+			stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, stagingBufferSize);
+			perImage.LoadTexturesStagingBuffer(*this, stagingBuffer, stagingBufferSize);
 			perImage.FillTextures(*this, stagingBuffer);
 		}
+		perImage.hostClearCount = host_clearcount;
 		double clearR;
 		double clearG;
 		double clearB;

@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "Pipeline.h"
 #include "PipelineAttributes.h"
+#include "LoadedBuffer.h"
 #include "CachedBuffers.h"
 #include "Lightmap.h"
 #include <unordered_map>
@@ -65,6 +66,14 @@ struct Scene
 	int hostClearCount;
 	Buffer* oldSurfaceVerticesPerModel;
 	std::unordered_map<void*, Buffer*> surfaceVerticesPerModel;
+	LoadedBuffer* firstVertexListToCreate;
+	LoadedBuffer* currentVertexListToCreate;
+	std::vector<LoadedBuffer> surfaceVertex16List;
+	std::vector<LoadedBuffer> surfaceVertex32List;
+	std::vector<LoadedBuffer> fenceVertex16List;
+	std::vector<LoadedBuffer> fenceVertex32List;
+	std::vector<LoadedBuffer> turbulentVertex16List;
+	std::vector<LoadedBuffer> turbulentVertex32List;
 	CachedBuffers colormappedBuffers;
 	int resetDescriptorSetsCount;
 	Lightmap* oldSurfaces;
@@ -128,7 +137,6 @@ struct Scene
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	ovrTextureSwapChain* skybox;
-	VkDeviceSize stagingBufferSize;
 	VkDeviceSize verticesSize;
 	VkDeviceSize controllerVerticesSize;
 	ovrQuatf orientation;

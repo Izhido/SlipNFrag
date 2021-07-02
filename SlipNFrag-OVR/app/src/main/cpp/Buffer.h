@@ -16,6 +16,7 @@ struct Buffer
 
 	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 	void CreateVertexBuffer(AppState& appState, VkDeviceSize size);
+	void CreateHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateIndexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateStagingBuffer(AppState& appState, VkDeviceSize size);
 	void CreateStagingStorageBuffer(AppState& appState, VkDeviceSize size);
