@@ -23,16 +23,10 @@ void main()
 	float ty = fragmentTexCoords.y + sin(mod(time + fragmentTexCoords.x * 5, 3.14159*2)) / 10;
 	vec2 texCoords = vec2(tx, ty);
 	vec2 level = textureQueryLod(fragmentTexture, texCoords);
-	float lowMip = floor(level.y);
-	float highMip = ceil(level.y);
-	uvec4 lowEntry = textureLod(fragmentTexture, texCoords, lowMip);
-	uvec4 highEntry = textureLod(fragmentTexture, texCoords, highMip);
+	vec2 mip = vec2(floor(level.y), ceil(level.y));
+	uvec4 lowEntry = textureLod(fragmentTexture, texCoords, mip.x);
+	uvec4 highEntry = textureLod(fragmentTexture, texCoords, mip.y);
 	vec4 lowColor = texelFetch(fragmentPalette, ivec2(lowEntry.x, 0), 0);
 	vec4 highColor = texelFetch(fragmentPalette, ivec2(highEntry.x, 0), 0);
-	float delta = level.y - lowMip;
-	float r = lowColor.x + delta * (highColor.x - lowColor.x);
-	float g = lowColor.y + delta * (highColor.y - lowColor.y);
-	float b = lowColor.z + delta * (highColor.z - lowColor.z);
-	float a = lowColor.w + delta * (highColor.w - lowColor.w);
-	outColor = vec4(r, g, b, a);
+	outColor = mix(lowColor, highColor, level.y - mip.x);
 }
