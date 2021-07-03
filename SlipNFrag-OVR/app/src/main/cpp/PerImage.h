@@ -73,12 +73,13 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
-	void GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize);
-	void GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& loadedBuffer, void*& previousVertexes, VkDeviceSize& stagingBufferSize);
+	void GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& loadedBuffer, VkDeviceSize& stagingBufferSize);
+	void GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& loadedBuffer, VkDeviceSize& stagingBufferSize);
 	void GetBuffersStagingBufferSize(AppState& appState, VkDeviceSize& stagingBufferSize);
-	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
 	void LoadBuffersStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
 	void FillBuffers(AppState& appState, Buffer* stagingBuffer);
+	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
+	void LoadRemainingBuffers(AppState& appState);
 	void GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize);
 	void GetTurbulentStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTexture& loadedTexture, VkDeviceSize& stagingBufferSize);
 	void GetAliasColormapStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);

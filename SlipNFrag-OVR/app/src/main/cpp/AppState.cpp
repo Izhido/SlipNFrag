@@ -73,6 +73,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			perImage.LoadBuffersStagingBuffer(*this, stagingBuffer, stagingBufferSize);
 			perImage.FillBuffers(*this, stagingBuffer);
 		}
+		perImage.LoadRemainingBuffers(*this);
 		stagingBufferSize = 0;
 		perImage.GetTexturesStagingBufferSize(*this, view, stagingBufferSize);
 		if (stagingBufferSize > 0)

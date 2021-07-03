@@ -146,6 +146,8 @@ struct Scene
 	ovrQuatf orientation;
 	ovrPosef pose;
 	StagingBuffer stagingBuffer;
+	void* previousSurfaceVertexes;
+	SharedMemoryBuffer* previousSurfaceBuffer;
 
 	void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	void AddBorder(AppState& appState, std::vector<uint32_t>& target);
