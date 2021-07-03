@@ -6,7 +6,6 @@
 
 void PerImage::Reset(AppState& appState)
 {
-	sceneMatricesStagingBuffers.Reset(appState);
 	cachedVertices.Reset(appState);
 	cachedAttributes.Reset(appState);
 	cachedIndices16.Reset(appState);
@@ -342,7 +341,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 	appState.Scene.currentVertexListToCreate = nullptr;
 	appState.Scene.previousSurfaceVertexes = nullptr;
 	appState.Scene.previousSurfaceBuffer = nullptr;
-	VkDeviceSize size = 0;
+	auto size = appState.Scene.matrices.size;
 	if (d_lists.last_surface16 >= appState.Scene.surfaceVertex16List.size())
 	{
 		appState.Scene.surfaceVertex16List.resize(d_lists.last_surface16 + 1);
@@ -673,9 +672,14 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 	return size;
 }
 
-void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
+void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* stagingBuffer)
 {
 	VkDeviceSize offset = 0;
+	size_t matricesSize = appState.Scene.numBuffers * sizeof(ovrMatrix4f);
+	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, &appState.ViewMatrices[matrixIndex], matricesSize);
+	offset += matricesSize;
+	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, &appState.ProjectionMatrices[matrixIndex], matricesSize);
+	offset += matricesSize;
 	auto loadedBuffer = appState.Scene.firstVertexListToCreate;
 	while (loadedBuffer != nullptr)
 	{
@@ -832,6 +836,16 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 {
 	appState.Scene.stagingBuffer.lastBarrier = -1;
 	VkBufferCopy bufferCopy { };
+	bufferCopy.size = appState.Scene.matrices.size;
+	VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.matrices.buffer, 1, &bufferCopy));
+	VkBufferMemoryBarrier barrier { };
+	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	barrier.buffer = appState.Scene.matrices.buffer;
+	barrier.size = VK_WHOLE_SIZE;
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
+	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr));
+	bufferCopy.srcOffset += appState.Scene.matrices.size;
 	auto loadedBuffer = appState.Scene.firstVertexListToCreate;
 	while (loadedBuffer != nullptr)
 	{
@@ -840,15 +854,12 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		{
 			appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
 		}
-		auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
-		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.srcAccessMask = 0;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.buffer = loadedBuffer->buffer->buffer;
-		barrier.size = loadedBuffer->size;
-		VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr));
 		bufferCopy.size = loadedBuffer->size;
 		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedBuffer->buffer->buffer, 1, &bufferCopy));
+		auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
+		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+		barrier.buffer = loadedBuffer->buffer->buffer;
+		barrier.size = VK_WHOLE_SIZE;
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 		bufferCopy.srcOffset += loadedBuffer->size;

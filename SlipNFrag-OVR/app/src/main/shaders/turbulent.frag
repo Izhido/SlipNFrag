@@ -19,9 +19,8 @@ layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
-	float tx = fragmentTexCoords.x + sin(mod(time + fragmentTexCoords.y * 5, 3.14159*2)) / 10;
-	float ty = fragmentTexCoords.y + sin(mod(time + fragmentTexCoords.x * 5, 3.14159*2)) / 10;
-	vec2 texCoords = vec2(tx, ty);
+	vec2 distortion = sin(mod(time + fragmentTexCoords * 5, 3.14159*2)) / 10;
+	vec2 texCoords = vec2(fragmentTexCoords.x + distortion.y, fragmentTexCoords.y + distortion.x);
 	vec2 level = textureQueryLod(fragmentTexture, texCoords);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
 	uvec4 lowEntry = textureLod(fragmentTexture, texCoords, mip.x);

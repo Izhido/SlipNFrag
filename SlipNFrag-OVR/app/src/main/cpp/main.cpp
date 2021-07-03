@@ -1969,7 +1969,6 @@ void android_main(struct android_app* app)
 			perImage.cachedIndices16.Delete(appState);
 			perImage.cachedAttributes.Delete(appState);
 			perImage.cachedVertices.Delete(appState);
-			perImage.sceneMatricesStagingBuffers.Delete(appState);
 		}
 	}
 	vrapi_DestroyTextureSwapChain(appState.RightArrows.SwapChain);

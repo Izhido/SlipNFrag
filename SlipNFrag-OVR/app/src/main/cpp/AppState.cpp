@@ -30,48 +30,11 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		memoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr));
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &view.framebuffer.startBarriers[view.index]));
-		Buffer* stagingBuffer;
-		if (perImage.sceneMatricesStagingBuffers.oldBuffers != nullptr)
-		{
-			stagingBuffer = perImage.sceneMatricesStagingBuffers.oldBuffers;
-			perImage.sceneMatricesStagingBuffers.oldBuffers = perImage.sceneMatricesStagingBuffers.oldBuffers->next;
-		}
-		else
-		{
-			stagingBuffer = new Buffer();
-			stagingBuffer->CreateStagingBuffer(*this, Scene.matrices.size);
-		}
-		perImage.sceneMatricesStagingBuffers.MoveToFront(stagingBuffer);
-		VK(Device.vkMapMemory(Device.device, stagingBuffer->memory, 0, stagingBuffer->size, 0, &stagingBuffer->mapped));
-		ovrMatrix4f *sceneMatrices = nullptr;
-		*((void**)&sceneMatrices) = stagingBuffer->mapped;
-		memcpy(sceneMatrices, &ViewMatrices[matrixIndex], Scene.numBuffers * sizeof(ovrMatrix4f));
-		memcpy(sceneMatrices + Scene.numBuffers, &ProjectionMatrices[matrixIndex], Scene.numBuffers * sizeof(ovrMatrix4f));
-		VC(Device.vkUnmapMemory(Device.device, stagingBuffer->memory));
-		stagingBuffer->mapped = nullptr;
-		VkBufferMemoryBarrier barrier { };
-		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		barrier.buffer = stagingBuffer->buffer;
-		barrier.size = stagingBuffer->size;
-		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr));
-		VkBufferCopy bufferCopy { };
-		bufferCopy.size = Scene.matrices.size;
-		VC(Device.vkCmdCopyBuffer(perImage.commandBuffer, stagingBuffer->buffer, Scene.matrices.buffer, 1, &bufferCopy));
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
-		barrier.buffer = Scene.matrices.buffer;
-		barrier.size = Scene.matrices.size;
-		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr));
 		Scene.ClearSizes();
 		auto stagingBufferSize = perImage.GetStagingBufferSize(*this, view);
-		if (stagingBufferSize > 0)
-		{
-			stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, stagingBufferSize);
-			perImage.LoadStagingBuffer(*this, stagingBuffer);
-			perImage.FillFromStagingBuffer(*this, stagingBuffer);
-		}
+		auto stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, stagingBufferSize);
+		perImage.LoadStagingBuffer(*this, matrixIndex, stagingBuffer);
+		perImage.FillFromStagingBuffer(*this, stagingBuffer);
 		perImage.LoadRemainingBuffers(*this);
 		perImage.hostClearCount = host_clearcount;
 		double clearR;

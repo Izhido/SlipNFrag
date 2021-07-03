@@ -17,7 +17,6 @@ struct View;
 
 struct PerImage
 {
-	CachedBuffers sceneMatricesStagingBuffers;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
 	CachedBuffers cachedIndices16;
@@ -83,7 +82,7 @@ struct PerImage
 	void SetupLoadedLightmap(AppState& appState, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize);
 	void SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, View& view);
-	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
+	void LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* stagingBuffer);
 	void FillAliasTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
