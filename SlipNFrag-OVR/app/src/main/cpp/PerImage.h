@@ -75,11 +75,6 @@ struct PerImage
 	void Reset(AppState& appState);
 	void GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& loadedBuffer, VkDeviceSize& stagingBufferSize);
 	void GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& loadedBuffer, VkDeviceSize& stagingBufferSize);
-	void GetBuffersStagingBufferSize(AppState& appState, VkDeviceSize& stagingBufferSize);
-	void LoadBuffersStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
-	void FillBuffers(AppState& appState, Buffer* stagingBuffer);
-	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
-	void LoadRemainingBuffers(AppState& appState);
 	void GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize);
 	void GetTurbulentStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTexture& loadedTexture, VkDeviceSize& stagingBufferSize);
 	void GetAliasColormapStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
@@ -87,10 +82,12 @@ struct PerImage
 	void GetViewmodelStagingBufferSize(AppState& appState, int lastViewmodel, std::vector<dalias_t>& viewmodelList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void SetupLoadedLightmap(AppState& appState, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize);
 	void SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture);
-	void GetTexturesStagingBufferSize(AppState& appState, View& view, VkDeviceSize& stagingBufferSize);
-	void LoadTexturesStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkDeviceSize stagingBufferSize);
+	VkDeviceSize GetStagingBufferSize(AppState& appState, View& view);
+	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void FillAliasTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
-	void FillTextures(AppState& appState, Buffer* stagingBuffer);
+	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
+	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
+	void LoadRemainingBuffers(AppState& appState);
 	void SetPushConstants(dsurface_t& surface, float pushConstants[]);
 	void SetPushConstants(dturbulent_t& turbulent, float pushConstants[]);
 	void SetPushConstants(dalias_t& alias, float pushConstants[]);
