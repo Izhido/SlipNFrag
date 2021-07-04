@@ -1957,7 +1957,6 @@ void android_main(struct android_app* app)
 				perImage.palette->Delete(appState);
 			}
 			perImage.colormaps.Delete(appState);
-			perImage.turbulent.Delete(appState);
 			perImage.stagingBuffers.Delete(appState);
 			perImage.cachedColors.Delete(appState);
 			perImage.cachedIndices32.Delete(appState);

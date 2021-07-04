@@ -910,10 +910,7 @@ void Scene::Reset()
 	D_ResetLists();
 	viewmodelTexturesPerKey.clear();
 	aliasTexturesPerKey.clear();
-	latestTextureSharedMemory = nullptr;
-	usedInLatestTextureSharedMemory = 0;
-	latestBufferSharedMemory = nullptr;
-	usedInLatestBufferSharedMemory = 0;
+	turbulentPerKey.clear();
 	spritesPerKey.clear();
 	fenceTexturesPerKey.clear();
 	surfaceTexturesPerKey.clear();
@@ -930,8 +927,13 @@ void Scene::Reset()
 	}
 	lightmaps.clear();
 	vertexBuffers.DisposeFront();
+	latestTextureSharedMemory = nullptr;
+	usedInLatestTextureSharedMemory = 0;
+	latestBufferSharedMemory = nullptr;
+	usedInLatestBufferSharedMemory = 0;
 	viewmodelTextureCount = 0;
 	aliasTextureCount = 0;
+	turbulentTextureCount = 0;
 	spriteTextureCount = 0;
 	surfaceTextureCount = 0;
 	resetDescriptorSetsCount++;

@@ -24,7 +24,6 @@ struct PerImage
 	CachedBuffers cachedIndices32;
 	CachedBuffers cachedColors;
 	CachedBuffers stagingBuffers;
-	CachedTextures turbulent;
 	CachedTextures colormaps;
 	int colormapCount;
 	int resetDescriptorSetsCount;
@@ -48,7 +47,7 @@ struct PerImage
 	CachedPipelineDescriptorResources surfaceTextureResources;
 	CachedPipelineDescriptorResources fenceTextureResources;
 	CachedPipelineDescriptorResources spriteResources;
-	UpdatablePipelineDescriptorResources turbulentResources;
+	CachedPipelineDescriptorResources turbulentResources;
 	UpdatablePipelineDescriptorResources colormapResources;
 	CachedPipelineDescriptorResources aliasResources;
 	CachedPipelineDescriptorResources viewmodelResources;
@@ -77,7 +76,7 @@ struct PerImage
 	void GetTurbulentVerticesStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& buffer, VkDeviceSize& stagingBufferSize);
 	void GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& alias, LoadedSharedMemoryBuffer& vertexBuffer, LoadedSharedMemoryTexCoordsBuffer& texCoordsBuffer, VkDeviceSize& stagingBufferSize);
 	void GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize);
-	void GetTurbulentStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTexture& loadedTexture, VkDeviceSize& stagingBufferSize);
+	void GetTurbulentStagingBufferSize(AppState& appState, int lastTurbulent, std::vector<dturbulent_t>& turbulentList, std::vector<LoadedSharedMemoryTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetAliasColormapStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetAliasStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetViewmodelStagingBufferSize(AppState& appState, int lastViewmodel, std::vector<dalias_t>& viewmodelList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
@@ -92,5 +91,6 @@ struct PerImage
 	void SetPushConstants(dturbulent_t& turbulent, float pushConstants[]);
 	void SetPushConstants(dalias_t& alias, float pushConstants[]);
 	VkDescriptorSet GetDescriptorSet(AppState& appState, SharedMemoryTexture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[]);
+	VkDescriptorSet GetDescriptorSet(AppState& appState, Texture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[]);
 	void Render(AppState& appState);
 };
