@@ -5,11 +5,11 @@
 #include "PipelineAttributes.h"
 #include "CachedSharedMemoryBuffers.h"
 #include "LoadedSharedMemoryBuffer.h"
+#include "LoadedSharedMemoryTexCoordsBuffer.h"
 #include "CachedBuffers.h"
 #include "Lightmap.h"
 #include <unordered_map>
 #include "CachedSharedMemoryTextures.h"
-#include "BufferWithOffset.h"
 #include "LoadedLightmap.h"
 #include "LoadedSharedMemoryTexture.h"
 #include "LoadedTexture.h"
@@ -66,16 +66,28 @@ struct Scene
 	int numBuffers;
 	int hostClearCount;
 	CachedSharedMemoryBuffers vertexBuffers;
-	std::unordered_map<void*, SharedMemoryBuffer*> surfaceVerticesPerModel;
+	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
+	std::unordered_map<void*, SharedMemoryBuffer*> texCoordsPerKey;
 	LoadedSharedMemoryBuffer* firstVertexListToCreate;
 	LoadedSharedMemoryBuffer* currentVertexListToCreate;
+	LoadedSharedMemoryBuffer* firstAliasVertexListToCreate;
+	LoadedSharedMemoryBuffer* currentAliasVertexListToCreate;
+	LoadedSharedMemoryTexCoordsBuffer* firstAliasTexCoordsListToCreate;
+	LoadedSharedMemoryTexCoordsBuffer* currentAliasTexCoordsListToCreate;
 	std::vector<LoadedSharedMemoryBuffer> surfaceVertex16List;
 	std::vector<LoadedSharedMemoryBuffer> surfaceVertex32List;
 	std::vector<LoadedSharedMemoryBuffer> fenceVertex16List;
 	std::vector<LoadedSharedMemoryBuffer> fenceVertex32List;
 	std::vector<LoadedSharedMemoryBuffer> turbulentVertex16List;
 	std::vector<LoadedSharedMemoryBuffer> turbulentVertex32List;
-	CachedBuffers colormappedBuffers;
+	std::vector<LoadedSharedMemoryBuffer> aliasVertex16List;
+	std::vector<LoadedSharedMemoryTexCoordsBuffer> aliasTexCoords16List;
+	std::vector<LoadedSharedMemoryBuffer> aliasVertex32List;
+	std::vector<LoadedSharedMemoryTexCoordsBuffer> aliasTexCoords32List;
+	std::vector<LoadedSharedMemoryBuffer> viewmodelVertex16List;
+	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords16List;
+	std::vector<LoadedSharedMemoryBuffer> viewmodelVertex32List;
+	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords32List;
 	int resetDescriptorSetsCount;
 	Lightmap* oldSurfaces;
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
@@ -90,11 +102,8 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> surfaceTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> fenceTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
-	std::unordered_map<void*, int> colormappedVerticesPerKey;
-	std::unordered_map<void*, int> colormappedTexCoordsPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> aliasPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> viewmodelsPerKey;
-	std::vector<BufferWithOffset> colormappedBufferList;
+	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesPerKey;
+	std::unordered_map<void*, SharedMemoryTexture*> viewmodelTexturesPerKey;
 	LoadedLightmap* firstLightmapToCreate;
 	LoadedLightmap* currentLightmapToCreate;
 	std::vector<LoadedLightmap> surfaceLightmap16List;
@@ -114,16 +123,6 @@ struct Scene
 	std::vector<LoadedColormappedTexture> alias32List;
 	std::vector<LoadedColormappedTexture> viewmodel16List;
 	std::vector<LoadedColormappedTexture> viewmodel32List;
-	std::vector<int> newVertices;
-	std::vector<int> newTexCoords;
-	std::vector<int> aliasVertices16List;
-	std::vector<int> aliasVertices32List;
-	std::vector<int> aliasTexCoords16List;
-	std::vector<int> aliasTexCoords32List;
-	std::vector<int> viewmodelVertices16List;
-	std::vector<int> viewmodelVertices32List;
-	std::vector<int> viewmodelTexCoords16List;
-	std::vector<int> viewmodelTexCoords32List;
 	std::unordered_map<void*, Texture*> turbulentPerKey;
 	Texture floorTexture;
 	Texture controllerTexture;
@@ -131,8 +130,6 @@ struct Scene
 	VkSampler lightmapSampler;
 	SharedMemory* latestBufferSharedMemory;
 	VkDeviceSize usedInLatestBufferSharedMemory;
-	Buffer* latestColormappedBuffer;
-	VkDeviceSize usedInLatestColormappedBuffer;
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	ovrTextureSwapChain* skybox;
@@ -141,13 +138,14 @@ struct Scene
 	ovrQuatf orientation;
 	ovrPosef pose;
 	StagingBuffer stagingBuffer;
-	void* previousSurfaceVertexes;
-	SharedMemoryBuffer* previousSurfaceBuffer;
+	void* previousVertexes;
+	SharedMemoryBuffer* previousVertexBuffer;
+	SharedMemoryBuffer* previousTexCoordsBuffer;
 
 	void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	void AddBorder(AppState& appState, std::vector<uint32_t>& target);
 	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app);
 	void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
-	void ClearSizes();
+	void Initialize();
 	void Reset();
 };

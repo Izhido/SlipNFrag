@@ -890,26 +890,30 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 	VK(appState.Device.vkCreateShaderModule(appState.Device.device, &moduleCreateInfo, nullptr, shaderModule));
 }
 
-void Scene::ClearSizes()
+void Scene::Initialize()
 {
 	verticesSize = 0;
 	controllerVerticesSize = 0;
+	firstVertexListToCreate = nullptr;
+	currentVertexListToCreate = nullptr;
+	firstAliasVertexListToCreate = nullptr;
+	currentAliasVertexListToCreate = nullptr;
+	firstAliasTexCoordsListToCreate = nullptr;
+	currentAliasTexCoordsListToCreate = nullptr;
+	previousVertexes = nullptr;
+	previousVertexBuffer = nullptr;
+	previousTexCoordsBuffer = nullptr;
 }
 
 void Scene::Reset()
 {
 	D_ResetLists();
-	viewmodelsPerKey.clear();
-	aliasPerKey.clear();
+	viewmodelTexturesPerKey.clear();
+	aliasTexturesPerKey.clear();
 	latestTextureSharedMemory = nullptr;
 	usedInLatestTextureSharedMemory = 0;
-	latestColormappedBuffer = nullptr;
-	usedInLatestColormappedBuffer = 0;
 	latestBufferSharedMemory = nullptr;
 	usedInLatestBufferSharedMemory = 0;
-	colormappedBufferList.clear();
-	colormappedTexCoordsPerKey.clear();
-	colormappedVerticesPerKey.clear();
 	spritesPerKey.clear();
 	fenceTexturesPerKey.clear();
 	surfaceTexturesPerKey.clear();
@@ -925,7 +929,6 @@ void Scene::Reset()
 		}
 	}
 	lightmaps.clear();
-	colormappedBuffers.DisposeFront();
 	vertexBuffers.DisposeFront();
 	viewmodelTextureCount = 0;
 	aliasTextureCount = 0;
@@ -937,5 +940,6 @@ void Scene::Reset()
 		vrapi_DestroyTextureSwapChain(skybox);
 		skybox = VK_NULL_HANDLE;
 	}
-	surfaceVerticesPerModel.clear();
+	texCoordsPerKey.clear();
+	verticesPerKey.clear();
 }

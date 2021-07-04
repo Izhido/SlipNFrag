@@ -30,7 +30,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		memoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr));
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &view.framebuffer.startBarriers[view.index]));
-		Scene.ClearSizes();
+		Scene.Initialize();
 		auto stagingBufferSize = perImage.GetStagingBufferSize(*this, view);
 		auto stagingBuffer = perImage.stagingBuffers.GetStagingStorageBuffer(*this, stagingBufferSize);
 		perImage.LoadStagingBuffer(*this, matrixIndex, stagingBuffer);

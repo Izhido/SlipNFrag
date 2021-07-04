@@ -8,6 +8,7 @@
 #include "vid_ovr.h"
 #include "d_lists.h"
 #include "LoadedSharedMemoryBuffer.h"
+#include "LoadedSharedMemoryTexCoordsBuffer.h"
 #include "LoadedTexture.h"
 #include "LoadedLightmap.h"
 #include "LoadedSharedMemoryTexture.h"
@@ -72,8 +73,9 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
-	void GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& loadedBuffer, VkDeviceSize& stagingBufferSize);
-	void GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& loadedBuffer, VkDeviceSize& stagingBufferSize);
+	void GetSurfaceVerticesStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& buffer, VkDeviceSize& stagingBufferSize);
+	void GetTurbulentVerticesStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& buffer, VkDeviceSize& stagingBufferSize);
+	void GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& alias, LoadedSharedMemoryBuffer& vertexBuffer, LoadedSharedMemoryTexCoordsBuffer& texCoordsBuffer, VkDeviceSize& stagingBufferSize);
 	void GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize);
 	void GetTurbulentStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTexture& loadedTexture, VkDeviceSize& stagingBufferSize);
 	void GetAliasColormapStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
@@ -85,7 +87,6 @@ struct PerImage
 	void LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* stagingBuffer);
 	void FillAliasTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
-	void LoadAliasBuffers(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<int>& aliasVertices, std::vector<int>& aliasTexCoords);
 	void LoadRemainingBuffers(AppState& appState);
 	void SetPushConstants(dsurface_t& surface, float pushConstants[]);
 	void SetPushConstants(dturbulent_t& turbulent, float pushConstants[]);

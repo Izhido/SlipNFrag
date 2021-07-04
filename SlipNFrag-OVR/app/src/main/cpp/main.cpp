@@ -1260,7 +1260,6 @@ void android_main(struct android_app* app)
 		appState.Scene.lightmapsToDelete.clear();
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.textures.oldTextures);
 		Lightmap::DeleteOld(appState, &appState.Scene.oldSurfaces);
-		appState.Scene.colormappedBuffers.DeleteOld(appState);
 		SharedMemoryBuffer::DeleteOld(appState, &appState.Scene.vertexBuffers.oldBuffers);
 		{
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
@@ -2027,7 +2026,6 @@ void android_main(struct android_app* app)
 			VC(appState.Device.vkFreeMemory(appState.Device.device, list.memory, nullptr));
 		}
 	}
-	appState.Scene.colormappedBuffers.Delete(appState);
 	appState.Scene.vertexBuffers.Delete(appState);
 	appState.Scene.console.Delete(appState);
 	appState.Scene.floor.Delete(appState);
