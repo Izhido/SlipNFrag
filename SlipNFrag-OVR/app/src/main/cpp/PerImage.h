@@ -27,9 +27,6 @@ struct PerImage
 	CachedTextures colormaps;
 	int colormapCount;
 	int resetDescriptorSetsCount;
-	VkDeviceSize paletteSize;
-	VkDeviceSize host_colormapSize;
-	VkDeviceSize skySize;
 	int paletteChanged;
 	Texture* palette;
 	Texture* host_colormap;

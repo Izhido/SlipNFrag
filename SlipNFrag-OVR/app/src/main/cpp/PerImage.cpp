@@ -279,9 +279,9 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, int lastTurbule
 	{
 		return;
 	}
-	if (lastTurbulent >= turbulentList.size())
+	if (lastTurbulent >= textures.size())
 	{
-		turbulentList.resize(lastTurbulent + 1);
+		textures.resize(lastTurbulent + 1);
 	}
 	for (auto i = 0; i <= lastTurbulent; i++)
 	{
@@ -332,30 +332,31 @@ void PerImage::GetAliasStagingBufferSize(AppState& appState, int lastAlias, std:
 	{
 		return;
 	}
-	if (lastAlias >= aliasList.size())
+	if (lastAlias >= textures.size())
 	{
-		aliasList.resize(lastAlias + 1);
+		textures.resize(lastAlias + 1);
 	}
 	for (auto i = 0; i <= lastAlias; i++)
 	{
 		auto& alias = aliasList[i];
+		auto& loaded = textures[i];
 		auto entry = appState.Scene.aliasTexturesPerKey.find(alias.data);
 		if (entry == appState.Scene.aliasTexturesPerKey.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 			auto texture = new SharedMemoryTexture();
 			texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			textures[i].texture.size = alias.size;
-			stagingBufferSize += textures[i].texture.size;
+			loaded.texture.size = alias.size;
+			stagingBufferSize += loaded.texture.size;
 			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.aliasTextureCount++;
 			appState.Scene.aliasTexturesPerKey.insert({ alias.data, texture });
-			textures[i].texture.texture = texture;
+			loaded.texture.texture = texture;
 		}
 		else
 		{
-			textures[i].texture.size = 0;
-			textures[i].texture.texture = entry->second;
+			loaded.texture.size = 0;
+			loaded.texture.texture = entry->second;
 		}
 	}
 	GetAliasColormapStagingBufferSize(appState, lastAlias, aliasList, textures, stagingBufferSize);
@@ -367,30 +368,31 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 	{
 		return;
 	}
-	if (lastViewmodel >= viewmodelList.size())
+	if (lastViewmodel >= textures.size())
 	{
-		viewmodelList.resize(lastViewmodel + 1);
+		textures.resize(lastViewmodel + 1);
 	}
 	for (auto i = 0; i <= lastViewmodel; i++)
 	{
 		auto& viewmodel = viewmodelList[i];
+		auto& loaded = textures[i];
 		auto entry = appState.Scene.viewmodelTexturesPerKey.find(viewmodel.data);
 		if (entry == appState.Scene.viewmodelTexturesPerKey.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
 			auto texture = new SharedMemoryTexture();
 			texture->Create(appState, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			textures[i].texture.size = viewmodel.size;
-			stagingBufferSize += textures[i].texture.size;
+			loaded.texture.size = viewmodel.size;
+			stagingBufferSize += loaded.texture.size;
 			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.viewmodelTextureCount++;
 			appState.Scene.viewmodelTexturesPerKey.insert({ viewmodel.data, texture });
-			textures[i].texture.texture = texture;
+			loaded.texture.texture = texture;
 		}
 		else
 		{
-			textures[i].texture.size = 0;
-			textures[i].texture.texture = entry->second;
+			loaded.texture.size = 0;
+			loaded.texture.texture = entry->second;
 		}
 	}
 	GetAliasColormapStagingBufferSize(appState, lastViewmodel, viewmodelList, textures, stagingBufferSize);
@@ -493,7 +495,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 		auto& viewmodel = d_lists.viewmodels32[i];
 		GetAliasVerticesStagingBufferSize(appState, viewmodel, appState.Scene.viewmodelVertex32List[i], appState.Scene.viewmodelTexCoords32List[i], size);
 	}
-	paletteSize = 0;
+	appState.Scene.paletteSize = 0;
 	if (palette == nullptr || paletteChanged != pal_changed)
 	{
 		if (palette == nullptr)
@@ -501,20 +503,18 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			palette = new Texture();
 			palette->Create(appState, 256, 1, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
-		paletteSize = 1024;
-		size += paletteSize;
+		appState.Scene.paletteSize = 1024;
+		size += appState.Scene.paletteSize;
 		paletteChanged = pal_changed;
 	}
-	host_colormapSize = 0;
+	appState.Scene.host_colormapSize = 0;
 	if (::host_colormap.size() > 0 && host_colormap == nullptr)
 	{
 		host_colormap = new Texture();
 		host_colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		host_colormapSize = 16384;
-		size += host_colormapSize;
+		appState.Scene.host_colormapSize = 16384;
+		size += appState.Scene.host_colormapSize;
 	}
-	appState.Scene.firstLightmapToCreate = nullptr;
-	appState.Scene.currentLightmapToCreate = nullptr;
 	if (d_lists.last_surface16 >= appState.Scene.surfaceLightmap16List.size())
 	{
 		appState.Scene.surfaceLightmap16List.resize(d_lists.last_surface16 + 1);
@@ -551,8 +551,6 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 		auto& fence = d_lists.fences32[i];
 		GetSurfaceLightmapStagingBufferSize(appState, view, fence, appState.Scene.fenceLightmap32List[i], size);
 	}
-	appState.Scene.firstSharedMemoryTextureToCreate = nullptr;
-	appState.Scene.currentSharedMemoryTextureToCreate = nullptr;
 	if (d_lists.last_surface16 >= appState.Scene.surfaceTexture16List.size())
 	{
 		appState.Scene.surfaceTexture16List.resize(d_lists.last_surface16 + 1);
@@ -709,7 +707,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 	GetAliasStagingBufferSize(appState, d_lists.last_alias32, d_lists.alias32, appState.Scene.alias32List, size);
 	GetViewmodelStagingBufferSize(appState, d_lists.last_viewmodel16, d_lists.viewmodels16, appState.Scene.viewmodel16List, size);
 	GetViewmodelStagingBufferSize(appState, d_lists.last_viewmodel32, d_lists.viewmodels32, appState.Scene.viewmodel32List, size);
-	skySize = 0;
+	appState.Scene.skySize = 0;
 	if (d_lists.last_sky >= 0)
 	{
 		if (sky == nullptr)
@@ -718,8 +716,8 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			sky = new Texture();
 			sky->Create(appState, 128, 128, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
-		skySize = 16384;
-		size += skySize;
+		appState.Scene.skySize = 16384;
+		size += appState.Scene.skySize;
 	}
 	return size;
 }
@@ -782,15 +780,15 @@ void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* st
 		offset += loadedTexCoordsBuffer->size;
 		loadedTexCoordsBuffer = loadedTexCoordsBuffer->next;
 	}
-	if (paletteSize > 0)
+	if (appState.Scene.paletteSize > 0)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_8to24table, paletteSize);
-		offset += paletteSize;
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_8to24table, appState.Scene.paletteSize);
+		offset += appState.Scene.paletteSize;
 	}
-	if (host_colormapSize > 0)
+	if (appState.Scene.host_colormapSize > 0)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, ::host_colormap.data(), host_colormapSize);
-		offset += host_colormapSize;
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, ::host_colormap.data(), appState.Scene.host_colormapSize);
+		offset += appState.Scene.host_colormapSize;
 	}
 	auto lightmap = appState.Scene.firstLightmapToCreate;
 	while (lightmap != nullptr)
@@ -886,7 +884,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* st
 			offset += 16384;
 		}
 	}
-	if (skySize > 0)
+	if (appState.Scene.skySize > 0)
 	{
 		auto source = r_skysource;
 		auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
@@ -1006,15 +1004,15 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	appState.Scene.stagingBuffer.offset = bufferCopy.srcOffset;
 	appState.Scene.stagingBuffer.commandBuffer = commandBuffer;
 	appState.Scene.stagingBuffer.lastBarrier = -1;
-	if (paletteSize > 0)
+	if (appState.Scene.paletteSize > 0)
 	{
 		palette->Fill(appState, appState.Scene.stagingBuffer);
-		appState.Scene.stagingBuffer.offset += paletteSize;
+		appState.Scene.stagingBuffer.offset += appState.Scene.paletteSize;
 	}
-	if (host_colormapSize > 0)
+	if (appState.Scene.host_colormapSize > 0)
 	{
 		host_colormap->Fill(appState, appState.Scene.stagingBuffer);
-		appState.Scene.stagingBuffer.offset += host_colormapSize;
+		appState.Scene.stagingBuffer.offset += appState.Scene.host_colormapSize;
 	}
 	auto lightmap = appState.Scene.firstLightmapToCreate;
 	while (lightmap != nullptr)
@@ -1068,10 +1066,10 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto& viewmodel = d_lists.viewmodels32[i];
 		FillAliasTextures(appState, appState.Scene.viewmodel32List[i], viewmodel);
 	}
-	if (skySize > 0)
+	if (appState.Scene.skySize > 0)
 	{
 		sky->FillMipmapped(appState, appState.Scene.stagingBuffer);
-		appState.Scene.stagingBuffer.offset += skySize;
+		appState.Scene.stagingBuffer.offset += appState.Scene.skySize;
 	}
 	if (appState.Scene.stagingBuffer.lastBarrier >= 0)
 	{

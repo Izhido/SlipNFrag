@@ -893,6 +893,9 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 void Scene::Initialize()
 {
 	verticesSize = 0;
+	paletteSize = 0;
+	host_colormapSize = 0;
+	skySize = 0;
 	controllerVerticesSize = 0;
 	firstVertexListToCreate = nullptr;
 	currentVertexListToCreate = nullptr;
@@ -900,6 +903,10 @@ void Scene::Initialize()
 	currentAliasVertexListToCreate = nullptr;
 	firstAliasTexCoordsListToCreate = nullptr;
 	currentAliasTexCoordsListToCreate = nullptr;
+	firstLightmapToCreate = nullptr;
+	currentLightmapToCreate = nullptr;
+	firstSharedMemoryTextureToCreate = nullptr;
+	currentSharedMemoryTextureToCreate = nullptr;
 	previousVertexes = nullptr;
 	previousVertexBuffer = nullptr;
 	previousTexCoordsBuffer = nullptr;

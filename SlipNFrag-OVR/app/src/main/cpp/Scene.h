@@ -135,6 +135,9 @@ struct Scene
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	ovrTextureSwapChain* skybox;
 	VkDeviceSize verticesSize;
+	VkDeviceSize paletteSize;
+	VkDeviceSize host_colormapSize;
+	VkDeviceSize skySize;
 	VkDeviceSize controllerVerticesSize;
 	ovrQuatf orientation;
 	ovrPosef pose;
