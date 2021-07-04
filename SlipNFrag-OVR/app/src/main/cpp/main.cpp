@@ -1258,14 +1258,10 @@ void android_main(struct android_app* app)
 			appState.Scene.lightmaps.erase(entry);
 		}
 		appState.Scene.lightmapsToDelete.clear();
-		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.viewmodelTextures.oldTextures);
-		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.aliasTextures.oldTextures);
-		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.spriteTextures.oldTextures);
-		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.fenceTextures.oldTextures);
-		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.surfaceTextures.oldTextures);
+		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.textures.oldTextures);
 		Lightmap::DeleteOld(appState, &appState.Scene.oldSurfaces);
 		appState.Scene.colormappedBuffers.DeleteOld(appState);
-		SharedMemoryBuffer::DeleteOld(appState, &appState.Scene.surfaceVertices.oldBuffers);
+		SharedMemoryBuffer::DeleteOld(appState, &appState.Scene.vertexBuffers.oldBuffers);
 		{
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
@@ -2023,11 +2019,7 @@ void android_main(struct android_app* app)
 	}
 	appState.Scene.controllerTexture.Delete(appState);
 	appState.Scene.floorTexture.Delete(appState);
-	appState.Scene.viewmodelTextures.Delete(appState);
-	appState.Scene.aliasTextures.Delete(appState);
-	appState.Scene.spriteTextures.Delete(appState);
-	appState.Scene.fenceTextures.Delete(appState);
-	appState.Scene.surfaceTextures.Delete(appState);
+	appState.Scene.textures.Delete(appState);
 	for (auto& entry : appState.Scene.allocations)
 	{
 		for (auto& list : entry.second.allocations)
@@ -2036,7 +2028,7 @@ void android_main(struct android_app* app)
 		}
 	}
 	appState.Scene.colormappedBuffers.Delete(appState);
-	appState.Scene.surfaceVertices.Delete(appState);
+	appState.Scene.vertexBuffers.Delete(appState);
 	appState.Scene.console.Delete(appState);
 	appState.Scene.floor.Delete(appState);
 	appState.Scene.sky.Delete(appState);

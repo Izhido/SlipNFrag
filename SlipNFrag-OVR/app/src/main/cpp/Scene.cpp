@@ -913,11 +913,7 @@ void Scene::Reset()
 	spritesPerKey.clear();
 	fenceTexturesPerKey.clear();
 	surfaceTexturesPerKey.clear();
-	viewmodelTextures.DisposeFront();
-	aliasTextures.DisposeFront();
-	spriteTextures.DisposeFront();
-	fenceTextures.DisposeFront();
-	surfaceTextures.DisposeFront();
+	textures.DisposeFront();
 	for (auto entry = lightmaps.begin(); entry != lightmaps.end(); entry++)
 	{
 		for (auto l = &entry->second; *l != nullptr; )
@@ -930,12 +926,11 @@ void Scene::Reset()
 	}
 	lightmaps.clear();
 	colormappedBuffers.DisposeFront();
-	surfaceVertices.DisposeFront();
+	vertexBuffers.DisposeFront();
 	viewmodelTextureCount = 0;
 	aliasTextureCount = 0;
 	spriteTextureCount = 0;
 	surfaceTextureCount = 0;
-	surfaceVerticesCount = 0;
 	resetDescriptorSetsCount++;
 	if (skybox != VK_NULL_HANDLE)
 	{

@@ -35,8 +35,7 @@ void PerImage::GetSurfaceVertexStagingBufferSize(AppState& appState, dsurface_t&
 			loadedBuffer.buffer->CreateVertexBuffer(appState, loadedBuffer.size);
 			appState.Scene.surfaceVerticesPerModel.insert({ vertexes, loadedBuffer.buffer });
 			stagingBufferSize += loadedBuffer.size;
-			appState.Scene.surfaceVertices.MoveToFront(loadedBuffer.buffer);
-			appState.Scene.surfaceVerticesCount++;
+			appState.Scene.vertexBuffers.MoveToFront(loadedBuffer.buffer);
 			loadedBuffer.source = surface.vertexes;
 			loadedBuffer.next = nullptr;
 			if (appState.Scene.currentVertexListToCreate == nullptr)
@@ -77,8 +76,7 @@ void PerImage::GetTurbulentVertexStagingBufferSize(AppState& appState, dturbulen
 			loadedBuffer.buffer->CreateVertexBuffer(appState, loadedBuffer.size);
 			appState.Scene.surfaceVerticesPerModel.insert({ vertexes, loadedBuffer.buffer });
 			stagingBufferSize += loadedBuffer.size;
-			appState.Scene.surfaceVertices.MoveToFront(loadedBuffer.buffer);
-			appState.Scene.surfaceVerticesCount++;
+			appState.Scene.vertexBuffers.MoveToFront(loadedBuffer.buffer);
 			loadedBuffer.source = turbulent.vertexes;
 			loadedBuffer.next = nullptr;
 			if (appState.Scene.currentVertexListToCreate == nullptr)
@@ -294,7 +292,7 @@ void PerImage::GetAliasStagingBufferSize(AppState& appState, int lastAlias, std:
 			texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			textures[i].texture.size = alias.size;
 			stagingBufferSize += textures[i].texture.size;
-			appState.Scene.aliasTextures.MoveToFront(texture);
+			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.aliasTextureCount++;
 			appState.Scene.aliasPerKey.insert({ alias.data, texture });
 			textures[i].texture.texture = texture;
@@ -321,7 +319,7 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 			texture->Create(appState, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			textures[i].texture.size = viewmodel.size;
 			stagingBufferSize += textures[i].texture.size;
-			appState.Scene.viewmodelTextures.MoveToFront(texture);
+			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.viewmodelTextureCount++;
 			appState.Scene.viewmodelsPerKey.insert({ viewmodel.data, texture });
 			textures[i].texture.texture = texture;
@@ -473,7 +471,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			texture->Create(appState, surface.texture_width, surface.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			surfaceFromList.size = surface.texture_size;
 			size += surfaceFromList.size;
-			appState.Scene.surfaceTextures.MoveToFront(texture);
+			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.surfaceTextureCount++;
 			appState.Scene.surfaceTexturesPerKey.insert({ surface.texture, texture });
 			surfaceFromList.texture = texture;
@@ -503,7 +501,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			texture->Create(appState, surface.texture_width, surface.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			surfaceFromList.size = surface.texture_size;
 			size += surfaceFromList.size;
-			appState.Scene.surfaceTextures.MoveToFront(texture);
+			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.surfaceTextureCount++;
 			appState.Scene.surfaceTexturesPerKey.insert({ surface.texture, texture });
 			surfaceFromList.texture = texture;
@@ -533,7 +531,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			texture->Create(appState, fence.texture_width, fence.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			fenceFromList.size = fence.texture_size;
 			size += fenceFromList.size;
-			appState.Scene.fenceTextures.MoveToFront(texture);
+			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.fenceTextureCount++;
 			appState.Scene.fenceTexturesPerKey.insert({ fence.texture, texture });
 			fenceFromList.texture = texture;
@@ -563,7 +561,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			texture->Create(appState, fence.texture_width, fence.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			fenceFromList.size = fence.texture_size;
 			size += fenceFromList.size;
-			appState.Scene.fenceTextures.MoveToFront(texture);
+			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.fenceTextureCount++;
 			appState.Scene.fenceTexturesPerKey.insert({ fence.texture, texture });
 			fenceFromList.texture = texture;
@@ -593,7 +591,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			spriteFromList.size = sprite.size;
 			size += spriteFromList.size;
-			appState.Scene.spriteTextures.MoveToFront(texture);
+			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.spriteTextureCount++;
 			appState.Scene.spritesPerKey.insert({ sprite.data, texture });
 			spriteFromList.texture = texture;

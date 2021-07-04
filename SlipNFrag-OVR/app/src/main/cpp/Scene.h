@@ -65,8 +65,7 @@ struct Scene
 	Buffer matrices;
 	int numBuffers;
 	int hostClearCount;
-	CachedSharedMemoryBuffers surfaceVertices;
-	int surfaceVerticesCount;
+	CachedSharedMemoryBuffers vertexBuffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> surfaceVerticesPerModel;
 	LoadedSharedMemoryBuffer* firstVertexListToCreate;
 	LoadedSharedMemoryBuffer* currentVertexListToCreate;
@@ -82,15 +81,11 @@ struct Scene
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
 	std::unordered_map<TwinKey, Lightmap*> lightmaps;
 	std::vector<TwinKey> lightmapsToDelete;
-	CachedSharedMemoryTextures surfaceTextures;
+	CachedSharedMemoryTextures textures;
 	int surfaceTextureCount;
-	CachedSharedMemoryTextures fenceTextures;
 	int fenceTextureCount;
-	CachedSharedMemoryTextures spriteTextures;
 	int spriteTextureCount;
-	CachedSharedMemoryTextures aliasTextures;
 	int aliasTextureCount;
-	CachedSharedMemoryTextures viewmodelTextures;
 	int viewmodelTextureCount;
 	std::unordered_map<void*, SharedMemoryTexture*> surfaceTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> fenceTexturesPerKey;
