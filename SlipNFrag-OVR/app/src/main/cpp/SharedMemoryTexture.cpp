@@ -61,16 +61,16 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	imageViewCreateInfo.subresourceRange.levelCount = mipCount;
 	imageViewCreateInfo.subresourceRange.layerCount = layerCount;
 	VK(appState.Device.vkCreateImageView(appState.Device.device, &imageViewCreateInfo, nullptr, &view));
-	if (appState.Scene.textureSamplers.size() <= mipCount)
+	if (appState.Scene.samplers.size() <= mipCount)
 	{
-		appState.Scene.textureSamplers.resize(mipCount + 1);
+		appState.Scene.samplers.resize(mipCount + 1);
 	}
-	if (appState.Scene.textureSamplers[mipCount] == VK_NULL_HANDLE)
+	if (appState.Scene.samplers[mipCount] == VK_NULL_HANDLE)
 	{
 		VkSamplerCreateInfo samplerCreateInfo { };
 		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		samplerCreateInfo.maxLod = mipCount - 1;
-		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.textureSamplers[mipCount]));
+		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
 	}
 }
 

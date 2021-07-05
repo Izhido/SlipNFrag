@@ -1260,7 +1260,7 @@ void android_main(struct android_app* app)
 		appState.Scene.lightmapsToDelete.clear();
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.textures.oldTextures);
 		Lightmap::DeleteOld(appState, &appState.Scene.oldSurfaces);
-		SharedMemoryBuffer::DeleteOld(appState, &appState.Scene.vertexBuffers.oldBuffers);
+		SharedMemoryBuffer::DeleteOld(appState, &appState.Scene.buffers.oldBuffers);
 		{
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
@@ -1603,10 +1603,10 @@ void android_main(struct android_app* app)
 				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &perImage.descriptorResources.descriptorSet));
 				VkDescriptorImageInfo textureInfo[2] { };
 				textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureInfo[0].sampler = appState.Scene.textureSamplers[perImage.texture->mipCount];
+				textureInfo[0].sampler = appState.Scene.samplers[perImage.texture->mipCount];
 				textureInfo[0].imageView = perImage.texture->view;
 				textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureInfo[1].sampler = appState.Scene.textureSamplers[perImage.palette->mipCount];
+				textureInfo[1].sampler = appState.Scene.samplers[perImage.palette->mipCount];
 				textureInfo[1].imageView = perImage.palette->view;
 				VkWriteDescriptorSet writes[2] { };
 				writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1642,10 +1642,10 @@ void android_main(struct android_app* app)
 				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &appState.Keyboard.descriptorResources.descriptorSet));
 				VkDescriptorImageInfo textureInfo[2] { };
 				textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureInfo[0].sampler = appState.Scene.textureSamplers[appState.Keyboard.texture->mipCount];
+				textureInfo[0].sampler = appState.Scene.samplers[appState.Keyboard.texture->mipCount];
 				textureInfo[0].imageView = appState.Keyboard.texture->view;
 				textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureInfo[1].sampler = appState.Scene.textureSamplers[perImage.palette->mipCount];
+				textureInfo[1].sampler = appState.Scene.samplers[perImage.palette->mipCount];
 				textureInfo[1].imageView = perImage.palette->view;
 				VkWriteDescriptorSet writes[2] { };
 				writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2011,9 +2011,9 @@ void android_main(struct android_app* app)
 	VC(appState.Device.vkDestroyRenderPass(appState.Device.device, appState.RenderPass, nullptr));
 	VK(appState.Device.vkQueueWaitIdle(appState.Context.queue));
 	VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.lightmapSampler, nullptr));
-	for (auto i = 0; i < appState.Scene.textureSamplers.size(); i++)
+	for (auto i = 0; i < appState.Scene.samplers.size(); i++)
 	{
-		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.textureSamplers[i], nullptr));
+		VC(appState.Device.vkDestroySampler(appState.Device.device, appState.Scene.samplers[i], nullptr));
 	}
 	appState.Scene.controllerTexture.Delete(appState);
 	appState.Scene.floorTexture.Delete(appState);
@@ -2025,7 +2025,7 @@ void android_main(struct android_app* app)
 			VC(appState.Device.vkFreeMemory(appState.Device.device, list.memory, nullptr));
 		}
 	}
-	appState.Scene.vertexBuffers.Delete(appState);
+	appState.Scene.buffers.Delete(appState);
 	appState.Scene.console.Delete(appState);
 	appState.Scene.floor.Delete(appState);
 	appState.Scene.sky.Delete(appState);

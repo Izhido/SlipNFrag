@@ -933,7 +933,7 @@ void Scene::Reset()
 		}
 	}
 	lightmaps.clear();
-	vertexBuffers.DisposeFront();
+	buffers.DisposeFront();
 	latestTextureSharedMemory = nullptr;
 	usedInLatestTextureSharedMemory = 0;
 	latestBufferSharedMemory = nullptr;

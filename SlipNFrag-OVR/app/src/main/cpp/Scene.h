@@ -65,7 +65,7 @@ struct Scene
 	Buffer matrices;
 	int numBuffers;
 	int hostClearCount;
-	CachedSharedMemoryBuffers vertexBuffers;
+	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texCoordsPerKey;
 	LoadedSharedMemoryBuffer* firstVertexListToCreate;
@@ -127,7 +127,7 @@ struct Scene
 	std::vector<LoadedColormappedTexture> viewmodel32List;
 	Texture floorTexture;
 	Texture controllerTexture;
-	std::vector<VkSampler> textureSamplers;
+	std::vector<VkSampler> samplers;
 	VkSampler lightmapSampler;
 	SharedMemory* latestBufferSharedMemory;
 	VkDeviceSize usedInLatestBufferSharedMemory;
