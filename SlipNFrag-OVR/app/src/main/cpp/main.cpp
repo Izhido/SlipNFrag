@@ -1344,9 +1344,10 @@ void android_main(struct android_app* app)
 						}
 						else
 						{
+							auto converted = d_8to24table[entry];
 							do
 							{
-								appState.Screen.Data[targetIndex] = d_8to24table[entry];
+								appState.Screen.Data[targetIndex] = converted;
 								screenIndex++;
 								targetIndex++;
 								x++;
@@ -1465,7 +1466,6 @@ void android_main(struct android_app* app)
 			perImage.indices.MoveToFront(indices);
 			memcpy(indices->mapped, appState.ConsoleIndices.data(), indices->size);
 			indices->SubmitIndexBuffer(appState, perImage.commandBuffer);
-			auto keyboardDrawn = appState.Keyboard.Draw(appState);
 			auto stagingBufferSize = 0;
 			perImage.paletteOffset = -1;
 			if (perImage.palette == nullptr || perImage.paletteChanged != pal_changed)
@@ -1491,17 +1491,6 @@ void android_main(struct android_app* app)
 			}
 			perImage.textureOffset = stagingBufferSize;
 			stagingBufferSize += con_buffer.size();
-			if (appState.Keyboard.texture == nullptr && keyboardDrawn)
-			{
-				appState.Keyboard.texture = new Texture();
-				appState.Keyboard.texture->Create(appState, appState.ConsoleWidth, appState.ConsoleHeight / 2, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			}
-			appState.Keyboard.textureOffset = -1;
-			if (keyboardDrawn)
-			{
-				appState.Keyboard.textureOffset = stagingBufferSize;
-				stagingBufferSize += appState.Keyboard.buffer.size();
-			}
 			auto stagingBuffer = perImage.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
 			auto offset = 0;
 			if (perImage.paletteOffset >= 0)
@@ -1547,10 +1536,6 @@ void android_main(struct android_app* app)
 					}
 				}
 			}
-			if (appState.Keyboard.textureOffset >= 0)
-			{
-				memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.Keyboard.buffer.data(), appState.Keyboard.buffer.size());
-			}
 			if (perImage.paletteOffset >= 0)
 			{
 				perImage.palette->Fill(appState, stagingBuffer, perImage.paletteOffset, perImage.commandBuffer);
@@ -1558,10 +1543,6 @@ void android_main(struct android_app* app)
 			if (perImage.textureOffset >= 0)
 			{
 				perImage.texture->Fill(appState, stagingBuffer, perImage.textureOffset, perImage.commandBuffer);
-			}
-			if (appState.Keyboard.textureOffset >= 0)
-			{
-				appState.Keyboard.texture->Fill(appState, stagingBuffer, appState.Keyboard.textureOffset, perImage.commandBuffer);
 			}
 			VkClearValue clearValues[3] { };
 			VkRenderPassBeginInfo renderPassBeginInfo { };
@@ -1623,53 +1604,9 @@ void android_main(struct android_app* app)
 				VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
 				perImage.descriptorResources.created = true;
 			}
-			if (!appState.Keyboard.descriptorResources.created && keyboardDrawn)
-			{
-				VkDescriptorPoolSize poolSize;
-				poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				poolSize.descriptorCount = 2;
-				VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
-				descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-				descriptorPoolCreateInfo.maxSets = 1;
-				descriptorPoolCreateInfo.poolSizeCount = 1;
-				descriptorPoolCreateInfo.pPoolSizes = &poolSize;
-				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &appState.Keyboard.descriptorResources.descriptorPool));
-				VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
-				descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-				descriptorSetAllocateInfo.descriptorPool = appState.Keyboard.descriptorResources.descriptorPool;
-				descriptorSetAllocateInfo.descriptorSetCount = 1;
-				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.doubleImageLayout;
-				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, &appState.Keyboard.descriptorResources.descriptorSet));
-				VkDescriptorImageInfo textureInfo[2] { };
-				textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureInfo[0].sampler = appState.Scene.samplers[appState.Keyboard.texture->mipCount];
-				textureInfo[0].imageView = appState.Keyboard.texture->view;
-				textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				textureInfo[1].sampler = appState.Scene.samplers[perImage.palette->mipCount];
-				textureInfo[1].imageView = perImage.palette->view;
-				VkWriteDescriptorSet writes[2] { };
-				writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writes[0].dstSet = appState.Keyboard.descriptorResources.descriptorSet;
-				writes[0].descriptorCount = 1;
-				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writes[0].pImageInfo = textureInfo;
-				writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writes[1].dstBinding = 1;
-				writes[1].dstSet = appState.Keyboard.descriptorResources.descriptorSet;
-				writes[1].descriptorCount = 1;
-				writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writes[1].pImageInfo = textureInfo + 1;
-				VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 2, writes, 0, nullptr));
-				appState.Keyboard.descriptorResources.created = true;
-			}
 			VC(appState.Device.vkCmdBindIndexBuffer(perImage.commandBuffer, indices->buffer, appState.NoOffset, VK_INDEX_TYPE_UINT16));
 			VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipelineLayout, 0, 1, &perImage.descriptorResources.descriptorSet, 0, nullptr));
 			VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, appState.ConsoleIndices.size() - 6, 1, 0, 0, 0));
-			if (keyboardDrawn)
-			{
-				VC(appState.Device.vkCmdBindDescriptorSets(perImage.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.console.pipelineLayout, 0, 1, &appState.Keyboard.descriptorResources.descriptorSet, 0, nullptr));
-				VC(appState.Device.vkCmdDrawIndexed(perImage.commandBuffer, 6, 1, appState.ConsoleIndices.size() - 6, 0, 0));
-			}
 			VC(appState.Device.vkCmdEndRenderPass(perImage.commandBuffer));
 			VC(appState.Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.Console.View.framebuffer.endBarriers[appState.Console.View.index]));
 			VK(appState.Device.vkEndCommandBuffer(perImage.commandBuffer));
@@ -1848,12 +1785,10 @@ void android_main(struct android_app* app)
 			CylinderProjection::Setup(appState, console); // First setup - rendering variables
 			const ovrMatrix4f scaleMatrix = ovrMatrix4f_CreateScale(CylinderProjection::radius, CylinderProjection::radius * (float) appState.ScreenHeight * VRAPI_PI / CylinderProjection::density, CylinderProjection::radius);
 			const ovrVector3f& position = appState.Tracking.HeadPose.Pose.Position;
-			const ovrMatrix4f transMatrix = ovrMatrix4f_CreateTranslation(position.x, position.y, position.z);
-			const ovrMatrix4f rotXMatrix = ovrMatrix4f_CreateRotation(appState.Pitch, 0, 0);
-			const ovrMatrix4f rotYMatrix = ovrMatrix4f_CreateRotation(0, appState.Yaw, 0);
-			const ovrMatrix4f m0 = ovrMatrix4f_Multiply(&rotXMatrix, &scaleMatrix);
-			const ovrMatrix4f m1 = ovrMatrix4f_Multiply(&rotYMatrix, &m0);
-			const ovrMatrix4f transform = ovrMatrix4f_Multiply(&transMatrix, &m1);
+			const ovrMatrix4f rotationMatrix = ovrMatrix4f_CreateRotation(appState.Pitch, appState.Yaw, 0);
+			const ovrMatrix4f positionMatrix = ovrMatrix4f_CreateTranslation(position.x, position.y, position.z);
+			const ovrMatrix4f m0 = ovrMatrix4f_Multiply(&rotationMatrix, &scaleMatrix);
+			const ovrMatrix4f transform = ovrMatrix4f_Multiply(&positionMatrix, &m0);
 			CylinderProjection::Setup(appState, console, &transform, appState.Console.SwapChain, appState.Console.View.index); // Second setup - transforms for each eye
 			cylinderLayers.push_back(console);
 		}
@@ -1868,6 +1803,81 @@ void android_main(struct android_app* app)
 			auto rightArrows = vrapi_DefaultLayerCylinder2();
 			CylinderProjection::Setup(appState, rightArrows, -2 * M_PI / 3, appState.RightArrows.SwapChain);
 			cylinderLayers.push_back(rightArrows);
+		}
+		if (appState.Keyboard.Draw(appState))
+		{
+			std::fill(appState.Keyboard.Data.begin(), appState.Keyboard.Data.end(), 0);
+			auto halfHeight = appState.ScreenHeight / 2;
+			auto keyboardIndex = 0;
+			auto keyboardIndexCache = 0;
+			uint32_t* target = appState.Keyboard.Data.data();
+			auto y = 0;
+			while (y < halfHeight)
+			{
+				auto x = 0;
+				while (x < appState.ScreenWidth)
+				{
+					auto entry = appState.Keyboard.buffer[keyboardIndex];
+					if (entry == 255)
+					{
+						target += 3;
+						x += 3;
+					}
+					else
+					{
+						auto converted = d_8to24table[entry];
+						do
+						{
+							*target++ = converted;
+							x++;
+						} while ((x % 3) != 0);
+					}
+					keyboardIndex++;
+				}
+				y++;
+				if ((y % 3) == 0)
+				{
+					keyboardIndexCache = keyboardIndex;
+				}
+				else
+				{
+					keyboardIndex = keyboardIndexCache;
+				}
+			}
+			memcpy(appState.Keyboard.Buffer.mapped, appState.Keyboard.Data.data(), appState.Keyboard.Data.size() * sizeof(uint32_t));
+			VK(appState.Device.vkBeginCommandBuffer(appState.Keyboard.CommandBuffer, &commandBufferBeginInfo));
+			VkBufferImageCopy region { };
+			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.imageSubresource.layerCount = 1;
+			region.imageExtent.width = appState.ScreenWidth;
+			region.imageExtent.height = appState.ScreenHeight;
+			region.imageExtent.depth = 1;
+			VC(appState.Device.vkCmdCopyBufferToImage(appState.Keyboard.CommandBuffer, appState.Keyboard.Buffer.buffer, appState.Keyboard.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+			VK(appState.Device.vkEndCommandBuffer(appState.Keyboard.CommandBuffer));
+			VK(appState.Device.vkQueueSubmit(appState.Context.queue, 1, &appState.Keyboard.SubmitInfo, VK_NULL_HANDLE));
+			auto keyboard = vrapi_DefaultLayerCylinder2();
+			CylinderProjection::Setup(appState, keyboard); // First setup - rendering variables
+			if (appState.Mode != AppWorldMode)
+			{
+				const ovrMatrix4f scaleMatrix = ovrMatrix4f_CreateScale(CylinderProjection::radius, CylinderProjection::radius * (float)appState.ScreenHeight * VRAPI_PI / CylinderProjection::density, CylinderProjection::radius);
+				const ovrMatrix4f offsetMatrix = ovrMatrix4f_CreateTranslation(0, appState.KeyboardDrawOffsetY, 0);
+				const ovrMatrix4f transform = ovrMatrix4f_Multiply(&offsetMatrix, &scaleMatrix);
+				CylinderProjection::Setup(appState, keyboard, &transform, appState.Keyboard.SwapChain, 0); // Second setup - transforms for each eye
+			}
+			else
+			{
+				CylinderProjection::Setup(appState, keyboard); // First setup - rendering variables
+				const ovrMatrix4f scaleMatrix = ovrMatrix4f_CreateScale(CylinderProjection::radius, CylinderProjection::radius * (float)appState.ScreenHeight * VRAPI_PI / CylinderProjection::density, CylinderProjection::radius);
+				const ovrMatrix4f offsetMatrix = ovrMatrix4f_CreateTranslation(0, appState.KeyboardDrawOffsetY, 0);
+				const ovrMatrix4f rotationMatrix = ovrMatrix4f_CreateRotation(appState.Pitch, appState.Yaw, 0);
+				const ovrVector3f& position = appState.Tracking.HeadPose.Pose.Position;
+				const ovrMatrix4f positionMatrix = ovrMatrix4f_CreateTranslation(position.x, position.y, position.z);
+				const ovrMatrix4f m0 = ovrMatrix4f_Multiply(&offsetMatrix, &scaleMatrix);
+				const ovrMatrix4f m1 = ovrMatrix4f_Multiply(&rotationMatrix, &m0);
+				const ovrMatrix4f transform = ovrMatrix4f_Multiply(&positionMatrix, &m1);
+				CylinderProjection::Setup(appState, keyboard, &transform, appState.Keyboard.SwapChain, 0); // Second setup - transforms for each eye
+			}
+			cylinderLayers.push_back(keyboard);
 		}
 		std::vector<ovrLayerHeader2*> layers;
 		for (auto& layer : skyboxLayers)
@@ -1967,6 +1977,8 @@ void android_main(struct android_app* app)
 	}
 	vrapi_DestroyTextureSwapChain(appState.RightArrows.SwapChain);
 	vrapi_DestroyTextureSwapChain(appState.LeftArrows.SwapChain);
+	VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &appState.Keyboard.CommandBuffer));
+	vrapi_DestroyTextureSwapChain(appState.Keyboard.SwapChain);
 	VC(appState.Device.vkFreeCommandBuffers(appState.Device.device, appState.Context.commandPool, 1, &appState.Screen.CommandBuffer));
 	vrapi_DestroyTextureSwapChain(appState.Screen.SwapChain);
 	for (auto i = 0; i < appState.Console.View.framebuffer.swapChainLength; i++)

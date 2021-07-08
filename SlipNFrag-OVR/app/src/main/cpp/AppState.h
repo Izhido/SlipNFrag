@@ -75,6 +75,8 @@ struct AppState
 	std::thread EngineThread;
 	bool EngineThreadStopped;
 	Keyboard Keyboard;
+	float KeyboardDrawOffsetY;
+	float KeyboardHitOffsetY;
 
 	void RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo);
 };

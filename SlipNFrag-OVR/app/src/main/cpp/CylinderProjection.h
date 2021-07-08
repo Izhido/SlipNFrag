@@ -17,4 +17,5 @@ struct CylinderProjection
 	static void Setup(AppState& appState, ovrLayerCylinder2& layer, float yaw, ovrTextureSwapChain* swapChain);
 	static void Setup(AppState& appState, ovrLayerCylinder2& layer, const ovrMatrix4f* transform, ovrTextureSwapChain* swapChain, int index);
 	static bool HitPoint(AppState& appState, Controller& controller, float& x, float& y);
+	static bool HitPointForScreenMode(AppState& appState, Controller& controller, float& x, float& y);
 };

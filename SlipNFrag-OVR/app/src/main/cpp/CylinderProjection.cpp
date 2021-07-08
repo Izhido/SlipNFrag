@@ -91,7 +91,45 @@ bool CylinderProjection::HitPoint(AppState& appState, Controller& controller, fl
 	{
 		return false;
 	}
-	auto vertical = controllerOrigin.y + controllerDirection.y * (projection2d + distanceToHitPoint) / length2d;
+	auto vertical = controllerOrigin.y - appState.KeyboardHitOffsetY + controllerDirection.y * (projection2d + distanceToHitPoint) / length2d;
+	x = (angle + M_PI / 2 + horizontalAngle / 2) / horizontalAngle;
+	y = (radius * verticalAngle / 2 - vertical) / (radius * verticalAngle);
+	return true;
+}
+
+bool CylinderProjection::HitPointForScreenMode(AppState& appState, Controller& controller, float& x, float& y)
+{
+	auto controllerTransform = ovrMatrix4f_CreateFromQuaternion(&controller.Tracking.HeadPose.Pose.Orientation);
+	ovrVector4f controllerDirection { 0, 0, -1, 0 };
+	controllerDirection = ovrVector4f_MultiplyMatrix4f(&controllerTransform, &controllerDirection);
+	auto& controllerOrigin3d = controller.Tracking.HeadPose.Pose.Position;
+	ovrVector4f controllerOrigin { controllerOrigin3d.x, controllerOrigin3d.y, controllerOrigin3d.z, 0 };
+	ovrVector4f controllerTip { controllerOrigin3d.x + controllerDirection.x, controllerOrigin3d.y + controllerDirection.y, controllerOrigin3d.z + controllerDirection.z, 0 };
+	controllerDirection.x = controllerTip.x - controllerOrigin.x;
+	controllerDirection.y = controllerTip.y - controllerOrigin.y;
+	controllerDirection.z = controllerTip.z - controllerOrigin.z;
+	auto lengthSquared2d = controllerDirection.x * controllerDirection.x + controllerDirection.z * controllerDirection.z;
+	if (lengthSquared2d < epsilon)
+	{
+		return false;
+	}
+	auto length2d = sqrt(lengthSquared2d);
+	ovrVector2f controllerDirection2d { controllerDirection.x / length2d, controllerDirection.z / length2d };
+	auto projection2d = -controllerOrigin.x * controllerDirection2d.x - controllerOrigin.z * controllerDirection2d.y;
+	ovrVector2f projected2d { controllerOrigin.x + controllerDirection2d.x * projection2d, controllerOrigin.z + controllerDirection2d.y * projection2d };
+	auto rejection2d = sqrt(projected2d.x * projected2d.x + projected2d.y * projected2d.y);
+	if (rejection2d >= radius)
+	{
+		return false;
+	}
+	auto distanceToHitPoint = sqrt(radius * radius - rejection2d * rejection2d);
+	ovrVector2f hitPoint2d { projected2d.x + controllerDirection2d.x * distanceToHitPoint, projected2d.y + controllerDirection2d.y * distanceToHitPoint };
+	auto angle = atan2(hitPoint2d.y, hitPoint2d.x);
+	if (angle < -M_PI / 2 - horizontalAngle / 2 || angle >= -M_PI / 2 + horizontalAngle / 2)
+	{
+		return false;
+	}
+	auto vertical = controllerOrigin.y - appState.KeyboardHitOffsetY + controllerDirection.y * (projection2d + distanceToHitPoint) / length2d;
 	x = (angle + M_PI / 2 + horizontalAngle / 2) / horizontalAngle;
 	y = (radius * verticalAngle / 2 - vertical) / (radius * verticalAngle);
 	return true;

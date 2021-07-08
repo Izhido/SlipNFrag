@@ -284,6 +284,17 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Screen.SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	appState.Screen.SubmitInfo.commandBufferCount = 1;
 	appState.Screen.SubmitInfo.pCommandBuffers = &appState.Screen.CommandBuffer;
+	appState.Keyboard.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
+	appState.Keyboard.Data.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
+	appState.Keyboard.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.Keyboard.SwapChain, 0);
+	appState.Keyboard.Buffer.CreateStagingBuffer(appState, appState.Keyboard.Data.size() * sizeof(uint32_t));
+	VK(appState.Device.vkMapMemory(appState.Device.device, appState.Keyboard.Buffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Keyboard.Buffer.mapped));
+	imageMemoryBarrier.image = appState.Keyboard.Image;
+	VC(appState.Device.vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
+	VK(appState.Device.vkAllocateCommandBuffers(appState.Device.device, &commandBufferAllocateInfo, &appState.Keyboard.CommandBuffer));
+	appState.Keyboard.SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	appState.Keyboard.SubmitInfo.commandBufferCount = 1;
+	appState.Keyboard.SubmitInfo.pCommandBuffers = &appState.Keyboard.CommandBuffer;
 	ImageAsset floorImage;
 	floorImage.Open("floor.png", app);
 	appState.Scene.floorTexture.Create(appState, floorImage.width, floorImage.height, VK_FORMAT_R8G8B8A8_UNORM, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);

@@ -336,7 +336,7 @@ void Keyboard::AddKeyInput(int key, bool down)
 
 bool Keyboard::Handle(AppState& appState)
 {
-	if (draw_chars == nullptr || key_dest != key_console)
+	if (draw_chars == nullptr || (key_dest != key_console && key_dest != key_menu && appState.Mode != AppScreenMode))
 	{
 		if (leftPressed >= 0)
 		{
@@ -350,12 +350,34 @@ bool Keyboard::Handle(AppState& appState)
 		}
 		return false;
 	}
+	if (appState.Mode != AppWorldMode)
+	{
+		appState.KeyboardDrawOffsetY = -0.85;
+	}
+	else if (key_dest == key_console)
+	{
+		appState.KeyboardDrawOffsetY = -0.425;
+	}
+	else
+	{
+		appState.KeyboardDrawOffsetY = -0.6;
+	}
+	appState.KeyboardHitOffsetY = appState.KeyboardDrawOffsetY + 0.425;
 	leftHighlighted = -1;
 	if (appState.LeftController.TrackingResult == ovrSuccess)
 	{
 		float x;
 		float y;
-		if (CylinderProjection::HitPoint(appState, appState.LeftController, x, y))
+		bool hit;
+		if (appState.Mode == AppScreenMode)
+		{
+			hit = CylinderProjection::HitPointForScreenMode(appState, appState.LeftController, x, y);
+		}
+		else
+		{
+			hit = CylinderProjection::HitPoint(appState, appState.LeftController, x, y);
+		}
+		if (hit)
 		{
 			auto horizontal = (int)(x * appState.ConsoleWidth);
 			auto vertical = (int)(y * appState.ConsoleHeight) - appState.ConsoleHeight / 2;
@@ -376,7 +398,16 @@ bool Keyboard::Handle(AppState& appState)
 	{
 		float x;
 		float y;
-		if (CylinderProjection::HitPoint(appState, appState.RightController, x, y))
+		bool hit;
+		if (appState.Mode == AppScreenMode)
+		{
+			hit = CylinderProjection::HitPointForScreenMode(appState, appState.RightController, x, y);
+		}
+		else
+		{
+			hit = CylinderProjection::HitPoint(appState, appState.RightController, x, y);
+		}
+		if (hit)
 		{
 			auto horizontal = (int)(x * appState.ConsoleWidth);
 			auto vertical = (int)(y * appState.ConsoleHeight) - appState.ConsoleHeight / 2;
@@ -479,7 +510,7 @@ void Keyboard::Print(AppState& appState, KeyboardCell& cell, bool upper)
 
 bool Keyboard::Draw(AppState& appState)
 {
-	if (draw_chars == nullptr || key_dest != key_console)
+	if (draw_chars == nullptr || (key_dest != key_console && key_dest != key_menu && appState.Mode != AppScreenMode))
 	{
 		return false;
 	}

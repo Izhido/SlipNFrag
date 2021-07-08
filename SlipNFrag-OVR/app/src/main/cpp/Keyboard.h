@@ -1,5 +1,6 @@
 #pragma once
 
+#include "VrApi_Helpers.h"
 #include "KeyboardLayout.h"
 #include "KeyboardCell.h"
 #include <vector>
@@ -10,6 +11,12 @@ struct AppState;
 
 struct Keyboard
 {
+	ovrTextureSwapChain* SwapChain;
+	std::vector<uint32_t> Data;
+	VkImage Image;
+	Buffer Buffer;
+	VkCommandBuffer CommandBuffer;
+	VkSubmitInfo SubmitInfo;
 	KeyboardLayout layout;
 	static std::vector<std::vector<KeyboardCell>> cells;
 	int leftHighlighted = -1;
@@ -17,9 +24,6 @@ struct Keyboard
 	int leftPressed = -1;
 	int rightPressed = -1;
 	std::vector<unsigned char> buffer;
-	Texture* texture;
-	int textureOffset;
-	PipelineDescriptorResources descriptorResources;
 
 	void Create(AppState& appState);
 	void AddKeyInput(int key, bool down);

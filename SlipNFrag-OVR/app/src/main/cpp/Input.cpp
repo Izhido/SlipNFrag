@@ -5,7 +5,7 @@
 
 extern m_state_t m_state;
 
-std::vector<Input> Input::inputQueue;
+std::vector<Input> Input::inputQueue(8);
 int Input::lastInputQueueItem = -1;
 
 bool Input::LeftButtonIsDown(AppState& appState, uint32_t button)
@@ -33,14 +33,12 @@ void Input::AddKeyInput(int key, int down)
 	lastInputQueueItem++;
 	if (lastInputQueueItem >= inputQueue.size())
 	{
-		inputQueue.push_back({ key, down });
+		inputQueue.emplace_back();
 	}
-	else
-	{
-		inputQueue[lastInputQueueItem].key = key;
-		inputQueue[lastInputQueueItem].down = down;
-		inputQueue[lastInputQueueItem].command.clear();
-	}
+	auto& entry = inputQueue[lastInputQueueItem];
+	entry.key = key;
+	entry.down = down;
+	entry.command.clear();
 }
 
 void Input::AddCommandInput(const char* command)
@@ -48,14 +46,12 @@ void Input::AddCommandInput(const char* command)
 	lastInputQueueItem++;
 	if (lastInputQueueItem >= inputQueue.size())
 	{
-		inputQueue.push_back({ 0, false, command });
+		inputQueue.emplace_back();
 	}
-	else
-	{
-		inputQueue[lastInputQueueItem].key = 0;
-		inputQueue[lastInputQueueItem].down = false;
-		inputQueue[lastInputQueueItem].command = command;
-	}
+	auto& entry = inputQueue[lastInputQueueItem];
+	entry.key = 0;
+	entry.down = false;
+	entry.command = command;
 }
 
 void Input::Handle(AppState& appState, bool triggerHandled)

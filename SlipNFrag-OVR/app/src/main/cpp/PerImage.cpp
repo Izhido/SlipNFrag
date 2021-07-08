@@ -1049,7 +1049,7 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	VkDeviceSize texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
 	VkDeviceSize coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
 	appState.Scene.controllerVerticesSize = 0;
-	if (appState.Mode != AppWorldMode || key_dest == key_console)
+	if (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode)
 	{
 		if (appState.LeftController.TrackingResult == ovrSuccess)
 		{
