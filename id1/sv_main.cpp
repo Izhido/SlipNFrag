@@ -1368,7 +1368,7 @@ void SV_SpawnServer (char *server)
     if (sv_protocol_version == PROTOCOL_VERSION)
     {
         sv.signon.maxsize = 8192;
-        if (sv.signon.data.size() > sv.signon.maxsize)
+        if (sv.signon.cursize > sv.signon.maxsize)
             Sys_Error("SV_SpawnServer: Signon message overflow");
 
         sv.datagram.maxsize = MAX_DATAGRAM;
