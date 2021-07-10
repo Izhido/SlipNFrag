@@ -1445,7 +1445,7 @@ void android_main(struct android_app* app)
 			else
 			{
 				vertices = new Buffer();
-				vertices->CreateHostVisibleVertexBuffer(appState, appState.ConsoleVertices.size() * sizeof(float));
+				vertices->CreateVertexBuffer(appState, appState.ConsoleVertices.size() * sizeof(float));
 				VK(appState.Device.vkMapMemory(appState.Device.device, vertices->memory, 0, VK_WHOLE_SIZE, 0, &vertices->mapped));
 			}
 			perImage.vertices.MoveToFront(vertices);
