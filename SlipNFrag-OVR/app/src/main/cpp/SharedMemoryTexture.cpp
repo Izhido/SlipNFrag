@@ -72,6 +72,47 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 		samplerCreateInfo.maxLod = mipCount - 1;
 		VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
 	}
+	if (appState.Scene.latestTextureDescriptorSets == nullptr || appState.Scene.latestTextureDescriptorSets->used >= appState.Scene.latestTextureDescriptorSets->descriptorSets.size())
+	{
+		appState.Scene.latestTextureDescriptorSets = new DescriptorSets();
+		VkDescriptorPoolSize poolSizes { };
+		poolSizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes.descriptorCount = DESCRIPTOR_SET_COUNT;
+		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
+		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		descriptorPoolCreateInfo.maxSets = DESCRIPTOR_SET_COUNT;
+		descriptorPoolCreateInfo.pPoolSizes = &poolSizes;
+		descriptorPoolCreateInfo.poolSizeCount = 1;
+		VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &appState.Scene.latestTextureDescriptorSets->descriptorPool));
+		if (appState.Scene.descriptorSetLayouts.size() < DESCRIPTOR_SET_COUNT)
+		{
+			appState.Scene.descriptorSetLayouts.resize(DESCRIPTOR_SET_COUNT);
+		}
+		std::fill(appState.Scene.descriptorSetLayouts.begin(), appState.Scene.descriptorSetLayouts.begin() + DESCRIPTOR_SET_COUNT, appState.Scene.singleImageLayout);
+		appState.Scene.latestTextureDescriptorSets->descriptorSets.resize(DESCRIPTOR_SET_COUNT);
+		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
+		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		descriptorSetAllocateInfo.descriptorSetCount = 1;
+		descriptorSetAllocateInfo.descriptorPool = appState.Scene.latestTextureDescriptorSets->descriptorPool;
+		descriptorSetAllocateInfo.descriptorSetCount = DESCRIPTOR_SET_COUNT;
+		descriptorSetAllocateInfo.pSetLayouts = appState.Scene.descriptorSetLayouts.data();
+		VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, appState.Scene.latestTextureDescriptorSets->descriptorSets.data()));
+	}
+	descriptorSet = appState.Scene.latestTextureDescriptorSets->descriptorSets[appState.Scene.latestTextureDescriptorSets->used];
+	appState.Scene.latestTextureDescriptorSets->used++;
+	appState.Scene.latestTextureDescriptorSets->referenceCount++;
+	descriptorSets = appState.Scene.latestTextureDescriptorSets;
+	VkDescriptorImageInfo textureInfo { };
+	textureInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	textureInfo.sampler = appState.Scene.samplers[mipCount];
+	textureInfo.imageView = view;
+	VkWriteDescriptorSet writes { };
+	writes.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writes.descriptorCount = 1;
+	writes.dstSet = descriptorSet;
+	writes.pImageInfo = &textureInfo;
+	writes.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, &writes, 0, nullptr));
 }
 
 void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer)
@@ -168,6 +209,11 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 
 void SharedMemoryTexture::Delete(AppState& appState)
 {
+	descriptorSets->referenceCount--;
+	if (descriptorSets->referenceCount == 0)
+	{
+		VC(appState.Device.vkDestroyDescriptorPool(appState.Device.device, descriptorSets->descriptorPool, nullptr));
+	}
 	if (view != VK_NULL_HANDLE)
 	{
 		VC(appState.Device.vkDestroyImageView(appState.Device.device, view, nullptr));

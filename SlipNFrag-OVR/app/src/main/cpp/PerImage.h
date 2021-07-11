@@ -26,7 +26,6 @@ struct PerImage
 	CachedBuffers stagingBuffers;
 	CachedTextures colormaps;
 	int colormapCount;
-	int resetDescriptorSetsCount;
 	int paletteChanged;
 	Texture* palette;
 	Texture* host_colormap;
@@ -41,13 +40,7 @@ struct PerImage
 	PipelineDescriptorResources sceneMatricesResources;
 	PipelineDescriptorResources sceneMatricesAndPaletteResources;
 	PipelineDescriptorResources sceneMatricesAndColormapResources;
-	CachedPipelineDescriptorResources surfaceTextureResources;
-	CachedPipelineDescriptorResources fenceTextureResources;
-	CachedPipelineDescriptorResources spriteResources;
-	CachedPipelineDescriptorResources turbulentResources;
 	UpdatablePipelineDescriptorResources colormapResources;
-	CachedPipelineDescriptorResources aliasResources;
-	CachedPipelineDescriptorResources viewmodelResources;
 	PipelineDescriptorResources skyResources;
 	PipelineDescriptorResources floorResources;
 	PipelineDescriptorResources controllerResources;
@@ -89,7 +82,5 @@ struct PerImage
 	void SetPushConstants(dsurface_t& surface, float pushConstants[]);
 	void SetPushConstants(dturbulent_t& turbulent, float pushConstants[]);
 	void SetPushConstants(dalias_t& alias, float pushConstants[]);
-	VkDescriptorSet GetDescriptorSet(AppState& appState, SharedMemoryTexture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[]);
-	VkDescriptorSet GetDescriptorSet(AppState& appState, Texture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[]);
 	void Render(AppState& appState);
 };

@@ -4,8 +4,6 @@
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-std::vector<VkDescriptorSetLayout> Lightmap::descriptorSetLayouts;
-
 void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage)
 {
 	this->width = width;
@@ -87,22 +85,18 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 		descriptorPoolCreateInfo.pPoolSizes = &poolSizes;
 		descriptorPoolCreateInfo.poolSizeCount = 1;
 		VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &allocation->descriptorPool));
-		if (descriptorSetLayouts.size() < count)
+		if (appState.Scene.descriptorSetLayouts.size() < count)
 		{
-			auto start = descriptorSetLayouts.size();
-			descriptorSetLayouts.resize(count);
-			for (auto i = start; i < count; i++)
-			{
-				descriptorSetLayouts[i] = appState.Scene.singleImageLayout;
-			}
+			appState.Scene.descriptorSetLayouts.resize(count);
 		}
+		std::fill(appState.Scene.descriptorSetLayouts.begin(), appState.Scene.descriptorSetLayouts.begin() + count, appState.Scene.singleImageLayout);
 		allocation->descriptorSets.resize(count);
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
 		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		descriptorSetAllocateInfo.descriptorSetCount = 1;
 		descriptorSetAllocateInfo.descriptorPool = allocation->descriptorPool;
 		descriptorSetAllocateInfo.descriptorSetCount = count;
-		descriptorSetAllocateInfo.pSetLayouts = descriptorSetLayouts.data();
+		descriptorSetAllocateInfo.pSetLayouts = appState.Scene.descriptorSetLayouts.data();
 		VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, allocation->descriptorSets.data()));
 		allocation->allocated[0] = true;
 		VK(appState.Device.vkBindImageMemory(appState.Device.device, image, allocation->memory, 0));

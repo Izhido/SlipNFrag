@@ -5,8 +5,6 @@
 #include "Buffer.h"
 #include "StagingBuffer.h"
 
-struct AppState;
-
 struct Lightmap
 {
 	Lightmap* next = nullptr;
@@ -21,7 +19,6 @@ struct Lightmap
 	int allocatedIndex = 0;
 	VkImageView view = VK_NULL_HANDLE;
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-	static std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	bool filled;
 
 	void Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);

@@ -17,6 +17,7 @@
 #include "VrApi.h"
 #include "Instance.h"
 #include "StagingBuffer.h"
+#include "DescriptorSets.h"
 
 struct Scene
 {
@@ -88,18 +89,11 @@ struct Scene
 	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords16List;
 	std::vector<LoadedSharedMemoryBuffer> viewmodelVertex32List;
 	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords32List;
-	int resetDescriptorSetsCount;
 	Lightmap* oldSurfaces;
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
 	std::unordered_map<TwinKey, Lightmap*> lightmaps;
 	std::vector<TwinKey> lightmapsToDelete;
 	CachedSharedMemoryTextures textures;
-	int surfaceTextureCount;
-	int fenceTextureCount;
-	int spriteTextureCount;
-	int turbulentTextureCount;
-	int aliasTextureCount;
-	int viewmodelTextureCount;
 	std::unordered_map<void*, SharedMemoryTexture*> surfaceTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> fenceTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
@@ -133,6 +127,7 @@ struct Scene
 	VkDeviceSize usedInLatestBufferSharedMemory;
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
+	DescriptorSets* latestTextureDescriptorSets;
 	ovrTextureSwapChain* skybox;
 	VkDeviceSize verticesSize;
 	VkDeviceSize paletteSize;
@@ -145,6 +140,7 @@ struct Scene
 	void* previousVertexes;
 	SharedMemoryBuffer* previousVertexBuffer;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
+	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
 	void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	void AddBorder(AppState& appState, std::vector<uint32_t>& target);

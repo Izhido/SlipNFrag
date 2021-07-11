@@ -223,7 +223,7 @@ void android_main(struct android_app* app)
 	__android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, "--------------------------------\n");
 	VkDebugReportCallbackCreateInfoEXT debugReportCallbackCreateInfo { };
 	debugReportCallbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-	debugReportCallbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+	debugReportCallbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT;
 	debugReportCallbackCreateInfo.pfnCallback = debugReportCallback;
 	VkApplicationInfo appInfo { };
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -1944,12 +1944,6 @@ void android_main(struct android_app* app)
 			perImage.controllerResources.Delete(appState);
 			perImage.floorResources.Delete(appState);
 			perImage.skyResources.Delete(appState);
-			perImage.viewmodelResources.Delete(appState);
-			perImage.aliasResources.Delete(appState);
-			perImage.turbulentResources.Delete(appState);
-			perImage.spriteResources.Delete(appState);
-			perImage.fenceTextureResources.Delete(appState);
-			perImage.surfaceTextureResources.Delete(appState);
 			perImage.sceneMatricesAndColormapResources.Delete(appState);
 			perImage.sceneMatricesAndPaletteResources.Delete(appState);
 			perImage.sceneMatricesResources.Delete(appState);

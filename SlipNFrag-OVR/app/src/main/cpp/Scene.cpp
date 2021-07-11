@@ -945,16 +945,11 @@ void Scene::Reset()
 	}
 	lightmaps.clear();
 	buffers.DisposeFront();
+	latestTextureDescriptorSets = nullptr;
 	latestTextureSharedMemory = nullptr;
 	usedInLatestTextureSharedMemory = 0;
 	latestBufferSharedMemory = nullptr;
 	usedInLatestBufferSharedMemory = 0;
-	viewmodelTextureCount = 0;
-	aliasTextureCount = 0;
-	turbulentTextureCount = 0;
-	spriteTextureCount = 0;
-	surfaceTextureCount = 0;
-	resetDescriptorSetsCount++;
 	if (skybox != VK_NULL_HANDLE)
 	{
 		vrapi_DestroyTextureSwapChain(skybox);

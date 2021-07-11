@@ -296,7 +296,6 @@ void PerImage::GetSurfaceTextureStagingBufferSize(AppState& appState, int lastSu
 			loaded.size = surface.texture_size;
 			stagingBufferSize += loaded.size;
 			appState.Scene.textures.MoveToFront(texture);
-			appState.Scene.surfaceTextureCount++;
 			appState.Scene.surfaceTexturesPerKey.insert({ surface.texture, texture });
 			loaded.texture = texture;
 			loaded.source = surface.texture;
@@ -333,7 +332,6 @@ void PerImage::GetFenceTextureStagingBufferSize(AppState& appState, int lastFenc
 			loaded.size = fence.texture_size;
 			stagingBufferSize += loaded.size;
 			appState.Scene.textures.MoveToFront(texture);
-			appState.Scene.fenceTextureCount++;
 			appState.Scene.fenceTexturesPerKey.insert({ fence.texture, texture });
 			loaded.texture = texture;
 			loaded.source = fence.texture;
@@ -370,7 +368,6 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, int lastTurbule
 			loaded.size = turbulent.size;
 			stagingBufferSize += loaded.size;
 			appState.Scene.textures.MoveToFront(texture);
-			appState.Scene.turbulentTextureCount++;
 			appState.Scene.turbulentPerKey.insert({ turbulent.texture, texture });
 			loaded.texture = texture;
 		}
@@ -423,7 +420,6 @@ void PerImage::GetAliasStagingBufferSize(AppState& appState, int lastAlias, std:
 			loaded.texture.size = alias.size;
 			stagingBufferSize += loaded.texture.size;
 			appState.Scene.textures.MoveToFront(texture);
-			appState.Scene.aliasTextureCount++;
 			appState.Scene.aliasTexturesPerKey.insert({ alias.data, texture });
 			loaded.texture.texture = texture;
 		}
@@ -459,7 +455,6 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 			loaded.texture.size = viewmodel.size;
 			stagingBufferSize += loaded.texture.size;
 			appState.Scene.textures.MoveToFront(texture);
-			appState.Scene.viewmodelTextureCount++;
 			appState.Scene.viewmodelTexturesPerKey.insert({ viewmodel.data, texture });
 			loaded.texture.texture = texture;
 		}
@@ -647,7 +642,6 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			spriteFromList.size = sprite.size;
 			size += spriteFromList.size;
 			appState.Scene.textures.MoveToFront(texture);
-			appState.Scene.spriteTextureCount++;
 			appState.Scene.spritesPerKey.insert({ sprite.data, texture });
 			spriteFromList.texture = texture;
 			spriteFromList.source = sprite.data;
@@ -1320,40 +1314,6 @@ void PerImage::SetPushConstants(dalias_t& alias, float pushConstants[])
 	pushConstants[14] = -alias.transform[1][3];
 }
 
-VkDescriptorSet PerImage::GetDescriptorSet(AppState& appState, SharedMemoryTexture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[])
-{
-	auto entry = resources.cache.find(texture);
-	if (entry != resources.cache.end())
-	{
-		return entry->second;
-	}
-	auto descriptorSet = resources.descriptorSets[resources.index];
-	resources.index++;
-	textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-	textureInfo[0].imageView = texture->view;
-	writes[0].dstSet = descriptorSet;
-	VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-	resources.cache.insert({ texture, descriptorSet });
-	return descriptorSet;
-}
-
-VkDescriptorSet PerImage::GetDescriptorSet(AppState& appState, Texture* texture, CachedPipelineDescriptorResources& resources, VkDescriptorImageInfo textureInfo[], VkWriteDescriptorSet writes[])
-{
-	auto entry = resources.cache.find(texture);
-	if (entry != resources.cache.end())
-	{
-		return entry->second;
-	}
-	auto descriptorSet = resources.descriptorSets[resources.index];
-	resources.index++;
-	textureInfo[0].sampler = appState.Scene.samplers[texture->mipCount];
-	textureInfo[0].imageView = texture->view;
-	writes[0].dstSet = descriptorSet;
-	VC(appState.Device.vkUpdateDescriptorSets(appState.Device.device, 1, writes, 0, nullptr));
-	resources.cache.insert({ texture, descriptorSet });
-	return descriptorSet;
-}
-
 void PerImage::Render(AppState& appState)
 {
 	if (d_lists.last_surface16 < 0 && d_lists.last_surface32 < 0 && d_lists.last_fence16 < 0 && d_lists.last_fence32 < 0 && appState.Scene.verticesSize == 0 && d_lists.last_alias16 < 0 && d_lists.last_alias32 < 0 && d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0)
@@ -1466,25 +1426,6 @@ void PerImage::Render(AppState& appState)
 		descriptorPoolCreateInfo.poolSizeCount = 1;
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		writes[0].pImageInfo = textureInfo;
-		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || surfaceTextureResources.descriptorSets.size() < appState.Scene.surfaceTextureCount)
-		{
-			surfaceTextureResources.Delete(appState);
-			auto toCreate = appState.Scene.surfaceTextureCount;
-			if (toCreate > 0)
-			{
-				poolSizes[0].descriptorCount = toCreate;
-				descriptorPoolCreateInfo.maxSets = toCreate;
-				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &surfaceTextureResources.descriptorPool));
-				surfaceTextureResources.descriptorSetLayouts.resize(toCreate);
-				surfaceTextureResources.descriptorSets.resize(toCreate);
-				std::fill(surfaceTextureResources.descriptorSetLayouts.begin(), surfaceTextureResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
-				descriptorSetAllocateInfo.descriptorPool = surfaceTextureResources.descriptorPool;
-				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
-				descriptorSetAllocateInfo.pSetLayouts = surfaceTextureResources.descriptorSetLayouts.data();
-				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, surfaceTextureResources.descriptorSets.data()));
-				surfaceTextureResources.created = true;
-			}
-		}
 		if (d_lists.last_surface16 >= 0 || d_lists.last_surface32 >= 0)
 		{
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipeline));
@@ -1510,8 +1451,7 @@ void PerImage::Render(AppState& appState)
 				auto texture = appState.Scene.surfaceTexture16List[i].texture;
 				if (previousTexture != texture)
 				{
-					auto descriptorSet = GetDescriptorSet(appState, texture, surfaceTextureResources, textureInfo, writes);
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
 				auto lightmap = appState.Scene.surfaceLightmap16List[i].lightmap;
@@ -1538,32 +1478,12 @@ void PerImage::Render(AppState& appState)
 				auto texture = appState.Scene.surfaceTexture32List[i].texture;
 				if (previousTexture != texture)
 				{
-					auto descriptorSet = GetDescriptorSet(appState, texture, surfaceTextureResources, textureInfo, writes);
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
 				auto lightmap = appState.Scene.surfaceLightmap32List[i].lightmap;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &lightmap->descriptorSet, 0, nullptr));
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, surface.count, 1, surface.first_index, 0, 0));
-			}
-		}
-		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || fenceTextureResources.descriptorSets.size() < appState.Scene.fenceTextureCount)
-		{
-			fenceTextureResources.Delete(appState);
-			auto toCreate = appState.Scene.fenceTextureCount;
-			if (toCreate > 0)
-			{
-				poolSizes[0].descriptorCount = toCreate;
-				descriptorPoolCreateInfo.maxSets = toCreate;
-				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &fenceTextureResources.descriptorPool));
-				fenceTextureResources.descriptorSetLayouts.resize(toCreate);
-				fenceTextureResources.descriptorSets.resize(toCreate);
-				std::fill(fenceTextureResources.descriptorSetLayouts.begin(), fenceTextureResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
-				descriptorSetAllocateInfo.descriptorPool = fenceTextureResources.descriptorPool;
-				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
-				descriptorSetAllocateInfo.pSetLayouts = fenceTextureResources.descriptorSetLayouts.data();
-				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, fenceTextureResources.descriptorSets.data()));
-				fenceTextureResources.created = true;
 			}
 		}
 		if (d_lists.last_fence16 >= 0 || d_lists.last_fence32 >= 0)
@@ -1591,8 +1511,7 @@ void PerImage::Render(AppState& appState)
 				auto texture = appState.Scene.fenceTexture16List[i].texture;
 				if (previousTexture != texture)
 				{
-					auto descriptorSet = GetDescriptorSet(appState, texture, fenceTextureResources, textureInfo, writes);
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
 				auto lightmap = appState.Scene.fenceLightmap16List[i].lightmap;
@@ -1619,32 +1538,12 @@ void PerImage::Render(AppState& appState)
 				auto texture = appState.Scene.fenceTexture32List[i].texture;
 				if (previousTexture != texture)
 				{
-					auto descriptorSet = GetDescriptorSet(appState, texture, fenceTextureResources, textureInfo, writes);
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
 				auto lightmap = appState.Scene.fenceLightmap32List[i].lightmap;
 				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 2, 1, &lightmap->descriptorSet, 0, nullptr));
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, fence.count, 1, fence.first_index, 0, 0));
-			}
-		}
-		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || spriteResources.descriptorSets.size() < appState.Scene.spriteTextureCount)
-		{
-			spriteResources.Delete(appState);
-			auto toCreate = appState.Scene.spriteTextureCount;
-			if (toCreate > 0)
-			{
-				poolSizes[0].descriptorCount = toCreate;
-				descriptorPoolCreateInfo.maxSets = toCreate;
-				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &spriteResources.descriptorPool));
-				spriteResources.descriptorSetLayouts.resize(toCreate);
-				spriteResources.descriptorSets.resize(toCreate);
-				std::fill(spriteResources.descriptorSetLayouts.begin(), spriteResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
-				descriptorSetAllocateInfo.descriptorPool = spriteResources.descriptorPool;
-				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
-				descriptorSetAllocateInfo.pSetLayouts = spriteResources.descriptorSetLayouts.data();
-				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, spriteResources.descriptorSets.data()));
-				spriteResources.created = true;
 			}
 		}
 		if (d_lists.last_sprite >= 0)
@@ -1654,32 +1553,17 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase));
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
+			SharedMemoryTexture* previousTexture = nullptr;
 			for (auto i = 0; i <= d_lists.last_sprite; i++)
 			{
 				auto& sprite = d_lists.sprites[i];
 				auto texture = appState.Scene.spriteList[i].texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, spriteResources, textureInfo, writes);
-				VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+				if (previousTexture != texture)
+				{
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
+					previousTexture = texture;
+				}
 				VC(appState.Device.vkCmdDraw(commandBuffer, sprite.count, 1, sprite.first_vertex, 0));
-			}
-		}
-		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || turbulentResources.descriptorSets.size() < appState.Scene.turbulentTextureCount)
-		{
-			turbulentResources.Delete(appState);
-			auto toCreate = appState.Scene.turbulentTextureCount;
-			if (toCreate > 0)
-			{
-				poolSizes[0].descriptorCount = toCreate;
-				descriptorPoolCreateInfo.maxSets = toCreate;
-				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &turbulentResources.descriptorPool));
-				turbulentResources.descriptorSetLayouts.resize(toCreate);
-				turbulentResources.descriptorSets.resize(toCreate);
-				std::fill(turbulentResources.descriptorSetLayouts.begin(), turbulentResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
-				descriptorSetAllocateInfo.descriptorPool = turbulentResources.descriptorPool;
-				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
-				descriptorSetAllocateInfo.pSetLayouts = turbulentResources.descriptorSetLayouts.data();
-				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, turbulentResources.descriptorSets.data()));
-				turbulentResources.created = true;
 			}
 		}
 		auto descriptorSetIndex = 0;
@@ -1709,8 +1593,7 @@ void PerImage::Render(AppState& appState)
 				auto texture = appState.Scene.turbulent16List[i].texture;
 				if (previousTexture != texture)
 				{
-					auto descriptorSet = GetDescriptorSet(appState, texture, turbulentResources, textureInfo, writes);
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, turbulent.count, 1, turbulent.first_index, 0, 0));
@@ -1735,8 +1618,7 @@ void PerImage::Render(AppState& appState)
 				auto texture = appState.Scene.turbulent32List[i].texture;
 				if (previousTexture != texture)
 				{
-					auto descriptorSet = GetDescriptorSet(appState, texture, turbulentResources, textureInfo, writes);
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &descriptorSet, 0, nullptr));
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, turbulent.count, 1, turbulent.first_index, 0, 0));
@@ -1772,25 +1654,6 @@ void PerImage::Render(AppState& appState)
 			}
 		}
 		descriptorSetIndex = 0;
-		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || aliasResources.descriptorSets.size() < appState.Scene.aliasTextureCount)
-		{
-			aliasResources.Delete(appState);
-			auto toCreate = appState.Scene.aliasTextureCount;
-			if (toCreate > 0)
-			{
-				poolSizes[0].descriptorCount = toCreate;
-				descriptorPoolCreateInfo.maxSets = toCreate;
-				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &aliasResources.descriptorPool));
-				aliasResources.descriptorSetLayouts.resize(toCreate);
-				aliasResources.descriptorSets.resize(toCreate);
-				std::fill(aliasResources.descriptorSetLayouts.begin(), aliasResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
-				descriptorSetAllocateInfo.descriptorPool = aliasResources.descriptorPool;
-				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
-				descriptorSetAllocateInfo.pSetLayouts = aliasResources.descriptorSetLayouts.data();
-				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, aliasResources.descriptorSets.data()));
-				aliasResources.created = true;
-			}
-		}
 		if (d_lists.last_alias16 >= 0 || d_lists.last_alias32 >= 0)
 		{
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipeline));
@@ -1804,7 +1667,7 @@ void PerImage::Render(AppState& appState)
 		if (d_lists.last_alias16 >= 0)
 		{
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
 			for (auto i = 0; i <= d_lists.last_alias16; i++)
 			{
@@ -1841,11 +1704,10 @@ void PerImage::Render(AppState& appState)
 					descriptorSetIndex++;
 				}
 				auto texture = appState.Scene.alias16List[i].texture.texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, aliasResources, textureInfo, writes);
-				if (previousTextureDescriptorSet != descriptorSet)
+				if (previousTexture != texture)
 				{
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &descriptorSet, 0, nullptr));
-					previousTextureDescriptorSet = descriptorSet;
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr));
+					previousTexture = texture;
 				}
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, alias.count, 1, alias.first_index, 0, 0));
 			}
@@ -1853,7 +1715,7 @@ void PerImage::Render(AppState& appState)
 		if (d_lists.last_alias32 >= 0)
 		{
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 			for (auto i = 0; i <= d_lists.last_alias32; i++)
 			{
@@ -1890,32 +1752,12 @@ void PerImage::Render(AppState& appState)
 					descriptorSetIndex++;
 				}
 				auto texture = appState.Scene.alias32List[i].texture.texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, aliasResources, textureInfo, writes);
-				if (previousTextureDescriptorSet != descriptorSet)
+				if (previousTexture != texture)
 				{
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &descriptorSet, 0, nullptr));
-					previousTextureDescriptorSet = descriptorSet;
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr));
+					previousTexture = texture;
 				}
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, alias.count, 1, alias.first_index, 0, 0));
-			}
-		}
-		if (resetDescriptorSetsCount != appState.Scene.resetDescriptorSetsCount || viewmodelResources.descriptorSets.size() < appState.Scene.viewmodelTextureCount)
-		{
-			viewmodelResources.Delete(appState);
-			auto toCreate = appState.Scene.viewmodelTextureCount;
-			if (toCreate > 0)
-			{
-				poolSizes[0].descriptorCount = toCreate;
-				descriptorPoolCreateInfo.maxSets = toCreate;
-				VK(appState.Device.vkCreateDescriptorPool(appState.Device.device, &descriptorPoolCreateInfo, nullptr, &viewmodelResources.descriptorPool));
-				viewmodelResources.descriptorSetLayouts.resize(toCreate);
-				viewmodelResources.descriptorSets.resize(toCreate);
-				std::fill(viewmodelResources.descriptorSetLayouts.begin(), viewmodelResources.descriptorSetLayouts.end(), appState.Scene.singleImageLayout);
-				descriptorSetAllocateInfo.descriptorPool = viewmodelResources.descriptorPool;
-				descriptorSetAllocateInfo.descriptorSetCount = toCreate;
-				descriptorSetAllocateInfo.pSetLayouts = viewmodelResources.descriptorSetLayouts.data();
-				VK(appState.Device.vkAllocateDescriptorSets(appState.Device.device, &descriptorSetAllocateInfo, viewmodelResources.descriptorSets.data()));
-				viewmodelResources.created = true;
 			}
 		}
 		if (d_lists.last_viewmodel16 >= 0 || d_lists.last_viewmodel32 >= 0)
@@ -1953,7 +1795,7 @@ void PerImage::Render(AppState& appState)
 		if (d_lists.last_viewmodel16 >= 0)
 		{
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
 			for (auto i = 0; i <= d_lists.last_viewmodel16; i++)
 			{
@@ -1990,11 +1832,10 @@ void PerImage::Render(AppState& appState)
 					descriptorSetIndex++;
 				}
 				auto texture = appState.Scene.viewmodel16List[i].texture.texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, viewmodelResources, textureInfo, writes);
-				if (previousTextureDescriptorSet != descriptorSet)
+				if (previousTexture != texture)
 				{
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &descriptorSet, 0, nullptr));
-					previousTextureDescriptorSet = descriptorSet;
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr));
+					previousTexture = texture;
 				}
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, viewmodel.count, 1, viewmodel.first_index, 0, 0));
 			}
@@ -2002,7 +1843,7 @@ void PerImage::Render(AppState& appState)
 		if (d_lists.last_viewmodel32 >= 0)
 		{
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
 			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 			for (auto i = 0; i <= d_lists.last_viewmodel32; i++)
 			{
@@ -2039,16 +1880,14 @@ void PerImage::Render(AppState& appState)
 					descriptorSetIndex++;
 				}
 				auto texture = appState.Scene.viewmodel32List[i].texture.texture;
-				auto descriptorSet = GetDescriptorSet(appState, texture, viewmodelResources, textureInfo, writes);
-				if (previousTextureDescriptorSet != descriptorSet)
+				if (previousTexture != texture)
 				{
-					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &descriptorSet, 0, nullptr));
-					previousTextureDescriptorSet = descriptorSet;
+					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr));
+					previousTexture = texture;
 				}
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, viewmodel.count, 1, viewmodel.first_index, 0, 0));
 			}
 		}
-		resetDescriptorSetsCount = appState.Scene.resetDescriptorSetsCount;
 		if (d_lists.last_colored_index16 >= 0 || d_lists.last_colored_index32 >= 0)
 		{
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipeline));
