@@ -32,6 +32,7 @@ void CachedLightmaps::DisposeFront()
 
 void CachedLightmaps::DeleteOld(AppState& appState)
 {
+	std::vector<TwinKey> toDelete;
 	for (auto& entry : lightmaps)
 	{
 		auto total = 0;
@@ -62,7 +63,6 @@ void CachedLightmaps::DeleteOld(AppState& appState)
 	{
 		lightmaps.erase(entry);
 	}
-	toDelete.clear();
 	if (oldLightmaps != nullptr)
 	{
 		for (auto l = &oldLightmaps; *l != nullptr; )

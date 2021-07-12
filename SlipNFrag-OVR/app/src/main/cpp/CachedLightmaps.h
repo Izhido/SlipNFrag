@@ -7,7 +7,6 @@ struct CachedLightmaps
 {
 	std::unordered_map<TwinKey, Lightmap*> lightmaps;
 	Lightmap* oldLightmaps;
-	std::vector<TwinKey> toDelete;
 	LoadedLightmap* first;
 	LoadedLightmap* current;
 
