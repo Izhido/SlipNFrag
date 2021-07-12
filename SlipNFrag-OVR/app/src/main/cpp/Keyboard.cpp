@@ -252,7 +252,7 @@ std::vector<std::vector<KeyboardCell>> Keyboard::cells
 
 void Keyboard::Create(AppState& appState)
 {
-	buffer.resize(appState.ConsoleWidth * appState.ConsoleHeight / 2);
+	buffer.resize(appState.ConsoleWidth * appState.ConsoleHeight / 2, 255);
 }
 
 void Keyboard::AddKeyInput(int key, bool down)
@@ -514,7 +514,6 @@ bool Keyboard::Draw(AppState& appState)
 	{
 		return false;
 	}
-	std::fill(buffer.begin(), buffer.end(), 255);
 	auto& source = cells[(int)layout];
 	for (auto i = 0; i < source.size(); i++)
 	{
@@ -560,6 +559,7 @@ bool Keyboard::Draw(AppState& appState)
 				continue;
 			}
 		}
+		Fill(appState, cell, 255);
 		Print(appState, cell, false);
 	}
 	return true;

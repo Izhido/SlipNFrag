@@ -285,7 +285,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.Screen.SubmitInfo.commandBufferCount = 1;
 	appState.Screen.SubmitInfo.pCommandBuffers = &appState.Screen.CommandBuffer;
 	appState.Keyboard.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, VK_FORMAT_R8G8B8A8_UNORM, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
-	appState.Keyboard.Data.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
+	appState.Keyboard.Data.resize(appState.ScreenWidth * appState.ScreenHeight, 0);
 	appState.Keyboard.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.Keyboard.SwapChain, 0);
 	appState.Keyboard.Buffer.CreateStagingBuffer(appState, appState.Keyboard.Data.size() * sizeof(uint32_t));
 	VK(appState.Device.vkMapMemory(appState.Device.device, appState.Keyboard.Buffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Keyboard.Buffer.mapped));
@@ -938,8 +938,8 @@ void Scene::Reset()
 		for (auto l = &entry->second; *l != nullptr; )
 		{
 			auto next = (*l)->next;
-			(*l)->next = oldSurfaces;
-			oldSurfaces = *l;
+			(*l)->next = oldLightmaps;
+			oldLightmaps = *l;
 			*l = next;
 		}
 	}

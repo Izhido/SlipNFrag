@@ -903,6 +903,7 @@ void android_main(struct android_app* app)
 			VK(appState.Device.vkCreateFence(appState.Device.device, &fenceCreateInfo, nullptr, &perImage.fence));
 		}
 	}
+	vrapi_SetExtraLatencyMode(appState.Ovr, VRAPI_EXTRA_LATENCY_MODE_DYNAMIC);
 	appState.NoOffset = 0;
 	app->userData = &appState;
 	app->onAppCmd = appHandleCommands;
@@ -1237,8 +1238,8 @@ void android_main(struct android_app* app)
 				if ((*l)->unusedCount >= MAX_UNUSED_COUNT)
 				{
 					auto next = (*l)->next;
-					(*l)->next = appState.Scene.oldSurfaces;
-					appState.Scene.oldSurfaces = *l;
+					(*l)->next = appState.Scene.oldLightmaps;
+					appState.Scene.oldLightmaps = *l;
 					*l = next;
 					erased++;
 				}
@@ -1259,7 +1260,7 @@ void android_main(struct android_app* app)
 		}
 		appState.Scene.lightmapsToDelete.clear();
 		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.textures.oldTextures);
-		Lightmap::DeleteOld(appState, &appState.Scene.oldSurfaces);
+		Lightmap::DeleteOld(appState, &appState.Scene.oldLightmaps);
 		SharedMemoryBuffer::DeleteOld(appState, &appState.Scene.buffers.oldBuffers);
 		{
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
@@ -1806,7 +1807,6 @@ void android_main(struct android_app* app)
 		}
 		if (appState.Keyboard.Draw(appState))
 		{
-			std::fill(appState.Keyboard.Data.begin(), appState.Keyboard.Data.end(), 0);
 			auto halfHeight = appState.ScreenHeight / 2;
 			auto keyboardIndex = 0;
 			auto keyboardIndexCache = 0;
@@ -1818,20 +1818,20 @@ void android_main(struct android_app* app)
 				while (x < appState.ScreenWidth)
 				{
 					auto entry = appState.Keyboard.buffer[keyboardIndex];
+					unsigned int converted;
 					if (entry == 255)
 					{
-						target += 3;
-						x += 3;
+						converted = 0;
 					}
 					else
 					{
-						auto converted = d_8to24table[entry];
-						do
-						{
-							*target++ = converted;
-							x++;
-						} while ((x % 3) != 0);
+						converted = d_8to24table[entry];
 					}
+					do
+					{
+						*target++ = converted;
+						x++;
+					} while ((x % 3) != 0);
 					keyboardIndex++;
 				}
 				y++;

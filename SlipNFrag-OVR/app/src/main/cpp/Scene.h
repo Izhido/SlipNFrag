@@ -7,7 +7,6 @@
 #include "LoadedSharedMemoryBuffer.h"
 #include "LoadedSharedMemoryTexCoordsBuffer.h"
 #include "CachedBuffers.h"
-#include "Lightmap.h"
 #include <unordered_map>
 #include "CachedSharedMemoryTextures.h"
 #include "LoadedLightmap.h"
@@ -89,7 +88,7 @@ struct Scene
 	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords16List;
 	std::vector<LoadedSharedMemoryBuffer> viewmodelVertex32List;
 	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords32List;
-	Lightmap* oldSurfaces;
+	Lightmap* oldLightmaps;
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
 	std::unordered_map<TwinKey, Lightmap*> lightmaps;
 	std::vector<TwinKey> lightmapsToDelete;

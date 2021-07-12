@@ -4,7 +4,6 @@
 #include "CachedTextures.h"
 #include "PipelineDescriptorResources.h"
 #include "UpdatablePipelineDescriptorResources.h"
-#include "CachedPipelineDescriptorResources.h"
 #include "vid_ovr.h"
 #include "d_lists.h"
 #include "LoadedSharedMemoryBuffer.h"

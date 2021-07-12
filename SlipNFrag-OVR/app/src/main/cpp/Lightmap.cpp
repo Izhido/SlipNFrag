@@ -71,9 +71,8 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 		{
 			size = blockSize;
 		}
-		auto memoryBlockAllocateInfo = memoryAllocateInfo;
-		memoryBlockAllocateInfo.allocationSize = size;
-		VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryBlockAllocateInfo, nullptr, &allocation->memory));
+		memoryAllocateInfo.allocationSize = size;
+		VK(appState.Device.vkAllocateMemory(appState.Device.device, &memoryAllocateInfo, nullptr, &allocation->memory));
 		auto count = size / blockSize;
 		allocation->allocated.resize(count);
 		VkDescriptorPoolSize poolSizes { };
