@@ -1,13 +1,17 @@
 #pragma once
 
-#include "SharedMemoryTexture.h"
+#include "LoadedSharedMemoryTexture.h"
 
 struct CachedSharedMemoryTextures
 {
-	SharedMemoryTexture* textures = nullptr;
-	SharedMemoryTexture* oldTextures = nullptr;
+	SharedMemoryTexture* textures;
+	SharedMemoryTexture* oldTextures;
+	LoadedSharedMemoryTexture* first;
+	LoadedSharedMemoryTexture* current;
 
+	void Setup(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture);
 	void DisposeFront();
 	void MoveToFront(SharedMemoryTexture* texture);
 	void Delete(AppState& appState);
+	void DeleteOld(AppState& appState);
 };

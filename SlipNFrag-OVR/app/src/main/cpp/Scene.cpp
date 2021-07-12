@@ -908,16 +908,16 @@ void Scene::Initialize()
 	host_colormapSize = 0;
 	skySize = 0;
 	controllerVerticesSize = 0;
-	firstVertexListToCreate = nullptr;
-	currentVertexListToCreate = nullptr;
-	firstAliasVertexListToCreate = nullptr;
-	currentAliasVertexListToCreate = nullptr;
-	firstAliasTexCoordsListToCreate = nullptr;
-	currentAliasTexCoordsListToCreate = nullptr;
-	firstLightmapToCreate = nullptr;
-	currentLightmapToCreate = nullptr;
-	firstSharedMemoryTextureToCreate = nullptr;
-	currentSharedMemoryTextureToCreate = nullptr;
+	buffers.firstVertices = nullptr;
+	buffers.currentVertices = nullptr;
+	buffers.firstAliasVertices = nullptr;
+	buffers.currentAliasVertices = nullptr;
+	buffers.firstAliasTexCoords = nullptr;
+	buffers.currentAliasTexCoords = nullptr;
+	lightmaps.first = nullptr;
+	lightmaps.current = nullptr;
+	textures.first = nullptr;
+	textures.current = nullptr;
 	previousVertexes = nullptr;
 	previousVertexBuffer = nullptr;
 	previousTexCoordsBuffer = nullptr;
@@ -933,17 +933,7 @@ void Scene::Reset()
 	fenceTexturesPerKey.clear();
 	surfaceTexturesPerKey.clear();
 	textures.DisposeFront();
-	for (auto entry = lightmaps.begin(); entry != lightmaps.end(); entry++)
-	{
-		for (auto l = &entry->second; *l != nullptr; )
-		{
-			auto next = (*l)->next;
-			(*l)->next = oldLightmaps;
-			oldLightmaps = *l;
-			*l = next;
-		}
-	}
-	lightmaps.clear();
+	lightmaps.DisposeFront();
 	buffers.DisposeFront();
 	latestTextureDescriptorSets = nullptr;
 	latestTextureSharedMemory = nullptr;

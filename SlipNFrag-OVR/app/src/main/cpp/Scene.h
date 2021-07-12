@@ -9,7 +9,7 @@
 #include "CachedBuffers.h"
 #include <unordered_map>
 #include "CachedSharedMemoryTextures.h"
-#include "LoadedLightmap.h"
+#include "CachedLightmaps.h"
 #include "LoadedSharedMemoryTexture.h"
 #include "LoadedTexture.h"
 #include "LoadedColormappedTexture.h"
@@ -68,12 +68,6 @@ struct Scene
 	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texCoordsPerKey;
-	LoadedSharedMemoryBuffer* firstVertexListToCreate;
-	LoadedSharedMemoryBuffer* currentVertexListToCreate;
-	LoadedSharedMemoryBuffer* firstAliasVertexListToCreate;
-	LoadedSharedMemoryBuffer* currentAliasVertexListToCreate;
-	LoadedSharedMemoryTexCoordsBuffer* firstAliasTexCoordsListToCreate;
-	LoadedSharedMemoryTexCoordsBuffer* currentAliasTexCoordsListToCreate;
 	std::vector<LoadedSharedMemoryBuffer> surfaceVertex16List;
 	std::vector<LoadedSharedMemoryBuffer> surfaceVertex32List;
 	std::vector<LoadedSharedMemoryBuffer> fenceVertex16List;
@@ -88,10 +82,8 @@ struct Scene
 	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords16List;
 	std::vector<LoadedSharedMemoryBuffer> viewmodelVertex32List;
 	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords32List;
-	Lightmap* oldLightmaps;
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
-	std::unordered_map<TwinKey, Lightmap*> lightmaps;
-	std::vector<TwinKey> lightmapsToDelete;
+	CachedLightmaps lightmaps;
 	CachedSharedMemoryTextures textures;
 	std::unordered_map<void*, SharedMemoryTexture*> surfaceTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> fenceTexturesPerKey;
@@ -99,14 +91,10 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> turbulentPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> viewmodelTexturesPerKey;
-	LoadedLightmap* firstLightmapToCreate;
-	LoadedLightmap* currentLightmapToCreate;
 	std::vector<LoadedLightmap> surfaceLightmap16List;
 	std::vector<LoadedLightmap> surfaceLightmap32List;
 	std::vector<LoadedLightmap> fenceLightmap16List;
 	std::vector<LoadedLightmap> fenceLightmap32List;
-	LoadedSharedMemoryTexture* firstSharedMemoryTextureToCreate;
-	LoadedSharedMemoryTexture* currentSharedMemoryTextureToCreate;
 	std::vector<LoadedSharedMemoryTexture> surfaceTexture16List;
 	std::vector<LoadedSharedMemoryTexture> surfaceTexture32List;
 	std::vector<LoadedSharedMemoryTexture> fenceTexture16List;

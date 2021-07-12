@@ -61,25 +61,3 @@ void SharedMemoryBuffer::Delete(AppState& appState)
 		delete sharedMemory;
 	}
 }
-
-void SharedMemoryBuffer::DeleteOld(AppState& appState, SharedMemoryBuffer** old)
-{
-	if (old != nullptr)
-	{
-		for (auto b = old; *b != nullptr; )
-		{
-			(*b)->unusedCount++;
-			if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
-			{
-				auto next = (*b)->next;
-				(*b)->Delete(appState);
-				delete *b;
-				*b = next;
-			}
-			else
-			{
-				b = &(*b)->next;
-			}
-		}
-	}
-}

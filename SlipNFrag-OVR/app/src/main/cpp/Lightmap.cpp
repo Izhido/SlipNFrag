@@ -190,25 +190,3 @@ void Lightmap::Delete(AppState& appState)
 		allocationList->allocations.erase(allocation);
 	}
 }
-
-void Lightmap::DeleteOld(AppState& appState, Lightmap** old)
-{
-	if (old != nullptr)
-	{
-		for (auto l = old; *l != nullptr; )
-		{
-			(*l)->unusedCount++;
-			if ((*l)->unusedCount >= MAX_UNUSED_COUNT)
-			{
-				auto next = (*l)->next;
-				(*l)->Delete(appState);
-				delete *l;
-				*l = next;
-			}
-			else
-			{
-				l = &(*l)->next;
-			}
-		}
-	}
-}

@@ -74,7 +74,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	}
 	if (appState.Scene.latestTextureDescriptorSets == nullptr || appState.Scene.latestTextureDescriptorSets->used >= appState.Scene.latestTextureDescriptorSets->descriptorSets.size())
 	{
-		appState.Scene.latestTextureDescriptorSets = new DescriptorSets();
+		appState.Scene.latestTextureDescriptorSets = new DescriptorSets { };
 		VkDescriptorPoolSize poolSizes { };
 		poolSizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		poolSizes.descriptorCount = DESCRIPTOR_SET_COUNT;
@@ -227,27 +227,5 @@ void SharedMemoryTexture::Delete(AppState& appState)
 	{
 		VC(appState.Device.vkFreeMemory(appState.Device.device, sharedMemory->memory, nullptr));
 		delete sharedMemory;
-	}
-}
-
-void SharedMemoryTexture::DeleteOld(AppState& appState, SharedMemoryTexture** old)
-{
-	if (old != nullptr)
-	{
-		for (auto t = old; *t != nullptr; )
-		{
-			(*t)->unusedCount++;
-			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
-			{
-				auto next = (*t)->next;
-				(*t)->Delete(appState);
-				delete *t;
-				*t = next;
-			}
-			else
-			{
-				t = &(*t)->next;
-			}
-		}
 	}
 }

@@ -1228,40 +1228,9 @@ void android_main(struct android_app* app)
 				appState.PreviousMode = appState.Mode;
 			}
 		}
-		for (auto& entry : appState.Scene.lightmaps)
-		{
-			auto total = 0;
-			auto erased = 0;
-			for (auto l = &entry.second; *l != nullptr; )
-			{
-				(*l)->unusedCount++;
-				if ((*l)->unusedCount >= MAX_UNUSED_COUNT)
-				{
-					auto next = (*l)->next;
-					(*l)->next = appState.Scene.oldLightmaps;
-					appState.Scene.oldLightmaps = *l;
-					*l = next;
-					erased++;
-				}
-				else
-				{
-					l = &(*l)->next;
-				}
-				total++;
-			}
-			if (total == erased)
-			{
-				appState.Scene.lightmapsToDelete.push_back(entry.first);
-			}
-		}
-		for (auto& entry : appState.Scene.lightmapsToDelete)
-		{
-			appState.Scene.lightmaps.erase(entry);
-		}
-		appState.Scene.lightmapsToDelete.clear();
-		SharedMemoryTexture::DeleteOld(appState, &appState.Scene.textures.oldTextures);
-		Lightmap::DeleteOld(appState, &appState.Scene.oldLightmaps);
-		SharedMemoryBuffer::DeleteOld(appState, &appState.Scene.buffers.oldBuffers);
+		appState.Scene.textures.DeleteOld(appState);
+		appState.Scene.lightmaps.DeleteOld(appState);
+		appState.Scene.buffers.DeleteOld(appState);
 		{
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)

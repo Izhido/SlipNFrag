@@ -21,38 +21,7 @@ void PerImage::Reset(AppState& appState)
 	colors = nullptr;
 }
 
-void PerImage::SetupLoadedLightmap(AppState& appState, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize)
-{
-	lightmap.size = surface.lightmap_size * sizeof(float);
-	stagingBufferSize += lightmap.size;
-	lightmap.source = surface.lightmap;
-	lightmap.next = nullptr;
-	if (appState.Scene.currentLightmapToCreate == nullptr)
-	{
-		appState.Scene.firstLightmapToCreate = &lightmap;
-	}
-	else
-	{
-		appState.Scene.currentLightmapToCreate->next = &lightmap;
-	}
-	appState.Scene.currentLightmapToCreate = &lightmap;
-}
-
-void PerImage::SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture)
-{
-	sharedMemoryTexture.next = nullptr;
-	if (appState.Scene.currentSharedMemoryTextureToCreate == nullptr)
-	{
-		appState.Scene.firstSharedMemoryTextureToCreate = &sharedMemoryTexture;
-	}
-	else
-	{
-		appState.Scene.currentSharedMemoryTextureToCreate->next = &sharedMemoryTexture;
-	}
-	appState.Scene.currentSharedMemoryTextureToCreate = &sharedMemoryTexture;
-}
-
-void PerImage::GetSurfaceVerticesStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& buffer, VkDeviceSize& stagingBufferSize)
+void PerImage::GetSurfaceVerticesStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& loaded, VkDeviceSize& stagingBufferSize)
 {
 	auto vertexes = surface.vertexes;
 	if (appState.Scene.previousVertexes != vertexes)
@@ -60,40 +29,31 @@ void PerImage::GetSurfaceVerticesStagingBufferSize(AppState& appState, dsurface_
 		auto entry = appState.Scene.verticesPerKey.find(vertexes);
 		if (entry == appState.Scene.verticesPerKey.end())
 		{
-			buffer.size = surface.vertex_count * 3 * sizeof(float);
-			buffer.buffer = new SharedMemoryBuffer();
-			buffer.buffer->CreateVertexBuffer(appState, buffer.size);
-			appState.Scene.verticesPerKey.insert({ vertexes, buffer.buffer });
-			stagingBufferSize += buffer.size;
-			appState.Scene.buffers.MoveToFront(buffer.buffer);
-			buffer.source = surface.vertexes;
-			buffer.next = nullptr;
-			if (appState.Scene.currentVertexListToCreate == nullptr)
-			{
-				appState.Scene.firstVertexListToCreate = &buffer;
-			}
-			else
-			{
-				appState.Scene.currentVertexListToCreate->next = &buffer;
-			}
-			appState.Scene.currentVertexListToCreate = &buffer;
+			loaded.size = surface.vertex_count * 3 * sizeof(float);
+			loaded.buffer = new SharedMemoryBuffer();
+			loaded.buffer->CreateVertexBuffer(appState, loaded.size);
+			appState.Scene.verticesPerKey.insert({ vertexes, loaded.buffer });
+			stagingBufferSize += loaded.size;
+			appState.Scene.buffers.MoveToFront(loaded.buffer);
+			loaded.source = surface.vertexes;
+			appState.Scene.buffers.SetupVertices(appState, loaded);
 		}
 		else
 		{
-			buffer.size = 0;
-			buffer.buffer = entry->second;
+			loaded.size = 0;
+			loaded.buffer = entry->second;
 		}
 		appState.Scene.previousVertexes = vertexes;
-		appState.Scene.previousVertexBuffer = buffer.buffer;
+		appState.Scene.previousVertexBuffer = loaded.buffer;
 	}
 	else
 	{
-		buffer.size = 0;
-		buffer.buffer = appState.Scene.previousVertexBuffer;
+		loaded.size = 0;
+		loaded.buffer = appState.Scene.previousVertexBuffer;
 	}
 }
 
-void PerImage::GetTurbulentVerticesStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& buffer, VkDeviceSize& stagingBufferSize)
+void PerImage::GetTurbulentVerticesStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& loaded, VkDeviceSize& stagingBufferSize)
 {
 	auto vertexes = turbulent.vertexes;
 	if (appState.Scene.previousVertexes != vertexes)
@@ -101,40 +61,31 @@ void PerImage::GetTurbulentVerticesStagingBufferSize(AppState& appState, dturbul
 		auto entry = appState.Scene.verticesPerKey.find(vertexes);
 		if (entry == appState.Scene.verticesPerKey.end())
 		{
-			buffer.size = turbulent.vertex_count * 3 * sizeof(float);
-			buffer.buffer = new SharedMemoryBuffer();
-			buffer.buffer->CreateVertexBuffer(appState, buffer.size);
-			appState.Scene.verticesPerKey.insert({ vertexes, buffer.buffer });
-			stagingBufferSize += buffer.size;
-			appState.Scene.buffers.MoveToFront(buffer.buffer);
-			buffer.source = turbulent.vertexes;
-			buffer.next = nullptr;
-			if (appState.Scene.currentVertexListToCreate == nullptr)
-			{
-				appState.Scene.firstVertexListToCreate = &buffer;
-			}
-			else
-			{
-				appState.Scene.currentVertexListToCreate->next = &buffer;
-			}
-			appState.Scene.currentVertexListToCreate = &buffer;
+			loaded.size = turbulent.vertex_count * 3 * sizeof(float);
+			loaded.buffer = new SharedMemoryBuffer();
+			loaded.buffer->CreateVertexBuffer(appState, loaded.size);
+			appState.Scene.verticesPerKey.insert({ vertexes, loaded.buffer });
+			stagingBufferSize += loaded.size;
+			appState.Scene.buffers.MoveToFront(loaded.buffer);
+			loaded.source = turbulent.vertexes;
+			appState.Scene.buffers.SetupVertices(appState, loaded);
 		}
 		else
 		{
-			buffer.size = 0;
-			buffer.buffer = entry->second;
+			loaded.size = 0;
+			loaded.buffer = entry->second;
 		}
 		appState.Scene.previousVertexes = vertexes;
-		appState.Scene.previousVertexBuffer = buffer.buffer;
+		appState.Scene.previousVertexBuffer = loaded.buffer;
 	}
 	else
 	{
-		buffer.size = 0;
-		buffer.buffer = appState.Scene.previousVertexBuffer;
+		loaded.size = 0;
+		loaded.buffer = appState.Scene.previousVertexBuffer;
 	}
 }
 
-void PerImage::GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& alias, LoadedSharedMemoryBuffer& vertexBuffer, LoadedSharedMemoryTexCoordsBuffer& texCoordsBuffer, VkDeviceSize& stagingBufferSize)
+void PerImage::GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& alias, LoadedSharedMemoryBuffer& loadedVertices, LoadedSharedMemoryTexCoordsBuffer& loadedTexCoords, VkDeviceSize& stagingBufferSize)
 {
 	auto vertices = alias.vertices;
 	if (appState.Scene.previousVertexes != vertices)
@@ -142,75 +93,60 @@ void PerImage::GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& a
 		auto entry = appState.Scene.verticesPerKey.find(vertices);
 		if (entry == appState.Scene.verticesPerKey.end())
 		{
-			vertexBuffer.size = alias.vertex_count * 2 * 4 * sizeof(float);
-			vertexBuffer.buffer = new SharedMemoryBuffer();
-			vertexBuffer.buffer->CreateVertexBuffer(appState, vertexBuffer.size);
-			appState.Scene.verticesPerKey.insert({ vertices, vertexBuffer.buffer });
-			stagingBufferSize += vertexBuffer.size;
-			appState.Scene.buffers.MoveToFront(vertexBuffer.buffer);
-			vertexBuffer.source = alias.vertices;
-			vertexBuffer.next = nullptr;
-			if (appState.Scene.currentAliasVertexListToCreate == nullptr)
-			{
-				appState.Scene.firstAliasVertexListToCreate = &vertexBuffer;
-			}
-			else
-			{
-				appState.Scene.currentAliasVertexListToCreate->next = &vertexBuffer;
-			}
-			appState.Scene.currentAliasVertexListToCreate = &vertexBuffer;
-			texCoordsBuffer.size = alias.vertex_count * 2 * 2 * sizeof(float);
-			texCoordsBuffer.buffer = new SharedMemoryBuffer();
-			texCoordsBuffer.buffer->CreateVertexBuffer(appState, texCoordsBuffer.size);
-			appState.Scene.texCoordsPerKey.insert({ vertices, texCoordsBuffer.buffer });
-			stagingBufferSize += texCoordsBuffer.size;
-			appState.Scene.buffers.MoveToFront(texCoordsBuffer.buffer);
-			texCoordsBuffer.source = alias.texture_coordinates;
-			texCoordsBuffer.width = alias.width;
-			texCoordsBuffer.height = alias.height;
-			texCoordsBuffer.next = nullptr;
-			if (appState.Scene.currentAliasTexCoordsListToCreate == nullptr)
-			{
-				appState.Scene.firstAliasTexCoordsListToCreate = &texCoordsBuffer;
-			}
-			else
-			{
-				appState.Scene.currentAliasTexCoordsListToCreate->next = &texCoordsBuffer;
-			}
-			appState.Scene.currentAliasTexCoordsListToCreate = &texCoordsBuffer;
+			loadedVertices.size = alias.vertex_count * 2 * 4 * sizeof(float);
+			loadedVertices.buffer = new SharedMemoryBuffer();
+			loadedVertices.buffer->CreateVertexBuffer(appState, loadedVertices.size);
+			appState.Scene.verticesPerKey.insert({ vertices, loadedVertices.buffer });
+			stagingBufferSize += loadedVertices.size;
+			appState.Scene.buffers.MoveToFront(loadedVertices.buffer);
+			loadedVertices.source = alias.vertices;
+			appState.Scene.buffers.SetupAliasVertices(appState, loadedVertices);
+			loadedTexCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
+			loadedTexCoords.buffer = new SharedMemoryBuffer();
+			loadedTexCoords.buffer->CreateVertexBuffer(appState, loadedTexCoords.size);
+			appState.Scene.texCoordsPerKey.insert({ vertices, loadedTexCoords.buffer });
+			stagingBufferSize += loadedTexCoords.size;
+			appState.Scene.buffers.MoveToFront(loadedTexCoords.buffer);
+			loadedTexCoords.source = alias.texture_coordinates;
+			loadedTexCoords.width = alias.width;
+			loadedTexCoords.height = alias.height;
+			appState.Scene.buffers.SetupAliasTexCoords(appState, loadedTexCoords);
 		}
 		else
 		{
-			vertexBuffer.size = 0;
-			vertexBuffer.buffer = entry->second;
-			texCoordsBuffer.size = 0;
-			texCoordsBuffer.buffer = appState.Scene.texCoordsPerKey[vertices];
+			loadedVertices.size = 0;
+			loadedVertices.buffer = entry->second;
+			loadedTexCoords.size = 0;
+			loadedTexCoords.buffer = appState.Scene.texCoordsPerKey[vertices];
 		}
 		appState.Scene.previousVertexes = vertices;
-		appState.Scene.previousVertexBuffer = vertexBuffer.buffer;
-		appState.Scene.previousTexCoordsBuffer = texCoordsBuffer.buffer;
+		appState.Scene.previousVertexBuffer = loadedVertices.buffer;
+		appState.Scene.previousTexCoordsBuffer = loadedTexCoords.buffer;
 	}
 	else
 	{
-		vertexBuffer.size = 0;
-		vertexBuffer.buffer = appState.Scene.previousVertexBuffer;
-		texCoordsBuffer.size = 0;
-		texCoordsBuffer.buffer = appState.Scene.previousTexCoordsBuffer;
+		loadedVertices.size = 0;
+		loadedVertices.buffer = appState.Scene.previousVertexBuffer;
+		loadedTexCoords.size = 0;
+		loadedTexCoords.buffer = appState.Scene.previousTexCoordsBuffer;
 	}
 }
 
-void PerImage::GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize)
+void PerImage::GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& loaded, VkDeviceSize& stagingBufferSize)
 {
-	auto entry = appState.Scene.lightmaps.find({ surface.surface, surface.entity });
-	if (entry == appState.Scene.lightmaps.end())
+	auto entry = appState.Scene.lightmaps.lightmaps.find({ surface.surface, surface.entity });
+	if (entry == appState.Scene.lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap();
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		lightmap->key.first = surface.surface;
 		lightmap->key.second = surface.entity;
-		appState.Scene.lightmaps.insert({ lightmap->key, lightmap });
-		loadedLightmap.lightmap = lightmap;
-		SetupLoadedLightmap(appState, surface, loadedLightmap, stagingBufferSize);
+		appState.Scene.lightmaps.lightmaps.insert({ lightmap->key, lightmap });
+		loaded.lightmap = lightmap;
+		loaded.size = surface.lightmap_size * sizeof(float);
+		stagingBufferSize += loaded.size;
+		loaded.source = surface.lightmap;
+		appState.Scene.lightmaps.Setup(appState, loaded);
 	}
 	else if (surface.created)
 	{
@@ -221,7 +157,7 @@ void PerImage::GetSurfaceLightmapStagingBufferSize(AppState& appState, View& vie
 			if (available)
 			{
 				first->unusedCount = 0;
-				loadedLightmap.lightmap = first;
+				loaded.lightmap = first;
 			}
 			else
 			{
@@ -231,7 +167,7 @@ void PerImage::GetSurfaceLightmapStagingBufferSize(AppState& appState, View& vie
 				lightmap->key.second = surface.entity;
 				lightmap->next = first;
 				entry->second = lightmap;
-				loadedLightmap.lightmap = lightmap;
+				loaded.lightmap = lightmap;
 			}
 		}
 		else
@@ -246,7 +182,7 @@ void PerImage::GetSurfaceLightmapStagingBufferSize(AppState& appState, View& vie
 					previous->next = lightmap->next;
 					lightmap->next = first;
 					entry->second = lightmap;
-					loadedLightmap.lightmap = lightmap;
+					loaded.lightmap = lightmap;
 					break;
 				}
 			}
@@ -258,18 +194,21 @@ void PerImage::GetSurfaceLightmapStagingBufferSize(AppState& appState, View& vie
 				lightmap->key.second = surface.entity;
 				lightmap->next = entry->second;
 				entry->second = lightmap;
-				loadedLightmap.lightmap = lightmap;
+				loaded.lightmap = lightmap;
 			}
 		}
-		SetupLoadedLightmap(appState, surface, loadedLightmap, stagingBufferSize);
+		loaded.size = surface.lightmap_size * sizeof(float);
+		stagingBufferSize += loaded.size;
+		loaded.source = surface.lightmap;
+		appState.Scene.lightmaps.Setup(appState, loaded);
 		surface.created = 0;
 	}
 	else
 	{
 		auto lightmap = entry->second;
 		lightmap->unusedCount = 0;
-		loadedLightmap.lightmap = lightmap;
-		loadedLightmap.size = 0;
+		loaded.lightmap = lightmap;
+		loaded.size = 0;
 	}
 }
 
@@ -299,7 +238,7 @@ void PerImage::GetSurfaceTextureStagingBufferSize(AppState& appState, int lastSu
 			appState.Scene.surfaceTexturesPerKey.insert({ surface.texture, texture });
 			loaded.texture = texture;
 			loaded.source = surface.texture;
-			SetupLoadedSharedMemoryTexture(appState, loaded);
+			appState.Scene.textures.Setup(appState, loaded);
 		}
 		else
 		{
@@ -335,7 +274,7 @@ void PerImage::GetFenceTextureStagingBufferSize(AppState& appState, int lastFenc
 			appState.Scene.fenceTexturesPerKey.insert({ fence.texture, texture });
 			loaded.texture = texture;
 			loaded.source = fence.texture;
-			SetupLoadedSharedMemoryTexture(appState, loaded);
+			appState.Scene.textures.Setup(appState, loaded);
 		}
 		else
 		{
@@ -631,7 +570,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 	for (auto i = 0; i <= d_lists.last_sprite; i++)
 	{
 		auto& sprite = d_lists.sprites[i];
-		auto& spriteFromList = appState.Scene.spriteList[i];
+		auto& loaded = appState.Scene.spriteList[i];
 		auto entry = appState.Scene.spritesPerKey.find(sprite.data);
 		if (entry == appState.Scene.spritesPerKey.end())
 		{
@@ -639,18 +578,18 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 			texture = new SharedMemoryTexture();
 			texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			spriteFromList.size = sprite.size;
-			size += spriteFromList.size;
+			loaded.size = sprite.size;
+			size += loaded.size;
 			appState.Scene.textures.MoveToFront(texture);
 			appState.Scene.spritesPerKey.insert({ sprite.data, texture });
-			spriteFromList.texture = texture;
-			spriteFromList.source = sprite.data;
-			SetupLoadedSharedMemoryTexture(appState, spriteFromList);
+			loaded.texture = texture;
+			loaded.source = sprite.data;
+			appState.Scene.textures.Setup(appState, loaded);
 		}
 		else
 		{
-			spriteFromList.size = 0;
-			spriteFromList.texture = entry->second;
+			loaded.size = 0;
+			loaded.texture = entry->second;
 		}
 	}
 	GetTurbulentStagingBufferSize(appState, d_lists.last_turbulent16, d_lists.turbulent16, appState.Scene.turbulent16List, size);
@@ -682,14 +621,14 @@ void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* st
 	offset += matricesSize;
 	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, &appState.ProjectionMatrices[matrixIndex], matricesSize);
 	offset += matricesSize;
-	auto loadedBuffer = appState.Scene.firstVertexListToCreate;
+	auto loadedBuffer = appState.Scene.buffers.firstVertices;
 	while (loadedBuffer != nullptr)
 	{
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedBuffer->source, loadedBuffer->size);
 		offset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
 	}
-	loadedBuffer = appState.Scene.firstAliasVertexListToCreate;
+	loadedBuffer = appState.Scene.buffers.firstAliasVertices;
 	while (loadedBuffer != nullptr)
 	{
 		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
@@ -712,7 +651,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* st
 		offset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
 	}
-	auto loadedTexCoordsBuffer = appState.Scene.firstAliasTexCoordsListToCreate;
+	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
 		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
@@ -742,14 +681,14 @@ void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* st
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, ::host_colormap.data(), appState.Scene.host_colormapSize);
 		offset += appState.Scene.host_colormapSize;
 	}
-	auto lightmap = appState.Scene.firstLightmapToCreate;
+	auto lightmap = appState.Scene.lightmaps.first;
 	while (lightmap != nullptr)
 	{
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, lightmap->source, lightmap->size);
 		offset += lightmap->size;
 		lightmap = lightmap->next;
 	}
-	auto sharedMemoryTexture = appState.Scene.firstSharedMemoryTextureToCreate;
+	auto sharedMemoryTexture = appState.Scene.textures.first;
 	while (sharedMemoryTexture != nullptr)
 	{
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, sharedMemoryTexture->source, sharedMemoryTexture->size);
@@ -891,7 +830,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
 	VC(appState.Device.vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr));
 	bufferCopy.srcOffset += appState.Scene.matrices.size;
-	auto loadedBuffer = appState.Scene.firstVertexListToCreate;
+	auto loadedBuffer = appState.Scene.buffers.firstVertices;
 	while (loadedBuffer != nullptr)
 	{
 		appState.Scene.stagingBuffer.lastBarrier++;
@@ -910,7 +849,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		bufferCopy.srcOffset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
 	}
-	loadedBuffer = appState.Scene.firstAliasVertexListToCreate;
+	loadedBuffer = appState.Scene.buffers.firstAliasVertices;
 	while (loadedBuffer != nullptr)
 	{
 		appState.Scene.stagingBuffer.lastBarrier++;
@@ -929,7 +868,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		bufferCopy.srcOffset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
 	}
-	auto loadedTexCoordsBuffer = appState.Scene.firstAliasTexCoordsListToCreate;
+	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
 		appState.Scene.stagingBuffer.lastBarrier++;
@@ -966,14 +905,14 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		host_colormap->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += appState.Scene.host_colormapSize;
 	}
-	auto lightmap = appState.Scene.firstLightmapToCreate;
+	auto lightmap = appState.Scene.lightmaps.first;
 	while (lightmap != nullptr)
 	{
 		lightmap->lightmap->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += lightmap->size;
 		lightmap = lightmap->next;
 	}
-	auto sharedMemoryTexture = appState.Scene.firstSharedMemoryTextureToCreate;
+	auto sharedMemoryTexture = appState.Scene.textures.first;
 	while (sharedMemoryTexture != nullptr)
 	{
 		sharedMemoryTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer);

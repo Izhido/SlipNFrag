@@ -61,12 +61,10 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
-	void SetupLoadedLightmap(AppState& appState, dsurface_t& surface, LoadedLightmap& loadedLightmap, VkDeviceSize& stagingBufferSize);
-	void SetupLoadedSharedMemoryTexture(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture);
-	void GetSurfaceVerticesStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& buffer, VkDeviceSize& stagingBufferSize);
-	void GetTurbulentVerticesStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& buffer, VkDeviceSize& stagingBufferSize);
-	void GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& alias, LoadedSharedMemoryBuffer& vertexBuffer, LoadedSharedMemoryTexCoordsBuffer& texCoordsBuffer, VkDeviceSize& stagingBufferSize);
-	void GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& lightmap, VkDeviceSize& stagingBufferSize);
+	void GetSurfaceVerticesStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSharedMemoryBuffer& loaded, VkDeviceSize& stagingBufferSize);
+	void GetTurbulentVerticesStagingBufferSize(AppState& appState, dturbulent_t& turbulent, LoadedSharedMemoryBuffer& loaded, VkDeviceSize& stagingBufferSize);
+	void GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& alias, LoadedSharedMemoryBuffer& loadedVertices, LoadedSharedMemoryTexCoordsBuffer& loadedTexCoords, VkDeviceSize& stagingBufferSize);
+	void GetSurfaceLightmapStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedLightmap& loaded, VkDeviceSize& stagingBufferSize);
 	void GetSurfaceTextureStagingBufferSize(AppState& appState, int lastSurface, std::vector<dsurface_t>& surfaceList, std::vector<LoadedSharedMemoryTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetFenceTextureStagingBufferSize(AppState& appState, int lastFence, std::vector<dsurface_t>& fenceList, std::vector<LoadedSharedMemoryTexture>& textures, VkDeviceSize& stagingBufferSize);
 	void GetTurbulentStagingBufferSize(AppState& appState, int lastTurbulent, std::vector<dturbulent_t>& turbulentList, std::vector<LoadedSharedMemoryTexture>& textures, VkDeviceSize& stagingBufferSize);

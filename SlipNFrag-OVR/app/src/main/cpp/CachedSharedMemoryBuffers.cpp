@@ -1,4 +1,47 @@
 #include "CachedSharedMemoryBuffers.h"
+#include "Constants.h"
+
+void CachedSharedMemoryBuffers::SetupVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentVertices == nullptr)
+	{
+		firstVertices = &loaded;
+	}
+	else
+	{
+		currentVertices->next = &loaded;
+	}
+	currentVertices = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupAliasVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentAliasVertices == nullptr)
+	{
+		firstAliasVertices = &loaded;
+	}
+	else
+	{
+		currentAliasVertices->next = &loaded;
+	}
+	currentAliasVertices = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupAliasTexCoords(AppState &appState, LoadedSharedMemoryTexCoordsBuffer &loaded)
+{
+	loaded.next = nullptr;
+	if (currentAliasTexCoords == nullptr)
+	{
+		firstAliasTexCoords = &loaded;
+	}
+	else
+	{
+		currentAliasTexCoords->next = &loaded;
+	}
+	currentAliasTexCoords = &loaded;
+}
 
 void CachedSharedMemoryBuffers::DisposeFront()
 {
@@ -31,5 +74,27 @@ void CachedSharedMemoryBuffers::Delete(AppState& appState)
 		next = b->next;
 		b->Delete(appState);
 		delete b;
+	}
+}
+
+void CachedSharedMemoryBuffers::DeleteOld(AppState& appState)
+{
+	if (oldBuffers != nullptr)
+	{
+		for (auto b = &oldBuffers; *b != nullptr; )
+		{
+			(*b)->unusedCount++;
+			if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
+			{
+				auto next = (*b)->next;
+				(*b)->Delete(appState);
+				delete *b;
+				*b = next;
+			}
+			else
+			{
+				b = &(*b)->next;
+			}
+		}
 	}
 }
