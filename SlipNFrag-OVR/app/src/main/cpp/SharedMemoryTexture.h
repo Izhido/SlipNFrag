@@ -18,7 +18,6 @@ struct SharedMemoryTexture
 	VkImageView view = VK_NULL_HANDLE;
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 	DescriptorSets* descriptorSets = nullptr;
-	bool filled;
 
 	void Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);
 	void FillMipmapped(AppState& appState, StagingBuffer& buffer);

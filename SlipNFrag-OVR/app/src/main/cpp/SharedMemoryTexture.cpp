@@ -124,16 +124,8 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	}
 	auto& barrier = buffer.imageBarriers[buffer.lastBarrier];
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	if (filled)
-	{
-		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	}
-	else
-	{
-		barrier.srcAccessMask = 0;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	}
+	barrier.srcAccessMask = 0;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	barrier.image = image;
@@ -204,7 +196,6 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 		writeBarrier.subresourceRange.baseMipLevel = 1;
 		writeBarrier.subresourceRange.levelCount = mipCount - 1;
 	}
-	filled = true;
 }
 
 void SharedMemoryTexture::Delete(AppState& appState)
