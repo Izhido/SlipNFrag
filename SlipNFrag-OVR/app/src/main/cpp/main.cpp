@@ -29,27 +29,33 @@ extern m_state_t m_state;
 VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallback(VkDebugReportFlagsEXT msgFlags, VkDebugReportObjectTypeEXT objType, uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *pUserData)
 {
 	const char *reportType = "Unknown";
+	int priority = ANDROID_LOG_UNKNOWN;
 	if ((msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT) != 0)
 	{
 		reportType = "Error";
+		priority = ANDROID_LOG_ERROR;
 	}
 	else if ((msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT) != 0)
 	{
 		reportType = "Warning";
+		priority = ANDROID_LOG_WARN;
 	}
 	else if ((msgFlags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) != 0)
 	{
 		reportType = "Performance Warning";
+		priority = ANDROID_LOG_WARN;
 	}
 	else if ((msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) != 0)
 	{
 		reportType = "Information";
+		priority = ANDROID_LOG_INFO;
 	}
 	else if ((msgFlags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) != 0)
 	{
 		reportType = "Debug";
+		priority = ANDROID_LOG_DEBUG;
 	}
-	__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "%s: [%s] Code %d : %s", reportType, pLayerPrefix, msgCode, pMsg);
+	__android_log_print(priority, LOG_TAG, "%s: [%s] Code %d : %s", reportType, pLayerPrefix, msgCode, pMsg);
 	return VK_FALSE;
 }
 
