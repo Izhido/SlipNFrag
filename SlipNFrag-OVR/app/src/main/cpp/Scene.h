@@ -55,13 +55,6 @@ struct Scene
 	Pipeline sky;
 	Pipeline floor;
 	Pipeline console;
-	PipelineAttributes surfaceAttributes;
-	PipelineAttributes spriteAttributes;
-	PipelineAttributes colormappedAttributes;
-	PipelineAttributes coloredAttributes;
-	PipelineAttributes skyAttributes;
-	PipelineAttributes floorAttributes;
-	PipelineAttributes consoleAttributes;
 	Buffer matrices;
 	int numBuffers;
 	int hostClearCount;

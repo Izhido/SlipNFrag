@@ -445,6 +445,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	pipelineDynamicStateCreateInfo.dynamicStateCount = 2;
 	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
+	PipelineAttributes surfaceAttributes { };
 	surfaceAttributes.vertexAttributes.resize(5);
 	surfaceAttributes.vertexBindings.resize(2);
 	surfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -474,6 +475,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaceAttributes.vertexInputState.pVertexAttributeDescriptions = surfaceAttributes.vertexAttributes.data();
 	surfaceAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	surfaceAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	PipelineAttributes spriteAttributes { };
 	spriteAttributes.vertexAttributes.resize(6);
 	spriteAttributes.vertexBindings.resize(3);
 	spriteAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -508,6 +510,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	spriteAttributes.vertexInputState.pVertexAttributeDescriptions = spriteAttributes.vertexAttributes.data();
 	spriteAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	spriteAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	PipelineAttributes colormappedAttributes { };
 	colormappedAttributes.vertexAttributes.resize(7);
 	colormappedAttributes.vertexBindings.resize(4);
 	colormappedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -547,6 +550,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	colormappedAttributes.vertexInputState.pVertexAttributeDescriptions = colormappedAttributes.vertexAttributes.data();
 	colormappedAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	colormappedAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	PipelineAttributes coloredAttributes { };
 	coloredAttributes.vertexAttributes.resize(6);
 	coloredAttributes.vertexBindings.resize(3);
 	coloredAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -581,6 +585,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	coloredAttributes.vertexInputState.pVertexAttributeDescriptions = coloredAttributes.vertexAttributes.data();
 	coloredAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	coloredAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	PipelineAttributes skyAttributes { };
 	skyAttributes.vertexAttributes.resize(2);
 	skyAttributes.vertexBindings.resize(2);
 	skyAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -597,6 +602,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	skyAttributes.vertexInputState.pVertexAttributeDescriptions = skyAttributes.vertexAttributes.data();
 	skyAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	skyAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	PipelineAttributes floorAttributes { };
 	floorAttributes.vertexAttributes.resize(2);
 	floorAttributes.vertexBindings.resize(2);
 	floorAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -613,6 +619,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	floorAttributes.vertexInputState.pVertexAttributeDescriptions = floorAttributes.vertexAttributes.data();
 	floorAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	floorAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	PipelineAttributes consoleAttributes { };
 	consoleAttributes.vertexAttributes.resize(2);
 	consoleAttributes.vertexBindings.resize(2);
 	consoleAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;

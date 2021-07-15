@@ -7,11 +7,11 @@ struct AppState;
 
 struct SharedMemoryBuffer
 {
-	SharedMemoryBuffer* next = nullptr;
-	int unusedCount = 0;
-	VkDeviceSize size = 0;
-	VkBuffer buffer = VK_NULL_HANDLE;
-	SharedMemory* sharedMemory = nullptr;
+	SharedMemoryBuffer* next;
+	int unusedCount;
+	VkDeviceSize size;
+	VkBuffer buffer;
+	SharedMemory* sharedMemory;
 
 	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 	void CreateVertexBuffer(AppState& appState, VkDeviceSize size);

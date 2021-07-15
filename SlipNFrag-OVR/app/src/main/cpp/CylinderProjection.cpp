@@ -1,6 +1,5 @@
 #include "CylinderProjection.h"
 #include "AppState.h"
-#include <android/log.h>
 
 const float CylinderProjection::density = 4500.0f;
 const float CylinderProjection::radius = 1.0f;

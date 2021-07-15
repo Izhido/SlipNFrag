@@ -30,7 +30,7 @@ void PerImage::GetSurfaceVerticesStagingBufferSize(AppState& appState, dsurface_
 		if (entry == appState.Scene.verticesPerKey.end())
 		{
 			loaded.size = surface.vertex_count * 3 * sizeof(float);
-			loaded.buffer = new SharedMemoryBuffer();
+			loaded.buffer = new SharedMemoryBuffer { };
 			loaded.buffer->CreateVertexBuffer(appState, loaded.size);
 			appState.Scene.verticesPerKey.insert({ vertexes, loaded.buffer });
 			stagingBufferSize += loaded.size;
@@ -62,7 +62,7 @@ void PerImage::GetTurbulentVerticesStagingBufferSize(AppState& appState, dturbul
 		if (entry == appState.Scene.verticesPerKey.end())
 		{
 			loaded.size = turbulent.vertex_count * 3 * sizeof(float);
-			loaded.buffer = new SharedMemoryBuffer();
+			loaded.buffer = new SharedMemoryBuffer { };
 			loaded.buffer->CreateVertexBuffer(appState, loaded.size);
 			appState.Scene.verticesPerKey.insert({ vertexes, loaded.buffer });
 			stagingBufferSize += loaded.size;
@@ -94,7 +94,7 @@ void PerImage::GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& a
 		if (entry == appState.Scene.verticesPerKey.end())
 		{
 			loadedVertices.size = alias.vertex_count * 2 * 4 * sizeof(float);
-			loadedVertices.buffer = new SharedMemoryBuffer();
+			loadedVertices.buffer = new SharedMemoryBuffer { };
 			loadedVertices.buffer->CreateVertexBuffer(appState, loadedVertices.size);
 			appState.Scene.verticesPerKey.insert({ vertices, loadedVertices.buffer });
 			stagingBufferSize += loadedVertices.size;
@@ -102,7 +102,7 @@ void PerImage::GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& a
 			loadedVertices.source = alias.vertices;
 			appState.Scene.buffers.SetupAliasVertices(appState, loadedVertices);
 			loadedTexCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
-			loadedTexCoords.buffer = new SharedMemoryBuffer();
+			loadedTexCoords.buffer = new SharedMemoryBuffer { };
 			loadedTexCoords.buffer->CreateVertexBuffer(appState, loadedTexCoords.size);
 			appState.Scene.texCoordsPerKey.insert({ vertices, loadedTexCoords.buffer });
 			stagingBufferSize += loadedTexCoords.size;
@@ -230,7 +230,7 @@ void PerImage::GetSurfaceTextureStagingBufferSize(AppState& appState, int lastSu
 		if (entry == appState.Scene.surfaceTexturesPerKey.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(surface.texture_width, surface.texture_height)))) + 1;
-			auto texture = new SharedMemoryTexture();
+			auto texture = new SharedMemoryTexture { };
 			texture->Create(appState, surface.texture_width, surface.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			loaded.size = surface.texture_size;
 			stagingBufferSize += loaded.size;
@@ -266,7 +266,7 @@ void PerImage::GetFenceTextureStagingBufferSize(AppState& appState, int lastFenc
 		if (entry == appState.Scene.fenceTexturesPerKey.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(fence.texture_width, fence.texture_height)))) + 1;
-			auto texture = new SharedMemoryTexture();
+			auto texture = new SharedMemoryTexture { };
 			texture->Create(appState, fence.texture_width, fence.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			loaded.size = fence.texture_size;
 			stagingBufferSize += loaded.size;
@@ -302,7 +302,7 @@ void PerImage::GetTurbulentStagingBufferSize(AppState& appState, int lastTurbule
 		if (entry == appState.Scene.turbulentPerKey.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
-			auto texture = new SharedMemoryTexture();
+			auto texture = new SharedMemoryTexture { };
 			texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			loaded.size = turbulent.size;
 			stagingBufferSize += loaded.size;
@@ -354,7 +354,7 @@ void PerImage::GetAliasStagingBufferSize(AppState& appState, int lastAlias, std:
 		if (entry == appState.Scene.aliasTexturesPerKey.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
-			auto texture = new SharedMemoryTexture();
+			auto texture = new SharedMemoryTexture { };
 			texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			loaded.texture.size = alias.size;
 			stagingBufferSize += loaded.texture.size;
@@ -389,7 +389,7 @@ void PerImage::GetViewmodelStagingBufferSize(AppState& appState, int lastViewmod
 		if (entry == appState.Scene.viewmodelTexturesPerKey.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(viewmodel.width, viewmodel.height)))) + 1;
-			auto texture = new SharedMemoryTexture();
+			auto texture = new SharedMemoryTexture { };
 			texture->Create(appState, viewmodel.width, viewmodel.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			loaded.texture.size = viewmodel.size;
 			stagingBufferSize += loaded.texture.size;
@@ -574,9 +574,8 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 		auto entry = appState.Scene.spritesPerKey.find(sprite.data);
 		if (entry == appState.Scene.spritesPerKey.end())
 		{
-			SharedMemoryTexture* texture;
 			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
-			texture = new SharedMemoryTexture();
+			auto texture = new SharedMemoryTexture { };
 			texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			loaded.size = sprite.size;
 			size += loaded.size;

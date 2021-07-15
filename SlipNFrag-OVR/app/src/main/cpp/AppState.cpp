@@ -2,7 +2,6 @@
 #include "VulkanCallWrappers.h"
 #include "Constants.h"
 #include "VrApi_Helpers.h"
-#include <android/log.h>
 #include "sys_ovr.h"
 
 void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
