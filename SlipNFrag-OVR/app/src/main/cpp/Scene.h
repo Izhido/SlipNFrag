@@ -4,18 +4,13 @@
 #include "Pipeline.h"
 #include "PipelineAttributes.h"
 #include "CachedSharedMemoryBuffers.h"
-#include "LoadedSharedMemoryBuffer.h"
-#include "LoadedSharedMemoryTexCoordsBuffer.h"
 #include "CachedBuffers.h"
-#include <unordered_map>
 #include "CachedSharedMemoryTextures.h"
 #include "CachedLightmaps.h"
-#include "LoadedSharedMemoryTexture.h"
 #include "LoadedTexture.h"
 #include "LoadedColormappedTexture.h"
 #include "VrApi.h"
 #include "Instance.h"
-#include "StagingBuffer.h"
 #include "DescriptorSets.h"
 
 struct Scene

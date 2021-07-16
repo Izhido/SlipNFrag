@@ -1194,46 +1194,46 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 
 void PerImage::SetPushConstants(dsurface_t& surface, float pushConstants[])
 {
-	pushConstants[0] = surface.origin_x;
-	pushConstants[1] = surface.origin_y;
-	pushConstants[2] = surface.origin_z;
-	pushConstants[3] = surface.yaw * M_PI / 180;
-	pushConstants[4] = surface.pitch * M_PI / 180;
-	pushConstants[5] = -surface.roll * M_PI / 180;
-	pushConstants[6] = surface.vecs[0][0];
-	pushConstants[7] = surface.vecs[0][1];
-	pushConstants[8] = surface.vecs[0][2];
-	pushConstants[9] = surface.vecs[0][3];
-	pushConstants[10] = surface.vecs[1][0];
-	pushConstants[11] = surface.vecs[1][1];
-	pushConstants[12] = surface.vecs[1][2];
-	pushConstants[13] = surface.vecs[1][3];
-	pushConstants[14] = surface.texturemins[0];
-	pushConstants[15] = surface.texturemins[1];
-	pushConstants[16] = surface.extents[0];
-	pushConstants[17] = surface.extents[1];
-	pushConstants[18] = surface.texture_width;
-	pushConstants[19] = surface.texture_height;
+	pushConstants[0] = surface.vecs[0][0];
+	pushConstants[1] = surface.vecs[0][1];
+	pushConstants[2] = surface.vecs[0][2];
+	pushConstants[3] = surface.vecs[0][3];
+	pushConstants[4] = surface.vecs[1][0];
+	pushConstants[5] = surface.vecs[1][1];
+	pushConstants[6] = surface.vecs[1][2];
+	pushConstants[7] = surface.vecs[1][3];
+	pushConstants[8] = surface.texturemins[0];
+	pushConstants[9] = surface.texturemins[1];
+	pushConstants[10] = surface.extents[0];
+	pushConstants[11] = surface.extents[1];
+	pushConstants[12] = surface.texture_width;
+	pushConstants[13] = surface.texture_height;
+	pushConstants[14] = surface.origin_x;
+	pushConstants[15] = surface.origin_y;
+	pushConstants[16] = surface.origin_z;
+	pushConstants[17] = surface.yaw * M_PI / 180;
+	pushConstants[18] = surface.pitch * M_PI / 180;
+	pushConstants[19] = -surface.roll * M_PI / 180;
 }
 
 void PerImage::SetPushConstants(dturbulent_t& turbulent, float pushConstants[])
 {
-	pushConstants[0] = turbulent.origin_x;
-	pushConstants[1] = turbulent.origin_y;
-	pushConstants[2] = turbulent.origin_z;
-	pushConstants[3] = turbulent.yaw * M_PI / 180;
-	pushConstants[4] = turbulent.pitch * M_PI / 180;
-	pushConstants[5] = -turbulent.roll * M_PI / 180;
-	pushConstants[6] = turbulent.vecs[0][0];
-	pushConstants[7] = turbulent.vecs[0][1];
-	pushConstants[8] = turbulent.vecs[0][2];
-	pushConstants[9] = turbulent.vecs[0][3];
-	pushConstants[10] = turbulent.vecs[1][0];
-	pushConstants[11] = turbulent.vecs[1][1];
-	pushConstants[12] = turbulent.vecs[1][2];
-	pushConstants[13] = turbulent.vecs[1][3];
-	pushConstants[14] = turbulent.width;
-	pushConstants[15] = turbulent.height;
+	pushConstants[0] = turbulent.vecs[0][0];
+	pushConstants[1] = turbulent.vecs[0][1];
+	pushConstants[2] = turbulent.vecs[0][2];
+	pushConstants[3] = turbulent.vecs[0][3];
+	pushConstants[4] = turbulent.vecs[1][0];
+	pushConstants[5] = turbulent.vecs[1][1];
+	pushConstants[6] = turbulent.vecs[1][2];
+	pushConstants[7] = turbulent.vecs[1][3];
+	pushConstants[8] = turbulent.width;
+	pushConstants[9] = turbulent.height;
+	pushConstants[10] = turbulent.origin_x;
+	pushConstants[11] = turbulent.origin_y;
+	pushConstants[12] = turbulent.origin_z;
+	pushConstants[13] = turbulent.yaw * M_PI / 180;
+	pushConstants[14] = turbulent.pitch * M_PI / 180;
+	pushConstants[15] = -turbulent.roll * M_PI / 180;
 }
 
 void PerImage::SetPushConstants(dalias_t& alias, float pushConstants[])

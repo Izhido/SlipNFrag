@@ -15,22 +15,15 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 
 layout(push_constant) uniform Transforms
 {
-	layout(offset = 0) float originX;
-	layout(offset = 4) float originY;
-	layout(offset = 8) float originZ;
-	layout(offset = 12) float yaw;
-	layout(offset = 16) float pitch;
-	layout(offset = 20) float roll;
-	layout(offset = 24) float vecs00;
-	layout(offset = 28) float vecs01;
-	layout(offset = 32) float vecs02;
-	layout(offset = 36) float vecs03;
-	layout(offset = 40) float vecs10;
-	layout(offset = 44) float vecs11;
-	layout(offset = 48) float vecs12;
-	layout(offset = 52) float vecs13;
-	layout(offset = 56) float width;
-	layout(offset = 60) float height;
+	layout(offset = 0) vec4 vecs0;
+	layout(offset = 16) vec4 vecs1;
+	layout(offset = 32) vec2 textureSize;
+	layout(offset = 40) float originX;
+	layout(offset = 44) float originY;
+	layout(offset = 48) float originZ;
+	layout(offset = 52) float yaw;
+	layout(offset = 56) float pitch;
+	layout(offset = 60) float roll;
 };
 
 layout(location = 0) in vec3 vertexPosition;
@@ -52,7 +45,7 @@ void main(void)
 	mat4 pitchRotation = mat4(cosine.y, -sine.y, 0, 0, sine.y, cosine.y, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 	mat4 rollRotation = mat4(1, 0, 0, 0, 0, cosine.z, -sine.z, 0, 0, sine.z, cosine.z, 0, 0, 0, 0, 1);
 	gl_Position = ProjectionMatrix[gl_ViewID_OVR] * ViewMatrix[gl_ViewID_OVR] * vertexTransform * translation * rollRotation * pitchRotation * yawRotation * position;
-	float s = vertexPosition.x * vecs00 + vertexPosition.y * vecs01 + vertexPosition.z * vecs02 + vecs03;
-	float t = vertexPosition.x * vecs10 + vertexPosition.y * vecs11 + vertexPosition.z * vecs12 + vecs13;
-	fragmentTexCoords = vec2(s / width, t / height);
+	vec4 position4 = vec4(vertexPosition, 1);
+	vec2 texCoords = vec2(dot(position4, vecs0), dot(position4, vecs1));
+	fragmentTexCoords = texCoords / textureSize;
 }
