@@ -55,7 +55,8 @@ struct Scene
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
-	std::unordered_map<void*, SharedMemoryBuffer*> texturePositionsPerKey;
+	std::unordered_map<void*, SharedMemoryBuffer*> surfaceTexturePositionsPerKey;
+	std::unordered_map<void*, SharedMemoryBuffer*> turbulentTexturePositionsPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texCoordsPerKey;
 	std::vector<LoadedSharedMemoryBuffer> surfaceVertex16List;
 	std::vector<LoadedSharedMemoryBuffer> surfaceTexturePosition16List;
@@ -66,7 +67,9 @@ struct Scene
 	std::vector<LoadedSharedMemoryBuffer> fenceVertex32List;
 	std::vector<LoadedSharedMemoryBuffer> fenceTexturePosition32List;
 	std::vector<LoadedSharedMemoryBuffer> turbulentVertex16List;
+	std::vector<LoadedSharedMemoryBuffer> turbulentTexturePosition16List;
 	std::vector<LoadedSharedMemoryBuffer> turbulentVertex32List;
+	std::vector<LoadedSharedMemoryBuffer> turbulentTexturePosition32List;
 	std::vector<LoadedSharedMemoryBuffer> aliasVertex16List;
 	std::vector<LoadedSharedMemoryTexCoordsBuffer> aliasTexCoords16List;
 	std::vector<LoadedSharedMemoryBuffer> aliasVertex32List;
@@ -120,6 +123,7 @@ struct Scene
 	void* previousVertexes;
 	SharedMemoryBuffer* previousVertexBuffer;
 	void* previousSurfaces;
+	void* previousTurbulent;
 	SharedMemoryBuffer* previousTexturePosition;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;

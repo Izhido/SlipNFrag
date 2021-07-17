@@ -37,6 +37,7 @@ struct dspritedata_t
 
 struct dturbulent_t
 {
+	void* surface;
 	void* vertexes;
 	int vertex_count;
 	void* texture;
@@ -52,7 +53,6 @@ struct dturbulent_t
 	float yaw;
 	float pitch;
 	float roll;
-	float vecs[2][4];
 };
 
 struct dalias_t

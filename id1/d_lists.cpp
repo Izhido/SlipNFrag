@@ -495,6 +495,7 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 {
 	auto texinfo = face->texinfo;
 	auto texture = texinfo->texture;
+	turbulent.surface = face;
 	turbulent.vertexes = entity->model->vertexes;
 	turbulent.vertex_count = entity->model->numvertexes;
 	turbulent.texture = texture;
@@ -509,13 +510,6 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
-	for (auto j = 0; j < 2; j++)
-	{
-		for (auto i = 0; i < 4; i++)
-		{
-			turbulent.vecs[j][i] = texinfo->vecs[j][i];
-		}
-	}
 }
 
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)

@@ -528,36 +528,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	spriteAttributes.vertexInputState.pVertexAttributeDescriptions = spriteAttributes.vertexAttributes.data();
 	spriteAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	spriteAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	PipelineAttributes turbulentAttributes { };
-	turbulentAttributes.vertexAttributes.resize(5);
-	turbulentAttributes.vertexBindings.resize(2);
-	turbulentAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-	turbulentAttributes.vertexBindings[0].stride = 3 * sizeof(float);
-	turbulentAttributes.vertexAttributes[1].location = 1;
-	turbulentAttributes.vertexAttributes[1].binding = 1;
-	turbulentAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	turbulentAttributes.vertexAttributes[2].location = 2;
-	turbulentAttributes.vertexAttributes[2].binding = 1;
-	turbulentAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	turbulentAttributes.vertexAttributes[2].offset = 4 * sizeof(float);
-	turbulentAttributes.vertexAttributes[3].location = 3;
-	turbulentAttributes.vertexAttributes[3].binding = 1;
-	turbulentAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	turbulentAttributes.vertexAttributes[3].offset = 8 * sizeof(float);
-	turbulentAttributes.vertexAttributes[4].location = 4;
-	turbulentAttributes.vertexAttributes[4].binding = 1;
-	turbulentAttributes.vertexAttributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	turbulentAttributes.vertexAttributes[4].offset = 12 * sizeof(float);
-	turbulentAttributes.vertexBindings[1].binding = 1;
-	turbulentAttributes.vertexBindings[1].stride = 16 * sizeof(float);
-	turbulentAttributes.vertexBindings[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-	turbulentAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	turbulentAttributes.vertexInputState.vertexBindingDescriptionCount = turbulentAttributes.vertexBindings.size();
-	turbulentAttributes.vertexInputState.pVertexBindingDescriptions = turbulentAttributes.vertexBindings.data();
-	turbulentAttributes.vertexInputState.vertexAttributeDescriptionCount = turbulentAttributes.vertexAttributes.size();
-	turbulentAttributes.vertexInputState.pVertexAttributeDescriptions = turbulentAttributes.vertexAttributes.data();
-	turbulentAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	turbulentAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	PipelineAttributes colormappedAttributes { };
 	colormappedAttributes.vertexAttributes.resize(7);
 	colormappedAttributes.vertexBindings.resize(4);
@@ -795,14 +765,14 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulent.stages[1].module = turbulentFragment;
 	turbulent.stages[1].pName = "main";
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 17 * sizeof(float);
+	pushConstantInfo.size = 7 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	VK(appState.Device.vkCreatePipelineLayout(appState.Device.device, &pipelineLayoutCreateInfo, nullptr, &turbulent.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = turbulent.stages.size();
 	graphicsPipelineCreateInfo.pStages = turbulent.stages.data();
-	graphicsPipelineCreateInfo.pVertexInputState = &turbulentAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &turbulentAttributes.inputAssemblyState;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	graphicsPipelineCreateInfo.layout = turbulent.pipelineLayout;
 	VK(appState.Device.vkCreateGraphicsPipelines(appState.Device.device, appState.Context.pipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulent.pipeline));
 	alias.stages.resize(2);
@@ -961,8 +931,10 @@ void Scene::Initialize()
 	controllerVerticesSize = 0;
 	buffers.firstVertices = nullptr;
 	buffers.currentVertices = nullptr;
-	buffers.firstTexturePositions = nullptr;
-	buffers.currentTexturePositions = nullptr;
+	buffers.firstSurfaceTexturePositions = nullptr;
+	buffers.currentSurfaceTexturePositions = nullptr;
+	buffers.firstTurbulentTexturePositions = nullptr;
+	buffers.currentTurbulentTexturePositions = nullptr;
 	buffers.firstAliasVertices = nullptr;
 	buffers.currentAliasVertices = nullptr;
 	buffers.firstAliasTexCoords = nullptr;
@@ -974,6 +946,7 @@ void Scene::Initialize()
 	previousVertexes = nullptr;
 	previousVertexBuffer = nullptr;
 	previousSurfaces = nullptr;
+	previousTurbulent = nullptr;
 	previousTexturePosition = nullptr;
 	previousTexCoordsBuffer = nullptr;
 }
@@ -1001,6 +974,7 @@ void Scene::Reset()
 		skybox = VK_NULL_HANDLE;
 	}
 	texCoordsPerKey.clear();
-	texturePositionsPerKey.clear();
+	turbulentTexturePositionsPerKey.clear();
+	surfaceTexturePositionsPerKey.clear();
 	verticesPerKey.clear();
 }
