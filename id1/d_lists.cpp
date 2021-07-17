@@ -81,16 +81,6 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	surface.yaw = entity->angles[YAW];
 	surface.pitch = entity->angles[PITCH];
 	surface.roll = entity->angles[ROLL];
-	auto texinfo = face->texinfo;
-	for (auto j = 0; j < 2; j++)
-	{
-		for (auto i = 0; i < 4; i++)
-		{
-			surface.vecs[j][i] = texinfo->vecs[j][i];
-		}
-		surface.texturemins[j] = face->texturemins[j];
-		surface.extents[j] = face->extents[j];
-	}
 }
 
 void D_AddSurfaceIndices16ToLists (entity_t* entity, msurface_t* face)

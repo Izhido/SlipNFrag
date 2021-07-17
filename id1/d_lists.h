@@ -23,9 +23,6 @@ struct dsurface_t
 	float yaw;
 	float pitch;
 	float roll;
-	float vecs[2][4];
-	float texturemins[2];
-	float extents[2];
 };
 
 struct dspritedata_t

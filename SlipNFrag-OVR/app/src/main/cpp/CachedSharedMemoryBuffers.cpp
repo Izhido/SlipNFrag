@@ -15,6 +15,20 @@ void CachedSharedMemoryBuffers::SetupVertices(AppState& appState, LoadedSharedMe
 	currentVertices = &loaded;
 }
 
+void CachedSharedMemoryBuffers::SetupTexturePositions(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentTexturePositions == nullptr)
+	{
+		firstTexturePositions = &loaded;
+	}
+	else
+	{
+		currentTexturePositions->next = &loaded;
+	}
+	currentTexturePositions = &loaded;
+}
+
 void CachedSharedMemoryBuffers::SetupAliasVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;

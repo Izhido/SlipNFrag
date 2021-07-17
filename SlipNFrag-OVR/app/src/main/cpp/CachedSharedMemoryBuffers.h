@@ -9,12 +9,15 @@ struct CachedSharedMemoryBuffers
 	SharedMemoryBuffer* oldBuffers;
 	LoadedSharedMemoryBuffer* firstVertices;
 	LoadedSharedMemoryBuffer* currentVertices;
+	LoadedSharedMemoryBuffer* firstTexturePositions;
+	LoadedSharedMemoryBuffer* currentTexturePositions;
 	LoadedSharedMemoryBuffer* firstAliasVertices;
 	LoadedSharedMemoryBuffer* currentAliasVertices;
 	LoadedSharedMemoryTexCoordsBuffer* firstAliasTexCoords;
 	LoadedSharedMemoryTexCoordsBuffer* currentAliasTexCoords;
 
 	void SetupVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded);
+	void SetupTexturePositions(AppState& appState, LoadedSharedMemoryBuffer& loaded);
 	void SetupAliasVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded);
 	void SetupAliasTexCoords(AppState& appState, LoadedSharedMemoryTexCoordsBuffer& loaded);
 	void DisposeFront();
