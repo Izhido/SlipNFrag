@@ -3,6 +3,8 @@
 #include <vulkan/vulkan.h>
 #include "Pipeline.h"
 #include "PipelineAttributes.h"
+#include "LoadedSurface.h"
+#include "LoadedTurbulent.h"
 #include "CachedSharedMemoryBuffers.h"
 #include "CachedBuffers.h"
 #include "CachedSharedMemoryTextures.h"
@@ -15,7 +17,7 @@
 
 struct Scene
 {
-	bool createdScene;
+	bool created;
 	VkShaderModule surfaceVertex;
 	VkShaderModule surfaceFragment;
 	VkShaderModule fenceFragment;
@@ -55,21 +57,20 @@ struct Scene
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
-	std::unordered_map<void*, SharedMemoryBuffer*> surfaceTexturePositionsPerKey;
-	std::unordered_map<void*, SharedMemoryBuffer*> turbulentTexturePositionsPerKey;
+	std::unordered_map<void*, SharedMemoryBuffer*> texturePositionsPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texCoordsPerKey;
-	std::vector<LoadedSharedMemoryBuffer> surfaceVertex16List;
-	std::vector<LoadedSharedMemoryBuffer> surfaceTexturePosition16List;
-	std::vector<LoadedSharedMemoryBuffer> surfaceVertex32List;
-	std::vector<LoadedSharedMemoryBuffer> surfaceTexturePosition32List;
-	std::vector<LoadedSharedMemoryBuffer> fenceVertex16List;
-	std::vector<LoadedSharedMemoryBuffer> fenceTexturePosition16List;
-	std::vector<LoadedSharedMemoryBuffer> fenceVertex32List;
-	std::vector<LoadedSharedMemoryBuffer> fenceTexturePosition32List;
-	std::vector<LoadedSharedMemoryBuffer> turbulentVertex16List;
-	std::vector<LoadedSharedMemoryBuffer> turbulentTexturePosition16List;
-	std::vector<LoadedSharedMemoryBuffer> turbulentVertex32List;
-	std::vector<LoadedSharedMemoryBuffer> turbulentTexturePosition32List;
+	int lastSurface16;
+	std::vector<LoadedSurface> loadedSurfaces16;
+	int lastSurface32;
+	std::vector<LoadedSurface> loadedSurfaces32;
+	int lastFence16;
+	std::vector<LoadedSurface> loadedFences16;
+	int lastFence32;
+	std::vector<LoadedSurface> loadedFences32;
+	int lastTurbulent16;
+	std::vector<LoadedTurbulent> loadedTurbulent16;
+	int lastTurbulent32;
+	std::vector<LoadedTurbulent> loadedTurbulent32;
 	std::vector<LoadedSharedMemoryBuffer> aliasVertex16List;
 	std::vector<LoadedSharedMemoryTexCoordsBuffer> aliasTexCoords16List;
 	std::vector<LoadedSharedMemoryBuffer> aliasVertex32List;
@@ -82,22 +83,11 @@ struct Scene
 	CachedLightmaps lightmaps;
 	CachedSharedMemoryTextures textures;
 	std::unordered_map<void*, SharedMemoryTexture*> surfaceTexturesPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> fenceTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> turbulentPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> viewmodelTexturesPerKey;
-	std::vector<LoadedLightmap> surfaceLightmap16List;
-	std::vector<LoadedLightmap> surfaceLightmap32List;
-	std::vector<LoadedLightmap> fenceLightmap16List;
-	std::vector<LoadedLightmap> fenceLightmap32List;
-	std::vector<LoadedSharedMemoryTexture> surfaceTexture16List;
-	std::vector<LoadedSharedMemoryTexture> surfaceTexture32List;
-	std::vector<LoadedSharedMemoryTexture> fenceTexture16List;
-	std::vector<LoadedSharedMemoryTexture> fenceTexture32List;
 	std::vector<LoadedSharedMemoryTexture> spriteList;
-	std::vector<LoadedSharedMemoryTexture> turbulent16List;
-	std::vector<LoadedSharedMemoryTexture> turbulent32List;
 	std::vector<LoadedColormappedTexture> alias16List;
 	std::vector<LoadedColormappedTexture> alias32List;
 	std::vector<LoadedColormappedTexture> viewmodel16List;
@@ -122,9 +112,10 @@ struct Scene
 	StagingBuffer stagingBuffer;
 	void* previousVertexes;
 	SharedMemoryBuffer* previousVertexBuffer;
-	void* previousSurfaces;
-	void* previousTurbulent;
+	void* previousSurface;
 	SharedMemoryBuffer* previousTexturePosition;
+	void* previousTexture;
+	SharedMemoryTexture* previousSharedMemoryTexture;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 

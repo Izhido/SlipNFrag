@@ -1,18 +1,18 @@
 #include "CachedSharedMemoryTextures.h"
 #include "Constants.h"
 
-void CachedSharedMemoryTextures::Setup(AppState& appState, LoadedSharedMemoryTexture& sharedMemoryTexture)
+void CachedSharedMemoryTextures::Setup(AppState& appState, LoadedSharedMemoryTexture& loaded)
 {
-	sharedMemoryTexture.next = nullptr;
+	loaded.next = nullptr;
 	if (current == nullptr)
 	{
-		first = &sharedMemoryTexture;
+		first = &loaded;
 	}
 	else
 	{
-		current->next = &sharedMemoryTexture;
+		current->next = &loaded;
 	}
-	current = &sharedMemoryTexture;
+	current = &loaded;
 }
 
 void CachedSharedMemoryTextures::DisposeFront()

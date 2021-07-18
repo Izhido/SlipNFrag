@@ -15,32 +15,32 @@ void CachedSharedMemoryBuffers::SetupVertices(AppState& appState, LoadedSharedMe
 	currentVertices = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupSurfaceTexturePositions(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupSurfaceTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;
-	if (currentSurfaceTexturePositions == nullptr)
+	if (currentSurfaceTexturePosition == nullptr)
 	{
-		firstSurfaceTexturePositions = &loaded;
+		firstSurfaceTexturePosition = &loaded;
 	}
 	else
 	{
-		currentSurfaceTexturePositions->next = &loaded;
+		currentSurfaceTexturePosition->next = &loaded;
 	}
-	currentSurfaceTexturePositions = &loaded;
+	currentSurfaceTexturePosition = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupTurbulentTexturePositions(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupTurbulentTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;
-	if (currentTurbulentTexturePositions == nullptr)
+	if (currentTurbulentTexturePosition == nullptr)
 	{
-		firstTurbulentTexturePositions = &loaded;
+		firstTurbulentTexturePosition = &loaded;
 	}
 	else
 	{
-		currentTurbulentTexturePositions->next = &loaded;
+		currentTurbulentTexturePosition->next = &loaded;
 	}
-	currentTurbulentTexturePositions = &loaded;
+	currentTurbulentTexturePosition = &loaded;
 }
 
 void CachedSharedMemoryBuffers::SetupAliasVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded)

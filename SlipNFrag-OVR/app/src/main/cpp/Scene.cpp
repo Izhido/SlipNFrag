@@ -902,6 +902,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	VK(appState.Device.vkCreateSampler(appState.Device.device, &samplerCreateInfo, nullptr, &lightmapSampler));
 	appState.Keyboard.Create(appState);
+	created = true;
 }
 
 void Scene::CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule)
@@ -931,10 +932,10 @@ void Scene::Initialize()
 	controllerVerticesSize = 0;
 	buffers.firstVertices = nullptr;
 	buffers.currentVertices = nullptr;
-	buffers.firstSurfaceTexturePositions = nullptr;
-	buffers.currentSurfaceTexturePositions = nullptr;
-	buffers.firstTurbulentTexturePositions = nullptr;
-	buffers.currentTurbulentTexturePositions = nullptr;
+	buffers.firstSurfaceTexturePosition = nullptr;
+	buffers.currentSurfaceTexturePosition = nullptr;
+	buffers.firstTurbulentTexturePosition = nullptr;
+	buffers.currentTurbulentTexturePosition = nullptr;
 	buffers.firstAliasVertices = nullptr;
 	buffers.currentAliasVertices = nullptr;
 	buffers.firstAliasTexCoords = nullptr;
@@ -945,9 +946,10 @@ void Scene::Initialize()
 	textures.current = nullptr;
 	previousVertexes = nullptr;
 	previousVertexBuffer = nullptr;
-	previousSurfaces = nullptr;
-	previousTurbulent = nullptr;
+	previousSurface = nullptr;
 	previousTexturePosition = nullptr;
+	previousTexture = nullptr;
+	previousSharedMemoryTexture = nullptr;
 	previousTexCoordsBuffer = nullptr;
 }
 
@@ -958,7 +960,6 @@ void Scene::Reset()
 	aliasTexturesPerKey.clear();
 	turbulentPerKey.clear();
 	spritesPerKey.clear();
-	fenceTexturesPerKey.clear();
 	surfaceTexturesPerKey.clear();
 	textures.DisposeFront();
 	lightmaps.DisposeFront();
@@ -974,7 +975,6 @@ void Scene::Reset()
 		skybox = VK_NULL_HANDLE;
 	}
 	texCoordsPerKey.clear();
-	turbulentTexturePositionsPerKey.clear();
-	surfaceTexturePositionsPerKey.clear();
+	texturePositionsPerKey.clear();
 	verticesPerKey.clear();
 }

@@ -1093,10 +1093,9 @@ void android_main(struct android_app* app)
 		{
 			continue;
 		}
-		if (!appState.Scene.createdScene)
+		if (!appState.Scene.created)
 		{
 			appState.Scene.Create(appState, commandBufferAllocateInfo, setupCommandBuffer, commandBufferBeginInfo, setupSubmitInfo, instance, fenceCreateInfo, app);
-			appState.Scene.createdScene = true;
 		}
 		{
 			std::lock_guard<std::mutex> lock(appState.ModeChangeMutex);

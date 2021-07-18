@@ -9,18 +9,18 @@ struct CachedSharedMemoryBuffers
 	SharedMemoryBuffer* oldBuffers;
 	LoadedSharedMemoryBuffer* firstVertices;
 	LoadedSharedMemoryBuffer* currentVertices;
-	LoadedSharedMemoryBuffer* firstSurfaceTexturePositions;
-	LoadedSharedMemoryBuffer* currentSurfaceTexturePositions;
-	LoadedSharedMemoryBuffer* firstTurbulentTexturePositions;
-	LoadedSharedMemoryBuffer* currentTurbulentTexturePositions;
+	LoadedSharedMemoryBuffer* firstSurfaceTexturePosition;
+	LoadedSharedMemoryBuffer* currentSurfaceTexturePosition;
+	LoadedSharedMemoryBuffer* firstTurbulentTexturePosition;
+	LoadedSharedMemoryBuffer* currentTurbulentTexturePosition;
 	LoadedSharedMemoryBuffer* firstAliasVertices;
 	LoadedSharedMemoryBuffer* currentAliasVertices;
 	LoadedSharedMemoryTexCoordsBuffer* firstAliasTexCoords;
 	LoadedSharedMemoryTexCoordsBuffer* currentAliasTexCoords;
 
 	void SetupVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded);
-	void SetupSurfaceTexturePositions(AppState& appState, LoadedSharedMemoryBuffer& loaded);
-	void SetupTurbulentTexturePositions(AppState& appState, LoadedSharedMemoryBuffer& loaded);
+	void SetupSurfaceTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded);
+	void SetupTurbulentTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded);
 	void SetupAliasVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded);
 	void SetupAliasTexCoords(AppState& appState, LoadedSharedMemoryTexCoordsBuffer& loaded);
 	void DisposeFront();
