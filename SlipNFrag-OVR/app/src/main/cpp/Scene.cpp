@@ -945,12 +945,9 @@ void Scene::Initialize()
 	textures.first = nullptr;
 	textures.current = nullptr;
 	previousVertexes = nullptr;
-	previousVertexBuffer = nullptr;
 	previousSurface = nullptr;
-	previousTexturePosition = nullptr;
 	previousTexture = nullptr;
-	previousSharedMemoryTexture = nullptr;
-	previousTexCoordsBuffer = nullptr;
+	previousApverts = nullptr;
 }
 
 void Scene::Reset()
