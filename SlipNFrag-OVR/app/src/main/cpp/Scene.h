@@ -4,6 +4,7 @@
 #include "Pipeline.h"
 #include "PipelineAttributes.h"
 #include "LoadedSurface.h"
+#include "LoadedSprite.h"
 #include "LoadedTurbulent.h"
 #include "CachedSharedMemoryBuffers.h"
 #include "CachedBuffers.h"
@@ -67,6 +68,8 @@ struct Scene
 	std::vector<LoadedSurface> loadedFences16;
 	int lastFence32;
 	std::vector<LoadedSurface> loadedFences32;
+	int lastSprite;
+	std::vector<LoadedSprite> loadedSprites;
 	int lastTurbulent16;
 	std::vector<LoadedTurbulent> loadedTurbulent16;
 	int lastTurbulent32;
@@ -87,7 +90,6 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> turbulentPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> viewmodelTexturesPerKey;
-	std::vector<LoadedSharedMemoryTexture> spriteList;
 	std::vector<LoadedColormappedTexture> alias16List;
 	std::vector<LoadedColormappedTexture> alias32List;
 	std::vector<LoadedColormappedTexture> viewmodel16List;

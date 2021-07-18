@@ -426,31 +426,36 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 {
 	auto size = appState.Scene.matrices.size;
 	appState.Scene.lastSurface16 = d_lists.last_surface16;
+	appState.Scene.lastSurface32 = d_lists.last_surface32;
+	appState.Scene.lastFence16 = d_lists.last_fence16;
+	appState.Scene.lastFence32 = d_lists.last_fence32;
+	appState.Scene.lastSprite = d_lists.last_sprite;
+	appState.Scene.lastTurbulent16 = d_lists.last_turbulent16;
+	appState.Scene.lastTurbulent32 = d_lists.last_turbulent32;
 	if (appState.Scene.lastSurface16 >= appState.Scene.loadedSurfaces16.size())
 	{
 		appState.Scene.loadedSurfaces16.resize(appState.Scene.lastSurface16 + 1);
 	}
-	appState.Scene.lastSurface32 = d_lists.last_surface32;
 	if (appState.Scene.lastSurface32 >= appState.Scene.loadedSurfaces32.size())
 	{
 		appState.Scene.loadedSurfaces32.resize(appState.Scene.lastSurface32 + 1);
 	}
-	appState.Scene.lastFence16 = d_lists.last_fence16;
 	if (appState.Scene.lastFence16 >= appState.Scene.loadedFences16.size())
 	{
 		appState.Scene.loadedFences16.resize(appState.Scene.lastFence16 + 1);
 	}
-	appState.Scene.lastFence32 = d_lists.last_fence32;
 	if (appState.Scene.lastFence32 >= appState.Scene.loadedFences32.size())
 	{
 		appState.Scene.loadedFences32.resize(appState.Scene.lastFence32 + 1);
 	}
-	appState.Scene.lastTurbulent16 = d_lists.last_turbulent16;
+	if (appState.Scene.lastSprite >= appState.Scene.loadedSprites.size())
+	{
+		appState.Scene.loadedSprites.resize(appState.Scene.lastSprite + 1);
+	}
 	if (appState.Scene.lastTurbulent16 >= appState.Scene.loadedTurbulent16.size())
 	{
 		appState.Scene.loadedTurbulent16.resize(appState.Scene.lastTurbulent16 + 1);
 	}
-	appState.Scene.lastTurbulent32 = d_lists.last_turbulent32;
 	if (appState.Scene.lastTurbulent32 >= appState.Scene.loadedTurbulent32.size())
 	{
 		appState.Scene.loadedTurbulent32.resize(appState.Scene.lastTurbulent32 + 1);
@@ -535,33 +540,41 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, View& view)
 		appState.Scene.host_colormapSize = 16384;
 		size += appState.Scene.host_colormapSize;
 	}
-	if (d_lists.last_sprite >= appState.Scene.spriteList.size())
-	{
-		appState.Scene.spriteList.resize(d_lists.last_sprite + 1);
-	}
-	for (auto i = 0; i <= d_lists.last_sprite; i++)
+	for (auto i = 0; i <= appState.Scene.lastSprite; i++)
 	{
 		auto& sprite = d_lists.sprites[i];
-		auto& loaded = appState.Scene.spriteList[i];
-		auto entry = appState.Scene.spritesPerKey.find(sprite.data);
-		if (entry == appState.Scene.spritesPerKey.end())
+		auto& loaded = appState.Scene.loadedSprites[i];
+		if (appState.Scene.previousTexture != sprite.data)
 		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
-			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			loaded.size = sprite.size;
-			size += loaded.size;
-			appState.Scene.textures.MoveToFront(texture);
-			appState.Scene.spritesPerKey.insert({ sprite.data, texture });
-			loaded.texture = texture;
-			loaded.source = sprite.data;
-			appState.Scene.textures.Setup(appState, loaded);
+			auto entry = appState.Scene.spritesPerKey.find(sprite.data);
+			if (entry == appState.Scene.spritesPerKey.end())
+			{
+				auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
+				auto texture = new SharedMemoryTexture { };
+				texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				loaded.texture.size = sprite.size;
+				size += loaded.texture.size;
+				appState.Scene.textures.MoveToFront(texture);
+				appState.Scene.spritesPerKey.insert({ sprite.data, texture });
+				loaded.texture.texture = texture;
+				loaded.texture.source = sprite.data;
+				appState.Scene.textures.Setup(appState, loaded.texture);
+			}
+			else
+			{
+				loaded.texture.size = 0;
+				loaded.texture.texture = entry->second;
+			}
+			appState.Scene.previousTexture = sprite.data;
+			appState.Scene.previousSharedMemoryTexture = loaded.texture.texture;
 		}
 		else
 		{
-			loaded.size = 0;
-			loaded.texture = entry->second;
+			loaded.texture.size = 0;
+			loaded.texture.texture = appState.Scene.previousSharedMemoryTexture;
 		}
+		loaded.count = sprite.count;
+		loaded.firstVertex = sprite.first_vertex;
 	}
 	GetAliasStagingBufferSize(appState, d_lists.last_alias16, d_lists.alias16, appState.Scene.alias16List, size);
 	GetAliasStagingBufferSize(appState, d_lists.last_alias32, d_lists.alias32, appState.Scene.alias32List, size);
@@ -1244,6 +1257,8 @@ void PerImage::Render(AppState& appState)
 		appState.Scene.lastSurface32 < 0 &&
 		appState.Scene.lastFence16 < 0 &&
 		appState.Scene.lastFence32 < 0 &&
+		appState.Scene.lastTurbulent16 < 0 &&
+		appState.Scene.lastTurbulent32 < 0 &&
 		appState.Scene.verticesSize == 0 &&
 		d_lists.last_alias16 < 0 &&
 		d_lists.last_alias32 < 0 &&
@@ -1506,7 +1521,7 @@ void PerImage::Render(AppState& appState)
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.firstIndex, 0, 0));
 			}
 		}
-		if (d_lists.last_sprite >= 0)
+		if (appState.Scene.lastSprite >= 0)
 		{
 			VC(appState.Device.vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipeline));
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase));
@@ -1514,16 +1529,16 @@ void PerImage::Render(AppState& appState)
 			VC(appState.Device.vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &vertexTransformBase));
 			VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr));
 			SharedMemoryTexture* previousTexture = nullptr;
-			for (auto i = 0; i <= d_lists.last_sprite; i++)
+			for (auto i = 0; i <= appState.Scene.lastSprite; i++)
 			{
-				auto& sprite = d_lists.sprites[i];
-				auto texture = appState.Scene.spriteList[i].texture;
+				auto& loaded = appState.Scene.loadedSprites[i];
+				auto texture = loaded.texture.texture;
 				if (previousTexture != texture)
 				{
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
-				VC(appState.Device.vkCmdDraw(commandBuffer, sprite.count, 1, sprite.first_vertex, 0));
+				VC(appState.Device.vkCmdDraw(commandBuffer, loaded.count, 1, loaded.firstVertex, 0));
 			}
 		}
 		auto descriptorSetIndex = 0;
