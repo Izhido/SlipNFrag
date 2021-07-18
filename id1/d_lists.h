@@ -63,7 +63,7 @@ struct dalias_t
 	unsigned char* data;
 	std::vector<unsigned char> colormap;
 	qboolean is_host_colormap;
-	trivertx_t* vertices;
+	trivertx_t* apverts;
 	stvert_t* texture_coordinates;
 	int vertex_count;
 	int first_attribute;
@@ -152,8 +152,8 @@ void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t*
 void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
-void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* vertices);
-void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* vertices);
+void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
+void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddParticleToLists (particle_t* part);
 void D_AddSkyToLists (surf_t* surf);
 void D_AddSkyboxToLists (mtexinfo_t* textures);

@@ -6,12 +6,11 @@
 #include "LoadedSurface.h"
 #include "LoadedSprite.h"
 #include "LoadedTurbulent.h"
+#include "LoadedAlias.h"
 #include "CachedSharedMemoryBuffers.h"
 #include "CachedBuffers.h"
 #include "CachedSharedMemoryTextures.h"
 #include "CachedLightmaps.h"
-#include "LoadedTexture.h"
-#include "LoadedColormappedTexture.h"
 #include "VrApi.h"
 #include "Instance.h"
 #include "DescriptorSets.h"
@@ -61,27 +60,32 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryBuffer*> texturePositionsPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texCoordsPerKey;
 	int lastSurface16;
-	std::vector<LoadedSurface> loadedSurfaces16;
 	int lastSurface32;
-	std::vector<LoadedSurface> loadedSurfaces32;
 	int lastFence16;
-	std::vector<LoadedSurface> loadedFences16;
 	int lastFence32;
-	std::vector<LoadedSurface> loadedFences32;
 	int lastSprite;
-	std::vector<LoadedSprite> loadedSprites;
 	int lastTurbulent16;
-	std::vector<LoadedTurbulent> loadedTurbulent16;
 	int lastTurbulent32;
+	int lastAlias16;
+	int lastAlias32;
+	int lastViewmodel16;
+	int lastViewmodel32;
+	int lastColoredIndex16;
+	int lastColoredIndex32;
+	int lastSky;
+	std::vector<LoadedSurface> loadedSurfaces16;
+	std::vector<LoadedSurface> loadedSurfaces32;
+	std::vector<LoadedSurface> loadedFences16;
+	std::vector<LoadedSurface> loadedFences32;
+	std::vector<LoadedSprite> loadedSprites;
+	std::vector<LoadedTurbulent> loadedTurbulent16;
 	std::vector<LoadedTurbulent> loadedTurbulent32;
-	std::vector<LoadedSharedMemoryBuffer> aliasVertex16List;
-	std::vector<LoadedSharedMemoryTexCoordsBuffer> aliasTexCoords16List;
-	std::vector<LoadedSharedMemoryBuffer> aliasVertex32List;
-	std::vector<LoadedSharedMemoryTexCoordsBuffer> aliasTexCoords32List;
-	std::vector<LoadedSharedMemoryBuffer> viewmodelVertex16List;
-	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords16List;
-	std::vector<LoadedSharedMemoryBuffer> viewmodelVertex32List;
-	std::vector<LoadedSharedMemoryTexCoordsBuffer> viewmodelTexCoords32List;
+	std::vector<LoadedAlias> loadedAlias16;
+	std::vector<LoadedAlias> loadedAlias32;
+	std::vector<LoadedAlias> loadedViewmodels16;
+	std::vector<LoadedAlias> loadedViewmodels32;
+	int skyCount;
+	int firstSkyVertex;
 	std::unordered_map<VkDeviceSize, AllocationList> allocations;
 	CachedLightmaps lightmaps;
 	CachedSharedMemoryTextures textures;
@@ -90,10 +94,6 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> turbulentPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> viewmodelTexturesPerKey;
-	std::vector<LoadedColormappedTexture> alias16List;
-	std::vector<LoadedColormappedTexture> alias32List;
-	std::vector<LoadedColormappedTexture> viewmodel16List;
-	std::vector<LoadedColormappedTexture> viewmodel32List;
 	Texture floorTexture;
 	Texture controllerTexture;
 	std::vector<VkSampler> samplers;
@@ -113,12 +113,13 @@ struct Scene
 	ovrPosef pose;
 	StagingBuffer stagingBuffer;
 	void* previousVertexes;
-	SharedMemoryBuffer* previousVertexBuffer;
 	void* previousSurface;
-	SharedMemoryBuffer* previousTexturePosition;
 	void* previousTexture;
-	SharedMemoryTexture* previousSharedMemoryTexture;
+	void* previousApverts;
+	SharedMemoryBuffer* previousVertexBuffer;
+	SharedMemoryBuffer* previousTexturePosition;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
+	SharedMemoryTexture* previousSharedMemoryTexture;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 
 	void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);

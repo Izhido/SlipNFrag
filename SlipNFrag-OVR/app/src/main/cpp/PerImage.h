@@ -8,8 +8,8 @@
 #include "d_lists.h"
 #include "LoadedSurface.h"
 #include "LoadedTurbulent.h"
+#include "LoadedAlias.h"
 #include "LoadedSharedMemoryTexCoordsBuffer.h"
-#include "LoadedTexture.h"
 #include "LoadedColormappedTexture.h"
 
 struct View;
@@ -60,19 +60,16 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
-	void GetStagingBufferSize(AppState& appState, View& view, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, View& view, dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
-	void GetAliasVerticesStagingBufferSize(AppState& appState, dalias_t& alias, LoadedSharedMemoryBuffer& loadedVertices, LoadedSharedMemoryTexCoordsBuffer& loadedTexCoords, VkDeviceSize& stagingBufferSize);
-	void GetAliasColormapStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
-	void GetAliasStagingBufferSize(AppState& appState, int lastAlias, std::vector<dalias_t>& aliasList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
-	void GetViewmodelStagingBufferSize(AppState& appState, int lastViewmodel, std::vector<dalias_t>& viewmodelList, std::vector<LoadedColormappedTexture>& textures, VkDeviceSize& stagingBufferSize);
-	VkDeviceSize GetStagingBufferSize(AppState& appState, View& view);
+	void GetStagingBufferSize(AppState& appState, const View& view, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
+	VkDeviceSize GetStagingBufferSize(AppState& appState, const View& view);
 	void LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* stagingBuffer);
-	void FillAliasTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
+	void FillColormapTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void LoadRemainingBuffers(AppState& appState);
-	void SetPushConstants(LoadedSurface& loaded, float pushConstants[]);
-	void SetPushConstants(LoadedTurbulent& loaded, float pushConstants[]);
-	void SetPushConstants(dalias_t& alias, float pushConstants[]);
+	void SetPushConstants(const LoadedSurface& loaded, float pushConstants[]);
+	void SetPushConstants(const LoadedTurbulent& loaded, float pushConstants[]);
+	void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	void Render(AppState& appState);
 };
