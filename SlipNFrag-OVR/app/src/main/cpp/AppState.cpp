@@ -3,10 +3,10 @@
 #include "Constants.h"
 #include "VrApi_Helpers.h"
 #include "sys_ovr.h"
+//#include <android/log.h>
 
 void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 {
-	std::lock_guard<std::mutex> lock(RenderMutex);
 	auto matrixIndex = 0;
 	for (auto& view : Views)
 	{
@@ -21,7 +21,6 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			VK(Device.vkResetFences(Device.device, 1, &perImage.fence));
 			perImage.submitted = false;
 		}
-		perImage.Reset(*this);
 		VK(Device.vkResetCommandBuffer(perImage.commandBuffer, 0));
 		VK(Device.vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 		VkMemoryBarrier memoryBarrier { };
@@ -29,39 +28,43 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		memoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr));
 		VC(Device.vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &view.framebuffer.startBarriers[view.index]));
-		Scene.Initialize();
-		auto stagingBufferSize = perImage.GetStagingBufferSize(*this, view);
-		auto stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(*this, stagingBufferSize);
-		perImage.LoadStagingBuffer(*this, matrixIndex, stagingBuffer);
-		perImage.FillFromStagingBuffer(*this, stagingBuffer);
-		perImage.LoadRemainingBuffers(*this);
-		perImage.hostClearCount = host_clearcount;
-		double clearR;
-		double clearG;
-		double clearB;
-		double clearA;
+		double clearR = 0;
+		double clearG = 0;
+		double clearB = 0;
+		double clearA = 1;
+		auto readClearColor = false;
 		if (Mode != AppWorldMode || Scene.skybox != VK_NULL_HANDLE)
 		{
-			clearR = 0;
-			clearG = 0;
-			clearB = 0;
 			clearA = 0;
-		}
-		else if (d_lists.clear_color >= 0)
-		{
-			auto color = d_8to24table[d_lists.clear_color];
-			clearR = (color & 255) / 255.0f;
-			clearG = (color >> 8 & 255) / 255.0f;
-			clearB = (color >> 16 & 255) / 255.0f;
-			clearA = (color >> 24) / 255.0f;
 		}
 		else
 		{
-			clearR = 0;
-			clearG = 0;
-			clearB = 0;
-			clearA = 1;
+			readClearColor = true;
 		}
+		//double elapsed = 0;
+		{
+			std::lock_guard<std::mutex> lock(RenderMutex);
+			//auto startTime = Sys_FloatTime();
+			if (readClearColor && d_lists.clear_color >= 0)
+			{
+				auto color = d_8to24table[d_lists.clear_color];
+				clearR = (color & 255) / 255.0f;
+				clearG = (color >> 8 & 255) / 255.0f;
+				clearB = (color >> 16 & 255) / 255.0f;
+				clearA = (color >> 24) / 255.0f;
+			}
+			perImage.Reset(*this);
+			Scene.Initialize();
+			auto stagingBufferSize = perImage.GetStagingBufferSize(*this, view);
+			auto stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(*this, stagingBufferSize);
+			perImage.LoadStagingBuffer(*this, matrixIndex, stagingBuffer);
+			perImage.FillFromStagingBuffer(*this, stagingBuffer);
+			perImage.LoadRemainingBuffers(*this);
+			perImage.hostClearCount = host_clearcount;
+			//auto endTime = Sys_FloatTime();
+			//elapsed += (endTime - startTime);
+		}
+		auto startTime = Sys_FloatTime();
 		uint32_t clearValueCount = 0;
 		VkClearValue clearValues[3] { };
 		clearValues[clearValueCount].color.float32[0] = clearR;
@@ -103,6 +106,9 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 		submitInfo.pCommandBuffers = &perImage.commandBuffer;
 		VK(Device.vkQueueSubmit(Context.queue, 1, &submitInfo, perImage.fence));
 		perImage.submitted = true;
+		//auto endTime = Sys_FloatTime();
+		//elapsed += (endTime - startTime);
+		//__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "AppState::RenderScene(): %.6f s.", elapsed);
 		matrixIndex++;
 	}
 }

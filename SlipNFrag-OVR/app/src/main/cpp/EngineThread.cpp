@@ -5,6 +5,7 @@
 #include "sys_ovr.h"
 #include "Input.h"
 #include "r_local.h"
+//#include <android/log.h>
 
 void runEngine(AppState* appState, struct android_app* app)
 {
@@ -110,6 +111,7 @@ void runEngine(AppState* appState, struct android_app* app)
 			{
 				VID_ReallocSurfCache();
 			}
+			//auto startTime = Sys_FloatTime();
 			auto updated = Host_FrameUpdate(frame_lapse);
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
@@ -140,6 +142,9 @@ void runEngine(AppState* appState, struct android_app* app)
 				cl.nodrift = nodrift;
 			}
 			Host_FrameFinish(updated);
+			//auto endTime = Sys_FloatTime();
+			//auto elapsed = endTime - startTime;
+			//__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "EngineThread::runEngine(): %.6f s.", elapsed);
 		}
 		std::this_thread::yield();
 	}
