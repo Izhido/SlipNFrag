@@ -15,7 +15,6 @@ struct dsurface_t
 	int lightmap_height;
 	int lightmap_size;
 	float* lightmap;
-	int first_index;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -38,6 +37,7 @@ struct dspritedata_t
 struct dturbulent_t
 {
 	void* surface;
+	void* entity;
 	void* vertexes;
 	int vertex_count;
 	void* texture;
@@ -45,7 +45,6 @@ struct dturbulent_t
 	int height;
 	int size;
 	unsigned char* data;
-	int first_index;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -102,8 +101,6 @@ struct dlists_t
 	int last_viewmodel32;
 	int last_sky;
     int last_skybox;
-	int last_surface_index16;
-	int last_surface_index32;
 	int last_textured_vertex;
 	int last_textured_attribute;
 	int last_colormapped_attribute;
@@ -128,8 +125,6 @@ struct dlists_t
 	std::vector<dalias_t> viewmodels32;
 	std::vector<dsky_t> sky;
     std::vector<dskybox_t> skyboxes;
-	std::vector<uint16_t> surface_indices16;
-	std::vector<uint32_t> surface_indices32;
 	std::vector<float> textured_vertices;
 	std::vector<float> textured_attributes;
 	std::vector<float> colormapped_attributes;

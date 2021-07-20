@@ -64,7 +64,7 @@ void AppState::RenderScene(VkCommandBufferBeginInfo& commandBufferBeginInfo)
 			//auto endTime = Sys_FloatTime();
 			//elapsed += (endTime - startTime);
 		}
-		auto startTime = Sys_FloatTime();
+		//auto startTime = Sys_FloatTime();
 		uint32_t clearValueCount = 0;
 		VkClearValue clearValues[3] { };
 		clearValues[clearValueCount].color.float32[0] = clearR;

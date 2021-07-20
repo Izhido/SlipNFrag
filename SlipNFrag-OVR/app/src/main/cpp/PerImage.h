@@ -9,7 +9,6 @@
 #include "LoadedSurface.h"
 #include "LoadedTurbulent.h"
 #include "LoadedAlias.h"
-#include "LoadedSharedMemoryTexCoordsBuffer.h"
 #include "LoadedColormappedTexture.h"
 
 struct View;
@@ -49,9 +48,7 @@ struct PerImage
 	VkDeviceSize colormappedAttributeBase;
 	VkDeviceSize vertexTransformBase;
 	VkDeviceSize controllerAttributeBase;
-	VkDeviceSize surfaceIndex16Base;
 	VkDeviceSize colormappedIndex16Base;
-	VkDeviceSize colormappedIndex32Base;
 	VkDeviceSize coloredIndex16Base;
 	VkDeviceSize controllerIndex16Base;
 	VkDeviceSize coloredIndex32Base;
@@ -60,6 +57,8 @@ struct PerImage
 	bool submitted;
 
 	void Reset(AppState& appState);
+	void GetIndex16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetIndex32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const View& view, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);

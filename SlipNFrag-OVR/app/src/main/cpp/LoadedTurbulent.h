@@ -1,14 +1,15 @@
 #pragma once
 
 #include "LoadedSharedMemoryBuffer.h"
+#include "LoadedSharedMemoryIndexBuffer.h"
 #include "LoadedSharedMemoryTexture.h"
 
 struct LoadedTurbulent
 {
 	LoadedSharedMemoryBuffer vertices;
 	LoadedSharedMemoryBuffer texturePosition;
+	LoadedSharedMemoryIndexBuffer indices;
 	LoadedSharedMemoryTexture texture;
-	int firstIndex;
 	int count;
 	float originX;
 	float originY;

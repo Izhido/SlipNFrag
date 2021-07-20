@@ -48,6 +48,11 @@ void SharedMemoryBuffer::CreateVertexBuffer(AppState& appState, VkDeviceSize siz
 	Create(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }
 
+void SharedMemoryBuffer::CreateIndexBuffer(AppState& appState, VkDeviceSize size)
+{
+	Create(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+}
+
 void SharedMemoryBuffer::Delete(AppState& appState)
 {
 	if (buffer != VK_NULL_HANDLE)

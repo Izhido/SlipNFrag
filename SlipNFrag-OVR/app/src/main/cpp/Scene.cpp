@@ -932,6 +932,10 @@ void Scene::Initialize()
 	controllerVerticesSize = 0;
 	buffers.firstVertices = nullptr;
 	buffers.currentVertices = nullptr;
+	buffers.firstIndices16 = nullptr;
+	buffers.currentIndices16 = nullptr;
+	buffers.firstIndices32 = nullptr;
+	buffers.currentIndices32 = nullptr;
 	buffers.firstSurfaceTexturePosition = nullptr;
 	buffers.currentSurfaceTexturePosition = nullptr;
 	buffers.firstTurbulentTexturePosition = nullptr;
@@ -944,16 +948,11 @@ void Scene::Initialize()
 	lightmaps.current = nullptr;
 	textures.first = nullptr;
 	textures.current = nullptr;
-	previousVertexes = nullptr;
-	previousSurface = nullptr;
-	previousTexture = nullptr;
-	previousApverts = nullptr;
 }
 
 void Scene::Reset()
 {
 	D_ResetLists();
-	viewmodelTexturesPerKey.clear();
 	aliasTexturesPerKey.clear();
 	turbulentPerKey.clear();
 	spritesPerKey.clear();
@@ -973,5 +972,6 @@ void Scene::Reset()
 	}
 	texCoordsPerKey.clear();
 	texturePositionsPerKey.clear();
+	indicesPerKey.clear();
 	verticesPerKey.clear();
 }

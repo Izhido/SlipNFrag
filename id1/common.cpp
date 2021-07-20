@@ -1430,7 +1430,6 @@ int COM_FindAllFiles (const char *directory, const char *prefix, const char *ext
 	std::string cachepath;
 	pack_t          *pak;
 	int                     i;
-	int                     findtime, cachetime;
 
 //
 // search through the path, one element at a time

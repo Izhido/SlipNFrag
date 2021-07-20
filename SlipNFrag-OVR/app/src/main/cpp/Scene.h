@@ -59,6 +59,7 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texturePositionsPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texCoordsPerKey;
+	std::unordered_map<TwinKey, SharedMemoryBuffer*> indicesPerKey;
 	int lastSurface16;
 	int lastSurface32;
 	int lastFence16;
@@ -93,7 +94,6 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> turbulentPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> viewmodelTexturesPerKey;
 	Texture floorTexture;
 	Texture controllerTexture;
 	std::vector<VkSampler> samplers;

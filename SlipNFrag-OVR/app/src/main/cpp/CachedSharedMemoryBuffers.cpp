@@ -15,6 +15,34 @@ void CachedSharedMemoryBuffers::SetupVertices(AppState& appState, LoadedSharedMe
 	currentVertices = &loaded;
 }
 
+void CachedSharedMemoryBuffers::SetupIndices16(AppState& appState, LoadedSharedMemoryIndexBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentIndices16 == nullptr)
+	{
+		firstIndices16 = &loaded;
+	}
+	else
+	{
+		currentIndices16->next = &loaded;
+	}
+	currentIndices16 = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupIndices32(AppState& appState, LoadedSharedMemoryIndexBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentIndices32 == nullptr)
+	{
+		firstIndices32 = &loaded;
+	}
+	else
+	{
+		currentIndices32->next = &loaded;
+	}
+	currentIndices32 = &loaded;
+}
+
 void CachedSharedMemoryBuffers::SetupSurfaceTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;

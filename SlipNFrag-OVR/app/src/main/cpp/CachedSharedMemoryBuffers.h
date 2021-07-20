@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LoadedSharedMemoryBuffer.h"
+#include "LoadedSharedMemoryIndexBuffer.h"
 #include "LoadedSharedMemoryTexCoordsBuffer.h"
 
 struct CachedSharedMemoryBuffers
@@ -9,6 +10,10 @@ struct CachedSharedMemoryBuffers
 	SharedMemoryBuffer* oldBuffers;
 	LoadedSharedMemoryBuffer* firstVertices;
 	LoadedSharedMemoryBuffer* currentVertices;
+	LoadedSharedMemoryIndexBuffer* firstIndices16;
+	LoadedSharedMemoryIndexBuffer* currentIndices16;
+	LoadedSharedMemoryIndexBuffer* firstIndices32;
+	LoadedSharedMemoryIndexBuffer* currentIndices32;
 	LoadedSharedMemoryBuffer* firstSurfaceTexturePosition;
 	LoadedSharedMemoryBuffer* currentSurfaceTexturePosition;
 	LoadedSharedMemoryBuffer* firstTurbulentTexturePosition;
@@ -19,6 +24,8 @@ struct CachedSharedMemoryBuffers
 	LoadedSharedMemoryTexCoordsBuffer* currentAliasTexCoords;
 
 	void SetupVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded);
+	void SetupIndices16(AppState& appState, LoadedSharedMemoryIndexBuffer& loaded);
+	void SetupIndices32(AppState& appState, LoadedSharedMemoryIndexBuffer& loaded);
 	void SetupSurfaceTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded);
 	void SetupTurbulentTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded);
 	void SetupAliasVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded);
