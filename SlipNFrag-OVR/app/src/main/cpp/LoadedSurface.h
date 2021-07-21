@@ -12,7 +12,7 @@ struct LoadedSurface
 	LoadedSharedMemoryIndexBuffer indices;
 	LoadedLightmap lightmap;
 	LoadedSharedMemoryTexture texture;
-	int count;
+	uint32_t count;
 	float originX;
 	float originY;
 	float originZ;

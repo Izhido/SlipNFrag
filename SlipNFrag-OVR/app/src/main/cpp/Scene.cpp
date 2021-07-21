@@ -963,6 +963,10 @@ void Scene::Reset()
 	latestTextureDescriptorSets = nullptr;
 	latestTextureSharedMemory = nullptr;
 	usedInLatestTextureSharedMemory = 0;
+	latestSharedMemoryIndexBuffer32 = nullptr;
+	usedInLatestSharedMemoryIndexBuffer32 = 0;
+	latestSharedMemoryIndexBuffer16 = nullptr;
+	usedInLatestSharedMemoryIndexBuffer16 = 0;
 	latestBufferSharedMemory = nullptr;
 	usedInLatestBufferSharedMemory = 0;
 	if (skybox != VK_NULL_HANDLE)

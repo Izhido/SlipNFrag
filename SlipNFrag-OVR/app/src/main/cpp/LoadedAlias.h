@@ -11,7 +11,7 @@ struct LoadedAlias
 	LoadedColormappedTexture colormapped;
 	int firstAttribute;
 	bool isHostColormap;
-	int firstIndex;
-	int count;
+	uint32_t firstIndex;
+	uint32_t count;
 	float transform[3][4];
 };

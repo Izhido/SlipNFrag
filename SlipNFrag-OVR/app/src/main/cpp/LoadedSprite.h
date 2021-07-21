@@ -5,6 +5,6 @@
 struct LoadedSprite
 {
 	LoadedSharedMemoryTexture texture;
-	int firstVertex;
-	int count;
+	uint32_t firstVertex;
+	uint32_t count;
 };

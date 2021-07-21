@@ -12,6 +12,7 @@
 #include "CachedSharedMemoryTextures.h"
 #include "CachedLightmaps.h"
 #include "AliasVertices.h"
+#include "SharedMemoryBufferWithOffset.h"
 #include "VrApi.h"
 #include "Instance.h"
 #include "DescriptorSets.h"
@@ -60,7 +61,7 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texturePositionsPerKey;
 	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
-	std::unordered_map<TwinKey, SharedMemoryBuffer*> indicesPerKey;
+	std::unordered_map<TwinKey, SharedMemoryBufferWithOffset> indicesPerKey;
 	int lastSurface16;
 	int lastSurface32;
 	int lastFence16;
@@ -101,6 +102,10 @@ struct Scene
 	VkSampler lightmapSampler;
 	SharedMemory* latestBufferSharedMemory;
 	VkDeviceSize usedInLatestBufferSharedMemory;
+	SharedMemoryBuffer* latestSharedMemoryIndexBuffer16;
+	VkDeviceSize usedInLatestSharedMemoryIndexBuffer16;
+	SharedMemoryBuffer* latestSharedMemoryIndexBuffer32;
+	VkDeviceSize usedInLatestSharedMemoryIndexBuffer32;
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	DescriptorSets* latestTextureDescriptorSets;

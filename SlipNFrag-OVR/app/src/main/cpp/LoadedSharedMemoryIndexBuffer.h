@@ -1,10 +1,9 @@
 #pragma once
 
-#include "SharedMemoryBuffer.h"
-
 struct LoadedSharedMemoryIndexBuffer
 {
 	SharedMemoryBuffer* buffer;
+	VkDeviceSize offset;
 	VkDeviceSize size;
 	void* firstSource;
 	void* secondSource;
