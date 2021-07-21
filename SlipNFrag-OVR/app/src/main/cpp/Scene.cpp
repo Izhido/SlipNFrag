@@ -970,8 +970,8 @@ void Scene::Reset()
 		vrapi_DestroyTextureSwapChain(skybox);
 		skybox = VK_NULL_HANDLE;
 	}
-	texCoordsPerKey.clear();
-	texturePositionsPerKey.clear();
 	indicesPerKey.clear();
+	aliasVerticesPerKey.clear();
+	texturePositionsPerKey.clear();
 	verticesPerKey.clear();
 }

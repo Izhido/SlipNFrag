@@ -1,7 +1,7 @@
 #include "CachedSharedMemoryBuffers.h"
 #include "Constants.h"
 
-void CachedSharedMemoryBuffers::SetupVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupVertices(LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentVertices == nullptr)
@@ -15,7 +15,7 @@ void CachedSharedMemoryBuffers::SetupVertices(AppState& appState, LoadedSharedMe
 	currentVertices = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupIndices16(AppState& appState, LoadedSharedMemoryIndexBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupIndices16(LoadedSharedMemoryIndexBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentIndices16 == nullptr)
@@ -29,7 +29,7 @@ void CachedSharedMemoryBuffers::SetupIndices16(AppState& appState, LoadedSharedM
 	currentIndices16 = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupIndices32(AppState& appState, LoadedSharedMemoryIndexBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupIndices32(LoadedSharedMemoryIndexBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentIndices32 == nullptr)
@@ -43,7 +43,7 @@ void CachedSharedMemoryBuffers::SetupIndices32(AppState& appState, LoadedSharedM
 	currentIndices32 = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupSurfaceTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupSurfaceTexturePosition(LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentSurfaceTexturePosition == nullptr)
@@ -57,7 +57,7 @@ void CachedSharedMemoryBuffers::SetupSurfaceTexturePosition(AppState& appState, 
 	currentSurfaceTexturePosition = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupTurbulentTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupTurbulentTexturePosition(LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentTurbulentTexturePosition == nullptr)
@@ -71,7 +71,7 @@ void CachedSharedMemoryBuffers::SetupTurbulentTexturePosition(AppState& appState
 	currentTurbulentTexturePosition = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupAliasVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupAliasVertices(LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasVertices == nullptr)
@@ -85,7 +85,7 @@ void CachedSharedMemoryBuffers::SetupAliasVertices(AppState& appState, LoadedSha
 	currentAliasVertices = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupAliasTexCoords(AppState &appState, LoadedSharedMemoryTexCoordsBuffer &loaded)
+void CachedSharedMemoryBuffers::SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer &loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasTexCoords == nullptr)

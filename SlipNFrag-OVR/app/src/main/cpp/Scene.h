@@ -11,6 +11,7 @@
 #include "CachedBuffers.h"
 #include "CachedSharedMemoryTextures.h"
 #include "CachedLightmaps.h"
+#include "AliasVertices.h"
 #include "VrApi.h"
 #include "Instance.h"
 #include "DescriptorSets.h"
@@ -58,7 +59,7 @@ struct Scene
 	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
 	std::unordered_map<void*, SharedMemoryBuffer*> texturePositionsPerKey;
-	std::unordered_map<void*, SharedMemoryBuffer*> texCoordsPerKey;
+	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
 	std::unordered_map<TwinKey, SharedMemoryBuffer*> indicesPerKey;
 	int lastSurface16;
 	int lastSurface32;

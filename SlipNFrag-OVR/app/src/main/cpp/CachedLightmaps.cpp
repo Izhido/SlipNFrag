@@ -1,7 +1,7 @@
 #include "CachedLightmaps.h"
 #include "Constants.h"
 
-void CachedLightmaps::Setup(AppState& appState, LoadedLightmap& lightmap)
+void CachedLightmaps::Setup(LoadedLightmap& lightmap)
 {
 	lightmap.next = nullptr;
 	if (current == nullptr)

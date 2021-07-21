@@ -59,7 +59,7 @@ struct PerImage
 	void Reset(AppState& appState);
 	void GetIndex16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetIndex32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const View& view, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const View& view, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, const View& view);

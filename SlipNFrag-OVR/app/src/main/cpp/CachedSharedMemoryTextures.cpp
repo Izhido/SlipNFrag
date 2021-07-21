@@ -1,7 +1,7 @@
 #include "CachedSharedMemoryTextures.h"
 #include "Constants.h"
 
-void CachedSharedMemoryTextures::Setup(AppState& appState, LoadedSharedMemoryTexture& loaded)
+void CachedSharedMemoryTextures::Setup(LoadedSharedMemoryTexture& loaded)
 {
 	loaded.next = nullptr;
 	if (current == nullptr)

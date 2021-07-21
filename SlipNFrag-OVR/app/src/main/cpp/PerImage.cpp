@@ -35,7 +35,7 @@ void PerImage::GetIndex16StagingBufferSize(AppState& appState, dsurface_t& surfa
 		appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 		loaded.indices.firstSource = surface.surface;
 		loaded.indices.secondSource = surface.entity;
-		appState.Scene.buffers.SetupIndices16(appState, loaded.indices);
+		appState.Scene.buffers.SetupIndices16(loaded.indices);
 	}
 	else
 	{
@@ -58,7 +58,7 @@ void PerImage::GetIndex32StagingBufferSize(AppState& appState, dsurface_t& surfa
 		appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 		loaded.indices.firstSource = surface.surface;
 		loaded.indices.secondSource = surface.entity;
-		appState.Scene.buffers.SetupIndices32(appState, loaded.indices);
+		appState.Scene.buffers.SetupIndices32(loaded.indices);
 	}
 	else
 	{
@@ -67,7 +67,7 @@ void PerImage::GetIndex32StagingBufferSize(AppState& appState, dsurface_t& surfa
 	}
 }
 
-void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+void PerImage::GetStagingBufferSize(AppState& appState, const View& view, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
 	if (appState.Scene.previousVertexes != surface.vertexes)
 	{
@@ -81,7 +81,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurfa
 			size += loaded.vertices.size;
 			appState.Scene.buffers.MoveToFront(loaded.vertices.buffer);
 			loaded.vertices.source = surface.vertexes;
-			appState.Scene.buffers.SetupVertices(appState, loaded.vertices);
+			appState.Scene.buffers.SetupVertices(loaded.vertices);
 		}
 		else
 		{
@@ -108,7 +108,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurfa
 			size += loaded.texturePosition.size;
 			appState.Scene.buffers.MoveToFront(loaded.texturePosition.buffer);
 			loaded.texturePosition.source = surface.surface;
-			appState.Scene.buffers.SetupSurfaceTexturePosition(appState, loaded.texturePosition);
+			appState.Scene.buffers.SetupSurfaceTexturePosition(loaded.texturePosition);
 		}
 		else
 		{
@@ -126,7 +126,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurfa
 	auto entry = appState.Scene.lightmaps.lightmaps.find({ surface.surface, surface.entity });
 	if (entry == appState.Scene.lightmaps.lightmaps.end())
 	{
-		auto lightmap = new Lightmap();
+		auto lightmap = new Lightmap { };
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		lightmap->key.first = surface.surface;
 		lightmap->key.second = surface.entity;
@@ -135,7 +135,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurfa
 		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
 		size += loaded.lightmap.size;
 		loaded.lightmap.source = surface.lightmap;
-		appState.Scene.lightmaps.Setup(appState, loaded.lightmap);
+		appState.Scene.lightmaps.Setup(loaded.lightmap);
 	}
 	else if (surface.created)
 	{
@@ -150,7 +150,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurfa
 			}
 			else
 			{
-				auto lightmap = new Lightmap();
+				auto lightmap = new Lightmap { };
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				lightmap->key.first = surface.surface;
 				lightmap->key.second = surface.entity;
@@ -177,7 +177,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurfa
 			}
 			if (!found)
 			{
-				auto lightmap = new Lightmap();
+				auto lightmap = new Lightmap { };
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				lightmap->key.first = surface.surface;
 				lightmap->key.second = surface.entity;
@@ -189,8 +189,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurfa
 		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
 		size += loaded.lightmap.size;
 		loaded.lightmap.source = surface.lightmap;
-		appState.Scene.lightmaps.Setup(appState, loaded.lightmap);
-		surface.created = 0;
+		appState.Scene.lightmaps.Setup(loaded.lightmap);
 	}
 	else
 	{
@@ -213,7 +212,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const View& view, dsurfa
 			appState.Scene.surfaceTexturesPerKey.insert({ surface.texture, texture });
 			loaded.texture.texture = texture;
 			loaded.texture.source = surface.texture;
-			appState.Scene.textures.Setup(appState, loaded.texture);
+			appState.Scene.textures.Setup(loaded.texture);
 		}
 		else
 		{
@@ -251,7 +250,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const dturbulent_t& turb
 			size += loaded.vertices.size;
 			appState.Scene.buffers.MoveToFront(loaded.vertices.buffer);
 			loaded.vertices.source = turbulent.vertexes;
-			appState.Scene.buffers.SetupVertices(appState, loaded.vertices);
+			appState.Scene.buffers.SetupVertices(loaded.vertices);
 		}
 		else
 		{
@@ -278,7 +277,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const dturbulent_t& turb
 			size += loaded.texturePosition.size;
 			appState.Scene.buffers.MoveToFront(loaded.texturePosition.buffer);
 			loaded.texturePosition.source = turbulent.surface;
-			appState.Scene.buffers.SetupTurbulentTexturePosition(appState, loaded.texturePosition);
+			appState.Scene.buffers.SetupTurbulentTexturePosition(loaded.texturePosition);
 		}
 		else
 		{
@@ -307,7 +306,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const dturbulent_t& turb
 			appState.Scene.turbulentPerKey.insert({ turbulent.texture, texture });
 			loaded.texture.texture = texture;
 			loaded.texture.source = turbulent.data;
-			appState.Scene.textures.Setup(appState, loaded.texture);
+			appState.Scene.textures.Setup(loaded.texture);
 		}
 		else
 		{
@@ -335,34 +334,33 @@ void PerImage::GetStagingBufferSize(AppState& appState, const dalias_t& alias, L
 {
 	if (appState.Scene.previousApverts != alias.apverts)
 	{
-		auto entry = appState.Scene.verticesPerKey.find(alias.apverts);
-		if (entry == appState.Scene.verticesPerKey.end())
+		auto entry = appState.Scene.aliasVerticesPerKey.find(alias.apverts);
+		if (entry == appState.Scene.aliasVerticesPerKey.end())
 		{
 			loaded.vertices.size = alias.vertex_count * 2 * 4 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
-			appState.Scene.verticesPerKey.insert({ alias.apverts, loaded.vertices.buffer });
 			size += loaded.vertices.size;
 			appState.Scene.buffers.MoveToFront(loaded.vertices.buffer);
 			loaded.vertices.source = alias.apverts;
-			appState.Scene.buffers.SetupAliasVertices(appState, loaded.vertices);
+			appState.Scene.buffers.SetupAliasVertices(loaded.vertices);
 			loaded.texCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
 			loaded.texCoords.buffer = new SharedMemoryBuffer { };
 			loaded.texCoords.buffer->CreateVertexBuffer(appState, loaded.texCoords.size);
-			appState.Scene.texCoordsPerKey.insert({ alias.apverts, loaded.texCoords.buffer });
 			size += loaded.texCoords.size;
 			appState.Scene.buffers.MoveToFront(loaded.texCoords.buffer);
 			loaded.texCoords.source = alias.texture_coordinates;
 			loaded.texCoords.width = alias.width;
 			loaded.texCoords.height = alias.height;
-			appState.Scene.buffers.SetupAliasTexCoords(appState, loaded.texCoords);
+			appState.Scene.buffers.SetupAliasTexCoords(loaded.texCoords);
+			appState.Scene.aliasVerticesPerKey.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
 		}
 		else
 		{
 			loaded.vertices.size = 0;
-			loaded.vertices.buffer = entry->second;
+			loaded.vertices.buffer = entry->second.vertices;
 			loaded.texCoords.size = 0;
-			loaded.texCoords.buffer = appState.Scene.texCoordsPerKey[alias.apverts];
+			loaded.texCoords.buffer = entry->second.texCoords;
 		}
 		appState.Scene.previousApverts = alias.apverts;
 		appState.Scene.previousVertexBuffer = loaded.vertices.buffer;
@@ -399,7 +397,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const dalias_t& alias, L
 			appState.Scene.aliasTexturesPerKey.insert({ alias.data, texture });
 			loaded.colormapped.texture.texture = texture;
 			loaded.colormapped.texture.source = alias.data;
-			appState.Scene.textures.Setup(appState, loaded.colormapped.texture);
+			appState.Scene.textures.Setup(loaded.colormapped.texture);
 		}
 		else
 		{
@@ -559,7 +557,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 				appState.Scene.spritesPerKey.insert({ sprite.data, texture });
 				loaded.texture.texture = texture;
 				loaded.texture.source = sprite.data;
-				appState.Scene.textures.Setup(appState, loaded.texture);
+				appState.Scene.textures.Setup(loaded.texture);
 			}
 			else
 			{
@@ -597,7 +595,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 			appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 			loaded.indices.firstSource = turbulent.surface;
 			loaded.indices.secondSource = turbulent.entity;
-			appState.Scene.buffers.SetupIndices16(appState, loaded.indices);
+			appState.Scene.buffers.SetupIndices16(loaded.indices);
 		}
 		else
 		{
@@ -625,7 +623,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 			appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 			loaded.indices.firstSource = turbulent.surface;
 			loaded.indices.secondSource = turbulent.entity;
-			appState.Scene.buffers.SetupIndices32(appState, loaded.indices);
+			appState.Scene.buffers.SetupIndices32(loaded.indices);
 		}
 		else
 		{

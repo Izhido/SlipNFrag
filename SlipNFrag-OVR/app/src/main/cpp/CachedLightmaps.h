@@ -10,7 +10,7 @@ struct CachedLightmaps
 	LoadedLightmap* first;
 	LoadedLightmap* current;
 
-	void Setup(AppState& appState, LoadedLightmap& lightmap);
+	void Setup(LoadedLightmap& lightmap);
 	void DisposeFront();
 	void DeleteOld(AppState& appState);
 };

@@ -23,13 +23,13 @@ struct CachedSharedMemoryBuffers
 	LoadedSharedMemoryTexCoordsBuffer* firstAliasTexCoords;
 	LoadedSharedMemoryTexCoordsBuffer* currentAliasTexCoords;
 
-	void SetupVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded);
-	void SetupIndices16(AppState& appState, LoadedSharedMemoryIndexBuffer& loaded);
-	void SetupIndices32(AppState& appState, LoadedSharedMemoryIndexBuffer& loaded);
-	void SetupSurfaceTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded);
-	void SetupTurbulentTexturePosition(AppState& appState, LoadedSharedMemoryBuffer& loaded);
-	void SetupAliasVertices(AppState& appState, LoadedSharedMemoryBuffer& loaded);
-	void SetupAliasTexCoords(AppState& appState, LoadedSharedMemoryTexCoordsBuffer& loaded);
+	void SetupVertices(LoadedSharedMemoryBuffer& loaded);
+	void SetupIndices16(LoadedSharedMemoryIndexBuffer& loaded);
+	void SetupIndices32(LoadedSharedMemoryIndexBuffer& loaded);
+	void SetupSurfaceTexturePosition(LoadedSharedMemoryBuffer& loaded);
+	void SetupTurbulentTexturePosition(LoadedSharedMemoryBuffer& loaded);
+	void SetupAliasVertices(LoadedSharedMemoryBuffer& loaded);
+	void SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer& loaded);
 	void DisposeFront();
 	void MoveToFront(SharedMemoryBuffer* buffer);
 	void Delete(AppState& appState);
