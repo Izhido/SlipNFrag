@@ -56,6 +56,7 @@ struct dturbulent_t
 
 struct dalias_t
 {
+	void* aliashdr;
 	int width;
 	int height;
 	int size;
@@ -66,7 +67,6 @@ struct dalias_t
 	stvert_t* texture_coordinates;
 	int vertex_count;
 	int first_attribute;
-	int first_index;
 	int count;
 	float transform[3][4];
 };
@@ -104,8 +104,6 @@ struct dlists_t
 	int last_textured_vertex;
 	int last_textured_attribute;
 	int last_colormapped_attribute;
-	int last_colormapped_index16;
-	int last_colormapped_index32;
 	int last_colored_vertex;
 	int last_colored_attribute;
 	int last_colored_index16;
@@ -128,8 +126,6 @@ struct dlists_t
 	std::vector<float> textured_vertices;
 	std::vector<float> textured_attributes;
 	std::vector<float> colormapped_attributes;
-	std::vector<uint16_t> colormapped_indices16;
-	std::vector<uint32_t> colormapped_indices32;
 	std::vector<float> colored_vertices;
 	std::vector<float> colored_attributes;
 	std::vector<uint16_t> colored_indices16;
@@ -148,7 +144,7 @@ void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* e
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
-void D_AddViewModelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
+void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddParticleToLists (particle_t* part);
 void D_AddSkyToLists (surf_t* surf);
 void D_AddSkyboxToLists (mtexinfo_t* textures);

@@ -62,6 +62,7 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryBuffer*> texturePositionsPerKey;
 	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
 	std::unordered_map<TwinKey, SharedMemoryBufferWithOffset> indicesPerKey;
+	std::unordered_map<void*, SharedMemoryBufferWithOffset> aliasIndicesPerKey;
 	int lastSurface16;
 	int lastSurface32;
 	int lastFence16;
@@ -133,5 +134,6 @@ struct Scene
 	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, Instance& instance, VkFenceCreateInfo& fenceCreateInfo, struct android_app* app);
 	void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
+	void AddToBufferBarrier(VkBuffer buffer);
 	void Reset();
 };

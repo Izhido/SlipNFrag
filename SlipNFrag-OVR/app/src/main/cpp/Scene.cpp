@@ -930,24 +930,26 @@ void Scene::Initialize()
 	host_colormapSize = 0;
 	skySize = 0;
 	controllerVerticesSize = 0;
-	buffers.firstVertices = nullptr;
-	buffers.currentVertices = nullptr;
-	buffers.firstIndices16 = nullptr;
-	buffers.currentIndices16 = nullptr;
-	buffers.firstIndices32 = nullptr;
-	buffers.currentIndices32 = nullptr;
-	buffers.firstSurfaceTexturePosition = nullptr;
-	buffers.currentSurfaceTexturePosition = nullptr;
-	buffers.firstTurbulentTexturePosition = nullptr;
-	buffers.currentTurbulentTexturePosition = nullptr;
-	buffers.firstAliasVertices = nullptr;
-	buffers.currentAliasVertices = nullptr;
-	buffers.firstAliasTexCoords = nullptr;
-	buffers.currentAliasTexCoords = nullptr;
+	buffers.Initialize();
 	lightmaps.first = nullptr;
 	lightmaps.current = nullptr;
 	textures.first = nullptr;
 	textures.current = nullptr;
+}
+
+void Scene::AddToBufferBarrier(VkBuffer buffer)
+{
+	stagingBuffer.lastBarrier++;
+	if (stagingBuffer.bufferBarriers.size() <= stagingBuffer.lastBarrier)
+	{
+		stagingBuffer.bufferBarriers.emplace_back();
+	}
+	auto& barrier = stagingBuffer.bufferBarriers[stagingBuffer.lastBarrier];
+	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	barrier.buffer = buffer;
+	barrier.size = VK_WHOLE_SIZE;
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
 void Scene::Reset()
@@ -974,6 +976,7 @@ void Scene::Reset()
 		vrapi_DestroyTextureSwapChain(skybox);
 		skybox = VK_NULL_HANDLE;
 	}
+	aliasIndicesPerKey.clear();
 	indicesPerKey.clear();
 	aliasVerticesPerKey.clear();
 	texturePositionsPerKey.clear();

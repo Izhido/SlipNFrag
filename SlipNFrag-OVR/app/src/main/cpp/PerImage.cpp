@@ -21,7 +21,7 @@ void PerImage::Reset(AppState& appState)
 	colors = nullptr;
 }
 
-void PerImage::GetIndex16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+void PerImage::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
 	TwinKey key { surface.surface, surface.entity };
 	auto entry = appState.Scene.indicesPerKey.find(key);
@@ -56,7 +56,7 @@ void PerImage::GetIndex16StagingBufferSize(AppState& appState, dsurface_t& surfa
 	}
 }
 
-void PerImage::GetIndex32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+void PerImage::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
 	TwinKey key { surface.surface, surface.entity };
 	auto entry = appState.Scene.indicesPerKey.find(key);
@@ -82,6 +82,72 @@ void PerImage::GetIndex32StagingBufferSize(AppState& appState, dsurface_t& surfa
 		loaded.indices.secondSource = surface.entity;
 		appState.Scene.buffers.SetupIndices32(loaded.indices);
 		appState.Scene.indicesPerKey.insert({ key, { loaded.indices.buffer, loaded.indices.offset } });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.buffer = entry->second.buffer;
+		loaded.indices.offset = entry->second.offset;
+	}
+}
+
+void PerImage::GetAliasIndices16StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
+{
+	auto entry = appState.Scene.aliasIndicesPerKey.find(alias.aliashdr);
+	if (entry == appState.Scene.aliasIndicesPerKey.end())
+	{
+		loaded.indices.size = alias.count * sizeof(uint16_t);
+		if (appState.Scene.latestSharedMemoryIndexBuffer16 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer16->size)
+		{
+			loaded.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.buffer->CreateIndexBuffer(appState, MEMORY_BLOCK_SIZE);
+			appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
+			appState.Scene.latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
+			appState.Scene.usedInLatestSharedMemoryIndexBuffer16 = 0;
+		}
+		else
+		{
+			loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer16;
+			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer16;
+		}
+		appState.Scene.usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
+		size += loaded.indices.size;
+		loaded.indices.source = alias.aliashdr;
+		appState.Scene.buffers.SetupAliasIndices16(loaded.indices);
+		appState.Scene.aliasIndicesPerKey.insert({ alias.aliashdr, { loaded.indices.buffer, loaded.indices.offset } });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.buffer = entry->second.buffer;
+		loaded.indices.offset = entry->second.offset;
+	}
+}
+
+void PerImage::GetAliasIndices32StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
+{
+	auto entry = appState.Scene.aliasIndicesPerKey.find(alias.aliashdr);
+	if (entry == appState.Scene.aliasIndicesPerKey.end())
+	{
+		loaded.indices.size = alias.count * sizeof(uint32_t);
+		if (appState.Scene.latestSharedMemoryIndexBuffer32 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer32->size)
+		{
+			loaded.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.buffer->CreateIndexBuffer(appState, MEMORY_BLOCK_SIZE);
+			appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
+			appState.Scene.latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
+			appState.Scene.usedInLatestSharedMemoryIndexBuffer32 = 0;
+		}
+		else
+		{
+			loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer32;
+			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer32;
+		}
+		appState.Scene.usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
+		size += loaded.indices.size;
+		loaded.indices.source = alias.aliashdr;
+		appState.Scene.buffers.SetupAliasIndices32(loaded.indices);
+		appState.Scene.aliasIndicesPerKey.insert({ alias.aliashdr, { loaded.indices.buffer, loaded.indices.offset } });
 	}
 	else
 	{
@@ -439,7 +505,6 @@ void PerImage::GetStagingBufferSize(AppState& appState, const dalias_t& alias, L
 	loaded.firstAttribute = alias.first_attribute;
 	loaded.isHostColormap = alias.is_host_colormap;
 	loaded.count = alias.count;
-	loaded.firstIndex = alias.first_index;
 	for (auto j = 0; j < 3; j++)
 	{
 		for (auto i = 0; i < 4; i++)
@@ -536,7 +601,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 	for (auto i = 0; i <= appState.Scene.lastSurface16; i++)
 	{
 		GetStagingBufferSize(appState, view, d_lists.surfaces16[i], appState.Scene.loadedSurfaces16[i], size);
-		GetIndex16StagingBufferSize(appState, d_lists.surfaces16[i], appState.Scene.loadedSurfaces16[i], size);
+		GetIndices16StagingBufferSize(appState, d_lists.surfaces16[i], appState.Scene.loadedSurfaces16[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousSurface = nullptr;
@@ -544,7 +609,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 	for (auto i = 0; i <= appState.Scene.lastSurface32; i++)
 	{
 		GetStagingBufferSize(appState, view, d_lists.surfaces32[i], appState.Scene.loadedSurfaces32[i], size);
-		GetIndex32StagingBufferSize(appState, d_lists.surfaces32[i], appState.Scene.loadedSurfaces32[i], size);
+		GetIndices32StagingBufferSize(appState, d_lists.surfaces32[i], appState.Scene.loadedSurfaces32[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousSurface = nullptr;
@@ -552,7 +617,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 	for (auto i = 0; i <= appState.Scene.lastFence16; i++)
 	{
 		GetStagingBufferSize(appState, view, d_lists.fences16[i], appState.Scene.loadedFences16[i], size);
-		GetIndex16StagingBufferSize(appState, d_lists.fences16[i], appState.Scene.loadedFences16[i], size);
+		GetIndices16StagingBufferSize(appState, d_lists.fences16[i], appState.Scene.loadedFences16[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousSurface = nullptr;
@@ -560,7 +625,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 	for (auto i = 0; i <= appState.Scene.lastFence32; i++)
 	{
 		GetStagingBufferSize(appState, view, d_lists.fences32[i], appState.Scene.loadedFences32[i], size);
-		GetIndex32StagingBufferSize(appState, d_lists.fences32[i], appState.Scene.loadedFences32[i], size);
+		GetIndices32StagingBufferSize(appState, d_lists.fences32[i], appState.Scene.loadedFences32[i], size);
 	}
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastSprite; i++)
@@ -684,24 +749,28 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 	for (auto i = 0; i <= appState.Scene.lastAlias16; i++)
 	{
 		GetStagingBufferSize(appState, d_lists.alias16[i], appState.Scene.loadedAlias16[i], size);
+		GetAliasIndices16StagingBufferSize(appState, d_lists.alias16[i], appState.Scene.loadedAlias16[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastAlias32; i++)
 	{
 		GetStagingBufferSize(appState, d_lists.alias32[i], appState.Scene.loadedAlias32[i], size);
+		GetAliasIndices32StagingBufferSize(appState, d_lists.alias32[i], appState.Scene.loadedAlias32[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastViewmodel16; i++)
 	{
 		GetStagingBufferSize(appState, d_lists.viewmodels16[i], appState.Scene.loadedViewmodels16[i], size);
+		GetAliasIndices16StagingBufferSize(appState, d_lists.viewmodels16[i], appState.Scene.loadedViewmodels16[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastViewmodel32; i++)
 	{
 		GetStagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], size);
+		GetAliasIndices16StagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], size);
 	}
 	if (appState.Scene.lastSky >= 0)
 	{
@@ -784,6 +853,30 @@ void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* st
 		offset += loadedIndexBuffer->size;
 		loadedIndexBuffer = loadedIndexBuffer->next;
 	}
+	auto loadedAliasIndexBuffer = appState.Scene.buffers.firstAliasIndices16;
+	while (loadedAliasIndexBuffer != nullptr)
+	{
+		auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->source;
+		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
+		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
+		auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
+		for (auto i = 0; i < mdl->numtris; i++)
+		{
+			auto v0 = triangle->vertindex[0];
+			auto v1 = triangle->vertindex[1];
+			auto v2 = triangle->vertindex[2];
+			auto v0back = (((stverts[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			auto v1back = (((stverts[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			auto v2back = (((stverts[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			*target++ = v0 * 2 + (v0back ? 1 : 0);
+			*target++ = v1 * 2 + (v1back ? 1 : 0);
+			*target++ = v2 * 2 + (v2back ? 1 : 0);
+			triangle++;
+		}
+		offset += loadedAliasIndexBuffer->size;
+		loadedAliasIndexBuffer = loadedAliasIndexBuffer->next;
+	}
 	while (offset % 4 != 0)
 	{
 		offset++;
@@ -833,6 +926,30 @@ void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* st
 		}
 		offset += loadedIndexBuffer->size;
 		loadedIndexBuffer = loadedIndexBuffer->next;
+	}
+	loadedAliasIndexBuffer = appState.Scene.buffers.firstAliasIndices32;
+	while (loadedAliasIndexBuffer != nullptr)
+	{
+		auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->source;
+		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
+		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
+		auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
+		for (auto i = 0; i < mdl->numtris; i++)
+		{
+			auto v0 = triangle->vertindex[0];
+			auto v1 = triangle->vertindex[1];
+			auto v2 = triangle->vertindex[2];
+			auto v0back = (((stverts[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			auto v1back = (((stverts[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			auto v2back = (((stverts[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			*target++ = v0 * 2 + (v0back ? 1 : 0);
+			*target++ = v1 * 2 + (v1back ? 1 : 0);
+			*target++ = v2 * 2 + (v2back ? 1 : 0);
+			triangle++;
+		}
+		offset += loadedAliasIndexBuffer->size;
+		loadedAliasIndexBuffer = loadedAliasIndexBuffer->next;
 	}
 	loadedBuffer = appState.Scene.buffers.firstSurfaceTexturePosition;
 	while (loadedBuffer != nullptr)
@@ -1013,6 +1130,55 @@ void PerImage::FillColormapTextures(AppState& appState, LoadedColormappedTexture
 	}
 }
 
+void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer)
+{
+	auto loaded = first;
+	while (loaded != nullptr)
+	{
+		bufferCopy.dstOffset = loaded->offset;
+		bufferCopy.size = loaded->size;
+		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loaded->buffer->buffer, 1, &bufferCopy));
+		bufferCopy.srcOffset += loaded->size;
+		if (previousBuffer != loaded->buffer)
+		{
+			appState.Scene.AddToBufferBarrier(loaded->buffer->buffer);
+			previousBuffer = loaded->buffer;
+		}
+		loaded = loaded->next;
+	}
+}
+
+void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryAliasIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer)
+{
+	auto loaded = first;
+	while (loaded != nullptr)
+	{
+		bufferCopy.dstOffset = loaded->offset;
+		bufferCopy.size = loaded->size;
+		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loaded->buffer->buffer, 1, &bufferCopy));
+		bufferCopy.srcOffset += loaded->size;
+		if (previousBuffer != loaded->buffer)
+		{
+			appState.Scene.AddToBufferBarrier(loaded->buffer->buffer);
+			previousBuffer = loaded->buffer;
+		}
+		loaded = loaded->next;
+	}
+}
+
+void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy)
+{
+	auto loaded = first;
+	while (loaded != nullptr)
+	{
+		bufferCopy.size = loaded->size;
+		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loaded->buffer->buffer, 1, &bufferCopy));
+		bufferCopy.srcOffset += loaded->size;
+		appState.Scene.AddToBufferBarrier(loaded->buffer->buffer);
+		loaded = loaded->next;
+	}
+}
+
 void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 {
 	appState.Scene.stagingBuffer.lastBarrier = -1;
@@ -1033,147 +1199,29 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		bufferCopy.size = loadedBuffer->size;
 		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedBuffer->buffer->buffer, 1, &bufferCopy));
 		bufferCopy.srcOffset += loadedBuffer->size;
-		appState.Scene.stagingBuffer.lastBarrier++;
-		if (appState.Scene.stagingBuffer.bufferBarriers.size() <= appState.Scene.stagingBuffer.lastBarrier)
-		{
-			appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
-		}
-		auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
-		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.buffer = loadedBuffer->buffer->buffer;
-		barrier.size = VK_WHOLE_SIZE;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+		appState.Scene.AddToBufferBarrier(loadedBuffer->buffer->buffer);
 		loadedBuffer = loadedBuffer->next;
 	}
 	SharedMemoryBuffer* previousBuffer = nullptr;
-	auto loadedIndexBuffer = appState.Scene.buffers.firstIndices16;
-	while (loadedIndexBuffer != nullptr)
-	{
-		bufferCopy.dstOffset = loadedIndexBuffer->offset;
-		bufferCopy.size = loadedIndexBuffer->size;
-		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedIndexBuffer->buffer->buffer, 1, &bufferCopy));
-		bufferCopy.srcOffset += loadedIndexBuffer->size;
-		if (previousBuffer != loadedIndexBuffer->buffer)
-		{
-			appState.Scene.stagingBuffer.lastBarrier++;
-			if (appState.Scene.stagingBuffer.bufferBarriers.size() <= appState.Scene.stagingBuffer.lastBarrier)
-			{
-				appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
-			}
-			auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
-			barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-			barrier.buffer = loadedIndexBuffer->buffer->buffer;
-			barrier.size = VK_WHOLE_SIZE;
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			previousBuffer = loadedIndexBuffer->buffer;
-		}
-		loadedIndexBuffer = loadedIndexBuffer->next;
-	}
+	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstIndices16, bufferCopy, previousBuffer);
+	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices16, bufferCopy, previousBuffer);
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
-	previousBuffer = nullptr;
-	loadedIndexBuffer = appState.Scene.buffers.firstIndices32;
-	while (loadedIndexBuffer != nullptr)
-	{
-		bufferCopy.dstOffset = loadedIndexBuffer->offset;
-		bufferCopy.size = loadedIndexBuffer->size;
-		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedIndexBuffer->buffer->buffer, 1, &bufferCopy));
-		bufferCopy.srcOffset += loadedIndexBuffer->size;
-		if (previousBuffer != loadedIndexBuffer->buffer)
-		{
-			appState.Scene.stagingBuffer.lastBarrier++;
-			if (appState.Scene.stagingBuffer.bufferBarriers.size() <= appState.Scene.stagingBuffer.lastBarrier)
-			{
-				appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
-			}
-			auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
-			barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-			barrier.buffer = loadedIndexBuffer->buffer->buffer;
-			barrier.size = VK_WHOLE_SIZE;
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-		}
-		loadedIndexBuffer = loadedIndexBuffer->next;
-	}
+	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstIndices32, bufferCopy, previousBuffer);
+	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices32, bufferCopy, previousBuffer);
 	bufferCopy.dstOffset = 0;
-	loadedBuffer = appState.Scene.buffers.firstSurfaceTexturePosition;
-	while (loadedBuffer != nullptr)
-	{
-		bufferCopy.size = loadedBuffer->size;
-		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedBuffer->buffer->buffer, 1, &bufferCopy));
-		bufferCopy.srcOffset += loadedBuffer->size;
-		appState.Scene.stagingBuffer.lastBarrier++;
-		if (appState.Scene.stagingBuffer.bufferBarriers.size() <= appState.Scene.stagingBuffer.lastBarrier)
-		{
-			appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
-		}
-		auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
-		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.buffer = loadedBuffer->buffer->buffer;
-		barrier.size = VK_WHOLE_SIZE;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-		loadedBuffer = loadedBuffer->next;
-	}
-	loadedBuffer = appState.Scene.buffers.firstTurbulentTexturePosition;
-	while (loadedBuffer != nullptr)
-	{
-		bufferCopy.size = loadedBuffer->size;
-		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedBuffer->buffer->buffer, 1, &bufferCopy));
-		bufferCopy.srcOffset += loadedBuffer->size;
-		appState.Scene.stagingBuffer.lastBarrier++;
-		if (appState.Scene.stagingBuffer.bufferBarriers.size() <= appState.Scene.stagingBuffer.lastBarrier)
-		{
-			appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
-		}
-		auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
-		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.buffer = loadedBuffer->buffer->buffer;
-		barrier.size = VK_WHOLE_SIZE;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-		loadedBuffer = loadedBuffer->next;
-	}
-	loadedBuffer = appState.Scene.buffers.firstAliasVertices;
-	while (loadedBuffer != nullptr)
-	{
-		bufferCopy.size = loadedBuffer->size;
-		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedBuffer->buffer->buffer, 1, &bufferCopy));
-		bufferCopy.srcOffset += loadedBuffer->size;
-		appState.Scene.stagingBuffer.lastBarrier++;
-		if (appState.Scene.stagingBuffer.bufferBarriers.size() <= appState.Scene.stagingBuffer.lastBarrier)
-		{
-			appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
-		}
-		auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
-		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.buffer = loadedBuffer->buffer->buffer;
-		barrier.size = VK_WHOLE_SIZE;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-		loadedBuffer = loadedBuffer->next;
-	}
+	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstSurfaceTexturePosition, bufferCopy);
+	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstTurbulentTexturePosition, bufferCopy);
+	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasVertices, bufferCopy);
 	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
 		bufferCopy.size = loadedTexCoordsBuffer->size;
 		VC(appState.Device.vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedTexCoordsBuffer->buffer->buffer, 1, &bufferCopy));
 		bufferCopy.srcOffset += loadedTexCoordsBuffer->size;
-		appState.Scene.stagingBuffer.lastBarrier++;
-		if (appState.Scene.stagingBuffer.bufferBarriers.size() <= appState.Scene.stagingBuffer.lastBarrier)
-		{
-			appState.Scene.stagingBuffer.bufferBarriers.emplace_back();
-		}
-		auto& barrier = appState.Scene.stagingBuffer.bufferBarriers[appState.Scene.stagingBuffer.lastBarrier];
-		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.buffer = loadedTexCoordsBuffer->buffer->buffer;
-		barrier.size = VK_WHOLE_SIZE;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+		appState.Scene.AddToBufferBarrier(loadedTexCoordsBuffer->buffer->buffer);
 		loadedTexCoordsBuffer = loadedTexCoordsBuffer->next;
 	}
 	if (appState.Scene.stagingBuffer.lastBarrier >= 0)
@@ -1385,7 +1433,6 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	{
 		floorIndicesSize = 0;
 	}
-	VkDeviceSize colormappedIndices16Size = (d_lists.last_colormapped_index16 + 1) * sizeof(uint16_t);
 	VkDeviceSize coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
 	VkDeviceSize controllerIndices16Size = 0;
 	if (appState.Scene.controllerVerticesSize > 0)
@@ -1399,7 +1446,7 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 			controllerIndices16Size += 2 * 36 * sizeof(uint16_t);
 		}
 	}
-	VkDeviceSize indices16Size = floorIndicesSize + colormappedIndices16Size + coloredIndices16Size + controllerIndices16Size;
+	VkDeviceSize indices16Size = floorIndicesSize + coloredIndices16Size + controllerIndices16Size;
 	if (indices16Size > 0)
 	{
 		indices16 = cachedIndices16.GetIndexBuffer(appState, indices16Size);
@@ -1413,9 +1460,7 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 			*mapped++ = 3;
 			*mapped++ = 0;
 		}
-		colormappedIndex16Base = floorIndicesSize;
-		memcpy((unsigned char*)indices16->mapped + colormappedIndex16Base, d_lists.colormapped_indices16.data(), colormappedIndices16Size);
-		coloredIndex16Base = colormappedIndex16Base + colormappedIndices16Size;
+		coloredIndex16Base = floorIndicesSize;
 		memcpy((unsigned char*)indices16->mapped + coloredIndex16Base, d_lists.colored_indices16.data(), coloredIndices16Size);
 		controllerIndex16Base = coloredIndex16Base + coloredIndices16Size;
 		if (controllerIndices16Size > 0)
@@ -1438,15 +1483,11 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 		}
 		indices16->SubmitIndexBuffer(appState, commandBuffer);
 	}
-	VkDeviceSize colormappedIndices32Size = (d_lists.last_colormapped_index32 + 1) * sizeof(uint32_t);
-	VkDeviceSize coloredIndices32Size = (d_lists.last_colored_index32 + 1) * sizeof(uint32_t);
-	VkDeviceSize indices32Size = colormappedIndices32Size + coloredIndices32Size;
+	VkDeviceSize indices32Size = (d_lists.last_colored_index32 + 1) * sizeof(uint32_t);
 	if (indices32Size > 0)
 	{
 		indices32 = cachedIndices32.GetIndexBuffer(appState, indices32Size);
-		memcpy((unsigned char*)indices32->mapped, d_lists.colormapped_indices32.data(), colormappedIndices32Size);
-		coloredIndex32Base = colormappedIndices32Size;
-		memcpy((unsigned char*)indices32->mapped + coloredIndex32Base, d_lists.colored_indices32.data(), coloredIndices32Size);
+		memcpy((unsigned char*)indices32->mapped, d_lists.colored_indices32.data(), indices32Size);
 		indices32->SubmitIndexBuffer(appState, commandBuffer);
 	}
 	VkDeviceSize colorsSize = (d_lists.last_colored_attribute + 1) * sizeof(float);
@@ -1939,7 +1980,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastAlias16; i++)
 			{
 				auto& loaded = appState.Scene.loadedAlias16[i];
@@ -1988,7 +2029,13 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
-				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.firstIndex, 0, 0));
+				auto indices = loaded.indices.buffer;
+				if (previousIndices != indices)
+				{
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT16));
+					previousIndices = indices;
+				}
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 2, 0, 0));
 			}
 		}
 		if (appState.Scene.lastAlias32 >= 0)
@@ -1997,7 +2044,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastAlias32; i++)
 			{
 				auto& loaded = appState.Scene.loadedAlias32[i];
@@ -2046,7 +2093,13 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
-				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.firstIndex, 0, 0));
+				auto indices = loaded.indices.buffer;
+				if (previousIndices != indices)
+				{
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT32));
+					previousIndices = indices;
+				}
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 4, 0, 0));
 			}
 		}
 		if (appState.Scene.lastViewmodel16 >= 0 || appState.Scene.lastViewmodel32 >= 0)
@@ -2087,7 +2140,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, colormappedIndex16Base, VK_INDEX_TYPE_UINT16));
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastViewmodel16; i++)
 			{
 				auto& loaded = appState.Scene.loadedViewmodels16[i];
@@ -2136,7 +2189,13 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
-				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.firstIndex, 0, 0));
+				auto indices = loaded.indices.buffer;
+				if (previousIndices != indices)
+				{
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT16));
+					previousIndices = indices;
+				}
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 2, 0, 0));
 			}
 		}
 		if (appState.Scene.lastViewmodel32 >= 0)
@@ -2145,7 +2204,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastViewmodel32; i++)
 			{
 				auto& loaded = appState.Scene.loadedViewmodels32[i];
@@ -2194,7 +2253,13 @@ void PerImage::Render(AppState& appState)
 					VC(appState.Device.vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodel.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr));
 					previousTexture = texture;
 				}
-				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.firstIndex, 0, 0));
+				auto indices = loaded.indices.buffer;
+				if (previousIndices != indices)
+				{
+					VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT16));
+					previousIndices = indices;
+				}
+				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 4, 0, 0));
 			}
 		}
 		if (appState.Scene.lastColoredIndex16 >= 0 || appState.Scene.lastColoredIndex32 >= 0)
@@ -2211,7 +2276,7 @@ void PerImage::Render(AppState& appState)
 			}
 			if (appState.Scene.lastColoredIndex32 >= 0)
 			{
-				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, coloredIndex32Base, VK_INDEX_TYPE_UINT32));
+				VC(appState.Device.vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32));
 				VC(appState.Device.vkCmdDrawIndexed(commandBuffer, appState.Scene.lastColoredIndex32 + 1, 1, 0, 0, 0));
 			}
 		}

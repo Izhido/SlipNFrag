@@ -1,6 +1,28 @@
 #include "CachedSharedMemoryBuffers.h"
 #include "Constants.h"
 
+void CachedSharedMemoryBuffers::Initialize()
+{
+	firstVertices = nullptr;
+	currentVertices = nullptr;
+	firstIndices16 = nullptr;
+	currentIndices16 = nullptr;
+	firstIndices32 = nullptr;
+	currentIndices32 = nullptr;
+	firstAliasIndices16 = nullptr;
+	currentAliasIndices16 = nullptr;
+	firstAliasIndices32 = nullptr;
+	currentAliasIndices32 = nullptr;
+	firstSurfaceTexturePosition = nullptr;
+	currentSurfaceTexturePosition = nullptr;
+	firstTurbulentTexturePosition = nullptr;
+	currentTurbulentTexturePosition = nullptr;
+	firstAliasVertices = nullptr;
+	currentAliasVertices = nullptr;
+	firstAliasTexCoords = nullptr;
+	currentAliasTexCoords = nullptr;
+}
+
 void CachedSharedMemoryBuffers::SetupVertices(LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;
@@ -41,6 +63,34 @@ void CachedSharedMemoryBuffers::SetupIndices32(LoadedSharedMemoryIndexBuffer& lo
 		currentIndices32->next = &loaded;
 	}
 	currentIndices32 = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupAliasIndices16(LoadedSharedMemoryAliasIndexBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentAliasIndices16 == nullptr)
+	{
+		firstAliasIndices16 = &loaded;
+	}
+	else
+	{
+		currentAliasIndices16->next = &loaded;
+	}
+	currentAliasIndices16 = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupAliasIndices32(LoadedSharedMemoryAliasIndexBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentAliasIndices32 == nullptr)
+	{
+		firstAliasIndices32 = &loaded;
+	}
+	else
+	{
+		currentAliasIndices32->next = &loaded;
+	}
+	currentAliasIndices32 = &loaded;
 }
 
 void CachedSharedMemoryBuffers::SetupSurfaceTexturePosition(LoadedSharedMemoryBuffer& loaded)
