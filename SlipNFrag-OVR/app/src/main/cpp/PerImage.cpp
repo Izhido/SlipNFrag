@@ -46,7 +46,8 @@ void PerImage::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& sur
 		loaded.indices.firstSource = surface.surface;
 		loaded.indices.secondSource = surface.entity;
 		appState.Scene.buffers.SetupIndices16(loaded.indices);
-		appState.Scene.indicesPerKey.insert({ key, { loaded.indices.buffer, loaded.indices.offset } });
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		appState.Scene.indicesPerKey.insert({ key, newEntry });
 	}
 	else
 	{
@@ -81,7 +82,8 @@ void PerImage::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& sur
 		loaded.indices.firstSource = surface.surface;
 		loaded.indices.secondSource = surface.entity;
 		appState.Scene.buffers.SetupIndices32(loaded.indices);
-		appState.Scene.indicesPerKey.insert({ key, { loaded.indices.buffer, loaded.indices.offset } });
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		appState.Scene.indicesPerKey.insert({ key, newEntry });
 	}
 	else
 	{
@@ -114,7 +116,8 @@ void PerImage::GetAliasIndices16StagingBufferSize(AppState& appState, dalias_t& 
 		size += loaded.indices.size;
 		loaded.indices.source = alias.aliashdr;
 		appState.Scene.buffers.SetupAliasIndices16(loaded.indices);
-		appState.Scene.aliasIndicesPerKey.insert({ alias.aliashdr, { loaded.indices.buffer, loaded.indices.offset } });
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		appState.Scene.aliasIndicesPerKey.insert({ alias.aliashdr, newEntry });
 	}
 	else
 	{
@@ -147,7 +150,8 @@ void PerImage::GetAliasIndices32StagingBufferSize(AppState& appState, dalias_t& 
 		size += loaded.indices.size;
 		loaded.indices.source = alias.aliashdr;
 		appState.Scene.buffers.SetupAliasIndices32(loaded.indices);
-		appState.Scene.aliasIndicesPerKey.insert({ alias.aliashdr, { loaded.indices.buffer, loaded.indices.offset } });
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		appState.Scene.aliasIndicesPerKey.insert({ alias.aliashdr, newEntry });
 	}
 	else
 	{
@@ -695,7 +699,8 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 			loaded.indices.firstSource = turbulent.surface;
 			loaded.indices.secondSource = turbulent.entity;
 			appState.Scene.buffers.SetupIndices16(loaded.indices);
-			appState.Scene.indicesPerKey.insert({ key, { loaded.indices.buffer, loaded.indices.offset } });
+			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+			appState.Scene.indicesPerKey.insert({ key, newEntry });
 		}
 		else
 		{
@@ -735,7 +740,8 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, const View& view
 			loaded.indices.firstSource = turbulent.surface;
 			loaded.indices.secondSource = turbulent.entity;
 			appState.Scene.buffers.SetupIndices32(loaded.indices);
-			appState.Scene.indicesPerKey.insert({ key, { loaded.indices.buffer, loaded.indices.offset } });
+			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+			appState.Scene.indicesPerKey.insert({ key, newEntry });
 		}
 		else
 		{
