@@ -54,6 +54,8 @@ struct Scene
 	Pipeline sky;
 	Pipeline floor;
 	Pipeline console;
+	ovrMatrix4f ViewMatrices[VRAPI_FRAME_LAYER_EYE_MAX];
+	ovrMatrix4f ProjectionMatrices[VRAPI_FRAME_LAYER_EYE_MAX];
 	Buffer matrices;
 	int numBuffers;
 	int hostClearCount;

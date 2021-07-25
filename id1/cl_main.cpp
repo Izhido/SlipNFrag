@@ -746,10 +746,11 @@ void CL_SendCmd (void)
 
 void CL_SendAckExpandedProtocol(usercmd_t* cmd)
 {
-    static sizebuf_t	buf;
+    static sizebuf_t buf;
     
     buf.maxsize = 4;
-    
+    buf.cursize = 0;
+
     cl.cmd = *cmd;
 
     MSG_WriteByte (&buf, clc_ackexpproto);

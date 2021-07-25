@@ -42,8 +42,6 @@ struct AppState
 	bool UseFragmentDensity;
 	VkRenderPass RenderPass;
 	std::vector<View> Views;
-	ovrMatrix4f ViewMatrices[VRAPI_FRAME_LAYER_EYE_MAX];
-	ovrMatrix4f ProjectionMatrices[VRAPI_FRAME_LAYER_EYE_MAX];
 	ovrTracking2 Tracking;
 	float Yaw;
 	float Pitch;

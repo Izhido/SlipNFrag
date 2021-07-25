@@ -21,13 +21,13 @@ file(GLOB STB_FILES ../../../../../${OVR_SDK_MOBILE}/3rdParty/stb/src/*.c)
 
 list(FILTER ID1_FILES EXCLUDE REGEX "net_win")
 
-add_library(native-activity SHARED ${SRC_FILES} ${ID1_FILES} ${STB_FILES})
+add_library(slipnfrag-native SHARED ${SRC_FILES} ${ID1_FILES} ${STB_FILES})
 
-target_include_directories(native-activity PRIVATE ${ANDROID_NDK}/sources/android/native_app_glue)
-target_include_directories(native-activity PRIVATE ${ANDROID_NDK}/sources/third_party/vulkan/src/include)
-target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBILE}/VrApi/Include)
-target_include_directories(native-activity PRIVATE ../../../../../id1)
-target_include_directories(native-activity PRIVATE ../../../../../${OVR_SDK_MOBILE}/3rdParty/stb/src)
+target_include_directories(slipnfrag-native PRIVATE ${ANDROID_NDK}/sources/android/native_app_glue)
+target_include_directories(slipnfrag-native PRIVATE ${ANDROID_NDK}/sources/third_party/vulkan/src/include)
+target_include_directories(slipnfrag-native PRIVATE ../../../../../${OVR_SDK_MOBILE}/VrApi/Include)
+target_include_directories(slipnfrag-native PRIVATE ../../../../../id1)
+target_include_directories(slipnfrag-native PRIVATE ../../../../../${OVR_SDK_MOBILE}/3rdParty/stb/src)
 
-target_link_libraries(native-activity android native_app_glue log vrapi OpenSLES)
-target_link_libraries(native-activity debug validation)
+target_link_libraries(slipnfrag-native android native_app_glue log vrapi OpenSLES)
+target_link_libraries(slipnfrag-native debug validation)

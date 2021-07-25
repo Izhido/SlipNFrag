@@ -802,9 +802,9 @@ void PerImage::LoadStagingBuffer(AppState& appState, int matrixIndex, Buffer* st
 {
 	VkDeviceSize offset = 0;
 	size_t matricesSize = appState.Scene.numBuffers * sizeof(ovrMatrix4f);
-	memcpy(stagingBuffer->mapped, &appState.ViewMatrices[matrixIndex], matricesSize);
+	memcpy(stagingBuffer->mapped, &appState.Scene.ViewMatrices[matrixIndex], matricesSize);
 	offset += matricesSize;
-	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, &appState.ProjectionMatrices[matrixIndex], matricesSize);
+	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, &appState.Scene.ProjectionMatrices[matrixIndex], matricesSize);
 	offset += matricesSize;
 	auto loadedBuffer = appState.Scene.buffers.firstVertices;
 	while (loadedBuffer != nullptr)

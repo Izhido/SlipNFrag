@@ -1114,7 +1114,7 @@ void android_main(struct android_app* app)
 			{
 				if (appState.PreviousMode == AppStartupMode)
 				{
-					sys_version = "OVR 1.0.7";
+					sys_version = "OVR 1.0.8";
 					const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag/files";
 					std::vector<std::string> arguments;
 					arguments.emplace_back("SlipNFrag");
@@ -1240,8 +1240,8 @@ void android_main(struct android_app* app)
 			std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
 			for (auto i = 0; i < VRAPI_FRAME_LAYER_EYE_MAX; i++)
 			{
-				appState.ViewMatrices[i] = ovrMatrix4f_Transpose(&appState.Tracking.Eye[i].ViewMatrix);
-				appState.ProjectionMatrices[i] = ovrMatrix4f_Transpose(&appState.Tracking.Eye[i].ProjectionMatrix);
+				appState.Scene.ViewMatrices[i] = ovrMatrix4f_Transpose(&appState.Tracking.Eye[i].ViewMatrix);
+				appState.Scene.ProjectionMatrices[i] = ovrMatrix4f_Transpose(&appState.Tracking.Eye[i].ProjectionMatrix);
 			}
 			appState.Scene.orientation = appState.Tracking.HeadPose.Pose.Orientation;
 			auto x = appState.Scene.orientation.x;
