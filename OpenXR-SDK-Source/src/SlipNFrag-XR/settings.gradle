@@ -1,0 +1,2 @@
+rootProject.name = "SlipNFrag-XR"
+include ':app'
