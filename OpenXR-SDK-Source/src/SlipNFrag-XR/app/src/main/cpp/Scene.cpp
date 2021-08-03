@@ -387,7 +387,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	rasterizationStateCreateInfo.lineWidth = 1.0f;
 	VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo { };
 	multisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_4_BIT;
 	multisampleStateCreateInfo.minSampleShading = 1.0f;
 	VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo { };
 	depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;

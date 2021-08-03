@@ -1056,40 +1056,17 @@ void android_main(struct android_app* app)
 
 		XrStructureType swapchainImageType { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
 
-		VkDeviceMemory depthMemory = VK_NULL_HANDLE;
-		VkImage depthImage = VK_NULL_HANDLE;
-		VkImageCreateInfo imageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = swapchainWidth;
-		imageInfo.extent.height = swapchainHeight;
-		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 2;
-		imageInfo.format = DEPTH_FORMAT;
-		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		imageInfo.samples = (VkSampleCountFlagBits)swapchainCreateInfo.sampleCount;
-		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &depthImage));
-
-		VkMemoryRequirements memRequirements { };
-		vkGetImageMemoryRequirements(appState.Device, depthImage, &memRequirements);
-		VkMemoryAllocateInfo memoryAllocateInfo { };
-		createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
-		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &depthMemory));
-		CHECK_VKCMD(vkBindImageMemory(appState.Device, depthImage, depthMemory, 0));
-
 		VkSubpassDescription subpass { };
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
 		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 		VkAttachmentReference depthRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference resolveRef = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
-		VkAttachmentDescription attachments[2];
+		VkAttachmentDescription attachments[3];
 
 		VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-		rpInfo.attachmentCount = 0;
+		rpInfo.attachmentCount = 3;
 		rpInfo.pAttachments = attachments;
 		rpInfo.subpassCount = 1;
 		rpInfo.pSubpasses = &subpass;
@@ -1103,32 +1080,39 @@ void android_main(struct android_app* app)
 		multiviewCreateInfo.pCorrelationMasks = &viewMask;
 		rpInfo.pNext = &multiviewCreateInfo;
 
-		colorRef.attachment = rpInfo.attachmentCount++;
-
-		attachments[colorRef.attachment].format = COLOR_FORMAT;
-		attachments[colorRef.attachment].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[colorRef.attachment].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[colorRef.attachment].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachments[colorRef.attachment].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[colorRef.attachment].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[colorRef.attachment].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		attachments[colorRef.attachment].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachments[0].format = COLOR_FORMAT;
+		attachments[0].samples = VK_SAMPLE_COUNT_4_BIT;
+		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		subpass.colorAttachmentCount = 1;
 		subpass.pColorAttachments = &colorRef;
 
-		depthRef.attachment = rpInfo.attachmentCount++;
-
-		attachments[depthRef.attachment].format = DEPTH_FORMAT;
-		attachments[depthRef.attachment].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[depthRef.attachment].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[depthRef.attachment].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachments[depthRef.attachment].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[depthRef.attachment].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[depthRef.attachment].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		attachments[depthRef.attachment].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments[1].format = DEPTH_FORMAT;
+		attachments[1].samples = VK_SAMPLE_COUNT_4_BIT;
+		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		subpass.pDepthStencilAttachment = &depthRef;
+
+		attachments[2].format = COLOR_FORMAT;
+		attachments[2].samples = (VkSampleCountFlagBits)swapchainSampleCount;
+		attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[2].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachments[2].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		subpass.pResolveAttachments = &resolveRef;
 
 		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &rpInfo, nullptr, &appState.RenderPass));
 
@@ -1593,20 +1577,13 @@ void android_main(struct android_app* app)
 					CHECK_VKCMD(vkResetCommandBuffer(perImage.commandBuffer, 0));
 					CHECK_VKCMD(vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 
-					VkImageMemoryBarrier depthBarrier {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
-					depthBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-					depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-					depthBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-					depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-					depthBarrier.image = depthImage;
-					depthBarrier.subresourceRange = { VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 };
-					vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
-
 					double clearR = 0;
 					double clearG = 0;
 					double clearB = 0;
 					double clearA = 1;
+					
 					auto readClearColor = false;
+					
 					if (appState.Mode != AppWorldMode/* || appState.Scene.skybox != VK_NULL_HANDLE*/)
 					{
 						clearA = 0;
@@ -1615,6 +1592,7 @@ void android_main(struct android_app* app)
 					{
 						readClearColor = true;
 					}
+					
 					//double elapsed = 0;
 					{
 						std::lock_guard<std::mutex> lock(appState.RenderMutex);
@@ -1638,7 +1616,8 @@ void android_main(struct android_app* app)
 						//auto endTime = Sys_FloatTime();
 						//elapsed += (endTime - startTime);
 					}
-					VkClearValue clearValues[2];
+					
+					VkClearValue clearValues[3] { };
 					clearValues[0].color.float32[0] = clearR;
 					clearValues[0].color.float32[1] = clearG;
 					clearValues[0].color.float32[2] = clearB;
@@ -1648,56 +1627,101 @@ void android_main(struct android_app* app)
 
 					if (perImage.framebuffer == VK_NULL_HANDLE)
 					{
-						perImage.colorImage = swapchainVulkanImages[swapchainImageIndex].image;
-						perImage.depthImage = depthImage;
+						VkImageCreateInfo imageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+						imageInfo.imageType = VK_IMAGE_TYPE_2D;
+						imageInfo.extent.width = swapchainWidth;
+						imageInfo.extent.height = swapchainHeight;
+						imageInfo.extent.depth = 1;
+						imageInfo.mipLevels = 1;
+						imageInfo.arrayLayers = 2;
+						imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+						imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+						imageInfo.samples = VK_SAMPLE_COUNT_4_BIT;
+						imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-						VkImageView attachments[2];
-						uint32_t attachmentCount = 0;
+						imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+						imageInfo.format = COLOR_FORMAT;
+						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perImage.colorImage));
 
-						VkImageViewCreateInfo colorViewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-						colorViewInfo.image = perImage.colorImage;
-						colorViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-						colorViewInfo.format = COLOR_FORMAT;
-						colorViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-						colorViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-						colorViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-						colorViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-						colorViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-						colorViewInfo.subresourceRange.baseMipLevel = 0;
-						colorViewInfo.subresourceRange.levelCount = 1;
-						colorViewInfo.subresourceRange.baseArrayLayer = 0;
-						colorViewInfo.subresourceRange.layerCount = 2;
-						CHECK_VKCMD(vkCreateImageView(appState.Device, &colorViewInfo, nullptr, &perImage.colorView));
-						attachments[attachmentCount++] = perImage.colorView;
+						imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+						imageInfo.format = DEPTH_FORMAT;
+						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perImage.depthImage));
 
-						VkImageViewCreateInfo depthViewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-						depthViewInfo.image = depthImage;
-						depthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-						depthViewInfo.format = DEPTH_FORMAT;
-						depthViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-						depthViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-						depthViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-						depthViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-						depthViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-						depthViewInfo.subresourceRange.baseMipLevel = 0;
-						depthViewInfo.subresourceRange.levelCount = 1;
-						depthViewInfo.subresourceRange.baseArrayLayer = 0;
-						depthViewInfo.subresourceRange.layerCount = 2;
-						CHECK_VKCMD(vkCreateImageView(appState.Device, &depthViewInfo, nullptr, &perImage.depthView));
-						attachments[attachmentCount++] = perImage.depthView;
+						perImage.resolveImage = swapchainVulkanImages[swapchainImageIndex].image;
 
-						VkFramebufferCreateInfo fbInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-						fbInfo.renderPass = appState.RenderPass;
-						fbInfo.attachmentCount = attachmentCount;
-						fbInfo.pAttachments = attachments;
-						fbInfo.width = swapchainWidth;
-						fbInfo.height = swapchainHeight;
-						fbInfo.layers = 1;
-						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &fbInfo, nullptr, &perImage.framebuffer));
+						VkMemoryRequirements memRequirements { };
+						VkMemoryAllocateInfo memoryAllocateInfo { };
+
+						vkGetImageMemoryRequirements(appState.Device, perImage.colorImage, &memRequirements);
+						createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perImage.colorMemory));
+						CHECK_VKCMD(vkBindImageMemory(appState.Device, perImage.colorImage, perImage.colorMemory, 0));
+						
+						vkGetImageMemoryRequirements(appState.Device, perImage.depthImage, &memRequirements);
+						createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perImage.depthMemory));
+						CHECK_VKCMD(vkBindImageMemory(appState.Device, perImage.depthImage, perImage.depthMemory, 0));
+
+						VkImageView attachments[3];
+
+						VkImageViewCreateInfo viewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+						viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+						viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+						viewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+						viewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+						viewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+						viewInfo.subresourceRange.levelCount = 1;
+						viewInfo.subresourceRange.layerCount = 2;
+
+						viewInfo.image = perImage.colorImage;
+						viewInfo.format = COLOR_FORMAT;
+						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perImage.colorView));
+						attachments[0] = perImage.colorView;
+
+						viewInfo.image = perImage.depthImage;
+						viewInfo.format = DEPTH_FORMAT;
+						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perImage.depthView));
+						attachments[1] = perImage.depthView;
+
+						viewInfo.image = perImage.resolveImage;
+						viewInfo.format = COLOR_FORMAT;
+						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perImage.resolveView));
+						attachments[2] = perImage.resolveView;
+
+						VkFramebufferCreateInfo framebufferInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+						framebufferInfo.renderPass = appState.RenderPass;
+						framebufferInfo.attachmentCount = 3;
+						framebufferInfo.pAttachments = attachments;
+						framebufferInfo.width = swapchainWidth;
+						framebufferInfo.height = swapchainHeight;
+						framebufferInfo.layers = 1;
+						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &framebufferInfo, nullptr, &perImage.framebuffer));
+
+						VkImageMemoryBarrier colorBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+						colorBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+						colorBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+						colorBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+						colorBarrier.image = perImage.colorImage;
+						colorBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 2 };
+						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorBarrier);
+
+						colorBarrier.image = perImage.resolveImage;
+						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorBarrier);
+
+						VkImageMemoryBarrier depthBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+						depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+						depthBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+						depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+						depthBarrier.image = perImage.depthImage;
+						depthBarrier.subresourceRange = { VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 2 };
+						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
 
 					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-					renderPassBeginInfo.clearValueCount = 2;
+					renderPassBeginInfo.clearValueCount = 3;
 					renderPassBeginInfo.pClearValues = clearValues;
 					
 					renderPassBeginInfo.renderPass = appState.RenderPass;
@@ -1768,114 +1792,128 @@ void android_main(struct android_app* app)
 			{
 				vkDestroyFramebuffer(appState.Device, perImage.framebuffer, nullptr);
 			}
-			if (perImage.colorView != VK_NULL_HANDLE)
+			if (perImage.resolveView != VK_NULL_HANDLE)
 			{
-				vkDestroyImageView(appState.Device, perImage.colorView, nullptr);
+				vkDestroyImageView(appState.Device, perImage.resolveView, nullptr);
 			}
 			if (perImage.depthView != VK_NULL_HANDLE)
 			{
 				vkDestroyImageView(appState.Device, perImage.depthView, nullptr);
 			}
-		}
-
-		if (depthImage != VK_NULL_HANDLE)
-		{
-			vkDestroyImage(appState.Device, depthImage, nullptr);
-		}
-		if (depthMemory != VK_NULL_HANDLE)
-		{
-			vkFreeMemory(appState.Device, depthMemory, nullptr);
-		}
-
-		for (auto& perImage : appState.PerImage)
-		{
-			vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &perImage.commandBuffer);
-			vkDestroyFence(appState.Device, perImage.fence, nullptr);
-			perImage.controllerResources.Delete(appState);
-			perImage.floorResources.Delete(appState);
-			perImage.skyResources.Delete(appState);
-			perImage.sceneMatricesAndColormapResources.Delete(appState);
-			perImage.sceneMatricesAndPaletteResources.Delete(appState);
-			perImage.sceneMatricesResources.Delete(appState);
-			perImage.host_colormapResources.Delete(appState);
-			if (perImage.sky != nullptr)
+			if (perImage.colorView != VK_NULL_HANDLE)
 			{
-				perImage.sky->Delete(appState);
+				vkDestroyImageView(appState.Device, perImage.colorView, nullptr);
 			}
-			if (perImage.host_colormap != nullptr)
+			if (perImage.depthImage != VK_NULL_HANDLE)
 			{
-				perImage.host_colormap->Delete(appState);
+				vkDestroyImage(appState.Device, perImage.depthImage, nullptr);
 			}
-			if (perImage.palette != nullptr)
+			if (perImage.depthMemory != VK_NULL_HANDLE)
 			{
-				perImage.palette->Delete(appState);
+				vkFreeMemory(appState.Device, perImage.depthMemory, nullptr);
 			}
-			perImage.colormaps.Delete(appState);
-			perImage.stagingBuffers.Delete(appState);
-			perImage.cachedColors.Delete(appState);
-			perImage.cachedIndices32.Delete(appState);
-			perImage.cachedIndices16.Delete(appState);
-			perImage.cachedAttributes.Delete(appState);
-			perImage.cachedVertices.Delete(appState);
-		}
-
-		if (appState.RenderPass != VK_NULL_HANDLE)
-		{
-			vkDestroyRenderPass(appState.Device, appState.RenderPass, nullptr);
-		}
-
-		CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
-		vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
-		for (auto i = 0; i < appState.Scene.samplers.size(); i++)
-		{
-			vkDestroySampler(appState.Device, appState.Scene.samplers[i], nullptr);
-		}
-		appState.Scene.controllerTexture.Delete(appState);
-		appState.Scene.floorTexture.Delete(appState);
-		appState.Scene.textures.Delete(appState);
-		for (auto& entry : appState.Scene.allocations)
-		{
-			for (auto& list : entry.second.allocations)
+			if (perImage.colorImage != VK_NULL_HANDLE)
 			{
-				vkFreeMemory(appState.Device, list.memory, nullptr);
+				vkDestroyImage(appState.Device, perImage.colorImage, nullptr);
+			}
+			if (perImage.colorMemory != VK_NULL_HANDLE)
+			{
+				vkFreeMemory(appState.Device, perImage.colorMemory, nullptr);
 			}
 		}
-		appState.Scene.buffers.Delete(appState);
-		appState.Scene.console.Delete(appState);
-		appState.Scene.floor.Delete(appState);
-		appState.Scene.sky.Delete(appState);
-		appState.Scene.colored.Delete(appState);
-		appState.Scene.viewmodel.Delete(appState);
-		appState.Scene.alias.Delete(appState);
-		appState.Scene.turbulent.Delete(appState);
-		appState.Scene.sprites.Delete(appState);
-		appState.Scene.fences.Delete(appState);
-		appState.Scene.surfaces.Delete(appState);
-		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.doubleImageLayout, nullptr);
-		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
-		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndTwoImagesLayout, nullptr);
-		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndImageLayout, nullptr);
-		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.consoleFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.consoleVertex, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.floorFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.floorVertex, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.skyFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.skyVertex, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.coloredFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.coloredVertex, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.viewmodelFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.viewmodelVertex, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.aliasFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.aliasVertex, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.turbulentFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.turbulentVertex, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.spriteFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.spriteVertex, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.fenceFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.surfaceFragment, nullptr);
-		vkDestroyShaderModule(appState.Device, appState.Scene.surfaceVertex, nullptr);
-		appState.Scene.matrices.Delete(appState);
+
+		if (appState.Device != VK_NULL_HANDLE)
+		{
+			for (auto& perImage : appState.PerImage)
+			{
+				vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &perImage.commandBuffer);
+				vkDestroyFence(appState.Device, perImage.fence, nullptr);
+				perImage.controllerResources.Delete(appState);
+				perImage.floorResources.Delete(appState);
+				perImage.skyResources.Delete(appState);
+				perImage.sceneMatricesAndColormapResources.Delete(appState);
+				perImage.sceneMatricesAndPaletteResources.Delete(appState);
+				perImage.sceneMatricesResources.Delete(appState);
+				perImage.host_colormapResources.Delete(appState);
+				if (perImage.sky != nullptr)
+				{
+					perImage.sky->Delete(appState);
+				}
+				if (perImage.host_colormap != nullptr)
+				{
+					perImage.host_colormap->Delete(appState);
+				}
+				if (perImage.palette != nullptr)
+				{
+					perImage.palette->Delete(appState);
+				}
+				perImage.colormaps.Delete(appState);
+				perImage.stagingBuffers.Delete(appState);
+				perImage.cachedColors.Delete(appState);
+				perImage.cachedIndices32.Delete(appState);
+				perImage.cachedIndices16.Delete(appState);
+				perImage.cachedAttributes.Delete(appState);
+				perImage.cachedVertices.Delete(appState);
+			}
+	
+			if (appState.RenderPass != VK_NULL_HANDLE)
+			{
+				vkDestroyRenderPass(appState.Device, appState.RenderPass, nullptr);
+			}
+	
+			CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
+			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
+			for (auto i = 0; i < appState.Scene.samplers.size(); i++)
+			{
+				vkDestroySampler(appState.Device, appState.Scene.samplers[i], nullptr);
+			}
+			appState.Scene.controllerTexture.Delete(appState);
+			appState.Scene.floorTexture.Delete(appState);
+			appState.Scene.textures.Delete(appState);
+			for (auto& entry : appState.Scene.allocations)
+			{
+				for (auto& list : entry.second.allocations)
+				{
+					vkFreeMemory(appState.Device, list.memory, nullptr);
+				}
+			}
+			appState.Scene.buffers.Delete(appState);
+			appState.Scene.console.Delete(appState);
+			appState.Scene.floor.Delete(appState);
+			appState.Scene.sky.Delete(appState);
+			appState.Scene.colored.Delete(appState);
+			appState.Scene.viewmodel.Delete(appState);
+			appState.Scene.alias.Delete(appState);
+			appState.Scene.turbulent.Delete(appState);
+			appState.Scene.sprites.Delete(appState);
+			appState.Scene.fences.Delete(appState);
+			appState.Scene.surfaces.Delete(appState);
+			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.doubleImageLayout, nullptr);
+			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
+			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndTwoImagesLayout, nullptr);
+			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndImageLayout, nullptr);
+			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.consoleFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.consoleVertex, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.floorFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.floorVertex, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.skyFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.skyVertex, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.coloredFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.coloredVertex, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.viewmodelFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.viewmodelVertex, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.aliasFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.aliasVertex, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.turbulentFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.turbulentVertex, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.spriteFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.spriteVertex, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.fenceFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceVertex, nullptr);
+			appState.Scene.matrices.Delete(appState);
+		}
 
 		if (appState.ActionSet != XR_NULL_HANDLE)
 		{

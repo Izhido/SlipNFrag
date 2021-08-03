@@ -14,8 +14,12 @@ struct PerImage
 {
 	VkImage colorImage;
 	VkImage depthImage;
+	VkImage resolveImage;
+	VkDeviceMemory colorMemory;
+	VkDeviceMemory depthMemory;
 	VkImageView colorView;
 	VkImageView depthView;
+	VkImageView resolveView;
 	VkFramebuffer framebuffer;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
