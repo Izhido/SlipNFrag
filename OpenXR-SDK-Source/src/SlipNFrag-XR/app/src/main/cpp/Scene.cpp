@@ -322,32 +322,32 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 	vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
 	stagingBuffer.Delete(appState);
-	/*auto consoleBottom = (float)(appState.ConsoleHeight - SBAR_HEIGHT - 24) / appState.ConsoleHeight;
+	auto consoleBottom = (float)(appState.ConsoleHeight - SBAR_HEIGHT - 24) / appState.ConsoleHeight;
 	auto statusBarTop = (float)(appState.ScreenHeight - SBAR_HEIGHT - 24) / appState.ScreenHeight;
 	appState.ConsoleVertices.assign(
-			{
-					-1, consoleBottom * 2 - 1, 0, 0, consoleBottom,
-					1, consoleBottom * 2 - 1, 0, 1, consoleBottom,
-					1, -1, 0, 1, 0,
-					-1, -1, 0, 0, 0,
-					-1, 1, 0, 0, 1,
-					-1.0 / 3.0, 1, 0, 1, 1,
-					-1.0 / 3.0, statusBarTop * 2 - 1, 0, 1, consoleBottom,
-					-1, statusBarTop * 2 - 1, 0, 0, consoleBottom,
-					-1, 1, 0, 0, 1,
-					1, 1, 0, 1, 1,
-					1, 0, 0, 1, 0,
-					-1, 0, 0, 0, 0
-			});
+	{
+		-1, consoleBottom * 2 - 1, 0, 0, consoleBottom,
+		1, consoleBottom * 2 - 1, 0, 1, consoleBottom,
+		1, -1, 0, 1, 0,
+		-1, -1, 0, 0, 0,
+		-1, 1, 0, 0, 1,
+		-1.0 / 3.0, 1, 0, 1, 1,
+		-1.0 / 3.0, statusBarTop * 2 - 1, 0, 1, consoleBottom,
+		-1, statusBarTop * 2 - 1, 0, 0, consoleBottom,
+		-1, 1, 0, 0, 1,
+		1, 1, 0, 1, 1,
+		1, 0, 0, 1, 0,
+		-1, 0, 0, 0, 0
+	});
 	appState.ConsoleIndices.assign(
-			{
-					0, 1, 2,
-					2, 3, 0,
-					4, 5, 6,
-					6, 7, 4,
-					8, 9, 10,
-					10, 11, 8
-			});*/
+	{
+		0, 1, 2,
+		2, 3, 0,
+		4, 5, 6,
+		6, 7, 4,
+		8, 9, 10,
+		10, 11, 8
+	});
 	appState.NoGameDataData.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
 	ImageAsset noGameData;
 	noGameData.Open("nogamedata.png", app);
@@ -382,7 +382,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo { };
 	rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-	//rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 	rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterizationStateCreateInfo.lineWidth = 1.0f;
 	VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo { };

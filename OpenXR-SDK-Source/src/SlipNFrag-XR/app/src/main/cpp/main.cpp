@@ -25,403 +25,7 @@
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-struct RenderPass
-{
-	VkRenderPass pass{VK_NULL_HANDLE};
-
-	RenderPass() = default;
-
-	bool Create(AppState& appState)
-	{
-		m_vkDevice = appState.Device;
-
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-
-		VkAttachmentReference colorRef = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
-		VkAttachmentReference depthRef = {1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
-
-		std::array<VkAttachmentDescription, 2> at = {};
-
-		VkRenderPassCreateInfo rpInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
-		rpInfo.attachmentCount = 0;
-		rpInfo.pAttachments = at.data();
-		rpInfo.subpassCount = 1;
-		rpInfo.pSubpasses = &subpass;
-		
-		VkRenderPassMultiviewCreateInfo multiviewCreateInfo { };
-		const uint32_t viewMask = 3;
-		multiviewCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
-		multiviewCreateInfo.subpassCount = 1;
-		multiviewCreateInfo.pViewMasks = &viewMask;
-		multiviewCreateInfo.correlationMaskCount = 1;
-		multiviewCreateInfo.pCorrelationMasks = &viewMask;
-		rpInfo.pNext = &multiviewCreateInfo;
-
-		colorRef.attachment = rpInfo.attachmentCount++;
-
-		at[colorRef.attachment].format = COLOR_FORMAT;
-		at[colorRef.attachment].samples = VK_SAMPLE_COUNT_1_BIT;
-		at[colorRef.attachment].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		at[colorRef.attachment].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		at[colorRef.attachment].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		at[colorRef.attachment].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		at[colorRef.attachment].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		at[colorRef.attachment].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorRef;
-
-		depthRef.attachment = rpInfo.attachmentCount++;
-
-		at[depthRef.attachment].format = DEPTH_FORMAT;
-		at[depthRef.attachment].samples = VK_SAMPLE_COUNT_1_BIT;
-		at[depthRef.attachment].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		at[depthRef.attachment].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		at[depthRef.attachment].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		at[depthRef.attachment].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		at[depthRef.attachment].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		at[depthRef.attachment].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		subpass.pDepthStencilAttachment = &depthRef;
-
-		CHECK_VKCMD(vkCreateRenderPass(m_vkDevice, &rpInfo, nullptr, &appState.RenderPass));
-
-		pass = appState.RenderPass;
-
-		return true;
-	}
-
-	~RenderPass()
-	{
-		if (m_vkDevice != nullptr)
-		{
-			if (pass != VK_NULL_HANDLE)
-			{
-				vkDestroyRenderPass(m_vkDevice, pass, nullptr);
-			}
-		}
-		pass = VK_NULL_HANDLE;
-		m_vkDevice = nullptr;
-	}
-
-	RenderPass(const RenderPass&) = delete;
-
-	RenderPass& operator=(const RenderPass&) = delete;
-
-	RenderPass(RenderPass&&) = delete;
-
-	RenderPass& operator=(RenderPass&&) = delete;
-
-private:
-	VkDevice m_vkDevice{VK_NULL_HANDLE};
-};
-
-// VkImage + framebuffer wrapper
-struct RenderTarget
-{
-	VkImage colorImage{VK_NULL_HANDLE};
-	VkImage depthImage{VK_NULL_HANDLE};
-	VkImageView colorView{VK_NULL_HANDLE};
-	VkImageView depthView{VK_NULL_HANDLE};
-	VkFramebuffer fb{VK_NULL_HANDLE};
-
-	RenderTarget() = default;
-
-	~RenderTarget()
-	{
-		if (m_vkDevice != nullptr)
-		{
-			if (fb != VK_NULL_HANDLE)
-			{
-				vkDestroyFramebuffer(m_vkDevice, fb, nullptr);
-			}
-			if (colorView != VK_NULL_HANDLE)
-			{
-				vkDestroyImageView(m_vkDevice, colorView, nullptr);
-			}
-			if (depthView != VK_NULL_HANDLE)
-			{
-				vkDestroyImageView(m_vkDevice, depthView, nullptr);
-			}
-		}
-
-		// Note we don't own color/depthImage, it will get destroyed when xrDestroySwapchain is called
-		colorImage = VK_NULL_HANDLE;
-		depthImage = VK_NULL_HANDLE;
-		colorView = VK_NULL_HANDLE;
-		depthView = VK_NULL_HANDLE;
-		fb = VK_NULL_HANDLE;
-		m_vkDevice = nullptr;
-	}
-
-	RenderTarget(RenderTarget&& other) noexcept: RenderTarget()
-	{
-		using std::swap;
-		swap(colorImage, other.colorImage);
-		swap(depthImage, other.depthImage);
-		swap(colorView, other.colorView);
-		swap(depthView, other.depthView);
-		swap(fb, other.fb);
-		swap(m_vkDevice, other.m_vkDevice);
-	}
-
-	RenderTarget& operator=(RenderTarget&& other) noexcept
-	{
-		if (&other == this)
-		{
-			return *this;
-		}
-		// Clean up ourselves.
-		this->~RenderTarget();
-		using std::swap;
-		swap(colorImage, other.colorImage);
-		swap(depthImage, other.depthImage);
-		swap(colorView, other.colorView);
-		swap(depthView, other.depthView);
-		swap(fb, other.fb);
-		swap(m_vkDevice, other.m_vkDevice);
-		return *this;
-	}
-
-	void Create(VkDevice device, VkImage aColorImage, VkImage aDepthImage, VkExtent2D size, RenderPass& renderPass)
-	{
-		m_vkDevice = device;
-
-		colorImage = aColorImage;
-		depthImage = aDepthImage;
-
-		std::array<VkImageView, 2> attachments{};
-		uint32_t attachmentCount = 0;
-
-		// Create color image view
-		if (colorImage != VK_NULL_HANDLE)
-		{
-			VkImageViewCreateInfo colorViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-			colorViewInfo.image = colorImage;
-			colorViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-			colorViewInfo.format = COLOR_FORMAT;
-			colorViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-			colorViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-			colorViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-			colorViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-			colorViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			colorViewInfo.subresourceRange.baseMipLevel = 0;
-			colorViewInfo.subresourceRange.levelCount = 1;
-			colorViewInfo.subresourceRange.baseArrayLayer = 0;
-			colorViewInfo.subresourceRange.layerCount = 2;
-			CHECK_VKCMD(vkCreateImageView(m_vkDevice, &colorViewInfo, nullptr, &colorView));
-			attachments[attachmentCount++] = colorView;
-		}
-
-		// Create depth image view
-		if (depthImage != VK_NULL_HANDLE)
-		{
-			VkImageViewCreateInfo depthViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-			depthViewInfo.image = depthImage;
-			depthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-			depthViewInfo.format = DEPTH_FORMAT;
-			depthViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-			depthViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
-			depthViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
-			depthViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
-			depthViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-			depthViewInfo.subresourceRange.baseMipLevel = 0;
-			depthViewInfo.subresourceRange.levelCount = 1;
-			depthViewInfo.subresourceRange.baseArrayLayer = 0;
-			depthViewInfo.subresourceRange.layerCount = 2;
-			CHECK_VKCMD(vkCreateImageView(m_vkDevice, &depthViewInfo, nullptr, &depthView));
-			attachments[attachmentCount++] = depthView;
-		}
-
-		VkFramebufferCreateInfo fbInfo{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-		fbInfo.renderPass = renderPass.pass;
-		fbInfo.attachmentCount = attachmentCount;
-		fbInfo.pAttachments = attachments.data();
-		fbInfo.width = size.width;
-		fbInfo.height = size.height;
-		fbInfo.layers = 1;
-		CHECK_VKCMD(vkCreateFramebuffer(m_vkDevice, &fbInfo, nullptr, &fb));
-	}
-
-	RenderTarget(const RenderTarget&) = delete;
-
-	RenderTarget& operator=(const RenderTarget&) = delete;
-
-private:
-	VkDevice m_vkDevice{VK_NULL_HANDLE};
-};
-
-struct DepthBuffer
-{
-	VkDeviceMemory depthMemory{VK_NULL_HANDLE};
-	VkImage depthImage{VK_NULL_HANDLE};
-
-	DepthBuffer() = default;
-
-	~DepthBuffer()
-	{
-		if (m_vkDevice != nullptr)
-		{
-			if (depthImage != VK_NULL_HANDLE)
-			{
-				vkDestroyImage(m_vkDevice, depthImage, nullptr);
-			}
-			if (depthMemory != VK_NULL_HANDLE)
-			{
-				vkFreeMemory(m_vkDevice, depthMemory, nullptr);
-			}
-		}
-		depthImage = VK_NULL_HANDLE;
-		depthMemory = VK_NULL_HANDLE;
-		m_vkDevice = nullptr;
-	}
-
-	DepthBuffer(DepthBuffer&& other) noexcept: DepthBuffer()
-	{
-		using std::swap;
-
-		swap(depthImage, other.depthImage);
-		swap(depthMemory, other.depthMemory);
-		swap(m_vkDevice, other.m_vkDevice);
-	}
-
-	DepthBuffer& operator=(DepthBuffer&& other) noexcept
-	{
-		if (&other == this)
-		{
-			return *this;
-		}
-		// clean up self
-		this->~DepthBuffer();
-		using std::swap;
-
-		swap(depthImage, other.depthImage);
-		swap(depthMemory, other.depthMemory);
-		swap(m_vkDevice, other.m_vkDevice);
-		return *this;
-	}
-
-	void Create(AppState& appState, const XrSwapchainCreateInfo& swapchainCreateInfo)
-	{
-		m_vkDevice = appState.Device;
-
-		VkExtent2D size = {swapchainCreateInfo.width, swapchainCreateInfo.height};
-
-		// Create a D32 depthbuffer
-		VkImageCreateInfo imageInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
-		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = size.width;
-		imageInfo.extent.height = size.height;
-		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 2;
-		imageInfo.format = DEPTH_FORMAT;
-		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		imageInfo.samples = (VkSampleCountFlagBits)swapchainCreateInfo.sampleCount;
-		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		CHECK_VKCMD(vkCreateImage(m_vkDevice, &imageInfo, nullptr, &depthImage));
-
-		VkMemoryRequirements memRequirements{};
-		vkGetImageMemoryRequirements(m_vkDevice, depthImage, &memRequirements);
-		VkMemoryAllocateInfo memoryAllocateInfo { };
-		createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
-		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &depthMemory));
-		CHECK_VKCMD(vkBindImageMemory(m_vkDevice, depthImage, depthMemory, 0));
-	}
-
-	void TransitionLayout(VkCommandBuffer cmdBuffer, VkImageLayout newLayout)
-	{
-		if (newLayout == m_vkLayout)
-		{
-			return;
-		}
-
-		VkImageMemoryBarrier depthBarrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
-		depthBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-		depthBarrier.oldLayout = m_vkLayout;
-		depthBarrier.newLayout = newLayout;
-		depthBarrier.image = depthImage;
-		depthBarrier.subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1};
-		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr,
-							 0, nullptr, 1, &depthBarrier);
-
-		m_vkLayout = newLayout;
-	}
-
-	DepthBuffer(const DepthBuffer&) = delete;
-
-	DepthBuffer& operator=(const DepthBuffer&) = delete;
-
-private:
-	VkDevice m_vkDevice{VK_NULL_HANDLE};
-	VkImageLayout m_vkLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-};
-
-struct SwapchainImageContext
-{
-	SwapchainImageContext(XrStructureType _swapchainImageType) : swapchainImageType(_swapchainImageType)
-	{
-	}
-
-	std::vector<XrSwapchainImageVulkan2KHR> swapchainImages;
-	std::vector<RenderTarget> renderTarget;
-	VkExtent2D size { };
-	DepthBuffer depthBuffer { };
-	RenderPass rp { };
-	XrStructureType swapchainImageType;
-
-	SwapchainImageContext() = default;
-
-	std::vector<XrSwapchainImageBaseHeader*> Create(AppState& appState, uint32_t capacity, const XrSwapchainCreateInfo& swapchainCreateInfo)
-	{
-		m_vkDevice = appState.Device;
-
-		size = { swapchainCreateInfo.width, swapchainCreateInfo.height };
-
-		depthBuffer.Create(appState, swapchainCreateInfo);
-		rp.Create(appState);
-
-		swapchainImages.resize(capacity);
-		renderTarget.resize(capacity);
-		std::vector<XrSwapchainImageBaseHeader*> bases(capacity);
-		for (uint32_t i = 0; i < capacity; ++i)
-		{
-			swapchainImages[i] = {swapchainImageType};
-			bases[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&swapchainImages[i]);
-		}
-
-		return bases;
-	}
-
-	uint32_t ImageIndex(const XrSwapchainImageBaseHeader* swapchainImageHeader)
-	{
-		auto p = reinterpret_cast<const XrSwapchainImageVulkan2KHR*>(swapchainImageHeader);
-		return (uint32_t) (p - &swapchainImages[0]);
-	}
-
-	void BindRenderTarget(uint32_t index, VkRenderPassBeginInfo* renderPassBeginInfo)
-	{
-		if (renderTarget[index].fb == VK_NULL_HANDLE)
-		{
-			renderTarget[index].Create(m_vkDevice, swapchainImages[index].image, depthBuffer.depthImage, size, rp);
-		}
-		renderPassBeginInfo->renderPass = rp.pass;
-		renderPassBeginInfo->framebuffer = renderTarget[index].fb;
-		renderPassBeginInfo->renderArea.offset = {0, 0};
-		renderPassBeginInfo->renderArea.extent = size;
-	}
-
-private:
-	VkDevice m_vkDevice{VK_NULL_HANDLE};
-};
-
-#define strcpy_s(dest, source) strncpy((dest), (source), sizeof(dest))
-
-inline std::string GetXrVersionString(XrVersion ver)
+std::string GetXrVersionString(XrVersion ver)
 {
 	return Fmt("%d.%d.%d", XR_VERSION_MAJOR(ver), XR_VERSION_MINOR(ver), XR_VERSION_PATCH(ver));
 }
@@ -466,13 +70,11 @@ void SwitchBoundInput(AppState& appState, XrAction action, const char* name)
 	__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", (std::string(name) + " action is bound to %s").c_str(), (!sourceName.empty() ? sourceName.c_str() : "nothing"));
 }
 
-const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& m_eventDataBuffer, XrInstance& m_instance)
+const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer, XrInstance& instance)
 {
-	// It is sufficient to clear the just the XrEventDataBuffer header to
-	// XR_TYPE_EVENT_DATA_BUFFER
-	XrEventDataBaseHeader* baseHeader = reinterpret_cast<XrEventDataBaseHeader*>(&m_eventDataBuffer);
-	*baseHeader = {XR_TYPE_EVENT_DATA_BUFFER};
-	const XrResult xr = xrPollEvent(m_instance, &m_eventDataBuffer);
+	auto baseHeader = reinterpret_cast<XrEventDataBaseHeader*>(&eventDataBuffer);
+	*baseHeader = { XR_TYPE_EVENT_DATA_BUFFER };
+	auto xr = xrPollEvent(instance, &eventDataBuffer);
 	if (xr == XR_SUCCESS)
 	{
 		if (baseHeader->type == XR_TYPE_EVENT_DATA_EVENTS_LOST)
@@ -510,7 +112,7 @@ std::vector<const char*> ParseExtensionString(char* names)
 	return list;
 }
 
-static VkBool32 debugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t /*location*/,
+static VkBool32 DebugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t /*location*/,
 							int32_t /*messageCode*/, const char* pLayerPrefix, const char* pMessage, void* /*userData*/)
 {
 	std::string flagNames;
@@ -610,7 +212,7 @@ static VkBool32 debugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectType
 	return VK_FALSE;
 }
 
-void logExtensions(const char* layerName, int indent = 0)
+void LogExtensions(const char* layerName, int indent = 0)
 {
 	uint32_t instanceExtensionCount;
 	CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layerName, 0, &instanceExtensionCount, nullptr));
@@ -631,7 +233,7 @@ void logExtensions(const char* layerName, int indent = 0)
 	}
 }
 
-static void app_handle_cmd(struct android_app* app, int32_t cmd)
+static void AppHandleCommand(struct android_app* app, int32_t cmd)
 {
 	AppState* appState = (AppState*)app->userData;
 	double delta;
@@ -707,9 +309,9 @@ void android_main(struct android_app* app)
 		appState.CurrentTime = -1;
 
 		app->userData = &appState;
-		app->onAppCmd = app_handle_cmd;
+		app->onAppCmd = AppHandleCommand;
 
-		XrGraphicsBindingVulkan2KHR m_graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR };
+		XrGraphicsBindingVulkan2KHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR };
 
 		VkInstance m_vkInstance = VK_NULL_HANDLE;
 		VkPhysicalDevice m_vkPhysicalDevice = VK_NULL_HANDLE;
@@ -719,8 +321,8 @@ void android_main(struct android_app* app)
 		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = nullptr;
 		VkDebugReportCallbackEXT m_vkDebugReporter = VK_NULL_HANDLE;
 
-		XrInstance m_instance = XR_NULL_HANDLE;
-		XrSpace m_appSpace = XR_NULL_HANDLE;
+		XrInstance instance = XR_NULL_HANDLE;
+		XrSpace appSpace = XR_NULL_HANDLE;
 		XrFormFactor m_formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 		XrViewConfigurationType m_viewConfigType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 		XrEnvironmentBlendMode m_environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
@@ -745,7 +347,7 @@ void android_main(struct android_app* app)
 		loaderInitInfoAndroid.applicationContext = app->activity->clazz;
 		initializeLoader((const XrLoaderInitInfoBaseHeaderKHR*) &loaderInitInfoAndroid);
 
-		logExtensions(nullptr);
+		LogExtensions(nullptr);
 
 		{
 			uint32_t layerCount;
@@ -763,7 +365,7 @@ void android_main(struct android_app* app)
 			for (const XrApiLayerProperties& layer : layers)
 			{
 				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%s LayerVersion=%d Description=%s", layer.layerName, GetXrVersionString(layer.specVersion).c_str(), layer.layerVersion, layer.description);
-				logExtensions(layer.layerName, 4);
+				LogExtensions(layer.layerName, 4);
 			}
 		}
 
@@ -803,12 +405,12 @@ void android_main(struct android_app* app)
 		strcpy(createInfo.applicationInfo.applicationName, "SlipNFrag-XR");
 		createInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
 
-		CHECK_XRCMD(xrCreateInstance(&createInfo, &m_instance));
+		CHECK_XRCMD(xrCreateInstance(&createInfo, &instance));
 
-		CHECK(m_instance != XR_NULL_HANDLE);
+		CHECK(instance != XR_NULL_HANDLE);
 
 		XrInstanceProperties instanceProperties{XR_TYPE_INSTANCE_PROPERTIES};
-		CHECK_XRCMD(xrGetInstanceProperties(m_instance, &instanceProperties));
+		CHECK_XRCMD(xrGetInstanceProperties(instance, &instanceProperties));
 
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Instance RuntimeName=%s RuntimeVersion=%s", instanceProperties.runtimeName, GetXrVersionString(instanceProperties.runtimeVersion).c_str());
 
@@ -818,16 +420,16 @@ void android_main(struct android_app* app)
 
 		XrSystemGetInfo systemInfo{XR_TYPE_SYSTEM_GET_INFO};
 		systemInfo.formFactor = m_formFactor;
-		CHECK_XRCMD(xrGetSystem(m_instance, &systemInfo, &m_systemId));
+		CHECK_XRCMD(xrGetSystem(instance, &systemInfo, &m_systemId));
 
 		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %d for form factor %s", m_systemId, to_string(m_formFactor));
 
 		CHECK(m_systemId != XR_NULL_SYSTEM_ID);
 
 		uint32_t viewConfigTypeCount;
-		CHECK_XRCMD(xrEnumerateViewConfigurations(m_instance, m_systemId, 0, &viewConfigTypeCount, nullptr));
+		CHECK_XRCMD(xrEnumerateViewConfigurations(instance, m_systemId, 0, &viewConfigTypeCount, nullptr));
 		std::vector<XrViewConfigurationType> viewConfigTypes(viewConfigTypeCount);
-		CHECK_XRCMD(xrEnumerateViewConfigurations(m_instance, m_systemId, viewConfigTypeCount, &viewConfigTypeCount, viewConfigTypes.data()));
+		CHECK_XRCMD(xrEnumerateViewConfigurations(instance, m_systemId, viewConfigTypeCount, &viewConfigTypeCount, viewConfigTypes.data()));
 		CHECK((uint32_t) viewConfigTypes.size() == viewConfigTypeCount);
 
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available View Configuration Types: (%d)", viewConfigTypeCount);
@@ -836,16 +438,16 @@ void android_main(struct android_app* app)
 			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View Configuration Type: %s %s", to_string(viewConfigType), viewConfigType == m_viewConfigType ? "(Selected)" : "");
 
 			XrViewConfigurationProperties viewConfigProperties{XR_TYPE_VIEW_CONFIGURATION_PROPERTIES};
-			CHECK_XRCMD(xrGetViewConfigurationProperties(m_instance, m_systemId, viewConfigType, &viewConfigProperties));
+			CHECK_XRCMD(xrGetViewConfigurationProperties(instance, m_systemId, viewConfigType, &viewConfigProperties));
 
 			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View configuration FovMutable=%s", (viewConfigProperties.fovMutable == XR_TRUE ? "True" : "False"));
 
 			uint32_t viewCount;
-			CHECK_XRCMD(xrEnumerateViewConfigurationViews(m_instance, m_systemId, viewConfigType, 0, &viewCount, nullptr));
+			CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, m_systemId, viewConfigType, 0, &viewCount, nullptr));
 			if (viewCount > 0)
 			{
 				std::vector<XrViewConfigurationView> views(viewCount, {XR_TYPE_VIEW_CONFIGURATION_VIEW});
-				CHECK_XRCMD(xrEnumerateViewConfigurationViews(m_instance, m_systemId, viewConfigType, viewCount, &viewCount, views.data()));
+				CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, m_systemId, viewConfigType, viewCount, &viewCount, views.data()));
 
 				for (uint32_t i = 0; i < views.size(); i++)
 				{
@@ -861,13 +463,13 @@ void android_main(struct android_app* app)
 			}
 
 			uint32_t count;
-			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(m_instance, m_systemId, viewConfigType, 0, &count, nullptr));
+			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, m_systemId, viewConfigType, 0, &count, nullptr));
 			CHECK(count > 0);
 
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available Environment Blend Mode count : (%d)", count);
 
 			std::vector<XrEnvironmentBlendMode> blendModes(count);
-			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(m_instance, m_systemId, viewConfigType, count, &count, blendModes.data()));
+			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, m_systemId, viewConfigType, count, &count, blendModes.data()));
 
 			bool blendModeFound = false;
 			for (XrEnvironmentBlendMode mode : blendModes)
@@ -882,10 +484,10 @@ void android_main(struct android_app* app)
 		XrGraphicsRequirementsVulkan2KHR graphicsRequirements {XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN2_KHR };
 
 		PFN_xrGetVulkanGraphicsRequirementsKHR pfnGetVulkanGraphicsRequirementsKHR = nullptr;
-		CHECK_XRCMD(xrGetInstanceProcAddr(m_instance, "xrGetVulkanGraphicsRequirementsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanGraphicsRequirementsKHR)));
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsRequirementsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanGraphicsRequirementsKHR)));
 
 		XrGraphicsRequirementsVulkanKHR legacyRequirements {XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR };
-		CHECK_XRCMD(pfnGetVulkanGraphicsRequirementsKHR(m_instance, m_systemId, &legacyRequirements));
+		CHECK_XRCMD(pfnGetVulkanGraphicsRequirementsKHR(instance, m_systemId, &legacyRequirements));
 
 		graphicsRequirements.maxApiVersionSupported = legacyRequirements.maxApiVersionSupported;
 		graphicsRequirements.minApiVersionSupported = legacyRequirements.minApiVersionSupported;
@@ -949,13 +551,13 @@ void android_main(struct android_app* app)
 			vulkanCreateInfo.vulkanAllocator = nullptr;
 
 			PFN_xrGetVulkanInstanceExtensionsKHR pfnGetVulkanInstanceExtensionsKHR = nullptr;
-			CHECK_XRCMD(xrGetInstanceProcAddr(m_instance, "xrGetVulkanInstanceExtensionsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanInstanceExtensionsKHR)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanInstanceExtensionsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanInstanceExtensionsKHR)));
 
 			uint32_t extensionNamesSize = 0;
-			CHECK_XRCMD(pfnGetVulkanInstanceExtensionsKHR(m_instance, vulkanCreateInfo.systemId, 0, &extensionNamesSize, nullptr));
+			CHECK_XRCMD(pfnGetVulkanInstanceExtensionsKHR(instance, vulkanCreateInfo.systemId, 0, &extensionNamesSize, nullptr));
 
 			std::vector<char> extensionNames(extensionNamesSize);
-			CHECK_XRCMD(pfnGetVulkanInstanceExtensionsKHR(m_instance, vulkanCreateInfo.systemId, extensionNamesSize, &extensionNamesSize, &extensionNames[0]));
+			CHECK_XRCMD(pfnGetVulkanInstanceExtensionsKHR(instance, vulkanCreateInfo.systemId, extensionNamesSize, &extensionNamesSize, &extensionNames[0]));
 			{
 				std::vector<const char*> extensions = ParseExtensionString(&extensionNames[0]);
 
@@ -980,7 +582,7 @@ void android_main(struct android_app* app)
 #if !defined(NDEBUG)
 			debugInfo.flags |= VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT;
 #endif
-			debugInfo.pfnCallback = &debugReport;
+			debugInfo.pfnCallback = &DebugReport;
 			CHECK_VKCMD(vkCreateDebugReportCallbackEXT(m_vkInstance, &debugInfo, nullptr, &m_vkDebugReporter));
 
 			XrVulkanGraphicsDeviceGetInfoKHR deviceGetInfo{XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR};
@@ -988,14 +590,14 @@ void android_main(struct android_app* app)
 			deviceGetInfo.vulkanInstance = m_vkInstance;
 
 			PFN_xrGetVulkanGraphicsDeviceKHR pfnGetVulkanGraphicsDeviceKHR = nullptr;
-			CHECK_XRCMD(xrGetInstanceProcAddr(m_instance, "xrGetVulkanGraphicsDeviceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanGraphicsDeviceKHR)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsDeviceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanGraphicsDeviceKHR)));
 
 			if (deviceGetInfo.next != nullptr)
 			{
 				CHECK_XRCMD(XR_ERROR_FEATURE_UNSUPPORTED);
 			}
 
-			CHECK_XRCMD(pfnGetVulkanGraphicsDeviceKHR(m_instance, deviceGetInfo.systemId, deviceGetInfo.vulkanInstance, &m_vkPhysicalDevice));
+			CHECK_XRCMD(pfnGetVulkanGraphicsDeviceKHR(instance, deviceGetInfo.systemId, deviceGetInfo.vulkanInstance, &m_vkPhysicalDevice));
 
 			VkDeviceQueueCreateInfo queueInfo{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
 			float queuePriorities = 0;
@@ -1038,12 +640,12 @@ void android_main(struct android_app* app)
 			deviceCreateInfo.vulkanAllocator = nullptr;
 
 			PFN_xrGetVulkanDeviceExtensionsKHR xrGetVulkanDeviceExtensionsKHR = nullptr;
-			CHECK_XRCMD(xrGetInstanceProcAddr(m_instance, "xrGetVulkanDeviceExtensionsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanDeviceExtensionsKHR)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanDeviceExtensionsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanDeviceExtensionsKHR)));
 
 			uint32_t deviceExtensionNamesSize = 0;
-			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(m_instance, vulkanCreateInfo.systemId, 0, &deviceExtensionNamesSize, nullptr));
+			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(instance, vulkanCreateInfo.systemId, 0, &deviceExtensionNamesSize, nullptr));
 			std::vector<char> deviceExtensionNames(deviceExtensionNamesSize);
-			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(m_instance, vulkanCreateInfo.systemId, deviceExtensionNamesSize, &deviceExtensionNamesSize, &deviceExtensionNames[0]));
+			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(instance, vulkanCreateInfo.systemId, deviceExtensionNamesSize, &deviceExtensionNamesSize, &deviceExtensionNames[0]));
 
 			std::vector<const char*> enabledExtensions = ParseExtensionString(&deviceExtensionNames[0]);
 
@@ -1109,14 +711,14 @@ void android_main(struct android_app* app)
 
 			vkGetPhysicalDeviceMemoryProperties(m_vkPhysicalDevice, &appState.MemoryProperties);
 
-			m_graphicsBinding.instance = m_vkInstance;
-			m_graphicsBinding.physicalDevice = m_vkPhysicalDevice;
-			m_graphicsBinding.device = appState.Device;
-			m_graphicsBinding.queueFamilyIndex = queueInfo.queueFamilyIndex;
-			m_graphicsBinding.queueIndex = 0;
+			graphicsBinding.instance = m_vkInstance;
+			graphicsBinding.physicalDevice = m_vkPhysicalDevice;
+			graphicsBinding.device = appState.Device;
+			graphicsBinding.queueFamilyIndex = queueInfo.queueFamilyIndex;
+			graphicsBinding.queueIndex = 0;
 		}
 
-		CHECK(m_instance != XR_NULL_HANDLE);
+		CHECK(instance != XR_NULL_HANDLE);
 
 		VkCommandPoolCreateInfo commandPoolCreateInfo { };
 		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -1151,9 +753,9 @@ void android_main(struct android_app* app)
 		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Creating session...");
 
 		XrSessionCreateInfo sessionCreateInfo { XR_TYPE_SESSION_CREATE_INFO };
-		sessionCreateInfo.next = reinterpret_cast<const XrBaseInStructure*>(&m_graphicsBinding);
+		sessionCreateInfo.next = reinterpret_cast<const XrBaseInStructure*>(&graphicsBinding);
 		sessionCreateInfo.systemId = m_systemId;
-		CHECK_XRCMD(xrCreateSession(m_instance, &sessionCreateInfo, &appState.Session));
+		CHECK_XRCMD(xrCreateSession(instance, &sessionCreateInfo, &appState.Session));
 		CHECK(appState.Session != XR_NULL_HANDLE);
 
 		uint32_t spaceCount;
@@ -1173,101 +775,101 @@ void android_main(struct android_app* app)
 		appState.ActiveHands.resize(2);
 		
 		XrActionSetCreateInfo actionSetInfo{XR_TYPE_ACTION_SET_CREATE_INFO};
-		strcpy_s(actionSetInfo.actionSetName, "gameplay");
-		strcpy_s(actionSetInfo.localizedActionSetName, "Gameplay");
+		strcpy(actionSetInfo.actionSetName, "gameplay");
+		strcpy(actionSetInfo.localizedActionSetName, "Gameplay");
 		actionSetInfo.priority = 0;
-		CHECK_XRCMD(xrCreateActionSet(m_instance, &actionSetInfo, &appState.ActionSet));
+		CHECK_XRCMD(xrCreateActionSet(instance, &actionSetInfo, &appState.ActionSet));
 
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left", &appState.SubactionPaths[0]));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right", &appState.SubactionPaths[1]));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left", &appState.SubactionPaths[0]));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right", &appState.SubactionPaths[1]));
 
 		XrActionCreateInfo actionInfo { XR_TYPE_ACTION_CREATE_INFO };
 
 		actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-		strcpy_s(actionInfo.actionName, "play_1");
-		strcpy_s(actionInfo.localizedActionName, "Play 1");
+		strcpy(actionInfo.actionName, "play_1");
+		strcpy(actionInfo.localizedActionName, "Play 1");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.Play1Action));
 
-		strcpy_s(actionInfo.actionName, "play_2");
-		strcpy_s(actionInfo.localizedActionName, "Play 2");
+		strcpy(actionInfo.actionName, "play_2");
+		strcpy(actionInfo.localizedActionName, "Play 2");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.Play2Action));
 
-		strcpy_s(actionInfo.actionName, "jump");
-		strcpy_s(actionInfo.localizedActionName, "Jump");
+		strcpy(actionInfo.actionName, "jump");
+		strcpy(actionInfo.localizedActionName, "Jump");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.JumpAction));
 
-		strcpy_s(actionInfo.actionName, "swim_down");
-		strcpy_s(actionInfo.localizedActionName, "Swim down");
+		strcpy(actionInfo.actionName, "swim_down");
+		strcpy(actionInfo.localizedActionName, "Swim down");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.SwimDownAction));
 
-		strcpy_s(actionInfo.actionName, "run");
-		strcpy_s(actionInfo.localizedActionName, "Run");
+		strcpy(actionInfo.actionName, "run");
+		strcpy(actionInfo.localizedActionName, "Run");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.RunAction));
 
-		strcpy_s(actionInfo.actionName, "fire");
-		strcpy_s(actionInfo.localizedActionName, "Fire");
+		strcpy(actionInfo.actionName, "fire");
+		strcpy(actionInfo.localizedActionName, "Fire");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.FireAction));
 
 		actionInfo.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
-		strcpy_s(actionInfo.actionName, "move_x");
-		strcpy_s(actionInfo.localizedActionName, "Move X");
+		strcpy(actionInfo.actionName, "move_x");
+		strcpy(actionInfo.localizedActionName, "Move X");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MoveXAction));
 
-		strcpy_s(actionInfo.actionName, "move_y");
-		strcpy_s(actionInfo.localizedActionName, "Move Y");
+		strcpy(actionInfo.actionName, "move_y");
+		strcpy(actionInfo.localizedActionName, "Move Y");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MoveYAction));
 
 		actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-		strcpy_s(actionInfo.actionName, "switch_weapon");
-		strcpy_s(actionInfo.localizedActionName, "Switch weapon");
+		strcpy(actionInfo.actionName, "switch_weapon");
+		strcpy(actionInfo.localizedActionName, "Switch weapon");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.SwitchWeaponAction));
 
-		strcpy_s(actionInfo.actionName, "menu");
-		strcpy_s(actionInfo.localizedActionName, "Menu");
+		strcpy(actionInfo.actionName, "menu");
+		strcpy(actionInfo.localizedActionName, "Menu");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MenuAction));
 
-		strcpy_s(actionInfo.actionName, "enter");
-		strcpy_s(actionInfo.localizedActionName, "Enter");
+		strcpy(actionInfo.actionName, "enter");
+		strcpy(actionInfo.localizedActionName, "Enter");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterAction));
 
-		strcpy_s(actionInfo.actionName, "escape");
-		strcpy_s(actionInfo.localizedActionName, "Escape");
+		strcpy(actionInfo.actionName, "escape");
+		strcpy(actionInfo.localizedActionName, "Escape");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EscapeAction));
 
 		actionInfo.actionType = XR_ACTION_TYPE_POSE_INPUT;
-		strcpy_s(actionInfo.actionName, "hand_pose");
-		strcpy_s(actionInfo.localizedActionName, "Hand pose");
+		strcpy(actionInfo.actionName, "hand_pose");
+		strcpy(actionInfo.localizedActionName, "Hand pose");
 		actionInfo.countSubactionPaths = (uint32_t)appState.SubactionPaths.size();
 		actionInfo.subactionPaths = appState.SubactionPaths.data();
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.PoseAction));
 
 		actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-		strcpy_s(actionInfo.actionName, "quit");
-		strcpy_s(actionInfo.localizedActionName, "Quit");
+		strcpy(actionInfo.actionName, "quit");
+		strcpy(actionInfo.localizedActionName, "Quit");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.QuitAction));
@@ -1289,26 +891,26 @@ void android_main(struct android_app* app)
 		XrPath menuClick;
 		XrPath leftPose;
 		XrPath rightPose;
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right/input/a/click", &aClick));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right/input/b/click", &bClick));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/x/click", &xClick));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/y/click", &yClick));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/trigger/value", &leftTrigger));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right/input/trigger/value", &rightTrigger));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/squeeze/value", &leftSqueeze));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right/input/squeeze/value", &rightSqueeze));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/thumbstick/x", &leftThumbstickX));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/thumbstick/y", &leftThumbstickY));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right/input/thumbstick/x", &rightThumbstickX));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right/input/thumbstick/y", &rightThumbstickY));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/thumbstick/click", &leftThumbstickClick));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right/input/thumbstick/click", &rightThumbstickClick));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/menu/click", &menuClick));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/left/input/grip/pose", &leftPose));
-		CHECK_XRCMD(xrStringToPath(m_instance, "/user/hand/right/input/grip/pose", &rightPose));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/a/click", &aClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/b/click", &bClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/x/click", &xClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/y/click", &yClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/trigger/value", &leftTrigger));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/trigger/value", &rightTrigger));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/squeeze/value", &leftSqueeze));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/squeeze/value", &rightSqueeze));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/x", &leftThumbstickX));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/y", &leftThumbstickY));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/x", &rightThumbstickX));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/y", &rightThumbstickY));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/click", &leftThumbstickClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/click", &rightThumbstickClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/menu/click", &menuClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/grip/pose", &leftPose));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/grip/pose", &rightPose));
 
 		XrPath interaction;
-		CHECK_XRCMD(xrStringToPath(m_instance, "/interaction_profiles/oculus/touch_controller", &interaction));
+		CHECK_XRCMD(xrStringToPath(instance, "/interaction_profiles/oculus/touch_controller", &interaction));
 		std::vector<XrActionSuggestedBinding> bindings
 		{
 			{
@@ -1345,7 +947,7 @@ void android_main(struct android_app* app)
 		suggestedBindings.interactionProfile = interaction;
 		suggestedBindings.suggestedBindings = bindings.data();
 		suggestedBindings.countSuggestedBindings = (uint32_t)bindings.size();
-		CHECK_XRCMD(xrSuggestInteractionProfileBindings(m_instance, &suggestedBindings));
+		CHECK_XRCMD(xrSuggestInteractionProfileBindings(instance, &suggestedBindings));
 
 		XrActionSpaceCreateInfo actionSpaceInfo { XR_TYPE_ACTION_SPACE_CREATE_INFO };
 		actionSpaceInfo.action = appState.PoseAction;
@@ -1368,10 +970,10 @@ void android_main(struct android_app* app)
 		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &m_worldSpace));
 
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
-		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &m_appSpace));
+		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &appSpace));
 
 		XrSystemProperties systemProperties{XR_TYPE_SYSTEM_PROPERTIES};
-		CHECK_XRCMD(xrGetSystemProperties(m_instance, m_systemId, &systemProperties));
+		CHECK_XRCMD(xrGetSystemProperties(instance, m_systemId, &systemProperties));
 
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Properties: Name=%s VendorId=%d", systemProperties.systemName, systemProperties.vendorId);
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
@@ -1380,9 +982,9 @@ void android_main(struct android_app* app)
 		CHECK_MSG(m_viewConfigType == XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, "Unsupported view configuration type");
 
 		uint32_t viewCount;
-		CHECK_XRCMD(xrEnumerateViewConfigurationViews(m_instance, m_systemId, m_viewConfigType, 0, &viewCount, nullptr));
+		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, m_systemId, m_viewConfigType, 0, &viewCount, nullptr));
 		m_configViews.resize(viewCount, { XR_TYPE_VIEW_CONFIGURATION_VIEW });
-		CHECK_XRCMD(xrEnumerateViewConfigurationViews(m_instance, m_systemId, m_viewConfigType, viewCount, &viewCount, m_configViews.data()));
+		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, m_systemId, m_viewConfigType, viewCount, &viewCount, m_configViews.data()));
 
 		for (auto configView : m_configViews)
 		{
@@ -1452,9 +1054,92 @@ void android_main(struct android_app* app)
 		uint32_t imageCount;
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr));
 
-		SwapchainImageContext swapchainImageContext(XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR);
+		XrStructureType swapchainImageType { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
 
-		auto swapchainImages = swapchainImageContext.Create(appState, imageCount, swapchainCreateInfo);
+		VkDeviceMemory depthMemory = VK_NULL_HANDLE;
+		VkImage depthImage = VK_NULL_HANDLE;
+		VkImageCreateInfo imageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+		imageInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageInfo.extent.width = swapchainWidth;
+		imageInfo.extent.height = swapchainHeight;
+		imageInfo.extent.depth = 1;
+		imageInfo.mipLevels = 1;
+		imageInfo.arrayLayers = 2;
+		imageInfo.format = DEPTH_FORMAT;
+		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageInfo.samples = (VkSampleCountFlagBits)swapchainCreateInfo.sampleCount;
+		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &depthImage));
+
+		VkMemoryRequirements memRequirements { };
+		vkGetImageMemoryRequirements(appState.Device, depthImage, &memRequirements);
+		VkMemoryAllocateInfo memoryAllocateInfo { };
+		createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &depthMemory));
+		CHECK_VKCMD(vkBindImageMemory(appState.Device, depthImage, depthMemory, 0));
+
+		VkSubpassDescription subpass { };
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference depthRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+
+		VkAttachmentDescription attachments[2];
+
+		VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+		rpInfo.attachmentCount = 0;
+		rpInfo.pAttachments = attachments;
+		rpInfo.subpassCount = 1;
+		rpInfo.pSubpasses = &subpass;
+
+		VkRenderPassMultiviewCreateInfo multiviewCreateInfo { };
+		const uint32_t viewMask = 3;
+		multiviewCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+		multiviewCreateInfo.subpassCount = 1;
+		multiviewCreateInfo.pViewMasks = &viewMask;
+		multiviewCreateInfo.correlationMaskCount = 1;
+		multiviewCreateInfo.pCorrelationMasks = &viewMask;
+		rpInfo.pNext = &multiviewCreateInfo;
+
+		colorRef.attachment = rpInfo.attachmentCount++;
+
+		attachments[colorRef.attachment].format = COLOR_FORMAT;
+		attachments[colorRef.attachment].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachments[colorRef.attachment].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[colorRef.attachment].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[colorRef.attachment].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[colorRef.attachment].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[colorRef.attachment].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachments[colorRef.attachment].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorRef;
+
+		depthRef.attachment = rpInfo.attachmentCount++;
+
+		attachments[depthRef.attachment].format = DEPTH_FORMAT;
+		attachments[depthRef.attachment].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachments[depthRef.attachment].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[depthRef.attachment].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[depthRef.attachment].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[depthRef.attachment].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[depthRef.attachment].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments[depthRef.attachment].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		subpass.pDepthStencilAttachment = &depthRef;
+
+		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &rpInfo, nullptr, &appState.RenderPass));
+
+		std::vector<XrSwapchainImageVulkan2KHR> swapchainVulkanImages(imageCount);
+
+		std::vector<XrSwapchainImageBaseHeader*> swapchainImages(imageCount);
+		for (uint32_t i = 0; i < imageCount; ++i)
+		{
+			swapchainVulkanImages[i] = { swapchainImageType };
+			swapchainImages[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&swapchainVulkanImages[i]);
+		}
 
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, swapchainImages[0]));
 
@@ -1488,7 +1173,7 @@ void android_main(struct android_app* app)
 			auto exitRenderLoop = false;
 			auto requestRestart = false;
 
-			while (const XrEventDataBaseHeader* event = TryReadNextEvent(m_eventDataBuffer, m_instance))
+			while (const XrEventDataBaseHeader* event = TryReadNextEvent(m_eventDataBuffer, instance))
 			{
 				switch (event->type)
 				{
@@ -1566,10 +1251,8 @@ void android_main(struct android_app* app)
 						break;
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
 					default:
-					{
 						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Ignoring event type %d", event->type);
 						break;
-					}
 				}
 			}
 
@@ -1722,6 +1405,10 @@ void android_main(struct android_app* app)
 				}
 			}
 
+			appState.Scene.textures.DeleteOld(appState);
+			appState.Scene.lightmaps.DeleteOld(appState);
+			appState.Scene.buffers.DeleteOld(appState);
+
 			XrFrameWaitInfo frameWaitInfo { XR_TYPE_FRAME_WAIT_INFO };
 			XrFrameState frameState { XR_TYPE_FRAME_STATE };
 			CHECK_XRCMD(xrWaitFrame(appState.Session, &frameWaitInfo, &frameState));
@@ -1737,7 +1424,7 @@ void android_main(struct android_app* app)
 
 			XrCompositionLayerCylinderKHR cylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
 			
-			if (frameState.shouldRender == XR_TRUE)
+			if (frameState.shouldRender)
 			{
 				XrViewState viewState { XR_TYPE_VIEW_STATE };
 				uint32_t viewCapacityInput = (uint32_t) m_views.size();
@@ -1746,7 +1433,7 @@ void android_main(struct android_app* app)
 				XrViewLocateInfo viewLocateInfo { XR_TYPE_VIEW_LOCATE_INFO };
 				viewLocateInfo.viewConfigurationType = m_viewConfigType;
 				viewLocateInfo.displayTime = frameState.predictedDisplayTime;
-				viewLocateInfo.space = m_appSpace;
+				viewLocateInfo.space = appSpace;
 
 				res = xrLocateViews(appState.Session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, m_views.data());
 				CHECK_XRRESULT(res, "xrLocateViews");
@@ -1854,7 +1541,7 @@ void android_main(struct android_app* app)
 						}
 
 						XrSpaceLocation spaceLocation { XR_TYPE_SPACE_LOCATION };
-						res = xrLocateSpace(m_worldSpace, m_appSpace, frameState.predictedDisplayTime, &spaceLocation);
+						res = xrLocateSpace(m_worldSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
 						
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
@@ -1895,8 +1582,6 @@ void android_main(struct android_app* app)
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
 					}
 
-					auto& swapchainImage = swapchainImages[swapchainImageIndex];
-
 					auto& perImage = appState.PerImage[swapchainImageIndex];
 					if (perImage.submitted)
 					{
@@ -1908,7 +1593,14 @@ void android_main(struct android_app* app)
 					CHECK_VKCMD(vkResetCommandBuffer(perImage.commandBuffer, 0));
 					CHECK_VKCMD(vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 
-					swapchainImageContext.depthBuffer.TransitionLayout(perImage.commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+					VkImageMemoryBarrier depthBarrier {VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+					depthBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+					depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+					depthBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+					depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+					depthBarrier.image = depthImage;
+					depthBarrier.subresourceRange = { VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1 };
+					vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 
 					double clearR = 0;
 					double clearG = 0;
@@ -1946,7 +1638,7 @@ void android_main(struct android_app* app)
 						//auto endTime = Sys_FloatTime();
 						//elapsed += (endTime - startTime);
 					}
-					static std::array<VkClearValue, 2> clearValues;
+					VkClearValue clearValues[2];
 					clearValues[0].color.float32[0] = clearR;
 					clearValues[0].color.float32[1] = clearG;
 					clearValues[0].color.float32[2] = clearB;
@@ -1954,12 +1646,65 @@ void android_main(struct android_app* app)
 					clearValues[1].depthStencil.depth = 1.0f;
 					clearValues[1].depthStencil.stencil = 0;
 
+					if (perImage.framebuffer == VK_NULL_HANDLE)
+					{
+						perImage.colorImage = swapchainVulkanImages[swapchainImageIndex].image;
+						perImage.depthImage = depthImage;
+
+						VkImageView attachments[2];
+						uint32_t attachmentCount = 0;
+
+						VkImageViewCreateInfo colorViewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+						colorViewInfo.image = perImage.colorImage;
+						colorViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+						colorViewInfo.format = COLOR_FORMAT;
+						colorViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+						colorViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+						colorViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+						colorViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+						colorViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						colorViewInfo.subresourceRange.baseMipLevel = 0;
+						colorViewInfo.subresourceRange.levelCount = 1;
+						colorViewInfo.subresourceRange.baseArrayLayer = 0;
+						colorViewInfo.subresourceRange.layerCount = 2;
+						CHECK_VKCMD(vkCreateImageView(appState.Device, &colorViewInfo, nullptr, &perImage.colorView));
+						attachments[attachmentCount++] = perImage.colorView;
+
+						VkImageViewCreateInfo depthViewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+						depthViewInfo.image = depthImage;
+						depthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+						depthViewInfo.format = DEPTH_FORMAT;
+						depthViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+						depthViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+						depthViewInfo.components.b = VK_COMPONENT_SWIZZLE_B;
+						depthViewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+						depthViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+						depthViewInfo.subresourceRange.baseMipLevel = 0;
+						depthViewInfo.subresourceRange.levelCount = 1;
+						depthViewInfo.subresourceRange.baseArrayLayer = 0;
+						depthViewInfo.subresourceRange.layerCount = 2;
+						CHECK_VKCMD(vkCreateImageView(appState.Device, &depthViewInfo, nullptr, &perImage.depthView));
+						attachments[attachmentCount++] = perImage.depthView;
+
+						VkFramebufferCreateInfo fbInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+						fbInfo.renderPass = appState.RenderPass;
+						fbInfo.attachmentCount = attachmentCount;
+						fbInfo.pAttachments = attachments;
+						fbInfo.width = swapchainWidth;
+						fbInfo.height = swapchainHeight;
+						fbInfo.layers = 1;
+						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &fbInfo, nullptr, &perImage.framebuffer));
+					}
+
 					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-					renderPassBeginInfo.clearValueCount = (uint32_t) clearValues.size();
-					renderPassBeginInfo.pClearValues = clearValues.data();
-
-					swapchainImageContext.BindRenderTarget(swapchainImageIndex, &renderPassBeginInfo);
-
+					renderPassBeginInfo.clearValueCount = 2;
+					renderPassBeginInfo.pClearValues = clearValues;
+					
+					renderPassBeginInfo.renderPass = appState.RenderPass;
+					renderPassBeginInfo.framebuffer = perImage.framebuffer;
+					renderPassBeginInfo.renderArea.offset = {0, 0};
+					renderPassBeginInfo.renderArea.extent.width = swapchainWidth;
+					renderPassBeginInfo.renderArea.extent.height = swapchainHeight;
 					vkCmdBeginRenderPass(perImage.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 					VkRect2D screenRect { };
@@ -1994,7 +1739,7 @@ void android_main(struct android_app* app)
 					XrSwapchainImageReleaseInfo releaseInfo {XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 					CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
 
-					projectionLayer.space = m_appSpace;
+					projectionLayer.space = appSpace;
 					projectionLayer.viewCount = (uint32_t) projectionLayerViews.size();
 					projectionLayer.views = projectionLayerViews.data();
 
@@ -2017,6 +1762,121 @@ void android_main(struct android_app* app)
 			appState.EngineThread.join();
 		}
 
+		for (auto perImage : appState.PerImage)
+		{
+			if (perImage.framebuffer != VK_NULL_HANDLE)
+			{
+				vkDestroyFramebuffer(appState.Device, perImage.framebuffer, nullptr);
+			}
+			if (perImage.colorView != VK_NULL_HANDLE)
+			{
+				vkDestroyImageView(appState.Device, perImage.colorView, nullptr);
+			}
+			if (perImage.depthView != VK_NULL_HANDLE)
+			{
+				vkDestroyImageView(appState.Device, perImage.depthView, nullptr);
+			}
+		}
+
+		if (depthImage != VK_NULL_HANDLE)
+		{
+			vkDestroyImage(appState.Device, depthImage, nullptr);
+		}
+		if (depthMemory != VK_NULL_HANDLE)
+		{
+			vkFreeMemory(appState.Device, depthMemory, nullptr);
+		}
+
+		for (auto& perImage : appState.PerImage)
+		{
+			vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &perImage.commandBuffer);
+			vkDestroyFence(appState.Device, perImage.fence, nullptr);
+			perImage.controllerResources.Delete(appState);
+			perImage.floorResources.Delete(appState);
+			perImage.skyResources.Delete(appState);
+			perImage.sceneMatricesAndColormapResources.Delete(appState);
+			perImage.sceneMatricesAndPaletteResources.Delete(appState);
+			perImage.sceneMatricesResources.Delete(appState);
+			perImage.host_colormapResources.Delete(appState);
+			if (perImage.sky != nullptr)
+			{
+				perImage.sky->Delete(appState);
+			}
+			if (perImage.host_colormap != nullptr)
+			{
+				perImage.host_colormap->Delete(appState);
+			}
+			if (perImage.palette != nullptr)
+			{
+				perImage.palette->Delete(appState);
+			}
+			perImage.colormaps.Delete(appState);
+			perImage.stagingBuffers.Delete(appState);
+			perImage.cachedColors.Delete(appState);
+			perImage.cachedIndices32.Delete(appState);
+			perImage.cachedIndices16.Delete(appState);
+			perImage.cachedAttributes.Delete(appState);
+			perImage.cachedVertices.Delete(appState);
+		}
+
+		if (appState.RenderPass != VK_NULL_HANDLE)
+		{
+			vkDestroyRenderPass(appState.Device, appState.RenderPass, nullptr);
+		}
+
+		CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
+		vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
+		for (auto i = 0; i < appState.Scene.samplers.size(); i++)
+		{
+			vkDestroySampler(appState.Device, appState.Scene.samplers[i], nullptr);
+		}
+		appState.Scene.controllerTexture.Delete(appState);
+		appState.Scene.floorTexture.Delete(appState);
+		appState.Scene.textures.Delete(appState);
+		for (auto& entry : appState.Scene.allocations)
+		{
+			for (auto& list : entry.second.allocations)
+			{
+				vkFreeMemory(appState.Device, list.memory, nullptr);
+			}
+		}
+		appState.Scene.buffers.Delete(appState);
+		appState.Scene.console.Delete(appState);
+		appState.Scene.floor.Delete(appState);
+		appState.Scene.sky.Delete(appState);
+		appState.Scene.colored.Delete(appState);
+		appState.Scene.viewmodel.Delete(appState);
+		appState.Scene.alias.Delete(appState);
+		appState.Scene.turbulent.Delete(appState);
+		appState.Scene.sprites.Delete(appState);
+		appState.Scene.fences.Delete(appState);
+		appState.Scene.surfaces.Delete(appState);
+		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.doubleImageLayout, nullptr);
+		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
+		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndTwoImagesLayout, nullptr);
+		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndImageLayout, nullptr);
+		vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.consoleFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.consoleVertex, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.floorFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.floorVertex, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.skyFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.skyVertex, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.coloredFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.coloredVertex, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.viewmodelFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.viewmodelVertex, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.aliasFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.aliasVertex, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.turbulentFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.turbulentVertex, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.spriteFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.spriteVertex, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.fenceFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.surfaceFragment, nullptr);
+		vkDestroyShaderModule(appState.Device, appState.Scene.surfaceVertex, nullptr);
+		appState.Scene.matrices.Delete(appState);
+
 		if (appState.ActionSet != XR_NULL_HANDLE)
 		{
 			xrDestroySpace(appState.HandSpaces[0]);
@@ -2034,9 +1894,9 @@ void android_main(struct android_app* app)
 			xrDestroySpace(m_worldSpace);
 		}
 
-		if (m_appSpace != XR_NULL_HANDLE)
+		if (appSpace != XR_NULL_HANDLE)
 		{
-			xrDestroySpace(m_appSpace);
+			xrDestroySpace(appSpace);
 		}
 
 		if (appState.Session != XR_NULL_HANDLE)
@@ -2044,9 +1904,9 @@ void android_main(struct android_app* app)
 			xrDestroySession(appState.Session);
 		}
 
-		if (m_instance != XR_NULL_HANDLE)
+		if (instance != XR_NULL_HANDLE)
 		{
-			xrDestroyInstance(m_instance);
+			xrDestroyInstance(instance);
 		}
 	}
 	catch (const std::exception& ex)

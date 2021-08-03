@@ -182,6 +182,9 @@ inline XrResult CheckXrResult(XrResult res, const char* originator = nullptr, co
         case VK_ERROR_INVALID_SHADER_NV:
             msg = "ERROR_INVALID_SHADER_NV";
             break;
+        default:
+            // Do nothing. Unknown value will be printed.
+            break;
     }
     if (msg == nullptr)
     {

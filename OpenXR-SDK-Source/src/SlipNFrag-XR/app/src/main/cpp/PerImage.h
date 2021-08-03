@@ -12,6 +12,11 @@
 
 struct PerImage
 {
+	VkImage colorImage;
+	VkImage depthImage;
+	VkImageView colorView;
+	VkImageView depthView;
+	VkFramebuffer framebuffer;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
 	CachedBuffers cachedIndices16;

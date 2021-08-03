@@ -47,6 +47,8 @@ struct AppState
 	int ScreenHeight;
 	int ConsoleWidth;
 	int ConsoleHeight;
+	std::vector<float> ConsoleVertices;
+	std::vector<uint16_t> ConsoleIndices;
 	std::vector<uint32_t> NoGameDataData;
 	double PreviousTime;
 	double CurrentTime;
