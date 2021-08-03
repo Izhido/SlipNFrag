@@ -17,7 +17,6 @@ struct AppState
 	bool StartupButtonsPressed;
 	bool Resumed;
 	double PausedTime;
-	bool SupportsMultiview;
 	VkDevice Device;
 	XrSession Session;
 	VkCommandPool CommandPool;

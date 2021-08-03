@@ -2,11 +2,12 @@
 
 #extension GL_EXT_shader_io_blocks : enable
 #extension GL_ARB_enhanced_layouts : enable
+#extension GL_OVR_multiview2 : enable
 
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
-	layout(offset = 0) mat4 ViewMatrix;
-	layout(offset = 64) mat4 ProjectionMatrix;
+	layout(offset = 0) mat4 ViewMatrix[2];
+	layout(offset = 128) mat4 ProjectionMatrix[2];
 };
 
 layout(push_constant) uniform Transforms
@@ -34,7 +35,7 @@ out gl_PerVertex
 void main(void)
 {
 	vec4 position = vertexTransform * (aliasTransform * vertexPosition);
-	gl_Position = ProjectionMatrix * (ViewMatrix * position);
+	gl_Position = ProjectionMatrix[gl_ViewID_OVR] * (ViewMatrix[gl_ViewID_OVR] * position);
 	fragmentTexCoords = vertexTexCoords;
 	fragmentLight = vertexLight;
 	float projection = offset + position.x * forwardX + position.y * forwardY + position.z * forwardZ;

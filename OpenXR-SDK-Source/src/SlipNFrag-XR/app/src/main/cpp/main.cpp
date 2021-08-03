@@ -51,15 +51,12 @@ struct RenderPass
 		
 		VkRenderPassMultiviewCreateInfo multiviewCreateInfo { };
 		const uint32_t viewMask = 3;
-		if (appState.SupportsMultiview)
-		{
-			multiviewCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
-			multiviewCreateInfo.subpassCount = 1;
-			multiviewCreateInfo.pViewMasks = &viewMask;
-			multiviewCreateInfo.correlationMaskCount = 1;
-			multiviewCreateInfo.pCorrelationMasks = &viewMask;
-			rpInfo.pNext = &multiviewCreateInfo;
-		}
+		multiviewCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+		multiviewCreateInfo.subpassCount = 1;
+		multiviewCreateInfo.pViewMasks = &viewMask;
+		multiviewCreateInfo.correlationMaskCount = 1;
+		multiviewCreateInfo.pCorrelationMasks = &viewMask;
+		rpInfo.pNext = &multiviewCreateInfo;
 
 		colorRef.attachment = rpInfo.attachmentCount++;
 
@@ -187,7 +184,7 @@ struct RenderTarget
 		return *this;
 	}
 
-	void Create(VkDevice device, VkImage aColorImage, VkImage aDepthImage, VkExtent2D size, RenderPass& renderPass, bool supportsMultiview)
+	void Create(VkDevice device, VkImage aColorImage, VkImage aDepthImage, VkExtent2D size, RenderPass& renderPass)
 	{
 		m_vkDevice = device;
 
@@ -202,7 +199,7 @@ struct RenderTarget
 		{
 			VkImageViewCreateInfo colorViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
 			colorViewInfo.image = colorImage;
-			colorViewInfo.viewType = (supportsMultiview ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D);
+			colorViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 			colorViewInfo.format = COLOR_FORMAT;
 			colorViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
 			colorViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
@@ -212,7 +209,7 @@ struct RenderTarget
 			colorViewInfo.subresourceRange.baseMipLevel = 0;
 			colorViewInfo.subresourceRange.levelCount = 1;
 			colorViewInfo.subresourceRange.baseArrayLayer = 0;
-			colorViewInfo.subresourceRange.layerCount = (supportsMultiview ? 2 : 1);
+			colorViewInfo.subresourceRange.layerCount = 2;
 			CHECK_VKCMD(vkCreateImageView(m_vkDevice, &colorViewInfo, nullptr, &colorView));
 			attachments[attachmentCount++] = colorView;
 		}
@@ -222,7 +219,7 @@ struct RenderTarget
 		{
 			VkImageViewCreateInfo depthViewInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
 			depthViewInfo.image = depthImage;
-			depthViewInfo.viewType = (supportsMultiview ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D);
+			depthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 			depthViewInfo.format = DEPTH_FORMAT;
 			depthViewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
 			depthViewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
@@ -232,7 +229,7 @@ struct RenderTarget
 			depthViewInfo.subresourceRange.baseMipLevel = 0;
 			depthViewInfo.subresourceRange.levelCount = 1;
 			depthViewInfo.subresourceRange.baseArrayLayer = 0;
-			depthViewInfo.subresourceRange.layerCount = (supportsMultiview ? 2 : 1);
+			depthViewInfo.subresourceRange.layerCount = 2;
 			CHECK_VKCMD(vkCreateImageView(m_vkDevice, &depthViewInfo, nullptr, &depthView));
 			attachments[attachmentCount++] = depthView;
 		}
@@ -318,7 +315,7 @@ struct DepthBuffer
 		imageInfo.extent.height = size.height;
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = (appState.SupportsMultiview ? 2 : 1);
+		imageInfo.arrayLayers = 2;
 		imageInfo.format = DEPTH_FORMAT;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -406,11 +403,11 @@ struct SwapchainImageContext
 		return (uint32_t) (p - &swapchainImages[0]);
 	}
 
-	void BindRenderTarget(uint32_t index, VkRenderPassBeginInfo* renderPassBeginInfo, bool supportsMultiview)
+	void BindRenderTarget(uint32_t index, VkRenderPassBeginInfo* renderPassBeginInfo)
 	{
 		if (renderTarget[index].fb == VK_NULL_HANDLE)
 		{
-			renderTarget[index].Create(m_vkDevice, swapchainImages[index].image, depthBuffer.depthImage, size, rp, supportsMultiview);
+			renderTarget[index].Create(m_vkDevice, swapchainImages[index].image, depthBuffer.depthImage, size, rp);
 		}
 		renderPassBeginInfo->renderPass = rp.pass;
 		renderPassBeginInfo->framebuffer = renderTarget[index].fb;
@@ -420,13 +417,6 @@ struct SwapchainImageContext
 
 private:
 	VkDevice m_vkDevice{VK_NULL_HANDLE};
-};
-
-struct Swapchain
-{
-	XrSwapchain handle;
-	int32_t width;
-	int32_t height;
 };
 
 #define strcpy_s(dest, source) strncpy((dest), (source), sizeof(dest))
@@ -720,13 +710,10 @@ void android_main(struct android_app* app)
 		app->onAppCmd = app_handle_cmd;
 
 		XrGraphicsBindingVulkan2KHR m_graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR };
-		std::list<SwapchainImageContext> m_swapchainImageContexts;
-		std::map<const XrSwapchainImageBaseHeader*, SwapchainImageContext*> m_swapchainImageContextMap;
 
 		VkInstance m_vkInstance = VK_NULL_HANDLE;
 		VkPhysicalDevice m_vkPhysicalDevice = VK_NULL_HANDLE;
 		uint32_t m_queueFamilyIndex = 0;
-		VkSemaphore m_vkDrawDone = VK_NULL_HANDLE;
 
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT = nullptr;
 		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = nullptr;
@@ -740,8 +727,6 @@ void android_main(struct android_app* app)
 		XrSystemId m_systemId = XR_NULL_SYSTEM_ID;
 
 		std::vector<XrViewConfigurationView> m_configViews;
-		std::vector<Swapchain> m_swapchains;
-		std::map<XrSwapchain, std::vector<XrSwapchainImageBaseHeader*>> m_swapchainImages;
 		std::vector<XrView> m_views;
 		
 		XrSessionState m_sessionState = XR_SESSION_STATE_UNKNOWN;
@@ -1059,92 +1044,70 @@ void android_main(struct android_app* app)
 			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(m_instance, vulkanCreateInfo.systemId, 0, &deviceExtensionNamesSize, nullptr));
 			std::vector<char> deviceExtensionNames(deviceExtensionNamesSize);
 			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(m_instance, vulkanCreateInfo.systemId, deviceExtensionNamesSize, &deviceExtensionNamesSize, &deviceExtensionNames[0]));
+
+			std::vector<const char*> enabledExtensions = ParseExtensionString(&deviceExtensionNames[0]);
+
+			for (uint32_t i = 0; i < deviceCreateInfo.vulkanCreateInfo->enabledExtensionCount; ++i)
 			{
-				std::vector<const char*> enabledExtensions = ParseExtensionString(&deviceExtensionNames[0]);
-
-				for (uint32_t i = 0; i < deviceCreateInfo.vulkanCreateInfo->enabledExtensionCount; ++i)
-				{
-					enabledExtensions.push_back(deviceCreateInfo.vulkanCreateInfo->ppEnabledExtensionNames[i]);
-				}
-
-				auto vkEnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)vkGetInstanceProcAddr(m_vkInstance, "vkEnumerateDeviceExtensionProperties");
-				uint32_t availableExtensionCount = 0;
-				vkEnumerateDeviceExtensionProperties(m_vkPhysicalDevice, nullptr, &availableExtensionCount, nullptr);
-				std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
-				vkEnumerateDeviceExtensionProperties(m_vkPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
-				for (int extensionIdx = 0; extensionIdx < availableExtensionCount; extensionIdx++)
-				{
-					if (strcmp(availableExtensions[extensionIdx].extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME) == 0)
-					{
-						appState.SupportsMultiview = true;
-						VkPhysicalDeviceFeatures2 physicalDeviceFeatures { };
-						physicalDeviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-						physicalDeviceFeatures.pNext = nullptr;
-						VkPhysicalDeviceProperties2 physicalDeviceProperties { };
-						physicalDeviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-						physicalDeviceProperties.pNext = nullptr;
-						VkPhysicalDeviceMultiviewFeatures deviceMultiviewFeatures { };
-						VkPhysicalDeviceMultiviewProperties deviceMultiviewProperties { };
-						deviceMultiviewFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES;
-						physicalDeviceFeatures.pNext = &deviceMultiviewFeatures;
-						deviceMultiviewProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
-						physicalDeviceProperties.pNext = &deviceMultiviewProperties;
-						auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(m_vkInstance, "vkGetPhysicalDeviceFeatures2KHR");
-						vkGetPhysicalDeviceFeatures2KHR(m_vkPhysicalDevice, &physicalDeviceFeatures);
-						auto vkGetPhysicalDeviceProperties2KHR = (PFN_vkGetPhysicalDeviceProperties2KHR) vkGetInstanceProcAddr(m_vkInstance, "vkGetPhysicalDeviceProperties2KHR");
-						vkGetPhysicalDeviceProperties2KHR(m_vkPhysicalDevice, &physicalDeviceProperties);
-						appState.SupportsMultiview = (bool)deviceMultiviewFeatures.multiview;
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device %s multiview rendering, with %d views and %u max instances", deviceMultiviewFeatures.multiview ? "supports" : "does not support", deviceMultiviewProperties.maxMultiviewViewCount, deviceMultiviewProperties.maxMultiviewInstanceIndex);
-						if (appState.SupportsMultiview)
-						{
-							char *extensionNameToAdd = new char[strlen(VK_KHR_MULTIVIEW_EXTENSION_NAME) + 1];
-							strcpy(extensionNameToAdd, VK_KHR_MULTIVIEW_EXTENSION_NAME);
-							enabledExtensions.push_back(extensionNameToAdd);
-							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Added %s extension to device creation", extensionNameToAdd);
-						}
-						break;
-					}
-				}
-
-				VkPhysicalDeviceFeatures features { };
-				memcpy(&features, deviceCreateInfo.vulkanCreateInfo->pEnabledFeatures, sizeof(features));
-
-				VkDeviceCreateInfo deviceInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
-				memcpy(&deviceInfo, deviceCreateInfo.vulkanCreateInfo, sizeof(deviceInfo));
-				deviceInfo.pEnabledFeatures = &features;
-				deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
-				deviceInfo.ppEnabledExtensionNames = (enabledExtensions.empty() ? nullptr : enabledExtensions.data());
-
-				auto vkCreateDevice = (PFN_vkCreateDevice)deviceCreateInfo.pfnGetInstanceProcAddr(m_vkInstance, "vkCreateDevice");
-				CHECK_VKCMD(vkCreateDevice(m_vkPhysicalDevice, &deviceInfo, deviceCreateInfo.vulkanAllocator, &appState.Device));
+				enabledExtensions.push_back(deviceCreateInfo.vulkanCreateInfo->ppEnabledExtensionNames[i]);
 			}
+
+			bool supportsMultiview = false;
+			auto vkEnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)vkGetInstanceProcAddr(m_vkInstance, "vkEnumerateDeviceExtensionProperties");
+			uint32_t availableExtensionCount = 0;
+			vkEnumerateDeviceExtensionProperties(m_vkPhysicalDevice, nullptr, &availableExtensionCount, nullptr);
+			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+			vkEnumerateDeviceExtensionProperties(m_vkPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
+			for (int extensionIdx = 0; extensionIdx < availableExtensionCount; extensionIdx++)
+			{
+				if (strcmp(availableExtensions[extensionIdx].extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME) == 0)
+				{
+					supportsMultiview = true;
+					VkPhysicalDeviceFeatures2 physicalDeviceFeatures { };
+					physicalDeviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+					physicalDeviceFeatures.pNext = nullptr;
+					VkPhysicalDeviceProperties2 physicalDeviceProperties { };
+					physicalDeviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+					physicalDeviceProperties.pNext = nullptr;
+					VkPhysicalDeviceMultiviewFeatures deviceMultiviewFeatures { };
+					VkPhysicalDeviceMultiviewProperties deviceMultiviewProperties { };
+					deviceMultiviewFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES;
+					physicalDeviceFeatures.pNext = &deviceMultiviewFeatures;
+					deviceMultiviewProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
+					physicalDeviceProperties.pNext = &deviceMultiviewProperties;
+					auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(m_vkInstance, "vkGetPhysicalDeviceFeatures2KHR");
+					vkGetPhysicalDeviceFeatures2KHR(m_vkPhysicalDevice, &physicalDeviceFeatures);
+					auto vkGetPhysicalDeviceProperties2KHR = (PFN_vkGetPhysicalDeviceProperties2KHR) vkGetInstanceProcAddr(m_vkInstance, "vkGetPhysicalDeviceProperties2KHR");
+					vkGetPhysicalDeviceProperties2KHR(m_vkPhysicalDevice, &physicalDeviceProperties);
+					supportsMultiview = (bool)deviceMultiviewFeatures.multiview;
+					if (supportsMultiview)
+					{
+						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device supports multiview rendering, with %d views and %u max instances", deviceMultiviewProperties.maxMultiviewViewCount, deviceMultiviewProperties.maxMultiviewInstanceIndex);
+						char *extensionNameToAdd = new char[strlen(VK_KHR_MULTIVIEW_EXTENSION_NAME) + 1];
+						strcpy(extensionNameToAdd, VK_KHR_MULTIVIEW_EXTENSION_NAME);
+						enabledExtensions.push_back(extensionNameToAdd);
+					}
+					break;
+				}
+			}
+
+			if (!supportsMultiview)
+			{
+				THROW("Device does not support multiview rendering.");
+			}
+
+			memcpy(&features, deviceCreateInfo.vulkanCreateInfo->pEnabledFeatures, sizeof(features));
+			memcpy(&deviceInfo, deviceCreateInfo.vulkanCreateInfo, sizeof(deviceInfo));
+			deviceInfo.pEnabledFeatures = &features;
+			deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
+			deviceInfo.ppEnabledExtensionNames = (enabledExtensions.empty() ? nullptr : enabledExtensions.data());
+
+			auto vkCreateDevice = (PFN_vkCreateDevice)deviceCreateInfo.pfnGetInstanceProcAddr(m_vkInstance, "vkCreateDevice");
+			CHECK_VKCMD(vkCreateDevice(m_vkPhysicalDevice, &deviceInfo, deviceCreateInfo.vulkanAllocator, &appState.Device));
 
 			vkGetDeviceQueue(appState.Device, queueInfo.queueFamilyIndex, 0, &appState.Queue);
 
 			vkGetPhysicalDeviceMemoryProperties(m_vkPhysicalDevice, &appState.MemoryProperties);
-
-			auto vertexFilename = (appState.SupportsMultiview ? "shaders/vert_multiview.vert.spv" : "shaders/vert.vert.spv");
-			auto file = AAssetManager_open(app->activity->assetManager, vertexFilename, AASSET_MODE_BUFFER);
-			size_t length = AAsset_getLength(file);
-			if ((length % 4) != 0)
-			{
-				Throw(Fmt("%s is not 4-byte aligned.", vertexFilename), nullptr, FILE_AND_LINE);
-			}
-			std::vector<uint32_t> vertexSPIRV(length / 4);
-			AAsset_read(file, vertexSPIRV.data(), length);
-
-			auto fragmentFilename = "shaders/frag.frag.spv";
-			file = AAssetManager_open(app->activity->assetManager, fragmentFilename, AASSET_MODE_BUFFER);
-			length = AAsset_getLength(file);
-			if ((length % 4) != 0)
-			{
-				Throw(Fmt("%s is not 4-byte aligned.", fragmentFilename), nullptr, FILE_AND_LINE);
-			}
-			std::vector<uint32_t> fragmentSPIRV(length / 4);
-			AAsset_read(file, fragmentSPIRV.data(), length);
-
-			VkSemaphoreCreateInfo semInfo {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
-			CHECK_VKCMD(vkCreateSemaphore(appState.Device, &semInfo, nullptr, &m_vkDrawDone));
 
 			m_graphicsBinding.instance = m_vkInstance;
 			m_graphicsBinding.physicalDevice = m_vkPhysicalDevice;
@@ -1431,94 +1394,76 @@ void android_main(struct android_app* app)
 
 		m_views.resize(viewCount, { XR_TYPE_VIEW });
 
-		uint32_t swapchainCount = (appState.SupportsMultiview ? 1 : viewCount);
-		
-		if (swapchainCount > 0)
+		uint32_t swapchainFormatCount;
+		CHECK_XRCMD(xrEnumerateSwapchainFormats(appState.Session, 0, &swapchainFormatCount, nullptr));
+		std::vector<int64_t> swapchainFormats(swapchainFormatCount);
+		CHECK_XRCMD(xrEnumerateSwapchainFormats(appState.Session, (uint32_t) swapchainFormats.size(), &swapchainFormatCount, swapchainFormats.data()));
+		CHECK(swapchainFormatCount == swapchainFormats.size());
+
+		auto found = false;
+		for (auto format : swapchainFormats)
 		{
-			uint32_t swapchainFormatCount;
-			CHECK_XRCMD(xrEnumerateSwapchainFormats(appState.Session, 0, &swapchainFormatCount, nullptr));
-			std::vector<int64_t> swapchainFormats(swapchainFormatCount);
-			CHECK_XRCMD(xrEnumerateSwapchainFormats(appState.Session, (uint32_t) swapchainFormats.size(), &swapchainFormatCount, swapchainFormats.data()));
-			CHECK(swapchainFormatCount == swapchainFormats.size());
-
-			auto found = false;
-			for (auto format : swapchainFormats)
+			if (format == (int64_t)COLOR_FORMAT)
 			{
-				if (format == (int64_t)COLOR_FORMAT)
-				{
-					found = true;
-					break;
-				}
+				found = true;
+				break;
 			}
-			if (!found)
+		}
+		if (!found)
+		{
+			THROW(Fmt("No runtime swapchain format supported for color swapchain %i", COLOR_FORMAT));
+		}
+
+		std::string swapchainFormatsString;
+		for (int64_t format : swapchainFormats)
+		{
+			const bool selected = (format == COLOR_FORMAT);
+			swapchainFormatsString += " ";
+			if (selected)
 			{
-				THROW(Fmt("No runtime swapchain format supported for color swapchain %i", COLOR_FORMAT));
+				swapchainFormatsString += "[";
 			}
-
-			std::string swapchainFormatsString;
-			for (int64_t format : swapchainFormats)
+			swapchainFormatsString += std::to_string(format);
+			if (selected)
 			{
-				const bool selected = (format == COLOR_FORMAT);
-				swapchainFormatsString += " ";
-				if (selected)
-				{
-					swapchainFormatsString += "[";
-				}
-				swapchainFormatsString += std::to_string(format);
-				if (selected)
-				{
-					swapchainFormatsString += "]";
-				}
+				swapchainFormatsString += "]";
 			}
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Swapchain Formats: %s", swapchainFormatsString.c_str());
+		}
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Swapchain Formats: %s", swapchainFormatsString.c_str());
 
-			for (uint32_t i = 0; i < swapchainCount; i++)
-			{
-				const XrViewConfigurationView& vp = m_configViews[i];
-				__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain for view %d with dimensions Width=%d Height=%d SampleCount=%d", i, vp.recommendedImageRectWidth, vp.recommendedImageRectHeight, vp.recommendedSwapchainSampleCount);
+		uint32_t swapchainWidth = m_configViews[0].recommendedImageRectWidth;
+		uint32_t swapchainHeight = m_configViews[0].recommendedImageRectHeight;
+		uint32_t swapchainSampleCount = m_configViews[0].recommendedSwapchainSampleCount;
+		
+		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d SampleCount=%d", swapchainWidth, swapchainHeight, swapchainSampleCount);
 
-				XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
-				swapchainCreateInfo.arraySize = (appState.SupportsMultiview ? viewCount : 1);
-				swapchainCreateInfo.format = COLOR_FORMAT;
-				swapchainCreateInfo.width = vp.recommendedImageRectWidth;
-				swapchainCreateInfo.height = vp.recommendedImageRectHeight;
-				swapchainCreateInfo.mipCount = 1;
-				swapchainCreateInfo.faceCount = 1;
-				swapchainCreateInfo.sampleCount = vp.recommendedSwapchainSampleCount;
-				swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
-				Swapchain swapchain;
-				swapchain.width = swapchainCreateInfo.width;
-				swapchain.height = swapchainCreateInfo.height;
-				CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &swapchain.handle));
+		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
+		swapchainCreateInfo.arraySize = viewCount;
+		swapchainCreateInfo.format = COLOR_FORMAT;
+		swapchainCreateInfo.width = swapchainWidth;
+		swapchainCreateInfo.height = swapchainHeight;
+		swapchainCreateInfo.mipCount = 1;
+		swapchainCreateInfo.faceCount = 1;
+		swapchainCreateInfo.sampleCount = swapchainSampleCount;
+		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+		XrSwapchain swapchain = VK_NULL_HANDLE;
+		CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &swapchain));
 
-				m_swapchains.push_back(swapchain);
+		uint32_t imageCount;
+		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr));
 
-				uint32_t imageCount;
-				CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain.handle, 0, &imageCount, nullptr));
+		SwapchainImageContext swapchainImageContext(XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR);
 
-				m_swapchainImageContexts.emplace_back(XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR);
-				SwapchainImageContext& swapchainImageContext = m_swapchainImageContexts.back();
+		auto swapchainImages = swapchainImageContext.Create(appState, imageCount, swapchainCreateInfo);
 
-				std::vector<XrSwapchainImageBaseHeader*> bases = swapchainImageContext.Create(appState, imageCount, swapchainCreateInfo);
+		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, swapchainImages[0]));
 
-				for (auto& base : bases)
-				{
-					m_swapchainImageContextMap[base] = &swapchainImageContext;
-				}
-				std::vector<XrSwapchainImageBaseHeader*> swapchainImages = bases;
-
-				CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain.handle, imageCount, &imageCount, swapchainImages[0]));
-
-				m_swapchainImages.insert(std::make_pair(swapchain.handle, std::move(swapchainImages)));
-				
-				for (auto j = 0; j < imageCount; j++)
-				{
-					appState.PerImage.emplace_back();
-					auto& perImage = appState.PerImage[appState.PerImage.size() - 1];
-					CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
-					CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreateInfo, nullptr, &perImage.fence));
-				}
-			}
+		for (auto j = 0; j < imageCount; j++)
+		{
+			appState.PerImage.emplace_back();
+			auto& perImage = appState.PerImage[appState.PerImage.size() - 1];
+			CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
+			CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreateInfo, nullptr, &perImage.fence));
 		}
 
 		while (app->destroyRequested == 0)
@@ -1805,7 +1750,7 @@ void android_main(struct android_app* app)
 
 				res = xrLocateViews(appState.Session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, m_views.data());
 				CHECK_XRRESULT(res, "xrLocateViews");
-				if (viewState.viewStateFlags & (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT) == (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT))
+				if ((viewState.viewStateFlags & (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT)) == (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT))
 				{
 					CHECK(viewCountOutput == viewCapacityInput);
 					CHECK(viewCountOutput == m_configViews.size());
@@ -1930,134 +1875,124 @@ void android_main(struct android_app* app)
 					
 					projectionLayerViews.resize(viewCountOutput);
 					
-					uint32_t swapchainCountOutput = (appState.SupportsMultiview ? 1 : viewCountOutput);
-					uint32_t viewsPerSwapchain = (appState.SupportsMultiview ? viewCountOutput : 1);
-					
-					for (uint32_t i = 0; i < swapchainCountOutput; i++)
+					XrSwapchainImageAcquireInfo acquireInfo { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+
+					uint32_t swapchainImageIndex;
+					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, &acquireInfo, &swapchainImageIndex));
+
+					XrSwapchainImageWaitInfo waitInfo{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
+					waitInfo.timeout = XR_INFINITE_DURATION;
+					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
+
+					for (auto i = 0; i < viewCountOutput; i++)
 					{
-						const Swapchain viewSwapchain = m_swapchains[i];
+						projectionLayerViews[i] = { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
+						projectionLayerViews[i].pose = m_views[i].pose;
+						projectionLayerViews[i].fov = m_views[i].fov;
+						projectionLayerViews[i].subImage.swapchain = swapchain;
+						projectionLayerViews[i].subImage.imageRect.extent.width = swapchainWidth;
+						projectionLayerViews[i].subImage.imageRect.extent.height = swapchainHeight;
+						projectionLayerViews[i].subImage.imageArrayIndex = i;
+					}
 
-						XrSwapchainImageAcquireInfo acquireInfo { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+					auto& swapchainImage = swapchainImages[swapchainImageIndex];
 
-						uint32_t swapchainImageIndex;
-						CHECK_XRCMD(xrAcquireSwapchainImage(viewSwapchain.handle, &acquireInfo, &swapchainImageIndex));
+					auto& perImage = appState.PerImage[swapchainImageIndex];
+					if (perImage.submitted)
+					{
+						CHECK_VKCMD(vkWaitForFences(appState.Device, 1, &perImage.fence, VK_TRUE, 1ULL * 1000 * 1000 * 1000));
+						CHECK_VKCMD(vkResetFences(appState.Device, 1, &perImage.fence));
+						perImage.submitted = false;
+					}
 
-						XrSwapchainImageWaitInfo waitInfo{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
-						waitInfo.timeout = XR_INFINITE_DURATION;
-						CHECK_XRCMD(xrWaitSwapchainImage(viewSwapchain.handle, &waitInfo));
+					CHECK_VKCMD(vkResetCommandBuffer(perImage.commandBuffer, 0));
+					CHECK_VKCMD(vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
 
-						for (auto j = 0; j < viewsPerSwapchain; j++)
+					swapchainImageContext.depthBuffer.TransitionLayout(perImage.commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+					double clearR = 0;
+					double clearG = 0;
+					double clearB = 0;
+					double clearA = 1;
+					auto readClearColor = false;
+					if (appState.Mode != AppWorldMode/* || appState.Scene.skybox != VK_NULL_HANDLE*/)
+					{
+						clearA = 0;
+					}
+					else
+					{
+						readClearColor = true;
+					}
+					//double elapsed = 0;
+					{
+						std::lock_guard<std::mutex> lock(appState.RenderMutex);
+						//auto startTime = Sys_FloatTime();
+						if (readClearColor && d_lists.clear_color >= 0)
 						{
-							projectionLayerViews[i + j] = { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
-							projectionLayerViews[i + j].pose = m_views[i + j].pose;
-							projectionLayerViews[i + j].fov = m_views[i + j].fov;
-							projectionLayerViews[i + j].subImage.swapchain = viewSwapchain.handle;
-							projectionLayerViews[i + j].subImage.imageRect.extent = { viewSwapchain.width, viewSwapchain.height };
-							projectionLayerViews[i + j].subImage.imageArrayIndex = j;
+							auto color = d_8to24table[d_lists.clear_color];
+							clearR = (color & 255) / 255.0f;
+							clearG = (color >> 8 & 255) / 255.0f;
+							clearB = (color >> 16 & 255) / 255.0f;
+							clearA = (color >> 24) / 255.0f;
 						}
-
-						const XrSwapchainImageBaseHeader* const swapchainImage = m_swapchainImages[viewSwapchain.handle][swapchainImageIndex];
-
-						auto swapchainContext = m_swapchainImageContextMap[swapchainImage];
-						uint32_t imageIndex = swapchainContext->ImageIndex(swapchainImage);
-
-						auto& perImage = appState.PerImage[imageIndex];
-						if (perImage.submitted)
-						{
-							CHECK_VKCMD(vkWaitForFences(appState.Device, 1, &perImage.fence, VK_TRUE, 1ULL * 1000 * 1000 * 1000));
-							CHECK_VKCMD(vkResetFences(appState.Device, 1, &perImage.fence));
-							perImage.submitted = false;
-						}
-
-						CHECK_VKCMD(vkResetCommandBuffer(perImage.commandBuffer, 0));
-						CHECK_VKCMD(vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
-
-						swapchainContext->depthBuffer.TransitionLayout(perImage.commandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-
-						double clearR = 0;
-						double clearG = 0;
-						double clearB = 0;
-						double clearA = 1;
-						auto readClearColor = false;
-						if (appState.Mode != AppWorldMode/* || appState.Scene.skybox != VK_NULL_HANDLE*/)
-						{
-							clearA = 0;
-						}
-						else
-						{
-							readClearColor = true;
-						}
-						//double elapsed = 0;
-						{
-							std::lock_guard<std::mutex> lock(appState.RenderMutex);
-							//auto startTime = Sys_FloatTime();
-							if (readClearColor && d_lists.clear_color >= 0)
-							{
-								auto color = d_8to24table[d_lists.clear_color];
-								clearR = (color & 255) / 255.0f;
-								clearG = (color >> 8 & 255) / 255.0f;
-								clearB = (color >> 16 & 255) / 255.0f;
-								clearA = (color >> 24) / 255.0f;
-							}
-							perImage.Reset(appState);
-							appState.Scene.Initialize();
-							auto stagingBufferSize = perImage.GetStagingBufferSize(appState);
-							auto stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
-							perImage.LoadStagingBuffer(appState, i, stagingBuffer);
-							perImage.FillFromStagingBuffer(appState, stagingBuffer);
-							perImage.LoadRemainingBuffers(appState);
-							perImage.hostClearCount = host_clearcount;
-							//auto endTime = Sys_FloatTime();
-							//elapsed += (endTime - startTime);
-						}
-						static std::array<VkClearValue, 2> clearValues;
-						clearValues[0].color.float32[0] = clearR;
-						clearValues[0].color.float32[1] = clearG;
-						clearValues[0].color.float32[2] = clearB;
-						clearValues[0].color.float32[3] = clearA;
-						clearValues[1].depthStencil.depth = 1.0f;
-						clearValues[1].depthStencil.stencil = 0;
-
-						VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-						renderPassBeginInfo.clearValueCount = (uint32_t) clearValues.size();
-						renderPassBeginInfo.pClearValues = clearValues.data();
-
-						swapchainContext->BindRenderTarget(imageIndex, &renderPassBeginInfo, appState.SupportsMultiview);
-
-						vkCmdBeginRenderPass(perImage.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-						VkRect2D screenRect { };
-						screenRect.extent.width = viewSwapchain.width;
-						screenRect.extent.height = viewSwapchain.height;
-						
-						VkViewport viewport;
-						viewport.x = (float) screenRect.offset.x;
-						viewport.y = (float) screenRect.offset.y;
-						viewport.width = (float) screenRect.extent.width;
-						viewport.height = (float) screenRect.extent.height;
-						viewport.minDepth = 0.0f;
-						viewport.maxDepth = 1.0f;
-						vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport);
-						vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect);
-						perImage.Render(appState);
-
-						vkCmdEndRenderPass(perImage.commandBuffer);
-
-						CHECK_VKCMD(vkEndCommandBuffer(perImage.commandBuffer));
-						VkSubmitInfo submitInfo { };
-						submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-						submitInfo.commandBufferCount = 1;
-						submitInfo.pCommandBuffers = &perImage.commandBuffer;
-						CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, perImage.fence));
-
-						perImage.submitted = true;
+						perImage.Reset(appState);
+						appState.Scene.Initialize();
+						auto stagingBufferSize = perImage.GetStagingBufferSize(appState);
+						auto stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
+						perImage.LoadStagingBuffer(appState, stagingBuffer);
+						perImage.FillFromStagingBuffer(appState, stagingBuffer);
+						perImage.LoadRemainingBuffers(appState);
+						perImage.hostClearCount = host_clearcount;
 						//auto endTime = Sys_FloatTime();
 						//elapsed += (endTime - startTime);
-						//__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "AppState::RenderScene(): %.6f s.", elapsed);
-
-						XrSwapchainImageReleaseInfo releaseInfo {XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
-						CHECK_XRCMD(xrReleaseSwapchainImage(viewSwapchain.handle, &releaseInfo));
 					}
+					static std::array<VkClearValue, 2> clearValues;
+					clearValues[0].color.float32[0] = clearR;
+					clearValues[0].color.float32[1] = clearG;
+					clearValues[0].color.float32[2] = clearB;
+					clearValues[0].color.float32[3] = clearA;
+					clearValues[1].depthStencil.depth = 1.0f;
+					clearValues[1].depthStencil.stencil = 0;
+
+					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+					renderPassBeginInfo.clearValueCount = (uint32_t) clearValues.size();
+					renderPassBeginInfo.pClearValues = clearValues.data();
+
+					swapchainImageContext.BindRenderTarget(swapchainImageIndex, &renderPassBeginInfo);
+
+					vkCmdBeginRenderPass(perImage.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+					VkRect2D screenRect { };
+					screenRect.extent.width = swapchainWidth;
+					screenRect.extent.height = swapchainHeight;
+					
+					VkViewport viewport;
+					viewport.x = (float) screenRect.offset.x;
+					viewport.y = (float) screenRect.offset.y;
+					viewport.width = (float) screenRect.extent.width;
+					viewport.height = (float) screenRect.extent.height;
+					viewport.minDepth = 0.0f;
+					viewport.maxDepth = 1.0f;
+					vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport);
+					vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect);
+					perImage.Render(appState);
+
+					vkCmdEndRenderPass(perImage.commandBuffer);
+
+					CHECK_VKCMD(vkEndCommandBuffer(perImage.commandBuffer));
+					VkSubmitInfo submitInfo { };
+					submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+					submitInfo.commandBufferCount = 1;
+					submitInfo.pCommandBuffers = &perImage.commandBuffer;
+					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, perImage.fence));
+
+					perImage.submitted = true;
+					//auto endTime = Sys_FloatTime();
+					//elapsed += (endTime - startTime);
+					//__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "AppState::RenderScene(): %.6f s.", elapsed);
+
+					XrSwapchainImageReleaseInfo releaseInfo {XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
+					CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
 
 					projectionLayer.space = m_appSpace;
 					projectionLayer.viewCount = (uint32_t) projectionLayerViews.size();
@@ -2089,9 +2024,9 @@ void android_main(struct android_app* app)
 			xrDestroyActionSet(appState.ActionSet);
 		}
 
-		for (Swapchain swapchain : m_swapchains)
+		if (swapchain != XR_NULL_HANDLE)
 		{
-			xrDestroySwapchain(swapchain.handle);
+			xrDestroySwapchain(swapchain);
 		}
 
 		if (m_worldSpace != XR_NULL_HANDLE)

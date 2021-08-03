@@ -58,9 +58,8 @@ struct Scene
 	Pipeline floor;
 	Pipeline console;
 	Buffer matrices;
-	int numBuffers;
-	std::vector<XrMatrix4x4f> viewMatrices;
-	std::vector<XrMatrix4x4f> projectionMatrices;
+	XrMatrix4x4f viewMatrices[2];
+	XrMatrix4x4f projectionMatrices[2];
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
