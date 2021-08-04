@@ -24,6 +24,9 @@ struct AppState
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
 	int DefaultFOV;
 	int FOV;
+	uint32_t SwapchainWidth;
+	uint32_t SwapchainHeight;
+	uint32_t SwapchainSampleCount;
 	Scene Scene;
 	std::vector<PerImage> PerImage;
 	int EyeTextureWidth;
@@ -74,8 +77,10 @@ struct AppState
 	XrAction MoveYAction;
 	XrAction SwitchWeaponAction;
 	XrAction MenuAction;
-	XrAction EnterAction;
-	XrAction EscapeAction;
+	XrAction EnterTriggerAction;
+	XrAction EnterNonTriggerAction;
+	XrAction EscapeYAction;
+	XrAction EscapeNonYAction;
 	XrAction QuitAction;
 	XrAction PoseAction;
 	std::vector<XrPath> SubactionPaths;

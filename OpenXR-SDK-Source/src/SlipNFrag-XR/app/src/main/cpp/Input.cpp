@@ -77,175 +77,146 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 	{
 		if (host_initialized)
 		{
-			/*if (LeftButtonIsDown(appState, ovrButton_Enter))
+			actionGetInfo.action = appState.MenuAction;
+			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 			{
-				AddKeyInput(K_ESCAPE, true);
-			}
-			if (LeftButtonIsUp(appState, ovrButton_Enter))
-			{
-				AddKeyInput(K_ESCAPE, false);
-			}
-			if (key_dest == key_game)
-			{
-				if (joy_initialized)
+				if (booleanActionState.currentState)
 				{
-					joy_avail = true;
-					pdwRawValue[JOY_AXIS_X] = -appState.LeftController.Joystick.x;
-					pdwRawValue[JOY_AXIS_Y] = -appState.LeftController.Joystick.y;
-					pdwRawValue[JOY_AXIS_Z] = appState.RightController.Joystick.x;
-					pdwRawValue[JOY_AXIS_R] = appState.RightController.Joystick.y;
-				}
-				if (!triggerHandled)
-				{
-					if (LeftButtonIsDown(appState, ovrButton_Trigger) || RightButtonIsDown(appState, ovrButton_Trigger))
-					{
-						AddCommandInput("+attack");
-					}
-					if (LeftButtonIsUp(appState, ovrButton_Trigger) || RightButtonIsUp(appState, ovrButton_Trigger))
-					{
-						AddCommandInput("-attack");
-					}
-				}
-				if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger))
-				{
-					AddCommandInput("+speed");
-				}
-				if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger))
-				{
-					AddCommandInput("-speed");
-				}
-				if (LeftButtonIsDown(appState, ovrButton_Joystick))
-				{
-					AddCommandInput("impulse 10");
-				}
-				if (m_state == m_quit)
-				{
-					if (RightButtonIsDown(appState, ovrButton_B))
-					{
-						AddCommandInput("+jump");
-					}
-					if (RightButtonIsUp(appState, ovrButton_B))
-					{
-						AddCommandInput("-jump");
-					}
-					if (LeftButtonIsDown(appState, ovrButton_Y))
-					{
-						AddKeyInput('y', true);
-					}
-					if (LeftButtonIsUp(appState, ovrButton_Y))
-					{
-						AddKeyInput('y', false);
-					}
+					AddKeyInput(K_ESCAPE, true);
 				}
 				else
 				{
-					if (LeftButtonIsDown(appState, ovrButton_Y) || RightButtonIsDown(appState, ovrButton_B))
+					AddKeyInput(K_ESCAPE, false);
+				}
+			}
+			auto thumbstick = appState.PreviousThumbstick;
+			actionGetInfo.action = appState.MoveXAction;
+			CHECK_XRCMD(xrGetActionStateFloat(appState.Session, &actionGetInfo, &floatActionState));
+			if (floatActionState.isActive && floatActionState.changedSinceLastSync)
+			{
+				thumbstick.x = -floatActionState.currentState;
+			}
+			actionGetInfo.action = appState.MoveYAction;
+			CHECK_XRCMD(xrGetActionStateFloat(appState.Session, &actionGetInfo, &floatActionState));
+			if (floatActionState.isActive && floatActionState.changedSinceLastSync)
+			{
+				thumbstick.y = -floatActionState.currentState;
+			}
+			if (thumbstick.y > 0.5 && appState.PreviousThumbstick.y <= 0.5)
+			{
+				AddKeyInput(K_DOWNARROW, true);
+			}
+			if (thumbstick.y <= 0.5 && appState.PreviousThumbstick.y > 0.5)
+			{
+				AddKeyInput(K_DOWNARROW, false);
+			}
+			if (thumbstick.y < -0.5 && appState.PreviousThumbstick.y >= -0.5)
+			{
+				AddKeyInput(K_UPARROW, true);
+			}
+			if (thumbstick.y >= -0.5 && appState.PreviousThumbstick.y < -0.5)
+			{
+				AddKeyInput(K_UPARROW, false);
+			}
+			if (thumbstick.x > 0.5 && appState.PreviousThumbstick.x <= 0.5)
+			{
+				AddKeyInput(K_LEFTARROW, true);
+			}
+			if (thumbstick.x <= 0.5 && appState.PreviousThumbstick.x > 0.5)
+			{
+				AddKeyInput(K_LEFTARROW, false);
+			}
+			if (thumbstick.x < -0.5 && appState.PreviousThumbstick.x >= -0.5)
+			{
+				AddKeyInput(K_RIGHTARROW, true);
+			}
+			if (thumbstick.x >= -0.5 && appState.PreviousThumbstick.x < -0.5)
+			{
+				AddKeyInput(K_RIGHTARROW, false);
+			}
+			appState.PreviousThumbstick = thumbstick;
+			auto enterDown = false;
+			auto enterUp = false;
+			actionGetInfo.action = appState.EnterTriggerAction;
+			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync && !triggerHandled)
+			{
+				if (booleanActionState.currentState)
+				{
+					enterDown = true;
+				}
+				else
+				{
+					enterUp = true;
+				}
+			}
+			actionGetInfo.action = appState.EnterNonTriggerAction;
+			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+			{
+				if (booleanActionState.currentState)
+				{
+					enterDown = true;
+				}
+				else
+				{
+					enterUp = true;
+				}
+			}
+			if (enterDown)
+			{
+				AddKeyInput(K_ENTER, true);
+			}
+			if (enterUp)
+			{
+				AddKeyInput(K_ENTER, false);
+			}
+			if (m_state == m_quit)
+			{
+				actionGetInfo.action = appState.EscapeNonYAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
 					{
-						AddCommandInput("+jump");
+						AddKeyInput(K_ESCAPE, true);
 					}
-					if (LeftButtonIsUp(appState, ovrButton_Y) || RightButtonIsUp(appState, ovrButton_B))
+					else
 					{
-						AddCommandInput("-jump");
+						AddKeyInput(K_ESCAPE, false);
 					}
 				}
-				if (LeftButtonIsDown(appState, ovrButton_X) || RightButtonIsDown(appState, ovrButton_A))
+				actionGetInfo.action = appState.QuitAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 				{
-					AddCommandInput("+movedown");
-				}
-				if (LeftButtonIsUp(appState, ovrButton_X) || RightButtonIsUp(appState, ovrButton_A))
-				{
-					AddCommandInput("-movedown");
-				}
-				if (RightButtonIsDown(appState, ovrButton_Joystick))
-				{
-					AddCommandInput("+mlook");
-				}
-				if (RightButtonIsUp(appState, ovrButton_Joystick))
-				{
-					AddCommandInput("-mlook");
+					if (booleanActionState.currentState)
+					{
+						AddKeyInput('y', true);
+					}
+					else
+					{
+						AddKeyInput('y', false);
+					}
 				}
 			}
 			else
 			{
-				if ((appState.LeftController.Joystick.y > 0.5 && appState.LeftController.PreviousJoystick.y <= 0.5) || (appState.RightController.Joystick.y > 0.5 && appState.RightController.PreviousJoystick.y <= 0.5))
+				actionGetInfo.action = appState.EscapeYAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 				{
-					AddKeyInput(K_UPARROW, true);
-				}
-				if ((appState.LeftController.Joystick.y <= 0.5 && appState.LeftController.PreviousJoystick.y > 0.5) || (appState.RightController.Joystick.y <= 0.5 && appState.RightController.PreviousJoystick.y > 0.5))
-				{
-					AddKeyInput(K_UPARROW, false);
-				}
-				if ((appState.LeftController.Joystick.y < -0.5 && appState.LeftController.PreviousJoystick.y >= -0.5) || (appState.RightController.Joystick.y < -0.5 && appState.RightController.PreviousJoystick.y >= -0.5))
-				{
-					AddKeyInput(K_DOWNARROW, true);
-				}
-				if ((appState.LeftController.Joystick.y >= -0.5 && appState.LeftController.PreviousJoystick.y < -0.5) || (appState.RightController.Joystick.y >= -0.5 && appState.RightController.PreviousJoystick.y < -0.5))
-				{
-					AddKeyInput(K_DOWNARROW, false);
-				}
-				if ((appState.LeftController.Joystick.x > 0.5 && appState.LeftController.PreviousJoystick.x <= 0.5) || (appState.RightController.Joystick.x > 0.5 && appState.RightController.PreviousJoystick.x <= 0.5))
-				{
-					AddKeyInput(K_RIGHTARROW, true);
-				}
-				if ((appState.LeftController.Joystick.x <= 0.5 && appState.LeftController.PreviousJoystick.x > 0.5) || (appState.RightController.Joystick.x <= 0.5 && appState.RightController.PreviousJoystick.x > 0.5))
-				{
-					AddKeyInput(K_RIGHTARROW, false);
-				}
-				if ((appState.LeftController.Joystick.x < -0.5 && appState.LeftController.PreviousJoystick.x >= -0.5) || (appState.RightController.Joystick.x < -0.5 && appState.RightController.PreviousJoystick.x >= -0.5))
-				{
-					AddKeyInput(K_LEFTARROW, true);
-				}
-				if ((appState.LeftController.Joystick.x >= -0.5 && appState.LeftController.PreviousJoystick.x < -0.5) || (appState.RightController.Joystick.x >= -0.5 && appState.RightController.PreviousJoystick.x < -0.5))
-				{
-					AddKeyInput(K_LEFTARROW, false);
-				}
-				if ((LeftButtonIsDown(appState, ovrButton_Trigger) && !triggerHandled) || LeftButtonIsDown(appState, ovrButton_X) || (RightButtonIsDown(appState, ovrButton_Trigger) && !triggerHandled) || RightButtonIsDown(appState, ovrButton_A))
-				{
-					AddKeyInput(K_ENTER, true);
-				}
-				if ((LeftButtonIsUp(appState, ovrButton_Trigger) && !triggerHandled) || LeftButtonIsUp(appState, ovrButton_X) || (RightButtonIsUp(appState, ovrButton_Trigger) && !triggerHandled) || RightButtonIsUp(appState, ovrButton_A))
-				{
-					AddKeyInput(K_ENTER, false);
-				}
-				if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
-				{
-					AddKeyInput(K_ESCAPE, true);
-				}
-				if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
-				{
-					AddKeyInput(K_ESCAPE, false);
-				}
-				if (m_state == m_quit)
-				{
-					if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
+					if (booleanActionState.currentState)
 					{
 						AddKeyInput(K_ESCAPE, true);
 					}
-					if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
-					{
-						AddKeyInput(K_ESCAPE, false);
-					}
-					if (LeftButtonIsDown(appState, ovrButton_Y))
-					{
-						AddKeyInput('y', true);
-					}
-					if (LeftButtonIsUp(appState, ovrButton_Y))
-					{
-						AddKeyInput('y', false);
-					}
-				}
-				else
-				{
-					if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || LeftButtonIsDown(appState, ovrButton_Y) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
-					{
-						AddKeyInput(K_ESCAPE, true);
-					}
-					if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || LeftButtonIsUp(appState, ovrButton_Y) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
+					else
 					{
 						AddKeyInput(K_ESCAPE, false);
 					}
 				}
-			}*/
+			}
 		}
 	}
 	else if (appState.Mode == AppWorldMode)
@@ -389,75 +360,118 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 				}
 				if (thumbstick.y > 0.5 && appState.PreviousThumbstick.y <= 0.5)
 				{
-					AddKeyInput(K_UPARROW, true);
+					AddKeyInput(K_DOWNARROW, true);
 				}
 				if (thumbstick.y <= 0.5 && appState.PreviousThumbstick.y > 0.5)
 				{
-					AddKeyInput(K_UPARROW, false);
+					AddKeyInput(K_DOWNARROW, false);
 				}
 				if (thumbstick.y < -0.5 && appState.PreviousThumbstick.y >= -0.5)
 				{
-					AddKeyInput(K_DOWNARROW, true);
+					AddKeyInput(K_UPARROW, true);
 				}
 				if (thumbstick.y >= -0.5 && appState.PreviousThumbstick.y < -0.5)
 				{
-					AddKeyInput(K_DOWNARROW, false);
+					AddKeyInput(K_UPARROW, false);
 				}
 				if (thumbstick.x > 0.5 && appState.PreviousThumbstick.x <= 0.5)
 				{
-					AddKeyInput(K_RIGHTARROW, true);
+					AddKeyInput(K_LEFTARROW, true);
 				}
 				if (thumbstick.x <= 0.5 && appState.PreviousThumbstick.x > 0.5)
 				{
-					AddKeyInput(K_RIGHTARROW, false);
+					AddKeyInput(K_LEFTARROW, false);
 				}
 				if (thumbstick.x < -0.5 && appState.PreviousThumbstick.x >= -0.5)
 				{
-					AddKeyInput(K_LEFTARROW, true);
+					AddKeyInput(K_RIGHTARROW, true);
 				}
 				if (thumbstick.x >= -0.5 && appState.PreviousThumbstick.x < -0.5)
 				{
-					AddKeyInput(K_LEFTARROW, false);
+					AddKeyInput(K_RIGHTARROW, false);
 				}
 				appState.PreviousThumbstick = thumbstick;
-				/*if ((LeftButtonIsDown(appState, ovrButton_Trigger) && !triggerHandled) || LeftButtonIsDown(appState, ovrButton_X) || (RightButtonIsDown(appState, ovrButton_Trigger) && !triggerHandled) || RightButtonIsDown(appState, ovrButton_A))
+				auto enterDown = false;
+				auto enterUp = false;
+				actionGetInfo.action = appState.EnterTriggerAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync && !triggerHandled)
+				{
+					if (booleanActionState.currentState)
+					{
+						enterDown = true;
+					}
+					else
+					{
+						enterUp = true;
+					}
+				}
+				actionGetInfo.action = appState.EnterNonTriggerAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
+					{
+						enterDown = true;
+					}
+					else
+					{
+						enterUp = true;
+					}
+				}
+				if (enterDown)
 				{
 					AddKeyInput(K_ENTER, true);
 				}
-				if ((LeftButtonIsUp(appState, ovrButton_Trigger) && !triggerHandled) || LeftButtonIsUp(appState, ovrButton_X) || (RightButtonIsUp(appState, ovrButton_Trigger) && !triggerHandled) || RightButtonIsUp(appState, ovrButton_A))
+				if (enterUp)
 				{
 					AddKeyInput(K_ENTER, false);
 				}
 				if (m_state == m_quit)
 				{
-					if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
+					actionGetInfo.action = appState.EscapeNonYAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
-						AddKeyInput(K_ESCAPE, true);
+						if (booleanActionState.currentState)
+						{
+							AddKeyInput(K_ESCAPE, true);
+						}
+						else
+						{
+							AddKeyInput(K_ESCAPE, false);
+						}
 					}
-					if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
+					actionGetInfo.action = appState.QuitAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
-						AddKeyInput(K_ESCAPE, false);
-					}
-					if (LeftButtonIsDown(appState, ovrButton_Y))
-					{
-						AddKeyInput('y', true);
-					}
-					if (LeftButtonIsUp(appState, ovrButton_Y))
-					{
-						AddKeyInput('y', false);
+						if (booleanActionState.currentState)
+						{
+							AddKeyInput('y', true);
+						}
+						else
+						{
+							AddKeyInput('y', false);
+						}
 					}
 				}
 				else
 				{
-					if (LeftButtonIsDown(appState, ovrButton_GripTrigger) || LeftButtonIsDown(appState, ovrButton_Y) || RightButtonIsDown(appState, ovrButton_GripTrigger) || RightButtonIsDown(appState, ovrButton_B))
+					actionGetInfo.action = appState.EscapeYAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
-						AddKeyInput(K_ESCAPE, true);
+						if (booleanActionState.currentState)
+						{
+							AddKeyInput(K_ESCAPE, true);
+						}
+						else
+						{
+							AddKeyInput(K_ESCAPE, false);
+						}
 					}
-					if (LeftButtonIsUp(appState, ovrButton_GripTrigger) || LeftButtonIsUp(appState, ovrButton_Y) || RightButtonIsUp(appState, ovrButton_GripTrigger) || RightButtonIsUp(appState, ovrButton_B))
-					{
-						AddKeyInput(K_ESCAPE, false);
-					}
-				}*/
+				}
 			}
 		}
 	}

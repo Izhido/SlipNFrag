@@ -46,7 +46,7 @@ void SwitchBoundInput(AppState& appState, XrAction action, const char* name)
 														XR_INPUT_SOURCE_LOCALIZED_NAME_INTERACTION_PROFILE_BIT |
 														XR_INPUT_SOURCE_LOCALIZED_NAME_COMPONENT_BIT;
 
-		XrInputSourceLocalizedNameGetInfo nameInfo = {XR_TYPE_INPUT_SOURCE_LOCALIZED_NAME_GET_INFO};
+		XrInputSourceLocalizedNameGetInfo nameInfo = { XR_TYPE_INPUT_SOURCE_LOCALIZED_NAME_GET_INFO };
 		nameInfo.sourcePath = paths[i];
 		nameInfo.whichComponents = all;
 
@@ -313,29 +313,16 @@ void android_main(struct android_app* app)
 
 		XrGraphicsBindingVulkan2KHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR };
 
-		VkInstance m_vkInstance = VK_NULL_HANDLE;
-		VkPhysicalDevice m_vkPhysicalDevice = VK_NULL_HANDLE;
-		uint32_t m_queueFamilyIndex = 0;
+		VkInstance vulkanInstance = VK_NULL_HANDLE;
+		VkPhysicalDevice vulkanPhysicalDevice = VK_NULL_HANDLE;
+		uint32_t queueFamilyIndex = 0;
 
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT = nullptr;
 		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = nullptr;
-		VkDebugReportCallbackEXT m_vkDebugReporter = VK_NULL_HANDLE;
+		VkDebugReportCallbackEXT vulkanDebugReporter = VK_NULL_HANDLE;
 
-		XrInstance instance = XR_NULL_HANDLE;
-		XrSpace appSpace = XR_NULL_HANDLE;
-		XrFormFactor m_formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
-		XrViewConfigurationType m_viewConfigType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-		XrEnvironmentBlendMode m_environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
-		XrSystemId m_systemId = XR_NULL_SYSTEM_ID;
-
-		std::vector<XrViewConfigurationView> m_configViews;
 		std::vector<XrView> m_views;
 		
-		XrSessionState m_sessionState = XR_SESSION_STATE_UNKNOWN;
-		bool m_sessionRunning = false;
-
-		XrEventDataBuffer m_eventDataBuffer { };
-
 		PFN_xrInitializeLoaderKHR initializeLoader = nullptr;
 		XrResult res = xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*) (&initializeLoader));
 		CHECK_XRRESULT(res, "xrGetInstanceProcAddr");
@@ -395,7 +382,9 @@ void android_main(struct android_app* app)
 		instanceCreateInfoAndroid.applicationVM = app->activity->vm;
 		instanceCreateInfoAndroid.applicationActivity = app->activity->clazz;
 
-		XrInstanceCreateInfo createInfo {XR_TYPE_INSTANCE_CREATE_INFO };
+		XrInstance instance = XR_NULL_HANDLE;
+
+		XrInstanceCreateInfo createInfo { XR_TYPE_INSTANCE_CREATE_INFO };
 		createInfo.next = (XrBaseInStructure*)&instanceCreateInfoAndroid;
 		createInfo.enabledExtensionCount = (uint32_t)xrInstanceExtensions.size();
 		createInfo.enabledExtensionNames = xrInstanceExtensions.data();
@@ -409,27 +398,26 @@ void android_main(struct android_app* app)
 
 		CHECK(instance != XR_NULL_HANDLE);
 
-		XrInstanceProperties instanceProperties{XR_TYPE_INSTANCE_PROPERTIES};
+		XrInstanceProperties instanceProperties { XR_TYPE_INSTANCE_PROPERTIES };
 		CHECK_XRCMD(xrGetInstanceProperties(instance, &instanceProperties));
 
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Instance RuntimeName=%s RuntimeVersion=%s", instanceProperties.runtimeName, GetXrVersionString(instanceProperties.runtimeVersion).c_str());
 
-		m_formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
-		m_viewConfigType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-		m_environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+		auto m_viewConfigType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 
-		XrSystemGetInfo systemInfo{XR_TYPE_SYSTEM_GET_INFO};
-		systemInfo.formFactor = m_formFactor;
-		CHECK_XRCMD(xrGetSystem(instance, &systemInfo, &m_systemId));
+		XrSystemId systemId = XR_NULL_SYSTEM_ID;
+		XrSystemGetInfo systemInfo { XR_TYPE_SYSTEM_GET_INFO };
+		systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
+		CHECK_XRCMD(xrGetSystem(instance, &systemInfo, &systemId));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %d for form factor %s", m_systemId, to_string(m_formFactor));
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %d for form factor %s", systemId, to_string(systemInfo.formFactor));
 
-		CHECK(m_systemId != XR_NULL_SYSTEM_ID);
+		CHECK(systemId != XR_NULL_SYSTEM_ID);
 
 		uint32_t viewConfigTypeCount;
-		CHECK_XRCMD(xrEnumerateViewConfigurations(instance, m_systemId, 0, &viewConfigTypeCount, nullptr));
+		CHECK_XRCMD(xrEnumerateViewConfigurations(instance, systemId, 0, &viewConfigTypeCount, nullptr));
 		std::vector<XrViewConfigurationType> viewConfigTypes(viewConfigTypeCount);
-		CHECK_XRCMD(xrEnumerateViewConfigurations(instance, m_systemId, viewConfigTypeCount, &viewConfigTypeCount, viewConfigTypes.data()));
+		CHECK_XRCMD(xrEnumerateViewConfigurations(instance, systemId, viewConfigTypeCount, &viewConfigTypeCount, viewConfigTypes.data()));
 		CHECK((uint32_t) viewConfigTypes.size() == viewConfigTypeCount);
 
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available View Configuration Types: (%d)", viewConfigTypeCount);
@@ -437,17 +425,17 @@ void android_main(struct android_app* app)
 		{
 			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View Configuration Type: %s %s", to_string(viewConfigType), viewConfigType == m_viewConfigType ? "(Selected)" : "");
 
-			XrViewConfigurationProperties viewConfigProperties{XR_TYPE_VIEW_CONFIGURATION_PROPERTIES};
-			CHECK_XRCMD(xrGetViewConfigurationProperties(instance, m_systemId, viewConfigType, &viewConfigProperties));
+			XrViewConfigurationProperties viewConfigProperties { XR_TYPE_VIEW_CONFIGURATION_PROPERTIES };
+			CHECK_XRCMD(xrGetViewConfigurationProperties(instance, systemId, viewConfigType, &viewConfigProperties));
 
 			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View configuration FovMutable=%s", (viewConfigProperties.fovMutable == XR_TRUE ? "True" : "False"));
 
 			uint32_t viewCount;
-			CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, m_systemId, viewConfigType, 0, &viewCount, nullptr));
+			CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigType, 0, &viewCount, nullptr));
 			if (viewCount > 0)
 			{
-				std::vector<XrViewConfigurationView> views(viewCount, {XR_TYPE_VIEW_CONFIGURATION_VIEW});
-				CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, m_systemId, viewConfigType, viewCount, &viewCount, views.data()));
+				std::vector<XrViewConfigurationView> views(viewCount, { XR_TYPE_VIEW_CONFIGURATION_VIEW });
+				CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigType, viewCount, &viewCount, views.data()));
 
 				for (uint32_t i = 0; i < views.size(); i++)
 				{
@@ -463,36 +451,34 @@ void android_main(struct android_app* app)
 			}
 
 			uint32_t count;
-			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, m_systemId, viewConfigType, 0, &count, nullptr));
+			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, systemId, viewConfigType, 0, &count, nullptr));
 			CHECK(count > 0);
 
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available Environment Blend Mode count : (%d)", count);
 
 			std::vector<XrEnvironmentBlendMode> blendModes(count);
-			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, m_systemId, viewConfigType, count, &count, blendModes.data()));
+			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, systemId, viewConfigType, count, &count, blendModes.data()));
 
 			bool blendModeFound = false;
 			for (XrEnvironmentBlendMode mode : blendModes)
 			{
-				const bool blendModeMatch = (mode == m_environmentBlendMode);
+				const bool blendModeMatch = (mode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE);
 				__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Environment Blend Mode (%s) : %s", to_string(mode), blendModeMatch ? "(Selected)" : "");
 				blendModeFound |= blendModeMatch;
 			}
 			CHECK(blendModeFound);
 		}
 
-		XrGraphicsRequirementsVulkan2KHR graphicsRequirements {XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN2_KHR };
+		XrGraphicsRequirementsVulkan2KHR graphicsRequirements { XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN2_KHR };
 
-		PFN_xrGetVulkanGraphicsRequirementsKHR pfnGetVulkanGraphicsRequirementsKHR = nullptr;
-		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsRequirementsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanGraphicsRequirementsKHR)));
+		PFN_xrGetVulkanGraphicsRequirementsKHR xrGetVulkanGraphicsRequirementsKHR = nullptr;
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsRequirementsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsRequirementsKHR)));
 
-		XrGraphicsRequirementsVulkanKHR legacyRequirements {XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR };
-		CHECK_XRCMD(pfnGetVulkanGraphicsRequirementsKHR(instance, m_systemId, &legacyRequirements));
+		XrGraphicsRequirementsVulkanKHR legacyRequirements { XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR };
+		CHECK_XRCMD(xrGetVulkanGraphicsRequirementsKHR(instance, systemId, &legacyRequirements));
 
 		graphicsRequirements.maxApiVersionSupported = legacyRequirements.maxApiVersionSupported;
 		graphicsRequirements.minApiVersionSupported = legacyRequirements.minApiVersionSupported;
-
-		VkResult err;
 
 		std::vector<const char*> layers;
 		
@@ -530,14 +516,14 @@ void android_main(struct android_app* app)
 			std::vector<const char*> vulkanExtensions;
 			vulkanExtensions.push_back("VK_EXT_debug_report");
 
-			VkApplicationInfo appInfo {VK_STRUCTURE_TYPE_APPLICATION_INFO };
+			VkApplicationInfo appInfo { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 			appInfo.pApplicationName = "slipnfrag_xr";
 			appInfo.applicationVersion = 1;
 			appInfo.pEngineName = "slipnfrag_xr";
 			appInfo.engineVersion = 1;
 			appInfo.apiVersion = VK_API_VERSION_1_0;
 
-			VkInstanceCreateInfo instInfo {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
+			VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 			instInfo.pApplicationInfo = &appInfo;
 			instInfo.enabledLayerCount = (uint32_t)layers.size();
 			instInfo.ppEnabledLayerNames = (layers.empty() ? nullptr : layers.data());
@@ -545,19 +531,19 @@ void android_main(struct android_app* app)
 			instInfo.ppEnabledExtensionNames = (vulkanExtensions.empty() ? nullptr : vulkanExtensions.data());
 
 			XrVulkanInstanceCreateInfoKHR vulkanCreateInfo { XR_TYPE_VULKAN_INSTANCE_CREATE_INFO_KHR };
-			vulkanCreateInfo.systemId = m_systemId;
+			vulkanCreateInfo.systemId = systemId;
 			vulkanCreateInfo.pfnGetInstanceProcAddr = &vkGetInstanceProcAddr;
 			vulkanCreateInfo.vulkanCreateInfo = &instInfo;
 			vulkanCreateInfo.vulkanAllocator = nullptr;
 
-			PFN_xrGetVulkanInstanceExtensionsKHR pfnGetVulkanInstanceExtensionsKHR = nullptr;
-			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanInstanceExtensionsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanInstanceExtensionsKHR)));
+			PFN_xrGetVulkanInstanceExtensionsKHR xrGetVulkanInstanceExtensionsKHR = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanInstanceExtensionsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanInstanceExtensionsKHR)));
 
 			uint32_t extensionNamesSize = 0;
-			CHECK_XRCMD(pfnGetVulkanInstanceExtensionsKHR(instance, vulkanCreateInfo.systemId, 0, &extensionNamesSize, nullptr));
+			CHECK_XRCMD(xrGetVulkanInstanceExtensionsKHR(instance, vulkanCreateInfo.systemId, 0, &extensionNamesSize, nullptr));
 
 			std::vector<char> extensionNames(extensionNamesSize);
-			CHECK_XRCMD(pfnGetVulkanInstanceExtensionsKHR(instance, vulkanCreateInfo.systemId, extensionNamesSize, &extensionNamesSize, &extensionNames[0]));
+			CHECK_XRCMD(xrGetVulkanInstanceExtensionsKHR(instance, vulkanCreateInfo.systemId, extensionNamesSize, &extensionNamesSize, &extensionNames[0]));
 			{
 				std::vector<const char*> extensions = ParseExtensionString(&extensionNames[0]);
 
@@ -566,54 +552,54 @@ void android_main(struct android_app* app)
 					extensions.push_back(vulkanCreateInfo.vulkanCreateInfo->ppEnabledExtensionNames[i]);
 				}
 
-				VkInstanceCreateInfo instInfo{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+				VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 				memcpy(&instInfo, vulkanCreateInfo.vulkanCreateInfo, sizeof(instInfo));
 				instInfo.enabledExtensionCount = (uint32_t) extensions.size();
 				instInfo.ppEnabledExtensionNames = extensions.empty() ? nullptr : extensions.data();
 
 				auto vkCreateInstance = (PFN_vkCreateInstance)vulkanCreateInfo.pfnGetInstanceProcAddr(nullptr, "vkCreateInstance");
-				CHECK_VKCMD(vkCreateInstance(&instInfo, vulkanCreateInfo.vulkanAllocator, &m_vkInstance));
+				CHECK_VKCMD(vkCreateInstance(&instInfo, vulkanCreateInfo.vulkanAllocator, &vulkanInstance));
 			}
 
-			vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(m_vkInstance, "vkCreateDebugReportCallbackEXT");
-			vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(m_vkInstance, "vkDestroyDebugReportCallbackEXT");
-			VkDebugReportCallbackCreateInfoEXT debugInfo {VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT };
+			vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugReportCallbackEXT");
+			vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugReportCallbackEXT");
+			VkDebugReportCallbackCreateInfoEXT debugInfo { VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT };
 			debugInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 #if !defined(NDEBUG)
 			debugInfo.flags |= VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT;
 #endif
 			debugInfo.pfnCallback = &DebugReport;
-			CHECK_VKCMD(vkCreateDebugReportCallbackEXT(m_vkInstance, &debugInfo, nullptr, &m_vkDebugReporter));
+			CHECK_VKCMD(vkCreateDebugReportCallbackEXT(vulkanInstance, &debugInfo, nullptr, &vulkanDebugReporter));
 
-			XrVulkanGraphicsDeviceGetInfoKHR deviceGetInfo{XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR};
-			deviceGetInfo.systemId = m_systemId;
-			deviceGetInfo.vulkanInstance = m_vkInstance;
+			XrVulkanGraphicsDeviceGetInfoKHR deviceGetInfo { XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR };
+			deviceGetInfo.systemId = systemId;
+			deviceGetInfo.vulkanInstance = vulkanInstance;
 
-			PFN_xrGetVulkanGraphicsDeviceKHR pfnGetVulkanGraphicsDeviceKHR = nullptr;
-			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsDeviceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetVulkanGraphicsDeviceKHR)));
+			PFN_xrGetVulkanGraphicsDeviceKHR xrGetVulkanGraphicsDeviceKHR = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsDeviceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsDeviceKHR)));
 
 			if (deviceGetInfo.next != nullptr)
 			{
 				CHECK_XRCMD(XR_ERROR_FEATURE_UNSUPPORTED);
 			}
 
-			CHECK_XRCMD(pfnGetVulkanGraphicsDeviceKHR(instance, deviceGetInfo.systemId, deviceGetInfo.vulkanInstance, &m_vkPhysicalDevice));
+			CHECK_XRCMD(xrGetVulkanGraphicsDeviceKHR(instance, deviceGetInfo.systemId, deviceGetInfo.vulkanInstance, &vulkanPhysicalDevice));
 
-			VkDeviceQueueCreateInfo queueInfo{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+			VkDeviceQueueCreateInfo queueInfo { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 			float queuePriorities = 0;
 			queueInfo.queueCount = 1;
 			queueInfo.pQueuePriorities = &queuePriorities;
 
 			uint32_t queueFamilyCount = 0;
-			vkGetPhysicalDeviceQueueFamilyProperties(m_vkPhysicalDevice, &queueFamilyCount, nullptr);
+			vkGetPhysicalDeviceQueueFamilyProperties(vulkanPhysicalDevice, &queueFamilyCount, nullptr);
 			std::vector<VkQueueFamilyProperties> queueFamilyProps(queueFamilyCount);
-			vkGetPhysicalDeviceQueueFamilyProperties(m_vkPhysicalDevice, &queueFamilyCount, &queueFamilyProps[0]);
+			vkGetPhysicalDeviceQueueFamilyProperties(vulkanPhysicalDevice, &queueFamilyCount, &queueFamilyProps[0]);
 
 			for (uint32_t i = 0; i < queueFamilyCount; ++i)
 			{
 				if ((queueFamilyProps[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0u)
 				{
-					m_queueFamilyIndex = queueInfo.queueFamilyIndex = i;
+					queueFamilyIndex = queueInfo.queueFamilyIndex = i;
 					break;
 				}
 			}
@@ -623,7 +609,7 @@ void android_main(struct android_app* app)
 			VkPhysicalDeviceFeatures features { };
 			features.samplerAnisotropy = VK_TRUE;
 
-			VkDeviceCreateInfo deviceInfo {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+			VkDeviceCreateInfo deviceInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 			deviceInfo.queueCreateInfoCount = 1;
 			deviceInfo.pQueueCreateInfos = &queueInfo;
 			deviceInfo.enabledLayerCount = 0;
@@ -632,11 +618,11 @@ void android_main(struct android_app* app)
 			deviceInfo.ppEnabledExtensionNames = deviceExtensions.empty() ? nullptr : deviceExtensions.data();
 			deviceInfo.pEnabledFeatures = &features;
 
-			XrVulkanDeviceCreateInfoKHR deviceCreateInfo {XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR };
-			deviceCreateInfo.systemId = m_systemId;
+			XrVulkanDeviceCreateInfoKHR deviceCreateInfo { XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR };
+			deviceCreateInfo.systemId = systemId;
 			deviceCreateInfo.pfnGetInstanceProcAddr = &vkGetInstanceProcAddr;
 			deviceCreateInfo.vulkanCreateInfo = &deviceInfo;
-			deviceCreateInfo.vulkanPhysicalDevice = m_vkPhysicalDevice;
+			deviceCreateInfo.vulkanPhysicalDevice = vulkanPhysicalDevice;
 			deviceCreateInfo.vulkanAllocator = nullptr;
 
 			PFN_xrGetVulkanDeviceExtensionsKHR xrGetVulkanDeviceExtensionsKHR = nullptr;
@@ -655,11 +641,11 @@ void android_main(struct android_app* app)
 			}
 
 			bool supportsMultiview = false;
-			auto vkEnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)vkGetInstanceProcAddr(m_vkInstance, "vkEnumerateDeviceExtensionProperties");
+			auto vkEnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)vkGetInstanceProcAddr(vulkanInstance, "vkEnumerateDeviceExtensionProperties");
 			uint32_t availableExtensionCount = 0;
-			vkEnumerateDeviceExtensionProperties(m_vkPhysicalDevice, nullptr, &availableExtensionCount, nullptr);
+			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, nullptr);
 			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
-			vkEnumerateDeviceExtensionProperties(m_vkPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
+			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
 			for (int extensionIdx = 0; extensionIdx < availableExtensionCount; extensionIdx++)
 			{
 				if (strcmp(availableExtensions[extensionIdx].extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME) == 0)
@@ -677,10 +663,10 @@ void android_main(struct android_app* app)
 					physicalDeviceFeatures.pNext = &deviceMultiviewFeatures;
 					deviceMultiviewProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
 					physicalDeviceProperties.pNext = &deviceMultiviewProperties;
-					auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(m_vkInstance, "vkGetPhysicalDeviceFeatures2KHR");
-					vkGetPhysicalDeviceFeatures2KHR(m_vkPhysicalDevice, &physicalDeviceFeatures);
-					auto vkGetPhysicalDeviceProperties2KHR = (PFN_vkGetPhysicalDeviceProperties2KHR) vkGetInstanceProcAddr(m_vkInstance, "vkGetPhysicalDeviceProperties2KHR");
-					vkGetPhysicalDeviceProperties2KHR(m_vkPhysicalDevice, &physicalDeviceProperties);
+					auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceFeatures2KHR");
+					vkGetPhysicalDeviceFeatures2KHR(vulkanPhysicalDevice, &physicalDeviceFeatures);
+					auto vkGetPhysicalDeviceProperties2KHR = (PFN_vkGetPhysicalDeviceProperties2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceProperties2KHR");
+					vkGetPhysicalDeviceProperties2KHR(vulkanPhysicalDevice, &physicalDeviceProperties);
 					supportsMultiview = (bool)deviceMultiviewFeatures.multiview;
 					if (supportsMultiview)
 					{
@@ -704,15 +690,15 @@ void android_main(struct android_app* app)
 			deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
 			deviceInfo.ppEnabledExtensionNames = (enabledExtensions.empty() ? nullptr : enabledExtensions.data());
 
-			auto vkCreateDevice = (PFN_vkCreateDevice)deviceCreateInfo.pfnGetInstanceProcAddr(m_vkInstance, "vkCreateDevice");
-			CHECK_VKCMD(vkCreateDevice(m_vkPhysicalDevice, &deviceInfo, deviceCreateInfo.vulkanAllocator, &appState.Device));
+			auto vkCreateDevice = (PFN_vkCreateDevice)deviceCreateInfo.pfnGetInstanceProcAddr(vulkanInstance, "vkCreateDevice");
+			CHECK_VKCMD(vkCreateDevice(vulkanPhysicalDevice, &deviceInfo, deviceCreateInfo.vulkanAllocator, &appState.Device));
 
 			vkGetDeviceQueue(appState.Device, queueInfo.queueFamilyIndex, 0, &appState.Queue);
 
-			vkGetPhysicalDeviceMemoryProperties(m_vkPhysicalDevice, &appState.MemoryProperties);
+			vkGetPhysicalDeviceMemoryProperties(vulkanPhysicalDevice, &appState.MemoryProperties);
 
-			graphicsBinding.instance = m_vkInstance;
-			graphicsBinding.physicalDevice = m_vkPhysicalDevice;
+			graphicsBinding.instance = vulkanInstance;
+			graphicsBinding.physicalDevice = vulkanPhysicalDevice;
 			graphicsBinding.device = appState.Device;
 			graphicsBinding.queueFamilyIndex = queueInfo.queueFamilyIndex;
 			graphicsBinding.queueIndex = 0;
@@ -723,7 +709,7 @@ void android_main(struct android_app* app)
 		VkCommandPoolCreateInfo commandPoolCreateInfo { };
 		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		commandPoolCreateInfo.queueFamilyIndex = m_queueFamilyIndex;
+		commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
 		CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &appState.CommandPool));
 
 		VkFenceCreateInfo fenceCreateInfo { };
@@ -754,7 +740,7 @@ void android_main(struct android_app* app)
 
 		XrSessionCreateInfo sessionCreateInfo { XR_TYPE_SESSION_CREATE_INFO };
 		sessionCreateInfo.next = reinterpret_cast<const XrBaseInStructure*>(&graphicsBinding);
-		sessionCreateInfo.systemId = m_systemId;
+		sessionCreateInfo.systemId = systemId;
 		CHECK_XRCMD(xrCreateSession(instance, &sessionCreateInfo, &appState.Session));
 		CHECK(appState.Session != XR_NULL_HANDLE);
 
@@ -774,7 +760,7 @@ void android_main(struct android_app* app)
 		appState.HandScales.resize(2);
 		appState.ActiveHands.resize(2);
 		
-		XrActionSetCreateInfo actionSetInfo{XR_TYPE_ACTION_SET_CREATE_INFO};
+		XrActionSetCreateInfo actionSetInfo { XR_TYPE_ACTION_SET_CREATE_INFO };
 		strcpy(actionSetInfo.actionSetName, "gameplay");
 		strcpy(actionSetInfo.localizedActionSetName, "Gameplay");
 		actionSetInfo.priority = 0;
@@ -848,17 +834,29 @@ void android_main(struct android_app* app)
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MenuAction));
 
-		strcpy(actionInfo.actionName, "enter");
-		strcpy(actionInfo.localizedActionName, "Enter");
+		strcpy(actionInfo.actionName, "enter_trigger");
+		strcpy(actionInfo.localizedActionName, "Enter (with triggers)");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterAction));
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterTriggerAction));
 
-		strcpy(actionInfo.actionName, "escape");
-		strcpy(actionInfo.localizedActionName, "Escape");
+		strcpy(actionInfo.actionName, "enter_non_trigger");
+		strcpy(actionInfo.localizedActionName, "Enter (without triggers)");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EscapeAction));
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterNonTriggerAction));
+
+		strcpy(actionInfo.actionName, "escape_y");
+		strcpy(actionInfo.localizedActionName, "Escape (plus Y)");
+		actionInfo.countSubactionPaths = 0;
+		actionInfo.subactionPaths = nullptr;
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EscapeYAction));
+
+		strcpy(actionInfo.actionName, "escape_non_y");
+		strcpy(actionInfo.localizedActionName, "Escape (minus Y)");
+		actionInfo.countSubactionPaths = 0;
+		actionInfo.subactionPaths = nullptr;
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EscapeNonYAction));
 
 		actionInfo.actionType = XR_ACTION_TYPE_POSE_INPUT;
 		strcpy(actionInfo.actionName, "hand_pose");
@@ -931,14 +929,16 @@ void android_main(struct android_app* app)
 				{ appState.SwitchWeaponAction, leftThumbstickClick },
 				{ appState.SwitchWeaponAction, rightThumbstickClick },
 				{ appState.MenuAction, menuClick },
-				{ appState.EnterAction, leftTrigger },
-				{ appState.EnterAction, rightTrigger },
-				{ appState.EnterAction, aClick },
-				{ appState.EnterAction, xClick },
-				{ appState.EscapeAction, leftSqueeze },
-				{ appState.EscapeAction, rightSqueeze },
-				{ appState.EscapeAction, bClick },
-				{ appState.EscapeAction, yClick },
+				{ appState.EnterTriggerAction, leftTrigger },
+				{ appState.EnterTriggerAction, rightTrigger },
+				{ appState.EnterNonTriggerAction, aClick },
+				{ appState.EnterNonTriggerAction, xClick },
+				{ appState.EscapeYAction, leftSqueeze },
+				{ appState.EscapeYAction, rightSqueeze },
+				{ appState.EscapeYAction, bClick },
+				{ appState.EscapeNonYAction, leftSqueeze },
+				{ appState.EscapeNonYAction, rightSqueeze },
+				{ appState.EscapeNonYAction, bClick },
 				{ appState.QuitAction, bClick }
 			}
 		};
@@ -964,16 +964,17 @@ void android_main(struct android_app* app)
 
 		XrReferenceSpaceCreateInfo referenceSpaceCreateInfo { XR_TYPE_REFERENCE_SPACE_CREATE_INFO };
 		referenceSpaceCreateInfo.poseInReferenceSpace.orientation.w = 1;
+
+		XrSpace worldSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
+		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &worldSpace));
 
-		XrSpace m_worldSpace;
-		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &m_worldSpace));
-
+		XrSpace appSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
 		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &appSpace));
 
-		XrSystemProperties systemProperties{XR_TYPE_SYSTEM_PROPERTIES};
-		CHECK_XRCMD(xrGetSystemProperties(instance, m_systemId, &systemProperties));
+		XrSystemProperties systemProperties { XR_TYPE_SYSTEM_PROPERTIES };
+		CHECK_XRCMD(xrGetSystemProperties(instance, systemId, &systemProperties));
 
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Properties: Name=%s VendorId=%d", systemProperties.systemName, systemProperties.vendorId);
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
@@ -982,11 +983,12 @@ void android_main(struct android_app* app)
 		CHECK_MSG(m_viewConfigType == XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, "Unsupported view configuration type");
 
 		uint32_t viewCount;
-		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, m_systemId, m_viewConfigType, 0, &viewCount, nullptr));
-		m_configViews.resize(viewCount, { XR_TYPE_VIEW_CONFIGURATION_VIEW });
-		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, m_systemId, m_viewConfigType, viewCount, &viewCount, m_configViews.data()));
+		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, m_viewConfigType, 0, &viewCount, nullptr));
+		std::vector<XrViewConfigurationView> configViews;
+		configViews.resize(viewCount, { XR_TYPE_VIEW_CONFIGURATION_VIEW });
+		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, m_viewConfigType, viewCount, &viewCount, configViews.data()));
 
-		for (auto configView : m_configViews)
+		for (auto configView : configViews)
 		{
 			appState.EyeTextureWidth = configView.recommendedImageRectWidth;
 			appState.EyeTextureHeight = configView.recommendedImageRectHeight;
@@ -1033,20 +1035,20 @@ void android_main(struct android_app* app)
 		}
 		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Swapchain Formats: %s", swapchainFormatsString.c_str());
 
-		uint32_t swapchainWidth = m_configViews[0].recommendedImageRectWidth;
-		uint32_t swapchainHeight = m_configViews[0].recommendedImageRectHeight;
-		uint32_t swapchainSampleCount = m_configViews[0].recommendedSwapchainSampleCount;
+		appState.SwapchainWidth = configViews[0].recommendedImageRectWidth;
+		appState.SwapchainHeight = configViews[0].recommendedImageRectHeight;
+		appState.SwapchainSampleCount = configViews[0].recommendedSwapchainSampleCount;
 		
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d SampleCount=%d", swapchainWidth, swapchainHeight, swapchainSampleCount);
+		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d SampleCount=%d", appState.SwapchainWidth, appState.SwapchainHeight, appState.SwapchainSampleCount);
 
 		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 		swapchainCreateInfo.arraySize = viewCount;
 		swapchainCreateInfo.format = COLOR_FORMAT;
-		swapchainCreateInfo.width = swapchainWidth;
-		swapchainCreateInfo.height = swapchainHeight;
+		swapchainCreateInfo.width = appState.SwapchainWidth;
+		swapchainCreateInfo.height = appState.SwapchainHeight;
 		swapchainCreateInfo.mipCount = 1;
 		swapchainCreateInfo.faceCount = 1;
-		swapchainCreateInfo.sampleCount = swapchainSampleCount;
+		swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
 		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 		XrSwapchain swapchain = VK_NULL_HANDLE;
 		CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &swapchain));
@@ -1059,9 +1061,9 @@ void android_main(struct android_app* app)
 		VkSubpassDescription subpass { };
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
-		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference depthRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference resolveRef = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference colorRef { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference depthRef { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference resolveRef { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
 		VkAttachmentDescription attachments[3];
 
@@ -1104,7 +1106,7 @@ void android_main(struct android_app* app)
 		subpass.pDepthStencilAttachment = &depthRef;
 
 		attachments[2].format = COLOR_FORMAT;
-		attachments[2].samples = (VkSampleCountFlagBits)swapchainSampleCount;
+		attachments[2].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 		attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -1135,14 +1137,19 @@ void android_main(struct android_app* app)
 			CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreateInfo, nullptr, &perImage.fence));
 		}
 
+		XrEventDataBuffer eventDataBuffer { };
+
+		auto sessionState = XR_SESSION_STATE_UNKNOWN;
+		auto sessionRunning = false;
+
 		while (app->destroyRequested == 0)
 		{
 			for (;;)
 			{
 				int events;
 				struct android_poll_source* source;
-				const int timeoutMilliseconds =
-						(!appState.Resumed && !m_sessionRunning && app->destroyRequested == 0) ? -1 : 0;
+				const int timeoutMilliseconds = ((!appState.Resumed && !sessionRunning && app->destroyRequested == 0) ? -1 : 0);
+
 				if (ALooper_pollAll(timeoutMilliseconds, nullptr, &events, (void**) &source) < 0)
 				{
 					break;
@@ -1157,7 +1164,7 @@ void android_main(struct android_app* app)
 			auto exitRenderLoop = false;
 			auto requestRestart = false;
 
-			while (const XrEventDataBaseHeader* event = TryReadNextEvent(m_eventDataBuffer, instance))
+			while (const XrEventDataBaseHeader* event = TryReadNextEvent(eventDataBuffer, instance))
 			{
 				switch (event->type)
 				{
@@ -1172,10 +1179,10 @@ void android_main(struct android_app* app)
 					case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
 					{
 						auto sessionStateChangedEvent = *reinterpret_cast<const XrEventDataSessionStateChanged*>(event);
-						const XrSessionState oldState = m_sessionState;
-						m_sessionState = sessionStateChangedEvent.state;
+						const XrSessionState oldState = sessionState;
+						sessionState = sessionStateChangedEvent.state;
 
-						__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "XrEventDataSessionStateChanged: state %s->%s session=%lld time=%lld", to_string(oldState), to_string(m_sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
+						__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "XrEventDataSessionStateChanged: state %s->%s session=%lld time=%lld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
 
 						if ((sessionStateChangedEvent.session != XR_NULL_HANDLE) && (sessionStateChangedEvent.session != appState.Session))
 						{
@@ -1183,21 +1190,21 @@ void android_main(struct android_app* app)
 							return;
 						}
 
-						switch (m_sessionState)
+						switch (sessionState)
 						{
 							case XR_SESSION_STATE_READY:
 							{
 								CHECK(appState.Session != XR_NULL_HANDLE);
-								XrSessionBeginInfo sessionBeginInfo{XR_TYPE_SESSION_BEGIN_INFO};
+								XrSessionBeginInfo sessionBeginInfo { XR_TYPE_SESSION_BEGIN_INFO };
 								sessionBeginInfo.primaryViewConfigurationType = m_viewConfigType;
 								CHECK_XRCMD(xrBeginSession(appState.Session, &sessionBeginInfo));
-								m_sessionRunning = true;
+								sessionRunning = true;
 								break;
 							}
 							case XR_SESSION_STATE_STOPPING:
 							{
 								CHECK(appState.Session != XR_NULL_HANDLE);
-								m_sessionRunning = false;
+								sessionRunning = false;
 								ANativeActivity_finish(app->activity);
 								CHECK_XRCMD(xrEndSession(appState.Session))
 								break;
@@ -1230,6 +1237,10 @@ void android_main(struct android_app* app)
 						SwitchBoundInput(appState, appState.MoveYAction, "Move Y");
 						SwitchBoundInput(appState, appState.SwitchWeaponAction, "Switch weapon");
 						SwitchBoundInput(appState, appState.MenuAction, "Menu");
+						SwitchBoundInput(appState, appState.EnterTriggerAction, "Enter (with triggers)");
+						SwitchBoundInput(appState, appState.EnterNonTriggerAction, "Enter (without triggers)");
+						SwitchBoundInput(appState, appState.EscapeYAction, "Escape (plus Y)");
+						SwitchBoundInput(appState, appState.EscapeNonYAction, "Escape (minus Y)");
 						SwitchBoundInput(appState, appState.QuitAction, "Quit");
 						SwitchBoundInput(appState, appState.PoseAction, "Pose");
 						break;
@@ -1240,12 +1251,12 @@ void android_main(struct android_app* app)
 				}
 			}
 
-			if (!m_sessionRunning)
+			if (!sessionRunning)
 			{
 				continue;
 			}
 
-			bool triggerHandled;
+			auto triggerHandled = false;
 			Input::Handle(appState, triggerHandled);
 
 			if (!appState.Scene.created)
@@ -1424,7 +1435,7 @@ void android_main(struct android_app* app)
 				if ((viewState.viewStateFlags & (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT)) == (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT))
 				{
 					CHECK(viewCountOutput == viewCapacityInput);
-					CHECK(viewCountOutput == m_configViews.size());
+					CHECK(viewCountOutput == configViews.size());
 
 					{
 						std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
@@ -1525,7 +1536,7 @@ void android_main(struct android_app* app)
 						}
 
 						XrSpaceLocation spaceLocation { XR_TYPE_SPACE_LOCATION };
-						res = xrLocateSpace(m_worldSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
+						res = xrLocateSpace(worldSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
 						
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
@@ -1551,7 +1562,7 @@ void android_main(struct android_app* app)
 					uint32_t swapchainImageIndex;
 					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, &acquireInfo, &swapchainImageIndex));
 
-					XrSwapchainImageWaitInfo waitInfo{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
+					XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
 					waitInfo.timeout = XR_INFINITE_DURATION;
 					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
 
@@ -1561,8 +1572,8 @@ void android_main(struct android_app* app)
 						projectionLayerViews[i].pose = m_views[i].pose;
 						projectionLayerViews[i].fov = m_views[i].fov;
 						projectionLayerViews[i].subImage.swapchain = swapchain;
-						projectionLayerViews[i].subImage.imageRect.extent.width = swapchainWidth;
-						projectionLayerViews[i].subImage.imageRect.extent.height = swapchainHeight;
+						projectionLayerViews[i].subImage.imageRect.extent.width = appState.SwapchainWidth;
+						projectionLayerViews[i].subImage.imageRect.extent.height = appState.SwapchainHeight;
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
 					}
 
@@ -1629,8 +1640,8 @@ void android_main(struct android_app* app)
 					{
 						VkImageCreateInfo imageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 						imageInfo.imageType = VK_IMAGE_TYPE_2D;
-						imageInfo.extent.width = swapchainWidth;
-						imageInfo.extent.height = swapchainHeight;
+						imageInfo.extent.width = appState.SwapchainWidth;
+						imageInfo.extent.height = appState.SwapchainHeight;
 						imageInfo.extent.depth = 1;
 						imageInfo.mipLevels = 1;
 						imageInfo.arrayLayers = 2;
@@ -1695,8 +1706,8 @@ void android_main(struct android_app* app)
 						framebufferInfo.renderPass = appState.RenderPass;
 						framebufferInfo.attachmentCount = 3;
 						framebufferInfo.pAttachments = attachments;
-						framebufferInfo.width = swapchainWidth;
-						framebufferInfo.height = swapchainHeight;
+						framebufferInfo.width = appState.SwapchainWidth;
+						framebufferInfo.height = appState.SwapchainHeight;
 						framebufferInfo.layers = 1;
 						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &framebufferInfo, nullptr, &perImage.framebuffer));
 
@@ -1727,19 +1738,19 @@ void android_main(struct android_app* app)
 					renderPassBeginInfo.renderPass = appState.RenderPass;
 					renderPassBeginInfo.framebuffer = perImage.framebuffer;
 					renderPassBeginInfo.renderArea.offset = {0, 0};
-					renderPassBeginInfo.renderArea.extent.width = swapchainWidth;
-					renderPassBeginInfo.renderArea.extent.height = swapchainHeight;
+					renderPassBeginInfo.renderArea.extent.width = appState.SwapchainWidth;
+					renderPassBeginInfo.renderArea.extent.height = appState.SwapchainHeight;
 					vkCmdBeginRenderPass(perImage.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 					VkRect2D screenRect { };
-					screenRect.extent.width = swapchainWidth;
-					screenRect.extent.height = swapchainHeight;
+					screenRect.extent.width = appState.SwapchainWidth;
+					screenRect.extent.height = appState.SwapchainHeight;
 					
 					VkViewport viewport;
-					viewport.x = (float) screenRect.offset.x;
-					viewport.y = (float) screenRect.offset.y;
-					viewport.width = (float) screenRect.extent.width;
-					viewport.height = (float) screenRect.extent.height;
+					viewport.x = (float)screenRect.offset.x;
+					viewport.y = (float)screenRect.offset.y;
+					viewport.width = (float)screenRect.extent.width;
+					viewport.height = (float)screenRect.extent.height;
 					viewport.minDepth = 0.0f;
 					viewport.maxDepth = 1.0f;
 					vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport);
@@ -1760,7 +1771,7 @@ void android_main(struct android_app* app)
 					//elapsed += (endTime - startTime);
 					//__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "AppState::RenderScene(): %.6f s.", elapsed);
 
-					XrSwapchainImageReleaseInfo releaseInfo {XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
+					XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 					CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
 
 					projectionLayer.space = appSpace;
@@ -1773,7 +1784,7 @@ void android_main(struct android_app* app)
 
 			XrFrameEndInfo frameEndInfo { XR_TYPE_FRAME_END_INFO };
 			frameEndInfo.displayTime = frameState.predictedDisplayTime;
-			frameEndInfo.environmentBlendMode = m_environmentBlendMode;
+			frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 			frameEndInfo.layerCount = (uint32_t)layers.size();
 			frameEndInfo.layers = layers.data();
 			
@@ -1927,9 +1938,9 @@ void android_main(struct android_app* app)
 			xrDestroySwapchain(swapchain);
 		}
 
-		if (m_worldSpace != XR_NULL_HANDLE)
+		if (worldSpace != XR_NULL_HANDLE)
 		{
-			xrDestroySpace(m_worldSpace);
+			xrDestroySpace(worldSpace);
 		}
 
 		if (appSpace != XR_NULL_HANDLE)

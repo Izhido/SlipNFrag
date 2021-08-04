@@ -800,7 +800,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 {
 	VkDeviceSize offset = 0;
-	size_t matricesSize = 2 * sizeof(XrMatrix4x4f);
+	const size_t matricesSize = 2 * sizeof(XrMatrix4x4f);
 	memcpy(stagingBuffer->mapped, appState.Scene.viewMatrices, matricesSize);
 	offset += matricesSize;
 	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.Scene.projectionMatrices, matricesSize);
