@@ -18,6 +18,10 @@ set_property(TARGET ovr_openxr_loader PROPERTY IMPORTED_LOCATION
 
 target_compile_options(slipnfrag_native PRIVATE -Wno-unused-parameter)
 
+target_compile_options(slipnfrag_native PUBLIC -fsanitize=address -fno-omit-frame-pointer)
+
+set_target_properties(slipnfrag_native PROPERTIES LINK_FLAGS -fsanitize=address)
+
 add_dependencies(slipnfrag_native generate_openxr_header)
 
 target_include_directories(slipnfrag_native PRIVATE
@@ -46,6 +50,12 @@ set_target_properties(vulkan_validation PROPERTIES IMPORTED_LOCATION
         ${ANDROID_NDK}/sources/third_party/vulkan/src/build-android/jniLibs/${ANDROID_ABI}/libVkLayer_khronos_validation.so
 )
 
+add_library(asan SHARED IMPORTED)
+set_property(TARGET asan PROPERTY IMPORTED_LOCATION
+        ${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/9.0.9/lib/linux/libclang_rt.asan-aarch64-android.so
+)
+
 target_link_libraries(slipnfrag_native debug 
         vulkan_validation
+        asan
 )

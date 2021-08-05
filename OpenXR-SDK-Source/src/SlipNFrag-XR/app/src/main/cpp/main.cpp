@@ -24,6 +24,7 @@
 #include "Input.h"
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
+#include "DirectRect.h"
 
 std::string GetXrVersionString(XrVersion ver)
 {
@@ -1049,14 +1050,12 @@ void android_main(struct android_app* app)
 		swapchainCreateInfo.mipCount = 1;
 		swapchainCreateInfo.faceCount = 1;
 		swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
-		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 		XrSwapchain swapchain = VK_NULL_HANDLE;
 		CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &swapchain));
 
 		uint32_t imageCount;
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr));
-
-		XrStructureType swapchainImageType { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
 
 		VkSubpassDescription subpass { };
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -1123,7 +1122,7 @@ void android_main(struct android_app* app)
 		std::vector<XrSwapchainImageBaseHeader*> swapchainImages(imageCount);
 		for (uint32_t i = 0; i < imageCount; ++i)
 		{
-			swapchainVulkanImages[i] = { swapchainImageType };
+			swapchainVulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
 			swapchainImages[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&swapchainVulkanImages[i]);
 		}
 
@@ -1779,6 +1778,218 @@ void android_main(struct android_app* app)
 					projectionLayer.views = projectionLayerViews.data();
 
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&projectionLayer));
+
+					CHECK_XRCMD(xrAcquireSwapchainImage(appState.ScreenSwapchain, &acquireInfo, &swapchainImageIndex));
+
+					CHECK_XRCMD(xrWaitSwapchainImage(appState.ScreenSwapchain, &waitInfo));
+
+					if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
+					{
+						if (appState.Mode == AppScreenMode)
+						{
+							std::lock_guard<std::mutex> lock(appState.RenderMutex);
+							auto consoleIndex = 0;
+							auto consoleIndexCache = 0;
+							auto screenIndex = 0;
+							auto targetIndex = 0;
+							auto y = 0;
+							while (y < vid_height)
+							{
+								auto x = 0;
+								while (x < vid_width)
+								{
+									auto entry = con_buffer[consoleIndex];
+									if (entry == 255)
+									{
+										do
+										{
+											appState.ScreenData[targetIndex] = d_8to24table[vid_buffer[screenIndex]];
+											screenIndex++;
+											targetIndex++;
+											x++;
+										} while ((x % 3) != 0);
+									}
+									else
+									{
+										auto converted = d_8to24table[entry];
+										do
+										{
+											appState.ScreenData[targetIndex] = converted;
+											screenIndex++;
+											targetIndex++;
+											x++;
+										} while ((x % 3) != 0);
+									}
+									consoleIndex++;
+								}
+								y++;
+								if ((y % 3) == 0)
+								{
+									consoleIndexCache = consoleIndex;
+								}
+								else
+								{
+									consoleIndex = consoleIndexCache;
+								}
+							}
+						}
+						else
+						{
+							std::lock_guard<std::mutex> lock(appState.RenderMutex);
+							auto consoleIndex = 0;
+							auto consoleIndexCache = 0;
+							auto targetIndex = 0;
+							auto y = 0;
+							auto limit = appState.ScreenHeight - (SBAR_HEIGHT + 24) * 3;
+							while (y < limit)
+							{
+								auto x = 0;
+								while (x < appState.ScreenWidth)
+								{
+									auto entry = con_buffer[consoleIndex];
+									if (entry == 255)
+									{
+										do
+										{
+											appState.ScreenData[targetIndex] = 0;
+											targetIndex++;
+											x++;
+										} while ((x % 3) != 0);
+									}
+									else
+									{
+										auto converted = d_8to24table[entry];
+										do
+										{
+											appState.ScreenData[targetIndex] = converted;
+											targetIndex++;
+											x++;
+										} while ((x % 3) != 0);
+									}
+									consoleIndex++;
+								}
+								y++;
+								if ((y % 3) == 0)
+								{
+									consoleIndexCache = consoleIndex;
+								}
+								else
+								{
+									consoleIndex = consoleIndexCache;
+								}
+							}
+							limit = appState.ScreenHeight - SBAR_HEIGHT - 24;
+							std::fill(appState.ScreenData.begin() + y * appState.ScreenWidth, appState.ScreenData.begin() + limit * appState.ScreenWidth, 0);
+							targetIndex += (limit - y) * appState.ScreenWidth;
+							y = limit;
+							limit = appState.ConsoleWidth;
+							while (y < appState.ScreenHeight)
+							{
+								auto x = 0;
+								while (x < limit)
+								{
+									appState.ScreenData[targetIndex] =  d_8to24table[con_buffer[consoleIndex]];
+									consoleIndex++;
+									targetIndex++;
+									x++;
+								}
+								while (x < appState.ScreenWidth)
+								{
+									appState.ScreenData[targetIndex] = 0;
+									targetIndex++;
+									x++;
+								}
+								y++;
+							}
+						}
+						{
+							std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+							for (auto& directRect : DirectRect::directRects)
+							{
+								auto width = directRect.width * 3;
+								auto height = directRect.height * 3;
+								auto directRectIndex = 0;
+								auto directRectIndexCache = 0;
+								auto targetIndex = directRect.y * 3 * appState.ScreenWidth + directRect.x * 3;
+								auto y = 0;
+								while (y < height)
+								{
+									auto x = 0;
+									while (x < width)
+									{
+										auto entry = d_8to24table[directRect.data[directRectIndex]];
+										do
+										{
+											appState.ScreenData[targetIndex] = entry;
+											targetIndex++;
+											x++;
+										} while ((x % 3) != 0);
+										directRectIndex++;
+									}
+									y++;
+									if ((y % 3) == 0)
+									{
+										directRectIndexCache = directRectIndex;
+									}
+									else
+									{
+										directRectIndex = directRectIndexCache;
+									}
+									targetIndex += appState.ScreenWidth - width;
+								}
+							}
+						}
+					}
+					else if (appState.Mode == AppNoGameDataMode)
+					{
+						static auto noGameDataLoaded = false;
+						if (!noGameDataLoaded)
+						{
+							memcpy(appState.ScreenData.data(), appState.NoGameDataData.data(), appState.NoGameDataData.size() * sizeof(uint32_t));
+							noGameDataLoaded = true;
+						}
+					}
+					
+					memcpy(appState.ScreenStagingBuffer.mapped, appState.ScreenData.data(), appState.ScreenStagingBuffer.size);
+
+					CHECK_VKCMD(vkResetCommandBuffer(appState.ScreenCommandBuffers[swapchainImageIndex], 0));
+					CHECK_VKCMD(vkBeginCommandBuffer(appState.ScreenCommandBuffers[swapchainImageIndex], &commandBufferBeginInfo));
+
+					VkImageMemoryBarrier imageMemoryBarrier { };
+					imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+					imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+					imageMemoryBarrier.image = appState.ScreenVulkanImages[swapchainImageIndex].image;
+					imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					imageMemoryBarrier.subresourceRange.levelCount = 1;
+					imageMemoryBarrier.subresourceRange.layerCount = 1;
+					vkCmdPipelineBarrier(appState.ScreenCommandBuffers[swapchainImageIndex], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+					VkBufferImageCopy region { };
+					region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+					region.imageSubresource.layerCount = 1;
+					region.imageExtent.width = appState.ScreenWidth;
+					region.imageExtent.height = appState.ScreenHeight;
+					region.imageExtent.depth = 1;
+					vkCmdCopyBufferToImage(appState.ScreenCommandBuffers[swapchainImageIndex], appState.ScreenStagingBuffer.buffer, appState.ScreenVulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+					CHECK_VKCMD(vkEndCommandBuffer(appState.ScreenCommandBuffers[swapchainImageIndex]));
+
+					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &appState.ScreenSubmitInfo[swapchainImageIndex], VK_NULL_HANDLE));
+
+					CHECK_XRCMD(xrReleaseSwapchainImage(appState.ScreenSwapchain, &releaseInfo));
+
+					cylinderLayer.radius = 1;
+					cylinderLayer.aspectRatio = (float) appState.ScreenWidth / appState.ScreenHeight;
+					cylinderLayer.centralAngle = 76.75 * M_PI / 180;
+					cylinderLayer.subImage.swapchain = appState.ScreenSwapchain;
+					cylinderLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
+					cylinderLayer.subImage.imageRect.extent.height = appState.ScreenHeight;
+					cylinderLayer.space = appSpace;
+					cylinderLayer.pose.orientation.w = 1;
+					cylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&cylinderLayer));
 				}
 			}
 
@@ -1924,6 +2135,16 @@ void android_main(struct android_app* app)
 			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceFragment, nullptr);
 			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceVertex, nullptr);
 			appState.Scene.matrices.Delete(appState);
+
+			appState.ScreenStagingBuffer.Delete(appState);
+
+			for (size_t i = 0; i < appState.ScreenImages.size(); i++)
+			{
+				if (appState.ScreenCommandBuffers[i] != VK_NULL_HANDLE)
+				{
+					vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &appState.ScreenCommandBuffers[i]);
+				}
+			}
 		}
 
 		if (appState.ActionSet != XR_NULL_HANDLE)
@@ -1931,6 +2152,11 @@ void android_main(struct android_app* app)
 			xrDestroySpace(appState.HandSpaces[0]);
 			xrDestroySpace(appState.HandSpaces[1]);
 			xrDestroyActionSet(appState.ActionSet);
+		}
+
+		if (appState.ScreenSwapchain != XR_NULL_HANDLE)
+		{
+			xrDestroySwapchain(appState.ScreenSwapchain);
 		}
 
 		if (swapchain != XR_NULL_HANDLE)

@@ -58,213 +58,43 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.ScreenHeight = 600;
 	appState.ConsoleWidth = 320;
 	appState.ConsoleHeight = 200;
-	/*appState.Console.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, COLOR_FORMAT, appState.ScreenWidth, appState.ScreenHeight, 1, 3);
-	appState.Console.View.colorSwapChain.SwapChain = appState.Console.SwapChain;
-	appState.Console.View.colorSwapChain.SwapChainLength = vrapi_GetTextureSwapChainLength(appState.Console.View.colorSwapChain.SwapChain);
-	appState.Console.View.colorSwapChain.ColorTextures.resize(appState.Console.View.colorSwapChain.SwapChainLength);
-	for (auto i = 0; i < appState.Console.View.colorSwapChain.SwapChainLength; i++)
+	XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
+	swapchainCreateInfo.arraySize = 1;
+	swapchainCreateInfo.format = COLOR_FORMAT;
+	swapchainCreateInfo.width = appState.ScreenWidth;
+	swapchainCreateInfo.height = appState.ScreenHeight;
+	swapchainCreateInfo.mipCount = 1;
+	swapchainCreateInfo.faceCount = 1;
+	swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
+	swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
+	CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.ScreenSwapchain));
+	uint32_t imageCount;
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.ScreenSwapchain, 0, &imageCount, nullptr));
+	appState.ScreenVulkanImages.resize(imageCount);
+	appState.ScreenImages.resize(imageCount);
+	appState.ScreenCommandBuffers.resize(imageCount);
+	appState.ScreenSubmitInfo.resize(imageCount);
+	for (auto i = 0; i < imageCount; i++)
 	{
-		appState.Console.View.colorSwapChain.ColorTextures[i] = vrapi_GetTextureSwapChainBufferVulkan(appState.Console.View.colorSwapChain.SwapChain, i);
+		appState.ScreenVulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
+		appState.ScreenImages[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.ScreenVulkanImages[i]);
+		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &appState.ScreenCommandBuffers[i]));
+		appState.ScreenSubmitInfo[i].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		appState.ScreenSubmitInfo[i].commandBufferCount = 1;
+		appState.ScreenSubmitInfo[i].pCommandBuffers = &appState.ScreenCommandBuffers[i];
 	}
-	uint32_t attachmentCount = 0;
-	VkAttachmentDescription attachments[2] { };
-	attachments[attachmentCount].format = COLOR_FORMAT;
-	attachments[attachmentCount].samples = VK_SAMPLE_COUNT_4_BIT;
-	attachments[attachmentCount].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[attachmentCount].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[attachmentCount].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[attachmentCount].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[attachmentCount].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	attachmentCount++;
-	attachments[attachmentCount].format = COLOR_FORMAT;
-	attachments[attachmentCount].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachments[attachmentCount].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[attachmentCount].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[attachmentCount].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[attachmentCount].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[attachmentCount].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	attachmentCount++;
-	VkAttachmentReference colorAttachmentReference;
-	colorAttachmentReference.attachment = 0;
-	colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	VkAttachmentReference resolveAttachmentReference;
-	resolveAttachmentReference.attachment = 1;
-	resolveAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	VkSubpassDescription subpassDescription { };
-	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpassDescription.colorAttachmentCount = 1;
-	subpassDescription.pColorAttachments = &colorAttachmentReference;
-	subpassDescription.pResolveAttachments = &resolveAttachmentReference;
-	VkRenderPassCreateInfo renderPassCreateInfo { };
-	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassCreateInfo.attachmentCount = attachmentCount;
-	renderPassCreateInfo.pAttachments = attachments;
-	renderPassCreateInfo.subpassCount = 1;
-	renderPassCreateInfo.pSubpasses = &subpassDescription;
-	CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassCreateInfo, nullptr, &appState.Console.RenderPass));
-	appState.Console.View.framebuffer.colorTextureSwapChain = appState.Console.View.colorSwapChain.SwapChain;
-	appState.Console.View.framebuffer.swapChainLength = appState.Console.View.colorSwapChain.SwapChainLength;
-	appState.Console.View.framebuffer.colorTextures.resize(appState.Console.View.framebuffer.swapChainLength);
-	appState.Console.View.framebuffer.startBarriers.resize(appState.Console.View.framebuffer.swapChainLength);
-	appState.Console.View.framebuffer.endBarriers.resize(appState.Console.View.framebuffer.swapChainLength);
-	appState.Console.View.framebuffer.framebuffers.resize(appState.Console.View.framebuffer.swapChainLength);
-	appState.Console.View.framebuffer.width = appState.ScreenWidth;
-	appState.Console.View.framebuffer.height = appState.ScreenHeight;*/
-	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
-	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
-	/*for (auto i = 0; i < appState.Console.View.framebuffer.swapChainLength; i++)
-	{
-		auto& texture = appState.Console.View.framebuffer.colorTextures[i];
-		texture.width = appState.ScreenWidth;
-		texture.height = appState.ScreenHeight;
-		texture.layerCount = 1;
-		texture.image = appState.Console.View.colorSwapChain.ColorTextures[i];
-		VkImageMemoryBarrier imageMemoryBarrier { };
-		imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageMemoryBarrier.image = appState.Console.View.colorSwapChain.ColorTextures[i];
-		imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageMemoryBarrier.subresourceRange.levelCount = 1;
-		imageMemoryBarrier.subresourceRange.layerCount = texture.layerCount;
-		vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-		VkImageViewCreateInfo imageViewCreateInfo { };
-		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		imageViewCreateInfo.image = texture.image;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = COLOR_FORMAT;
-		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageViewCreateInfo.subresourceRange.levelCount = 1;
-		imageViewCreateInfo.subresourceRange.layerCount = texture.layerCount;
-		CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &texture.view));
-		auto& startBarrier = appState.Console.View.framebuffer.startBarriers[i];
-		startBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		startBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		startBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		startBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		startBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		startBarrier.image = texture.image;
-		startBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		startBarrier.subresourceRange.levelCount = 1;
-		startBarrier.subresourceRange.layerCount = texture.layerCount;
-		auto& endBarrier = appState.Console.View.framebuffer.endBarriers[i];
-		endBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		endBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		endBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		endBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		endBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		endBarrier.image = texture.image;
-		endBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		endBarrier.subresourceRange.levelCount = 1;
-		endBarrier.subresourceRange.layerCount = texture.layerCount;
-	}
-	VkFormatProperties props;
-	VC(instance.vkGetPhysicalDeviceFormatProperties(appState.Device.physicalDevice, COLOR_FORMAT, &props));
-	if ((props.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT) == 0)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Scene::Create(): Color attachment bit in texture is not defined.");
-		vrapi_Shutdown();
-		exit(0);
-	}
-	auto& texture = appState.Console.View.framebuffer.renderTexture;
-	texture.width = appState.Console.View.framebuffer.width;
-	texture.height = appState.Console.View.framebuffer.height;
-	texture.layerCount = 1;
-	VkImageCreateInfo imageCreateInfo { };
-	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageCreateInfo.format = COLOR_FORMAT;
-	imageCreateInfo.extent.width = texture.width;
-	imageCreateInfo.extent.height = texture.height;
-	imageCreateInfo.extent.depth = 1;
-	imageCreateInfo.mipLevels = 1;
-	imageCreateInfo.arrayLayers = texture.layerCount;
-	imageCreateInfo.samples = VK_SAMPLE_COUNT_4_BIT;
-	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
-	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &texture.image));
-	VkMemoryRequirements memoryRequirements;
-	vkGetImageMemoryRequirements(appState.Device, texture.image, &memoryRequirements));
-	VkMemoryPropertyFlags memFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-	if (appState.Device.supportsLazyAllocate)
-	{
-		memFlags |= VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
-	}
-	VkMemoryAllocateInfo memoryAllocateInfo { };
-	createMemoryAllocateInfo(appState, memoryRequirements, memFlags, memoryAllocateInfo);
-	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &texture.memory));
-	CHECK_VKCMD(vkBindImageMemory(appState.Device, texture.image, texture.memory, 0));
-	VkImageViewCreateInfo imageViewCreateInfo { };
-	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	imageViewCreateInfo.image = texture.image;
-	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-	imageViewCreateInfo.format = COLOR_FORMAT;
-	imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageViewCreateInfo.subresourceRange.levelCount = 1;
-	imageViewCreateInfo.subresourceRange.layerCount = texture.layerCount;
-	CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &texture.view));
-	VkImageMemoryBarrier imageMemoryBarrier { };
-	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	imageMemoryBarrier.image = texture.image;
-	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageMemoryBarrier.subresourceRange.levelCount = 1;
-	imageMemoryBarrier.subresourceRange.layerCount = texture.layerCount;
-	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	for (auto i = 0; i < appState.Console.View.framebuffer.swapChainLength; i++)
-	{
-		uint32_t attachmentCount = 0;
-		VkImageView attachments[2];
-		attachments[attachmentCount++] = appState.Console.View.framebuffer.renderTexture.view;
-		attachments[attachmentCount++] = appState.Console.View.framebuffer.colorTextures[i].view;
-		VkFramebufferCreateInfo framebufferCreateInfo { };
-		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferCreateInfo.renderPass = appState.Console.RenderPass;
-		framebufferCreateInfo.attachmentCount = attachmentCount;
-		framebufferCreateInfo.pAttachments = attachments;
-		framebufferCreateInfo.width = appState.Console.View.framebuffer.width;
-		framebufferCreateInfo.height = appState.Console.View.framebuffer.height;
-		framebufferCreateInfo.layers = 1;
-		CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &framebufferCreateInfo, nullptr, &appState.Console.View.framebuffer.framebuffers[i]));
-	}
-	appState.Console.View.perImage.resize(appState.Console.View.framebuffer.swapChainLength);
-	for (auto& perImage : appState.Console.View.perImage)
-	{
-		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
-		CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreateInfo, nullptr, &perImage.fence));
-	}
-	appState.Screen.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, COLOR_FORMAT, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
-	appState.Screen.Data.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
-	appState.Screen.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.Screen.SwapChain, 0);
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.ScreenSwapchain, imageCount, &imageCount, appState.ScreenImages[0]));
+	appState.ScreenData.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
 	ImageAsset play;
 	play.Open("play.png", app);
-	CopyImage(appState, play.image, appState.Screen.Data.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);
+	CopyImage(appState, play.image, appState.ScreenData.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);
 	play.Close();
-	AddBorder(appState, appState.Screen.Data);
-	appState.Screen.Buffer.CreateStagingBuffer(appState, appState.Screen.Data.size() * sizeof(uint32_t));
-	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Screen.Buffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.Buffer.mapped));
-	memcpy(appState.Screen.Buffer.mapped, appState.Screen.Data.data(), appState.Screen.Buffer.size);
-	imageMemoryBarrier.srcAccessMask = 0;
-	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	imageMemoryBarrier.image = appState.Screen.Image;
-	imageMemoryBarrier.subresourceRange.layerCount = 1;
-	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	VkBufferImageCopy region { };
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.layerCount = 1;
-	region.imageExtent.width = appState.ScreenWidth;
-	region.imageExtent.height = appState.ScreenHeight;
-	region.imageExtent.depth = 1;
-	vkCmdCopyBufferToImage(setupCommandBuffer, appState.Screen.Buffer.buffer, appState.Screen.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
-	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &appState.Screen.CommandBuffer));
-	appState.Screen.SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	appState.Screen.SubmitInfo.commandBufferCount = 1;
-	appState.Screen.SubmitInfo.pCommandBuffers = &appState.Screen.CommandBuffer;
-	appState.Keyboard.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, COLOR_FORMAT, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
+	AddBorder(appState, appState.ScreenData);
+	appState.ScreenStagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
+	CHECK_VKCMD(vkMapMemory(appState.Device, appState.ScreenStagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.ScreenStagingBuffer.mapped));
+	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
+	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
+	/*appState.Keyboard.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, COLOR_FORMAT, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
 	appState.Keyboard.Data.resize(appState.ScreenWidth * appState.ScreenHeight, 0);
 	appState.Keyboard.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.Keyboard.SwapChain, 0);
 	appState.Keyboard.Buffer.CreateStagingBuffer(appState, appState.Keyboard.Data.size() * sizeof(uint32_t));
@@ -322,32 +152,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 	vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
 	stagingBuffer.Delete(appState);
-	auto consoleBottom = (float)(appState.ConsoleHeight - SBAR_HEIGHT - 24) / appState.ConsoleHeight;
-	auto statusBarTop = (float)(appState.ScreenHeight - SBAR_HEIGHT - 24) / appState.ScreenHeight;
-	appState.ConsoleVertices.assign(
-	{
-		-1, consoleBottom * 2 - 1, 0, 0, consoleBottom,
-		1, consoleBottom * 2 - 1, 0, 1, consoleBottom,
-		1, -1, 0, 1, 0,
-		-1, -1, 0, 0, 0,
-		-1, 1, 0, 0, 1,
-		-1.0 / 3.0, 1, 0, 1, 1,
-		-1.0 / 3.0, statusBarTop * 2 - 1, 0, 1, consoleBottom,
-		-1, statusBarTop * 2 - 1, 0, 0, consoleBottom,
-		-1, 1, 0, 0, 1,
-		1, 1, 0, 1, 1,
-		1, 0, 0, 1, 0,
-		-1, 0, 0, 0, 0
-	});
-	appState.ConsoleIndices.assign(
-	{
-		0, 1, 2,
-		2, 3, 0,
-		4, 5, 6,
-		6, 7, 4,
-		8, 9, 10,
-		10, 11, 8
-	});
 	appState.NoGameDataData.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
 	ImageAsset noGameData;
 	noGameData.Open("nogamedata.png", app);

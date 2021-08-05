@@ -2,8 +2,10 @@
 
 #include <android_native_app_glue.h>
 #include "AppMode.h"
+#include <EGL/egl.h>
 #include <vulkan/vulkan.h>
 #include <openxr/openxr.h>
+#include <openxr/openxr_platform.h>
 #include "Scene.h"
 #include "PerImage.h"
 #include <mutex>
@@ -27,6 +29,13 @@ struct AppState
 	uint32_t SwapchainWidth;
 	uint32_t SwapchainHeight;
 	uint32_t SwapchainSampleCount;
+	XrSwapchain ScreenSwapchain;
+	std::vector<XrSwapchainImageVulkan2KHR> ScreenVulkanImages;
+	std::vector<XrSwapchainImageBaseHeader*> ScreenImages;
+	std::vector<uint32_t> ScreenData;
+	Buffer ScreenStagingBuffer;
+	std::vector<VkCommandBuffer> ScreenCommandBuffers;
+	std::vector<VkSubmitInfo> ScreenSubmitInfo;
 	Scene Scene;
 	std::vector<PerImage> PerImage;
 	int EyeTextureWidth;
@@ -50,8 +59,6 @@ struct AppState
 	int ScreenHeight;
 	int ConsoleWidth;
 	int ConsoleHeight;
-	std::vector<float> ConsoleVertices;
-	std::vector<uint16_t> ConsoleIndices;
 	std::vector<uint32_t> NoGameDataData;
 	double PreviousTime;
 	double CurrentTime;
