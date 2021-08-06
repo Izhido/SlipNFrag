@@ -10,6 +10,7 @@
 #include "PerImage.h"
 #include <mutex>
 #include <thread>
+#include "Controller.h"
 
 struct AppState
 {
@@ -62,6 +63,8 @@ struct AppState
 	std::vector<uint32_t> NoGameDataData;
 	double PreviousTime;
 	double CurrentTime;
+	Controller LeftController;
+	Controller RightController;
 	XrVector2f PreviousThumbstick;
 	bool NearViewModel;
 	double TimeInWorldMode;

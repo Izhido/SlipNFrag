@@ -1306,17 +1306,17 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	VkDeviceSize texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
 	VkDeviceSize coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
 	appState.Scene.controllerVerticesSize = 0;
-	/*if (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode)
+	if (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode)
 	{
-		if (appState.LeftController.TrackingResult == ovrSuccess)
+		if (appState.LeftController.PoseIsValid)
 		{
 			appState.Scene.controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
 		}
-		if (appState.RightController.TrackingResult == ovrSuccess)
+		if (appState.RightController.PoseIsValid)
 		{
 			appState.Scene.controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
 		}
-	}*/
+	}
 	appState.Scene.verticesSize = floorVerticesSize + texturedVerticesSize + coloredVerticesSize + appState.Scene.controllerVerticesSize;
 	if (appState.Scene.verticesSize > 0)
 	{
@@ -1344,15 +1344,15 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 		controllerVertexBase = coloredVertexBase + coloredVerticesSize;
 		if (appState.Scene.controllerVerticesSize > 0)
 		{
-			/*auto mapped = (float*)vertices->mapped + controllerVertexBase / sizeof(float);
-			if (appState.LeftController.TrackingResult == ovrSuccess)
+			auto mapped = (float*)vertices->mapped + controllerVertexBase / sizeof(float);
+			if (appState.LeftController.PoseIsValid)
 			{
 				mapped = appState.LeftController.WriteVertices(mapped);
 			}
-			if (appState.RightController.TrackingResult == ovrSuccess)
+			if (appState.RightController.PoseIsValid)
 			{
 				mapped = appState.RightController.WriteVertices(mapped);
-			}*/
+			}
 		}
 		vertices->SubmitVertexBuffer(appState, commandBuffer);
 	}
@@ -1371,14 +1371,14 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	VkDeviceSize controllerAttributesSize = 0;
 	if (appState.Scene.controllerVerticesSize > 0)
 	{
-		/*if (appState.LeftController.TrackingResult == ovrSuccess)
+		if (appState.LeftController.PoseIsValid)
 		{
 			controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
 		}
-		if (appState.RightController.TrackingResult == ovrSuccess)
+		if (appState.RightController.PoseIsValid)
 		{
 			controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
-		}*/
+		}
 	}
 	VkDeviceSize attributesSize = floorAttributesSize + texturedAttributesSize + colormappedLightsSize + vertexTransformSize + controllerAttributesSize;
 	attributes = cachedAttributes.GetVertexBuffer(appState, attributesSize);
@@ -1419,14 +1419,14 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	controllerAttributeBase = vertexTransformBase + 16 * sizeof(float);
 	if (controllerAttributesSize > 0)
 	{
-		/*if (appState.LeftController.TrackingResult == ovrSuccess)
+		if (appState.LeftController.PoseIsValid)
 		{
 			mapped = appState.LeftController.WriteAttributes(mapped);
 		}
-		if (appState.RightController.TrackingResult == ovrSuccess)
+		if (appState.RightController.PoseIsValid)
 		{
 			mapped = appState.RightController.WriteAttributes(mapped);
-		}*/
+		}
 	}
 	attributes->SubmitVertexBuffer(appState, commandBuffer);
 	VkDeviceSize floorIndicesSize;
@@ -1442,14 +1442,14 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	VkDeviceSize controllerIndices16Size = 0;
 	if (appState.Scene.controllerVerticesSize > 0)
 	{
-		/*if (appState.LeftController.TrackingResult == ovrSuccess)
+		if (appState.LeftController.PoseIsValid)
 		{
 			controllerIndices16Size += 2 * 36 * sizeof(uint16_t);
 		}
-		if (appState.RightController.TrackingResult == ovrSuccess)
+		if (appState.RightController.PoseIsValid)
 		{
 			controllerIndices16Size += 2 * 36 * sizeof(uint16_t);
-		}*/
+		}
 	}
 	VkDeviceSize indices16Size = floorIndicesSize + coloredIndices16Size + controllerIndices16Size;
 	if (indices16Size > 0)
@@ -1470,21 +1470,21 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 		controllerIndex16Base = coloredIndex16Base + coloredIndices16Size;
 		if (controllerIndices16Size > 0)
 		{
-			/*auto mapped = (uint16_t*)indices16->mapped + controllerIndex16Base / sizeof(uint16_t);
+			auto mapped = (uint16_t*)indices16->mapped + controllerIndex16Base / sizeof(uint16_t);
 			auto offset = 0;
-			if (appState.LeftController.TrackingResult == ovrSuccess)
+			if (appState.LeftController.PoseIsValid)
 			{
 				mapped = appState.LeftController.WriteIndices(mapped, offset);
 				offset += 8;
 				mapped = appState.LeftController.WriteIndices(mapped, offset);
 				offset += 8;
 			}
-			if (appState.RightController.TrackingResult == ovrSuccess)
+			if (appState.RightController.PoseIsValid)
 			{
 				mapped = appState.RightController.WriteIndices(mapped, offset);
 				offset += 8;
 				mapped = appState.RightController.WriteIndices(mapped, offset);
-			}*/
+			}
 		}
 		indices16->SubmitIndexBuffer(appState, commandBuffer);
 	}
@@ -2386,15 +2386,15 @@ void PerImage::Render(AppState& appState)
 		descriptorSets[1] = controllerResources.descriptorSet;
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 		vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllerIndex16Base, VK_INDEX_TYPE_UINT16);
-		/*VkDeviceSize size = 0;
-		if (appState.LeftController.TrackingResult == ovrSuccess)
+		VkDeviceSize size = 0;
+		if (appState.LeftController.PoseIsValid)
 		{
 			size += 2 * 36;
 		}
-		if (appState.RightController.TrackingResult == ovrSuccess)
+		if (appState.RightController.PoseIsValid)
 		{
 			size += 2 * 36;
 		}
-		vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);*/
+		vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
 	}
 }

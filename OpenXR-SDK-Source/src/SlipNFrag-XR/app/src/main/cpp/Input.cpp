@@ -77,6 +77,51 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 	{
 		if (host_initialized)
 		{
+			if (m_state == m_quit)
+			{
+				actionGetInfo.action = appState.EscapeNonYAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
+					{
+						AddKeyInput(K_ESCAPE, true);
+					}
+					else
+					{
+						AddKeyInput(K_ESCAPE, false);
+					}
+				}
+				actionGetInfo.action = appState.QuitAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
+					{
+						AddKeyInput('y', true);
+					}
+					else
+					{
+						AddKeyInput('y', false);
+					}
+				}
+			}
+			else
+			{
+				actionGetInfo.action = appState.EscapeYAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
+					{
+						AddKeyInput(K_ESCAPE, true);
+					}
+					else
+					{
+						AddKeyInput(K_ESCAPE, false);
+					}
+				}
+			}
 			actionGetInfo.action = appState.MenuAction;
 			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
 			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
@@ -172,72 +217,59 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 			{
 				AddKeyInput(K_ENTER, false);
 			}
-			if (m_state == m_quit)
-			{
-				actionGetInfo.action = appState.EscapeNonYAction;
-				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
-				{
-					if (booleanActionState.currentState)
-					{
-						AddKeyInput(K_ESCAPE, true);
-					}
-					else
-					{
-						AddKeyInput(K_ESCAPE, false);
-					}
-				}
-				actionGetInfo.action = appState.QuitAction;
-				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
-				{
-					if (booleanActionState.currentState)
-					{
-						AddKeyInput('y', true);
-					}
-					else
-					{
-						AddKeyInput('y', false);
-					}
-				}
-			}
-			else
-			{
-				actionGetInfo.action = appState.EscapeYAction;
-				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
-				{
-					if (booleanActionState.currentState)
-					{
-						AddKeyInput(K_ESCAPE, true);
-					}
-					else
-					{
-						AddKeyInput(K_ESCAPE, false);
-					}
-				}
-			}
 		}
 	}
 	else if (appState.Mode == AppWorldMode)
 	{
 		if (host_initialized)
 		{
-			actionGetInfo.action = appState.MenuAction;
-			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+			if (key_dest == key_game)
 			{
-				if (booleanActionState.currentState)
+				if (m_state == m_quit)
 				{
-					AddKeyInput(K_ESCAPE, true);
+					actionGetInfo.action = appState.QuitAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							AddKeyInput('y', true);
+						}
+						else
+						{
+							AddKeyInput('y', false);
+						}
+					}
 				}
 				else
 				{
-					AddKeyInput(K_ESCAPE, false);
+					actionGetInfo.action = appState.JumpAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							AddCommandInput("+jump");
+						}
+						else
+						{
+							AddCommandInput("-jump");
+						}
+					}
 				}
-			}
-			if (key_dest == key_game)
-			{
+				actionGetInfo.action = appState.MenuAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
+					{
+						AddKeyInput(K_ESCAPE, true);
+					}
+					else
+					{
+						AddKeyInput(K_ESCAPE, false);
+					}
+				}
 				if (joy_initialized)
 				{
 					joy_avail = true;
@@ -297,38 +329,6 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 				{
 					AddCommandInput("impulse 10");
 				}
-				if (m_state == m_quit)
-				{
-					actionGetInfo.action = appState.QuitAction;
-					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
-					{
-						if (booleanActionState.currentState)
-						{
-							AddKeyInput('y', true);
-						}
-						else
-						{
-							AddKeyInput('y', false);
-						}
-					}
-				}
-				else
-				{
-					actionGetInfo.action = appState.JumpAction;
-					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
-					{
-						if (booleanActionState.currentState)
-						{
-							AddCommandInput("+jump");
-						}
-						else
-						{
-							AddCommandInput("-jump");
-						}
-					}
-				}
 				actionGetInfo.action = appState.SwimDownAction;
 				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
 				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
@@ -345,6 +345,64 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 			}
 			else
 			{
+				if (m_state == m_quit)
+				{
+					actionGetInfo.action = appState.EscapeNonYAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							AddKeyInput(K_ESCAPE, true);
+						}
+						else
+						{
+							AddKeyInput(K_ESCAPE, false);
+						}
+					}
+					actionGetInfo.action = appState.QuitAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							AddKeyInput('y', true);
+						}
+						else
+						{
+							AddKeyInput('y', false);
+						}
+					}
+				}
+				else
+				{
+					actionGetInfo.action = appState.EscapeYAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							AddKeyInput(K_ESCAPE, true);
+						}
+						else
+						{
+							AddKeyInput(K_ESCAPE, false);
+						}
+					}
+				}
+				actionGetInfo.action = appState.MenuAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
+					{
+						AddKeyInput(K_ESCAPE, true);
+					}
+					else
+					{
+						AddKeyInput(K_ESCAPE, false);
+					}
+				}
 				auto thumbstick = appState.PreviousThumbstick;
 				actionGetInfo.action = appState.MoveXAction;
 				CHECK_XRCMD(xrGetActionStateFloat(appState.Session, &actionGetInfo, &floatActionState));
@@ -426,51 +484,6 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 				if (enterUp)
 				{
 					AddKeyInput(K_ENTER, false);
-				}
-				if (m_state == m_quit)
-				{
-					actionGetInfo.action = appState.EscapeNonYAction;
-					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
-					{
-						if (booleanActionState.currentState)
-						{
-							AddKeyInput(K_ESCAPE, true);
-						}
-						else
-						{
-							AddKeyInput(K_ESCAPE, false);
-						}
-					}
-					actionGetInfo.action = appState.QuitAction;
-					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
-					{
-						if (booleanActionState.currentState)
-						{
-							AddKeyInput('y', true);
-						}
-						else
-						{
-							AddKeyInput('y', false);
-						}
-					}
-				}
-				else
-				{
-					actionGetInfo.action = appState.EscapeYAction;
-					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
-					{
-						if (booleanActionState.currentState)
-						{
-							AddKeyInput(K_ESCAPE, true);
-						}
-						else
-						{
-							AddKeyInput(K_ESCAPE, false);
-						}
-					}
 				}
 			}
 		}

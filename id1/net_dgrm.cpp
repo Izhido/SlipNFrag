@@ -431,7 +431,7 @@ int	Datagram_GetMessage (qsocket_t *sock)
 			sock->sendMessageLength -= MAX_DATAGRAM;
 			if (sock->sendMessageLength > 0)
 			{
-				memcpy(sock->sendMessage.data(), sock->sendMessage.data()+MAX_DATAGRAM, sock->sendMessageLength);
+				memmove(sock->sendMessage.data(), sock->sendMessage.data()+MAX_DATAGRAM, sock->sendMessageLength);
 				sock->sendNext = true;
 			}
 			else

@@ -33,7 +33,7 @@ std::string GetXrVersionString(XrVersion ver)
 
 void SwitchBoundInput(AppState& appState, XrAction action, const char* name)
 {
-	XrBoundSourcesForActionEnumerateInfo getInfo = { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
+	XrBoundSourcesForActionEnumerateInfo getInfo { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
 	getInfo.action = action;
 	uint32_t pathCount = 0;
 	CHECK_XRCMD(xrEnumerateBoundSourcesForAction(appState.Session, &getInfo, 0, &pathCount, nullptr));
@@ -47,7 +47,7 @@ void SwitchBoundInput(AppState& appState, XrAction action, const char* name)
 														XR_INPUT_SOURCE_LOCALIZED_NAME_INTERACTION_PROFILE_BIT |
 														XR_INPUT_SOURCE_LOCALIZED_NAME_COMPONENT_BIT;
 
-		XrInputSourceLocalizedNameGetInfo nameInfo = { XR_TYPE_INPUT_SOURCE_LOCALIZED_NAME_GET_INFO };
+		XrInputSourceLocalizedNameGetInfo nameInfo { XR_TYPE_INPUT_SOURCE_LOCALIZED_NAME_GET_INFO };
 		nameInfo.sourcePath = paths[i];
 		nameInfo.whichComponents = all;
 
@@ -859,19 +859,19 @@ void android_main(struct android_app* app)
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EscapeNonYAction));
 
-		actionInfo.actionType = XR_ACTION_TYPE_POSE_INPUT;
-		strcpy(actionInfo.actionName, "hand_pose");
-		strcpy(actionInfo.localizedActionName, "Hand pose");
-		actionInfo.countSubactionPaths = (uint32_t)appState.SubactionPaths.size();
-		actionInfo.subactionPaths = appState.SubactionPaths.data();
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.PoseAction));
-
 		actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
 		strcpy(actionInfo.actionName, "quit");
 		strcpy(actionInfo.localizedActionName, "Quit");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.QuitAction));
+
+		actionInfo.actionType = XR_ACTION_TYPE_POSE_INPUT;
+		strcpy(actionInfo.actionName, "hand_pose");
+		strcpy(actionInfo.localizedActionName, "Hand pose");
+		actionInfo.countSubactionPaths = (uint32_t)appState.SubactionPaths.size();
+		actionInfo.subactionPaths = appState.SubactionPaths.data();
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.PoseAction));
 
 		XrPath aClick;
 		XrPath bClick;
@@ -937,10 +937,13 @@ void android_main(struct android_app* app)
 				{ appState.EscapeYAction, leftSqueeze },
 				{ appState.EscapeYAction, rightSqueeze },
 				{ appState.EscapeYAction, bClick },
+				{ appState.EscapeYAction, yClick },
 				{ appState.EscapeNonYAction, leftSqueeze },
 				{ appState.EscapeNonYAction, rightSqueeze },
 				{ appState.EscapeNonYAction, bClick },
-				{ appState.QuitAction, bClick }
+				{ appState.QuitAction, yClick },
+				{ appState.PoseAction, leftPose },
+				{ appState.PoseAction, rightPose }
 			}
 		};
 		
@@ -1241,7 +1244,7 @@ void android_main(struct android_app* app)
 						SwitchBoundInput(appState, appState.EscapeYAction, "Escape (plus Y)");
 						SwitchBoundInput(appState, appState.EscapeNonYAction, "Escape (minus Y)");
 						SwitchBoundInput(appState, appState.QuitAction, "Quit");
-						SwitchBoundInput(appState, appState.PoseAction, "Pose");
+						SwitchBoundInput(appState, appState.PoseAction, "Hand pose");
 						break;
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
 					default:
@@ -1257,6 +1260,19 @@ void android_main(struct android_app* app)
 
 			auto triggerHandled = false;
 			Input::Handle(appState, triggerHandled);
+
+			XrActionStatePose poseState { XR_TYPE_ACTION_STATE_POSE };
+
+			XrActionStateGetInfo getInfo { XR_TYPE_ACTION_STATE_GET_INFO };
+			getInfo.action = appState.PoseAction;
+
+			getInfo.subactionPath = appState.SubactionPaths[0];
+			CHECK_XRCMD(xrGetActionStatePose(appState.Session, &getInfo, &poseState));
+			appState.ActiveHands[0] = poseState.isActive;
+
+			getInfo.subactionPath = appState.SubactionPaths[1];
+			CHECK_XRCMD(xrGetActionStatePose(appState.Session, &getInfo, &poseState));
+			appState.ActiveHands[1] = poseState.isActive;
 
 			if (!appState.Scene.created)
 			{
@@ -1438,7 +1454,39 @@ void android_main(struct android_app* app)
 
 					{
 						std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
-						
+
+						appState.LeftController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
+						appState.LeftController.PoseIsValid = false;
+						res = xrLocateSpace(appState.HandSpaces[0], appSpace, frameState.predictedDisplayTime, &appState.LeftController.SpaceLocation);
+						CHECK_XRRESULT(res, "xrLocateSpace");
+						if (XR_UNQUALIFIED_SUCCESS(res)) 
+						{
+							if ((appState.LeftController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+							{
+								appState.LeftController.PoseIsValid = true;
+							}
+						} 
+						else if (appState.ActiveHands[0]) 
+						{
+							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate left hand action space in app space: %d", res);
+						}
+
+						appState.RightController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
+						appState.RightController.PoseIsValid = false;
+						res = xrLocateSpace(appState.HandSpaces[1], appSpace, frameState.predictedDisplayTime, &appState.RightController.SpaceLocation);
+						CHECK_XRRESULT(res, "xrLocateSpace");
+						if (XR_UNQUALIFIED_SUCCESS(res))
+						{
+							if ((appState.RightController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+							{
+								appState.RightController.PoseIsValid = true;
+							}
+						}
+						else if (appState.ActiveHands[1])
+						{
+							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate right hand action space in app space: %d", res);
+						}
+
 						for (size_t i = 0; i < viewCountOutput; i++)
 						{
 							XrMatrix4x4f_CreateProjectionFov(&appState.Scene.projectionMatrices[i], GRAPHICS_VULKAN, m_views[i].fov, 0.05f, 100.0f);
@@ -1777,6 +1825,11 @@ void android_main(struct android_app* app)
 					projectionLayer.viewCount = (uint32_t) projectionLayerViews.size();
 					projectionLayer.views = projectionLayerViews.data();
 
+					if (appState.Mode != AppWorldMode)
+					{
+						projectionLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+					}
+					
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&projectionLayer));
 
 					CHECK_XRCMD(xrAcquireSwapchainImage(appState.ScreenSwapchain, &acquireInfo, &swapchainImageIndex));
@@ -1807,7 +1860,7 @@ void android_main(struct android_app* app)
 											screenIndex++;
 											targetIndex++;
 											x++;
-										} while ((x % 3) != 0);
+										} while ((x % SCREEN_TO_CONSOLE_MULTIPLIER) != 0);
 									}
 									else
 									{
@@ -1818,12 +1871,12 @@ void android_main(struct android_app* app)
 											screenIndex++;
 											targetIndex++;
 											x++;
-										} while ((x % 3) != 0);
+										} while ((x % SCREEN_TO_CONSOLE_MULTIPLIER) != 0);
 									}
 									consoleIndex++;
 								}
 								y++;
-								if ((y % 3) == 0)
+								if ((y % SCREEN_TO_CONSOLE_MULTIPLIER) == 0)
 								{
 									consoleIndexCache = consoleIndex;
 								}
@@ -1840,7 +1893,7 @@ void android_main(struct android_app* app)
 							auto consoleIndexCache = 0;
 							auto targetIndex = 0;
 							auto y = 0;
-							auto limit = appState.ScreenHeight - (SBAR_HEIGHT + 24) * 3;
+							auto limit = appState.ScreenHeight - (SBAR_HEIGHT + 24) * SCREEN_TO_CONSOLE_MULTIPLIER;
 							while (y < limit)
 							{
 								auto x = 0;
@@ -1854,7 +1907,7 @@ void android_main(struct android_app* app)
 											appState.ScreenData[targetIndex] = 0;
 											targetIndex++;
 											x++;
-										} while ((x % 3) != 0);
+										} while ((x % SCREEN_TO_CONSOLE_MULTIPLIER) != 0);
 									}
 									else
 									{
@@ -1864,12 +1917,12 @@ void android_main(struct android_app* app)
 											appState.ScreenData[targetIndex] = converted;
 											targetIndex++;
 											x++;
-										} while ((x % 3) != 0);
+										} while ((x % SCREEN_TO_CONSOLE_MULTIPLIER) != 0);
 									}
 									consoleIndex++;
 								}
 								y++;
-								if ((y % 3) == 0)
+								if ((y % SCREEN_TO_CONSOLE_MULTIPLIER) == 0)
 								{
 									consoleIndexCache = consoleIndex;
 								}
@@ -1906,11 +1959,11 @@ void android_main(struct android_app* app)
 							std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
 							for (auto& directRect : DirectRect::directRects)
 							{
-								auto width = directRect.width * 3;
-								auto height = directRect.height * 3;
+								auto width = directRect.width * SCREEN_TO_CONSOLE_MULTIPLIER;
+								auto height = directRect.height * SCREEN_TO_CONSOLE_MULTIPLIER;
 								auto directRectIndex = 0;
 								auto directRectIndexCache = 0;
-								auto targetIndex = directRect.y * 3 * appState.ScreenWidth + directRect.x * 3;
+								auto targetIndex = (directRect.y * appState.ScreenWidth + directRect.x) * SCREEN_TO_CONSOLE_MULTIPLIER;
 								auto y = 0;
 								while (y < height)
 								{
@@ -1923,11 +1976,11 @@ void android_main(struct android_app* app)
 											appState.ScreenData[targetIndex] = entry;
 											targetIndex++;
 											x++;
-										} while ((x % 3) != 0);
+										} while ((x % SCREEN_TO_CONSOLE_MULTIPLIER) != 0);
 										directRectIndex++;
 									}
 									y++;
-									if ((y % 3) == 0)
+									if ((y % SCREEN_TO_CONSOLE_MULTIPLIER) == 0)
 									{
 										directRectIndexCache = directRectIndex;
 									}
@@ -1986,10 +2039,20 @@ void android_main(struct android_app* app)
 					cylinderLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
 					cylinderLayer.subImage.imageRect.extent.height = appState.ScreenHeight;
 					cylinderLayer.space = appSpace;
-					cylinderLayer.pose.orientation.w = 1;
-					cylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
 
-					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&cylinderLayer));
+					if (appState.Mode == AppWorldMode)
+					{
+						cylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+						cylinderLayer.pose.orientation = appState.Scene.orientation;
+
+						layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&cylinderLayer));
+					}
+					else
+					{
+						cylinderLayer.pose.orientation.w = 1;
+
+						layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&cylinderLayer));
+					}
 				}
 			}
 

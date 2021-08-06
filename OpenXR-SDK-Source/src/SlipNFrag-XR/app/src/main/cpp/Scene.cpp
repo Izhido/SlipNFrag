@@ -54,10 +54,10 @@ void Scene::AddBorder(AppState& appState, std::vector<uint32_t>& target)
 
 void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app)
 {
-	appState.ScreenWidth = 960;
-	appState.ScreenHeight = 600;
 	appState.ConsoleWidth = 320;
 	appState.ConsoleHeight = 200;
+	appState.ScreenWidth = appState.ConsoleWidth * SCREEN_TO_CONSOLE_MULTIPLIER;
+	appState.ScreenHeight = appState.ConsoleHeight * SCREEN_TO_CONSOLE_MULTIPLIER;
 	XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 	swapchainCreateInfo.arraySize = 1;
 	swapchainCreateInfo.format = COLOR_FORMAT;
