@@ -23,9 +23,9 @@ void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferU
 	{
 		alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
 	}
-	if (appState.Scene.latestBufferSharedMemory == nullptr || appState.Scene.usedInLatestBufferSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > MEMORY_BLOCK_SIZE)
+	if (appState.Scene.latestBufferSharedMemory == nullptr || appState.Scene.usedInLatestBufferSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > Constants::memoryBlockSize)
 	{
-		VkDeviceSize size = MEMORY_BLOCK_SIZE;
+		VkDeviceSize size = Constants::memoryBlockSize;
 		if (size < memoryAllocateInfo.allocationSize)
 		{
 			size = memoryAllocateInfo.allocationSize;

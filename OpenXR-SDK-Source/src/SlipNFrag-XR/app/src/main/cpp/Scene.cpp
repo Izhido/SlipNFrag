@@ -56,61 +56,76 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 {
 	appState.ConsoleWidth = 320;
 	appState.ConsoleHeight = 200;
-	appState.ScreenWidth = appState.ConsoleWidth * SCREEN_TO_CONSOLE_MULTIPLIER;
-	appState.ScreenHeight = appState.ConsoleHeight * SCREEN_TO_CONSOLE_MULTIPLIER;
+	appState.ScreenWidth = appState.ConsoleWidth * Constants::screenToConsoleMultiplier;
+	appState.ScreenHeight = appState.ConsoleHeight * Constants::screenToConsoleMultiplier;
+	
 	XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 	swapchainCreateInfo.arraySize = 1;
-	swapchainCreateInfo.format = COLOR_FORMAT;
-	swapchainCreateInfo.width = appState.ScreenWidth;
-	swapchainCreateInfo.height = appState.ScreenHeight;
+	swapchainCreateInfo.format = Constants::colorFormat;
 	swapchainCreateInfo.mipCount = 1;
 	swapchainCreateInfo.faceCount = 1;
 	swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
 	swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
-	CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.ScreenSwapchain));
+
+	swapchainCreateInfo.width = appState.ScreenWidth;
+	swapchainCreateInfo.height = appState.ScreenHeight;
+	CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.Screen.Swapchain));
 	uint32_t imageCount;
-	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.ScreenSwapchain, 0, &imageCount, nullptr));
-	appState.ScreenVulkanImages.resize(imageCount);
-	appState.ScreenImages.resize(imageCount);
-	appState.ScreenCommandBuffers.resize(imageCount);
-	appState.ScreenSubmitInfo.resize(imageCount);
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Screen.Swapchain, 0, &imageCount, nullptr));
+	appState.Screen.VulkanImages.resize(imageCount);
+	appState.Screen.Images.resize(imageCount);
+	appState.Screen.CommandBuffers.resize(imageCount);
+	appState.Screen.SubmitInfo.resize(imageCount);
 	for (auto i = 0; i < imageCount; i++)
 	{
-		appState.ScreenVulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
-		appState.ScreenImages[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.ScreenVulkanImages[i]);
-		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &appState.ScreenCommandBuffers[i]));
-		appState.ScreenSubmitInfo[i].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		appState.ScreenSubmitInfo[i].commandBufferCount = 1;
-		appState.ScreenSubmitInfo[i].pCommandBuffers = &appState.ScreenCommandBuffers[i];
+		appState.Screen.VulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
+		appState.Screen.Images[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.Screen.VulkanImages[i]);
+		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &appState.Screen.CommandBuffers[i]));
+		appState.Screen.SubmitInfo[i].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		appState.Screen.SubmitInfo[i].commandBufferCount = 1;
+		appState.Screen.SubmitInfo[i].pCommandBuffers = &appState.Screen.CommandBuffers[i];
 	}
-	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.ScreenSwapchain, imageCount, &imageCount, appState.ScreenImages[0]));
-	appState.ScreenData.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Screen.Swapchain, imageCount, &imageCount, appState.Screen.Images[0]));
+	appState.Screen.Data.resize(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
 	ImageAsset play;
 	play.Open("play.png", app);
-	CopyImage(appState, play.image, appState.ScreenData.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);
+	CopyImage(appState, play.image, appState.Screen.Data.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);
 	play.Close();
-	AddBorder(appState, appState.ScreenData);
-	appState.ScreenStagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
-	CHECK_VKCMD(vkMapMemory(appState.Device, appState.ScreenStagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.ScreenStagingBuffer.mapped));
+	AddBorder(appState, appState.Screen.Data);
+	appState.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.Screen.Data.size() * sizeof(uint32_t));
+	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Screen.StagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.StagingBuffer.mapped));
+
+	swapchainCreateInfo.width = appState.ScreenWidth;
+	swapchainCreateInfo.height = appState.ScreenHeight / 2;
+	CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.Keyboard.Screen.Swapchain));
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.Swapchain, 0, &imageCount, nullptr));
+	appState.Keyboard.Screen.VulkanImages.resize(imageCount);
+	appState.Keyboard.Screen.Images.resize(imageCount);
+	appState.Keyboard.Screen.CommandBuffers.resize(imageCount);
+	appState.Keyboard.Screen.SubmitInfo.resize(imageCount);
+	for (auto i = 0; i < imageCount; i++)
+	{
+		appState.Keyboard.Screen.VulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
+		appState.Keyboard.Screen.Images[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.Keyboard.Screen.VulkanImages[i]);
+		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &appState.Keyboard.Screen.CommandBuffers[i]));
+		appState.Keyboard.Screen.SubmitInfo[i].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		appState.Keyboard.Screen.SubmitInfo[i].commandBufferCount = 1;
+		appState.Keyboard.Screen.SubmitInfo[i].pCommandBuffers = &appState.Keyboard.Screen.CommandBuffers[i];
+	}
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.Swapchain, imageCount, &imageCount, appState.Keyboard.Screen.Images[0]));
+	appState.Keyboard.Screen.Data.resize(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
+	appState.Keyboard.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.Keyboard.Screen.Data.size() * sizeof(uint32_t));
+	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Keyboard.Screen.StagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Keyboard.Screen.StagingBuffer.mapped));
+
 	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
-	/*appState.Keyboard.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, COLOR_FORMAT, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
-	appState.Keyboard.Data.resize(appState.ScreenWidth * appState.ScreenHeight, 0);
-	appState.Keyboard.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.Keyboard.SwapChain, 0);
-	appState.Keyboard.Buffer.CreateStagingBuffer(appState, appState.Keyboard.Data.size() * sizeof(uint32_t));
-	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Keyboard.Buffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Keyboard.Buffer.mapped));
-	imageMemoryBarrier.image = appState.Keyboard.Image;
-	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &appState.Keyboard.CommandBuffer));
-	appState.Keyboard.SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	appState.Keyboard.SubmitInfo.commandBufferCount = 1;
-	appState.Keyboard.SubmitInfo.pCommandBuffers = &appState.Keyboard.CommandBuffer;*/
+
 	ImageAsset floorImage;
 	floorImage.Open("floor.png", app);
-	appState.Scene.floorTexture.Create(appState, floorImage.width, floorImage.height, COLOR_FORMAT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	appState.Scene.floorTexture.Create(appState, floorImage.width, floorImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	ImageAsset controller;
 	controller.Open("controller.png", app);
-	appState.Scene.controllerTexture.Create(appState, controller.width, controller.height, COLOR_FORMAT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	appState.Scene.controllerTexture.Create(appState, controller.width, controller.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controller.width * controller.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
 	Buffer stagingBuffer;
 	stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);
@@ -119,8 +134,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	floorImage.Close();
 	size_t offset = floorImage.width * floorImage.height;
 	memcpy((uint32_t*)stagingBuffer.mapped + offset, controller.image, controller.width * controller.height * sizeof(uint32_t));
-	offset += controller.width * controller.height;
-	/*ImageAsset leftArrows;
+	/*offset += controller.width * controller.height;
+	ImageAsset leftArrows;
 	leftArrows.Open("leftarrows.png", app);
 	appState.LeftArrows.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, COLOR_FORMAT, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
 	appState.LeftArrows.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.LeftArrows.SwapChain, 0);
@@ -683,7 +698,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &lightmapSampler));
-	//appState.Keyboard.Create(appState);
+	appState.Keyboard.Create(appState);
 	created = true;
 }
 

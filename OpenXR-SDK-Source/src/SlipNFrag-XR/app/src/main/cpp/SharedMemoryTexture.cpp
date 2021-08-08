@@ -34,9 +34,9 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	{
 		alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
 	}
-	if (appState.Scene.latestTextureSharedMemory == nullptr || appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > MEMORY_BLOCK_SIZE)
+	if (appState.Scene.latestTextureSharedMemory == nullptr || appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > Constants::memoryBlockSize)
 	{
-		VkDeviceSize size = MEMORY_BLOCK_SIZE;
+		VkDeviceSize size = Constants::memoryBlockSize;
 		if (size < memoryAllocateInfo.allocationSize)
 		{
 			size = memoryAllocateInfo.allocationSize;
@@ -77,24 +77,24 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 		appState.Scene.latestTextureDescriptorSets = new DescriptorSets { };
 		VkDescriptorPoolSize poolSizes { };
 		poolSizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		poolSizes.descriptorCount = DESCRIPTOR_SET_COUNT;
+		poolSizes.descriptorCount = Constants::descriptorSetCount;
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
 		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolCreateInfo.maxSets = DESCRIPTOR_SET_COUNT;
+		descriptorPoolCreateInfo.maxSets = Constants::descriptorSetCount;
 		descriptorPoolCreateInfo.pPoolSizes = &poolSizes;
 		descriptorPoolCreateInfo.poolSizeCount = 1;
 		CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &appState.Scene.latestTextureDescriptorSets->descriptorPool));
-		if (appState.Scene.descriptorSetLayouts.size() < DESCRIPTOR_SET_COUNT)
+		if (appState.Scene.descriptorSetLayouts.size() < Constants::descriptorSetCount)
 		{
-			appState.Scene.descriptorSetLayouts.resize(DESCRIPTOR_SET_COUNT);
+			appState.Scene.descriptorSetLayouts.resize(Constants::descriptorSetCount);
 		}
-		std::fill(appState.Scene.descriptorSetLayouts.begin(), appState.Scene.descriptorSetLayouts.begin() + DESCRIPTOR_SET_COUNT, appState.Scene.singleImageLayout);
-		appState.Scene.latestTextureDescriptorSets->descriptorSets.resize(DESCRIPTOR_SET_COUNT);
+		std::fill(appState.Scene.descriptorSetLayouts.begin(), appState.Scene.descriptorSetLayouts.begin() + Constants::descriptorSetCount, appState.Scene.singleImageLayout);
+		appState.Scene.latestTextureDescriptorSets->descriptorSets.resize(Constants::descriptorSetCount);
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
 		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		descriptorSetAllocateInfo.descriptorSetCount = 1;
 		descriptorSetAllocateInfo.descriptorPool = appState.Scene.latestTextureDescriptorSets->descriptorPool;
-		descriptorSetAllocateInfo.descriptorSetCount = DESCRIPTOR_SET_COUNT;
+		descriptorSetAllocateInfo.descriptorSetCount = Constants::descriptorSetCount;
 		descriptorSetAllocateInfo.pSetLayouts = appState.Scene.descriptorSetLayouts.data();
 		CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, appState.Scene.latestTextureDescriptorSets->descriptorSets.data()));
 	}

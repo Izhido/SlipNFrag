@@ -4,6 +4,8 @@
 
 struct CachedBuffers
 {
+	static const int minimumAllocation = 4096;
+
 	Buffer* buffers = nullptr;
 	Buffer* oldBuffers = nullptr;
 

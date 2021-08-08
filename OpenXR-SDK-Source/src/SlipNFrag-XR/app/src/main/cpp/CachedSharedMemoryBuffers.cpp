@@ -190,7 +190,7 @@ void CachedSharedMemoryBuffers::DeleteOld(AppState& appState)
 		for (auto b = &oldBuffers; *b != nullptr; )
 		{
 			(*b)->unusedCount++;
-			if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
+			if ((*b)->unusedCount >= Constants::maxUnusedCount)
 			{
 				auto next = (*b)->next;
 				(*b)->Delete(appState);

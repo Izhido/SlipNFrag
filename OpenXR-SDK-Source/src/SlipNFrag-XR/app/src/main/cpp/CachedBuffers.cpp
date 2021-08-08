@@ -3,8 +3,6 @@
 #include "AppState.h"
 #include "Utils.h"
 
-#define MINIMUM_ALLOCATION 4096
-
 Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
 {
 	for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
@@ -22,9 +20,9 @@ Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
 VkDeviceSize CachedBuffers::MinimumAllocationFor(VkDeviceSize size)
 {
 	VkDeviceSize result = size * 5 / 4;
-	if (result < MINIMUM_ALLOCATION)
+	if (result < minimumAllocation)
 	{
-		result = MINIMUM_ALLOCATION;
+		result = minimumAllocation;
 	}
 	return result;
 }
@@ -86,7 +84,7 @@ void CachedBuffers::DeleteOld(AppState& appState)
 	for (Buffer** b = &oldBuffers; *b != nullptr; )
 	{
 		(*b)->unusedCount++;
-		if ((*b)->unusedCount >= MAX_UNUSED_COUNT)
+		if ((*b)->unusedCount >= Constants::maxUnusedCount)
 		{
 			auto next = (*b)->next;
 			(*b)->Delete(appState);

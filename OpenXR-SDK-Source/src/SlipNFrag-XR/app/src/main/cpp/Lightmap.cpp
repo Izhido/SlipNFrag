@@ -66,7 +66,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 		allocationList.allocations.emplace_back();
 		allocation = allocationList.allocations.end();
 		allocation--;
-		VkDeviceSize size = MEMORY_BLOCK_SIZE;
+		VkDeviceSize size = Constants::memoryBlockSize;
 		if (size < blockSize)
 		{
 			size = blockSize;

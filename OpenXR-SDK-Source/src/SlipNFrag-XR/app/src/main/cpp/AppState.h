@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
+#include "Keyboard.h"
 #include "Scene.h"
 #include "PerImage.h"
 #include <mutex>
@@ -30,13 +31,10 @@ struct AppState
 	uint32_t SwapchainWidth;
 	uint32_t SwapchainHeight;
 	uint32_t SwapchainSampleCount;
-	XrSwapchain ScreenSwapchain;
-	std::vector<XrSwapchainImageVulkan2KHR> ScreenVulkanImages;
-	std::vector<XrSwapchainImageBaseHeader*> ScreenImages;
-	std::vector<uint32_t> ScreenData;
-	Buffer ScreenStagingBuffer;
-	std::vector<VkCommandBuffer> ScreenCommandBuffers;
-	std::vector<VkSubmitInfo> ScreenSubmitInfo;
+	Screen Screen;
+	Keyboard Keyboard;
+	float KeyboardDrawOffsetY;
+	float KeyboardHitOffsetY;
 	Scene Scene;
 	std::vector<PerImage> PerImage;
 	int EyeTextureWidth;
@@ -93,6 +91,8 @@ struct AppState
 	XrAction EscapeNonYAction;
 	XrAction QuitAction;
 	XrAction PoseAction;
+	XrAction LeftKeyPressAction;
+	XrAction RightKeyPressAction;
 	std::vector<XrPath> SubactionPaths;
 	std::vector<XrSpace> HandSpaces;
 	std::vector<float> HandScales;

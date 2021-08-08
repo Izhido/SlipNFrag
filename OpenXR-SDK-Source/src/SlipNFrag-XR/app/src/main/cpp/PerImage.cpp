@@ -30,7 +30,7 @@ void PerImage::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& sur
 		if (appState.Scene.latestSharedMemoryIndexBuffer16 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer16->size)
 		{
 			loaded.indices.buffer = new SharedMemoryBuffer { };
-			loaded.indices.buffer->CreateIndexBuffer(appState, MEMORY_BLOCK_SIZE);
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
 			appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 			appState.Scene.latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer16 = 0;
@@ -66,7 +66,7 @@ void PerImage::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& sur
 		if (appState.Scene.latestSharedMemoryIndexBuffer32 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer32->size)
 		{
 			loaded.indices.buffer = new SharedMemoryBuffer { };
-			loaded.indices.buffer->CreateIndexBuffer(appState, MEMORY_BLOCK_SIZE);
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
 			appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 			appState.Scene.latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer32 = 0;
@@ -101,7 +101,7 @@ void PerImage::GetAliasIndices16StagingBufferSize(AppState& appState, dalias_t& 
 		if (appState.Scene.latestSharedMemoryIndexBuffer16 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer16->size)
 		{
 			loaded.indices.buffer = new SharedMemoryBuffer { };
-			loaded.indices.buffer->CreateIndexBuffer(appState, MEMORY_BLOCK_SIZE);
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
 			appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 			appState.Scene.latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer16 = 0;
@@ -135,7 +135,7 @@ void PerImage::GetAliasIndices32StagingBufferSize(AppState& appState, dalias_t& 
 		if (appState.Scene.latestSharedMemoryIndexBuffer32 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer32->size)
 		{
 			loaded.indices.buffer = new SharedMemoryBuffer { };
-			loaded.indices.buffer->CreateIndexBuffer(appState, MEMORY_BLOCK_SIZE);
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
 			appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 			appState.Scene.latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer32 = 0;
@@ -584,7 +584,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 		if (palette == nullptr)
 		{
 			palette = new Texture();
-			palette->Create(appState, 256, 1, COLOR_FORMAT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			palette->Create(appState, 256, 1, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
 		appState.Scene.paletteSize = 1024;
 		size += appState.Scene.paletteSize;
@@ -683,7 +683,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			if (appState.Scene.latestSharedMemoryIndexBuffer16 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer16->size)
 			{
 				loaded.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.buffer->CreateIndexBuffer(appState, MEMORY_BLOCK_SIZE);
+				loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
 				appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 				appState.Scene.latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
 				appState.Scene.usedInLatestSharedMemoryIndexBuffer16 = 0;
@@ -724,7 +724,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			if (appState.Scene.latestSharedMemoryIndexBuffer32 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer32->size)
 			{
 				loaded.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.buffer->CreateIndexBuffer(appState, MEMORY_BLOCK_SIZE);
+				loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
 				appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
 				appState.Scene.latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
 				appState.Scene.usedInLatestSharedMemoryIndexBuffer32 = 0;

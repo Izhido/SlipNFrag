@@ -56,7 +56,7 @@ void CachedSharedMemoryTextures::DeleteOld(AppState& appState)
 		for (auto t = &oldTextures; *t != nullptr; )
 		{
 			(*t)->unusedCount++;
-			if ((*t)->unusedCount >= MAX_UNUSED_COUNT)
+			if ((*t)->unusedCount >= Constants::maxUnusedCount)
 			{
 				auto next = (*t)->next;
 				(*t)->Delete(appState);

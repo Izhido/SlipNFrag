@@ -40,7 +40,7 @@ void CachedLightmaps::DeleteOld(AppState& appState)
 		for (auto l = &entry.second; *l != nullptr; )
 		{
 			(*l)->unusedCount++;
-			if ((*l)->unusedCount >= MAX_UNUSED_COUNT)
+			if ((*l)->unusedCount >= Constants::maxUnusedCount)
 			{
 				auto next = (*l)->next;
 				(*l)->next = oldLightmaps;
@@ -68,7 +68,7 @@ void CachedLightmaps::DeleteOld(AppState& appState)
 		for (auto l = &oldLightmaps; *l != nullptr; )
 		{
 			(*l)->unusedCount++;
-			if ((*l)->unusedCount >= MAX_UNUSED_COUNT)
+			if ((*l)->unusedCount >= Constants::maxUnusedCount)
 			{
 				auto next = (*l)->next;
 				(*l)->Delete(appState);
