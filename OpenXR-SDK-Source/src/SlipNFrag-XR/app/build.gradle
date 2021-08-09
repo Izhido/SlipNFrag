@@ -21,13 +21,25 @@ android {
         }
         externalNativeBuild {
             cmake {
-                arguments "-DBUILD_LOADER=OFF", "-DBUILD_TESTS=OFF", "-DANDROID_ARM_MODE=arm", "-DANDROID_STL=c++_shared"
+                arguments "-DBUILD_LOADER=OFF", "-DBUILD_TESTS=OFF"
             }
         }
     }
 
     buildTypes {
+        debug {
+            externalNativeBuild {
+                cmake {
+                    arguments "-DANDROID_ARM_MODE=arm", "-DANDROID_STL=c++_shared", "-DBUILD_WITH_ASAN=ON"
+                }
+            }
+        }
         release {
+            externalNativeBuild {
+                cmake {
+                    arguments "-DBUILD_API_LAYERS=OFF"
+                }
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

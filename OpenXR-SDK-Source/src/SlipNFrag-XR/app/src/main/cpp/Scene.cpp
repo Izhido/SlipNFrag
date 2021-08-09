@@ -60,12 +60,12 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.ScreenHeight = appState.ConsoleHeight * Constants::screenToConsoleMultiplier;
 	
 	XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
-	swapchainCreateInfo.arraySize = 1;
-	swapchainCreateInfo.format = Constants::colorFormat;
-	swapchainCreateInfo.mipCount = 1;
-	swapchainCreateInfo.faceCount = 1;
-	swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
 	swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
+	swapchainCreateInfo.format = Constants::colorFormat;
+	swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
+	swapchainCreateInfo.faceCount = 1;
+	swapchainCreateInfo.arraySize = 1;
+	swapchainCreateInfo.mipCount = 1;
 
 	swapchainCreateInfo.width = appState.ScreenWidth;
 	swapchainCreateInfo.height = appState.ScreenHeight;
