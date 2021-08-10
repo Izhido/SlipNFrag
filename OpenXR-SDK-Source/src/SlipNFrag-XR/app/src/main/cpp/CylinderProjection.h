@@ -11,6 +11,7 @@ struct CylinderProjection
 	static const float verticalAngle;
 	static const float screenLowerLimit;
 	static const float keyboardLowerLimit;
+	static const float epsilon;
 
 	static bool HitPoint(AppState& appState, Controller& controller, float& x, float& y);
 	static bool HitPointForScreenMode(AppState& appState, Controller& controller, float& x, float& y);

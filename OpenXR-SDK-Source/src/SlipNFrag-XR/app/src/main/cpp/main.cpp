@@ -1287,6 +1287,12 @@ void android_main(struct android_app* app)
 				continue;
 			}
 
+			const XrActiveActionSet activeActionSet { appState.ActionSet, XR_NULL_PATH };
+			XrActionsSyncInfo syncInfo { XR_TYPE_ACTIONS_SYNC_INFO };
+			syncInfo.countActiveActionSets = 1;
+			syncInfo.activeActionSets = &activeActionSet;
+			CHECK_XRCMD(xrSyncActions(appState.Session, &syncInfo));
+
 			auto keyPressHandled = appState.Keyboard.Handle(appState);
 			Input::Handle(appState, keyPressHandled);
 

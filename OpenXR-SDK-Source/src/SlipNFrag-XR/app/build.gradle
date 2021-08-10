@@ -30,7 +30,7 @@ android {
         debug {
             externalNativeBuild {
                 cmake {
-                    arguments "-DANDROID_ARM_MODE=arm", "-DANDROID_STL=c++_shared", "-DBUILD_WITH_ASAN=ON"
+                    arguments "-DANDROID_ARM_MODE=arm", "-DANDROID_STL=c++_shared", "-DBUILD_WITH_ASAN=OFF"
                 }
             }
         }

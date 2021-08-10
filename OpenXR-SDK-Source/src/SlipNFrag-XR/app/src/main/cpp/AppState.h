@@ -33,7 +33,6 @@ struct AppState
 	uint32_t SwapchainSampleCount;
 	Screen Screen;
 	Keyboard Keyboard;
-	float KeyboardDrawOffsetY;
 	float KeyboardHitOffsetY;
 	Scene Scene;
 	std::vector<PerImage> PerImage;

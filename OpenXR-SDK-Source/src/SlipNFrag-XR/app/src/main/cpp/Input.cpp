@@ -35,16 +35,10 @@ void Input::AddCommandInput(const char* command)
 	entry.command = command;
 }
 
-void Input::Handle(AppState& appState, bool triggerHandled)
+void Input::Handle(AppState& appState, bool keyPressHandled)
 {
 	std::lock_guard<std::mutex> lock(appState.InputMutex);
 	
-	const XrActiveActionSet activeActionSet { appState.ActionSet, XR_NULL_PATH };
-	XrActionsSyncInfo syncInfo { XR_TYPE_ACTIONS_SYNC_INFO };
-	syncInfo.countActiveActionSets = 1;
-	syncInfo.activeActionSets = &activeActionSet;
-	CHECK_XRCMD(xrSyncActions(appState.Session, &syncInfo));
-
 	XrActionStateGetInfo actionGetInfo { XR_TYPE_ACTION_STATE_GET_INFO };
 	XrActionStateBoolean booleanActionState { XR_TYPE_ACTION_STATE_BOOLEAN };
 	XrActionStateFloat floatActionState { XR_TYPE_ACTION_STATE_FLOAT };
@@ -183,17 +177,20 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 			appState.PreviousThumbstick = thumbstick;
 			auto enterDown = false;
 			auto enterUp = false;
-			actionGetInfo.action = appState.EnterTriggerAction;
-			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync && !triggerHandled)
+			if (!keyPressHandled)
 			{
-				if (booleanActionState.currentState)
+				actionGetInfo.action = appState.EnterTriggerAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 				{
-					enterDown = true;
-				}
-				else
-				{
-					enterUp = true;
+					if (booleanActionState.currentState)
+					{
+						enterDown = true;
+					}
+					else
+					{
+						enterUp = true;
+					}
 				}
 			}
 			actionGetInfo.action = appState.EnterNonTriggerAction;
@@ -286,7 +283,7 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 						pdwRawValue[JOY_AXIS_Y] = -floatActionState.currentState;
 					}
 				}
-				if (!triggerHandled)
+				if (!keyPressHandled)
 				{
 					actionGetInfo.action = appState.FireAction;
 					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
@@ -451,17 +448,20 @@ void Input::Handle(AppState& appState, bool triggerHandled)
 				appState.PreviousThumbstick = thumbstick;
 				auto enterDown = false;
 				auto enterUp = false;
-				actionGetInfo.action = appState.EnterTriggerAction;
-				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync && !triggerHandled)
+				if (!keyPressHandled)
 				{
-					if (booleanActionState.currentState)
+					actionGetInfo.action = appState.EnterTriggerAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
-						enterDown = true;
-					}
-					else
-					{
-						enterUp = true;
+						if (booleanActionState.currentState)
+						{
+							enterDown = true;
+						}
+						else
+						{
+							enterUp = true;
+						}
 					}
 				}
 				actionGetInfo.action = appState.EnterNonTriggerAction;

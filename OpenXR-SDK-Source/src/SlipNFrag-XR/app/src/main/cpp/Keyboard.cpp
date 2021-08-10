@@ -350,19 +350,14 @@ bool Keyboard::Handle(AppState& appState)
 		}
 		return false;
 	}
-	if (appState.Mode != AppWorldMode)
+	if (appState.Mode == AppWorldMode && key_dest == key_console)
 	{
-		appState.KeyboardDrawOffsetY = -0.85;
-	}
-	else if (key_dest == key_console)
-	{
-		appState.KeyboardDrawOffsetY = -0.425;
+		appState.KeyboardHitOffsetY = -CylinderProjection::keyboardLowerLimit / 6;
 	}
 	else
 	{
-		appState.KeyboardDrawOffsetY = -0.6;
+		appState.KeyboardHitOffsetY = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit / 6;
 	}
-	appState.KeyboardHitOffsetY = appState.KeyboardDrawOffsetY + 0.425;
 	leftHighlighted = -1;
 	if (appState.LeftController.PoseIsValid)
 	{
@@ -463,14 +458,11 @@ bool Keyboard::Handle(AppState& appState)
 				keyPressHandled = true;
 			}
 		}
-		else if (leftPressed >= 0)
+		else if (rightPressed >= 0)
 		{
-			if (rightPressed >= 0)
-			{
-				AddKeyInput(rightPressed, false);
-				rightPressed = -1;
-				keyPressHandled = true;
-			}
+			AddKeyInput(rightPressed, false);
+			rightPressed = -1;
+			keyPressHandled = true;
 		}
 	}
 
