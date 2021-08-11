@@ -1412,9 +1412,9 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	*mapped++ = 0;
 	*mapped++ = appState.Scale;
 	*mapped++ = 0;
-	*mapped++ = appState.OriginX;
-	*mapped++ = appState.OriginY;
-	*mapped++ = appState.OriginZ;
+	*mapped++ = appState.ViewTransformX;
+	*mapped++ = appState.ViewTransformY;
+	*mapped++ = appState.ViewTransformZ;
 	*mapped++ = 1;
 	controllerAttributeBase = vertexTransformBase + 16 * sizeof(float);
 	if (controllerAttributesSize > 0)
@@ -2116,11 +2116,11 @@ void PerImage::Render(AppState& appState)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			if (appState.NearViewModel)
+			if (appState.NearViewmodel)
 			{
-				pushConstants[16] = vpn[0] / appState.Scale;
-				pushConstants[17] = vpn[2] / appState.Scale;
-				pushConstants[18] = -vpn[1] / appState.Scale;
+				pushConstants[16] = appState.ViewmodelForwardX;
+				pushConstants[17] = appState.ViewmodelForwardY;
+				pushConstants[18] = appState.ViewmodelForwardZ;
 				pushConstants[19] = 0;
 				pushConstants[20] = 1;
 				pushConstants[21] = 1;

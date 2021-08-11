@@ -1609,9 +1609,14 @@ void android_main(struct android_app* app)
 
 							appState.DistanceToFloor = spaceLocation.pose.position.y;
 							appState.Scale = -spaceLocation.pose.position.y / playerHeight;
-							appState.OriginX = -r_refdef.vieworg[0] * appState.Scale;
-							appState.OriginY = -r_refdef.vieworg[2] * appState.Scale;
-							appState.OriginZ = r_refdef.vieworg[1] * appState.Scale;
+
+							appState.ViewTransformX = -appState.EngineViewOriginX * appState.Scale;
+							appState.ViewTransformY = -appState.EngineViewOriginZ * appState.Scale;
+							appState.ViewTransformZ = appState.EngineViewOriginY * appState.Scale;
+
+							appState.ViewmodelForwardX = appState.EngineForwardX / appState.Scale;
+							appState.ViewmodelForwardY = appState.EngineForwardZ / appState.Scale;
+							appState.ViewmodelForwardZ = -appState.EngineForwardY / appState.Scale;
 
 							if (appState.FOV == 0)
 							{

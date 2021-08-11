@@ -89,6 +89,12 @@ void runEngine(AppState* appState, struct android_app* app)
 				positionY = appState->CameraLocation.pose.position.y;
 				positionZ = appState->CameraLocation.pose.position.z;
 				scale = appState->Scale;
+				appState->EngineForwardX = vpn[0];
+				appState->EngineForwardY = vpn[1];
+				appState->EngineForwardZ = vpn[2];
+				appState->EngineViewOriginX = r_refdef.vieworg[0];
+				appState->EngineViewOriginY = r_refdef.vieworg[1];
+				appState->EngineViewOriginZ = r_refdef.vieworg[2];
 			}
 			if (appState->PreviousTime < 0)
 			{
@@ -137,8 +143,8 @@ void runEngine(AppState* appState, struct android_app* app)
 				r_modelorg_delta[1] = -positionZ / scale;
 				r_modelorg_delta[2] = positionY / scale;
 				auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
-				appState->NearViewModel = (distanceSquared < 12 * 12);
-				d_awayfromviewmodel = !appState->NearViewModel;
+				appState->NearViewmodel = (distanceSquared < 12 * 12);
+				d_awayfromviewmodel = !appState->NearViewmodel;
 				auto nodrift = cl.nodrift;
 				cl.nodrift = true;
 				Host_FrameRender();
