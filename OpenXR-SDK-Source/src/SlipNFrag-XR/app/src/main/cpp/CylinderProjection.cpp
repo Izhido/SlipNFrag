@@ -13,20 +13,27 @@ const float CylinderProjection::epsilon = 1e-5;
 
 bool CylinderProjection::HitPoint(AppState& appState, Controller& controller, float& x, float& y)
 {
+	if (!appState.CameraLocationIsValid)
+	{
+		return false;
+	}
+	float positionX = appState.CameraLocation.pose.position.x;
+	float positionY = appState.CameraLocation.pose.position.y;
+	float positionZ = appState.CameraLocation.pose.position.z;
 	XrMatrix4x4f controllerTransform;
 	XrMatrix4x4f_CreateFromQuaternion(&controllerTransform, &controller.SpaceLocation.pose.orientation);
 	XrVector4f untransformedControllerDirection { 0, 0, -1, 0 };
 	XrVector4f controllerDirection;
 	XrMatrix4x4f_TransformVector4f(&controllerDirection, &controllerTransform, &untransformedControllerDirection);
 	XrMatrix4x4f rotation;
-	XrMatrix4x4f_CreateFromQuaternion(&rotation, &appState.Scene.orientation);
+	XrMatrix4x4f_CreateFromQuaternion(&rotation, &appState.CameraLocation.pose.orientation);
 	XrMatrix4x4f translation;
-	XrMatrix4x4f_CreateTranslation(&translation, appState.PositionX, appState.PositionY, appState.PositionZ);
+	XrMatrix4x4f_CreateTranslation(&translation, positionX, positionY, positionZ);
 	XrMatrix4x4f inverseView;
 	XrMatrix4x4f_Multiply(&inverseView, &translation, &rotation);
 	XrMatrix4x4f transform;
 	XrMatrix4x4f_Invert(&transform, &inverseView);
-	XrVector3f origin3d { appState.PositionX, appState.PositionY, appState.PositionZ };
+	XrVector3f origin3d { positionX, positionY, positionZ };
 	auto& controllerOrigin3d = controller.SpaceLocation.pose.position;
 	XrVector4f untransformedControllerOrigin { controllerOrigin3d.x - origin3d.x, controllerOrigin3d.y - origin3d.y, controllerOrigin3d.z - origin3d.z, 0 };
 	XrVector4f controllerOrigin;

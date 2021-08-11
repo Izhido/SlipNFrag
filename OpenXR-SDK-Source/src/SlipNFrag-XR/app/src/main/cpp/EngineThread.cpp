@@ -85,9 +85,9 @@ void runEngine(AppState* appState, struct android_app* app)
 				cl.viewangles[YAW] = appState->Yaw * 180 / M_PI + 90;
 				cl.viewangles[PITCH] = -appState->Pitch * 180 / M_PI;
 				cl.viewangles[ROLL] = -appState->Roll * 180 / M_PI;
-				positionX = appState->PositionX;
-				positionY = appState->PositionY;
-				positionZ = appState->PositionZ;
+				positionX = appState->CameraLocation.pose.position.x;
+				positionY = appState->CameraLocation.pose.position.y;
+				positionZ = appState->CameraLocation.pose.position.z;
 				scale = appState->Scale;
 			}
 			if (appState->PreviousTime < 0)

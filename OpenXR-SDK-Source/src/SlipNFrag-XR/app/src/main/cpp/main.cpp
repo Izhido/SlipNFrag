@@ -1494,8 +1494,6 @@ void android_main(struct android_app* app)
 					CHECK(viewCountOutput == configViews.size());
 
 					{
-						std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
-
 						appState.LeftController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
 						appState.LeftController.PoseIsValid = false;
 						res = xrLocateSpace(appState.HandSpaces[0], appSpace, frameState.predictedDisplayTime, &appState.LeftController.SpaceLocation);
@@ -1548,107 +1546,82 @@ void android_main(struct android_app* app)
 							XrMatrix4x4f_Multiply(&appState.ViewMatrices[i], &transposedRotation, &translation);
 							XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, m_views[i].fov, 0.05f, 100.0f);
 						}
-						
-						XrQuaternionf& first = m_views[0].pose.orientation;
-						XrQuaternionf cumulative = first;
-						for (size_t i = 1; i < viewCountOutput; i++)
+
 						{
-							XrQuaternionf current = m_views[i].pose.orientation;
-							if (first.x * current.x + first.y * current.y + first.z * current.z + first.w * current.w < 0)
+							std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
+							
+							appState.CameraLocation.type = XR_TYPE_SPACE_LOCATION;
+							res = xrLocateSpace(screenSpace, appSpace, frameState.predictedDisplayTime, &appState.CameraLocation);
+							CHECK_XRRESULT(res, "xrLocateSpace(screenSpace, appSpace)");
+							appState.CameraLocationIsValid = (XR_UNQUALIFIED_SUCCESS(res) && (appState.CameraLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT));
+	
+							if (appState.CameraLocationIsValid)
 							{
-								current.x = -current.x;
-								current.y = -current.y;
-								current.z = -current.z;
-								current.w = -current.w;
-							}
-							cumulative.x += current.x;
-							cumulative.y += current.y;
-							cumulative.z += current.z;
-							cumulative.w += current.w;
-						}
-						auto x = cumulative.x / viewCountOutput;
-						auto y = cumulative.y / viewCountOutput;
-						auto z = cumulative.z / viewCountOutput;
-						auto w = cumulative.w / viewCountOutput;
-						auto lengthSquared = x * x + y * y + z * z + w * w;
-						if (lengthSquared > 0)
-						{
-							auto length = sqrt(lengthSquared);
-							x /= length;
-							y /= length;
-							z /= length;
-							w /= length;
-						}
-						appState.Scene.orientation = { x, y, z, w };
-						float Q[3] = { x, y, z };
-						float ww = w * w;
-						float Q11 = Q[1] * Q[1];
-						float Q22 = Q[0] * Q[0];
-						float Q33 = Q[2] * Q[2];
-						const float psign = -1;
-						float s2 = psign * 2 * (psign * w * Q[0] + Q[1] * Q[2]);
-						const float singularityRadius = 1e-12;
-						if (s2 < singularityRadius - 1)
-						{
-							appState.Yaw = 0;
-							appState.Pitch = -M_PI / 2;
-							appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
-						}
-						else if (s2 > 1 - singularityRadius)
-						{
-							appState.Yaw = 0;
-							appState.Pitch = M_PI / 2;
-							appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
-						}
-						else
-						{
-							appState.Yaw = -(atan2(-2 * (w * Q[1] - psign * Q[0] * Q[2]), ww + Q33 - Q11 - Q22));
-							appState.Pitch = asin(s2);
-							appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
-						}
-						auto positionX = 0.0f;
-						auto positionY = 0.0f;
-						auto positionZ = 0.0f;
-						for (auto& view : m_views)
-						{
-							positionX += view.pose.position.x;
-							positionY += view.pose.position.y;
-							positionZ += view.pose.position.z;
-						}
-						appState.PositionX = positionX / viewCountOutput;
-						appState.PositionY = positionY / viewCountOutput;
-						appState.PositionZ = positionZ / viewCountOutput;
-						auto playerHeight = 32;
-						if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
-						{
-							auto player = &cl_entities[cl.viewentity];
-							if (player != nullptr)
-							{
-								auto model = player->model;
-								if (model != nullptr)
+								auto x = appState.CameraLocation.pose.orientation.x;
+								auto y = appState.CameraLocation.pose.orientation.y;
+								auto z = appState.CameraLocation.pose.orientation.z;
+								auto w = appState.CameraLocation.pose.orientation.w;
+	
+								float Q[3] = { x, y, z };
+								float ww = w * w;
+								float Q11 = Q[1] * Q[1];
+								float Q22 = Q[0] * Q[0];
+								float Q33 = Q[2] * Q[2];
+								const float psign = -1;
+								float s2 = psign * 2 * (psign * w * Q[0] + Q[1] * Q[2]);
+								const float singularityRadius = 1e-12;
+								if (s2 < singularityRadius - 1)
 								{
-									playerHeight = model->maxs[1] - model->mins[1];
+									appState.Yaw = 0;
+									appState.Pitch = -M_PI / 2;
+									appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
+								}
+								else if (s2 > 1 - singularityRadius)
+								{
+									appState.Yaw = 0;
+									appState.Pitch = M_PI / 2;
+									appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
+								}
+								else
+								{
+									appState.Yaw = -(atan2(-2 * (w * Q[1] - psign * Q[0] * Q[2]), ww + Q33 - Q11 - Q22));
+									appState.Pitch = asin(s2);
+									appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
 								}
 							}
-						}
-
-						XrSpaceLocation spaceLocation { XR_TYPE_SPACE_LOCATION };
-						res = xrLocateSpace(worldSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
-						
-						appState.DistanceToFloor = spaceLocation.pose.position.y;
-						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
-						appState.OriginX = -r_refdef.vieworg[0] * appState.Scale;
-						appState.OriginY = -r_refdef.vieworg[2] * appState.Scale;
-						appState.OriginZ = r_refdef.vieworg[1] * appState.Scale;
-						
-						if (appState.FOV == 0)
-						{
-							for (size_t i = 0; i < viewCountOutput; i++)
+	
+							auto playerHeight = 32;
+							if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
 							{
-								auto fov = (m_views[i].fov.angleRight - m_views[i].fov.angleLeft) * 180 / M_PI;
-								appState.FOV += fov;
+								auto player = &cl_entities[cl.viewentity];
+								if (player != nullptr)
+								{
+									auto model = player->model;
+									if (model != nullptr)
+									{
+										playerHeight = model->maxs[1] - model->mins[1];
+									}
+								}
 							}
-							appState.FOV /= viewCountOutput;
+
+							XrSpaceLocation spaceLocation { XR_TYPE_SPACE_LOCATION };
+							res = xrLocateSpace(worldSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
+
+							appState.DistanceToFloor = spaceLocation.pose.position.y;
+							appState.Scale = -spaceLocation.pose.position.y / playerHeight;
+							appState.OriginX = -r_refdef.vieworg[0] * appState.Scale;
+							appState.OriginY = -r_refdef.vieworg[2] * appState.Scale;
+							appState.OriginZ = r_refdef.vieworg[1] * appState.Scale;
+
+							if (appState.FOV == 0)
+							{
+								for (size_t i = 0; i < viewCountOutput; i++)
+								{
+									auto fov = (m_views[i].fov.angleRight - m_views[i].fov.angleLeft) * 180 / M_PI;
+									appState.FOV += fov;
+								}
+								appState.FOV /= viewCountOutput;
+							}
 						}
 					}
 					
@@ -1886,9 +1859,9 @@ void android_main(struct android_app* app)
 						if (appState.Mode == AppScreenMode)
 						{
 							std::lock_guard<std::mutex> lock(appState.RenderMutex);
-							auto consoleIndex = 0;
-							auto consoleIndexCache = 0;
-							auto screenIndex = 0;
+							auto console = con_buffer.data();
+							auto previousConsole = console;
+							auto screen = vid_buffer.data();
 							auto target = appState.Screen.Data.data();
 							auto y = 0;
 							while (y < vid_height)
@@ -1896,13 +1869,12 @@ void android_main(struct android_app* app)
 								auto x = 0;
 								while (x < vid_width)
 								{
-									auto entry = con_buffer[consoleIndex];
+									auto entry = *console++;
 									if (entry == 255)
 									{
 										do
 										{
-											*target++ = d_8to24table[vid_buffer[screenIndex]];
-											screenIndex++;
+											*target++ = d_8to24table[*screen++];
 											x++;
 										} while ((x % Constants::screenToConsoleMultiplier) != 0);
 									}
@@ -1912,20 +1884,19 @@ void android_main(struct android_app* app)
 										do
 										{
 											*target++ = converted;
-											screenIndex++;
+											screen++;
 											x++;
 										} while ((x % Constants::screenToConsoleMultiplier) != 0);
 									}
-									consoleIndex++;
 								}
 								y++;
 								if ((y % Constants::screenToConsoleMultiplier) == 0)
 								{
-									consoleIndexCache = consoleIndex;
+									previousConsole = console;
 								}
 								else
 								{
-									consoleIndex = consoleIndexCache;
+									console = previousConsole;
 								}
 							}
 						}
@@ -1934,7 +1905,7 @@ void android_main(struct android_app* app)
 							std::lock_guard<std::mutex> lock(appState.RenderMutex);
 							auto source = con_buffer.data();
 							auto previousSource = source;
-							auto targetIndex = 0;
+							auto target = appState.Screen.Data.data();
 							auto y = 0;
 							auto limit = appState.ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
 							while (y < limit)
@@ -1947,8 +1918,7 @@ void android_main(struct android_app* app)
 									{
 										do
 										{
-											appState.Screen.Data[targetIndex] = 0;
-											targetIndex++;
+											*target++ = 0;
 											x++;
 										} while ((x % Constants::screenToConsoleMultiplier) != 0);
 									}
@@ -1957,8 +1927,7 @@ void android_main(struct android_app* app)
 										auto converted = d_8to24table[entry];
 										do
 										{
-											appState.Screen.Data[targetIndex] = converted;
-											targetIndex++;
+											*target++ = converted;
 											x++;
 										} while ((x % Constants::screenToConsoleMultiplier) != 0);
 									}
@@ -1974,8 +1943,8 @@ void android_main(struct android_app* app)
 								}
 							}
 							limit = appState.ScreenHeight - SBAR_HEIGHT - 24;
-							std::fill(appState.Screen.Data.begin() + y * appState.ScreenWidth, appState.Screen.Data.begin() + limit * appState.ScreenWidth, 0);
-							targetIndex += (limit - y) * appState.ScreenWidth;
+							memset(target, 0, (limit - y) * appState.ScreenWidth * sizeof(uint32_t));
+							target += (limit - y) * appState.ScreenWidth;
 							y = limit;
 							limit = appState.ScreenWidth / Constants::screenToConsoleMultiplier;
 							while (y < appState.ScreenHeight)
@@ -1983,14 +1952,20 @@ void android_main(struct android_app* app)
 								auto x = 0;
 								while (x < limit)
 								{
-									appState.Screen.Data[targetIndex] =  d_8to24table[*source++];
-									targetIndex++;
+									auto entry = *source++;
+									if (entry == 255)
+									{
+										*target++ = 0;
+									}
+									else
+									{
+										*target++ = d_8to24table[entry];
+									}
 									x++;
 								}
 								while (x < appState.ScreenWidth)
 								{
-									appState.Screen.Data[targetIndex] = 0;
-									targetIndex++;
+									*target++ = 0;
 									x++;
 								}
 								y++;
@@ -2004,7 +1979,7 @@ void android_main(struct android_app* app)
 								auto height = directRect.height * Constants::screenToConsoleMultiplier;
 								auto directRectIndex = 0;
 								auto directRectIndexCache = 0;
-								auto targetIndex = (directRect.y * appState.ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
+								auto target = appState.Screen.Data.data() + (directRect.y * appState.ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
 								auto y = 0;
 								while (y < height)
 								{
@@ -2014,8 +1989,7 @@ void android_main(struct android_app* app)
 										auto entry = d_8to24table[directRect.data[directRectIndex]];
 										do
 										{
-											appState.Screen.Data[targetIndex] = entry;
-											targetIndex++;
+											*target++ = entry;
 											x++;
 										} while ((x % Constants::screenToConsoleMultiplier) != 0);
 										directRectIndex++;
@@ -2029,7 +2003,7 @@ void android_main(struct android_app* app)
 									{
 										directRectIndex = directRectIndexCache;
 									}
-									targetIndex += appState.ScreenWidth - width;
+									target += appState.ScreenWidth - width;
 								}
 							}
 						}
@@ -2087,13 +2061,10 @@ void android_main(struct android_app* app)
 
 					if (appState.Mode == AppWorldMode)
 					{
-						XrSpaceLocation screenLocation { XR_TYPE_SPACE_LOCATION };
-						res = xrLocateSpace(screenSpace, appSpace, frameState.predictedDisplayTime, &screenLocation);
-						CHECK_XRRESULT(res, "xrLocateSpace(screenSpace, appSpace)");
-						if (XR_UNQUALIFIED_SUCCESS(res) && (screenLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+						if (appState.CameraLocationIsValid)
 						{
 							screenLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
-							screenLayer.pose = screenLocation.pose;
+							screenLayer.pose = appState.CameraLocation.pose;
 
 							layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenLayer));
 						}

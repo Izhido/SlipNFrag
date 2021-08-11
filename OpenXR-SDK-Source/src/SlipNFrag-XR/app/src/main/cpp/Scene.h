@@ -118,7 +118,6 @@ struct Scene
 	VkDeviceSize host_colormapSize;
 	VkDeviceSize skySize;
 	VkDeviceSize controllerVerticesSize;
-	XrQuaternionf orientation;
 	StagingBuffer stagingBuffer;
 	void* previousVertexes;
 	void* previousSurface;

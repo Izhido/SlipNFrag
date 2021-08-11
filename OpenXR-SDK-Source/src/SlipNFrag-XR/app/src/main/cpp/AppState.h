@@ -45,9 +45,6 @@ struct AppState
 	float Yaw;
 	float Pitch;
 	float Roll;
-	float PositionX;
-	float PositionY;
-	float PositionZ;
 	float DistanceToFloor;
 	float Scale;
 	float OriginX;
@@ -98,4 +95,6 @@ struct AppState
 	std::vector<XrBool32> ActiveHands;
 	std::vector<XrMatrix4x4f> ViewMatrices;
 	std::vector<XrMatrix4x4f> ProjectionMatrices;
+	XrSpaceLocation CameraLocation;
+	bool CameraLocationIsValid;
 };

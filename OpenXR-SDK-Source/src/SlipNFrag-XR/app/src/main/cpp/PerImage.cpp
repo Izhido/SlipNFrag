@@ -2310,7 +2310,7 @@ void PerImage::Render(AppState& appState)
 			descriptorSets[1] = skyResources.descriptorSet;
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 			XrMatrix4x4f orientation;
-			XrMatrix4x4f_CreateFromQuaternion(&orientation, &appState.Scene.orientation);
+			XrMatrix4x4f_CreateFromQuaternion(&orientation, &appState.CameraLocation.pose.orientation);
 			pushConstants[0] = -orientation.m[8];
 			pushConstants[1] = orientation.m[10];
 			pushConstants[2] = -orientation.m[9];
