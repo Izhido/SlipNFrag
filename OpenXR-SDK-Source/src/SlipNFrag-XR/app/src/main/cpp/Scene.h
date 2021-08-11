@@ -1,6 +1,5 @@
 #pragma once
 
-#include <jni.h>
 #include <vulkan/vulkan.h>
 #include "Pipeline.h"
 #include "Buffer.h"
@@ -16,9 +15,7 @@
 #include "AllocationList.h"
 #include "CachedLightmaps.h"
 #include "CachedSharedMemoryTextures.h"
-#include <EGL/Egl.h>
-#include <openxr/openxr.h>
-#include <openxr/openxr_platform.h>
+#include "Skybox.h"
 #include <common/xr_linear.h>
 
 struct AppState;
@@ -61,8 +58,6 @@ struct Scene
 	Pipeline floor;
 	Pipeline console;
 	Buffer matrices;
-	XrMatrix4x4f viewMatrices[2];
-	XrMatrix4x4f projectionMatrices[2];
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
@@ -117,9 +112,7 @@ struct Scene
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	DescriptorSets* latestTextureDescriptorSets;
-	XrSwapchain skybox;
-	std::vector<XrSwapchainImageVulkan2KHR> skyboxVulkanImages;
-	std::vector<XrSwapchainImageBaseHeader*> skyboxImages;
+	Skybox* skybox;
 	VkDeviceSize verticesSize;
 	VkDeviceSize paletteSize;
 	VkDeviceSize host_colormapSize;

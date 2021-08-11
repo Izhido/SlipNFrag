@@ -1454,6 +1454,8 @@ void android_main(struct android_app* app)
 			appState.Scene.lightmaps.DeleteOld(appState);
 			appState.Scene.buffers.DeleteOld(appState);
 
+			Skybox::DeleteOld(appState);
+			
 			XrFrameWaitInfo frameWaitInfo { XR_TYPE_FRAME_WAIT_INFO };
 			XrFrameState frameState { XR_TYPE_FRAME_STATE };
 			CHECK_XRCMD(xrWaitFrame(appState.Session, &frameWaitInfo, &frameState));
@@ -1526,16 +1528,25 @@ void android_main(struct android_app* app)
 							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate right hand action space in app space: %d", res);
 						}
 
+						if (appState.ViewMatrices.size() != viewCountOutput)
+						{
+							appState.ViewMatrices.resize(viewCountOutput);
+						}
+						if (appState.ProjectionMatrices.size() != viewCountOutput)
+						{
+							appState.ProjectionMatrices.resize(viewCountOutput);
+						}
+
 						for (size_t i = 0; i < viewCountOutput; i++)
 						{
-							XrMatrix4x4f_CreateProjectionFov(&appState.Scene.projectionMatrices[i], GRAPHICS_VULKAN, m_views[i].fov, 0.05f, 100.0f);
 							XrMatrix4x4f rotation;
 							XrMatrix4x4f_CreateFromQuaternion(&rotation, &m_views[i].pose.orientation);
 							XrMatrix4x4f transposedRotation;
 							XrMatrix4x4f_Transpose(&transposedRotation, &rotation);
 							XrMatrix4x4f translation;
 							XrMatrix4x4f_CreateTranslation(&translation, -m_views[i].pose.position.x, -m_views[i].pose.position.y, -m_views[i].pose.position.z);
-							XrMatrix4x4f_Multiply(&appState.Scene.viewMatrices[i], &transposedRotation, &translation);
+							XrMatrix4x4f_Multiply(&appState.ViewMatrices[i], &transposedRotation, &translation);
+							XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, m_views[i].fov, 0.05f, 100.0f);
 						}
 						
 						XrQuaternionf& first = m_views[0].pose.orientation;
@@ -2238,6 +2249,8 @@ void android_main(struct android_app* app)
 							}
 							if (width > 0 && height > 0)
 							{
+								auto newSkybox = new Skybox { };
+								
 								XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 								swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
 								swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
@@ -2248,18 +2261,18 @@ void android_main(struct android_app* app)
 								swapchainCreateInfo.faceCount = 6;
 								swapchainCreateInfo.arraySize = 1;
 								swapchainCreateInfo.mipCount = 1;
-								CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.Scene.skybox));
+								CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &newSkybox->swapchain));
 
 								uint32_t imageCount;
-								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox, 0, &imageCount, nullptr));
-								appState.Scene.skyboxVulkanImages.resize(imageCount);
-								appState.Scene.skyboxImages.resize(imageCount);
+								CHECK_XRCMD(xrEnumerateSwapchainImages(newSkybox->swapchain, 0, &imageCount, nullptr));
+								newSkybox->vulkanImages.resize(imageCount);
+								newSkybox->images.resize(imageCount);
 								for (auto i = 0; i < imageCount; i++)
 								{
-									appState.Scene.skyboxVulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
-									appState.Scene.skyboxImages[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.Scene.skyboxVulkanImages[i]);
+									newSkybox->vulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
+									newSkybox->images[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&newSkybox->vulkanImages[i]);
 								}
-								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox, imageCount, &imageCount, appState.Scene.skyboxImages[0]));
+								CHECK_XRCMD(xrEnumerateSwapchainImages(newSkybox->swapchain, imageCount, &imageCount, newSkybox->images[0]));
 								
 								VkBufferCreateInfo bufferCreateInfo { };
 								bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -2284,14 +2297,14 @@ void android_main(struct android_app* app)
 								region.imageExtent.height = height;
 								region.imageExtent.depth = 1;
 
-								CHECK_XRCMD(xrAcquireSwapchainImage(appState.Scene.skybox, &acquireInfo, &swapchainImageIndex));
+								CHECK_XRCMD(xrAcquireSwapchainImage(newSkybox->swapchain, &acquireInfo, &swapchainImageIndex));
 
-								CHECK_XRCMD(xrWaitSwapchainImage(appState.Scene.skybox, &waitInfo));
+								CHECK_XRCMD(xrWaitSwapchainImage(newSkybox->swapchain, &waitInfo));
 
 								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 								
-								auto image = appState.Scene.skyboxVulkanImages[swapchainImageIndex].image;
+								auto image = newSkybox->vulkanImages[swapchainImageIndex].image;
 								imageMemoryBarrier.image = image;
 								
 								for (auto i = 0; i < 6; i++)
@@ -2361,7 +2374,7 @@ void android_main(struct android_app* app)
 
 								CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 
-								CHECK_XRCMD(xrReleaseSwapchainImage(appState.Scene.skybox, &releaseInfo));
+								CHECK_XRCMD(xrReleaseSwapchainImage(newSkybox->swapchain, &releaseInfo));
 
 								vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
 								for (auto i = 0; i < 6; i++)
@@ -2369,6 +2382,9 @@ void android_main(struct android_app* app)
 									vkDestroyBuffer(appState.Device, buffers[i], nullptr);
 									vkFreeMemory(appState.Device, memoryBlocks[i], nullptr);
 								}
+
+								newSkybox->next = appState.Scene.skybox;
+								appState.Scene.skybox = newSkybox;
 							}
 						}
 						if (appState.Scene.skybox != VK_NULL_HANDLE)
@@ -2382,7 +2398,7 @@ void android_main(struct android_app* app)
 							XrMatrix4x4f_GetRotation(&skyboxLayer.orientation, &transform);
 
 							skyboxLayer.space = appSpace;
-							skyboxLayer.swapchain = appState.Scene.skybox;
+							skyboxLayer.swapchain = appState.Scene.skybox->swapchain;
 
 							layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&skyboxLayer));
 						}
@@ -2562,6 +2578,8 @@ void android_main(struct android_app* app)
 			xrDestroyActionSet(appState.ActionSet);
 		}
 
+		Skybox::DeleteAll(appState);
+		
 		if (appState.Keyboard.Screen.Swapchain != XR_NULL_HANDLE)
 		{
 			xrDestroySwapchain(appState.Keyboard.Screen.Swapchain);

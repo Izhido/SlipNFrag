@@ -96,4 +96,6 @@ struct AppState
 	std::vector<XrSpace> HandSpaces;
 	std::vector<float> HandScales;
 	std::vector<XrBool32> ActiveHands;
+	std::vector<XrMatrix4x4f> ViewMatrices;
+	std::vector<XrMatrix4x4f> ProjectionMatrices;
 };
