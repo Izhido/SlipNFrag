@@ -214,6 +214,23 @@ void Input::Handle(AppState& appState, bool keyPressHandled)
 			{
 				AddKeyInput(K_ENTER, false);
 			}
+			// The following actions are performed only to reset any in-game actions
+			// after a transition occurs - this is why only currentState == false is checked:
+			if (!keyPressHandled)
+			{
+				actionGetInfo.action = appState.FireAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync && !booleanActionState.currentState)
+				{
+					AddCommandInput("-attack");
+				}
+			}
+			actionGetInfo.action = appState.RunAction;
+			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync && !booleanActionState.currentState)
+			{
+				AddCommandInput("-speed");
+			}
 		}
 	}
 	else if (appState.Mode == AppWorldMode)

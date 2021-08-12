@@ -1389,8 +1389,6 @@ void android_main(struct android_app* app)
 								Throw(Fmt("Sys_Error: %s", sys_errormessage.c_str()), nullptr, FILE_AND_LINE);
 							}
 						}
-						//appState.LeftController.PreviousButtons = 0;
-						//appState.RightController.PreviousButtons = 0;
 						appState.DefaultFOV = (int)Cvar_VariableValue("fov");
 						r_skybox_as_rgba = true;
 						appState.EngineThread = std::thread(runEngine, &appState, app);
