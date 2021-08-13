@@ -22,6 +22,8 @@
 #include "Constants.h"
 #include "DirectRect.h"
 #include "CylinderProjection.h"
+#include <pthread.h>
+#include <sys/prctl.h>
 
 std::string GetXrVersionString(XrVersion ver)
 {
@@ -297,6 +299,8 @@ void android_main(struct android_app* app)
 {
 	JNIEnv* Env;
 	app->activity->vm->AttachCurrentThread(&Env, nullptr);
+
+	prctl(PR_SET_NAME, (long)"android_main", 0, 0, 0);
 
 	try
 	{
@@ -1854,6 +1858,11 @@ void android_main(struct android_app* app)
 					{
 						worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
 					}
+					else
+					{
+						worldLayer.layerFlags = 0;
+					}
+					worldLayer.layerFlags |= XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
 					
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 

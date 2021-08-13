@@ -493,7 +493,7 @@ void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 			d_lists.viewmodels16.emplace_back();
 		}
 		auto& viewmodel = d_lists.viewmodels16[d_lists.last_viewmodel16];
-		D_FillAliasData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
+		D_FillViewmodelData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
 		return;
 	}
 	d_lists.last_viewmodel32++;
@@ -502,7 +502,7 @@ void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 		d_lists.viewmodels32.emplace_back();
 	}
 	auto& viewmodel = d_lists.viewmodels32[d_lists.last_viewmodel32];
-	D_FillAliasData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
+	D_FillViewmodelData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
 }
 
 void D_AddParticleToLists (particle_t* part)

@@ -4,10 +4,13 @@
 #include "sys_ovr.h"
 #include "Input.h"
 #include "r_local.h"
+#include <pthread.h>
+#include <sys/prctl.h>
 //#include <android/log.h>
 
 void runEngine(AppState* appState, struct android_app* app)
 {
+	prctl(PR_SET_NAME, (long)"runEngine", 0, 0, 0);
 	while (!appState->EngineThreadStopped)
 	{
 		if (!host_initialized)

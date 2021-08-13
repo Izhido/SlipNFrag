@@ -1137,8 +1137,9 @@ void CL_ParseServerMessage (void)
 		Con_Printf ("%i ",net_message.cursize);
 	else if (cl_shownet.value == 2)
 		Con_Printf ("------------------\n");
-	
-	cl.onground = false;	// unless the server says otherwise	
+
+	// Commenting out the following line seemed to help smooth things out with jumping animations:
+	//cl.onground = false;	// unless the server says otherwise
 //
 // parse the message
 //
