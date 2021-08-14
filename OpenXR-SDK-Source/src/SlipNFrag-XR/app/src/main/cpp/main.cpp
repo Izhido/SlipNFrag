@@ -323,8 +323,6 @@ void android_main(struct android_app* app)
 		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = nullptr;
 		VkDebugReportCallbackEXT vulkanDebugReporter = VK_NULL_HANDLE;
 
-		std::vector<XrView> m_views;
-		
 		PFN_xrInitializeLoaderKHR initializeLoader = nullptr;
 		XrResult res = xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*) (&initializeLoader));
 		CHECK_XRRESULT(res, "xrGetInstanceProcAddr");
@@ -406,8 +404,6 @@ void android_main(struct android_app* app)
 
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Instance RuntimeName=%s RuntimeVersion=%s", instanceProperties.runtimeName, GetXrVersionString(instanceProperties.runtimeVersion).c_str());
 
-		auto m_viewConfigType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-
 		XrSystemId systemId = XR_NULL_SYSTEM_ID;
 		XrSystemGetInfo systemInfo { XR_TYPE_SYSTEM_GET_INFO };
 		systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
@@ -423,10 +419,12 @@ void android_main(struct android_app* app)
 		CHECK_XRCMD(xrEnumerateViewConfigurations(instance, systemId, viewConfigTypeCount, &viewConfigTypeCount, viewConfigTypes.data()));
 		CHECK((uint32_t) viewConfigTypes.size() == viewConfigTypeCount);
 
+		auto viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available View Configuration Types: (%d)", viewConfigTypeCount);
 		for (XrViewConfigurationType viewConfigType : viewConfigTypes)
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View Configuration Type: %s %s", to_string(viewConfigType), viewConfigType == m_viewConfigType ? "(Selected)" : "");
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View Configuration Type: %s %s", to_string(viewConfigType), viewConfigType == viewConfigurationType ? "(Selected)" : "");
 
 			XrViewConfigurationProperties viewConfigProperties { XR_TYPE_VIEW_CONFIGURATION_PROPERTIES };
 			CHECK_XRCMD(xrGetViewConfigurationProperties(instance, systemId, viewConfigType, &viewConfigProperties));
@@ -1000,7 +998,7 @@ void android_main(struct android_app* app)
 
 		XrSpace keyboardSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-		referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
+		referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit * 5 / 6;
 		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &keyboardSpace));
 
 		XrSpace consoleKeyboardSpace = XR_NULL_HANDLE;
@@ -1015,13 +1013,11 @@ void android_main(struct android_app* app)
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Tracking Properties: OrientationTracking=%s PositionTracking=%s", (systemProperties.trackingProperties.orientationTracking == XR_TRUE ? "True" : "False"), (systemProperties.trackingProperties.positionTracking == XR_TRUE ? "True" : "False"));
 
-		CHECK_MSG(m_viewConfigType == XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, "Unsupported view configuration type");
-
 		uint32_t viewCount;
-		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, m_viewConfigType, 0, &viewCount, nullptr));
+		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigurationType, 0, &viewCount, nullptr));
 		std::vector<XrViewConfigurationView> configViews;
 		configViews.resize(viewCount, { XR_TYPE_VIEW_CONFIGURATION_VIEW });
-		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, m_viewConfigType, viewCount, &viewCount, configViews.data()));
+		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigurationType, viewCount, &viewCount, configViews.data()));
 
 		for (auto configView : configViews)
 		{
@@ -1031,7 +1027,7 @@ void android_main(struct android_app* app)
 			break;
 		}
 
-		m_views.resize(viewCount, { XR_TYPE_VIEW });
+		std::vector<XrView> views(viewCount, { XR_TYPE_VIEW });
 
 		uint32_t swapchainFormatCount;
 		CHECK_XRCMD(xrEnumerateSwapchainFormats(appState.Session, 0, &swapchainFormatCount, nullptr));
@@ -1229,7 +1225,7 @@ void android_main(struct android_app* app)
 							{
 								CHECK(appState.Session != XR_NULL_HANDLE);
 								XrSessionBeginInfo sessionBeginInfo { XR_TYPE_SESSION_BEGIN_INFO };
-								sessionBeginInfo.primaryViewConfigurationType = m_viewConfigType;
+								sessionBeginInfo.primaryViewConfigurationType = viewConfigurationType;
 								CHECK_XRCMD(xrBeginSession(appState.Session, &sessionBeginInfo));
 								sessionRunning = true;
 								break;
@@ -1395,6 +1391,7 @@ void android_main(struct android_app* app)
 						}
 						appState.DefaultFOV = (int)Cvar_VariableValue("fov");
 						r_skybox_as_rgba = true;
+						d_skipfade = true;
 						appState.EngineThread = std::thread(runEngine, &appState, app);
 					}
 					if (appState.Mode == AppScreenMode)
@@ -1480,15 +1477,15 @@ void android_main(struct android_app* app)
 			if (frameState.shouldRender)
 			{
 				XrViewState viewState { XR_TYPE_VIEW_STATE };
-				uint32_t viewCapacityInput = (uint32_t) m_views.size();
+				uint32_t viewCapacityInput = (uint32_t)views.size();
 				uint32_t viewCountOutput;
 
 				XrViewLocateInfo viewLocateInfo { XR_TYPE_VIEW_LOCATE_INFO };
-				viewLocateInfo.viewConfigurationType = m_viewConfigType;
+				viewLocateInfo.viewConfigurationType = viewConfigurationType;
 				viewLocateInfo.displayTime = frameState.predictedDisplayTime;
 				viewLocateInfo.space = appSpace;
 
-				res = xrLocateViews(appState.Session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, m_views.data());
+				res = xrLocateViews(appState.Session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, views.data());
 				CHECK_XRRESULT(res, "xrLocateViews");
 				if ((viewState.viewStateFlags & (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT)) == (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT))
 				{
@@ -1540,13 +1537,13 @@ void android_main(struct android_app* app)
 						for (size_t i = 0; i < viewCountOutput; i++)
 						{
 							XrMatrix4x4f rotation;
-							XrMatrix4x4f_CreateFromQuaternion(&rotation, &m_views[i].pose.orientation);
+							XrMatrix4x4f_CreateFromQuaternion(&rotation, &views[i].pose.orientation);
 							XrMatrix4x4f transposedRotation;
 							XrMatrix4x4f_Transpose(&transposedRotation, &rotation);
 							XrMatrix4x4f translation;
-							XrMatrix4x4f_CreateTranslation(&translation, -m_views[i].pose.position.x, -m_views[i].pose.position.y, -m_views[i].pose.position.z);
+							XrMatrix4x4f_CreateTranslation(&translation, -views[i].pose.position.x, -views[i].pose.position.y, -views[i].pose.position.z);
 							XrMatrix4x4f_Multiply(&appState.ViewMatrices[i], &transposedRotation, &translation);
-							XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, m_views[i].fov, 0.05f, 100.0f);
+							XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, views[i].fov, 0.05f, 0);
 						}
 
 						{
@@ -1624,7 +1621,7 @@ void android_main(struct android_app* app)
 							{
 								for (size_t i = 0; i < viewCountOutput; i++)
 								{
-									auto fov = (m_views[i].fov.angleRight - m_views[i].fov.angleLeft) * 180 / M_PI;
+									auto fov = (views[i].fov.angleRight - views[i].fov.angleLeft) * 180 / M_PI;
 									appState.FOV += fov;
 								}
 								appState.FOV /= viewCountOutput;
@@ -1646,8 +1643,8 @@ void android_main(struct android_app* app)
 					for (auto i = 0; i < viewCountOutput; i++)
 					{
 						projectionLayerViews[i] = { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
-						projectionLayerViews[i].pose = m_views[i].pose;
-						projectionLayerViews[i].fov = m_views[i].fov;
+						projectionLayerViews[i].pose = views[i].pose;
+						projectionLayerViews[i].fov = views[i].fov;
 						projectionLayerViews[i].subImage.swapchain = swapchain;
 						projectionLayerViews[i].subImage.imageRect.extent.width = appState.SwapchainWidth;
 						projectionLayerViews[i].subImage.imageRect.extent.height = appState.SwapchainHeight;
@@ -1870,49 +1867,106 @@ void android_main(struct android_app* app)
 					{
 						if (appState.Mode == AppScreenMode)
 						{
-							std::lock_guard<std::mutex> lock(appState.RenderMutex);
-							auto console = con_buffer.data();
-							auto previousConsole = console;
-							auto screen = vid_buffer.data();
-							auto target = appState.Screen.Data.data();
-							auto y = 0;
-							while (y < vid_height)
+							if (key_dest == key_game)
 							{
-								auto x = 0;
-								while (x < vid_width)
+								std::lock_guard<std::mutex> lock(appState.RenderMutex);
+								auto console = con_buffer.data();
+								auto previousConsole = console;
+								auto screen = vid_buffer.data();
+								auto target = appState.Screen.Data.data();
+								auto y = 0;
+								while (y < vid_height)
 								{
-									auto entry = *console++;
-									if (entry == 255)
+									auto x = 0;
+									while (x < vid_width)
 									{
-										do
+										auto entry = *console++;
+										if (entry == 255)
 										{
-											*target++ = d_8to24table[*screen++];
-											x++;
-										} while ((x % Constants::screenToConsoleMultiplier) != 0);
+											do
+											{
+												*target++ = d_8to24table[*screen++];
+												x++;
+											} while ((x % Constants::screenToConsoleMultiplier) != 0);
+										}
+										else
+										{
+											auto converted = d_8to24table[entry];
+											do
+											{
+												*target++ = converted;
+												screen++;
+												x++;
+											} while ((x % Constants::screenToConsoleMultiplier) != 0);
+										}
+									}
+									y++;
+									if ((y % Constants::screenToConsoleMultiplier) == 0)
+									{
+										previousConsole = console;
 									}
 									else
 									{
-										auto converted = d_8to24table[entry];
-										do
-										{
-											*target++ = converted;
-											screen++;
-											x++;
-										} while ((x % Constants::screenToConsoleMultiplier) != 0);
+										console = previousConsole;
 									}
 								}
-								y++;
-								if ((y % Constants::screenToConsoleMultiplier) == 0)
+							}
+							else
+							{
+								std::lock_guard<std::mutex> lock(appState.RenderMutex);
+								auto console = con_buffer.data();
+								auto previousConsole = console;
+								auto screen = vid_buffer.data();
+								auto target = appState.Screen.Data.data();
+								auto black = d_8to24table[0];
+								auto y = 0;
+								while (y < vid_height)
 								{
-									previousConsole = console;
-								}
-								else
-								{
-									console = previousConsole;
+									auto t = (y & 1) << 1;
+									auto x = 0;
+									while (x < vid_width)
+									{
+										auto entry = *console++;
+										if (entry == 255)
+										{
+											do
+											{
+												if ((x & 3) == t)
+												{
+													*target++ = d_8to24table[*screen++];
+												}
+												else
+												{
+													*target++ = black;
+													screen++;
+												}
+												x++;
+											} while ((x % Constants::screenToConsoleMultiplier) != 0);
+										}
+										else
+										{
+											auto converted = d_8to24table[entry];
+											do
+											{
+												*target++ = converted;
+												screen++;
+												x++;
+											} while ((x % Constants::screenToConsoleMultiplier) != 0);
+										}
+									}
+									y++;
+									if ((y % Constants::screenToConsoleMultiplier) == 0)
+									{
+										previousConsole = console;
+									}
+									else
+									{
+										console = previousConsole;
+									}
 								}
 							}
 						}
-						else
+						else if (key_dest == key_game)
 						{
 							std::lock_guard<std::mutex> lock(appState.RenderMutex);
 							auto source = con_buffer.data();
@@ -1978,6 +2032,116 @@ void android_main(struct android_app* app)
 								while (x < appState.ScreenWidth)
 								{
 									*target++ = 0;
+									x++;
+								}
+								y++;
+							}
+						}
+						else
+						{
+							std::lock_guard<std::mutex> lock(appState.RenderMutex);
+							auto source = con_buffer.data();
+							auto previousSource = source;
+							auto target = appState.Screen.Data.data();
+							auto black = d_8to24table[0];
+							auto y = 0;
+							auto limit = appState.ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
+							while (y < limit)
+							{
+								auto t = (y & 1) << 1;
+								auto x = 0;
+								while (x < appState.ScreenWidth)
+								{
+									auto entry = *source++;
+									if (entry == 255)
+									{
+										do
+										{
+											if ((x & 3) == t)
+											{
+												*target++ = 0;
+											}
+											else
+											{
+												*target++ = black;
+											}
+											x++;
+										} while ((x % Constants::screenToConsoleMultiplier) != 0);
+									}
+									else
+									{
+										auto converted = d_8to24table[entry];
+										do
+										{
+											*target++ = converted;
+											x++;
+										} while ((x % Constants::screenToConsoleMultiplier) != 0);
+									}
+								}
+								y++;
+								if ((y % Constants::screenToConsoleMultiplier) == 0)
+								{
+									previousSource = source;
+								}
+								else
+								{
+									source = previousSource;
+								}
+							}
+							limit = appState.ScreenHeight - SBAR_HEIGHT - 24;
+							while (y < limit)
+							{
+								auto t = (y & 1) << 1;
+								auto x = 0;
+								while (x < appState.ScreenWidth)
+								{
+									if ((x & 3) == t)
+									{
+										*target++ = 0;
+									}
+									else
+									{
+										*target++ = black;
+									}
+									x++;
+								}
+								y++;
+							}
+							limit = appState.ScreenWidth / Constants::screenToConsoleMultiplier;
+							while (y < appState.ScreenHeight)
+							{
+								auto t = (y & 1) << 1;
+								auto x = 0;
+								while (x < limit)
+								{
+									auto entry = *source++;
+									if (entry == 255)
+									{
+										if ((x & 3) == t)
+										{
+											*target++ = 0;
+										}
+										else
+										{
+											*target++ = black;
+										}
+									}
+									else
+									{
+										*target++ = d_8to24table[entry];
+									}
+									x++;
+								}
+								while (x < appState.ScreenWidth)
+								{
+									if ((x & 3) == t)
+									{
+										*target++ = 0;
+									}
+									else
+									{
+										*target++ = black;
+									}
 									x++;
 								}
 								y++;
@@ -2195,7 +2359,7 @@ void android_main(struct android_app* app)
 						{
 							keyboardLayer.layerFlags = 0;
 							keyboardLayer.pose = { };
-							keyboardLayer.pose.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
+							keyboardLayer.pose.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit * 5 / 6;
 							keyboardLayer.pose.orientation.w = 1;
 
 							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardLayer));

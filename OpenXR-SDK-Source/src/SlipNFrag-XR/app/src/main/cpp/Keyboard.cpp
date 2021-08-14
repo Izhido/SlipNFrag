@@ -356,7 +356,7 @@ bool Keyboard::Handle(AppState& appState)
 	}
 	else
 	{
-		appState.KeyboardHitOffsetY = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit / 6;
+		appState.KeyboardHitOffsetY = -CylinderProjection::screenLowerLimit;
 	}
 	leftHighlighted = -1;
 	if (appState.LeftController.PoseIsValid)

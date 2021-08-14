@@ -3013,7 +3013,7 @@ void M_Draw (void)
 			S_ExtraUpdate ();
 			VID_LockBuffer ();
 		}
-		else
+		else if (!d_skipfade)
 			Draw_FadeScreen ();
 
 		scr_fullupdate = 0;

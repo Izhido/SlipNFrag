@@ -981,7 +981,10 @@ void SCR_UpdateScreen (void)
 	if (scr_drawdialog)
 	{
 		Sbar_Draw ();
-		Draw_FadeScreen ();
+		if (!d_skipfade)
+		{
+			Draw_FadeScreen ();
+		}
 		SCR_DrawNotifyString ();
 		scr_copyeverything = true;
 	}

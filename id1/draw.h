@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern	qpic_t		*draw_disc;	// also used on sbar
 
+extern qboolean d_skipfade;
+
 void Draw_Init (void);
 void Draw_Character (int x, int y, int num);
 void Draw_CharacterOnScreen (int x, int y, int num);

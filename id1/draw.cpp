@@ -44,6 +44,7 @@ std::string sys_version;
 
 std::unordered_map<std::string, qpic_t*> menu_cachepics;
 
+qboolean d_skipfade = false;
 
 qpic_t	*Draw_PicFromWad (const char *name)
 {
