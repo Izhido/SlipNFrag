@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-85.33 -85.33 1194.66 1194.66">
+    <path stroke="lightgray" stroke-width="16" fill="dimgray" d="M 24 40 A 16 16 0 0 1 40 24 h 944 A 16 16 0 0 1 1000 40 v 944 A 16 16 0 0 1 984 1000 h -944 A 16 16 0 0 1 24 984 v -944" />
+    <text font-family="Arial" font-size="584" x="64" y="724" fill="gold">S</text>
+    <text font-family="Arial" font-size="196" x="480" y="576" fill="white">&amp;</text>
+    <text font-family="Arial" font-size="584" x="608" y="724" fill="crimson">F</text>
+</svg>

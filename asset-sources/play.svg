@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150">
+    <circle stroke="gray" stroke-width="3" fill="transparent" cx="75" cy="75" r="73.5" />
+    <path stroke="gray" stroke-width="3" fill="transparent" d="M 55 45 L 105 75 L 55 105 z" />
+    <text font-family="Arial" font-size="24" x="47.5" y="130" fill="gray">A + X</text>
+</svg>
