@@ -34,6 +34,12 @@ struct AppState
 	Screen Screen;
 	Keyboard Keyboard;
 	float KeyboardHitOffsetY;
+	XrSwapchain LeftArrowsSwapchain;
+	std::vector<XrSwapchainImageVulkan2KHR> LeftArrowsVulkanImages;
+	std::vector<XrSwapchainImageBaseHeader*> LeftArrowsImages;
+	XrSwapchain RightArrowsSwapchain;
+	std::vector<XrSwapchainImageVulkan2KHR> RightArrowsVulkanImages;
+	std::vector<XrSwapchainImageBaseHeader*> RightArrowsImages;
 	Scene Scene;
 	std::vector<PerImage> PerImage;
 	int EyeTextureWidth;

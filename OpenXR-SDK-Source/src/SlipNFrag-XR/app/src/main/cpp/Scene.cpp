@@ -4,6 +4,7 @@
 #include "ImageAsset.h"
 #include "PipelineAttributes.h"
 #include "Constants.h"
+#include "MemoryAllocateInfo.h"
 
 void Scene::CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height)
 {
@@ -134,34 +135,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	floorImage.Close();
 	size_t offset = floorImage.width * floorImage.height;
 	memcpy((uint32_t*)stagingBuffer.mapped + offset, controller.image, controller.width * controller.height * sizeof(uint32_t));
-	/*offset += controller.width * controller.height;
-	ImageAsset leftArrows;
-	leftArrows.Open("leftarrows.png", app);
-	appState.LeftArrows.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, COLOR_FORMAT, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
-	appState.LeftArrows.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.LeftArrows.SwapChain, 0);
-	CopyImage(appState, leftArrows.image, (uint32_t*)stagingBuffer.mapped + offset + ((appState.ScreenHeight - leftArrows.height) * appState.ScreenWidth + appState.ScreenWidth - leftArrows.width) / 2, leftArrows.width, leftArrows.height);
-	leftArrows.Close();
-	offset += appState.ScreenWidth * appState.ScreenHeight;
-	ImageAsset rightArrows;
-	rightArrows.Open("rightarrows.png", app);
-	appState.RightArrows.SwapChain = vrapi_CreateTextureSwapChain3(VRAPI_TEXTURE_TYPE_2D, COLOR_FORMAT, appState.ScreenWidth, appState.ScreenHeight, 1, 1);
-	appState.RightArrows.Image = vrapi_GetTextureSwapChainBufferVulkan(appState.RightArrows.SwapChain, 0);
-	CopyImage(appState, rightArrows.image, (uint32_t*)stagingBuffer.mapped + offset + ((appState.ScreenHeight - rightArrows.height) * appState.ScreenWidth + appState.ScreenWidth - rightArrows.width) / 2, rightArrows.width, rightArrows.height);
-	rightArrows.Close();*/
 	offset = 0;
 	appState.Scene.floorTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
 	offset += floorImage.width * floorImage.height * sizeof(uint32_t);
 	appState.Scene.controllerTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
-	offset += controller.width * controller.height * sizeof(uint32_t);
-	/*imageMemoryBarrier.image = appState.LeftArrows.Image;
-	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	region.bufferOffset = offset;
-	vkCmdCopyBufferToImage(setupCommandBuffer, stagingBuffer.buffer, appState.LeftArrows.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
-	offset += appState.ScreenWidth * appState.ScreenHeight * sizeof(uint32_t);
-	imageMemoryBarrier.image = appState.RightArrows.Image;
-	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier));
-	region.bufferOffset = offset;
-	vkCmdCopyBufferToImage(setupCommandBuffer, stagingBuffer.buffer, appState.RightArrows.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));*/
 	CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
 	CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
 	CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
@@ -173,6 +150,145 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CopyImage(appState, noGameData.image, appState.NoGameDataData.data() + ((appState.ScreenHeight - noGameData.height) * appState.ScreenWidth + appState.ScreenWidth - noGameData.width) / 2, noGameData.width, noGameData.height);
 	noGameData.Close();
 	AddBorder(appState, appState.NoGameDataData);
+
+	swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
+	swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
+	swapchainCreateInfo.width = 450;
+	swapchainCreateInfo.height = 150;
+	CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.LeftArrowsSwapchain));
+
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.LeftArrowsSwapchain, 0, &imageCount, nullptr));
+	appState.LeftArrowsVulkanImages.resize(imageCount);
+	appState.LeftArrowsImages.resize(imageCount);
+	for (auto i = 0; i < imageCount; i++)
+	{
+		appState.LeftArrowsVulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
+		appState.LeftArrowsImages[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.LeftArrowsVulkanImages[i]);
+	}
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.LeftArrowsSwapchain, imageCount, &imageCount, appState.LeftArrowsImages[0]));
+
+	VkBufferCreateInfo bufferCreateInfo { };
+	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCreateInfo.size = swapchainCreateInfo.width * swapchainCreateInfo.height * 4;
+	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	VkBuffer buffer;
+	VkMemoryRequirements memoryRequirements;
+	VkMemoryAllocateInfo memoryAllocateInfo { };
+	VkDeviceMemory memoryBlock;
+	VkImageMemoryBarrier imageMemoryBarrier { };
+	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageMemoryBarrier.subresourceRange.levelCount = 1;
+	imageMemoryBarrier.subresourceRange.layerCount = 1;
+	VkBufferImageCopy region { };
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.layerCount = 1;
+	region.imageExtent.width = swapchainCreateInfo.width;
+	region.imageExtent.height = swapchainCreateInfo.height;
+	region.imageExtent.depth = 1;
+
+	XrSwapchainImageAcquireInfo acquireInfo { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+	uint32_t swapchainImageIndex;
+	CHECK_XRCMD(xrAcquireSwapchainImage(appState.LeftArrowsSwapchain, &acquireInfo, &swapchainImageIndex));
+
+	XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
+	waitInfo.timeout = XR_INFINITE_DURATION;
+	CHECK_XRCMD(xrWaitSwapchainImage(appState.LeftArrowsSwapchain, &waitInfo));
+
+	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
+	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
+
+	auto image = appState.LeftArrowsVulkanImages[swapchainImageIndex].image;
+	imageMemoryBarrier.image = image;
+
+	CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffer));
+	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
+	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo);
+	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memoryBlock));
+	CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, memoryBlock, 0));
+	void* mapped;
+	CHECK_VKCMD(vkMapMemory(appState.Device, memoryBlock, 0, memoryRequirements.size, 0, &mapped));
+
+	ImageAsset leftArrows;
+	leftArrows.Open("leftarrows.png", app);
+	memcpy(mapped, leftArrows.image, leftArrows.width * leftArrows.height * leftArrows.components);
+	
+	vkUnmapMemory(appState.Device, memoryBlock);
+	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
+	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+	region.imageSubresource.baseArrayLayer = 0;
+	vkCmdCopyBufferToImage(setupCommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
+	CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
+
+	CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
+
+	XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
+	CHECK_XRCMD(xrReleaseSwapchainImage(appState.LeftArrowsSwapchain, &releaseInfo));
+
+	vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
+	vkDestroyBuffer(appState.Device, buffer, nullptr);
+	vkFreeMemory(appState.Device, memoryBlock, nullptr);
+
+	CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.RightArrowsSwapchain));
+
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.RightArrowsSwapchain, 0, &imageCount, nullptr));
+	appState.RightArrowsVulkanImages.resize(imageCount);
+	appState.RightArrowsImages.resize(imageCount);
+	for (auto i = 0; i < imageCount; i++)
+	{
+		appState.RightArrowsVulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
+		appState.RightArrowsImages[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.RightArrowsVulkanImages[i]);
+	}
+	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.RightArrowsSwapchain, imageCount, &imageCount, appState.RightArrowsImages[0]));
+ 
+ 	bufferCreateInfo.size = swapchainCreateInfo.width * swapchainCreateInfo.height * 4;
+	region.imageExtent.width = swapchainCreateInfo.width;
+	region.imageExtent.height = swapchainCreateInfo.height;
+
+	CHECK_XRCMD(xrAcquireSwapchainImage(appState.RightArrowsSwapchain, &acquireInfo, &swapchainImageIndex));
+
+	CHECK_XRCMD(xrWaitSwapchainImage(appState.RightArrowsSwapchain, &waitInfo));
+
+	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
+	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
+
+	image = appState.RightArrowsVulkanImages[swapchainImageIndex].image;
+	imageMemoryBarrier.image = image;
+
+	CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffer));
+	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
+	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo);
+	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memoryBlock));
+	CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, memoryBlock, 0));
+
+	CHECK_VKCMD(vkMapMemory(appState.Device, memoryBlock, 0, memoryRequirements.size, 0, &mapped));
+
+	ImageAsset rightArrows;
+	rightArrows.Open("rightarrows.png", app);
+	memcpy(mapped, rightArrows.image, rightArrows.width * rightArrows.height * rightArrows.components);
+
+	vkUnmapMemory(appState.Device, memoryBlock);
+	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
+	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+	region.imageSubresource.baseArrayLayer = 0;
+	vkCmdCopyBufferToImage(setupCommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
+	CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
+
+	CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
+
+	CHECK_XRCMD(xrReleaseSwapchainImage(appState.RightArrowsSwapchain, &releaseInfo));
+
+	vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
+	vkDestroyBuffer(appState.Device, buffer, nullptr);
+	vkFreeMemory(appState.Device, memoryBlock, nullptr);
+
 	CreateShader(appState, app, "shaders/surface.vert.spv", &surfaceVertex);
 	CreateShader(appState, app, "shaders/surface.frag.spv", &surfaceFragment);
 	CreateShader(appState, app, "shaders/fence.frag.spv", &fenceFragment);
@@ -767,11 +883,6 @@ void Scene::Reset()
 	usedInLatestSharedMemoryIndexBuffer16 = 0;
 	latestBufferSharedMemory = nullptr;
 	usedInLatestBufferSharedMemory = 0;
-	/*if (skybox != VK_NULL_HANDLE)
-	{
-		vrapi_DestroyTextureSwapChain(skybox);
-		skybox = VK_NULL_HANDLE;
-	}*/
 	aliasIndicesPerKey.clear();
 	indicesPerKey.clear();
 	aliasVerticesPerKey.clear();

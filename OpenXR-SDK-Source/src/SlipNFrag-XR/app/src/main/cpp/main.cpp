@@ -1470,10 +1470,14 @@ void android_main(struct android_app* app)
 
 			XrCompositionLayerCylinderKHR screenLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
 
+			XrCompositionLayerCylinderKHR leftArrowsLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+
+			XrCompositionLayerCylinderKHR rightArrowsLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+
 			XrCompositionLayerCylinderKHR keyboardLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
 
 			XrCompositionLayerCubeKHR skyboxLayer { XR_TYPE_COMPOSITION_LAYER_CUBE_KHR };
-			
+
 			if (frameState.shouldRender)
 			{
 				XrViewState viewState { XR_TYPE_VIEW_STATE };
@@ -1492,140 +1496,138 @@ void android_main(struct android_app* app)
 					CHECK(viewCountOutput == viewCapacityInput);
 					CHECK(viewCountOutput == configViews.size());
 
+					appState.LeftController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
+					appState.LeftController.PoseIsValid = false;
+					res = xrLocateSpace(appState.HandSpaces[0], appSpace, frameState.predictedDisplayTime, &appState.LeftController.SpaceLocation);
+					CHECK_XRRESULT(res, "xrLocateSpace(appState.HandSpaces[0], appSpace)");
+					if (XR_UNQUALIFIED_SUCCESS(res)) 
 					{
-						appState.LeftController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
-						appState.LeftController.PoseIsValid = false;
-						res = xrLocateSpace(appState.HandSpaces[0], appSpace, frameState.predictedDisplayTime, &appState.LeftController.SpaceLocation);
-						CHECK_XRRESULT(res, "xrLocateSpace(appState.HandSpaces[0], appSpace)");
-						if (XR_UNQUALIFIED_SUCCESS(res)) 
+						if ((appState.LeftController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 						{
-							if ((appState.LeftController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+							appState.LeftController.PoseIsValid = true;
+						}
+					} 
+					else if (appState.ActiveHands[0]) 
+					{
+						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate left hand action space in app space: %d", res);
+					}
+
+					appState.RightController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
+					appState.RightController.PoseIsValid = false;
+					res = xrLocateSpace(appState.HandSpaces[1], appSpace, frameState.predictedDisplayTime, &appState.RightController.SpaceLocation);
+					CHECK_XRRESULT(res, "xrLocateSpace(appState.HandSpaces[1], appSpace)");
+					if (XR_UNQUALIFIED_SUCCESS(res))
+					{
+						if ((appState.RightController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+						{
+							appState.RightController.PoseIsValid = true;
+						}
+					}
+					else if (appState.ActiveHands[1])
+					{
+						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate right hand action space in app space: %d", res);
+					}
+
+					if (appState.ViewMatrices.size() != viewCountOutput)
+					{
+						appState.ViewMatrices.resize(viewCountOutput);
+					}
+					if (appState.ProjectionMatrices.size() != viewCountOutput)
+					{
+						appState.ProjectionMatrices.resize(viewCountOutput);
+					}
+
+					for (size_t i = 0; i < viewCountOutput; i++)
+					{
+						XrMatrix4x4f rotation;
+						XrMatrix4x4f_CreateFromQuaternion(&rotation, &views[i].pose.orientation);
+						XrMatrix4x4f transposedRotation;
+						XrMatrix4x4f_Transpose(&transposedRotation, &rotation);
+						XrMatrix4x4f translation;
+						XrMatrix4x4f_CreateTranslation(&translation, -views[i].pose.position.x, -views[i].pose.position.y, -views[i].pose.position.z);
+						XrMatrix4x4f_Multiply(&appState.ViewMatrices[i], &transposedRotation, &translation);
+						XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, views[i].fov, 0.05f, 0);
+					}
+
+					{
+						std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
+						
+						appState.CameraLocation.type = XR_TYPE_SPACE_LOCATION;
+						res = xrLocateSpace(screenSpace, appSpace, frameState.predictedDisplayTime, &appState.CameraLocation);
+						CHECK_XRRESULT(res, "xrLocateSpace(screenSpace, appSpace)");
+						appState.CameraLocationIsValid = (XR_UNQUALIFIED_SUCCESS(res) && (appState.CameraLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT));
+
+						if (appState.CameraLocationIsValid)
+						{
+							auto x = appState.CameraLocation.pose.orientation.x;
+							auto y = appState.CameraLocation.pose.orientation.y;
+							auto z = appState.CameraLocation.pose.orientation.z;
+							auto w = appState.CameraLocation.pose.orientation.w;
+
+							float Q[3] = { x, y, z };
+							float ww = w * w;
+							float Q11 = Q[1] * Q[1];
+							float Q22 = Q[0] * Q[0];
+							float Q33 = Q[2] * Q[2];
+							const float psign = -1;
+							float s2 = psign * 2 * (psign * w * Q[0] + Q[1] * Q[2]);
+							const float singularityRadius = 1e-12;
+							if (s2 < singularityRadius - 1)
 							{
-								appState.LeftController.PoseIsValid = true;
+								appState.Yaw = 0;
+								appState.Pitch = -M_PI / 2;
+								appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
 							}
-						} 
-						else if (appState.ActiveHands[0]) 
-						{
-							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate left hand action space in app space: %d", res);
-						}
-
-						appState.RightController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
-						appState.RightController.PoseIsValid = false;
-						res = xrLocateSpace(appState.HandSpaces[1], appSpace, frameState.predictedDisplayTime, &appState.RightController.SpaceLocation);
-						CHECK_XRRESULT(res, "xrLocateSpace(appState.HandSpaces[1], appSpace)");
-						if (XR_UNQUALIFIED_SUCCESS(res))
-						{
-							if ((appState.RightController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+							else if (s2 > 1 - singularityRadius)
 							{
-								appState.RightController.PoseIsValid = true;
+								appState.Yaw = 0;
+								appState.Pitch = M_PI / 2;
+								appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
+							}
+							else
+							{
+								appState.Yaw = -(atan2(-2 * (w * Q[1] - psign * Q[0] * Q[2]), ww + Q33 - Q11 - Q22));
+								appState.Pitch = asin(s2);
+								appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
 							}
 						}
-						else if (appState.ActiveHands[1])
-						{
-							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate right hand action space in app space: %d", res);
-						}
 
-						if (appState.ViewMatrices.size() != viewCountOutput)
+						auto playerHeight = 32;
+						if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
 						{
-							appState.ViewMatrices.resize(viewCountOutput);
-						}
-						if (appState.ProjectionMatrices.size() != viewCountOutput)
-						{
-							appState.ProjectionMatrices.resize(viewCountOutput);
-						}
-
-						for (size_t i = 0; i < viewCountOutput; i++)
-						{
-							XrMatrix4x4f rotation;
-							XrMatrix4x4f_CreateFromQuaternion(&rotation, &views[i].pose.orientation);
-							XrMatrix4x4f transposedRotation;
-							XrMatrix4x4f_Transpose(&transposedRotation, &rotation);
-							XrMatrix4x4f translation;
-							XrMatrix4x4f_CreateTranslation(&translation, -views[i].pose.position.x, -views[i].pose.position.y, -views[i].pose.position.z);
-							XrMatrix4x4f_Multiply(&appState.ViewMatrices[i], &transposedRotation, &translation);
-							XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, views[i].fov, 0.05f, 0);
-						}
-
-						{
-							std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
-							
-							appState.CameraLocation.type = XR_TYPE_SPACE_LOCATION;
-							res = xrLocateSpace(screenSpace, appSpace, frameState.predictedDisplayTime, &appState.CameraLocation);
-							CHECK_XRRESULT(res, "xrLocateSpace(screenSpace, appSpace)");
-							appState.CameraLocationIsValid = (XR_UNQUALIFIED_SUCCESS(res) && (appState.CameraLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT));
-	
-							if (appState.CameraLocationIsValid)
+							auto player = &cl_entities[cl.viewentity];
+							if (player != nullptr)
 							{
-								auto x = appState.CameraLocation.pose.orientation.x;
-								auto y = appState.CameraLocation.pose.orientation.y;
-								auto z = appState.CameraLocation.pose.orientation.z;
-								auto w = appState.CameraLocation.pose.orientation.w;
-	
-								float Q[3] = { x, y, z };
-								float ww = w * w;
-								float Q11 = Q[1] * Q[1];
-								float Q22 = Q[0] * Q[0];
-								float Q33 = Q[2] * Q[2];
-								const float psign = -1;
-								float s2 = psign * 2 * (psign * w * Q[0] + Q[1] * Q[2]);
-								const float singularityRadius = 1e-12;
-								if (s2 < singularityRadius - 1)
+								auto model = player->model;
+								if (model != nullptr)
 								{
-									appState.Yaw = 0;
-									appState.Pitch = -M_PI / 2;
-									appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
-								}
-								else if (s2 > 1 - singularityRadius)
-								{
-									appState.Yaw = 0;
-									appState.Pitch = M_PI / 2;
-									appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
-								}
-								else
-								{
-									appState.Yaw = -(atan2(-2 * (w * Q[1] - psign * Q[0] * Q[2]), ww + Q33 - Q11 - Q22));
-									appState.Pitch = asin(s2);
-									appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
-								}
-							}
-	
-							auto playerHeight = 32;
-							if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
-							{
-								auto player = &cl_entities[cl.viewentity];
-								if (player != nullptr)
-								{
-									auto model = player->model;
-									if (model != nullptr)
-									{
-										playerHeight = model->maxs[1] - model->mins[1];
-									}
+									playerHeight = model->maxs[1] - model->mins[1];
 								}
 							}
+						}
 
-							XrSpaceLocation spaceLocation { XR_TYPE_SPACE_LOCATION };
-							res = xrLocateSpace(worldSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
+						XrSpaceLocation spaceLocation { XR_TYPE_SPACE_LOCATION };
+						res = xrLocateSpace(worldSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
 
-							appState.DistanceToFloor = spaceLocation.pose.position.y;
-							appState.Scale = -spaceLocation.pose.position.y / playerHeight;
+						appState.DistanceToFloor = spaceLocation.pose.position.y;
+						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
 
-							appState.ViewTransformX = -appState.EngineViewOriginX * appState.Scale;
-							appState.ViewTransformY = -appState.EngineViewOriginZ * appState.Scale;
-							appState.ViewTransformZ = appState.EngineViewOriginY * appState.Scale;
+						appState.ViewTransformX = -appState.EngineViewOriginX * appState.Scale;
+						appState.ViewTransformY = -appState.EngineViewOriginZ * appState.Scale;
+						appState.ViewTransformZ = appState.EngineViewOriginY * appState.Scale;
 
-							appState.ViewmodelForwardX = appState.EngineForwardX / appState.Scale;
-							appState.ViewmodelForwardY = appState.EngineForwardZ / appState.Scale;
-							appState.ViewmodelForwardZ = -appState.EngineForwardY / appState.Scale;
+						appState.ViewmodelForwardX = appState.EngineForwardX / appState.Scale;
+						appState.ViewmodelForwardY = appState.EngineForwardZ / appState.Scale;
+						appState.ViewmodelForwardZ = -appState.EngineForwardY / appState.Scale;
 
-							if (appState.FOV == 0)
+						if (appState.FOV == 0)
+						{
+							for (size_t i = 0; i < viewCountOutput; i++)
 							{
-								for (size_t i = 0; i < viewCountOutput; i++)
-								{
-									auto fov = (views[i].fov.angleRight - views[i].fov.angleLeft) * 180 / M_PI;
-									appState.FOV += fov;
-								}
-								appState.FOV /= viewCountOutput;
+								auto fov = (views[i].fov.angleRight - views[i].fov.angleLeft) * 180 / M_PI;
+								appState.FOV += fov;
 							}
+							appState.FOV /= viewCountOutput;
 						}
 					}
 					
@@ -2253,7 +2255,7 @@ void android_main(struct android_app* app)
 
 						layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenLayer));
 					}
-
+					
 					if (appState.Keyboard.Draw(appState))
 					{
 						unsigned char* source = appState.Keyboard.buffer.data();
@@ -2364,6 +2366,41 @@ void android_main(struct android_app* app)
 
 							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardLayer));
 						}
+					}
+
+					if (appState.Mode != AppWorldMode)
+					{
+						leftArrowsLayer.radius = CylinderProjection::radius;
+						leftArrowsLayer.aspectRatio = 450 / 150;
+						leftArrowsLayer.centralAngle = CylinderProjection::horizontalAngle * 450 / 960;
+						leftArrowsLayer.subImage.swapchain = appState.LeftArrowsSwapchain;
+						leftArrowsLayer.subImage.imageRect.extent.width = 450;
+						leftArrowsLayer.subImage.imageRect.extent.height = 150;
+						leftArrowsLayer.space = appSpace;
+						leftArrowsLayer.layerFlags = 0;
+						leftArrowsLayer.pose = { };
+						
+						XrMatrix4x4f rotation;
+						
+						XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
+						XrMatrix4x4f_GetRotation(&leftArrowsLayer.pose.orientation, &rotation);
+
+						layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsLayer));
+
+						rightArrowsLayer.radius = CylinderProjection::radius;
+						rightArrowsLayer.aspectRatio = 450 / 150;
+						rightArrowsLayer.centralAngle = CylinderProjection::horizontalAngle * 450 / 960;
+						rightArrowsLayer.subImage.swapchain = appState.RightArrowsSwapchain;
+						rightArrowsLayer.subImage.imageRect.extent.width = 450;
+						rightArrowsLayer.subImage.imageRect.extent.height = 150;
+						rightArrowsLayer.space = appSpace;
+						rightArrowsLayer.layerFlags = 0;
+						rightArrowsLayer.pose = { };
+
+						XrMatrix4x4f_CreateRotation(&rotation, 0, -120, 0);
+						XrMatrix4x4f_GetRotation(&rightArrowsLayer.pose.orientation, &rotation);
+
+						layers.insert(layers.begin() + 3, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsLayer));
 					}
 					
 					if (appState.Mode == AppWorldMode)
@@ -2726,7 +2763,17 @@ void android_main(struct android_app* app)
 		}
 
 		Skybox::DeleteAll(appState);
-		
+
+		if (appState.RightArrowsSwapchain != XR_NULL_HANDLE)
+		{
+			xrDestroySwapchain(appState.RightArrowsSwapchain);
+		}
+
+		if (appState.LeftArrowsSwapchain != XR_NULL_HANDLE)
+		{
+			xrDestroySwapchain(appState.LeftArrowsSwapchain);
+		}
+
 		if (appState.Keyboard.Screen.Swapchain != XR_NULL_HANDLE)
 		{
 			xrDestroySwapchain(appState.Keyboard.Screen.Swapchain);

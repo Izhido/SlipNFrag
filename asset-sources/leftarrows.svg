@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 450 150">
+    <defs>
+        <g id="arrow">
+            <path stroke="gray" stroke-width="25" fill="transparent" d="M -25 -50 L 25 0 L -25 50" />
+            <circle fill="gray" cx="-25" cy="-50" r="12.5" />
+            <circle fill="gray" cx="-25" cy="50" r="12.5" />
+        </g>
+    </defs>
+    <use x="75" y="75" xlink:href="#arrow" />
+    <use x="225" y="75" xlink:href="#arrow" />
+    <use x="375" y="75" xlink:href="#arrow" />
+</svg>
