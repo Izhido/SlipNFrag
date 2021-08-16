@@ -9,5 +9,5 @@ struct CachedTextures
 
 	void Reset(AppState& appState);
 	void MoveToFront(Texture* texture);
-	void Delete(AppState& appState);
+	void Delete(AppState& appState) const;
 };

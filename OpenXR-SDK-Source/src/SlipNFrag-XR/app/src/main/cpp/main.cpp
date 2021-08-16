@@ -79,7 +79,7 @@ const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer
 	{
 		if (baseHeader->type == XR_TYPE_EVENT_DATA_EVENTS_LOST)
 		{
-			const XrEventDataEventsLost* const eventsLost = reinterpret_cast<const XrEventDataEventsLost*>(baseHeader);
+			auto const eventsLost = reinterpret_cast<const XrEventDataEventsLost*>(baseHeader);
 			__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "%d events lost", eventsLost->lostEventCount);
 		}
 
@@ -235,7 +235,7 @@ void LogExtensions(const char* layerName, int indent = 0)
 
 static void AppHandleCommand(struct android_app* app, int32_t cmd)
 {
-	AppState* appState = (AppState*)app->userData;
+	auto appState = (AppState*)app->userData;
 	double delta;
 
 	switch (cmd)
@@ -244,6 +244,7 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_START");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onStart()");
 			break;
+			
 		case APP_CMD_RESUME:
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onResume()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_RESUME");
@@ -258,40 +259,39 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 				appState->CurrentTime += delta;
 			}
 			break;
+			
 		case APP_CMD_PAUSE:
-		{
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onPause()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_PAUSE");
 			appState->Resumed = false;
 			break;
-		}
+
 		case APP_CMD_STOP:
-		{
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onStop()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_STOP");
 			break;
-		}
+
 		case APP_CMD_DESTROY:
-		{
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onDestroy()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_DESTROY");
 			appState->NativeWindow = nullptr;
 			break;
-		}
+
 		case APP_CMD_INIT_WINDOW:
-		{
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "surfaceCreated()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_INIT_WINDOW");
 			appState->NativeWindow = app->window;
 			break;
-		}
+
 		case APP_CMD_TERM_WINDOW:
-		{
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "surfaceDestroyed()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_TERM_WINDOW");
 			appState->NativeWindow = nullptr;
 			break;
-		}
+
+		default:
+			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Unrecognized app command %i", cmd);
+			break;
 	}
 }
 
@@ -1356,7 +1356,7 @@ void android_main(struct android_app* app)
 						{
 							if (c <= ' ')
 							{
-								if (arguments[arguments.size() - 1].size() != 0)
+								if (!arguments[arguments.size() - 1].empty())
 								{
 									arguments.emplace_back();
 								}
@@ -1366,7 +1366,7 @@ void android_main(struct android_app* app)
 								arguments[arguments.size() - 1] += c;
 							}
 						}
-						if (arguments[arguments.size() - 1].size() == 0)
+						if (arguments[arguments.size() - 1].empty())
 						{
 							arguments.pop_back();
 						}
@@ -1481,7 +1481,7 @@ void android_main(struct android_app* app)
 			if (frameState.shouldRender)
 			{
 				XrViewState viewState { XR_TYPE_VIEW_STATE };
-				uint32_t viewCapacityInput = (uint32_t)views.size();
+				auto viewCapacityInput = (uint32_t)views.size();
 				uint32_t viewCountOutput;
 
 				XrViewLocateInfo viewLocateInfo { XR_TYPE_VIEW_LOCATE_INFO };
@@ -1696,7 +1696,7 @@ void android_main(struct android_app* app)
 						appState.Scene.Initialize();
 						auto stagingBufferSize = perImage.GetStagingBufferSize(appState);
 						auto stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
-						perImage.LoadStagingBuffer(appState, stagingBuffer);
+						PerImage::LoadStagingBuffer(appState, stagingBuffer);
 						perImage.FillFromStagingBuffer(appState, stagingBuffer);
 						perImage.LoadRemainingBuffers(appState);
 						perImage.hostClearCount = host_clearcount;
@@ -2605,7 +2605,7 @@ void android_main(struct android_app* app)
 			appState.EngineThread.join();
 		}
 
-		for (auto perImage : appState.PerImage)
+		for (auto& perImage : appState.PerImage)
 		{
 			if (perImage.framebuffer != VK_NULL_HANDLE)
 			{

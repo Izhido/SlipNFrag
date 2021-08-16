@@ -3,12 +3,13 @@
 
 void UpdatablePipelineDescriptorResources::Delete(AppState& appState)
 {
-	if (created)
+	if (!created)
 	{
-		vkDestroyDescriptorPool(appState.Device, descriptorPool, nullptr);
-		descriptorSetLayouts.clear();
-		descriptorSets.clear();
-		bound.clear();
-		created = false;
+		return;
 	}
+	vkDestroyDescriptorPool(appState.Device, descriptorPool, nullptr);
+	descriptorSetLayouts.clear();
+	descriptorSets.clear();
+	bound.clear();
+	created = false;
 }

@@ -10,5 +10,5 @@ struct ImageAsset
 	int components;
 
 	void Open(const char* name, struct android_app* app);
-	void Close();
+	void Close() const;
 };

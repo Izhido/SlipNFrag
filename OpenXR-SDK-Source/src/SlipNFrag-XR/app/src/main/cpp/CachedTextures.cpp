@@ -21,7 +21,7 @@ void CachedTextures::Reset(AppState& appState)
 			}
 		}
 	}
-	for (Texture* t = textures, *next = nullptr; t != nullptr; t = next)
+	for (Texture* t = textures, *next; t != nullptr; t = next)
 	{
 		next = t->next;
 		t->next = oldTextures;
@@ -37,15 +37,15 @@ void CachedTextures::MoveToFront(Texture* texture)
 	textures = texture;
 }
 
-void CachedTextures::Delete(AppState& appState)
+void CachedTextures::Delete(AppState& appState) const
 {
-	for (Texture* t = textures, *next = nullptr; t != nullptr; t = next)
+	for (Texture* t = textures, *next; t != nullptr; t = next)
 	{
 		next = t->next;
 		t->Delete(appState);
 		delete t;
 	}
-	for (Texture* t = oldTextures, *next = nullptr; t != nullptr; t = next)
+	for (Texture* t = oldTextures, *next; t != nullptr; t = next)
 	{
 		next = t->next;
 		t->Delete(appState);

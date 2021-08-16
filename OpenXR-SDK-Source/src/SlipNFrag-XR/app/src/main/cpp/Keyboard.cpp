@@ -552,13 +552,7 @@ bool Keyboard::Draw(AppState& appState)
 		{
 			auto& cell = source[i];
 			auto text = cell.text;
-			if ((layout == CapsKeys || layout == CapsShiftKeys) && (strcmp(text, "Caps") == 0 || strcmp(text, "CAPS") == 0))
-			{
-				Fill(appState, cell, 7);
-				Print(appState, cell, false);
-				continue;
-			}
-			else if ((layout == ShiftKeys || layout == CapsShiftKeys) && (strcmp(text, "Shift") == 0 || strcmp(text, "SHIFT") == 0))
+			if (((layout == CapsKeys || layout == CapsShiftKeys) && (strcmp(text, "Caps") == 0 || strcmp(text, "CAPS") == 0)) || ((layout == ShiftKeys || layout == CapsShiftKeys) && (strcmp(text, "Shift") == 0 || strcmp(text, "SHIFT") == 0)))
 			{
 				Fill(appState, cell, 7);
 				Print(appState, cell, false);

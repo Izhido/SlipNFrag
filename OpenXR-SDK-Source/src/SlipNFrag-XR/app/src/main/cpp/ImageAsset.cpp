@@ -15,7 +15,7 @@ void ImageAsset::Open(const char* name, struct android_app* app)
 	AAsset_close(file);
 }
 
-void ImageAsset::Close()
+void ImageAsset::Close() const
 {
 	stbi_image_free(image);
 }

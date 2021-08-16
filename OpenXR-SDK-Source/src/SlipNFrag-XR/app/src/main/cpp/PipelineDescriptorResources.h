@@ -10,5 +10,5 @@ struct PipelineDescriptorResources
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet descriptorSet;
 
-	void Delete(AppState& appState);
+	void Delete(AppState& appState) const;
 };

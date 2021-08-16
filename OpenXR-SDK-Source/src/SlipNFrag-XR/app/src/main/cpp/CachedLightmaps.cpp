@@ -17,9 +17,9 @@ void CachedLightmaps::Setup(LoadedLightmap& lightmap)
 
 void CachedLightmaps::DisposeFront()
 {
-	for (auto entry = lightmaps.begin(); entry != lightmaps.end(); entry++)
+	for (auto& entry : lightmaps)
 	{
-		for (auto l = &entry->second; *l != nullptr; )
+		for (auto l = &entry.second; *l != nullptr; )
 		{
 			auto next = (*l)->next;
 			(*l)->next = oldLightmaps;

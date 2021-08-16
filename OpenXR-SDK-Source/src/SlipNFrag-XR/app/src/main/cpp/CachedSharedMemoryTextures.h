@@ -12,6 +12,6 @@ struct CachedSharedMemoryTextures
 	void Setup(LoadedSharedMemoryTexture& loaded);
 	void DisposeFront();
 	void MoveToFront(SharedMemoryTexture* texture);
-	void Delete(AppState& appState);
+	void Delete(AppState& appState) const;
 	void DeleteOld(AppState& appState);
 };

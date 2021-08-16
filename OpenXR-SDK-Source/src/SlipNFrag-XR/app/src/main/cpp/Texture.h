@@ -21,5 +21,5 @@ struct Texture
 	void Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer);
 	void Fill(AppState& appState, StagingBuffer& buffer);
 	void FillMipmapped(AppState& appState, StagingBuffer& buffer);
-	void Delete(AppState& appState);
+	void Delete(AppState& appState) const;
 };

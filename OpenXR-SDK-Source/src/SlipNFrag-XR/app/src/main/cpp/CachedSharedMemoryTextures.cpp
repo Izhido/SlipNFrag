@@ -17,7 +17,7 @@ void CachedSharedMemoryTextures::Setup(LoadedSharedMemoryTexture& loaded)
 
 void CachedSharedMemoryTextures::DisposeFront()
 {
-	for (SharedMemoryTexture* t = textures, *next = nullptr; t != nullptr; t = next)
+	for (SharedMemoryTexture* t = textures, *next; t != nullptr; t = next)
 	{
 		next = t->next;
 		t->next = oldTextures;
@@ -33,15 +33,15 @@ void CachedSharedMemoryTextures::MoveToFront(SharedMemoryTexture* texture)
 	textures = texture;
 }
 
-void CachedSharedMemoryTextures::Delete(AppState& appState)
+void CachedSharedMemoryTextures::Delete(AppState& appState) const
 {
-	for (SharedMemoryTexture* t = textures, *next = nullptr; t != nullptr; t = next)
+	for (SharedMemoryTexture* t = textures, *next; t != nullptr; t = next)
 	{
 		next = t->next;
 		t->Delete(appState);
 		delete t;
 	}
-	for (SharedMemoryTexture* t = oldTextures, *next = nullptr; t != nullptr; t = next)
+	for (SharedMemoryTexture* t = oldTextures, *next; t != nullptr; t = next)
 	{
 		next = t->next;
 		t->Delete(appState);

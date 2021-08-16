@@ -217,7 +217,7 @@ void Texture::FillMipmapped(AppState& appState, StagingBuffer& buffer)
 	filled = true;
 }
 
-void Texture::Delete(AppState& appState)
+void Texture::Delete(AppState& appState) const
 {
 	if (view != VK_NULL_HANDLE)
 	{

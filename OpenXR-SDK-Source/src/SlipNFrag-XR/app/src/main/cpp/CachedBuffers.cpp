@@ -53,19 +53,6 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 	return buffer;
 }
 
-Buffer* CachedBuffers::GetStagingBuffer(AppState& appState, VkDeviceSize size)
-{
-	auto buffer = Get(appState, size);
-	if (buffer == nullptr)
-	{
-		buffer = new Buffer();
-		buffer->CreateStagingBuffer(appState, MinimumAllocationFor(size));
-		CHECK_VKCMD(vkMapMemory(appState.Device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
-	}
-	MoveToFront(buffer);
-	return buffer;
-}
-
 Buffer* CachedBuffers::GetStorageBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(appState, size);
@@ -100,7 +87,7 @@ void CachedBuffers::DeleteOld(AppState& appState)
 
 void CachedBuffers::DisposeFront()
 {
-	for (Buffer* b = buffers, *next = nullptr; b != nullptr; b = next)
+	for (Buffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->next = oldBuffers;
@@ -122,15 +109,15 @@ void CachedBuffers::MoveToFront(Buffer* buffer)
 	buffers = buffer;
 }
 
-void CachedBuffers::Delete(AppState& appState)
+void CachedBuffers::Delete(AppState& appState) const
 {
-	for (Buffer* b = buffers, *next = nullptr; b != nullptr; b = next)
+	for (Buffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);
 		delete b;
 	}
-	for (Buffer* b = oldBuffers, *next = nullptr; b != nullptr; b = next)
+	for (Buffer* b = oldBuffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);

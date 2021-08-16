@@ -423,7 +423,7 @@ void PerImage::GetStagingBufferSize(AppState& appState, const dturbulent_t& turb
 	loaded.roll = turbulent.roll;
 }
 
-void PerImage::GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
+void PerImage::GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size) const
 {
 	if (appState.Scene.previousApverts != alias.apverts)
 	{
@@ -591,7 +591,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 		paletteChanged = pal_changed;
 	}
 	appState.Scene.host_colormapSize = 0;
-	if (::host_colormap.size() > 0 && host_colormap == nullptr)
+	if (!::host_colormap.empty() && host_colormap == nullptr)
 	{
 		host_colormap = new Texture();
 		host_colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1135,7 +1135,7 @@ void PerImage::FillColormapTextures(AppState& appState, LoadedColormappedTexture
 	}
 }
 
-void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer)
+void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;
 	while (loaded != nullptr)
@@ -1153,7 +1153,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 }
 
-void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryAliasIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer)
+void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryAliasIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;
 	while (loaded != nullptr)
@@ -1171,7 +1171,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 }
 
-void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy)
+void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const
 {
 	auto loaded = first;
 	while (loaded != nullptr)
@@ -1421,11 +1421,11 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	{
 		if (appState.LeftController.PoseIsValid)
 		{
-			mapped = appState.LeftController.WriteAttributes(mapped);
+			mapped = Controller::WriteAttributes(mapped);
 		}
 		if (appState.RightController.PoseIsValid)
 		{
-			mapped = appState.RightController.WriteAttributes(mapped);
+			mapped = Controller::WriteAttributes(mapped);
 		}
 	}
 	attributes->SubmitVertexBuffer(appState, commandBuffer);
@@ -1474,16 +1474,16 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 			auto offset = 0;
 			if (appState.LeftController.PoseIsValid)
 			{
-				mapped = appState.LeftController.WriteIndices(mapped, offset);
+				mapped = Controller::WriteIndices(mapped, offset);
 				offset += 8;
-				mapped = appState.LeftController.WriteIndices(mapped, offset);
+				mapped = Controller::WriteIndices(mapped, offset);
 				offset += 8;
 			}
 			if (appState.RightController.PoseIsValid)
 			{
-				mapped = appState.RightController.WriteIndices(mapped, offset);
+				mapped = Controller::WriteIndices(mapped, offset);
 				offset += 8;
-				mapped = appState.RightController.WriteIndices(mapped, offset);
+				mapped = Controller::WriteIndices(mapped, offset);
 			}
 		}
 		indices16->SubmitIndexBuffer(appState, commandBuffer);

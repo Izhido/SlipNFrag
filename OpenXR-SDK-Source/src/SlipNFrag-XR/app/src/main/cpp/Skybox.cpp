@@ -2,7 +2,7 @@
 #include "AppState.h"
 #include "Constants.h"
 
-void Skybox::Delete(AppState& appState)
+void Skybox::Delete(AppState& appState) const
 {
 	if (swapchain != XR_NULL_HANDLE)
 	{

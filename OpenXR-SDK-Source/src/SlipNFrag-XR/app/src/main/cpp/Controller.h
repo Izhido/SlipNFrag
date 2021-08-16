@@ -8,6 +8,6 @@ struct Controller
 	bool PoseIsValid;
 
 	float* WriteVertices(float* vertices);
-	float* WriteAttributes(float* attributes);
-	uint16_t* WriteIndices(uint16_t* indices, uint16_t offset);
+	static float* WriteAttributes(float* attributes);
+	static uint16_t* WriteIndices(uint16_t* indices, uint16_t offset);
 };

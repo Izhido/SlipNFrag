@@ -40,6 +40,6 @@ struct CachedSharedMemoryBuffers
 	void SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer& loaded);
 	void DisposeFront();
 	void MoveToFront(SharedMemoryBuffer* buffer);
-	void Delete(AppState& appState);
+	void Delete(AppState& appState) const;
 	void DeleteOld(AppState& appState);
 };

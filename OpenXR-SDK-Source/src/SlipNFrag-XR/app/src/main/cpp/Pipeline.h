@@ -11,5 +11,5 @@ struct Pipeline
 	VkPipelineLayout pipelineLayout;
 	VkPipeline pipeline;
 
-	void Delete(AppState& appState);
+	void Delete(AppState& appState) const;
 };

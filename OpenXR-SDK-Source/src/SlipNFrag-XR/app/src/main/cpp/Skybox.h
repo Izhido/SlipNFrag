@@ -17,7 +17,7 @@ struct Skybox
 	std::vector<XrSwapchainImageVulkan2KHR> vulkanImages;
 	std::vector<XrSwapchainImageBaseHeader*> images;
 
-	void Delete(AppState& appState);
+	void Delete(AppState& appState) const;
 	static void DeleteOld(AppState& appState);
 	static void DeleteAll(AppState& appState);
 };

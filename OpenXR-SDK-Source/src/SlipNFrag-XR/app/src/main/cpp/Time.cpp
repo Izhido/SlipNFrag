@@ -1,5 +1,5 @@
 #include "Time.h"
-#include <time.h>
+#include <ctime>
 
 double getTime()
 {

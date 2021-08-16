@@ -27,7 +27,7 @@ void runEngine(AppState* appState, struct android_app* app)
 				{
 					Key_Event(input.key, input.down);
 				}
-				if (input.command.size() > 0)
+				if (!input.command.empty())
 				{
 					Cmd_ExecuteString(input.command.c_str(), src_command);
 				}

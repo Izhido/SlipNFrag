@@ -167,7 +167,7 @@ void Lightmap::Fill(AppState& appState, StagingBuffer& buffer)
 	filled = true;
 }
 
-void Lightmap::Delete(AppState& appState)
+void Lightmap::Delete(AppState& appState) const
 {
 	if (view != VK_NULL_HANDLE)
 	{

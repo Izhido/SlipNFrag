@@ -151,7 +151,7 @@ void CachedSharedMemoryBuffers::SetupAliasTexCoords(LoadedSharedMemoryTexCoordsB
 
 void CachedSharedMemoryBuffers::DisposeFront()
 {
-	for (SharedMemoryBuffer* b = buffers, *next = nullptr; b != nullptr; b = next)
+	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->next = oldBuffers;
@@ -167,15 +167,15 @@ void CachedSharedMemoryBuffers::MoveToFront(SharedMemoryBuffer* buffer)
 	buffers = buffer;
 }
 
-void CachedSharedMemoryBuffers::Delete(AppState& appState)
+void CachedSharedMemoryBuffers::Delete(AppState& appState) const
 {
-	for (SharedMemoryBuffer* b = buffers, *next = nullptr; b != nullptr; b = next)
+	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);
 		delete b;
 	}
-	for (SharedMemoryBuffer* b = oldBuffers, *next = nullptr; b != nullptr; b = next)
+	for (SharedMemoryBuffer* b = oldBuffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);

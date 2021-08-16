@@ -115,7 +115,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	vkUpdateDescriptorSets(appState.Device, 1, &writes, 0, nullptr);
 }
 
-void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer)
+void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer) const
 {
 	buffer.lastBarrier++;
 	if (buffer.imageBarriers.size() <= buffer.lastBarrier)
@@ -198,7 +198,7 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	}
 }
 
-void SharedMemoryTexture::Delete(AppState& appState)
+void SharedMemoryTexture::Delete(AppState& appState) const
 {
 	descriptorSets->referenceCount--;
 	if (descriptorSets->referenceCount == 0)
