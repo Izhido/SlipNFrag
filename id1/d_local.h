@@ -45,6 +45,7 @@ typedef struct surfcache_s
 	unsigned			height;		// DEBUG only needed for debug
 	float				mipscale;
 	void*				texture;	// checked for animating textures
+	int 				pad;		// to fix an issue with sizeof() not returning the expected result in 64-bit platforms
 	byte				data[4];	// width*height elements
 } surfcache_t;
 
