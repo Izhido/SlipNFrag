@@ -1,7 +1,8 @@
 #pragma once
 
 #include "TwinKey.h"
-#include "AllocationList.h"
+#include <list>
+#include "LightmapTexture.h"
 #include "Buffer.h"
 #include "StagingBuffer.h"
 
@@ -12,13 +13,9 @@ struct Lightmap
 	int unusedCount;
 	int width;
 	int height;
-	int layerCount;
-	VkImage image;
-	AllocationList* allocationList;
-	std::list<Allocation>::iterator allocation;
+	std::list<LightmapTexture>* textureList;
+	std::list<LightmapTexture>::iterator texture;
 	int allocatedIndex;
-	VkImageView view;
-	VkDescriptorSet descriptorSet;
 	bool filled;
 
 	void Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);

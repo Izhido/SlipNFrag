@@ -2690,11 +2690,14 @@ void android_main(struct android_app* app)
 			appState.Scene.controllerTexture.Delete(appState);
 			appState.Scene.floorTexture.Delete(appState);
 			appState.Scene.textures.Delete(appState);
-			for (auto& entry : appState.Scene.allocations)
+			for (auto& entry : appState.Scene.lightmapTextures)
 			{
-				for (auto& list : entry.second.allocations)
+				for (auto& texture : entry.second)
 				{
-					vkFreeMemory(appState.Device, list.memory, nullptr);
+					vkDestroyDescriptorPool(appState.Device, texture.descriptorPool, nullptr);
+					vkDestroyImageView(appState.Device, texture.view, nullptr);
+					vkDestroyImage(appState.Device, texture.image, nullptr);
+					vkFreeMemory(appState.Device, texture.memory, nullptr);
 				}
 			}
 			appState.Scene.buffers.Delete(appState);

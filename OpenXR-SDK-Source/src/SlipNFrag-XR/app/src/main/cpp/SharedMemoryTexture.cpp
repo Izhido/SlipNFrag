@@ -92,7 +92,6 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 		appState.Scene.latestTextureDescriptorSets->descriptorSets.resize(Constants::descriptorSetCount);
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
 		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptorSetAllocateInfo.descriptorSetCount = 1;
 		descriptorSetAllocateInfo.descriptorPool = appState.Scene.latestTextureDescriptorSets->descriptorPool;
 		descriptorSetAllocateInfo.descriptorSetCount = Constants::descriptorSetCount;
 		descriptorSetAllocateInfo.pSetLayouts = appState.Scene.descriptorSetLayouts.data();

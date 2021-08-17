@@ -12,7 +12,6 @@
 #include "LoadedSprite.h"
 #include "LoadedTurbulent.h"
 #include "LoadedAlias.h"
-#include "AllocationList.h"
 #include "CachedLightmaps.h"
 #include "CachedSharedMemoryTextures.h"
 #include "Skybox.h"
@@ -92,7 +91,7 @@ struct Scene
 	std::vector<LoadedAlias> loadedViewmodels32;
 	int skyCount;
 	int firstSkyVertex;
-	std::unordered_map<VkDeviceSize, AllocationList> allocations;
+	std::unordered_map<VkDeviceSize, std::list<LightmapTexture>> lightmapTextures;
 	CachedLightmaps lightmaps;
 	CachedSharedMemoryTextures textures;
 	std::unordered_map<void*, SharedMemoryTexture*> surfaceTexturesPerKey;

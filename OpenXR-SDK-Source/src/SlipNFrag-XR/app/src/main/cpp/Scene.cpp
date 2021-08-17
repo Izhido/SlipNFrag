@@ -614,7 +614,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	VkPushConstantRange pushConstantInfo { };
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	pushConstantInfo.size = 6 * sizeof(float);
+	pushConstantInfo.size = 9 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfaces.pipelineLayout));
@@ -661,6 +661,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	descriptorSetLayouts[0] = bufferAndImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
+	pushConstantInfo.size = 6 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sprites.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = sprites.stages.size();
 	graphicsPipelineCreateInfo.pStages = sprites.stages.data();
