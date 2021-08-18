@@ -253,7 +253,7 @@ extern	cvar_t	m_forward;
 extern	cvar_t	m_side;
 
 
-#define	MAX_TEMP_ENTITIES	64			// lightning bolts, etc
+#define	MAX_TEMP_ENTITIES	64			// lightning bolts, etc (limit no longer in use)
 #define	MAX_STATIC_ENTITIES	128			// torches, etc
 
 extern	client_state_t	cl;
@@ -264,7 +264,7 @@ extern std::vector<entity_t> cl_entities;
 extern std::list<entity_t> cl_static_entities;
 extern	lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 extern std::vector<dlight_t> cl_dlights;
-extern std::vector<entity_t> cl_temp_entities;
+extern std::list<entity_t> cl_temp_entities;
 extern std::vector<beam_t> cl_beams;
 
 extern int cl_protocol_version_from_server;

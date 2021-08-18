@@ -21,9 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-int			num_temp_entities;
-int additional_temp_entities;
-std::vector<entity_t> cl_temp_entities(MAX_TEMP_ENTITIES);
+std::list<entity_t> cl_temp_entities;
 
 int additional_beams;
 std::vector<beam_t> cl_beams(MAX_BEAMS);
@@ -269,14 +267,8 @@ entity_t *CL_NewTempEntity (void)
 {
 	entity_t	*ent;
 
-	if (num_temp_entities == cl_temp_entities.size())
-    {
-        additional_temp_entities++;
-		return NULL;
-    }
-	ent = &cl_temp_entities[num_temp_entities];
-	ent->Clear();
-	num_temp_entities++;
+	cl_temp_entities.push_back({ });
+	ent = &cl_temp_entities.back();
     cl_visedicts.push_back(ent);
 
 	ent->colormap = vid.colormap;
@@ -299,14 +291,8 @@ void CL_UpdateTEnts (void)
 	float		yaw, pitch;
 	float		forward;
 
-	num_temp_entities = 0;
-    if (additional_temp_entities > 0)
-    {
-        additional_temp_entities = MAX_TEMP_ENTITIES * (int)ceil((float)additional_temp_entities / MAX_TEMP_ENTITIES);
-        cl_temp_entities.resize(cl_temp_entities.size() + additional_temp_entities);
-        additional_temp_entities = 0;
-    }
-    
+	cl_temp_entities.clear();
+
     if (additional_beams > 0)
     {
         additional_beams = MAX_BEAMS * (int)ceil((float)additional_beams / MAX_BEAMS);

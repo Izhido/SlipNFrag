@@ -779,7 +779,9 @@ void CL_Init (void)
 
 	CL_InitInput ();
 	CL_InitTEnts ();
-	
+
+	cl_entities.reserve(MAX_EFRAGS);
+
 //
 // register our commands
 //
