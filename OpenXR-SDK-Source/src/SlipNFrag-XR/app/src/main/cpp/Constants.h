@@ -2,6 +2,8 @@
 
 struct Constants
 {
+	static const int cpuLevel = 2;
+	static const int gpuLevel = 3;
 	static const VkFormat colorFormat = VK_FORMAT_R8G8B8A8_SRGB;
 	static const VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 	static const int screenToConsoleMultiplier = 3;

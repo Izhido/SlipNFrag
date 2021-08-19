@@ -112,4 +112,10 @@ struct AppState
 	std::vector<XrMatrix4x4f> ProjectionMatrices;
 	XrSpaceLocation CameraLocation;
 	bool CameraLocationIsValid;
+	bool Focused;
+	int CpuLevel;
+	int GpuLevel;
+	pid_t EngineThreadId;
+	pid_t RenderThreadId;
+	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
 };

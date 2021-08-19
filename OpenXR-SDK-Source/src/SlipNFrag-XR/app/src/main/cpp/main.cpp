@@ -24,6 +24,7 @@
 #include "CylinderProjection.h"
 #include <pthread.h>
 #include <sys/prctl.h>
+#include <unistd.h>
 
 std::string GetXrVersionString(XrVersion ver)
 {
@@ -309,6 +310,9 @@ void android_main(struct android_app* app)
 		appState.PausedTime = -1;
 		appState.PreviousTime = -1;
 		appState.CurrentTime = -1;
+		appState.CpuLevel = Constants::cpuLevel;
+		appState.GpuLevel = Constants::gpuLevel;
+		appState.RenderThreadId = gettid();
 
 		app->userData = &appState;
 		app->onAppCmd = AppHandleCommand;
@@ -361,8 +365,12 @@ void android_main(struct android_app* app)
 		{
 			XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME,
 			XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
+			XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME,
+			XR_KHR_ANDROID_THREAD_SETTINGS_EXTENSION_NAME,
 			XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME,
-			XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME
+			XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME,
+			XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME,
+			XR_FB_COLOR_SPACE_EXTENSION_NAME
 		};
 		std::transform(xrInstanceExtensionSources.begin(), xrInstanceExtensionSources.end(), std::back_inserter(xrInstanceExtensions), [](const std::string& extension)
 		{ 
@@ -745,6 +753,88 @@ void android_main(struct android_app* app)
 		CHECK_XRCMD(xrCreateSession(instance, &sessionCreateInfo, &appState.Session));
 		CHECK(appState.Session != XR_NULL_HANDLE);
 
+		// Enumerate the supported color space options for the system.
+		PFN_xrEnumerateColorSpacesFB xrEnumerateColorSpacesFB = nullptr;
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrEnumerateColorSpacesFB", (PFN_xrVoidFunction*)(&xrEnumerateColorSpacesFB)));
+
+		uint32_t colorSpaceCount = 0;
+		CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, 0, &colorSpaceCount, NULL));
+
+		std::vector<XrColorSpaceFB> colorSpaces(colorSpaceCount);
+
+		CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, colorSpaceCount, &colorSpaceCount, colorSpaces.data()));
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Supported color spaces:");
+
+		for (uint32_t i = 0; i < colorSpaceCount; i++) 
+		{
+			const char* name;
+			switch (colorSpaces[i])
+			{
+				case 1:
+					name = "XR_COLOR_SPACE_REC2020_FB";
+					break;
+				case 2:
+					name = "XR_COLOR_SPACE_REC709_FB";
+					break;
+				case 3:
+					name = "XR_COLOR_SPACE_RIFT_CV1_FB";
+					break;
+				case 4:
+					name = "XR_COLOR_SPACE_RIFT_S_FB";
+					break;
+				case 5:
+					name = "XR_COLOR_SPACE_QUEST_FB";
+					break;
+				case 6:
+					name = "XR_COLOR_SPACE_P3_FB";
+					break;
+				case 7:
+					name = "XR_COLOR_SPACE_ADOBE_RGB_FB";
+					break;
+				default:
+					name = "XR_COLOR_SPACE_UNMANAGED_FB";
+					break;
+			}
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%d:%d (%s)", i, colorSpaces[i], name);
+		}
+
+		PFN_xrSetColorSpaceFB xrSetColorSpaceFB = nullptr;
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetColorSpaceFB", (PFN_xrVoidFunction*)(&xrSetColorSpaceFB)));
+
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Setting color space %i (%s)...", XR_COLOR_SPACE_REC2020_FB, "XR_COLOR_SPACE_REC2020_FB");
+		CHECK_XRCMD(xrSetColorSpaceFB(appState.Session, XR_COLOR_SPACE_REC2020_FB));
+
+		// Get the supported display refresh rates for the system.
+		PFN_xrEnumerateDisplayRefreshRatesFB xrEnumerateDisplayRefreshRatesFB = nullptr;
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrEnumerateDisplayRefreshRatesFB", (PFN_xrVoidFunction*)(&xrEnumerateDisplayRefreshRatesFB)));
+
+		uint32_t numSupportedDisplayRefreshRates;
+		CHECK_XRCMD(xrEnumerateDisplayRefreshRatesFB(appState.Session, 0, &numSupportedDisplayRefreshRates, nullptr));
+
+		std::vector<float> supportedDisplayRefreshRates(numSupportedDisplayRefreshRates);
+		CHECK_XRCMD(xrEnumerateDisplayRefreshRatesFB(appState.Session, numSupportedDisplayRefreshRates, &numSupportedDisplayRefreshRates, supportedDisplayRefreshRates.data()));
+
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Supported Refresh Rates:");
+		auto highestDisplayRefreshRate = 0.0f;
+		for (uint32_t i = 0; i < numSupportedDisplayRefreshRates; i++) 
+		{
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%d:%.1f", i, supportedDisplayRefreshRates[i]);
+			highestDisplayRefreshRate = std::max(highestDisplayRefreshRate, supportedDisplayRefreshRates[i]);
+		}
+
+		PFN_xrRequestDisplayRefreshRateFB xrRequestDisplayRefreshRateFB;
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrRequestDisplayRefreshRateFB", (PFN_xrVoidFunction*)(&xrRequestDisplayRefreshRateFB)));
+
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Requesting display refresh rate of %.1fHz...", highestDisplayRefreshRate);
+		CHECK_XRCMD(xrRequestDisplayRefreshRateFB(appState.Session, highestDisplayRefreshRate));
+		
+		PFN_xrGetDisplayRefreshRateFB xrGetDisplayRefreshRateFB;
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetDisplayRefreshRateFB", (PFN_xrVoidFunction*)(&xrGetDisplayRefreshRateFB)));
+
+		auto currentDisplayRefreshRate = 0.0f;
+		CHECK_XRCMD(xrGetDisplayRefreshRateFB(appState.Session, &currentDisplayRefreshRate));
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Current System Display Refresh Rate: %.1fHz.", currentDisplayRefreshRate);
+		
 		uint32_t spaceCount;
 		CHECK_XRCMD(xrEnumerateReferenceSpaces(appState.Session, 0, &spaceCount, nullptr));
 		std::vector<XrReferenceSpaceType> spaces(spaceCount);
@@ -1221,6 +1311,16 @@ void android_main(struct android_app* app)
 
 						switch (sessionState)
 						{
+							case XR_SESSION_STATE_FOCUSED:
+							{
+								appState.Focused = true;
+								break;
+							}
+							case XR_SESSION_STATE_VISIBLE:
+							{
+								appState.Focused = false;
+								break;
+							}
 							case XR_SESSION_STATE_READY:
 							{
 								CHECK(appState.Session != XR_NULL_HANDLE);
@@ -1228,6 +1328,58 @@ void android_main(struct android_app* app)
 								sessionBeginInfo.primaryViewConfigurationType = viewConfigurationType;
 								CHECK_XRCMD(xrBeginSession(appState.Session, &sessionBeginInfo));
 								sessionRunning = true;
+
+								// Set session state once we have entered VR mode and have a valid session object.
+								XrPerfSettingsLevelEXT cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
+								switch (appState.CpuLevel) 
+								{
+									case 0:
+										cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_POWER_SAVINGS_EXT;
+										break;
+									case 1:
+										cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT;
+										break;
+									case 2:
+										cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
+										break;
+									case 3:
+										cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_BOOST_EXT;
+										break;
+									default:
+										__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Invalid CPU level %d", appState.CpuLevel);
+										break;
+								}
+
+								XrPerfSettingsLevelEXT gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
+								switch (appState.GpuLevel) 
+								{
+									case 0:
+										gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_POWER_SAVINGS_EXT;
+										break;
+									case 1:
+										gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT;
+										break;
+									case 2:
+										gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
+										break;
+									case 3:
+										gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_BOOST_EXT;
+										break;
+									default:
+										__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Invalid GPU level %d", appState.GpuLevel);
+										break;
+								}
+
+								PFN_xrPerfSettingsSetPerformanceLevelEXT pfnPerfSettingsSetPerformanceLevelEXT = nullptr;
+								CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrPerfSettingsSetPerformanceLevelEXT", (PFN_xrVoidFunction*)(&pfnPerfSettingsSetPerformanceLevelEXT)));
+
+								CHECK_XRCMD(pfnPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_CPU_EXT, cpuPerfLevel));
+								CHECK_XRCMD(pfnPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_GPU_EXT, gpuPerfLevel));
+
+								CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetAndroidApplicationThreadKHR", (PFN_xrVoidFunction*)(&appState.xrSetAndroidApplicationThreadKHR)));
+
+								CHECK_XRCMD(appState.xrSetAndroidApplicationThreadKHR(appState.Session, XR_ANDROID_THREAD_TYPE_RENDERER_MAIN_KHR, appState.RenderThreadId));
+								
 								break;
 							}
 							case XR_SESSION_STATE_STOPPING:
@@ -1250,12 +1402,23 @@ void android_main(struct android_app* app)
 								requestRestart = true;
 								break;
 							}
-							default:
-								break;
 						}
 						break;
 					}
+					case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
+					{
+						const auto& perfSettingsEvent = *reinterpret_cast<const XrEventDataPerfSettingsEXT*>(event);
+						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataPerfSettingsEXT: type %d subdomain %d : level %d -> level %d", perfSettingsEvent.type, perfSettingsEvent.subDomain, perfSettingsEvent.fromLevel, perfSettingsEvent.toLevel);
+						break;
+					}
+					case XR_TYPE_EVENT_DATA_DISPLAY_REFRESH_RATE_CHANGED_FB:
+					{
+						const auto& refreshRateChangedEvent = *reinterpret_cast<const XrEventDataDisplayRefreshRateChangedFB*>(event);
+						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataDisplayRefreshRateChangedFB: fromRate %f -> toRate %f", refreshRateChangedEvent.fromDisplayRefreshRate, refreshRateChangedEvent.toDisplayRefreshRate);
+						break;
+					}
 					case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
+					{
 						SwitchBoundInput(appState, appState.Play1Action, "Play 1");
 						SwitchBoundInput(appState, appState.Play2Action, "Play 2");
 						SwitchBoundInput(appState, appState.JumpAction, "Jump");
@@ -1275,7 +1438,13 @@ void android_main(struct android_app* app)
 						SwitchBoundInput(appState, appState.LeftKeyPressAction, "Left key press");
 						SwitchBoundInput(appState, appState.RightKeyPressAction, "Right key press");
 						break;
+					}
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
+					{
+						const auto& referenceSpaceChangeEvent = *reinterpret_cast<const XrEventDataReferenceSpaceChangePending*>(event);
+						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %lld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
+						break;
+					}
 					default:
 						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Ignoring event type %d", event->type);
 						break;

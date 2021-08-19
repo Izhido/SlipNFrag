@@ -6,11 +6,17 @@
 #include "r_local.h"
 #include <pthread.h>
 #include <sys/prctl.h>
+#include <unistd.h>
+#include "Utils.h"
 //#include <android/log.h>
 
 void runEngine(AppState* appState, struct android_app* app)
 {
 	prctl(PR_SET_NAME, (long)"runEngine", 0, 0, 0);
+
+	appState->EngineThreadId = gettid();
+	CHECK_XRCMD(appState->xrSetAndroidApplicationThreadKHR(appState->Session, XR_ANDROID_THREAD_TYPE_APPLICATION_MAIN_KHR, appState->EngineThreadId));
+
 	while (!appState->EngineThreadStopped)
 	{
 		if (!host_initialized)
