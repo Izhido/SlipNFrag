@@ -43,7 +43,7 @@ void PerImage::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& sur
 		appState.Scene.usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.firstSource = surface.surface;
-		loaded.indices.secondSource = surface.entity;
+		loaded.indices.secondSource = surface.model;
 		appState.Scene.buffers.SetupIndices16(loaded.indices);
 		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
 		appState.Scene.indicesPerKey.insert({ key, newEntry });
@@ -79,7 +79,7 @@ void PerImage::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& sur
 		appState.Scene.usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.firstSource = surface.surface;
-		loaded.indices.secondSource = surface.entity;
+		loaded.indices.secondSource = surface.model;
 		appState.Scene.buffers.SetupIndices32(loaded.indices);
 		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
 		appState.Scene.indicesPerKey.insert({ key, newEntry });
@@ -162,26 +162,27 @@ void PerImage::GetAliasIndices32StagingBufferSize(AppState& appState, dalias_t& 
 
 void PerImage::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
-	if (appState.Scene.previousVertexes != surface.vertexes)
+	auto vertexes = ((model_t*)surface.model)->vertexes;
+	if (appState.Scene.previousVertexes != vertexes)
 	{
-		auto entry = appState.Scene.verticesPerKey.find(surface.vertexes);
+		auto entry = appState.Scene.verticesPerKey.find(vertexes);
 		if (entry == appState.Scene.verticesPerKey.end())
 		{
-			loaded.vertices.size = surface.vertex_count * 3 * sizeof(float);
+			loaded.vertices.size = ((model_t*)surface.model)->numvertexes * 3 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
 			appState.Scene.buffers.MoveToFront(loaded.vertices.buffer);
 			size += loaded.vertices.size;
-			loaded.vertices.source = surface.vertexes;
+			loaded.vertices.source = vertexes;
 			appState.Scene.buffers.SetupVertices(loaded.vertices);
-			appState.Scene.verticesPerKey.insert({ surface.vertexes, loaded.vertices.buffer });
+			appState.Scene.verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
 		}
 		else
 		{
 			loaded.vertices.size = 0;
 			loaded.vertices.buffer = entry->second;
 		}
-		appState.Scene.previousVertexes = surface.vertexes;
+		appState.Scene.previousVertexes = vertexes;
 		appState.Scene.previousVertexBuffer = loaded.vertices.buffer;
 	}
 	else
@@ -331,26 +332,27 @@ void PerImage::GetStagingBufferSize(AppState& appState, const dsurface_t& surfac
 
 void PerImage::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
-	if (appState.Scene.previousVertexes != turbulent.vertexes)
+	auto vertexes = ((model_t*)turbulent.model)->vertexes;
+	if (appState.Scene.previousVertexes != vertexes)
 	{
-		auto entry = appState.Scene.verticesPerKey.find(turbulent.vertexes);
+		auto entry = appState.Scene.verticesPerKey.find(vertexes);
 		if (entry == appState.Scene.verticesPerKey.end())
 		{
-			loaded.vertices.size = turbulent.vertex_count * 3 * sizeof(float);
+			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
 			appState.Scene.buffers.MoveToFront(loaded.vertices.buffer);
 			size += loaded.vertices.size;
-			loaded.vertices.source = turbulent.vertexes;
+			loaded.vertices.source = vertexes;
 			appState.Scene.buffers.SetupVertices(loaded.vertices);
-			appState.Scene.verticesPerKey.insert({ turbulent.vertexes, loaded.vertices.buffer });
+			appState.Scene.verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
 		}
 		else
 		{
 			loaded.vertices.size = 0;
 			loaded.vertices.buffer = entry->second;
 		}
-		appState.Scene.previousVertexes = turbulent.vertexes;
+		appState.Scene.previousVertexes = vertexes;
 		appState.Scene.previousVertexBuffer = loaded.vertices.buffer;
 	}
 	else
@@ -696,7 +698,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 			size += loaded.indices.size;
 			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.entity;
+			loaded.indices.secondSource = turbulent.model;
 			appState.Scene.buffers.SetupIndices16(loaded.indices);
 			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
 			appState.Scene.indicesPerKey.insert({ key, newEntry });
@@ -737,7 +739,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 			size += loaded.indices.size;
 			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.entity;
+			loaded.indices.secondSource = turbulent.model;
 			appState.Scene.buffers.SetupIndices32(loaded.indices);
 			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
 			appState.Scene.indicesPerKey.insert({ key, newEntry });
@@ -817,16 +819,16 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	{
 		auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 		auto face = (msurface_t*)loadedIndexBuffer->firstSource;
-		auto entity = (entity_t*)loadedIndexBuffer->secondSource;
-		auto edge = entity->model->surfedges[face->firstedge];
+		auto model = (model_t*)loadedIndexBuffer->secondSource;
+		auto edge = model->surfedges[face->firstedge];
 		uint16_t index;
 		if (edge >= 0)
 		{
-			index = entity->model->edges[edge].v[0];
+			index = model->edges[edge].v[0];
 		}
 		else
 		{
-			index = entity->model->edges[-edge].v[1];
+			index = model->edges[-edge].v[1];
 		}
 		*target++ = index;
 		auto next_front = 0;
@@ -837,21 +839,21 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			if (use_back)
 			{
 				next_back--;
-				edge = entity->model->surfedges[face->firstedge + next_back];
+				edge = model->surfedges[face->firstedge + next_back];
 			}
 			else
 			{
 				next_front++;
-				edge = entity->model->surfedges[face->firstedge + next_front];
+				edge = model->surfedges[face->firstedge + next_front];
 			}
 			use_back = !use_back;
 			if (edge >= 0)
 			{
-				index = entity->model->edges[edge].v[0];
+				index = model->edges[edge].v[0];
 			}
 			else
 			{
-				index = entity->model->edges[-edge].v[1];
+				index = model->edges[-edge].v[1];
 			}
 			*target++ = index;
 		}
@@ -891,16 +893,16 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	{
 		auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 		auto face = (msurface_t*)loadedIndexBuffer->firstSource;
-		auto entity = (entity_t*)loadedIndexBuffer->secondSource;
-		auto edge = entity->model->surfedges[face->firstedge];
+		auto model = (model_t*)loadedIndexBuffer->secondSource;
+		auto edge = model->surfedges[face->firstedge];
 		uint32_t index;
 		if (edge >= 0)
 		{
-			index = entity->model->edges[edge].v[0];
+			index = model->edges[edge].v[0];
 		}
 		else
 		{
-			index = entity->model->edges[-edge].v[1];
+			index = model->edges[-edge].v[1];
 		}
 		*target++ = index;
 		auto next_front = 0;
@@ -911,21 +913,21 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			if (use_back)
 			{
 				next_back--;
-				edge = entity->model->surfedges[face->firstedge + next_back];
+				edge = model->surfedges[face->firstedge + next_back];
 			}
 			else
 			{
 				next_front++;
-				edge = entity->model->surfedges[face->firstedge + next_front];
+				edge = model->surfedges[face->firstedge + next_front];
 			}
 			use_back = !use_back;
 			if (edge >= 0)
 			{
-				index = entity->model->edges[edge].v[0];
+				index = model->edges[edge].v[0];
 			}
 			else
 			{
-				index = entity->model->edges[-edge].v[1];
+				index = model->edges[-edge].v[1];
 			}
 			*target++ = index;
 		}

@@ -4,8 +4,7 @@ struct dsurface_t
 {
 	void* surface;
 	void* entity;
-	void* vertexes;
-	int vertex_count;
+	void* model;
 	int created;
 	int texture_width;
 	int texture_height;
@@ -38,8 +37,7 @@ struct dturbulent_t
 {
 	void* surface;
 	void* entity;
-	void* vertexes;
-	int vertex_count;
+	void* model;
 	void* texture;
 	int width;
 	int height;

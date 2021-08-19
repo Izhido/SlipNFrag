@@ -47,8 +47,7 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 {
 	surface.surface = face;
 	surface.entity = entity;
-	surface.vertexes = entity->model->vertexes;
-	surface.vertex_count = entity->model->numvertexes;
+	surface.model = entity->model;
 	surface.created = (created ? 1: 0);
 	auto texture = R_TextureAnimation(face->texinfo->texture);
 	surface.texture_width = texture->width;
@@ -223,8 +222,7 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	auto texture = texinfo->texture;
 	turbulent.surface = face;
 	turbulent.entity = entity;
-	turbulent.vertexes = entity->model->vertexes;
-	turbulent.vertex_count = entity->model->numvertexes;
+	turbulent.model = entity->model;
 	turbulent.texture = texture;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
