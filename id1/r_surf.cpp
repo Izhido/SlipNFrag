@@ -572,7 +572,7 @@ void R_DrawSurfaceBlock16 (void)
 R_GenTurbTile
 ================
 */
-void R_GenTurbTile (pixel_t *pbasetex, void *pdest)
+void R_GenTurbTile (const pixel_t *pbasetex, void *pdest)
 {
 	int		*turb;
 	int		i, j, s, t;
@@ -598,7 +598,7 @@ void R_GenTurbTile (pixel_t *pbasetex, void *pdest)
 R_GenTurbTile16
 ================
 */
-void R_GenTurbTile16 (pixel_t *pbasetex, void *pdest)
+void R_GenTurbTile16 (const pixel_t *pbasetex, void *pdest)
 {
 	int				*turb;
 	int				i, j, s, t;

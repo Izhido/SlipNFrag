@@ -1415,9 +1415,9 @@ void PerImage::LoadRemainingBuffers(AppState& appState)
 	*mapped++ = 0;
 	*mapped++ = appState.Scale;
 	*mapped++ = 0;
-	*mapped++ = appState.ViewTransformX;
-	*mapped++ = appState.ViewTransformY;
-	*mapped++ = appState.ViewTransformZ;
+	*mapped++ = -r_refdef.vieworg[0] * appState.Scale;
+	*mapped++ = -r_refdef.vieworg[2] * appState.Scale;
+	*mapped++ = r_refdef.vieworg[1] * appState.Scale;
 	*mapped++ = 1;
 	controllerAttributeBase = vertexTransformBase + 16 * sizeof(float);
 	if (controllerAttributesSize > 0)

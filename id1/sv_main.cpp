@@ -122,7 +122,7 @@ SV_StartParticle
 Make sure the event gets sent to all clients
 ==================
 */
-void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
+void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count)
 {
 	int		i, v;
 
@@ -1299,7 +1299,7 @@ void SV_SpawnServer (char *server)
 		sv.active = false;
 		return;
 	}
-    if (sv.models.size() == 0)
+    if (sv.models.empty())
     {
         sv.models.push_back(nullptr);
     }

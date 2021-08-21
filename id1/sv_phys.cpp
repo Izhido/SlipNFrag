@@ -186,7 +186,7 @@ returns the blocked flags (1 = floor, 2 = step / wall)
 */
 #define	STOP_EPSILON	0.1
 
-int ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce)
+int ClipVelocity (const vec3_t in, const vec3_t normal, vec3_t out, float overbounce)
 {
 	float	backoff;
 	float	change;
@@ -397,7 +397,7 @@ SV_PushEntity
 Does not change the entities velocity at all
 ============
 */
-trace_t SV_PushEntity (edict_t *ent, vec3_t push)
+trace_t SV_PushEntity (edict_t *ent, const vec3_t push)
 {
 	trace_t	trace;
 	vec3_t	end;
@@ -741,7 +741,7 @@ Try fixing by pushing one pixel in each direction.
 This is a hack, but in the interest of good gameplay...
 ======================
 */
-int SV_TryUnstick (edict_t *ent, vec3_t oldvel)
+int SV_TryUnstick (edict_t *ent, const vec3_t oldvel)
 {
 	int		i;
 	vec3_t	oldorg;

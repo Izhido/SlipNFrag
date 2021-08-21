@@ -23,12 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void Cmd_ForwardToServer (void);
 
-typedef struct cmdalias_s
+struct cmdalias_t
 {
-	struct cmdalias_s	*next;
+	cmdalias_t	*next;
     std::string name;
 	std::string value;
-} cmdalias_t;
+};
 
 cmdalias_t	*cmd_alias;
 
@@ -306,8 +306,7 @@ void Cmd_Alias_f (void)
 
 	if (!a)
 	{
-		a = new cmdalias_t;
-		a->next = cmd_alias;
+		a = new cmdalias_t { cmd_alias };
 		cmd_alias = a;
         a->name = s;
 	}
@@ -494,9 +493,9 @@ char *Cmd_CompleteCommand (char *partial)
 		return NULL;
 		
 // check functions
-    for (auto entry = cmd_functions.begin(); entry != cmd_functions.end(); entry++)
-		if (!Q_strncmp (partial,entry->first.c_str(), len))
-			return (char*)entry->first.c_str();
+    for (auto& entry : cmd_functions)
+		if (!Q_strncmp (partial,entry.first.c_str(), len))
+			return (char*)entry.first.c_str();
 
 	return NULL;
 }

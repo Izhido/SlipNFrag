@@ -125,7 +125,7 @@ void S_TransferPaintBuffer(int endtime)
 
 	if (shm->samplebits == 16)
 	{
-		short *out = (short *) pbuf;
+		auto out = (short *) pbuf;
 		while (count--)
 		{
 			val = (*p * snd_vol) >> 8;
@@ -140,7 +140,7 @@ void S_TransferPaintBuffer(int endtime)
 	}
 	else if (shm->samplebits == 8)
 	{
-		unsigned char *out = (unsigned char *) pbuf;
+		auto out = (unsigned char *) pbuf;
 		while (count--)
 		{
 			val = (*p * snd_vol) >> 8;

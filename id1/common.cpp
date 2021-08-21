@@ -1459,7 +1459,7 @@ int COM_FindAllFiles (const char *directory, const char *prefix, const char *ext
 				}
 				if (found)
 				{
-					result.push_back(file);
+					result.emplace_back(file);
 				}
 			}
 		}
@@ -1467,7 +1467,7 @@ int COM_FindAllFiles (const char *directory, const char *prefix, const char *ext
 		{
 			find_in_path (search->filename.c_str(), directory, prefix, extension, result);
 		}
-		if (result.size() > 0)
+		if (!result.empty())
 		{
 			return 0;
 		}

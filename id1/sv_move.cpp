@@ -107,7 +107,7 @@ possible, no move is done, false is returned, and
 pr_global_struct->trace_normal is set to the normal of the blocking wall
 =============
 */
-qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
+qboolean SV_movestep (edict_t *ent, const vec3_t move, qboolean relink)
 {
 	float		dz;
 	vec3_t		oldorg, neworg, end;

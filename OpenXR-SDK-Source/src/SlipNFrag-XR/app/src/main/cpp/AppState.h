@@ -62,9 +62,6 @@ struct AppState
 	float EngineViewOriginX;
 	float EngineViewOriginY;
 	float EngineViewOriginZ;
-	float ViewTransformX;
-	float ViewTransformY;
-	float ViewTransformZ;
 	int ScreenWidth;
 	int ScreenHeight;
 	int ConsoleWidth;

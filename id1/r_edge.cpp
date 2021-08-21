@@ -777,7 +777,7 @@ void R_ScanEdges (void)
 // draw whatever's left in the span list
 	if (d_uselists)
 	{
-		if (r_drawnsurfaces.size() == 0)
+		if (r_drawnsurfaces.empty())
 		{
 			D_DrawSurfacesToLists();
 		}

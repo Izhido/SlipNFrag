@@ -500,7 +500,8 @@ void android_main(struct android_app* app)
 		std::vector<const char*> validationLayerNames 
 		{ 
 			"VK_LAYER_KHRONOS_validation",
-			"VK_LAYER_LUNARG_standard_validation"
+			"VK_LAYER_LUNARG_standard_validation",
+			"VK_LAYER_ADRENO_debug"
 		};
 
 		auto validationLayerFound = false;
@@ -758,7 +759,7 @@ void android_main(struct android_app* app)
 		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrEnumerateColorSpacesFB", (PFN_xrVoidFunction*)(&xrEnumerateColorSpacesFB)));
 
 		uint32_t colorSpaceCount = 0;
-		CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, 0, &colorSpaceCount, NULL));
+		CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, 0, &colorSpaceCount, nullptr));
 
 		std::vector<XrColorSpaceFB> colorSpaces(colorSpaceCount);
 
@@ -1227,7 +1228,7 @@ void android_main(struct android_app* app)
 		attachments[2].format = Constants::colorFormat;
 		attachments[2].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 		attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[2].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -1780,10 +1781,6 @@ void android_main(struct android_app* app)
 
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
-
-						appState.ViewTransformX = -appState.EngineViewOriginX * appState.Scale;
-						appState.ViewTransformY = -appState.EngineViewOriginZ * appState.Scale;
-						appState.ViewTransformZ = appState.EngineViewOriginY * appState.Scale;
 
 						appState.ViewmodelForwardX = appState.EngineForwardX / appState.Scale;
 						appState.ViewmodelForwardY = appState.EngineForwardZ / appState.Scale;

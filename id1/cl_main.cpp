@@ -119,7 +119,7 @@ void CL_ClearState (void)
 	SZ_Clear (&cls.message);
 
 // clear other arrays	
-    if (cl_efrags.size() == 0) cl_efrags.resize(MAX_EFRAGS);
+    if (cl_efrags.empty()) cl_efrags.resize(MAX_EFRAGS);
     cl_entities.clear();
     cl_static_entities.clear();
     cl_dlights.clear();

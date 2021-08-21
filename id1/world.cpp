@@ -42,7 +42,7 @@ typedef struct
 } moveclip_t;
 
 
-int SV_HullPointContents (hull_t *hull, int num, vec3_t p);
+int SV_HullPointContents (hull_t *hull, int num, const vec3_t p);
 
 /*
 ===============================================================================
@@ -102,7 +102,7 @@ To keep everything totally uniform, bounding boxes are turned into small
 BSP trees instead of being compared directly.
 ===================
 */
-hull_t	*SV_HullForBox (vec3_t mins, vec3_t maxs)
+hull_t	*SV_HullForBox (const vec3_t mins, const vec3_t maxs)
 {
 	box_planes[0].dist = maxs[0];
 	box_planes[1].dist = mins[0];
@@ -126,7 +126,7 @@ Offset is filled in to contain the adjustment that must be added to the
 testing object's origin to get a point to use with the returned hull.
 ================
 */
-hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset)
+hull_t *SV_HullForEntity (edict_t *ent, const vec3_t mins, const vec3_t maxs, vec3_t offset)
 {
 	model_t		*model;
 	vec3_t		size;
@@ -202,7 +202,7 @@ SV_CreateAreaNode
 
 ===============
 */
-areanode_t *SV_CreateAreaNode (int depth, vec3_t mins, vec3_t maxs)
+areanode_t *SV_CreateAreaNode (int depth, const vec3_t mins, const vec3_t maxs)
 {
 	areanode_t	*anode;
 	vec3_t		size;
@@ -482,7 +482,7 @@ SV_HullPointContents
 
 ==================
 */
-int SV_HullPointContents (hull_t *hull, int num, vec3_t p)
+int SV_HullPointContents (hull_t *hull, int num, const vec3_t p)
 {
 	float		d;
 	mclipnode_t	*node;
@@ -713,7 +713,7 @@ Handles selection or creation of a clipping hull, and offseting (and
 eventually rotation) of the end points
 ==================
 */
-trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
+trace_t SV_ClipMoveToEntity (edict_t *ent, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end)
 {
 	trace_t		trace;
 	vec3_t		offset;
@@ -841,7 +841,7 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 SV_MoveBounds
 ==================
 */
-void SV_MoveBounds (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, vec3_t boxmins, vec3_t boxmaxs)
+void SV_MoveBounds (const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, vec3_t boxmins, vec3_t boxmaxs)
 {
 #if 0
 // debug to test against everything

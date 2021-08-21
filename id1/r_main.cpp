@@ -645,7 +645,7 @@ void R_DrawViewModel (void)
 R_BmodelCheckBBox
 =============
 */
-int R_BmodelCheckBBox (model_t *clmodel, float *minmaxs)
+int R_BmodelCheckBBox (model_t *clmodel, const float *minmaxs)
 {
 	int			i, *pindex, clipflags;
 	vec3_t		acceptpt, rejectpt;

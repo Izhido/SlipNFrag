@@ -116,13 +116,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 
 void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer) const
 {
-	buffer.lastBarrier++;
-	if (buffer.imageBarriers.size() <= buffer.lastBarrier)
-	{
-		buffer.imageBarriers.emplace_back();
-	}
-	auto& barrier = buffer.imageBarriers[buffer.lastBarrier];
-	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	VkImageMemoryBarrier barrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 	barrier.srcAccessMask = 0;
 	barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -181,19 +175,24 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	barrier.subresourceRange.levelCount = 1;
+	buffer.lastBarrier++;
+	if (buffer.imageBarriers.size() <= buffer.lastBarrier)
+	{
+		buffer.imageBarriers.emplace_back();
+	}
+	buffer.imageBarriers[buffer.lastBarrier] = barrier;
 	if (mipCount > 1)
 	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		barrier.subresourceRange.baseMipLevel = 1;
+		barrier.subresourceRange.levelCount = mipCount - 1;
 		buffer.lastBarrier++;
 		if (buffer.imageBarriers.size() <= buffer.lastBarrier)
 		{
 			buffer.imageBarriers.emplace_back();
 		}
-		auto& writeBarrier = buffer.imageBarriers[buffer.lastBarrier];
-		writeBarrier = barrier;
-		writeBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		writeBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		writeBarrier.subresourceRange.baseMipLevel = 1;
-		writeBarrier.subresourceRange.levelCount = mipCount - 1;
+		buffer.imageBarriers[buffer.lastBarrier] = barrier;
 	}
 }
 

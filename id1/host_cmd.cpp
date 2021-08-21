@@ -494,7 +494,7 @@ void Host_Savegame_f (void)
 
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
-		if (sv.lightstyles[i].size() > 0)
+		if (!sv.lightstyles[i].empty())
             to_write += sv.lightstyles[i] + "\n";
 		else
             to_write += "m\n";

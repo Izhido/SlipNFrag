@@ -129,7 +129,7 @@ void PF_setorigin (void)
 }
 
 
-void SetMinMaxSize (edict_t *e, float *min, float *max, qboolean rotate)
+void SetMinMaxSize (edict_t *e, const float *min, const float *max, qboolean rotate)
 {
 	float	*angles;
 	vec3_t	rmin, rmax;
@@ -993,7 +993,7 @@ void PF_Find (void)
 	RETURN_EDICT(sv.edicts.data());
 }
 
-void PR_CheckEmptyString (char *s)
+void PR_CheckEmptyString (const char *s)
 {
 	if (s[0] <= ' ')
 		PR_RunError ("Bad string");

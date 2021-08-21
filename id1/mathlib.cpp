@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // mathlib.c -- math primitives
 
-#include <math.h>
+#include <cmath>
 #include "quakedef.h"
 
 void Sys_Error (const char *error, ...);
@@ -186,7 +186,7 @@ BoxOnPlaneSide
 Returns 1, 2, or 1 + 2
 ==================
 */
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, mplane_t *p)
+int BoxOnPlaneSide (const vec3_t emins, const vec3_t emaxs, mplane_t *p)
 {
 	float	dist1, dist2;
 	int		sides;
@@ -289,7 +289,7 @@ if (sides == 0)
 #endif
 
 
-void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
+void AngleVectors (const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 {
 	float		angle;
 	float		sr, sp, sy, cr, cp, cy;
@@ -315,7 +315,7 @@ void AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 	up[2] = cr*cp;
 }
 
-int VectorCompare (vec3_t v1, vec3_t v2)
+int VectorCompare (const vec3_t v1, const vec3_t v2)
 {
 	int		i;
 	
@@ -326,7 +326,7 @@ int VectorCompare (vec3_t v1, vec3_t v2)
 	return 1;
 }
 
-void VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
+void VectorMA (const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc)
 {
 	vecc[0] = veca[0] + scale*vecb[0];
 	vecc[1] = veca[1] + scale*vecb[1];
@@ -334,33 +334,33 @@ void VectorMA (vec3_t veca, float scale, vec3_t vecb, vec3_t vecc)
 }
 
 
-vec_t _DotProduct (vec3_t v1, vec3_t v2)
+vec_t _DotProduct (const vec3_t v1, const vec3_t v2)
 {
 	return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
 
-void _VectorSubtract (vec3_t veca, vec3_t vecb, vec3_t out)
+void _VectorSubtract (const vec3_t veca, const vec3_t vecb, vec3_t out)
 {
 	out[0] = veca[0]-vecb[0];
 	out[1] = veca[1]-vecb[1];
 	out[2] = veca[2]-vecb[2];
 }
 
-void _VectorAdd (vec3_t veca, vec3_t vecb, vec3_t out)
+void _VectorAdd (const vec3_t veca, const vec3_t vecb, vec3_t out)
 {
 	out[0] = veca[0]+vecb[0];
 	out[1] = veca[1]+vecb[1];
 	out[2] = veca[2]+vecb[2];
 }
 
-void _VectorCopy (vec3_t in, vec3_t out)
+void _VectorCopy (const vec3_t in, vec3_t out)
 {
 	out[0] = in[0];
 	out[1] = in[1];
 	out[2] = in[2];
 }
 
-void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
+void CrossProduct (const vec3_t v1, const vec3_t v2, vec3_t cross)
 {
 	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
 	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
@@ -369,7 +369,7 @@ void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
 
 double sqrt(double x);
 
-vec_t Length(vec3_t v)
+vec_t Length(const vec3_t v)
 {
 	int		i;
 	float	length;
@@ -408,7 +408,7 @@ void VectorInverse (vec3_t v)
 	v[2] = -v[2];
 }
 
-void VectorScale (vec3_t in, vec_t scale, vec3_t out)
+void VectorScale (const vec3_t in, vec_t scale, vec3_t out)
 {
 	out[0] = in[0]*scale;
 	out[1] = in[1]*scale;
@@ -430,7 +430,7 @@ int Q_log2(int val)
 R_ConcatRotations
 ================
 */
-void R_ConcatRotations (float in1[3][3], float in2[3][3], float out[3][3])
+void R_ConcatRotations (const float in1[3][3], const float in2[3][3], float out[3][3])
 {
 	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] +
 				in1[0][2] * in2[2][0];
@@ -458,7 +458,7 @@ void R_ConcatRotations (float in1[3][3], float in2[3][3], float out[3][3])
 R_ConcatTransforms
 ================
 */
-void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4])
+void R_ConcatTransforms (const float in1[3][4], const float in2[3][4], float out[3][4])
 {
 	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] +
 				in1[0][2] * in2[2][0];

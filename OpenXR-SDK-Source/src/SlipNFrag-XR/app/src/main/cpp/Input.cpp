@@ -308,12 +308,12 @@ void Input::Handle(AppState& appState, bool keyPressHandled)
 					{
 						if (booleanActionState.currentState)
 						{
-							if (!appState.ControlsMessageClosed && appState.ControlsMessageDisplayed && (appState.NearViewmodel || (d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0)))
+							if (!appState.ControlsMessageClosed && appState.ControlsMessageDisplayed && (appState.NearViewmodel || (appState.Scene.lastViewmodel16 < 0 && appState.Scene.lastViewmodel32 < 0)))
 							{
 								SCR_Interrupt();
 								appState.ControlsMessageClosed = true;
 							}
-							else if (appState.NearViewmodel || (d_lists.last_viewmodel16 < 0 && d_lists.last_viewmodel32 < 0))
+							else if (appState.NearViewmodel || (appState.Scene.lastViewmodel16 < 0 && appState.Scene.lastViewmodel32 < 0))
 							{
 								AddCommandInput("+attack");
 							}

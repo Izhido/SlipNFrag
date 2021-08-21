@@ -164,7 +164,6 @@ void R_InitSkyBox (void)
 	r_skysurfedges = loadmodel->surfedges + loadmodel->numsurfedges;
 	loadmodel->numsurfedges += 24;
 
-	memset (r_skyfaces, 0, 6*sizeof(*r_skyfaces));
 	for (i=0 ; i<6 ; i++)
 	{
 		r_skyplanes[i].normal[skybox_planes[i*2]] = 1;
@@ -173,6 +172,7 @@ void R_InitSkyBox (void)
 		VectorCopy (box_vecs[i][0], r_skytexinfo[i].vecs[0]);
 		VectorCopy (box_vecs[i][1], r_skytexinfo[i].vecs[1]);
 
+		r_skyfaces[i] = { };
 		r_skyfaces[i].plane = &r_skyplanes[i];
 		r_skyfaces[i].numedges = 4;
 		r_skyfaces[i].flags = box_faces[i] | SURF_DRAWSKYBOX;
@@ -629,7 +629,7 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
 }
 
 
-void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
+void R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*& texture)
 {
 	if (texture != nullptr)
 	{
@@ -666,7 +666,7 @@ void R_LoadSkyImage(std::string& path, std::string prefix, texture_t*& texture)
 		texture->offsets[0] = sizeof(texture_t);
 		auto start = Sys_FloatTime ();
         static std::vector<float> halfSquaredDistances;
-        if (halfSquaredDistances.size() == 0)
+        if (halfSquaredDistances.empty())
         {
             auto first = host_basepal.data();
             for (auto i = 0; i < 256; i++)
@@ -770,7 +770,7 @@ R_SetSkyBox
 const char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 int	r_skysideimage[6] = {5, 2, 4, 1, 0, 3};
 
-void R_SetSkyBox (float rotate, vec3_t axis)
+void R_SetSkyBox (float rotate, const vec3_t axis)
 {
 	r_skyrotate = rotate;
 	VectorCopy (axis, r_skyaxis);

@@ -78,7 +78,7 @@ Used by view and sv_user
 */
 vec3_t	forward, right, up;
 
-float V_CalcRoll (vec3_t angles, vec3_t velocity)
+float V_CalcRoll (vec3_t angles, const vec3_t velocity)
 {
 	float	sign;
 	float	side;

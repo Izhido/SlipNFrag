@@ -289,7 +289,7 @@ extern qboolean r_skyinitialized;
 extern qboolean r_skyboxinitialized;
 extern std::string r_skyboxprefix;
 
-void R_SetSkyBox (float rotate, vec3_t axis);
+void R_SetSkyBox (float rotate, const vec3_t axis);
 void R_EmitSkyBox (void);
 
 #endif

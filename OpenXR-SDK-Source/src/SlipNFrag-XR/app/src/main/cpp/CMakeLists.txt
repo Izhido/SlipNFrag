@@ -1,5 +1,5 @@
 file(GLOB LOCAL_SOURCE "*.cpp")
-file(GLOB ID1_SOURCE "../../../../../../../id1/*.cpp")
+file(GLOB ID1_SOURCE "${PROJECT_SOURCE_DIR}/../id1/*.cpp")
 
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_win")
 
@@ -35,8 +35,8 @@ target_include_directories(slipnfrag_native PRIVATE
         ${PROJECT_BINARY_DIR}/include
         ${PROJECT_SOURCE_DIR}/external/include
         ${Vulkan_INCLUDE_DIRS}
-        ../../../../../../../id1
-        ../../../../../../../stb
+        ${PROJECT_SOURCE_DIR}/../id1
+        ${PROJECT_SOURCE_DIR}/../stb
 )
 
 target_link_libraries(slipnfrag_native
@@ -59,9 +59,22 @@ target_link_libraries(slipnfrag_native debug vulkan_validation)
 if(BUILD_WITH_ASAN)
     add_library(asan SHARED IMPORTED)
 
-    set_property(TARGET asan PROPERTY IMPORTED_LOCATION
+    set_target_properties(asan PROPERTIES IMPORTED_LOCATION
             ${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/9.0.9/lib/linux/libclang_rt.asan-aarch64-android.so
     )
 
     target_link_libraries(slipnfrag_native asan)
 endif()
+
+option(BUILD_WITH_ADRENO "Build with Adreno validation / performance layer" OFF)
+
+if(BUILD_WITH_ADRENO)
+    add_library(adreno SHARED IMPORTED)
+
+    set_target_properties(adreno PROPERTIES IMPORTED_LOCATION
+            ${PROJECT_SOURCE_DIR}/../VkAdrenoLayer_v1.1/libs/${ANDROID_ABI}/libVkLayer_adreno.so
+    )
+
+    target_link_libraries(slipnfrag_native adreno)
+endif()
+

@@ -834,7 +834,7 @@ void Draw_ConsoleBackground (int lines)
 	auto scaley = conback->height / 200;
 
 // hack the version number directly into the pic
-	if (sys_version.size() > 0)
+	if (!sys_version.empty())
 	{
 		sprintf (ver, "%s", sys_version.c_str());
 		dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
