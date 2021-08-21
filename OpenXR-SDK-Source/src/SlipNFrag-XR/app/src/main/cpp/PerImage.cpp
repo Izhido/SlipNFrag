@@ -1697,18 +1697,18 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &texturePosition->buffer, &appState.NoOffset);
 					previousTexturePosition = texturePosition;
 				}
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
 				if (previousLightmapDescriptorSet != lightmapDescriptorSet)
 				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &lightmapDescriptorSet, 0, nullptr);
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
 					previousLightmapDescriptorSet = lightmapDescriptorSet;
+				}
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 9 * sizeof(float), pushConstants);
@@ -1743,18 +1743,18 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &texturePosition->buffer, &appState.NoOffset);
 					previousTexturePosition = texturePosition;
 				}
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
 				if (previousLightmapDescriptorSet != lightmapDescriptorSet)
 				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &lightmapDescriptorSet, 0, nullptr);
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
 					previousLightmapDescriptorSet = lightmapDescriptorSet;
+				}
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 9 * sizeof(float), pushConstants);
@@ -1795,18 +1795,18 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &texturePosition->buffer, &appState.NoOffset);
 					previousTexturePosition = texturePosition;
 				}
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
 				if (previousLightmapDescriptorSet != lightmapDescriptorSet)
 				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &lightmapDescriptorSet, 0, nullptr);
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
 					previousLightmapDescriptorSet = lightmapDescriptorSet;
+				}
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 9 * sizeof(float), pushConstants);
@@ -1841,18 +1841,18 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &texturePosition->buffer, &appState.NoOffset);
 					previousTexturePosition = texturePosition;
 				}
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
 				if (previousLightmapDescriptorSet != lightmapDescriptorSet)
 				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &lightmapDescriptorSet, 0, nullptr);
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
 					previousLightmapDescriptorSet = lightmapDescriptorSet;
+				}
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 9 * sizeof(float), pushConstants);
