@@ -807,7 +807,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	appState.Scene.texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
 	appState.Scene.coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
 	appState.Scene.controllerVerticesSize = 0;
-	if (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode)
+	if (appState.Focused && (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
 	{
 		if (appState.LeftController.PoseIsValid)
 		{

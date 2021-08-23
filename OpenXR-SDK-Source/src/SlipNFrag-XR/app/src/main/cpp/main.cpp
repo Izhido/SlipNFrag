@@ -2550,7 +2550,7 @@ void android_main(struct android_app* app)
 						XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
 						XrMatrix4x4f_GetRotation(&leftArrowsLayer.pose.orientation, &rotation);
 
-						layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsLayer));
+						layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsLayer));
 
 						rightArrowsLayer.radius = CylinderProjection::radius;
 						rightArrowsLayer.aspectRatio = 450 / 150;
@@ -2565,7 +2565,7 @@ void android_main(struct android_app* app)
 						XrMatrix4x4f_CreateRotation(&rotation, 0, -120, 0);
 						XrMatrix4x4f_GetRotation(&rightArrowsLayer.pose.orientation, &rotation);
 
-						layers.insert(layers.begin() + 3, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsLayer));
+						layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsLayer));
 					}
 					
 					if (appState.Mode == AppWorldMode)
