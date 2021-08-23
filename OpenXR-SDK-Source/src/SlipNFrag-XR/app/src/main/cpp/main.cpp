@@ -1501,7 +1501,7 @@ void android_main(struct android_app* app)
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "OVR 1.0.9";
+						sys_version = "OXR 1.0.9";
 						const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 						std::vector<std::string> arguments;
 						arguments.emplace_back("SlipNFrag");
@@ -1862,9 +1862,8 @@ void android_main(struct android_app* app)
 						appState.Scene.Initialize();
 						auto stagingBufferSize = perImage.GetStagingBufferSize(appState);
 						auto stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
-						PerImage::LoadStagingBuffer(appState, stagingBuffer);
+						perImage.LoadStagingBuffer(appState, stagingBuffer);
 						perImage.FillFromStagingBuffer(appState, stagingBuffer);
-						perImage.LoadRemainingBuffers(appState);
 						perImage.hostClearCount = host_clearcount;
 						//auto endTime = Sys_FloatTime();
 						//elapsed += (endTime - startTime);

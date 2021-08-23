@@ -19,8 +19,5 @@ struct Buffer
 	void CreateStagingBuffer(AppState& appState, VkDeviceSize size);
 	void CreateStorageBuffer(AppState& appState, VkDeviceSize size);
 	void CreateUniformBuffer(AppState& appState, VkDeviceSize size);
-	void Submit(AppState& appState, VkCommandBuffer commandBuffer, VkAccessFlags access) const;
-	void SubmitVertexBuffer(AppState& appState, VkCommandBuffer commandBuffer) const;
-	void SubmitIndexBuffer(AppState& appState, VkCommandBuffer commandBuffer) const;
 	void Delete(AppState& appState) const;
 };

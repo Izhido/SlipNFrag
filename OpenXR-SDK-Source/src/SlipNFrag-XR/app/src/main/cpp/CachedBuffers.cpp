@@ -34,7 +34,6 @@ Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 	{
 		buffer = new Buffer();
 		buffer->CreateVertexBuffer(appState, MinimumAllocationFor(size));
-		CHECK_VKCMD(vkMapMemory(appState.Device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
 	return buffer;
@@ -47,7 +46,6 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 	{
 		buffer = new Buffer();
 		buffer->CreateIndexBuffer(appState, MinimumAllocationFor(size));
-		CHECK_VKCMD(vkMapMemory(appState.Device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);
 	return buffer;
