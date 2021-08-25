@@ -48,19 +48,23 @@ target_link_libraries(slipnfrag_native
         OpenSLES
 )
 
-add_library(vulkan_validation SHARED IMPORTED)
+option(BUILD_WITH_VALIDATION "Build with Vulkan validation layer" OFF)
 
-set_target_properties(vulkan_validation PROPERTIES IMPORTED_LOCATION 
-        ${ANDROID_NDK}/sources/third_party/vulkan/src/build-android/jniLibs/${ANDROID_ABI}/libVkLayer_khronos_validation.so
-)
+if(BUILD_WITH_VALIDATION)
+    add_library(vulkan_validation SHARED IMPORTED)
 
-target_link_libraries(slipnfrag_native debug vulkan_validation)
+    set_target_properties(vulkan_validation PROPERTIES IMPORTED_LOCATION
+            ${ANDROID_NDK}/sources/third_party/vulkan/src/build-android/jniLibs/${ANDROID_ABI}/libVkLayer_khronos_validation.so
+    )
+
+    target_link_libraries(slipnfrag_native vulkan_validation)
+endif()
 
 if(BUILD_WITH_ASAN)
     add_library(asan SHARED IMPORTED)
 
     set_target_properties(asan PROPERTIES IMPORTED_LOCATION
-            ${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/9.0.9/lib/linux/libclang_rt.asan-aarch64-android.so
+            ${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/11.0.5/lib/linux/libclang_rt.asan-aarch64-android.so
     )
 
     target_link_libraries(slipnfrag_native asan)

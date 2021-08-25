@@ -5,7 +5,8 @@ plugins {
 
 android {
     compileSdkVersion 29
-    buildToolsVersion '30.0.3'
+    buildToolsVersion '31.0.0'
+    ndkVersion '22.1.7171670'
 
     defaultConfig {
         applicationId "com.heribertodelgado.slipnfrag_xr"
@@ -21,7 +22,9 @@ android {
         }
         externalNativeBuild {
             cmake {
-                arguments "-DBUILD_LOADER=OFF", "-DBUILD_TESTS=OFF", "-DANDROID_STL=c++_shared"
+                arguments "-DBUILD_LOADER=OFF", 
+                        "-DBUILD_TESTS=OFF", 
+                        "-DANDROID_STL=c++_shared"
             }
         }
     }
@@ -30,7 +33,10 @@ android {
         debug {
             externalNativeBuild {
                 cmake {
-                    arguments "-DANDROID_ARM_MODE=arm", "-DBUILD_WITH_ASAN=OFF", "-DBUILD_WITH_ADRENO=OFF"
+                    arguments "-DANDROID_ARM_MODE=arm",
+                            "-DBUILD_WITH_VALIDATION=ON",
+                            "-DBUILD_WITH_ASAN=ON",
+                            "-DBUILD_WITH_ADRENO=OFF"
                 }
             }
         }
