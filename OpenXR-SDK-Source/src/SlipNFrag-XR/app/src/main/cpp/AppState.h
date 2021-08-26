@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vid_ovr.h"
+#include "d_lists.h"
 #include <android_native_app_glue.h>
 #include "AppMode.h"
 #include <EGL/egl.h>
@@ -59,9 +61,6 @@ struct AppState
 	float ViewmodelForwardX;
 	float ViewmodelForwardY;
 	float ViewmodelForwardZ;
-	float EngineViewOriginX;
-	float EngineViewOriginY;
-	float EngineViewOriginZ;
 	int ScreenWidth;
 	int ScreenHeight;
 	int ConsoleWidth;

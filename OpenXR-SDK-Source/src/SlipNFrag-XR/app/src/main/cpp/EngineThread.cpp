@@ -101,9 +101,6 @@ void runEngine(AppState* appState, struct android_app* app)
 				appState->EngineForwardX = vpn[0];
 				appState->EngineForwardY = vpn[1];
 				appState->EngineForwardZ = vpn[2];
-				appState->EngineViewOriginX = r_refdef.vieworg[0];
-				appState->EngineViewOriginY = r_refdef.vieworg[1];
-				appState->EngineViewOriginZ = r_refdef.vieworg[2];
 			}
 			if (appState->PreviousTime < 0)
 			{

@@ -1,5 +1,5 @@
-#include "Scene.h"
 #include "AppState.h"
+#include "Scene.h" // This header is specified second in the list to allow headers in AppState.h to include the core engine structs
 #include "Utils.h"
 #include "ImageAsset.h"
 #include "PipelineAttributes.h"
@@ -123,10 +123,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	ImageAsset floorImage;
 	floorImage.Open("floor.png", app);
-	appState.Scene.floorTexture.Create(appState, floorImage.width, floorImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	floorTexture.Create(appState, floorImage.width, floorImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	ImageAsset controller;
 	controller.Open("controller.png", app);
-	appState.Scene.controllerTexture.Create(appState, controller.width, controller.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	controllerTexture.Create(appState, controller.width, controller.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controller.width * controller.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
 	Buffer stagingBuffer;
 	stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);
@@ -136,9 +136,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	size_t offset = floorImage.width * floorImage.height;
 	memcpy((uint32_t*)stagingBuffer.mapped + offset, controller.image, controller.width * controller.height * sizeof(uint32_t));
 	offset = 0;
-	appState.Scene.floorTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
+	floorTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
 	offset += floorImage.width * floorImage.height * sizeof(uint32_t);
-	appState.Scene.controllerTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
+	controllerTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
 	CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
 	CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
 	CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
@@ -896,6 +896,650 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.size = VK_WHOLE_SIZE;
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+}
+
+void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+{
+	TwinKey key { surface.surface, surface.entity };
+	auto entry = indicesPerKey.find(key);
+	if (entry == indicesPerKey.end())
+	{
+		loaded.indices.size = surface.count * sizeof(uint16_t);
+		if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
+		{
+			loaded.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.indices.buffer);
+			latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
+			usedInLatestSharedMemoryIndexBuffer16 = 0;
+		}
+		else
+		{
+			loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
+			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
+		}
+		usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
+		size += loaded.indices.size;
+		loaded.indices.firstSource = surface.surface;
+		loaded.indices.secondSource = surface.model;
+		buffers.SetupIndices16(loaded.indices);
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		indicesPerKey.insert({ key, newEntry });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.buffer = entry->second.buffer;
+		loaded.indices.offset = entry->second.offset;
+	}
+}
+
+void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
+{
+	TwinKey key { surface.surface, surface.entity };
+	auto entry = indicesPerKey.find(key);
+	if (entry == indicesPerKey.end())
+	{
+		loaded.indices.size = surface.count * sizeof(uint16_t);
+		if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
+		{
+			loaded.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.indices.buffer);
+			latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
+			usedInLatestSharedMemoryIndexBuffer16 = 0;
+		}
+		else
+		{
+			loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
+			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
+		}
+		usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
+		size += loaded.indices.size;
+		loaded.indices.firstSource = surface.surface;
+		loaded.indices.secondSource = surface.model;
+		buffers.SetupIndices16(loaded.indices);
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		indicesPerKey.insert({ key, newEntry });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.buffer = entry->second.buffer;
+		loaded.indices.offset = entry->second.offset;
+	}
+}
+
+void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+{
+	TwinKey key { surface.surface, surface.entity };
+	auto entry = indicesPerKey.find(key);
+	if (entry == indicesPerKey.end())
+	{
+		loaded.indices.size = surface.count * sizeof(uint32_t);
+		if (latestSharedMemoryIndexBuffer32 == nullptr || usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > latestSharedMemoryIndexBuffer32->size)
+		{
+			loaded.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.indices.buffer);
+			latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
+			usedInLatestSharedMemoryIndexBuffer32 = 0;
+		}
+		else
+		{
+			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
+			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
+		}
+		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
+		size += loaded.indices.size;
+		loaded.indices.firstSource = surface.surface;
+		loaded.indices.secondSource = surface.model;
+		buffers.SetupIndices32(loaded.indices);
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		indicesPerKey.insert({ key, newEntry });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.buffer = entry->second.buffer;
+		loaded.indices.offset = entry->second.offset;
+	}
+}
+
+void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
+{
+	TwinKey key { surface.surface, surface.entity };
+	auto entry = indicesPerKey.find(key);
+	if (entry == indicesPerKey.end())
+	{
+		loaded.indices.size = surface.count * sizeof(uint32_t);
+		if (latestSharedMemoryIndexBuffer32 == nullptr || usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > latestSharedMemoryIndexBuffer32->size)
+		{
+			loaded.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.indices.buffer);
+			latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
+			usedInLatestSharedMemoryIndexBuffer32 = 0;
+		}
+		else
+		{
+			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
+			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
+		}
+		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
+		size += loaded.indices.size;
+		loaded.indices.firstSource = surface.surface;
+		loaded.indices.secondSource = surface.model;
+		buffers.SetupIndices32(loaded.indices);
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		indicesPerKey.insert({ key, newEntry });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.buffer = entry->second.buffer;
+		loaded.indices.offset = entry->second.offset;
+	}
+}
+
+void Scene::GetAliasIndices16StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
+{
+	auto entry = aliasIndicesPerKey.find(alias.aliashdr);
+	if (entry == aliasIndicesPerKey.end())
+	{
+		loaded.indices.size = alias.count * sizeof(uint16_t);
+		if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
+		{
+			loaded.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.indices.buffer);
+			latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
+			usedInLatestSharedMemoryIndexBuffer16 = 0;
+		}
+		else
+		{
+			loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
+			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
+		}
+		usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
+		size += loaded.indices.size;
+		loaded.indices.source = alias.aliashdr;
+		buffers.SetupAliasIndices16(loaded.indices);
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		aliasIndicesPerKey.insert({ alias.aliashdr, newEntry });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.buffer = entry->second.buffer;
+		loaded.indices.offset = entry->second.offset;
+	}
+}
+
+void Scene::GetAliasIndices32StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
+{
+	auto entry = aliasIndicesPerKey.find(alias.aliashdr);
+	if (entry == aliasIndicesPerKey.end())
+	{
+		loaded.indices.size = alias.count * sizeof(uint32_t);
+		if (latestSharedMemoryIndexBuffer32 == nullptr || usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > latestSharedMemoryIndexBuffer32->size)
+		{
+			loaded.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.indices.buffer);
+			latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
+			usedInLatestSharedMemoryIndexBuffer32 = 0;
+		}
+		else
+		{
+			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
+			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
+		}
+		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
+		size += loaded.indices.size;
+		loaded.indices.source = alias.aliashdr;
+		buffers.SetupAliasIndices32(loaded.indices);
+		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		aliasIndicesPerKey.insert({ alias.aliashdr, newEntry });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.buffer = entry->second.buffer;
+		loaded.indices.offset = entry->second.offset;
+	}
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+{
+	auto vertexes = ((model_t*)surface.model)->vertexes;
+	if (previousVertexes != vertexes)
+	{
+		auto entry = verticesPerKey.find(vertexes);
+		if (entry == verticesPerKey.end())
+		{
+			loaded.vertices.size = ((model_t*)surface.model)->numvertexes * 3 * sizeof(float);
+			loaded.vertices.buffer = new SharedMemoryBuffer { };
+			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
+			buffers.MoveToFront(loaded.vertices.buffer);
+			size += loaded.vertices.size;
+			loaded.vertices.source = vertexes;
+			buffers.SetupVertices(loaded.vertices);
+			verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
+		}
+		else
+		{
+			loaded.vertices.size = 0;
+			loaded.vertices.buffer = entry->second;
+		}
+		previousVertexes = vertexes;
+		previousVertexBuffer = loaded.vertices.buffer;
+	}
+	else
+	{
+		loaded.vertices.size = 0;
+		loaded.vertices.buffer = previousVertexBuffer;
+	}
+	if (previousSurface != surface.surface)
+	{
+		auto entry = texturePositionsPerKey.find(surface.surface);
+		if (entry == texturePositionsPerKey.end())
+		{
+			loaded.texturePosition.size = 16 * sizeof(float);
+			loaded.texturePosition.buffer = new SharedMemoryBuffer { };
+			loaded.texturePosition.buffer->CreateVertexBuffer(appState, loaded.texturePosition.size);
+			buffers.MoveToFront(loaded.texturePosition.buffer);
+			size += loaded.texturePosition.size;
+			loaded.texturePosition.source = surface.surface;
+			buffers.SetupSurfaceTexturePosition(loaded.texturePosition);
+			texturePositionsPerKey.insert({ surface.surface, loaded.texturePosition.buffer });
+		}
+		else
+		{
+			loaded.texturePosition.size = 0;
+			loaded.texturePosition.buffer = entry->second;
+		}
+		previousSurface = surface.surface;
+		previousTexturePosition = loaded.texturePosition.buffer;
+	}
+	else
+	{
+		loaded.texturePosition.size = 0;
+		loaded.texturePosition.buffer = previousTexturePosition;
+	}
+	auto entry = lightmaps.lightmaps.find({ surface.surface, surface.entity });
+	if (entry == lightmaps.lightmaps.end())
+	{
+		auto lightmap = new Lightmap { };
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->key.first = surface.surface;
+		lightmap->key.second = surface.entity;
+		loaded.lightmap.lightmap = lightmap;
+		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+		size += loaded.lightmap.size;
+		loaded.lightmap.source = surface.lightmap;
+		lightmaps.Setup(loaded.lightmap);
+		lightmaps.lightmaps.insert({ lightmap->key, lightmap });
+	}
+	else if (surface.created)
+	{
+		auto first = entry->second;
+		auto available = (first->unusedCount >= appState.PerImage.size());
+		if (first->next == nullptr || available)
+		{
+			if (available)
+			{
+				first->unusedCount = 0;
+				loaded.lightmap.lightmap = first;
+			}
+			else
+			{
+				auto lightmap = new Lightmap { };
+				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				lightmap->key.first = surface.surface;
+				lightmap->key.second = surface.entity;
+				lightmap->next = first;
+				entry->second = lightmap;
+				loaded.lightmap.lightmap = lightmap;
+			}
+		}
+		else
+		{
+			auto found = false;
+			for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
+			{
+				if (lightmap->unusedCount >= appState.PerImage.size())
+				{
+					found = true;
+					lightmap->unusedCount = 0;
+					previous->next = lightmap->next;
+					lightmap->next = first;
+					entry->second = lightmap;
+					loaded.lightmap.lightmap = lightmap;
+					break;
+				}
+			}
+			if (!found)
+			{
+				auto lightmap = new Lightmap { };
+				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				lightmap->key.first = surface.surface;
+				lightmap->key.second = surface.entity;
+				lightmap->next = entry->second;
+				entry->second = lightmap;
+				loaded.lightmap.lightmap = lightmap;
+			}
+		}
+		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+		size += loaded.lightmap.size;
+		loaded.lightmap.source = surface.lightmap;
+		lightmaps.Setup(loaded.lightmap);
+	}
+	else
+	{
+		auto lightmap = entry->second;
+		lightmap->unusedCount = 0;
+		loaded.lightmap.lightmap = lightmap;
+		loaded.lightmap.size = 0;
+	}
+	if (previousTexture != surface.texture)
+	{
+		auto entry = surfaceTexturesPerKey.find(surface.texture);
+		if (entry == surfaceTexturesPerKey.end())
+		{
+			auto mipCount = (int)(std::floor(std::log2(std::max(surface.texture_width, surface.texture_height)))) + 1;
+			auto texture = new SharedMemoryTexture { };
+			texture->Create(appState, surface.texture_width, surface.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			textures.MoveToFront(texture);
+			loaded.texture.size = surface.texture_size;
+			size += loaded.texture.size;
+			loaded.texture.texture = texture;
+			loaded.texture.source = surface.texture;
+			textures.Setup(loaded.texture);
+			surfaceTexturesPerKey.insert({ surface.texture, texture });
+		}
+		else
+		{
+			loaded.texture.size = 0;
+			loaded.texture.texture = entry->second;
+		}
+		previousTexture = surface.texture;
+		previousSharedMemoryTexture = loaded.texture.texture;
+	}
+	else
+	{
+		loaded.texture.size = 0;
+		loaded.texture.texture = previousSharedMemoryTexture;
+	}
+	loaded.count = surface.count;
+	loaded.originX = surface.origin_x;
+	loaded.originY = surface.origin_y;
+	loaded.originZ = surface.origin_z;
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
+{
+	auto vertexes = ((model_t*)surface.model)->vertexes;
+	if (previousVertexes != vertexes)
+	{
+		auto entry = verticesPerKey.find(vertexes);
+		if (entry == verticesPerKey.end())
+		{
+			loaded.vertices.size = ((model_t*)surface.model)->numvertexes * 3 * sizeof(float);
+			loaded.vertices.buffer = new SharedMemoryBuffer { };
+			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
+			buffers.MoveToFront(loaded.vertices.buffer);
+			size += loaded.vertices.size;
+			loaded.vertices.source = vertexes;
+			buffers.SetupVertices(loaded.vertices);
+			verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
+		}
+		else
+		{
+			loaded.vertices.size = 0;
+			loaded.vertices.buffer = entry->second;
+		}
+		previousVertexes = vertexes;
+		previousVertexBuffer = loaded.vertices.buffer;
+	}
+	else
+	{
+		loaded.vertices.size = 0;
+		loaded.vertices.buffer = previousVertexBuffer;
+	}
+	if (previousSurface != surface.surface)
+	{
+		auto entry = texturePositionsPerKey.find(surface.surface);
+		if (entry == texturePositionsPerKey.end())
+		{
+			loaded.texturePosition.size = 16 * sizeof(float);
+			loaded.texturePosition.buffer = new SharedMemoryBuffer { };
+			loaded.texturePosition.buffer->CreateVertexBuffer(appState, loaded.texturePosition.size);
+			buffers.MoveToFront(loaded.texturePosition.buffer);
+			size += loaded.texturePosition.size;
+			loaded.texturePosition.source = surface.surface;
+			buffers.SetupSurfaceTexturePosition(loaded.texturePosition);
+			texturePositionsPerKey.insert({ surface.surface, loaded.texturePosition.buffer });
+		}
+		else
+		{
+			loaded.texturePosition.size = 0;
+			loaded.texturePosition.buffer = entry->second;
+		}
+		previousSurface = surface.surface;
+		previousTexturePosition = loaded.texturePosition.buffer;
+	}
+	else
+	{
+		loaded.texturePosition.size = 0;
+		loaded.texturePosition.buffer = previousTexturePosition;
+	}
+	auto entry = lightmaps.lightmaps.find({ surface.surface, surface.entity });
+	if (entry == lightmaps.lightmaps.end())
+	{
+		auto lightmap = new Lightmap { };
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->key.first = surface.surface;
+		lightmap->key.second = surface.entity;
+		loaded.lightmap.lightmap = lightmap;
+		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+		size += loaded.lightmap.size;
+		loaded.lightmap.source = surface.lightmap;
+		lightmaps.Setup(loaded.lightmap);
+		lightmaps.lightmaps.insert({ lightmap->key, lightmap });
+	}
+	else if (surface.created)
+	{
+		auto first = entry->second;
+		auto available = (first->unusedCount >= appState.PerImage.size());
+		if (first->next == nullptr || available)
+		{
+			if (available)
+			{
+				first->unusedCount = 0;
+				loaded.lightmap.lightmap = first;
+			}
+			else
+			{
+				auto lightmap = new Lightmap { };
+				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				lightmap->key.first = surface.surface;
+				lightmap->key.second = surface.entity;
+				lightmap->next = first;
+				entry->second = lightmap;
+				loaded.lightmap.lightmap = lightmap;
+			}
+		}
+		else
+		{
+			auto found = false;
+			for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
+			{
+				if (lightmap->unusedCount >= appState.PerImage.size())
+				{
+					found = true;
+					lightmap->unusedCount = 0;
+					previous->next = lightmap->next;
+					lightmap->next = first;
+					entry->second = lightmap;
+					loaded.lightmap.lightmap = lightmap;
+					break;
+				}
+			}
+			if (!found)
+			{
+				auto lightmap = new Lightmap { };
+				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				lightmap->key.first = surface.surface;
+				lightmap->key.second = surface.entity;
+				lightmap->next = entry->second;
+				entry->second = lightmap;
+				loaded.lightmap.lightmap = lightmap;
+			}
+		}
+		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+		size += loaded.lightmap.size;
+		loaded.lightmap.source = surface.lightmap;
+		lightmaps.Setup(loaded.lightmap);
+	}
+	else
+	{
+		auto lightmap = entry->second;
+		lightmap->unusedCount = 0;
+		loaded.lightmap.lightmap = lightmap;
+		loaded.lightmap.size = 0;
+	}
+	if (previousTexture != surface.texture)
+	{
+		auto entry = surfaceTexturesPerKey.find(surface.texture);
+		if (entry == surfaceTexturesPerKey.end())
+		{
+			auto mipCount = (int)(std::floor(std::log2(std::max(surface.texture_width, surface.texture_height)))) + 1;
+			auto texture = new SharedMemoryTexture { };
+			texture->Create(appState, surface.texture_width, surface.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			textures.MoveToFront(texture);
+			loaded.texture.size = surface.texture_size;
+			size += loaded.texture.size;
+			loaded.texture.texture = texture;
+			loaded.texture.source = surface.texture;
+			textures.Setup(loaded.texture);
+			surfaceTexturesPerKey.insert({ surface.texture, texture });
+		}
+		else
+		{
+			loaded.texture.size = 0;
+			loaded.texture.texture = entry->second;
+		}
+		previousTexture = surface.texture;
+		previousSharedMemoryTexture = loaded.texture.texture;
+	}
+	else
+	{
+		loaded.texture.size = 0;
+		loaded.texture.texture = previousSharedMemoryTexture;
+	}
+	loaded.count = surface.count;
+	loaded.originX = surface.origin_x;
+	loaded.originY = surface.origin_y;
+	loaded.originZ = surface.origin_z;
+	loaded.yaw = surface.yaw;
+	loaded.pitch = surface.pitch;
+	loaded.roll = surface.roll;
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
+{
+	auto vertexes = ((model_t*)turbulent.model)->vertexes;
+	if (previousVertexes != vertexes)
+	{
+		auto entry = verticesPerKey.find(vertexes);
+		if (entry == verticesPerKey.end())
+		{
+			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
+			loaded.vertices.buffer = new SharedMemoryBuffer { };
+			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
+			buffers.MoveToFront(loaded.vertices.buffer);
+			size += loaded.vertices.size;
+			loaded.vertices.source = vertexes;
+			buffers.SetupVertices(loaded.vertices);
+			verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
+		}
+		else
+		{
+			loaded.vertices.size = 0;
+			loaded.vertices.buffer = entry->second;
+		}
+		previousVertexes = vertexes;
+		previousVertexBuffer = loaded.vertices.buffer;
+	}
+	else
+	{
+		loaded.vertices.size = 0;
+		loaded.vertices.buffer = previousVertexBuffer;
+	}
+	if (previousSurface != turbulent.surface)
+	{
+		auto entry = texturePositionsPerKey.find(turbulent.surface);
+		if (entry == texturePositionsPerKey.end())
+		{
+			loaded.texturePosition.size = 16 * sizeof(float);
+			loaded.texturePosition.buffer = new SharedMemoryBuffer { };
+			loaded.texturePosition.buffer->CreateVertexBuffer(appState, loaded.texturePosition.size);
+			buffers.MoveToFront(loaded.texturePosition.buffer);
+			size += loaded.texturePosition.size;
+			loaded.texturePosition.source = turbulent.surface;
+			buffers.SetupTurbulentTexturePosition(loaded.texturePosition);
+			texturePositionsPerKey.insert({ turbulent.surface, loaded.texturePosition.buffer });
+		}
+		else
+		{
+			loaded.texturePosition.size = 0;
+			loaded.texturePosition.buffer = entry->second;
+		}
+		previousSurface = turbulent.surface;
+		previousTexturePosition = loaded.texturePosition.buffer;
+	}
+	else
+	{
+		loaded.texturePosition.size = 0;
+		loaded.texturePosition.buffer = previousTexturePosition;
+	}
+	if (previousTexture != turbulent.texture)
+	{
+		auto entry = turbulentPerKey.find(turbulent.texture);
+		if (entry == turbulentPerKey.end())
+		{
+			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
+			auto texture = new SharedMemoryTexture { };
+			texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			textures.MoveToFront(texture);
+			loaded.texture.size = turbulent.size;
+			size += loaded.texture.size;
+			loaded.texture.texture = texture;
+			loaded.texture.source = turbulent.data;
+			textures.Setup(loaded.texture);
+			turbulentPerKey.insert({ turbulent.texture, texture });
+		}
+		else
+		{
+			loaded.texture.size = 0;
+			loaded.texture.texture = entry->second;
+		}
+		previousTexture = turbulent.texture;
+		previousSharedMemoryTexture = loaded.texture.texture;
+	}
+	else
+	{
+		loaded.texture.size = 0;
+		loaded.texture.texture = previousSharedMemoryTexture;
+	}
+	loaded.count = turbulent.count;
+	loaded.originX = turbulent.origin_x;
+	loaded.originY = turbulent.origin_y;
+	loaded.originZ = turbulent.origin_z;
+	loaded.yaw = turbulent.yaw;
+	loaded.pitch = turbulent.pitch;
+	loaded.roll = turbulent.roll;
 }
 
 void Scene::Reset()
