@@ -10,9 +10,19 @@ void Skybox::Delete(AppState& appState) const
 	}
 }
 
+void Skybox::MoveToPrevious(Scene& scene)
+{
+	if (scene.skybox != nullptr)
+	{
+		scene.skybox->next = scene.previousSkyboxes;
+		scene.previousSkyboxes = scene.skybox;
+		scene.skybox = nullptr;
+	}
+}
+
 void Skybox::DeleteOld(AppState& appState)
 {
-	for (Skybox** s = &appState.Scene.skybox; *s != nullptr; )
+	for (Skybox** s = &appState.Scene.previousSkyboxes; *s != nullptr; )
 	{
 		(*s)->unusedCount++;
 		if ((*s)->unusedCount >= Constants::maxUnusedCount)
@@ -35,7 +45,8 @@ void Skybox::DeleteOld(AppState& appState)
 
 void Skybox::DeleteAll(AppState& appState)
 {
-	for (Skybox** s = &appState.Scene.skybox; *s != nullptr; )
+	MoveToPrevious(appState.Scene);
+	for (Skybox** s = &appState.Scene.previousSkyboxes; *s != nullptr; )
 	{
 		auto next = (*s)->next;
 		(*s)->Delete(appState);

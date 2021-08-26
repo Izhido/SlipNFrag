@@ -123,6 +123,7 @@ struct Scene
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	DescriptorSets* latestTextureDescriptorSets;
+	Skybox* previousSkyboxes;
 	Skybox* skybox;
 	VkDeviceSize floorVerticesSize;
 	VkDeviceSize texturedVerticesSize;

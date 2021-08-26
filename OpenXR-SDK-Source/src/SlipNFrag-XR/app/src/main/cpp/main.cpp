@@ -1837,7 +1837,7 @@ void android_main(struct android_app* app)
 					
 					auto readClearColor = false;
 					
-					if (appState.Mode != AppWorldMode || appState.Scene.skybox != VK_NULL_HANDLE)
+					if (appState.Mode != AppWorldMode || appState.Scene.skybox != nullptr)
 					{
 						clearA = 0;
 					}
@@ -2018,7 +2018,7 @@ void android_main(struct android_app* app)
 					worldLayer.viewCount = (uint32_t) projectionLayerViews.size();
 					worldLayer.views = projectionLayerViews.data();
 
-					if (appState.Mode != AppWorldMode || appState.Scene.skybox != VK_NULL_HANDLE)
+					if (appState.Mode != AppWorldMode || appState.Scene.skybox != nullptr)
 					{
 						worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
 					}
@@ -2570,7 +2570,7 @@ void android_main(struct android_app* app)
 					
 					if (appState.Mode == AppWorldMode)
 					{
-						if (d_lists.last_skybox >= 0 && appState.Scene.skybox == VK_NULL_HANDLE)
+						if (d_lists.last_skybox >= 0 && appState.Scene.skybox == nullptr)
 						{
 							int width = -1;
 							int height = -1;
@@ -2598,7 +2598,7 @@ void android_main(struct android_app* app)
 							}
 							if (width > 0 && height > 0)
 							{
-								auto newSkybox = new Skybox { };
+								appState.Scene.skybox = new Skybox { };
 								
 								XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 								swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
@@ -2610,18 +2610,18 @@ void android_main(struct android_app* app)
 								swapchainCreateInfo.faceCount = 6;
 								swapchainCreateInfo.arraySize = 1;
 								swapchainCreateInfo.mipCount = 1;
-								CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &newSkybox->swapchain));
+								CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.Scene.skybox->swapchain));
 
 								uint32_t imageCount;
-								CHECK_XRCMD(xrEnumerateSwapchainImages(newSkybox->swapchain, 0, &imageCount, nullptr));
-								newSkybox->vulkanImages.resize(imageCount);
-								newSkybox->images.resize(imageCount);
+								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, 0, &imageCount, nullptr));
+								appState.Scene.skybox->vulkanImages.resize(imageCount);
+								appState.Scene.skybox->images.resize(imageCount);
 								for (auto i = 0; i < imageCount; i++)
 								{
-									newSkybox->vulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
-									newSkybox->images[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&newSkybox->vulkanImages[i]);
+									appState.Scene.skybox->vulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
+									appState.Scene.skybox->images[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.Scene.skybox->vulkanImages[i]);
 								}
-								CHECK_XRCMD(xrEnumerateSwapchainImages(newSkybox->swapchain, imageCount, &imageCount, newSkybox->images[0]));
+								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, imageCount, &imageCount, appState.Scene.skybox->images[0]));
 								
 								VkBufferCreateInfo bufferCreateInfo { };
 								bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -2646,14 +2646,14 @@ void android_main(struct android_app* app)
 								region.imageExtent.height = height;
 								region.imageExtent.depth = 1;
 
-								CHECK_XRCMD(xrAcquireSwapchainImage(newSkybox->swapchain, &acquireInfo, &swapchainImageIndex));
+								CHECK_XRCMD(xrAcquireSwapchainImage(appState.Scene.skybox->swapchain, &acquireInfo, &swapchainImageIndex));
 
-								CHECK_XRCMD(xrWaitSwapchainImage(newSkybox->swapchain, &waitInfo));
+								CHECK_XRCMD(xrWaitSwapchainImage(appState.Scene.skybox->swapchain, &waitInfo));
 
 								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 								
-								auto image = newSkybox->vulkanImages[swapchainImageIndex].image;
+								auto image = appState.Scene.skybox->vulkanImages[swapchainImageIndex].image;
 								imageMemoryBarrier.image = image;
 								
 								for (auto i = 0; i < 6; i++)
@@ -2723,7 +2723,7 @@ void android_main(struct android_app* app)
 
 								CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 
-								CHECK_XRCMD(xrReleaseSwapchainImage(newSkybox->swapchain, &releaseInfo));
+								CHECK_XRCMD(xrReleaseSwapchainImage(appState.Scene.skybox->swapchain, &releaseInfo));
 
 								vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
 								for (auto i = 0; i < 6; i++)
@@ -2731,9 +2731,6 @@ void android_main(struct android_app* app)
 									vkDestroyBuffer(appState.Device, buffers[i], nullptr);
 									vkFreeMemory(appState.Device, memoryBlocks[i], nullptr);
 								}
-
-								newSkybox->next = appState.Scene.skybox;
-								appState.Scene.skybox = newSkybox;
 							}
 						}
 						if (appState.Scene.skybox != VK_NULL_HANDLE)

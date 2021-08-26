@@ -1561,6 +1561,7 @@ void Scene::Reset()
 	usedInLatestSharedMemoryIndexBuffer16 = 0;
 	latestBufferSharedMemory = nullptr;
 	usedInLatestBufferSharedMemory = 0;
+	Skybox::MoveToPrevious(*this);
 	aliasIndicesPerKey.clear();
 	indicesPerKey.clear();
 	aliasVerticesPerKey.clear();

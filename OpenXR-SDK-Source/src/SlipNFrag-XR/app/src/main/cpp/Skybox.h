@@ -8,6 +8,7 @@
 #include <vector>
 
 struct AppState;
+struct Scene;
 
 struct Skybox
 {
@@ -16,8 +17,9 @@ struct Skybox
 	XrSwapchain swapchain;
 	std::vector<XrSwapchainImageVulkan2KHR> vulkanImages;
 	std::vector<XrSwapchainImageBaseHeader*> images;
-
+	
 	void Delete(AppState& appState) const;
+	static void MoveToPrevious(Scene& scene);
 	static void DeleteOld(AppState& appState);
 	static void DeleteAll(AppState& appState);
 };
