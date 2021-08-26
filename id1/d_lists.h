@@ -18,6 +18,26 @@ struct dsurface_t
 	float origin_x;
 	float origin_y;
 	float origin_z;
+};
+
+struct dsurfacerotated_t
+{
+	void* surface;
+	void* entity;
+	void* model;
+	int created;
+	int texture_width;
+	int texture_height;
+	int texture_size;
+	unsigned char* texture;
+	int lightmap_width;
+	int lightmap_height;
+	int lightmap_size;
+	float* lightmap;
+	int count;
+	float origin_x;
+	float origin_y;
+	float origin_z;
 	float yaw;
 	float pitch;
 	float roll;
@@ -88,8 +108,12 @@ struct dlists_t
 {
 	int last_surface16;
 	int last_surface32;
+	int last_surface_rotated16;
+	int last_surface_rotated32;
 	int last_fence16;
 	int last_fence32;
+	int last_fence_rotated16;
+	int last_fence_rotated32;
 	int last_sprite;
 	int last_turbulent16;
 	int last_turbulent32;
@@ -110,8 +134,12 @@ struct dlists_t
 	int clear_color;
 	std::vector<dsurface_t> surfaces16;
 	std::vector<dsurface_t> surfaces32;
+	std::vector<dsurfacerotated_t> surfaces_rotated16;
+	std::vector<dsurfacerotated_t> surfaces_rotated32;
 	std::vector<dsurface_t> fences16;
 	std::vector<dsurface_t> fences32;
+	std::vector<dsurfacerotated_t> fences_rotated16;
+	std::vector<dsurfacerotated_t> fences_rotated32;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dturbulent_t> turbulent16;
 	std::vector<dturbulent_t> turbulent32;
@@ -138,7 +166,9 @@ extern qboolean d_awayfromviewmodel;
 
 void D_ResetLists ();
 void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
+void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
 void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
+void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);

@@ -7,6 +7,7 @@
 #include "vid_ovr.h"
 #include "d_lists.h"
 #include "LoadedSurface.h"
+#include "LoadedSurfaceRotated.h"
 #include "LoadedAlias.h"
 #include "LoadedTurbulent.h"
 
@@ -62,10 +63,13 @@ struct PerImage
 
 	void Reset(AppState& appState);
 	static void GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	static void GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	static void GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	static void GetIndices32StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	static void GetAliasIndices16StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
 	static void GetAliasIndices32StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
 	static void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	static void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	static void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size) const;
 	VkDeviceSize GetStagingBufferSize(AppState& appState);
@@ -76,6 +80,7 @@ struct PerImage
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	static void SetPushConstants(const LoadedSurface& loaded, float pushConstants[]);
+	static void SetPushConstants(const LoadedSurfaceRotated& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedTurbulent& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	void Render(AppState& appState);

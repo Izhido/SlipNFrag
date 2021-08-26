@@ -544,9 +544,24 @@ void D_DrawSurfacesToLists (void)
 				if (pcurrentcache != nullptr)
 				{
 					if (s->isfence)
-						D_AddFenceToLists (pface, pcurrentcache, currententity, created);
-					else
+					{
+						if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+						{
+							D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+						}
+						else
+						{
+							D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, created);
+						}
+					}
+					else if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+					{
 						D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+					}
+					else
+					{
+						D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity, created);
+					}
 				}
 
 				if (s->insubmodel)
@@ -681,9 +696,24 @@ void D_DrawSurfacesToListsIfNeeded (void)
 				if (pcurrentcache != nullptr)
 				{
 					if (s->isfence)
-						D_AddFenceToLists (pface, pcurrentcache, currententity, created);
-					else
+					{
+						if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+						{
+							D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+						}
+						else
+						{
+							D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, created);
+						}
+					}
+					else if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+					{
 						D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+					}
+					else
+					{
+						D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity, created);
+					}
 				}
 
 				if (s->insubmodel)

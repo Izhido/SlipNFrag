@@ -39,14 +39,13 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 		texture--;
 		size_t count;
 		texture->width = dimension;
+		texture->height = dimension;
 		if (dimension > 1024)
 		{
-			texture->height = dimension;
 			count = 1;
 		}
 		else
 		{
-			texture->height = 1024;
 			count = 1024 / dimension;
 		}
 		VkImageCreateInfo imageCreateInfo { };
@@ -57,7 +56,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 		imageCreateInfo.extent.height = texture->height;
 		imageCreateInfo.extent.depth = 1;
 		imageCreateInfo.mipLevels = 1;
-		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.arrayLayers = count;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageCreateInfo.usage = usage;
@@ -91,11 +90,11 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 		VkImageViewCreateInfo imageViewCreateInfo { };
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		imageViewCreateInfo.image = texture->image;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 		imageViewCreateInfo.format = imageCreateInfo.format;
 		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageViewCreateInfo.subresourceRange.levelCount = 1;
-		imageViewCreateInfo.subresourceRange.layerCount = 1;
+		imageViewCreateInfo.subresourceRange.layerCount = count;
 		CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &texture->view));
 		VkDescriptorImageInfo textureInfo { };
 		textureInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -116,8 +115,8 @@ void Lightmap::Fill(AppState& appState, StagingBuffer& buffer)
 	VkBufferImageCopy region { };
 	region.bufferOffset = buffer.offset;
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.baseArrayLayer = allocatedIndex;
 	region.imageSubresource.layerCount = 1;
-	region.imageOffset.y = allocatedIndex * texture->width;
 	region.imageExtent.width = width;
 	region.imageExtent.height = height;
 	region.imageExtent.depth = 1;
@@ -146,7 +145,7 @@ void Lightmap::Fill(AppState& appState, StagingBuffer& buffer)
 		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.layerCount = 1;
+		barrier.subresourceRange.layerCount = texture->allocated.size();
 		vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;

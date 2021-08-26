@@ -2874,7 +2874,9 @@ void android_main(struct android_app* app)
 			appState.Scene.alias.Delete(appState);
 			appState.Scene.turbulent.Delete(appState);
 			appState.Scene.sprites.Delete(appState);
+			appState.Scene.fencesRotated.Delete(appState);
 			appState.Scene.fences.Delete(appState);
+			appState.Scene.surfacesRotated.Delete(appState);
 			appState.Scene.surfaces.Delete(appState);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.doubleImageLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
@@ -2899,6 +2901,7 @@ void android_main(struct android_app* app)
 			vkDestroyShaderModule(appState.Device, appState.Scene.spriteVertex, nullptr);
 			vkDestroyShaderModule(appState.Device, appState.Scene.fenceFragment, nullptr);
 			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceFragment, nullptr);
+			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceRotatedVertex, nullptr);
 			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceVertex, nullptr);
 			appState.Scene.matrices.Delete(appState);
 

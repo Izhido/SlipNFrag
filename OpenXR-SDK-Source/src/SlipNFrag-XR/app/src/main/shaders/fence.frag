@@ -8,10 +8,10 @@ precision mediump int;
 
 layout(set = 0, binding = 1) uniform sampler2D fragmentPalette;
 layout(set = 0, binding = 2) uniform usampler2D fragmentColormap;
-layout(set = 1, binding = 0) uniform sampler2D fragmentLightmap;
+layout(set = 1, binding = 0) uniform sampler2DArray fragmentLightmap;
 layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
 
-layout(location = 0) in vec2 fragmentLightmapCoords;
+layout(location = 0) in vec3 fragmentLightmapCoords;
 layout(location = 1) in vec2 fragmentTexCoords;
 layout(location = 0) out lowp vec4 outColor;
 

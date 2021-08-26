@@ -9,6 +9,7 @@
 #include "TwinKey.h"
 #include "SharedMemoryBufferWithOffset.h"
 #include "LoadedSurface.h"
+#include "LoadedSurfaceRotated.h"
 #include "LoadedSprite.h"
 #include "LoadedTurbulent.h"
 #include "LoadedAlias.h"
@@ -23,6 +24,7 @@ struct Scene
 {
 	bool created;
 	VkShaderModule surfaceVertex;
+	VkShaderModule surfaceRotatedVertex;
 	VkShaderModule surfaceFragment;
 	VkShaderModule fenceFragment;
 	VkShaderModule spriteVertex;
@@ -47,7 +49,9 @@ struct Scene
 	VkDescriptorSetLayout singleImageLayout;
 	VkDescriptorSetLayout doubleImageLayout;
 	Pipeline surfaces;
+	Pipeline surfacesRotated;
 	Pipeline fences;
+	Pipeline fencesRotated;
 	Pipeline sprites;
 	Pipeline turbulent;
 	Pipeline alias;
@@ -66,8 +70,12 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryBufferWithOffset> aliasIndicesPerKey;
 	int lastSurface16;
 	int lastSurface32;
+	int lastSurfaceRotated16;
+	int lastSurfaceRotated32;
 	int lastFence16;
 	int lastFence32;
+	int lastFenceRotated16;
+	int lastFenceRotated32;
 	int lastSprite;
 	int lastTurbulent16;
 	int lastTurbulent32;
@@ -80,8 +88,12 @@ struct Scene
 	int lastSky;
 	std::vector<LoadedSurface> loadedSurfaces16;
 	std::vector<LoadedSurface> loadedSurfaces32;
+	std::vector<LoadedSurfaceRotated> loadedSurfacesRotated16;
+	std::vector<LoadedSurfaceRotated> loadedSurfacesRotated32;
 	std::vector<LoadedSurface> loadedFences16;
 	std::vector<LoadedSurface> loadedFences32;
+	std::vector<LoadedSurfaceRotated> loadedFencesRotated16;
+	std::vector<LoadedSurfaceRotated> loadedFencesRotated32;
 	std::vector<LoadedSprite> loadedSprites;
 	std::vector<LoadedTurbulent> loadedTurbulent16;
 	std::vector<LoadedTurbulent> loadedTurbulent32;

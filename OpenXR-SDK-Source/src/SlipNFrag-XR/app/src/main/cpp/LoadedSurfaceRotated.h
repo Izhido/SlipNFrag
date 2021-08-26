@@ -5,7 +5,7 @@
 #include "LoadedLightmap.h"
 #include "LoadedSharedMemoryTexture.h"
 
-struct LoadedSurface
+struct LoadedSurfaceRotated
 {
 	LoadedSharedMemoryBuffer vertices;
 	LoadedSharedMemoryBuffer texturePosition;
@@ -16,4 +16,7 @@ struct LoadedSurface
 	float originX;
 	float originY;
 	float originZ;
+	float yaw;
+	float pitch;
+	float roll;
 };

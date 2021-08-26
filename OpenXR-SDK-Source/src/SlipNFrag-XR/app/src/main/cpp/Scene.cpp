@@ -290,6 +290,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkFreeMemory(appState.Device, memoryBlock, nullptr);
 
 	CreateShader(appState, app, "shaders/surface.vert.spv", &surfaceVertex);
+	CreateShader(appState, app, "shaders/surface_rotated.vert.spv", &surfaceRotatedVertex);
 	CreateShader(appState, app, "shaders/surface.frag.spv", &surfaceFragment);
 	CreateShader(appState, app, "shaders/fence.frag.spv", &fenceFragment);
 	CreateShader(appState, app, "shaders/sprite.vert.spv", &spriteVertex);
@@ -308,6 +309,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/floor.frag.spv", &floorFragment);
 	CreateShader(appState, app, "shaders/console.vert.spv", &consoleVertex);
 	CreateShader(appState, app, "shaders/console.frag.spv", &consoleFragment);
+	
 	VkPipelineTessellationStateCreateInfo tessellationStateCreateInfo { };
 	tessellationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 	VkPipelineViewportStateCreateInfo viewportStateCreateInfo { };
@@ -614,7 +616,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	VkPushConstantRange pushConstantInfo { };
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	pushConstantInfo.size = 9 * sizeof(float);
+	pushConstantInfo.size = 6 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfaces.pipelineLayout));
@@ -634,6 +636,21 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.layout = surfaces.pipelineLayout;
 	graphicsPipelineCreateInfo.renderPass = appState.RenderPass;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfaces.pipeline));
+	surfacesRotated.stages.resize(2);
+	surfacesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	surfacesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	surfacesRotated.stages[0].module = surfaceRotatedVertex;
+	surfacesRotated.stages[0].pName = "main";
+	surfacesRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	surfacesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	surfacesRotated.stages[1].module = surfaceFragment;
+	surfacesRotated.stages[1].pName = "main";
+	pushConstantInfo.size = 9 * sizeof(float);
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotated.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = surfacesRotated.stages.size();
+	graphicsPipelineCreateInfo.pStages = surfacesRotated.stages.data();
+	graphicsPipelineCreateInfo.layout = surfacesRotated.pipelineLayout;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRotated.pipeline));
 	fences.stages.resize(2);
 	fences.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fences.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -643,11 +660,27 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fences.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fences.stages[1].module = fenceFragment;
 	fences.stages[1].pName = "main";
+	pushConstantInfo.size = 6 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fences.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fences.stages.size();
 	graphicsPipelineCreateInfo.pStages = fences.stages.data();
 	graphicsPipelineCreateInfo.layout = fences.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fences.pipeline));
+	fencesRotated.stages.resize(2);
+	fencesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	fencesRotated.stages[0].module = surfaceRotatedVertex;
+	fencesRotated.stages[0].pName = "main";
+	fencesRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fencesRotated.stages[1].module = fenceFragment;
+	fencesRotated.stages[1].pName = "main";
+	pushConstantInfo.size = 9 * sizeof(float);
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotated.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = fencesRotated.stages.size();
+	graphicsPipelineCreateInfo.pStages = fencesRotated.stages.data();
+	graphicsPipelineCreateInfo.layout = fencesRotated.pipelineLayout;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotated.pipeline));
 	sprites.stages.resize(2);
 	sprites.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	sprites.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
