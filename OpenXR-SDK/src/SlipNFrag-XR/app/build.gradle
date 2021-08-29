@@ -34,8 +34,8 @@ android {
             externalNativeBuild {
                 cmake {
                     arguments "-DANDROID_ARM_MODE=arm",
-                            "-DBUILD_WITH_VALIDATION=ON",
-                            "-DBUILD_WITH_ASAN=ON",
+                            "-DBUILD_WITH_VALIDATION=OFF",
+                            "-DBUILD_WITH_ASAN=OFF",
                             "-DBUILD_WITH_ADRENO=OFF"
                 }
             }

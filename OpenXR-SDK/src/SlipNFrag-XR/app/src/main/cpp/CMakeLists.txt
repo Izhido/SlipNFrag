@@ -8,7 +8,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(slipnfrag_native MODULE
         ${LOCAL_SOURCE}
         ${ID1_SOURCE}
-        $<TARGET_OBJECTS:android_native_app_glue>
+        ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
 )
 
 add_library(ovr_openxr_loader SHARED IMPORTED)
@@ -37,13 +37,13 @@ target_include_directories(slipnfrag_native PRIVATE
         ${Vulkan_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/../id1
         ${PROJECT_SOURCE_DIR}/../stb
+        ${ANDROID_NDK}/sources/android/native_app_glue
 )
 
 target_link_libraries(slipnfrag_native
         ${ANDROID_LIBRARY}
         ${ANDROID_LOG_LIBRARY}
         ovr_openxr_loader
-        openxr-gfxwrapper
         ${Vulkan_LIBRARY}
         OpenSLES
 )
