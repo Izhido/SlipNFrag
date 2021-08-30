@@ -13,11 +13,11 @@ void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkForm
 	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 	imageCreateInfo.format = format;
-	imageCreateInfo.extent.width = width;
-	imageCreateInfo.extent.height = height;
+	imageCreateInfo.extent.width = this->width;
+	imageCreateInfo.extent.height = this->height;
 	imageCreateInfo.extent.depth = 1;
-	imageCreateInfo.mipLevels = mipCount;
-	imageCreateInfo.arrayLayers = layerCount;
+	imageCreateInfo.mipLevels = this->mipCount;
+	imageCreateInfo.arrayLayers = this->layerCount;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	imageCreateInfo.usage = usage;

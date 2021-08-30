@@ -14,7 +14,7 @@ void AppState::RenderScreen()
 				auto console = con_buffer.data();
 				auto previousConsole = console;
 				auto screen = vid_buffer.data();
-				auto target = Screen.Data.data();
+				auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
 				auto y = 0;
 				while (y < vid_height)
 				{
@@ -58,7 +58,7 @@ void AppState::RenderScreen()
 				auto console = con_buffer.data();
 				auto previousConsole = console;
 				auto screen = vid_buffer.data();
-				auto target = Screen.Data.data();
+				auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
 				auto black = d_8to24table[0];
 				auto y = 0;
 				while (y < vid_height)
@@ -106,84 +106,84 @@ void AppState::RenderScreen()
 					}
 				}
 			}
+			{
+				std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+				for (auto& directRect : DirectRect::directRects)
+				{
+					auto width = directRect.width * Constants::screenToConsoleMultiplier;
+					auto height = directRect.height * Constants::screenToConsoleMultiplier;
+					auto source = directRect.data;
+					auto target = (uint32_t*)(Screen.StagingBuffer.mapped) + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
+					auto y = 0;
+					while (y < height)
+					{
+						auto x = 0;
+						while (x < width)
+						{
+							auto entry = d_8to24table[*source++];
+							do
+							{
+								*target++ = entry;
+								x++;
+							} while ((x % Constants::screenToConsoleMultiplier) != 0);
+						}
+						y++;
+						while ((y % Constants::screenToConsoleMultiplier) != 0)
+						{
+							target += ScreenWidth - width;
+							memcpy(target, target - ScreenWidth, width * sizeof(uint32_t));
+							target += width;
+							y++;
+						}
+						target += ScreenWidth - width;
+					}
+				}
+			}
 		}
 		else if (key_dest == key_game)
 		{
 			std::lock_guard<std::mutex> lock(RenderMutex);
 			auto source = con_buffer.data();
-			auto target = Screen.Data.data();
-			auto y = 0;
-			auto limit = ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
-			while (y < limit)
+			auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
+			auto count = ConsoleWidth * ConsoleHeight;
+			while (count > 0)
 			{
-				auto x = 0;
-				while (x < ScreenWidth)
-				{
-					auto entry = *source++;
-					if (entry == 255)
-					{
-						do
-						{
-							*target++ = 0;
-							x++;
-						} while ((x % Constants::screenToConsoleMultiplier) != 0);
-					}
-					else
-					{
-						auto converted = d_8to24table[entry];
-						do
-						{
-							*target++ = converted;
-							x++;
-						} while ((x % Constants::screenToConsoleMultiplier) != 0);
-					}
-				}
-				y++;
-				while ((y % Constants::screenToConsoleMultiplier) != 0)
-				{
-					memcpy(target, target - ScreenWidth, ScreenWidth * sizeof(uint32_t));
-					target += ScreenWidth;
-					y++;
-				}
-			}
-			limit = ScreenHeight - SBAR_HEIGHT - 24;
-			memset(target, 0, (limit - y) * ScreenWidth * sizeof(uint32_t));
-			target += (limit - y) * ScreenWidth;
-			y = limit;
-			limit = ScreenWidth / Constants::screenToConsoleMultiplier;
-			while (y < ScreenHeight)
-			{
-				auto x = 0;
-				while (x < limit)
-				{
-					auto entry = *source++;
-					if (entry == 255)
-					{
-						*target++ = 0;
-					}
-					else
-					{
-						*target++ = d_8to24table[entry];
-					}
-					x++;
-				}
-				while (x < ScreenWidth)
+				auto entry = *source++;
+				if (entry == 255)
 				{
 					*target++ = 0;
-					x++;
 				}
-				y++;
+				else
+				{
+					*target++ = d_8to24table[entry];
+				}
+				count--;
+			}
+			{
+				std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+				for (auto& directRect : DirectRect::directRects)
+				{
+					auto source = directRect.data;
+					auto target = (uint32_t*)(Screen.StagingBuffer.mapped) + directRect.y * ConsoleWidth + directRect.x;
+					for (auto y = 0; y < directRect.height; y++)
+					{
+						for (auto x = 0; x < directRect.width; x++)
+						{
+							*target++ = d_8to24table[*source++];
+						}
+						target += ConsoleWidth - directRect.width;
+					}
+				}
 			}
 		}
 		else
 		{
 			std::lock_guard<std::mutex> lock(RenderMutex);
 			auto source = con_buffer.data();
-			auto target = Screen.Data.data();
+			auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
 			auto black = d_8to24table[0];
 			auto y = 0;
 			auto limit = ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
-			auto oneLine = ScreenWidth * Constants::screenToConsoleMultiplier;
 			while (y < limit)
 			{
 				auto t = (y & 1) << 1;
@@ -282,40 +282,37 @@ void AppState::RenderScreen()
 				}
 				y++;
 			}
-		}
-		{
-			std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
-			for (auto& directRect : DirectRect::directRects)
 			{
-				auto width = directRect.width * Constants::screenToConsoleMultiplier;
-				auto height = directRect.height * Constants::screenToConsoleMultiplier;
-				auto directRectIndex = 0;
-				auto directRectIndexCache = 0;
-				auto target = Screen.Data.data() + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
-				auto y = 0;
-				while (y < height)
+				std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+				for (auto& directRect : DirectRect::directRects)
 				{
-					auto x = 0;
-					while (x < width)
+					auto width = directRect.width * Constants::screenToConsoleMultiplier;
+					auto height = directRect.height * Constants::screenToConsoleMultiplier;
+					auto source = directRect.data;
+					auto target = (uint32_t*)(Screen.StagingBuffer.mapped) + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
+					auto y = 0;
+					while (y < height)
 					{
-						auto entry = d_8to24table[directRect.data[directRectIndex]];
-						do
+						auto x = 0;
+						while (x < width)
 						{
-							*target++ = entry;
-							x++;
-						} while ((x % Constants::screenToConsoleMultiplier) != 0);
-						directRectIndex++;
+							auto entry = d_8to24table[*source++];
+							do
+							{
+								*target++ = entry;
+								x++;
+							} while ((x % Constants::screenToConsoleMultiplier) != 0);
+						}
+						y++;
+						while ((y % Constants::screenToConsoleMultiplier) != 0)
+						{
+							target += ScreenWidth - width;
+							memcpy(target, target - ScreenWidth, width * sizeof(uint32_t));
+							target += width;
+							y++;
+						}
+						target += ScreenWidth - width;
 					}
-					y++;
-					if ((y % Constants::screenToConsoleMultiplier) == 0)
-					{
-						directRectIndexCache = directRectIndex;
-					}
-					else
-					{
-						directRectIndex = directRectIndexCache;
-					}
-					target += ScreenWidth - width;
 				}
 			}
 		}
@@ -328,6 +325,49 @@ void AppState::RenderScreen()
 			memcpy(Screen.Data.data(), NoGameDataData.data(), NoGameDataData.size() * sizeof(uint32_t));
 			noGameDataLoaded = true;
 		}
+		memcpy(Screen.StagingBuffer.mapped, Screen.Data.data(), Screen.StagingBuffer.size);
 	}
-	memcpy(Screen.StagingBuffer.mapped, Screen.Data.data(), Screen.StagingBuffer.size);
+	else
+	{
+		memcpy(Screen.StagingBuffer.mapped, Screen.Data.data(), Screen.StagingBuffer.size);
+	}
+}
+
+int AppState::RenderKeyboard()
+{
+	auto source = Keyboard.buffer.data();
+	auto target = (uint32_t*)(Keyboard.Screen.StagingBuffer.mapped);
+	auto limit = ScreenHeight / 2;
+	auto y = 0;
+	while (y < limit)
+	{
+		auto x = 0;
+		while (x < ScreenWidth)
+		{
+			auto entry = *source++;
+			unsigned int converted;
+			if (entry == 255)
+			{
+				converted = 0;
+			}
+			else
+			{
+				converted = d_8to24table[entry];
+			}
+			do
+			{
+				*target++ = converted;
+				x++;
+			} while ((x % Constants::screenToConsoleMultiplier) != 0);
+		}
+		y++;
+		while ((y % Constants::screenToConsoleMultiplier) != 0)
+		{
+			memcpy(target, target - ScreenWidth, ScreenWidth * sizeof(uint32_t));
+			target += ScreenWidth;
+			y++;
+		}
+	}
+	
+	return limit;
 }

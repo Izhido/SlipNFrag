@@ -93,8 +93,36 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CopyImage(appState, play.image, appState.Screen.Data.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);
 	play.Close();
 	AddBorder(appState, appState.Screen.Data);
+
 	appState.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.Screen.Data.size() * sizeof(uint32_t));
 	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Screen.StagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.StagingBuffer.mapped));
+
+	{
+		appState.Screen.ConsoleTexture.width = appState.ConsoleWidth;
+		appState.Screen.ConsoleTexture.height = appState.ConsoleHeight;
+		appState.Screen.ConsoleTexture.mipCount = 1;
+		appState.Screen.ConsoleTexture.layerCount = 1;
+		VkImageCreateInfo imageCreateInfo { };
+		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.format = Constants::colorFormat;
+		imageCreateInfo.extent.width = appState.Screen.ConsoleTexture.width;
+		imageCreateInfo.extent.height = appState.Screen.ConsoleTexture.height;
+		imageCreateInfo.extent.depth = 1;
+		imageCreateInfo.mipLevels = appState.Screen.ConsoleTexture.mipCount;
+		imageCreateInfo.arrayLayers = appState.Screen.ConsoleTexture.layerCount;
+		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &appState.Screen.ConsoleTexture.image));
+		VkMemoryRequirements memoryRequirements;
+		vkGetImageMemoryRequirements(appState.Device, appState.Screen.ConsoleTexture.image, &memoryRequirements);
+		VkMemoryAllocateInfo memoryAllocateInfo { };
+		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &appState.Screen.ConsoleTexture.memory));
+		CHECK_VKCMD(vkBindImageMemory(appState.Device, appState.Screen.ConsoleTexture.image, appState.Screen.ConsoleTexture.memory, 0));
+	}
 
 	swapchainCreateInfo.width = appState.ScreenWidth;
 	swapchainCreateInfo.height = appState.ScreenHeight / 2;
@@ -114,8 +142,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		appState.Keyboard.Screen.SubmitInfo[i].pCommandBuffers = &appState.Keyboard.Screen.CommandBuffers[i];
 	}
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.Swapchain, imageCount, &imageCount, appState.Keyboard.Screen.Images[0]));
-	appState.Keyboard.Screen.Data.resize(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
-	appState.Keyboard.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.Keyboard.Screen.Data.size() * sizeof(uint32_t));
+	appState.Keyboard.Screen.StagingBuffer.CreateStagingBuffer(appState, swapchainCreateInfo.width * swapchainCreateInfo.height * sizeof(uint32_t));
 	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Keyboard.Screen.StagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Keyboard.Screen.StagingBuffer.mapped));
 
 	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));

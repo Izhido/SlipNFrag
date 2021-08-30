@@ -116,4 +116,5 @@ struct AppState
 	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
 
 	void RenderScreen();
+	int RenderKeyboard();
 };

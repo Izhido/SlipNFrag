@@ -2042,19 +2042,72 @@ void android_main(struct android_app* app)
 					imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 					imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 					imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-					imageMemoryBarrier.image = appState.Screen.VulkanImages[swapchainImageIndex].image;
 					imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 					imageMemoryBarrier.subresourceRange.levelCount = 1;
 					imageMemoryBarrier.subresourceRange.layerCount = 1;
+					imageMemoryBarrier.image = appState.Screen.VulkanImages[swapchainImageIndex].image;
 					vkCmdPipelineBarrier(appState.Screen.CommandBuffers[swapchainImageIndex], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 					VkBufferImageCopy region { };
 					region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 					region.imageSubresource.layerCount = 1;
-					region.imageExtent.width = appState.ScreenWidth;
-					region.imageExtent.height = appState.ScreenHeight;
-					region.imageExtent.depth = 1;
-					vkCmdCopyBufferToImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.StagingBuffer.buffer, appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+					if (appState.Mode == AppWorldMode && key_dest == key_game)
+					{
+						if (appState.Screen.ConsoleTexture.filled)
+						{
+							imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+							imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+						}
+						imageMemoryBarrier.image = appState.Screen.ConsoleTexture.image;
+						vkCmdPipelineBarrier(appState.Screen.CommandBuffers[swapchainImageIndex], VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+						region.imageExtent.width = appState.ConsoleWidth;
+						region.imageExtent.height = appState.ConsoleHeight;
+						region.imageExtent.depth = 1;
+						vkCmdCopyBufferToImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.StagingBuffer.buffer, appState.Screen.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						appState.Screen.ConsoleTexture.filled = true;
+
+						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+						imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+						imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+						vkCmdPipelineBarrier(appState.Screen.CommandBuffers[swapchainImageIndex], VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+						VkClearColorValue transparentColor { };
+						VkImageSubresourceRange imageSubresourceRange { };
+						imageSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						imageSubresourceRange.levelCount = 1;
+						imageSubresourceRange.layerCount = 1;
+						vkCmdClearColorImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &transparentColor, 1, &imageSubresourceRange);
+
+						VkImageBlit blit { };
+						blit.srcOffsets[1].x = appState.ConsoleWidth;
+						blit.srcOffsets[1].y = appState.ConsoleHeight - (SBAR_HEIGHT + 24);
+						blit.srcOffsets[1].z = 1;
+						blit.dstOffsets[1].x = appState.ScreenWidth;
+						blit.dstOffsets[1].y = appState.ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
+						blit.dstOffsets[1].z = 1;
+						blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						blit.srcSubresource.layerCount = 1;
+						blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+						blit.dstSubresource.layerCount = 1;
+						vkCmdBlitImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+
+						blit.srcOffsets[0].y = blit.srcOffsets[1].y;
+						blit.srcOffsets[1].y = appState.ConsoleHeight;
+						blit.dstOffsets[0].y = appState.ScreenHeight - (SBAR_HEIGHT + 24);
+						blit.dstOffsets[1].x = appState.ConsoleWidth;
+						blit.dstOffsets[1].y = appState.ScreenHeight; // By doing this an unscaled copy to the bottom left of the screen is performed - this is why we set it using ConsoleWidth/Height instead of ScreenWidth/Height.
+						vkCmdBlitImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+					}
+					else
+					{
+						region.imageExtent.width = appState.ScreenWidth;
+						region.imageExtent.height = appState.ScreenHeight;
+						region.imageExtent.depth = 1;
+						vkCmdCopyBufferToImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.StagingBuffer.buffer, appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+					}
 
 					CHECK_VKCMD(vkEndCommandBuffer(appState.Screen.CommandBuffers[swapchainImageIndex]));
 
@@ -2091,44 +2144,7 @@ void android_main(struct android_app* app)
 					
 					if (appState.Keyboard.Draw(appState))
 					{
-						unsigned char* source = appState.Keyboard.buffer.data();
-						unsigned char* previousSource = source;
-						uint32_t* target = appState.Keyboard.Screen.Data.data();
-						auto limit = appState.ScreenHeight / 2;
-						auto y = 0;
-						while (y < limit)
-						{
-							auto x = 0;
-							while (x < appState.ScreenWidth)
-							{
-								auto entry = *source++;
-								unsigned int converted;
-								if (entry == 255)
-								{
-									converted = 0;
-								}
-								else
-								{
-									converted = d_8to24table[entry];
-								}
-								do
-								{
-									*target++ = converted;
-									x++;
-								} while ((x % Constants::screenToConsoleMultiplier) != 0);
-							}
-							y++;
-							if ((y % Constants::screenToConsoleMultiplier) == 0)
-							{
-								previousSource = source;
-							}
-							else
-							{
-								source = previousSource;
-							}
-						}
-
-						memcpy(appState.Keyboard.Screen.StagingBuffer.mapped, appState.Keyboard.Screen.Data.data(), appState.Keyboard.Screen.Data.size() * sizeof(uint32_t));
+						auto limit = appState.RenderKeyboard();
 
 						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.Swapchain, &acquireInfo, &swapchainImageIndex));
 
@@ -2577,6 +2593,7 @@ void android_main(struct android_app* app)
 				}
 			}
 
+			appState.Screen.ConsoleTexture.Delete(appState);
 			appState.Screen.StagingBuffer.Delete(appState);
 
 			for (size_t i = 0; i < appState.Screen.Images.size(); i++)

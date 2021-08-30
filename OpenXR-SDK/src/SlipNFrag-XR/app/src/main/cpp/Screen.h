@@ -7,6 +7,7 @@
 #include <openxr/openxr_platform.h>
 #include <vector>
 #include "Buffer.h"
+#include "Texture.h"
 
 struct Screen
 {
@@ -15,6 +16,7 @@ struct Screen
 	std::vector<XrSwapchainImageBaseHeader*> Images;
 	std::vector<uint32_t> Data;
 	Buffer StagingBuffer;
+	Texture ConsoleTexture;
 	std::vector<VkCommandBuffer> CommandBuffers;
 	std::vector<VkSubmitInfo> SubmitInfo;
 };
