@@ -41,8 +41,6 @@ struct Scene
 	VkShaderModule skyFragment;
 	VkShaderModule floorVertex;
 	VkShaderModule floorFragment;
-	VkShaderModule consoleVertex;
-	VkShaderModule consoleFragment;
 	VkDescriptorSetLayout singleBufferLayout;
 	VkDescriptorSetLayout bufferAndImageLayout;
 	VkDescriptorSetLayout bufferAndTwoImagesLayout;
@@ -59,7 +57,6 @@ struct Scene
 	Pipeline colored;
 	Pipeline sky;
 	Pipeline floor;
-	Pipeline console;
 	Buffer matrices;
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;

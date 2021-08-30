@@ -114,4 +114,6 @@ struct AppState
 	pid_t EngineThreadId;
 	pid_t RenderThreadId;
 	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
+
+	void RenderScreen();
 };
