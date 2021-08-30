@@ -322,14 +322,14 @@ void AppState::RenderScreen()
 		static auto noGameDataLoaded = false;
 		if (!noGameDataLoaded)
 		{
-			memcpy(Screen.Data.data(), NoGameDataData.data(), NoGameDataData.size() * sizeof(uint32_t));
+			memcpy(ScreenData.data(), NoGameDataData.data(), NoGameDataData.size() * sizeof(uint32_t));
 			noGameDataLoaded = true;
 		}
-		memcpy(Screen.StagingBuffer.mapped, Screen.Data.data(), Screen.StagingBuffer.size);
+		memcpy(Screen.StagingBuffer.mapped, ScreenData.data(), Screen.StagingBuffer.size);
 	}
 	else
 	{
-		memcpy(Screen.StagingBuffer.mapped, Screen.Data.data(), Screen.StagingBuffer.size);
+		memcpy(Screen.StagingBuffer.mapped, ScreenData.data(), Screen.StagingBuffer.size);
 	}
 }
 

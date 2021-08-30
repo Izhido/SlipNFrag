@@ -32,7 +32,7 @@ typedef struct
 } prstack_t;
 
 #define	MAX_STACK_DEPTH		32
-prstack_t	pr_stack[MAX_STACK_DEPTH];
+std::vector<prstack_t>	pr_stack(MAX_STACK_DEPTH);
 int			pr_depth;
 
 #define	LOCALSTACK_SIZE		2048
@@ -306,8 +306,10 @@ int PR_EnterFunction (dfunction_t *f)
 	pr_stack[pr_depth].s = pr_xstatement;
 	pr_stack[pr_depth].f = pr_xfunction;	
 	pr_depth++;
-	if (pr_depth >= MAX_STACK_DEPTH)
-		PR_RunError ("stack overflow");
+	if (pr_depth >= pr_stack.size())
+	{
+		pr_stack.resize(pr_stack.size() + MAX_STACK_DEPTH);
+	}
 
 // save off any locals that the new function steps on
 	c = f->locals;

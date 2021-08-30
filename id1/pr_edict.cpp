@@ -790,12 +790,14 @@ returns false if error
 qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 {
 	int		i;
-	char	string[128];
+	std::vector<char> string(128);
 	ddef_t	*def;
 	char	*v, *w;
 	void	*d;
 	dfunction_t	*func;
-	
+	size_t len;
+	char* end;
+
 	d = (void *)((int *)base + key->ofs);
 	
 	switch (key->type & ~DEF_SAVEGLOBAL)
@@ -809,16 +811,30 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 		break;
 		
 	case ev_vector:
-		strcpy (string, s);
-		v = string;
-		w = string;
-		for (i=0 ; i<3 ; i++)
+		len = strlen(s);
+		if (string.size() < len + 1)
+		{
+			string.resize(len + 1);
+		}
+		memcpy (string.data(), s, len);
+		v = string.data();
+		w = string.data();
+		end = string.data() + len;
+		for (i=0 ; i<3 && (w <= end) ; i++)
 		{
 			while (*v && *v != ' ')
 				v++;
 			*v = 0;
 			((float *)d)[i] = atof (w);
 			w = v = v+1;
+		}
+		if (i < 3)
+		{
+			Con_Printf ("Vector %s missing %i components\n", s, 3 - i);
+			for (; i < 3; i++)
+			{
+				((float *)d)[i] = 0;
+			}
 		}
 		break;
 		

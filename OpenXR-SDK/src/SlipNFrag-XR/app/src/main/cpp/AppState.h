@@ -34,6 +34,8 @@ struct AppState
 	uint32_t SwapchainHeight;
 	uint32_t SwapchainSampleCount;
 	Screen Screen;
+	std::vector<uint32_t> ScreenData;
+	Texture ConsoleTexture;
 	Keyboard Keyboard;
 	float KeyboardHitOffsetY;
 	XrSwapchain LeftArrowsSwapchain;

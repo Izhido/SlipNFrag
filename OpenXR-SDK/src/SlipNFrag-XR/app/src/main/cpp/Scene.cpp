@@ -87,41 +87,41 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		appState.Screen.SubmitInfo[i].pCommandBuffers = &appState.Screen.CommandBuffers[i];
 	}
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Screen.Swapchain, imageCount, &imageCount, appState.Screen.Images[0]));
-	appState.Screen.Data.resize(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
+	appState.ScreenData.resize(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
 	ImageAsset play;
 	play.Open("play.png", app);
-	CopyImage(appState, play.image, appState.Screen.Data.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);
+	CopyImage(appState, play.image, appState.ScreenData.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);
 	play.Close();
-	AddBorder(appState, appState.Screen.Data);
+	AddBorder(appState, appState.ScreenData);
 
-	appState.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.Screen.Data.size() * sizeof(uint32_t));
+	appState.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
 	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Screen.StagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.StagingBuffer.mapped));
 
 	{
-		appState.Screen.ConsoleTexture.width = appState.ConsoleWidth;
-		appState.Screen.ConsoleTexture.height = appState.ConsoleHeight;
-		appState.Screen.ConsoleTexture.mipCount = 1;
-		appState.Screen.ConsoleTexture.layerCount = 1;
+		appState.ConsoleTexture.width = appState.ConsoleWidth;
+		appState.ConsoleTexture.height = appState.ConsoleHeight;
+		appState.ConsoleTexture.mipCount = 1;
+		appState.ConsoleTexture.layerCount = 1;
 		VkImageCreateInfo imageCreateInfo { };
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 		imageCreateInfo.format = Constants::colorFormat;
-		imageCreateInfo.extent.width = appState.Screen.ConsoleTexture.width;
-		imageCreateInfo.extent.height = appState.Screen.ConsoleTexture.height;
+		imageCreateInfo.extent.width = appState.ConsoleTexture.width;
+		imageCreateInfo.extent.height = appState.ConsoleTexture.height;
 		imageCreateInfo.extent.depth = 1;
-		imageCreateInfo.mipLevels = appState.Screen.ConsoleTexture.mipCount;
-		imageCreateInfo.arrayLayers = appState.Screen.ConsoleTexture.layerCount;
+		imageCreateInfo.mipLevels = appState.ConsoleTexture.mipCount;
+		imageCreateInfo.arrayLayers = appState.ConsoleTexture.layerCount;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &appState.Screen.ConsoleTexture.image));
+		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &appState.ConsoleTexture.image));
 		VkMemoryRequirements memoryRequirements;
-		vkGetImageMemoryRequirements(appState.Device, appState.Screen.ConsoleTexture.image, &memoryRequirements);
+		vkGetImageMemoryRequirements(appState.Device, appState.ConsoleTexture.image, &memoryRequirements);
 		VkMemoryAllocateInfo memoryAllocateInfo { };
 		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
-		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &appState.Screen.ConsoleTexture.memory));
-		CHECK_VKCMD(vkBindImageMemory(appState.Device, appState.Screen.ConsoleTexture.image, appState.Screen.ConsoleTexture.memory, 0));
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &appState.ConsoleTexture.memory));
+		CHECK_VKCMD(vkBindImageMemory(appState.Device, appState.ConsoleTexture.image, appState.ConsoleTexture.memory, 0));
 	}
 
 	swapchainCreateInfo.width = appState.ScreenWidth;
