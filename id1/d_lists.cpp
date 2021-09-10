@@ -405,6 +405,7 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 	t2matrix[2][3] = currententity->origin[2];
 	R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
 	auto vertex = apverts;
+	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
 		// lighting
@@ -424,12 +425,12 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 
 		float light = temp / 256;
 
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+		*attribute++ = light;
+		*attribute++ = light;
 		vertex++;
 	}
+	d_lists.last_colormapped_attribute += mdl->numverts;
+	d_lists.last_colormapped_attribute += mdl->numverts;
 	alias.count = mdl->numtris * 3;
 }
 
@@ -529,6 +530,7 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 	}
 	R_ConcatTransforms (t2matrix, tmatrix, viewmodel.transform);
 	auto vertex = apverts;
+	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
 		// lighting
@@ -555,12 +557,12 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 
 			light = temp / 256;
 		}
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
-		d_lists.last_colormapped_attribute++;
-		d_lists.colormapped_attributes[d_lists.last_colormapped_attribute] = light;
+		*attribute++ = light;
+		*attribute++ = light;
 		vertex++;
 	}
+	d_lists.last_colormapped_attribute += mdl->numverts;
+	d_lists.last_colormapped_attribute += mdl->numverts;
 	viewmodel.count = mdl->numtris * 3;
 }
 

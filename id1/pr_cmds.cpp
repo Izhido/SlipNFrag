@@ -1159,6 +1159,13 @@ void PF_lightstyle (void)
 	style = G_FLOAT(OFS_PARM0);
 	val = G_STRING(OFS_PARM1);
 
+// bounds check to avoid clobbering sv struct
+	if (style < 0 || style >= sv.lightstyles.size())
+	{
+		Con_Printf("PF_lightstyle: style %d exceeds count %d", style, sv.lightstyles.size());
+		return;
+	}
+
 // change the string in sv
 	sv.lightstyles[style] = val;
 	

@@ -37,6 +37,7 @@ struct AppState
 	std::vector<uint32_t> ScreenData;
 	Texture ConsoleTexture;
 	Keyboard Keyboard;
+	Texture KeyboardTexture;
 	float KeyboardHitOffsetY;
 	XrSwapchain LeftArrowsSwapchain;
 	std::vector<XrSwapchainImageVulkan2KHR> LeftArrowsVulkanImages;
@@ -118,5 +119,5 @@ struct AppState
 	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
 
 	void RenderScreen();
-	int RenderKeyboard();
+	void RenderKeyboard();
 };

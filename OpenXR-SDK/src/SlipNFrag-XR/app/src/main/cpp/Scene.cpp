@@ -142,8 +142,35 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		appState.Keyboard.Screen.SubmitInfo[i].pCommandBuffers = &appState.Keyboard.Screen.CommandBuffers[i];
 	}
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.Swapchain, imageCount, &imageCount, appState.Keyboard.Screen.Images[0]));
-	appState.Keyboard.Screen.StagingBuffer.CreateStagingBuffer(appState, swapchainCreateInfo.width * swapchainCreateInfo.height * sizeof(uint32_t));
+	appState.Keyboard.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Keyboard.Screen.StagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Keyboard.Screen.StagingBuffer.mapped));
+
+	{
+		appState.KeyboardTexture.width = appState.ConsoleWidth;
+		appState.KeyboardTexture.height = appState.ConsoleHeight;
+		appState.KeyboardTexture.mipCount = 1;
+		appState.KeyboardTexture.layerCount = 1;
+		VkImageCreateInfo imageCreateInfo { };
+		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.format = Constants::colorFormat;
+		imageCreateInfo.extent.width = appState.KeyboardTexture.width;
+		imageCreateInfo.extent.height = appState.KeyboardTexture.height;
+		imageCreateInfo.extent.depth = 1;
+		imageCreateInfo.mipLevels = appState.KeyboardTexture.mipCount;
+		imageCreateInfo.arrayLayers = appState.KeyboardTexture.layerCount;
+		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &appState.KeyboardTexture.image));
+		VkMemoryRequirements memoryRequirements;
+		vkGetImageMemoryRequirements(appState.Device, appState.KeyboardTexture.image, &memoryRequirements);
+		VkMemoryAllocateInfo memoryAllocateInfo { };
+		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &appState.KeyboardTexture.memory));
+		CHECK_VKCMD(vkBindImageMemory(appState.Device, appState.KeyboardTexture.image, appState.KeyboardTexture.memory, 0));
+	}
 
 	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));

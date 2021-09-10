@@ -520,7 +520,7 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
 					break;
 
-			if (i == ent->num_leafs)
+			if (i == ent->num_leafs && ent->num_leafs < ent->leaf_size)
 				continue;		// not visible
 		}
 

@@ -333,16 +333,14 @@ void AppState::RenderScreen()
 	}
 }
 
-int AppState::RenderKeyboard()
+void AppState::RenderKeyboard()
 {
 	auto source = Keyboard.buffer.data();
 	auto target = (uint32_t*)(Keyboard.Screen.StagingBuffer.mapped);
-	auto limit = ScreenHeight / 2;
-	auto y = 0;
-	while (y < limit)
+	auto limit = ConsoleHeight / 2;
+	for (auto y = 0; y < limit; y++)
 	{
-		auto x = 0;
-		while (x < ScreenWidth)
+		for (auto x = 0; x < ConsoleWidth; x++)
 		{
 			auto entry = *source++;
 			unsigned int converted;
@@ -354,20 +352,7 @@ int AppState::RenderKeyboard()
 			{
 				converted = d_8to24table[entry];
 			}
-			do
-			{
-				*target++ = converted;
-				x++;
-			} while ((x % Constants::screenToConsoleMultiplier) != 0);
-		}
-		y++;
-		while ((y % Constants::screenToConsoleMultiplier) != 0)
-		{
-			memcpy(target, target - ScreenWidth, ScreenWidth * sizeof(uint32_t));
-			target += ScreenWidth;
-			y++;
+			*target++ = converted;
 		}
 	}
-	
-	return limit;
 }
