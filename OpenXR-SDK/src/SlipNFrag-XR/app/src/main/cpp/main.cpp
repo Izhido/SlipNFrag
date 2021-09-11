@@ -1970,6 +1970,7 @@ void android_main(struct android_app* app)
 						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
 
+					//auto startTime = Sys_FloatTime();
 					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 					renderPassBeginInfo.clearValueCount = 2;
 					renderPassBeginInfo.pClearValues = clearValues;

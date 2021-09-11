@@ -6,6 +6,6 @@ struct LoadedLightmap
 {
 	Lightmap* lightmap;
 	VkDeviceSize size;
-	float* source;
+	unsigned* source;
 	LoadedLightmap* next;
 };

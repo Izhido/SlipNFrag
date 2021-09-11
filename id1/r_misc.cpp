@@ -384,6 +384,7 @@ void R_SetupFrame (void)
 	}
 
 	r_refdef.ambientlight = r_ambient.value;
+	r_refdef.ambientlight_shift8 = r_refdef.ambientlight<<8;
 
 	if (r_refdef.ambientlight < 0)
 		r_refdef.ambientlight = 0;

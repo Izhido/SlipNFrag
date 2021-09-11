@@ -13,7 +13,7 @@ struct dsurface_t
 	int lightmap_width;
 	int lightmap_height;
 	int lightmap_size;
-	float* lightmap;
+	unsigned* lightmap;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -33,7 +33,7 @@ struct dsurfacerotated_t
 	int lightmap_width;
 	int lightmap_height;
 	int lightmap_size;
-	float* lightmap;
+	unsigned* lightmap;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -156,7 +156,7 @@ struct dlists_t
 	std::vector<float> colored_attributes;
 	std::vector<uint16_t> colored_indices16;
 	std::vector<uint32_t> colored_indices32;
-	std::vector<float> lightmap_texels;
+	std::vector<unsigned> lightmap_texels;
 };
 
 extern dlists_t d_lists;

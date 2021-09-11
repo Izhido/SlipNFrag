@@ -93,6 +93,7 @@ typedef struct
 	float		fov_x, fov_y;
 
 	int			ambientlight;
+	int			ambientlight_shift8;
 } refdef_t;
 
 

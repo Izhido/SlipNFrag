@@ -67,12 +67,7 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	}
 	surface.lightmap = d_lists.lightmap_texels.data() + d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
-	auto source = (unsigned*)&cache->data[0];
-	auto target = surface.lightmap;
-	for (auto i = 0; i < surface.lightmap_size; i++)
-	{
-		*target++ = (float)(*source++);
-	}
+	memcpy(surface.lightmap, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
 	surface.count = face->numedges;
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
@@ -99,12 +94,7 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	}
 	surface.lightmap = d_lists.lightmap_texels.data() + d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
-	auto source = (unsigned*)&cache->data[0];
-	auto target = surface.lightmap;
-	for (auto i = 0; i < surface.lightmap_size; i++)
-	{
-		*target++ = (float)(*source++);
-	}
+	memcpy(surface.lightmap, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
 	surface.count = face->numedges;
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];

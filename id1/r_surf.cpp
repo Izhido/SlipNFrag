@@ -76,6 +76,9 @@ void R_AddDynamicLights (void)
 	surf = r_drawsurf.surf;
 	tex = surf->texinfo;
 
+	auto smax = r_blocklights_smax * 16;
+	auto tmax = r_blocklights_tmax * 16;
+
 	for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
 	{
 		if ( surf->dlightbits.size() <= lnum || !surf->dlightbits[lnum] )
@@ -101,15 +104,16 @@ void R_AddDynamicLights (void)
 
 		local[0] -= surf->texturemins[0];
 		local[1] -= surf->texturemins[1];
-		
-		for (t = 0 ; t<r_blocklights_tmax ; t++)
+
+		auto target = blocklights;
+		for (t = 0 ; t<tmax ; t += 16)
 		{
-			td = local[1] - t*16;
+			td = local[1] - t;
 			if (td < 0)
 				td = -td;
-			for (s=0 ; s<r_blocklights_smax ; s++)
+			for (s=0 ; s<smax ; s += 16)
 			{
-				sd = local[0] - s*16;
+				sd = local[0] - s;
 				if (sd < 0)
 					sd = -sd;
 				if (sd > td)
@@ -117,7 +121,8 @@ void R_AddDynamicLights (void)
 				else
 					dist = td + (sd>>1);
 				if (dist < minlight)
-					blocklights[t*r_blocklights_smax + s] += (rad - dist)*256;
+					*target += (rad - dist)*256;
+				target++;
 			}
 		}
 	}
@@ -152,7 +157,7 @@ void R_BuildLightMap (void)
 
 // clear to ambient
 	for (i=0 ; i<r_blocklights_size ; i++)
-		blocklights[i] = r_refdef.ambientlight<<8;
+		blocklights[i] = r_refdef.ambientlight_shift8;
 
 
 // add all the lightmaps
