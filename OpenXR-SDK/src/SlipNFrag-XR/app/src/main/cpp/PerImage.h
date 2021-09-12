@@ -4,10 +4,6 @@
 #include "CachedTextures.h"
 #include "PipelineDescriptorResources.h"
 #include "UpdatablePipelineDescriptorResources.h"
-#include "LoadedSurface.h"
-#include "LoadedSurfaceRotated.h"
-#include "LoadedAlias.h"
-#include "LoadedTurbulent.h"
 
 struct PerImage
 {
@@ -71,6 +67,7 @@ struct PerImage
 	static void SetPushConstants(const LoadedSurface& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedSurfaceRotated& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedTurbulent& loaded, float pushConstants[]);
+	static void SetPushConstants(const LoadedTurbulentRotated& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	void Render(AppState& appState);
 };

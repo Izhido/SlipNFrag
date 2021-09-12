@@ -6,7 +6,7 @@
 
 #define UPPER_16BIT_LIMIT 65520
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -30,6 +30,8 @@ void D_ResetLists ()
 	d_lists.last_sprite = -1;
 	d_lists.last_turbulent16 = -1;
 	d_lists.last_turbulent32 = -1;
+	d_lists.last_turbulent_rotated16 = -1;
+	d_lists.last_turbulent_rotated32 = -1;
 	d_lists.last_alias16 = -1;
 	d_lists.last_alias32 = -1;
 	d_lists.last_viewmodel16 = -1;
@@ -65,9 +67,9 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	{
 		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}
-	surface.lightmap = d_lists.lightmap_texels.data() + d_lists.last_lightmap_texel + 1;
+	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
-	memcpy(surface.lightmap, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
 	surface.count = face->numedges;
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
@@ -92,9 +94,9 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	{
 		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}
-	surface.lightmap = d_lists.lightmap_texels.data() + d_lists.last_lightmap_texel + 1;
+	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
-	memcpy(surface.lightmap, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
 	surface.count = face->numedges;
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
@@ -310,6 +312,24 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	turbulent.origin_x = entity->origin[0];
 	turbulent.origin_y = entity->origin[1];
 	turbulent.origin_z = entity->origin[2];
+}
+
+void D_FillTurbulentRotatedData (dturbulentrotated_t& turbulent, msurface_t* face, entity_t* entity)
+{
+	auto texinfo = face->texinfo;
+	auto texture = texinfo->texture;
+	turbulent.surface = face;
+	turbulent.entity = entity;
+	turbulent.model = entity->model;
+	turbulent.texture = texture;
+	turbulent.width = texture->width;
+	turbulent.height = texture->height;
+	turbulent.size = turbulent.width * turbulent.height;
+	turbulent.data = (unsigned char*)texture + texture->offsets[0];
+	turbulent.count = face->numedges;
+	turbulent.origin_x = entity->origin[0];
+	turbulent.origin_y = entity->origin[1];
+	turbulent.origin_z = entity->origin[2];
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
@@ -339,6 +359,32 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	}
 	auto& turbulent = d_lists.turbulent32[d_lists.last_turbulent32];
 	D_FillTurbulentData(turbulent, face, entity);
+}
+
+void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity)
+{
+	if (face->numedges < 3)
+	{
+		return;
+	}
+	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
+	{
+		d_lists.last_turbulent_rotated16++;
+		if (d_lists.last_turbulent_rotated16 >= d_lists.turbulent_rotated16.size())
+		{
+			d_lists.turbulent_rotated16.emplace_back();
+		}
+		auto& turbulent = d_lists.turbulent_rotated16[d_lists.last_turbulent_rotated16];
+		D_FillTurbulentRotatedData(turbulent, face, entity);
+		return;
+	}
+	d_lists.last_turbulent_rotated32++;
+	if (d_lists.last_turbulent_rotated32 >= d_lists.turbulent_rotated32.size())
+	{
+		d_lists.turbulent_rotated32.emplace_back();
+	}
+	auto& turbulent = d_lists.turbulent_rotated32[d_lists.last_turbulent_rotated32];
+	D_FillTurbulentRotatedData(turbulent, face, entity);
 }
 
 void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)

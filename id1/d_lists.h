@@ -13,7 +13,7 @@ struct dsurface_t
 	int lightmap_width;
 	int lightmap_height;
 	int lightmap_size;
-	unsigned* lightmap;
+	int lightmap_texels;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -33,7 +33,7 @@ struct dsurfacerotated_t
 	int lightmap_width;
 	int lightmap_height;
 	int lightmap_size;
-	unsigned* lightmap;
+	int lightmap_texels;
 	int count;
 	float origin_x;
 	float origin_y;
@@ -54,6 +54,22 @@ struct dspritedata_t
 };
 
 struct dturbulent_t
+{
+	void* surface;
+	void* entity;
+	void* model;
+	void* texture;
+	int width;
+	int height;
+	int size;
+	unsigned char* data;
+	int count;
+	float origin_x;
+	float origin_y;
+	float origin_z;
+};
+
+struct dturbulentrotated_t
 {
 	void* surface;
 	void* entity;
@@ -117,6 +133,8 @@ struct dlists_t
 	int last_sprite;
 	int last_turbulent16;
 	int last_turbulent32;
+	int last_turbulent_rotated16;
+	int last_turbulent_rotated32;
 	int last_alias16;
 	int last_alias32;
 	int last_viewmodel16;
@@ -143,6 +161,8 @@ struct dlists_t
 	std::vector<dspritedata_t> sprites;
 	std::vector<dturbulent_t> turbulent16;
 	std::vector<dturbulent_t> turbulent32;
+	std::vector<dturbulentrotated_t> turbulent_rotated16;
+	std::vector<dturbulentrotated_t> turbulent_rotated32;
 	std::vector<dalias_t> alias16;
 	std::vector<dalias_t> alias32;
 	std::vector<dalias_t> viewmodels16;
@@ -170,6 +190,7 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, en
 void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
 void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
+void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);

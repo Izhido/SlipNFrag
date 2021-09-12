@@ -12,6 +12,7 @@
 #include "LoadedSurfaceRotated.h"
 #include "LoadedSprite.h"
 #include "LoadedTurbulent.h"
+#include "LoadedTurbulentRotated.h"
 #include "LoadedAlias.h"
 #include "CachedLightmaps.h"
 #include "CachedSharedMemoryTextures.h"
@@ -31,6 +32,8 @@ struct Scene
 	VkShaderModule spriteFragment;
 	VkShaderModule turbulentVertex;
 	VkShaderModule turbulentFragment;
+	VkShaderModule turbulentRotatedVertex;
+	VkShaderModule turbulentRotatedFragment;
 	VkShaderModule aliasVertex;
 	VkShaderModule aliasFragment;
 	VkShaderModule viewmodelVertex;
@@ -52,6 +55,7 @@ struct Scene
 	Pipeline fencesRotated;
 	Pipeline sprites;
 	Pipeline turbulent;
+	Pipeline turbulentRotated;
 	Pipeline alias;
 	Pipeline viewmodel;
 	Pipeline colored;
@@ -76,6 +80,8 @@ struct Scene
 	int lastSprite;
 	int lastTurbulent16;
 	int lastTurbulent32;
+	int lastTurbulentRotated16;
+	int lastTurbulentRotated32;
 	int lastAlias16;
 	int lastAlias32;
 	int lastViewmodel16;
@@ -94,6 +100,8 @@ struct Scene
 	std::vector<LoadedSprite> loadedSprites;
 	std::vector<LoadedTurbulent> loadedTurbulent16;
 	std::vector<LoadedTurbulent> loadedTurbulent32;
+	std::vector<LoadedTurbulentRotated> loadedTurbulentRotated16;
+	std::vector<LoadedTurbulentRotated> loadedTurbulentRotated32;
 	std::vector<LoadedAlias> loadedAlias16;
 	std::vector<LoadedAlias> loadedAlias32;
 	std::vector<LoadedAlias> loadedViewmodels16;
@@ -159,14 +167,15 @@ struct Scene
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
 	void GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
-	void GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetIndices32StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetAliasIndices16StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
 	void GetAliasIndices32StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void AddToBufferBarrier(VkBuffer buffer);
 	void Reset();
 };

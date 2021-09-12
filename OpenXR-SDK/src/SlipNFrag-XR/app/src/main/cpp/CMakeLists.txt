@@ -76,7 +76,7 @@ if(BUILD_WITH_ADRENO)
     add_library(adreno SHARED IMPORTED)
 
     set_target_properties(adreno PROPERTIES IMPORTED_LOCATION
-            ${PROJECT_SOURCE_DIR}/../VkAdrenoLayer_v1.1/libs/${ANDROID_ABI}/libVkLayer_adreno.so
+            ${PROJECT_SOURCE_DIR}/../VkAdrenoLayer_v1.2/libs/${ANDROID_ABI}/libVkLayer_adreno.so
     )
 
     target_link_libraries(slipnfrag_native adreno)

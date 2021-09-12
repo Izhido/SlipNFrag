@@ -514,7 +514,14 @@ void D_DrawSurfacesToLists (void)
 												// R_RotateBmodel ()
 				}
 
-				D_AddTurbulentToLists (pface, currententity);
+				if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+				{
+					D_AddTurbulentToLists (pface, currententity);
+				}
+				else
+				{
+					D_AddTurbulentRotatedToLists (pface, currententity);
+				}
 
 				if (s->insubmodel)
 				{
@@ -666,7 +673,14 @@ void D_DrawSurfacesToListsIfNeeded (void)
 												// R_RotateBmodel ()
 				}
 
-				D_AddTurbulentToLists (pface, currententity);
+				if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+				{
+					D_AddTurbulentToLists (pface, currententity);
+				}
+				else
+				{
+					D_AddTurbulentRotatedToLists (pface, currententity);
+				}
 
 				if (s->insubmodel)
 				{

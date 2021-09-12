@@ -4,7 +4,7 @@
 #include "LoadedSharedMemoryIndexBuffer.h"
 #include "LoadedSharedMemoryTexture.h"
 
-struct LoadedTurbulent
+struct LoadedTurbulentRotated
 {
 	LoadedSharedMemoryBuffer vertices;
 	LoadedSharedMemoryBuffer texturePosition;
@@ -14,4 +14,7 @@ struct LoadedTurbulent
 	float originX;
 	float originY;
 	float originZ;
+	float yaw;
+	float pitch;
+	float roll;
 };

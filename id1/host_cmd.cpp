@@ -616,7 +616,7 @@ void Host_Loadgame_f (void)
         to_read.push_back(onechar);
         len = Sys_FileRead (f, &onechar, 1);
     }
-    len = std::max((int)to_read.length(), MAX_QPATH);
+    len = std::min((int)to_read.length(), MAX_QPATH - 1);
     Q_memcpy(mapname, to_read.c_str(), len);
     str[len] = 0;
     to_read.clear();
