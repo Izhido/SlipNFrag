@@ -27,6 +27,16 @@ VkDeviceSize CachedBuffers::MinimumAllocationFor(VkDeviceSize size)
 	return result;
 }
 
+VkDeviceSize CachedBuffers::MinimumStorageAllocationFor(VkDeviceSize size)
+{
+	VkDeviceSize result = Constants::memoryBlockSize;
+	while (result < size)
+	{
+		result += Constants::memoryBlockSize;
+	}
+	return result;
+}
+
 Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(appState, size);
@@ -53,11 +63,12 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 
 Buffer* CachedBuffers::GetStorageBuffer(AppState& appState, VkDeviceSize size)
 {
-	auto buffer = Get(appState, size);
+	auto actualSize = MinimumStorageAllocationFor(size);
+	auto buffer = Get(appState, actualSize);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateStorageBuffer(appState, MinimumAllocationFor(size));
+		buffer->CreateStorageBuffer(appState, actualSize);
 		CHECK_VKCMD(vkMapMemory(appState.Device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
 	}
 	MoveToFront(buffer);

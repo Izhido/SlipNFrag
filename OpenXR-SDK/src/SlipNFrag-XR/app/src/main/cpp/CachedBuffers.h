@@ -11,6 +11,7 @@ struct CachedBuffers
 
 	Buffer* Get(AppState& appState, VkDeviceSize size);
 	static VkDeviceSize MinimumAllocationFor(VkDeviceSize size);
+	static VkDeviceSize MinimumStorageAllocationFor(VkDeviceSize size);
 	Buffer* GetVertexBuffer(AppState& appState, VkDeviceSize size);
 	Buffer* GetIndexBuffer(AppState& appState, VkDeviceSize size);
 	Buffer* GetStorageBuffer(AppState& appState, VkDeviceSize size);
