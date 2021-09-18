@@ -24,26 +24,6 @@ struct AppState;
 struct Scene
 {
 	bool created;
-	VkShaderModule surfaceVertex;
-	VkShaderModule surfaceRotatedVertex;
-	VkShaderModule surfaceFragment;
-	VkShaderModule fenceFragment;
-	VkShaderModule spriteVertex;
-	VkShaderModule spriteFragment;
-	VkShaderModule turbulentVertex;
-	VkShaderModule turbulentFragment;
-	VkShaderModule turbulentRotatedVertex;
-	VkShaderModule turbulentRotatedFragment;
-	VkShaderModule aliasVertex;
-	VkShaderModule aliasFragment;
-	VkShaderModule viewmodelVertex;
-	VkShaderModule viewmodelFragment;
-	VkShaderModule coloredVertex;
-	VkShaderModule coloredFragment;
-	VkShaderModule skyVertex;
-	VkShaderModule skyFragment;
-	VkShaderModule floorVertex;
-	VkShaderModule floorFragment;
 	VkDescriptorSetLayout singleBufferLayout;
 	VkDescriptorSetLayout bufferAndImageLayout;
 	VkDescriptorSetLayout bufferAndTwoImagesLayout;

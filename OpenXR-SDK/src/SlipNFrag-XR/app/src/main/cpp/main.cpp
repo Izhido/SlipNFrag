@@ -2594,26 +2594,6 @@ void android_main(struct android_app* app)
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndTwoImagesLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndImageLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.floorFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.floorVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.skyFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.skyVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.coloredFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.coloredVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.viewmodelFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.viewmodelVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.aliasFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.aliasVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.turbulentRotatedFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.turbulentRotatedVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.turbulentFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.turbulentVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.spriteFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.spriteVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.fenceFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceFragment, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceRotatedVertex, nullptr);
-			vkDestroyShaderModule(appState.Device, appState.Scene.surfaceVertex, nullptr);
 			appState.Scene.matrices.Delete(appState);
 
 			appState.Keyboard.Screen.StagingBuffer.Delete(appState);
