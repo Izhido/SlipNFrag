@@ -130,14 +130,14 @@ extern int	ubasestep, errorterm, erroradjustup, erroradjustdown;
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct edge_s
 {
-	fixed44p20_t		u;
-	fixed44p20_t		u_step;
+	fixed44p20_t	u;
+	fixed44p20_t	u_step;
 	struct edge_s	*prev, *next;
-	unsigned short	surfs[2];
+	int				surfs[2];
 	struct edge_s	*nextremove;
 	float			nearzi;
 	medge_t			*owner;
-	int				pad[2]; // to 64 bytes
+	int				pad; // to 64 bytes
 } edge_t;
 
 #endif	// _R_SHARED_H_
