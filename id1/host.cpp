@@ -668,7 +668,7 @@ Runs all active servers
 
 void _Host_FrameReset()
 {
-    r_ledgesurfstackindex = -1;
+    r_edgesurfstackindex = -1;
     r_increaseledges = false;
     r_increaselsurfs = false;
     sv_bump_protocol_version = false;

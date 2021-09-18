@@ -88,7 +88,7 @@ void R_BeginEdgeFrame (void)
 	int		v;
 
 	edge_p = r_edges;
-	edge_max = &r_edges[r_ledgessize];
+	edge_max = &r_edges[r_edgessize];
 
 	surface_p = &surfaces[2];	// background is surface 1,
 								//  surface 0 is a dummy

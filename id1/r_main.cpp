@@ -92,9 +92,9 @@ mleaf_t		*r_viewleaf, *r_oldviewleaf;
 
 texture_t	*r_notexture_mip;
 
-int r_ledgesurfstackindex = -1;
-int r_ledgessize = NUMSTACKEDGES;
-int r_lsurfssize = NUMSTACKSURFACES;
+int r_edgesurfstackindex = -1;
+int r_edgessize = NUMSTACKEDGES;
+int r_surfssize = NUMSTACKSURFACES;
 
 float		r_aliastransition, r_resfudge;
 
@@ -825,9 +825,9 @@ void R_DrawBEntitiesOnList (void)
 	insubmodel = false;
 }
 
-std::vector<std::vector<edge_t>> ledgestack;
-std::vector<std::vector<surf_t>> lsurfstack;
-std::vector<std::vector<int>> lfencestack;
+std::vector<std::vector<edge_t>> r_edgestack;
+std::vector<std::vector<surf_t>> r_surfstack;
+std::vector<std::vector<int>> r_fencestack;
 
 /*
 ================
@@ -838,54 +838,43 @@ void R_EdgeDrawing (void)
 {
     if (r_increaseledges)
     {
-        r_ledgessize += NUMSTACKEDGES;
-        r_increaseledges = false;
+        r_edgessize += NUMSTACKEDGES;
     }
     if (r_increaselsurfs)
     {
-        r_lsurfssize += NUMSTACKSURFACES;
-        r_increaselsurfs = false;
+        r_surfssize += NUMSTACKSURFACES;
     }
-    r_ledgesurfstackindex++;
-    if (r_ledgesurfstackindex >= ledgestack.size())
+    r_edgesurfstackindex++;
+    if (r_edgesurfstackindex >= r_edgestack.size())
     {
-        ledgestack.emplace_back(r_ledgessize + ((CACHE_SIZE - 1) / sizeof(edge_t)) + 1);
+		r_edgestack.emplace_back(r_edgessize + 1);
     }
-    else
+    else if (r_edgessize >= r_edgestack[r_edgesurfstackindex].size())
     {
-        ledgestack[r_ledgesurfstackindex].resize(r_ledgessize + ((CACHE_SIZE - 1) / sizeof(edge_t)) + 1);
+		r_edgestack[r_edgesurfstackindex].resize(r_edgessize);
     }
-    edge_t* ledges = ledgestack[r_ledgesurfstackindex].data();
-    if (r_ledgesurfstackindex >= lsurfstack.size())
+    if (r_edgesurfstackindex >= r_surfstack.size())
     {
-        lsurfstack.emplace_back(r_lsurfssize + ((CACHE_SIZE - 1) / sizeof(surf_t)) + 1);
-		lfencestack.emplace_back(r_lsurfssize + ((CACHE_SIZE - 1) / sizeof(int)) + 1);
+		r_surfstack.emplace_back(r_surfssize + 1);
+		r_fencestack.emplace_back(r_surfssize + 1);
     }
-    else
+    else if (r_surfssize >= r_surfstack[r_edgesurfstackindex].size())
     {
-        lsurfstack[r_ledgesurfstackindex].resize(r_lsurfssize + ((CACHE_SIZE - 1) / sizeof(surf_t)) + 1);
-		lfencestack[r_ledgesurfstackindex].resize(r_lsurfssize + ((CACHE_SIZE - 1) / sizeof(int)) + 1);
+		r_surfstack[r_edgesurfstackindex].resize(r_surfssize);
+		r_fencestack[r_edgesurfstackindex].resize(r_surfssize);
     }
-    surf_t* lsurfs = lsurfstack[r_ledgesurfstackindex].data();
-	int* lfences = lfencestack[r_ledgesurfstackindex].data();
-	{
-		r_edges =  (edge_t *)
-				(((size_t)&ledges[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
-	}
-
-	{
-		surfaces =  (surf_t *)
-				(((size_t)&lsurfs[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
-		surf_max = &surfaces[r_lsurfssize];
+	r_edges =  r_edgestack[r_edgesurfstackindex].data();
+	surfaces =  r_surfstack[r_edgesurfstackindex].data();
+	surf_max = &surfaces[r_surfssize];
 	// surface 0 doesn't really exist; it's just a dummy because index 0
 	// is used to indicate no edge attached to surface
-		surfaces--;
-		R_SurfacePatch ();
+	R_SurfacePatch ();
 		
-		r_fences =  (int *)
-				(((size_t)&lfences[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
-		r_fence_max = &r_fences[r_lsurfssize];
-	}
+	r_fences =  r_fencestack[r_edgesurfstackindex].data();
+	r_fence_max = &r_fences[r_surfssize];
+
+	r_increaseledges = false;
+	r_increaselsurfs = false;
 
 	R_BeginEdgeFrame ();
 
@@ -923,7 +912,7 @@ void R_EdgeDrawing (void)
 	
         R_ScanEdges ();
     
-    r_ledgesurfstackindex--;
+    r_edgesurfstackindex--;
 }
 
 std::vector<byte> warpbuffer(WARP_WIDTH * WARP_HEIGHT);
