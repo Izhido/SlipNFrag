@@ -224,9 +224,9 @@ extern	std::vector<edge_t*> removeedges;
 extern	int	screenwidth;
 
 // FIXME: make stack vars when debugging done
-extern	edge_t	edge_head;
-extern	edge_t	edge_tail;
-extern	edge_t	edge_aftertail;
+extern	edge_t*	r_edge_head;
+extern	edge_t*	r_edge_tail;
+extern	edge_t*	r_edge_aftertail;
 extern int		r_bmodelactive;
 extern vrect_t	*pconupdate;
 

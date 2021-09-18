@@ -60,10 +60,10 @@ int	edge_head_u_shift20, edge_tail_u_shift20;
 
 static void (*pdrawfunc)(void);
 
-edge_t	edge_head;
-edge_t	edge_tail;
-edge_t	edge_aftertail;
-edge_t	edge_sentinel;
+edge_t*	r_edge_head;
+edge_t*	r_edge_tail;
+edge_t*	r_edge_aftertail;
+edge_t*	r_edge_sentinel;
 
 float	fv;
 
@@ -87,7 +87,7 @@ void R_BeginEdgeFrame (void)
 {
 	int		v;
 
-	edge_p = r_edges;
+	edge_p = r_edges + 4; // to accomodate for the (former static) edge heads and tails
 	edge_max = &r_edges[r_edgessize];
 
 	surface_p = &surfaces[2];	// background is surface 1,
@@ -222,7 +222,7 @@ nextedge:
 		goto nextedge;		
 		
 pushback:
-		if (pedge == &edge_aftertail)
+		if (pedge == r_edge_aftertail)
 			return;
 			
 	// push it back to keep it sorted		
@@ -247,7 +247,7 @@ pushback:
 		pwedge->next = pedge;
 
 		pedge = pnext_edge;
-		if (pedge == &edge_tail)
+		if (pedge == r_edge_tail)
 			return;
 	}
 }
@@ -576,7 +576,7 @@ void R_GenerateSpans (void)
 	surfaces[1].last_u = edge_head_u_shift20;
 
 // generate spans
-	for (edge=edge_head.next ; edge != &edge_tail; edge=edge->next)
+	for (edge=r_edge_head->next ; edge != r_edge_tail; edge=edge->next)
 	{			
 		if (edge->surfs[0])
 		{
@@ -627,7 +627,7 @@ void R_GenerateSpansBackward (void)
 	surfaces[1].last_u = edge_head_u_shift20;
 
 // generate spans
-	for (edge=edge_head.next ; edge != &edge_tail; edge=edge->next)
+	for (edge=r_edge_head->next ; edge != r_edge_tail; edge=edge->next)
 	{			
 		if (edge->surfs[0])
 			R_TrailingEdge (&surfaces[edge->surfs[0]], edge);
@@ -688,30 +688,35 @@ void R_ScanEdges (void)
 
 // clear active edges to just the background edges around the whole screen
 // FIXME: most of this only needs to be set up once
-	edge_head.u = ((fixed44p20_t)r_refdef.vrect.x) << 20;
-	edge_head_u_shift20 = (int)(edge_head.u >> 20);
-	edge_head.u_step = 0;
-	edge_head.prev = NULL;
-	edge_head.next = &edge_tail;
-	edge_head.surfs[0] = 0;
-	edge_head.surfs[1] = 1;
+	r_edge_head = &r_edges[0];
+	r_edge_tail = &r_edges[1];
+	r_edge_aftertail = &r_edges[2];
+	r_edge_sentinel = &r_edges[3];
+
+	r_edge_head->u = ((fixed44p20_t)r_refdef.vrect.x) << 20;
+	edge_head_u_shift20 = (int)(r_edge_head->u >> 20);
+	r_edge_head->u_step = 0;
+	r_edge_head->prev = NULL;
+	r_edge_head->next = r_edge_tail;
+	r_edge_head->surfs[0] = 0;
+	r_edge_head->surfs[1] = 1;
 	
-	edge_tail.u = (((fixed44p20_t)r_refdef.vrectright) << 20) + 0xFFFFF;
-	edge_tail_u_shift20 = (int)(edge_tail.u >> 20);
-	edge_tail.u_step = 0;
-	edge_tail.prev = &edge_head;
-	edge_tail.next = &edge_aftertail;
-	edge_tail.surfs[0] = 1;
-	edge_tail.surfs[1] = 0;
+	r_edge_tail->u = (((fixed44p20_t)r_refdef.vrectright) << 20) + 0xFFFFF;
+	edge_tail_u_shift20 = (int)(r_edge_tail->u >> 20);
+	r_edge_tail->u_step = 0;
+	r_edge_tail->prev = r_edge_head;
+	r_edge_tail->next = r_edge_aftertail;
+	r_edge_tail->surfs[0] = 1;
+	r_edge_tail->surfs[1] = 0;
 	
-	edge_aftertail.u = -1;		// force a move
-	edge_aftertail.u_step = 0;
-	edge_aftertail.next = &edge_sentinel;
-	edge_aftertail.prev = &edge_tail;
+	r_edge_aftertail->u = -1;		// force a move
+	r_edge_aftertail->u_step = 0;
+	r_edge_aftertail->next = r_edge_sentinel;
+	r_edge_aftertail->prev = r_edge_tail;
 
 // FIXME: do we need this now that we clamp x in r_draw.c?
-	edge_sentinel.u = ((fixed44p20_t)2000) << 24;		// make sure nothing sorts past this
-	edge_sentinel.prev = &edge_aftertail;
+	r_edge_sentinel->u = ((fixed44p20_t)r_refdef.vrect.width + 1) << 24;		// make sure nothing sorts past this
+	r_edge_sentinel->prev = r_edge_aftertail;
 
 //	
 // process all scan lines
@@ -728,7 +733,7 @@ void R_ScanEdges (void)
 
 		if (newedges[iv])
 		{
-			R_InsertNewEdges (newedges[iv], edge_head.next);
+			R_InsertNewEdges (newedges[iv], r_edge_head->next);
 		}
 
 		(*pdrawfunc) ();
@@ -757,8 +762,8 @@ void R_ScanEdges (void)
 		if (removeedges[iv])
 			R_RemoveEdges (removeedges[iv]);
 
-		if (edge_head.next != &edge_tail)
-			R_StepActiveU (edge_head.next);
+		if (r_edge_head->next != r_edge_tail)
+			R_StepActiveU (r_edge_head->next);
 	}
 
 // do the last scan (no need to step or sort or remove on the last scan)
@@ -770,7 +775,7 @@ void R_ScanEdges (void)
 	surfaces[1].spanstate = 1;
 
 	if (newedges[iv])
-		R_InsertNewEdges (newedges[iv], edge_head.next);
+		R_InsertNewEdges (newedges[iv], r_edge_head->next);
 
 	(*pdrawfunc) ();
 

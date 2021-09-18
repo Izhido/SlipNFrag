@@ -847,7 +847,7 @@ void R_EdgeDrawing (void)
     r_edgesurfstackindex++;
     if (r_edgesurfstackindex >= r_edgestack.size())
     {
-		r_edgestack.emplace_back(r_edgessize + 1);
+		r_edgestack.emplace_back(4 + r_edgessize + 1); // to include all of edge_max and the (former static) edge heads and tails...
     }
     else if (r_edgessize >= r_edgestack[r_edgesurfstackindex].size())
     {
