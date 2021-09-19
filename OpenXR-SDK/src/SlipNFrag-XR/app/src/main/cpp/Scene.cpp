@@ -383,7 +383,35 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/floor.vert.spv", &floorVertex);
 	VkShaderModule floorFragment;
 	CreateShader(appState, app, "shaders/floor.frag.spv", &floorFragment);
-	
+
+	VkDescriptorSetLayoutBinding descriptorSetBindings[3] { };
+	descriptorSetBindings[1].binding = 1;
+	descriptorSetBindings[2].binding = 2;
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo { };
+	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	descriptorSetLayoutCreateInfo.pBindings = descriptorSetBindings;
+	descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorSetBindings[0].descriptorCount = 1;
+	descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &singleBufferLayout));
+	descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorSetBindings[1].descriptorCount = 1;
+	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	descriptorSetLayoutCreateInfo.bindingCount = 2;
+	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &bufferAndImageLayout));
+	descriptorSetBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorSetBindings[2].descriptorCount = 1;
+	descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	descriptorSetLayoutCreateInfo.bindingCount = 3;
+	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &bufferAndTwoImagesLayout));
+	descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &singleImageLayout));
+	descriptorSetLayoutCreateInfo.bindingCount = 2;
+	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &doubleImageLayout));
+
 	VkPipelineTessellationStateCreateInfo tessellationStateCreateInfo { };
 	tessellationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 	VkPipelineViewportStateCreateInfo viewportStateCreateInfo { };
@@ -434,6 +462,17 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	pipelineDynamicStateCreateInfo.dynamicStateCount = 2;
 	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
+
+	VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+	graphicsPipelineCreateInfo.pTessellationState = &tessellationStateCreateInfo;
+	graphicsPipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
+	graphicsPipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
+	graphicsPipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
+	graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
+	graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
+	graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
+	graphicsPipelineCreateInfo.renderPass = appState.RenderPass;
+
 	PipelineAttributes surfaceAttributes { };
 	surfaceAttributes.vertexAttributes.resize(9);
 	surfaceAttributes.vertexBindings.resize(3);
@@ -482,6 +521,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaceAttributes.vertexInputState.pVertexAttributeDescriptions = surfaceAttributes.vertexAttributes.data();
 	surfaceAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	surfaceAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+
 	PipelineAttributes spriteAttributes { };
 	spriteAttributes.vertexAttributes.resize(6);
 	spriteAttributes.vertexBindings.resize(3);
@@ -517,6 +557,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	spriteAttributes.vertexInputState.pVertexAttributeDescriptions = spriteAttributes.vertexAttributes.data();
 	spriteAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	spriteAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+
 	PipelineAttributes colormappedAttributes { };
 	colormappedAttributes.vertexAttributes.resize(7);
 	colormappedAttributes.vertexBindings.resize(4);
@@ -557,6 +598,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	colormappedAttributes.vertexInputState.pVertexAttributeDescriptions = colormappedAttributes.vertexAttributes.data();
 	colormappedAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	colormappedAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
 	PipelineAttributes coloredAttributes { };
 	coloredAttributes.vertexAttributes.resize(6);
 	coloredAttributes.vertexBindings.resize(3);
@@ -592,6 +634,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	coloredAttributes.vertexInputState.pVertexAttributeDescriptions = coloredAttributes.vertexAttributes.data();
 	coloredAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	coloredAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
 	PipelineAttributes skyAttributes { };
 	skyAttributes.vertexAttributes.resize(2);
 	skyAttributes.vertexBindings.resize(2);
@@ -609,6 +652,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	skyAttributes.vertexInputState.pVertexAttributeDescriptions = skyAttributes.vertexAttributes.data();
 	skyAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	skyAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+
 	PipelineAttributes floorAttributes { };
 	floorAttributes.vertexAttributes.resize(2);
 	floorAttributes.vertexBindings.resize(2);
@@ -626,6 +670,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	floorAttributes.vertexInputState.pVertexAttributeDescriptions = floorAttributes.vertexAttributes.data();
 	floorAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	floorAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
 	surfaces.stages.resize(2);
 	surfaces.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfaces.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -635,33 +680,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaces.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfaces.stages[1].module = surfaceFragment;
 	surfaces.stages[1].pName = "main";
-	VkDescriptorSetLayoutBinding descriptorSetBindings[3] { };
-	descriptorSetBindings[1].binding = 1;
-	descriptorSetBindings[2].binding = 2;
-	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo { };
-	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	descriptorSetLayoutCreateInfo.pBindings = descriptorSetBindings;
-	descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorSetBindings[0].descriptorCount = 1;
-	descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &singleBufferLayout));
-	descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorSetBindings[1].descriptorCount = 1;
-	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	descriptorSetLayoutCreateInfo.bindingCount = 2;
-	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &bufferAndImageLayout));
-	descriptorSetBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorSetBindings[2].descriptorCount = 1;
-	descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	descriptorSetLayoutCreateInfo.bindingCount = 3;
-	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &bufferAndTwoImagesLayout));
-	descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &singleImageLayout));
-	descriptorSetLayoutCreateInfo.bindingCount = 2;
-	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &doubleImageLayout));
 	VkDescriptorSetLayout descriptorSetLayouts[3] { };
 	descriptorSetLayouts[0] = bufferAndTwoImagesLayout;
 	descriptorSetLayouts[1] = singleImageLayout;
@@ -676,22 +694,13 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfaces.pipelineLayout));
-	VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo { };
-	graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	graphicsPipelineCreateInfo.stageCount = surfaces.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfaces.stages.data();
 	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
-	graphicsPipelineCreateInfo.pTessellationState = &tessellationStateCreateInfo;
-	graphicsPipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
-	graphicsPipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
-	graphicsPipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
-	graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
-	graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
-	graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
 	graphicsPipelineCreateInfo.layout = surfaces.pipelineLayout;
-	graphicsPipelineCreateInfo.renderPass = appState.RenderPass;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfaces.pipeline));
+
 	surfacesRotated.stages.resize(2);
 	surfacesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfacesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -707,6 +716,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pStages = surfacesRotated.stages.data();
 	graphicsPipelineCreateInfo.layout = surfacesRotated.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRotated.pipeline));
+
 	fences.stages.resize(2);
 	fences.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fences.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -722,6 +732,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pStages = fences.stages.data();
 	graphicsPipelineCreateInfo.layout = fences.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fences.pipeline));
+
 	fencesRotated.stages.resize(2);
 	fencesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fencesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -737,6 +748,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pStages = fencesRotated.stages.data();
 	graphicsPipelineCreateInfo.layout = fencesRotated.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotated.pipeline));
+
 	sprites.stages.resize(2);
 	sprites.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	sprites.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -758,6 +770,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &spriteAttributes.inputAssemblyState;
 	graphicsPipelineCreateInfo.layout = sprites.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &sprites.pipeline));
+
 	turbulent.stages.resize(2);
 	turbulent.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulent.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -778,6 +791,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	graphicsPipelineCreateInfo.layout = turbulent.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulent.pipeline));
+
 	turbulentRotated.stages.resize(2);
 	turbulentRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -793,6 +807,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pStages = turbulentRotated.stages.data();
 	graphicsPipelineCreateInfo.layout = turbulentRotated.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentRotated.pipeline));
+
 	alias.stages.resize(2);
 	alias.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	alias.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -814,6 +829,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &colormappedAttributes.inputAssemblyState;
 	graphicsPipelineCreateInfo.layout = alias.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &alias.pipeline));
+
 	viewmodel.stages.resize(2);
 	viewmodel.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	viewmodel.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -830,6 +846,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pStages = viewmodel.stages.data();
 	graphicsPipelineCreateInfo.layout = viewmodel.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodel.pipeline));
+
 	colored.stages.resize(2);
 	colored.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	colored.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -849,6 +866,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &coloredAttributes.inputAssemblyState;
 	graphicsPipelineCreateInfo.layout = colored.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &colored.pipeline));
+
 	sky.stages.resize(2);
 	sky.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	sky.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -871,6 +889,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &skyAttributes.inputAssemblyState;
 	graphicsPipelineCreateInfo.layout = sky.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &sky.pipeline));
+
 	floor.stages.resize(2);
 	floor.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	floor.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -912,6 +931,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 
 	matrices.CreateUniformBuffer(appState, 2 * 2 * sizeof(XrMatrix4x4f));
+
 	VkSamplerCreateInfo samplerCreateInfo { };
 	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerCreateInfo.maxLod = 0;
@@ -922,7 +942,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &lightmapSampler));
+
 	appState.Keyboard.Create(appState);
+
 	created = true;
 }
 
