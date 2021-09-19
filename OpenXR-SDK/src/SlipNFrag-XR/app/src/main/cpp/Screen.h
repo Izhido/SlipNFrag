@@ -8,12 +8,11 @@
 #include <vector>
 #include "Buffer.h"
 #include "Texture.h"
+#include "ScreenPerImage.h"
 
 struct Screen
 {
 	XrSwapchain Swapchain;
-	std::vector<XrSwapchainImageVulkan2KHR> Images;
 	Buffer StagingBuffer;
-	std::vector<VkCommandBuffer> CommandBuffers;
-	std::vector<VkSubmitInfo> SubmitInfo;
+	std::vector<ScreenPerImage> PerImage;
 };
