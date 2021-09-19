@@ -1177,6 +1177,17 @@ void android_main(struct android_app* app)
 		uint32_t imageCount;
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr));
 
+		std::vector<XrSwapchainImageVulkan2KHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
+
+		for (auto j = 0; j < imageCount; j++)
+		{
+			appState.PerImage.emplace_back();
+			auto& perImage = appState.PerImage[appState.PerImage.size() - 1];
+			CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
+			CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreateInfo, nullptr, &perImage.fence));
+		}
+
 		VkSubpassDescription subpass { };
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
@@ -1236,25 +1247,6 @@ void android_main(struct android_app* app)
 		subpass.pResolveAttachments = &resolveRef;
 
 		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &rpInfo, nullptr, &appState.RenderPass));
-
-		std::vector<XrSwapchainImageVulkan2KHR> swapchainVulkanImages(imageCount);
-
-		std::vector<XrSwapchainImageBaseHeader*> swapchainImages(imageCount);
-		for (uint32_t i = 0; i < imageCount; ++i)
-		{
-			swapchainVulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
-			swapchainImages[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&swapchainVulkanImages[i]);
-		}
-
-		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, swapchainImages[0]));
-
-		for (auto j = 0; j < imageCount; j++)
-		{
-			appState.PerImage.emplace_back();
-			auto& perImage = appState.PerImage[appState.PerImage.size() - 1];
-			CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
-			CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreateInfo, nullptr, &perImage.fence));
-		}
 
 		XrEventDataBuffer eventDataBuffer { };
 
@@ -1897,7 +1889,7 @@ void android_main(struct android_app* app)
 						imageInfo.format = Constants::depthFormat;
 						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perImage.depthImage));
 
-						perImage.resolveImage = swapchainVulkanImages[swapchainImageIndex].image;
+						perImage.resolveImage = swapchainImages[swapchainImageIndex].image;
 
 						VkMemoryRequirements memRequirements { };
 						VkMemoryAllocateInfo memoryAllocateInfo { };
@@ -2046,7 +2038,7 @@ void android_main(struct android_app* app)
 					imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 					imageMemoryBarrier.subresourceRange.levelCount = 1;
 					imageMemoryBarrier.subresourceRange.layerCount = 1;
-					imageMemoryBarrier.image = appState.Screen.VulkanImages[swapchainImageIndex].image;
+					imageMemoryBarrier.image = appState.Screen.Images[swapchainImageIndex].image;
 					vkCmdPipelineBarrier(appState.Screen.CommandBuffers[swapchainImageIndex], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 					VkBufferImageCopy region { };
@@ -2080,7 +2072,7 @@ void android_main(struct android_app* app)
 						imageSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						imageSubresourceRange.levelCount = 1;
 						imageSubresourceRange.layerCount = 1;
-						vkCmdClearColorImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &transparentColor, 1, &imageSubresourceRange);
+						vkCmdClearColorImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.Images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &transparentColor, 1, &imageSubresourceRange);
 
 						VkImageBlit blit { };
 						blit.srcOffsets[1].x = appState.ConsoleWidth;
@@ -2093,21 +2085,21 @@ void android_main(struct android_app* app)
 						blit.srcSubresource.layerCount = 1;
 						blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						blit.dstSubresource.layerCount = 1;
-						vkCmdBlitImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						vkCmdBlitImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, appState.Screen.Images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 						blit.srcOffsets[0].y = blit.srcOffsets[1].y;
 						blit.srcOffsets[1].y = appState.ConsoleHeight;
 						blit.dstOffsets[0].y = appState.ScreenHeight - (SBAR_HEIGHT + 24);
 						blit.dstOffsets[1].x = appState.ConsoleWidth;
 						blit.dstOffsets[1].y = appState.ScreenHeight; // By doing this an unscaled copy to the bottom left of the screen is performed - this is why we set it using ConsoleWidth/Height instead of ScreenWidth/Height.
-						vkCmdBlitImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						vkCmdBlitImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, appState.Screen.Images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 					}
 					else
 					{
 						region.imageExtent.width = appState.ScreenWidth;
 						region.imageExtent.height = appState.ScreenHeight;
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.StagingBuffer.buffer, appState.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(appState.Screen.CommandBuffers[swapchainImageIndex], appState.Screen.StagingBuffer.buffer, appState.Screen.Images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 					}
 
 					CHECK_VKCMD(vkEndCommandBuffer(appState.Screen.CommandBuffers[swapchainImageIndex]));
@@ -2161,7 +2153,7 @@ void android_main(struct android_app* app)
 						imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						imageMemoryBarrier.subresourceRange.levelCount = 1;
 						imageMemoryBarrier.subresourceRange.layerCount = 1;
-						imageMemoryBarrier.image = appState.Keyboard.Screen.VulkanImages[swapchainImageIndex].image;
+						imageMemoryBarrier.image = appState.Keyboard.Screen.Images[swapchainImageIndex].image;
 						vkCmdPipelineBarrier(appState.Keyboard.Screen.CommandBuffers[swapchainImageIndex], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 						VkBufferImageCopy region { };
@@ -2199,7 +2191,7 @@ void android_main(struct android_app* app)
 						blit.srcSubresource.layerCount = 1;
 						blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						blit.dstSubresource.layerCount = 1;
-						vkCmdBlitImage(appState.Keyboard.Screen.CommandBuffers[swapchainImageIndex], appState.KeyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, appState.Keyboard.Screen.VulkanImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						vkCmdBlitImage(appState.Keyboard.Screen.CommandBuffers[swapchainImageIndex], appState.KeyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, appState.Keyboard.Screen.Images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 						CHECK_VKCMD(vkEndCommandBuffer(appState.Keyboard.Screen.CommandBuffers[swapchainImageIndex]));
 
@@ -2328,14 +2320,9 @@ void android_main(struct android_app* app)
 
 								uint32_t imageCount;
 								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, 0, &imageCount, nullptr));
-								appState.Scene.skybox->vulkanImages.resize(imageCount);
-								appState.Scene.skybox->images.resize(imageCount);
-								for (auto i = 0; i < imageCount; i++)
-								{
-									appState.Scene.skybox->vulkanImages[i] = { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR };
-									appState.Scene.skybox->images[i] = reinterpret_cast<XrSwapchainImageBaseHeader*>(&appState.Scene.skybox->vulkanImages[i]);
-								}
-								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, imageCount, &imageCount, appState.Scene.skybox->images[0]));
+
+								appState.Scene.skybox->images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
 								
 								VkBufferCreateInfo bufferCreateInfo { };
 								bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -2367,8 +2354,7 @@ void android_main(struct android_app* app)
 								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 								
-								auto image = appState.Scene.skybox->vulkanImages[swapchainImageIndex].image;
-								imageMemoryBarrier.image = image;
+								imageMemoryBarrier.image = appState.Scene.skybox->images[swapchainImageIndex].image;
 								
 								for (auto i = 0; i < 6; i++)
 								{
@@ -2429,7 +2415,7 @@ void android_main(struct android_app* app)
 									imageMemoryBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 									region.imageSubresource.baseArrayLayer = i;
-									vkCmdCopyBufferToImage(setupCommandBuffer, buffers[i], image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+									vkCmdCopyBufferToImage(setupCommandBuffer, buffers[i], appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 								}
 								
 								CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));

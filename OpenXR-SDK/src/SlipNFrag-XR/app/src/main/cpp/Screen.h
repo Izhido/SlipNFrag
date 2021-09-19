@@ -12,8 +12,7 @@
 struct Screen
 {
 	XrSwapchain Swapchain;
-	std::vector<XrSwapchainImageVulkan2KHR> VulkanImages;
-	std::vector<XrSwapchainImageBaseHeader*> Images;
+	std::vector<XrSwapchainImageVulkan2KHR> Images;
 	Buffer StagingBuffer;
 	std::vector<VkCommandBuffer> CommandBuffers;
 	std::vector<VkSubmitInfo> SubmitInfo;
