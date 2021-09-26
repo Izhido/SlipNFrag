@@ -699,6 +699,10 @@ void R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*& te
             }
         }
 		auto source = pic;
+		if (r_skybox_as_rgba)
+		{
+			source += sizeof(texture_t) + pixels;
+		}
 		auto target = (byte*)texture + sizeof(texture_t);
         auto rprev = -1;
         auto gprev = -1;
