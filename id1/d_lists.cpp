@@ -442,11 +442,12 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 	R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
 	auto vertex = apverts;
 	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
+	vec3_t lightvec { r_plightvec[0], r_plightvec[1], r_plightvec[2] };
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
 		// lighting
-		auto plightnormal = r_avertexnormals[vertex->lightnormalindex];
-		auto lightcos = DotProduct (plightnormal, r_plightvec);
+		float* plightnormal = r_avertexnormals[vertex->lightnormalindex];
+		auto lightcos = DotProduct (plightnormal, lightvec);
 		auto temp = r_ambientlight;
 
 		if (lightcos < 0)
@@ -567,6 +568,7 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 	R_ConcatTransforms (t2matrix, tmatrix, viewmodel.transform);
 	auto vertex = apverts;
 	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
+	vec3_t lightvec { r_plightvec[0], r_plightvec[1], r_plightvec[2] };
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
 		// lighting
@@ -577,8 +579,8 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 		}
 		else
 		{
-			auto plightnormal = r_avertexnormals[vertex->lightnormalindex];
-			auto lightcos = DotProduct (plightnormal, r_plightvec);
+			float* plightnormal = r_avertexnormals[vertex->lightnormalindex];
+			auto lightcos = DotProduct (plightnormal, lightvec);
 			auto temp = r_ambientlight;
 
 			if (lightcos < 0)

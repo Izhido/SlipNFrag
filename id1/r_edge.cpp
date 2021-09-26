@@ -85,8 +85,6 @@ R_BeginEdgeFrame
 */
 void R_BeginEdgeFrame (void)
 {
-	int		v;
-
 	edge_p = r_edges + 4; // to accomodate for the (former static) edge heads and tails
 	edge_max = &r_edges[r_edgessize];
 
@@ -111,11 +109,8 @@ void R_BeginEdgeFrame (void)
 		r_currentkey = 0;
 	}
 
-// FIXME: set with memset
-	for (v=r_refdef.vrect.y ; v<r_refdef.vrectbottom ; v++)
-	{
-		newedges[v] = removeedges[v] = NULL;
-	}
+	std::fill(newedges.begin() + r_refdef.vrect.y, newedges.begin() + r_refdef.vrectbottom, nullptr);
+	std::fill(removeedges.begin() + r_refdef.vrect.y, removeedges.begin() + r_refdef.vrectbottom, nullptr);
 }
 
 

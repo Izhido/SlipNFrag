@@ -438,6 +438,7 @@ void SV_AddToFatPVS (vec3_t org, mnode_t *node)
 	mplane_t	*plane;
 	float	d;
 
+	vec4_t org4 { org[0], org[1], org[2], -1 };
 	while (1)
 	{
 	// if this is a leaf, accumulate the pvs bits
@@ -453,7 +454,8 @@ void SV_AddToFatPVS (vec3_t org, mnode_t *node)
 		}
 	
 		plane = node->plane;
-		d = DotProduct (org, plane->normal) - plane->dist;
+		float* normal_dist = &plane->normal[0];
+		d = DotProduct4 (org4, normal_dist);
 		if (d > 8)
 			node = node->children[0];
 		else if (d < -8)

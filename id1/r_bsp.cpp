@@ -352,12 +352,14 @@ void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel)
 	numsurfaces = pmodel->nummodelsurfaces;
 	pedges = pmodel->edges;
 
+	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1};
 	for (i=0 ; i<numsurfaces ; i++, psurf++)
 	{
 	// find which side of the node we are on
 		pplane = psurf->plane;
 
-		dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
+		float* normal_dist = &pplane->normal[0];
+		dot = DotProduct4 (modelorg4, normal_dist);
 
 	// draw the polygon
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
@@ -440,12 +442,14 @@ void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags)
 	psurf = &pmodel->surfaces[pmodel->firstmodelsurface];
 	numsurfaces = pmodel->nummodelsurfaces;
 
+	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1};
 	for (i=0 ; i<numsurfaces ; i++, psurf++)
 	{
 	// find which side of the node we are on
 		pplane = psurf->plane;
 
-		dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
+		float* normal_dist = &pplane->normal[0];
+		dot = DotProduct4 (modelorg4, normal_dist);
 
 	// draw the polygon
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
