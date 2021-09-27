@@ -1119,14 +1119,13 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 	byte			*dest;
 	unsigned short	*pusdest;
 	unsigned		uc;
-	int				u, v;
+	int				v;
 
 	if (r_pixbytes == 1)
 	{
 		dest = vid.buffer + y*vid.rowbytes + x;
 		for (v=0 ; v<h ; v++, dest += vid.rowbytes)
-			for (u=0 ; u<w ; u++)
-				dest[u] = c;
+			std::fill(dest, dest + w, (byte)c);
 	}
 	else
 	{
@@ -1134,8 +1133,7 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 
 		pusdest = (unsigned short *)vid.buffer + y * (vid.rowbytes >> 1) + x;
 		for (v=0 ; v<h ; v++, pusdest += (vid.rowbytes >> 1))
-			for (u=0 ; u<w ; u++)
-				pusdest[u] = uc;
+			std::fill(pusdest, pusdest + w, (byte)uc);
 	}
 }
 
@@ -1152,14 +1150,13 @@ void Draw_FillOnConsole(int x, int y, int w, int h, int c)
 	byte* dest;
 	unsigned short* pusdest;
 	unsigned		uc;
-	int				u, v;
+	int				v;
 
 	if (r_pixbytes == 1)
 	{
 		dest = vid.conbuffer + y * vid.conrowbytes + x;
 		for (v = 0; v < h; v++, dest += vid.conrowbytes)
-			for (u = 0; u < w; u++)
-				dest[u] = c;
+			std::fill(dest, dest + w, (byte)c);
 	}
 	else
 	{
@@ -1167,8 +1164,7 @@ void Draw_FillOnConsole(int x, int y, int w, int h, int c)
 
 		pusdest = (unsigned short*)vid.conbuffer + y * (vid.conrowbytes >> 1) + x;
 		for (v = 0; v < h; v++, pusdest += (vid.conrowbytes >> 1))
-			for (u = 0; u < w; u++)
-				pusdest[u] = uc;
+			std::fill(pusdest, pusdest + w, (byte)uc);
 	}
 }
 //=============================================================================
@@ -1188,6 +1184,8 @@ void Draw_FadeScreen (void)
 	S_ExtraUpdate ();
 	VID_LockBuffer ();
 
+	auto trailing = vid.width - vid.width % 4;
+
 	for (y=0 ; y<vid.height ; y++)
 	{
 		int	t;
@@ -1195,7 +1193,18 @@ void Draw_FadeScreen (void)
 		pbuf = (byte *)(vid.buffer + vid.rowbytes*y);
 		t = (y & 1) << 1;
 
-		for (x=0 ; x<vid.width ; x++)
+		for (x=0 ; x<trailing ; x+=4)
+		{
+			if ((x & 3) != t)
+				pbuf[x] = 0;
+			if ((x+1 & 3) != t)
+				pbuf[x+1] = 0;
+			if ((x+2 & 3) != t)
+				pbuf[x+2] = 0;
+			if ((x+3 & 3) != t)
+				pbuf[x+3] = 0;
+		}
+		for (x=trailing ; x<vid.width ; x++)
 		{
 			if ((x & 3) != t)
 				pbuf[x] = 0;

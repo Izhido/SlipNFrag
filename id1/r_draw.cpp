@@ -83,13 +83,12 @@ void R_ResizeEdges()
 R_EmitEdge
 ================
 */
-void R_EmitEdge (mvertex_t *pv0, mvertex_t *pv1)
+void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1)
 {
 	edge_t	*edge, *pcheck;
 	fixed44p20_t u_check;
 	float	u, u_step;
 	vec3_t	local, transformed;
-	float	*world;
 	int		v, v2, ceilv0;
 	float	scale, lzi0, u0, v0;
 	int		side;
@@ -103,7 +102,7 @@ void R_EmitEdge (mvertex_t *pv0, mvertex_t *pv1)
 	}
 	else
 	{
-		world = &pv0->position[0];
+		auto world = &pv0->position[0];
 	
 	// transform and project
 		VectorSubtract (world, modelorg, local);
@@ -132,7 +131,7 @@ void R_EmitEdge (mvertex_t *pv0, mvertex_t *pv1)
 		ceilv0 = (int) ceil(v0);
 	}
 
-	world = &pv1->position[0];
+	auto world = &pv1->position[0];
 
 // transform and project
 	VectorSubtract (world, modelorg, local);
@@ -262,7 +261,7 @@ void R_EmitEdge (mvertex_t *pv0, mvertex_t *pv1)
 R_ClipEdge
 ================
 */
-void R_ClipEdge (mvertex_t *pv0, mvertex_t *pv1, clipplane_t *clip)
+void R_ClipEdge (const mvertex_t *pv0, const mvertex_t *pv1, clipplane_t *clip)
 {
 	float		d0, d1, f;
 	mvertex_t	clipvert;
