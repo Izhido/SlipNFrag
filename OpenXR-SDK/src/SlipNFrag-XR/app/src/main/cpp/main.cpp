@@ -2058,7 +2058,7 @@ void android_main(struct android_app* app)
 						vkCmdPipelineBarrier(screenPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 						region.imageExtent.width = appState.ConsoleWidth;
-						region.imageExtent.height = appState.ConsoleHeight;
+						region.imageExtent.height = appState.ConsoleHeight - (SBAR_HEIGHT + 24);
 						region.imageExtent.depth = 1;
 						vkCmdCopyBufferToImage(screenPerImage.commandBuffer, appState.Screen.StagingBuffer.buffer, appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						appState.ConsoleTexture.filled = true;
@@ -2069,19 +2069,38 @@ void android_main(struct android_app* app)
 						imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 						vkCmdPipelineBarrier(screenPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
-						VkClearColorValue transparentColor { };
-						VkImageSubresourceRange imageSubresourceRange { };
-						imageSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-						imageSubresourceRange.levelCount = 1;
-						imageSubresourceRange.layerCount = 1;
-						vkCmdClearColorImage(screenPerImage.commandBuffer, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &transparentColor, 1, &imageSubresourceRange);
+						if (appState.StatusBarTexture.filled)
+						{
+							imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+							imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+						}
+						else
+						{
+							imageMemoryBarrier.srcAccessMask = 0;
+							imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+						}
+						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+						imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+						imageMemoryBarrier.image = appState.StatusBarTexture.image;
+						vkCmdPipelineBarrier(screenPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+						region.bufferOffset = region.imageExtent.width * sizeof(uint32_t) * region.imageExtent.height; 
+						region.imageExtent.height = SBAR_HEIGHT + 24;
+						vkCmdCopyBufferToImage(screenPerImage.commandBuffer, appState.Screen.StagingBuffer.buffer, appState.StatusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						appState.StatusBarTexture.filled = true;
+
+						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+						imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+						imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+						vkCmdPipelineBarrier(screenPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 						VkImageBlit blit { };
 						blit.srcOffsets[1].x = appState.ConsoleWidth;
-						blit.srcOffsets[1].y = appState.ConsoleHeight - (SBAR_HEIGHT + 24);
+						blit.srcOffsets[1].y = appState.ConsoleHeight;
 						blit.srcOffsets[1].z = 1;
 						blit.dstOffsets[1].x = appState.ScreenWidth;
-						blit.dstOffsets[1].y = appState.ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
+						blit.dstOffsets[1].y = appState.ScreenHeight;
 						blit.dstOffsets[1].z = 1;
 						blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						blit.srcSubresource.layerCount = 1;
@@ -2089,12 +2108,11 @@ void android_main(struct android_app* app)
 						blit.dstSubresource.layerCount = 1;
 						vkCmdBlitImage(screenPerImage.commandBuffer, appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
-						blit.srcOffsets[0].y = blit.srcOffsets[1].y;
-						blit.srcOffsets[1].y = appState.ConsoleHeight;
+						blit.srcOffsets[1].y = SBAR_HEIGHT + 24;
 						blit.dstOffsets[0].y = appState.ScreenHeight - (SBAR_HEIGHT + 24);
 						blit.dstOffsets[1].x = appState.ConsoleWidth;
-						blit.dstOffsets[1].y = appState.ScreenHeight; // By doing this an unscaled copy to the bottom left of the screen is performed - this is why we set it using ConsoleWidth/Height instead of ScreenWidth/Height.
-						vkCmdBlitImage(screenPerImage.commandBuffer, appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						blit.dstOffsets[1].y = appState.ScreenHeight;
+						vkCmdBlitImage(screenPerImage.commandBuffer, appState.StatusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 					}
 					else
 					{
@@ -2587,6 +2605,7 @@ void android_main(struct android_app* app)
 			appState.Keyboard.Screen.StagingBuffer.Delete(appState);
 			
 			appState.KeyboardTexture.Delete(appState);
+			appState.StatusBarTexture.Delete(appState);
 			appState.ConsoleTexture.Delete(appState);
 			appState.Screen.StagingBuffer.Delete(appState);
 

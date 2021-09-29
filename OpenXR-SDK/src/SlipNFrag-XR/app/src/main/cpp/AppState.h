@@ -36,6 +36,7 @@ struct AppState
 	Screen Screen;
 	std::vector<uint32_t> ScreenData;
 	Texture ConsoleTexture;
+	Texture StatusBarTexture;
 	Keyboard Keyboard;
 	Texture KeyboardTexture;
 	float KeyboardHitOffsetY;

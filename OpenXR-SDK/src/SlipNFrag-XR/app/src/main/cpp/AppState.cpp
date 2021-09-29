@@ -224,7 +224,7 @@ void AppState::RenderScreen()
 					y++;
 				}
 			}
-			limit = ScreenHeight - SBAR_HEIGHT - 24;
+			limit = ScreenHeight - (SBAR_HEIGHT + 24);
 			while (y < limit)
 			{
 				auto t = (y & 1) << 1;
