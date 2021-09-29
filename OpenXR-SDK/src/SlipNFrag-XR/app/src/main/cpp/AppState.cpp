@@ -180,6 +180,7 @@ void AppState::RenderScreen()
 		{
 			std::lock_guard<std::mutex> lock(RenderMutex);
 			auto source = con_buffer.data();
+			auto previousSource = source;
 			auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
 			auto black = d_8to24table[0];
 			auto y = 0;
@@ -217,11 +218,13 @@ void AppState::RenderScreen()
 					}
 				}
 				y++;
-				while ((y % Constants::screenToConsoleMultiplier) != 0)
+				if ((y % Constants::screenToConsoleMultiplier) == 0)
 				{
-					memcpy(target, target - ScreenWidth, ScreenWidth * sizeof(uint32_t));
-					target += ScreenWidth;
-					y++;
+					previousSource = source;
+				}
+				else
+				{
+					source = previousSource;
 				}
 			}
 			limit = ScreenHeight - (SBAR_HEIGHT + 24);
