@@ -2,7 +2,7 @@
 #include "Constants.h"
 #include "DirectRect.h"
 
-void AppState::RenderScreen()
+void AppState::RenderScreen(uint32_t swapchainImageIndex)
 {
 	if (Mode == AppScreenMode || Mode == AppWorldMode)
 	{
@@ -14,7 +14,7 @@ void AppState::RenderScreen()
 				auto console = con_buffer.data();
 				auto previousConsole = console;
 				auto screen = vid_buffer.data();
-				auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
+				auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped);
 				auto y = 0;
 				while (y < vid_height)
 				{
@@ -58,7 +58,7 @@ void AppState::RenderScreen()
 				auto console = con_buffer.data();
 				auto previousConsole = console;
 				auto screen = vid_buffer.data();
-				auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
+				auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped);
 				auto black = d_8to24table[0];
 				auto y = 0;
 				while (y < vid_height)
@@ -113,7 +113,7 @@ void AppState::RenderScreen()
 					auto width = directRect.width * Constants::screenToConsoleMultiplier;
 					auto height = directRect.height * Constants::screenToConsoleMultiplier;
 					auto source = directRect.data;
-					auto target = (uint32_t*)(Screen.StagingBuffer.mapped) + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
+					auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped) + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
 					auto y = 0;
 					while (y < height)
 					{
@@ -144,7 +144,7 @@ void AppState::RenderScreen()
 		{
 			std::lock_guard<std::mutex> lock(RenderMutex);
 			auto source = con_buffer.data();
-			auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
+			auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped);
 			auto count = ConsoleWidth * ConsoleHeight;
 			while (count > 0)
 			{
@@ -164,7 +164,7 @@ void AppState::RenderScreen()
 				for (auto& directRect : DirectRect::directRects)
 				{
 					auto source = directRect.data;
-					auto target = (uint32_t*)(Screen.StagingBuffer.mapped) + directRect.y * ConsoleWidth + directRect.x;
+					auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped) + directRect.y * ConsoleWidth + directRect.x;
 					for (auto y = 0; y < directRect.height; y++)
 					{
 						for (auto x = 0; x < directRect.width; x++)
@@ -181,7 +181,7 @@ void AppState::RenderScreen()
 			std::lock_guard<std::mutex> lock(RenderMutex);
 			auto source = con_buffer.data();
 			auto previousSource = source;
-			auto target = (uint32_t*)(Screen.StagingBuffer.mapped);
+			auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped);
 			auto black = d_8to24table[0];
 			auto y = 0;
 			auto limit = ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
@@ -292,7 +292,7 @@ void AppState::RenderScreen()
 					auto width = directRect.width * Constants::screenToConsoleMultiplier;
 					auto height = directRect.height * Constants::screenToConsoleMultiplier;
 					auto source = directRect.data;
-					auto target = (uint32_t*)(Screen.StagingBuffer.mapped) + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
+					auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped) + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
 					auto y = 0;
 					while (y < height)
 					{
@@ -328,18 +328,18 @@ void AppState::RenderScreen()
 			memcpy(ScreenData.data(), NoGameDataData.data(), NoGameDataData.size() * sizeof(uint32_t));
 			noGameDataLoaded = true;
 		}
-		memcpy(Screen.StagingBuffer.mapped, ScreenData.data(), Screen.StagingBuffer.size);
+		memcpy(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped, ScreenData.data(), Screen.PerImage[swapchainImageIndex].stagingBuffer.size);
 	}
 	else
 	{
-		memcpy(Screen.StagingBuffer.mapped, ScreenData.data(), Screen.StagingBuffer.size);
+		memcpy(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped, ScreenData.data(), Screen.PerImage[swapchainImageIndex].stagingBuffer.size);
 	}
 }
 
-void AppState::RenderKeyboard()
+void AppState::RenderKeyboard(uint32_t swapchainImageIndex)
 {
 	auto source = Keyboard.buffer.data();
-	auto target = (uint32_t*)(Keyboard.Screen.StagingBuffer.mapped);
+	auto target = (uint32_t*)(Keyboard.Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped);
 	auto limit = ConsoleHeight / 2;
 	for (auto y = 0; y < limit; y++)
 	{

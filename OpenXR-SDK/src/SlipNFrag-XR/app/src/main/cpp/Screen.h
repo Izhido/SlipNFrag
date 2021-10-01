@@ -13,6 +13,5 @@
 struct Screen
 {
 	XrSwapchain Swapchain;
-	Buffer StagingBuffer;
 	std::vector<ScreenPerImage> PerImage;
 };

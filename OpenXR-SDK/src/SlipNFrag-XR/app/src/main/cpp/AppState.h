@@ -35,10 +35,10 @@ struct AppState
 	uint32_t SwapchainSampleCount;
 	Screen Screen;
 	std::vector<uint32_t> ScreenData;
-	Texture ConsoleTexture;
-	Texture StatusBarTexture;
+	std::vector<Texture> ConsoleTextures;
+	std::vector<Texture> StatusBarTextures;
 	Keyboard Keyboard;
-	Texture KeyboardTexture;
+	std::vector<Texture> KeyboardTextures;
 	float KeyboardHitOffsetY;
 	XrSwapchain LeftArrowsSwapchain;
 	XrSwapchain RightArrowsSwapchain;
@@ -115,6 +115,6 @@ struct AppState
 	pid_t RenderThreadId;
 	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
 
-	void RenderScreen();
-	void RenderKeyboard();
+	void RenderScreen(uint32_t swapchainImageIndex);
+	void RenderKeyboard(uint32_t swapchainImageIndex);
 };

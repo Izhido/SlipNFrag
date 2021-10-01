@@ -1837,10 +1837,8 @@ void android_main(struct android_app* app)
 						readClearColor = true;
 					}
 					
-					//double elapsed = 0;
 					{
 						std::lock_guard<std::mutex> lock(appState.RenderMutex);
-						//auto startTime = Sys_FloatTime();
 						if (readClearColor && d_lists.clear_color >= 0)
 						{
 							auto color = d_8to24table[d_lists.clear_color];
@@ -1856,8 +1854,6 @@ void android_main(struct android_app* app)
 						perImage.LoadStagingBuffer(appState, stagingBuffer);
 						perImage.FillFromStagingBuffer(appState, stagingBuffer);
 						perImage.hostClearCount = host_clearcount;
-						//auto endTime = Sys_FloatTime();
-						//elapsed += (endTime - startTime);
 					}
 					
 					VkClearValue clearValues[2] { };
@@ -1962,7 +1958,6 @@ void android_main(struct android_app* app)
 						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
 
-					//auto startTime = Sys_FloatTime();
 					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 					renderPassBeginInfo.clearValueCount = 2;
 					renderPassBeginInfo.pClearValues = clearValues;
@@ -1987,6 +1982,7 @@ void android_main(struct android_app* app)
 					viewport.maxDepth = 1.0f;
 					vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport);
 					vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect);
+
 					perImage.Render(appState);
 
 					vkCmdEndRenderPass(perImage.commandBuffer);
@@ -1999,9 +1995,6 @@ void android_main(struct android_app* app)
 					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, perImage.fence));
 
 					perImage.submitted = true;
-					//auto endTime = Sys_FloatTime();
-					//elapsed += (endTime - startTime);
-					//__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "AppState::RenderScene(): %.6f s.", elapsed);
 
 					XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 					CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
@@ -2022,9 +2015,9 @@ void android_main(struct android_app* app)
 					
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
-					appState.RenderScreen();
-
 					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.Swapchain, &acquireInfo, &swapchainImageIndex));
+
+					appState.RenderScreen(swapchainImageIndex);
 
 					CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.Swapchain, &waitInfo));
 
@@ -2049,19 +2042,20 @@ void android_main(struct android_app* app)
 
 					if (appState.Mode == AppWorldMode && key_dest == key_game)
 					{
-						if (appState.ConsoleTexture.filled)
+						auto& consoleTexture = appState.ConsoleTextures[swapchainImageIndex];
+						if (consoleTexture.filled)
 						{
 							imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 							imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 						}
-						imageMemoryBarrier.image = appState.ConsoleTexture.image;
+						imageMemoryBarrier.image = consoleTexture.image;
 						vkCmdPipelineBarrier(screenPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 						region.imageExtent.width = appState.ConsoleWidth;
 						region.imageExtent.height = appState.ConsoleHeight - (SBAR_HEIGHT + 24);
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(screenPerImage.commandBuffer, appState.Screen.StagingBuffer.buffer, appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-						appState.ConsoleTexture.filled = true;
+						vkCmdCopyBufferToImage(screenPerImage.commandBuffer, appState.Screen.PerImage[swapchainImageIndex].stagingBuffer.buffer, consoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						consoleTexture.filled = true;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -2069,7 +2063,8 @@ void android_main(struct android_app* app)
 						imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 						vkCmdPipelineBarrier(screenPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
-						if (appState.StatusBarTexture.filled)
+						auto& statusBarTexture = appState.StatusBarTextures[swapchainImageIndex];
+						if (statusBarTexture.filled)
 						{
 							imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 							imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -2081,13 +2076,13 @@ void android_main(struct android_app* app)
 						}
 						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 						imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-						imageMemoryBarrier.image = appState.StatusBarTexture.image;
+						imageMemoryBarrier.image = statusBarTexture.image;
 						vkCmdPipelineBarrier(screenPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 						region.bufferOffset = region.imageExtent.width * sizeof(uint32_t) * region.imageExtent.height; 
 						region.imageExtent.height = SBAR_HEIGHT + 24;
-						vkCmdCopyBufferToImage(screenPerImage.commandBuffer, appState.Screen.StagingBuffer.buffer, appState.StatusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-						appState.StatusBarTexture.filled = true;
+						vkCmdCopyBufferToImage(screenPerImage.commandBuffer, appState.Screen.PerImage[swapchainImageIndex].stagingBuffer.buffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						statusBarTexture.filled = true;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -2106,20 +2101,20 @@ void android_main(struct android_app* app)
 						blit.srcSubresource.layerCount = 1;
 						blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						blit.dstSubresource.layerCount = 1;
-						vkCmdBlitImage(screenPerImage.commandBuffer, appState.ConsoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						vkCmdBlitImage(screenPerImage.commandBuffer, consoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 						blit.srcOffsets[1].y = SBAR_HEIGHT + 24;
 						blit.dstOffsets[0].y = appState.ScreenHeight - (SBAR_HEIGHT + 24);
 						blit.dstOffsets[1].x = appState.ConsoleWidth;
 						blit.dstOffsets[1].y = appState.ScreenHeight;
-						vkCmdBlitImage(screenPerImage.commandBuffer, appState.StatusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						vkCmdBlitImage(screenPerImage.commandBuffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 					}
 					else
 					{
 						region.imageExtent.width = appState.ScreenWidth;
 						region.imageExtent.height = appState.ScreenHeight;
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(screenPerImage.commandBuffer, appState.Screen.StagingBuffer.buffer, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(screenPerImage.commandBuffer, appState.Screen.PerImage[swapchainImageIndex].stagingBuffer.buffer, screenPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 					}
 
 					CHECK_VKCMD(vkEndCommandBuffer(screenPerImage.commandBuffer));
@@ -2157,9 +2152,9 @@ void android_main(struct android_app* app)
 					
 					if (appState.Keyboard.Draw(appState))
 					{
-						appState.RenderKeyboard();
-
 						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.Swapchain, &acquireInfo, &swapchainImageIndex));
+
+						appState.RenderKeyboard(swapchainImageIndex);
 
 						CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.Swapchain, &waitInfo));
 
@@ -2181,19 +2176,20 @@ void android_main(struct android_app* app)
 						region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						region.imageSubresource.layerCount = 1;
 
-						if (appState.KeyboardTexture.filled)
+						auto& keyboardTexture = appState.KeyboardTextures[swapchainImageIndex];
+						if (keyboardTexture.filled)
 						{
 							imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 							imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 						}
-						imageMemoryBarrier.image = appState.KeyboardTexture.image;
+						imageMemoryBarrier.image = keyboardTexture.image;
 						vkCmdPipelineBarrier(keyboardPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 						region.imageExtent.width = appState.ConsoleWidth;
 						region.imageExtent.height = appState.ConsoleHeight / 2;
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(keyboardPerImage.commandBuffer, appState.Keyboard.Screen.StagingBuffer.buffer, appState.KeyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-						appState.KeyboardTexture.filled = true;
+						vkCmdCopyBufferToImage(keyboardPerImage.commandBuffer, appState.Keyboard.Screen.PerImage[swapchainImageIndex].stagingBuffer.buffer, keyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						keyboardTexture.filled = true;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -2212,7 +2208,7 @@ void android_main(struct android_app* app)
 						blit.srcSubresource.layerCount = 1;
 						blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						blit.dstSubresource.layerCount = 1;
-						vkCmdBlitImage(keyboardPerImage.commandBuffer, appState.KeyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, keyboardPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						vkCmdBlitImage(keyboardPerImage.commandBuffer, keyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, keyboardPerImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 						CHECK_VKCMD(vkEndCommandBuffer(keyboardPerImage.commandBuffer));
 
@@ -2488,6 +2484,11 @@ void android_main(struct android_app* app)
 			appState.EngineThread.join();
 		}
 
+		if (appState.Queue != VK_NULL_HANDLE)
+		{
+			CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
+		}	
+
 		for (auto& perImage : appState.PerImage)
 		{
 			if (perImage.framebuffer != VK_NULL_HANDLE)
@@ -2526,6 +2527,31 @@ void android_main(struct android_app* app)
 
 		if (appState.Device != VK_NULL_HANDLE)
 		{
+			for (auto& texture : appState.KeyboardTextures)
+			{
+				texture.Delete(appState);
+			}
+			
+			for (auto& perImage : appState.Keyboard.Screen.PerImage)
+			{
+				perImage.stagingBuffer.Delete(appState);
+			}
+
+			for (auto& texture : appState.StatusBarTextures)
+			{
+				texture.Delete(appState);
+			}
+
+			for (auto& texture : appState.ConsoleTextures)
+			{
+				texture.Delete(appState);
+			}
+
+			for (auto& perImage : appState.Screen.PerImage)
+			{
+				perImage.stagingBuffer.Delete(appState);
+			}
+
 			for (auto& perImage : appState.PerImage)
 			{
 				vkDestroyFence(appState.Device, perImage.fence, nullptr);
@@ -2562,8 +2588,6 @@ void android_main(struct android_app* app)
 				vkDestroyRenderPass(appState.Device, appState.RenderPass, nullptr);
 			}
 	
-			CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
-			
 			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
 			for (auto i = 0; i < appState.Scene.samplers.size(); i++)
 			{
@@ -2601,13 +2625,6 @@ void android_main(struct android_app* app)
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndImageLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
 			appState.Scene.matrices.Delete(appState);
-
-			appState.Keyboard.Screen.StagingBuffer.Delete(appState);
-			
-			appState.KeyboardTexture.Delete(appState);
-			appState.StatusBarTexture.Delete(appState);
-			appState.ConsoleTexture.Delete(appState);
-			appState.Screen.StagingBuffer.Delete(appState);
 
 			vkDestroyCommandPool(appState.Device, appState.CommandPool, nullptr);
 		}

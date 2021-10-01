@@ -96,8 +96,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	play.Close();
 	AddBorder(appState, appState.ScreenData);
 
-	appState.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
-	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Screen.StagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Screen.StagingBuffer.mapped));
+	for (auto& perImage : appState.Screen.PerImage)
+	{
+		perImage.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
+		CHECK_VKCMD(vkMapMemory(appState.Device, perImage.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &perImage.stagingBuffer.mapped));
+	}
 
 	VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -110,34 +113,41 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	VkMemoryRequirements memoryRequirements;
 	VkMemoryAllocateInfo memoryAllocateInfo { };
-	
-	appState.ConsoleTexture.width = appState.ConsoleWidth;
-	appState.ConsoleTexture.height = appState.ConsoleHeight;
-	appState.ConsoleTexture.mipCount = 1;
-	appState.ConsoleTexture.layerCount = 1;
-	imageCreateInfo.extent.width = appState.ConsoleTexture.width;
-	imageCreateInfo.extent.height = appState.ConsoleTexture.height;
-	imageCreateInfo.mipLevels = appState.ConsoleTexture.mipCount;
-	imageCreateInfo.arrayLayers = appState.ConsoleTexture.layerCount;
-	CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &appState.ConsoleTexture.image));
-	vkGetImageMemoryRequirements(appState.Device, appState.ConsoleTexture.image, &memoryRequirements);
-	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
-	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &appState.ConsoleTexture.memory));
-	CHECK_VKCMD(vkBindImageMemory(appState.Device, appState.ConsoleTexture.image, appState.ConsoleTexture.memory, 0));
 
-	appState.StatusBarTexture.width = appState.ConsoleWidth;
-	appState.StatusBarTexture.height = SBAR_HEIGHT + 24;
-	appState.StatusBarTexture.mipCount = 1;
-	appState.StatusBarTexture.layerCount = 1;
-	imageCreateInfo.extent.width = appState.StatusBarTexture.width;
-	imageCreateInfo.extent.height = appState.StatusBarTexture.height;
-	imageCreateInfo.mipLevels = appState.StatusBarTexture.mipCount;
-	imageCreateInfo.arrayLayers = appState.StatusBarTexture.layerCount;
-	CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &appState.StatusBarTexture.image));
-	vkGetImageMemoryRequirements(appState.Device, appState.StatusBarTexture.image, &memoryRequirements);
-	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
-	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &appState.StatusBarTexture.memory));
-	CHECK_VKCMD(vkBindImageMemory(appState.Device, appState.StatusBarTexture.image, appState.StatusBarTexture.memory, 0));
+	appState.ConsoleTextures.resize(imageCount);
+	appState.StatusBarTextures.resize(imageCount);
+	for (auto i = 0; i < imageCount; i++)
+	{
+		auto& consoleTexture = appState.ConsoleTextures[i];
+		consoleTexture.width = appState.ConsoleWidth;
+		consoleTexture.height = appState.ConsoleHeight;
+		consoleTexture.mipCount = 1;
+		consoleTexture.layerCount = 1;
+		imageCreateInfo.extent.width = consoleTexture.width;
+		imageCreateInfo.extent.height = consoleTexture.height;
+		imageCreateInfo.mipLevels = consoleTexture.mipCount;
+		imageCreateInfo.arrayLayers = consoleTexture.layerCount;
+		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &consoleTexture.image));
+		vkGetImageMemoryRequirements(appState.Device, consoleTexture.image, &memoryRequirements);
+		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &consoleTexture.memory));
+		CHECK_VKCMD(vkBindImageMemory(appState.Device, consoleTexture.image, consoleTexture.memory, 0));
+
+		auto& statusBarTexture = appState.StatusBarTextures[i];
+		statusBarTexture.width = appState.ConsoleWidth;
+		statusBarTexture.height = SBAR_HEIGHT + 24;
+		statusBarTexture.mipCount = 1;
+		statusBarTexture.layerCount = 1;
+		imageCreateInfo.extent.width = statusBarTexture.width;
+		imageCreateInfo.extent.height = statusBarTexture.height;
+		imageCreateInfo.mipLevels = statusBarTexture.mipCount;
+		imageCreateInfo.arrayLayers = statusBarTexture.layerCount;
+		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &statusBarTexture.image));
+		vkGetImageMemoryRequirements(appState.Device, statusBarTexture.image, &memoryRequirements);
+		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &statusBarTexture.memory));
+		CHECK_VKCMD(vkBindImageMemory(appState.Device, statusBarTexture.image, statusBarTexture.memory, 0));
+	}
 
 	swapchainCreateInfo.width = appState.ScreenWidth;
 	swapchainCreateInfo.height = appState.ScreenHeight / 2;
@@ -149,6 +159,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.Swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)images.data()));
 
 	appState.Keyboard.Screen.PerImage.resize(imageCount);
+	appState.KeyboardTextures.resize(imageCount);
 	for (auto i = 0; i < imageCount; i++)
 	{
 		auto& perImage = appState.Keyboard.Screen.PerImage[i];
@@ -157,24 +168,24 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		perImage.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		perImage.submitInfo.commandBufferCount = 1;
 		perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
-	}
+		perImage.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
+		CHECK_VKCMD(vkMapMemory(appState.Device, perImage.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &perImage.stagingBuffer.mapped));
 	
-	appState.Keyboard.Screen.StagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
-	CHECK_VKCMD(vkMapMemory(appState.Device, appState.Keyboard.Screen.StagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &appState.Keyboard.Screen.StagingBuffer.mapped));
-
-	appState.KeyboardTexture.width = appState.ConsoleWidth;
-	appState.KeyboardTexture.height = appState.ConsoleHeight / 2;
-	appState.KeyboardTexture.mipCount = 1;
-	appState.KeyboardTexture.layerCount = 1;
-	imageCreateInfo.extent.width = appState.KeyboardTexture.width;
-	imageCreateInfo.extent.height = appState.KeyboardTexture.height;
-	imageCreateInfo.mipLevels = appState.KeyboardTexture.mipCount;
-	imageCreateInfo.arrayLayers = appState.KeyboardTexture.layerCount;
-	CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &appState.KeyboardTexture.image));
-	vkGetImageMemoryRequirements(appState.Device, appState.KeyboardTexture.image, &memoryRequirements);
-	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
-	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &appState.KeyboardTexture.memory));
-	CHECK_VKCMD(vkBindImageMemory(appState.Device, appState.KeyboardTexture.image, appState.KeyboardTexture.memory, 0));
+		auto& keyboardTexture = appState.KeyboardTextures[i];
+		keyboardTexture.width = appState.ConsoleWidth;
+		keyboardTexture.height = appState.ConsoleHeight / 2;
+		keyboardTexture.mipCount = 1;
+		keyboardTexture.layerCount = 1;
+		imageCreateInfo.extent.width = keyboardTexture.width;
+		imageCreateInfo.extent.height = keyboardTexture.height;
+		imageCreateInfo.mipLevels = keyboardTexture.mipCount;
+		imageCreateInfo.arrayLayers = keyboardTexture.layerCount;
+		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &keyboardTexture.image));
+		vkGetImageMemoryRequirements(appState.Device, keyboardTexture.image, &memoryRequirements);
+		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &keyboardTexture.memory));
+		CHECK_VKCMD(vkBindImageMemory(appState.Device, keyboardTexture.image, keyboardTexture.memory, 0));
+	}
 
 	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
