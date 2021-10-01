@@ -42,8 +42,7 @@ void VID_SetPalette(unsigned char *palette)
         v = (255 << 24) | (b << 16) | (g << 8) | r;
         *table++ = v;
     }
-    // Force the last entry to be solid black. This should help cover areas that would otherwise allow the skybox to go through them:
-    d_8to24table[255] = 255 << 24;
+    d_8to24table[255] &= 0xFFFFFF;    // 255 is transparent
     pal_changed++;
 }
 
