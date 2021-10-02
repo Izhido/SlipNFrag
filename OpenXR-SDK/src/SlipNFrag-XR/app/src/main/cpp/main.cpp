@@ -721,9 +721,6 @@ void android_main(struct android_app* app)
 		commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
 		CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &appState.CommandPool));
 
-		VkFenceCreateInfo fenceCreateInfo { };
-		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-
 		VkCommandBufferAllocateInfo commandBufferAllocateInfo { };
 		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		commandBufferAllocateInfo.commandPool = appState.CommandPool;
@@ -1185,7 +1182,6 @@ void android_main(struct android_app* app)
 			appState.PerImage.emplace_back();
 			auto& perImage = appState.PerImage[appState.PerImage.size() - 1];
 			CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
-			CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreateInfo, nullptr, &perImage.fence));
 		}
 
 		VkSubpassDescription subpass { };
@@ -1795,10 +1791,6 @@ void android_main(struct android_app* app)
 					uint32_t swapchainImageIndex;
 					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, &acquireInfo, &swapchainImageIndex));
 
-					XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
-					waitInfo.timeout = XR_INFINITE_DURATION;
-					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
-
 					for (auto i = 0; i < viewCountOutput; i++)
 					{
 						projectionLayerViews[i] = { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
@@ -1810,13 +1802,11 @@ void android_main(struct android_app* app)
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
 					}
 
+					XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
+					waitInfo.timeout = XR_INFINITE_DURATION;
+					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
+
 					auto& perImage = appState.PerImage[swapchainImageIndex];
-					if (perImage.submitted)
-					{
-						CHECK_VKCMD(vkWaitForFences(appState.Device, 1, &perImage.fence, VK_TRUE, 1ULL * 1000 * 1000 * 1000));
-						CHECK_VKCMD(vkResetFences(appState.Device, 1, &perImage.fence));
-						perImage.submitted = false;
-					}
 
 					CHECK_VKCMD(vkResetCommandBuffer(perImage.commandBuffer, 0));
 					CHECK_VKCMD(vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
@@ -1992,9 +1982,7 @@ void android_main(struct android_app* app)
 					submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 					submitInfo.commandBufferCount = 1;
 					submitInfo.pCommandBuffers = &perImage.commandBuffer;
-					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, perImage.fence));
-
-					perImage.submitted = true;
+					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, VK_NULL_HANDLE));
 
 					XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 					CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
@@ -2159,6 +2147,7 @@ void android_main(struct android_app* app)
 						CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.Swapchain, &waitInfo));
 
 						auto& keyboardPerImage = appState.Keyboard.Screen.PerImage[swapchainImageIndex];
+
 						CHECK_VKCMD(vkResetCommandBuffer(keyboardPerImage.commandBuffer, 0));
 						CHECK_VKCMD(vkBeginCommandBuffer(keyboardPerImage.commandBuffer, &commandBufferBeginInfo));
 
@@ -2554,7 +2543,6 @@ void android_main(struct android_app* app)
 
 			for (auto& perImage : appState.PerImage)
 			{
-				vkDestroyFence(appState.Device, perImage.fence, nullptr);
 				perImage.controllerResources.Delete(appState);
 				perImage.floorResources.Delete(appState);
 				perImage.skyResources.Delete(appState);

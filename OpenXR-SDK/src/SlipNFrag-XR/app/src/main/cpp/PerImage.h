@@ -52,8 +52,6 @@ struct PerImage
 	VkDeviceSize coloredIndex16Base;
 	VkDeviceSize controllerIndex16Base;
 	VkCommandBuffer commandBuffer;
-	VkFence fence;
-	bool submitted;
 
 	void Reset(AppState& appState);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size) const;
