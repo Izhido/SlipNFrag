@@ -149,14 +149,7 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 			while (count > 0)
 			{
 				auto entry = *source++;
-				if (entry == 255)
-				{
-					*target++ = 0;
-				}
-				else
-				{
-					*target++ = d_8to24table[entry];
-				}
+				*target++ = d_8to24table[entry];
 				count--;
 			}
 			{
@@ -340,22 +333,11 @@ void AppState::RenderKeyboard(uint32_t swapchainImageIndex)
 {
 	auto source = Keyboard.buffer.data();
 	auto target = (uint32_t*)(Keyboard.Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped);
-	auto limit = ConsoleHeight / 2;
-	for (auto y = 0; y < limit; y++)
+	auto count = ConsoleWidth * ConsoleHeight / 2;
+	while (count > 0)
 	{
-		for (auto x = 0; x < ConsoleWidth; x++)
-		{
-			auto entry = *source++;
-			unsigned int converted;
-			if (entry == 255)
-			{
-				converted = 0;
-			}
-			else
-			{
-				converted = d_8to24table[entry];
-			}
-			*target++ = converted;
-		}
+		auto entry = *source++;
+		*target++ = d_8to24table[entry];
+		count--;
 	}
 }
