@@ -52,6 +52,7 @@ struct PerImage
 	VkDeviceSize coloredIndex16Base;
 	VkDeviceSize controllerIndex16Base;
 	VkCommandBuffer commandBuffer;
+	VkSubmitInfo submitInfo;
 
 	void Reset(AppState& appState);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size) const;

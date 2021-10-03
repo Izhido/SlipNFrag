@@ -1172,16 +1172,18 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 {
 	appState.Scene.stagingBuffer.lastBarrier = -1;
 	appState.Scene.stagingBuffer.descriptorSetsInUse.clear();
+
 	VkBufferCopy bufferCopy { };
 	bufferCopy.size = appState.Scene.matrices.size;
 	vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.matrices.buffer, 1, &bufferCopy);
-	VkBufferMemoryBarrier barrier { };
-	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+
+	VkBufferMemoryBarrier barrier { VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER };
 	barrier.buffer = appState.Scene.matrices.buffer;
 	barrier.size = VK_WHOLE_SIZE;
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
 	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
+
 	bufferCopy.srcOffset += appState.Scene.matrices.size;
 	auto loadedBuffer = appState.Scene.buffers.firstVertices;
 	while (loadedBuffer != nullptr)
@@ -1192,19 +1194,25 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		appState.Scene.AddToBufferBarrier(loadedBuffer->buffer->buffer);
 		loadedBuffer = loadedBuffer->next;
 	}
+
 	SharedMemoryBuffer* previousBuffer = nullptr;
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstIndices16, bufferCopy, previousBuffer);
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices16, bufferCopy, previousBuffer);
+
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
+
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstIndices32, bufferCopy, previousBuffer);
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices32, bufferCopy, previousBuffer);
+
 	bufferCopy.dstOffset = 0;
+
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstSurfaceTexturePosition, bufferCopy);
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstTurbulentTexturePosition, bufferCopy);
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasVertices, bufferCopy);
+
 	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
@@ -1214,10 +1222,12 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		appState.Scene.AddToBufferBarrier(loadedTexCoordsBuffer->buffer->buffer);
 		loadedTexCoordsBuffer = loadedTexCoordsBuffer->next;
 	}
+
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
+
 	if (appState.Scene.verticesSize > 0)
 	{
 		bufferCopy.size = appState.Scene.verticesSize;
@@ -1239,10 +1249,12 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		bufferCopy.srcOffset += bufferCopy.size;
 		appState.Scene.AddToBufferBarrier(indices16->buffer);
 	}
+
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
+
 	if (appState.Scene.indices32Size > 0)
 	{
 		bufferCopy.size = appState.Scene.indices32Size;
@@ -1257,14 +1269,17 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		bufferCopy.srcOffset += bufferCopy.size;
 		appState.Scene.AddToBufferBarrier(colors->buffer);
 	}
+
 	if (appState.Scene.stagingBuffer.lastBarrier >= 0)
 	{
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastBarrier + 1, appState.Scene.stagingBuffer.bufferBarriers.data(), 0, nullptr);
 	}
+
 	appState.Scene.stagingBuffer.buffer = stagingBuffer;
 	appState.Scene.stagingBuffer.offset = bufferCopy.srcOffset;
 	appState.Scene.stagingBuffer.commandBuffer = commandBuffer;
 	appState.Scene.stagingBuffer.lastBarrier = -1;
+
 	if (appState.Scene.paletteSize > 0)
 	{
 		palette->Fill(appState, appState.Scene.stagingBuffer);
@@ -1314,6 +1329,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		sky->FillMipmapped(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += appState.Scene.skySize;
 	}
+
 	if (appState.Scene.stagingBuffer.lastBarrier >= 0)
 	{
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, appState.Scene.stagingBuffer.lastBarrier + 1, appState.Scene.stagingBuffer.imageBarriers.data());
@@ -1399,17 +1415,20 @@ void PerImage::Render(AppState& appState)
 	{
 		return;
 	}
+
 	VkDescriptorPoolSize poolSizes[3] { };
-	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { };
-	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
 	descriptorPoolCreateInfo.maxSets = 1;
 	descriptorPoolCreateInfo.pPoolSizes = poolSizes;
-	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { };
-	descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+
+	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
 	descriptorSetAllocateInfo.descriptorSetCount = 1;
+
 	VkDescriptorImageInfo textureInfo[2] { };
 	textureInfo[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	textureInfo[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
 	VkWriteDescriptorSet writes[3] { };
 	writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writes[0].descriptorCount = 1;
@@ -1419,6 +1438,7 @@ void PerImage::Render(AppState& appState)
 	writes[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writes[2].descriptorCount = 1;
 	writes[2].dstBinding = 2;
+
 	if (!host_colormapResources.created && host_colormap != nullptr)
 	{
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

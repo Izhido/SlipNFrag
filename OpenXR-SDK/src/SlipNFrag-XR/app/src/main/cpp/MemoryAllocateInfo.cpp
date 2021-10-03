@@ -8,6 +8,7 @@ void createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRe
 {
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocateInfo.allocationSize = memoryRequirements.size;
+
 	auto found = false;
 	for (auto i = 0; i < appState.MemoryProperties.memoryTypeCount; i++)
 	{
@@ -22,6 +23,7 @@ void createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRe
 			}
 		}
 	}
+
 	if (!found)
 	{
 		THROW(Fmt("createMemoryAllocateInfo(): Memory type %d with properties %d not found.", memoryRequirements.memoryTypeBits, properties));

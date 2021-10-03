@@ -6,17 +6,21 @@
 void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
 	this->size = size;
-	VkBufferCreateInfo bufferCreateInfo { };
-	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+
+	VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 	bufferCreateInfo.size = size;
 	bufferCreateInfo.usage = usage;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffer));
+
 	VkMemoryRequirements memoryRequirements;
 	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
+
 	VkMemoryAllocateInfo memoryAllocateInfo { };
 	createMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo);
+
 	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memory));
+
 	CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, memory, 0));
 }
 

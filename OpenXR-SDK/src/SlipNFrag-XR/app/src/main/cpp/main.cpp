@@ -660,22 +660,24 @@ void android_main(struct android_app* app)
 				if (strcmp(availableExtensions[extensionIdx].extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME) == 0)
 				{
 					supportsMultiview = true;
-					VkPhysicalDeviceFeatures2 physicalDeviceFeatures { };
-					physicalDeviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-					physicalDeviceFeatures.pNext = nullptr;
-					VkPhysicalDeviceProperties2 physicalDeviceProperties { };
-					physicalDeviceProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-					physicalDeviceProperties.pNext = nullptr;
-					VkPhysicalDeviceMultiviewFeatures deviceMultiviewFeatures { };
-					VkPhysicalDeviceMultiviewProperties deviceMultiviewProperties { };
-					deviceMultiviewFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES;
+
+					VkPhysicalDeviceFeatures2 physicalDeviceFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+
+					VkPhysicalDeviceProperties2 physicalDeviceProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+
+					VkPhysicalDeviceMultiviewFeatures deviceMultiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
+
+					VkPhysicalDeviceMultiviewProperties deviceMultiviewProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES};
+
 					physicalDeviceFeatures.pNext = &deviceMultiviewFeatures;
-					deviceMultiviewProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
 					physicalDeviceProperties.pNext = &deviceMultiviewProperties;
+
 					auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceFeatures2KHR");
 					vkGetPhysicalDeviceFeatures2KHR(vulkanPhysicalDevice, &physicalDeviceFeatures);
+
 					auto vkGetPhysicalDeviceProperties2KHR = (PFN_vkGetPhysicalDeviceProperties2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceProperties2KHR");
 					vkGetPhysicalDeviceProperties2KHR(vulkanPhysicalDevice, &physicalDeviceProperties);
+
 					supportsMultiview = (bool)deviceMultiviewFeatures.multiview;
 					if (supportsMultiview)
 					{
@@ -684,6 +686,7 @@ void android_main(struct android_app* app)
 						strcpy(extensionNameToAdd, VK_KHR_MULTIVIEW_EXTENSION_NAME);
 						enabledExtensions.push_back(extensionNameToAdd);
 					}
+
 					break;
 				}
 			}
@@ -715,31 +718,25 @@ void android_main(struct android_app* app)
 
 		CHECK(instance != XR_NULL_HANDLE);
 
-		VkCommandPoolCreateInfo commandPoolCreateInfo { };
-		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		VkCommandPoolCreateInfo commandPoolCreateInfo { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
 		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
 		CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &appState.CommandPool));
 
-		VkCommandBufferAllocateInfo commandBufferAllocateInfo { };
-		commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		VkCommandBufferAllocateInfo commandBufferAllocateInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
 		commandBufferAllocateInfo.commandPool = appState.CommandPool;
-		commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		commandBufferAllocateInfo.commandBufferCount = 1;
 		
-		VkCommandBufferBeginInfo commandBufferBeginInfo { };
-		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		VkCommandBufferBeginInfo commandBufferBeginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		
 		VkCommandBuffer setupCommandBuffer;
 		
-		VkSubmitInfo setupSubmitInfo { };
-		setupSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		VkSubmitInfo setupSubmitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 		setupSubmitInfo.commandBufferCount = 1;
 		setupSubmitInfo.pCommandBuffers = &setupCommandBuffer;
 
-		VkPipelineCacheCreateInfo pipelineCacheCreateInfo { };
-		pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+		VkPipelineCacheCreateInfo pipelineCacheCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO };
 		CHECK_VKCMD(vkCreatePipelineCache(appState.Device, &pipelineCacheCreateInfo, nullptr, &appState.PipelineCache));
 
 		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Creating session...");
@@ -1177,11 +1174,16 @@ void android_main(struct android_app* app)
 		std::vector<XrSwapchainImageVulkan2KHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
-		for (auto j = 0; j < imageCount; j++)
+		appState.PerImage.resize(imageCount);
+		for (auto i = 0; i < imageCount; i++)
 		{
-			appState.PerImage.emplace_back();
-			auto& perImage = appState.PerImage[appState.PerImage.size() - 1];
+			auto& perImage = appState.PerImage[i];
+
 			CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
+
+			perImage.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			perImage.submitInfo.commandBufferCount = 1;
+			perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
 		}
 
 		VkSubpassDescription subpass { };
@@ -1199,9 +1201,9 @@ void android_main(struct android_app* app)
 		rpInfo.subpassCount = 1;
 		rpInfo.pSubpasses = &subpass;
 
-		VkRenderPassMultiviewCreateInfo multiviewCreateInfo { };
 		const uint32_t viewMask = 3;
-		multiviewCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+
+		VkRenderPassMultiviewCreateInfo multiviewCreateInfo { VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO };
 		multiviewCreateInfo.subpassCount = 1;
 		multiviewCreateInfo.pViewMasks = &viewMask;
 		multiviewCreateInfo.correlationMaskCount = 1;
@@ -1978,11 +1980,8 @@ void android_main(struct android_app* app)
 					vkCmdEndRenderPass(perImage.commandBuffer);
 
 					CHECK_VKCMD(vkEndCommandBuffer(perImage.commandBuffer));
-					VkSubmitInfo submitInfo { };
-					submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-					submitInfo.commandBufferCount = 1;
-					submitInfo.pCommandBuffers = &perImage.commandBuffer;
-					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, VK_NULL_HANDLE));
+
+					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &perImage.submitInfo, VK_NULL_HANDLE));
 
 					XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 					CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
@@ -2014,8 +2013,7 @@ void android_main(struct android_app* app)
 					CHECK_VKCMD(vkResetCommandBuffer(screenPerImage.commandBuffer, 0));
 					CHECK_VKCMD(vkBeginCommandBuffer(screenPerImage.commandBuffer, &commandBufferBeginInfo));
 
-					VkImageMemoryBarrier imageMemoryBarrier { };
-					imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					VkImageMemoryBarrier imageMemoryBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 					imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 					imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 					imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -2151,8 +2149,7 @@ void android_main(struct android_app* app)
 						CHECK_VKCMD(vkResetCommandBuffer(keyboardPerImage.commandBuffer, 0));
 						CHECK_VKCMD(vkBeginCommandBuffer(keyboardPerImage.commandBuffer, &commandBufferBeginInfo));
 
-						VkImageMemoryBarrier imageMemoryBarrier { };
-						imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+						VkImageMemoryBarrier imageMemoryBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 						imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 						imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -2330,22 +2327,25 @@ void android_main(struct android_app* app)
 								appState.Scene.skybox->images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
 								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
 								
-								VkBufferCreateInfo bufferCreateInfo { };
-								bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+								VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 								bufferCreateInfo.size = width * height * 4;
 								bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-								bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
 								std::vector<VkBuffer> buffers(6);
+
 								VkMemoryRequirements memoryRequirements;
+
 								VkMemoryAllocateInfo memoryAllocateInfo { };
+
 								std::vector<VkDeviceMemory> memoryBlocks(6);
-								VkImageMemoryBarrier imageMemoryBarrier { };
-								imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+								VkImageMemoryBarrier imageMemoryBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 								imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 								imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 								imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 								imageMemoryBarrier.subresourceRange.levelCount = 1;
 								imageMemoryBarrier.subresourceRange.layerCount = 1;
+
 								VkBufferImageCopy region { };
 								region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 								region.imageSubresource.layerCount = 1;

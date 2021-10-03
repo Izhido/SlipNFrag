@@ -83,7 +83,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	{
 		auto& perImage = appState.Screen.PerImage[i];
 		perImage.image = images[i].image;
+
 		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
+
 		perImage.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		perImage.submitInfo.commandBufferCount = 1;
 		perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
@@ -164,11 +166,15 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	{
 		auto& perImage = appState.Keyboard.Screen.PerImage[i];
 		perImage.image = images[i].image;
+
 		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
+
 		perImage.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		perImage.submitInfo.commandBufferCount = 1;
 		perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
+
 		perImage.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
+
 		CHECK_VKCMD(vkMapMemory(appState.Device, perImage.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &perImage.stagingBuffer.mapped));
 	
 		auto& keyboardTexture = appState.KeyboardTextures[i];
@@ -181,8 +187,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		imageCreateInfo.mipLevels = keyboardTexture.mipCount;
 		imageCreateInfo.arrayLayers = keyboardTexture.layerCount;
 		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &keyboardTexture.image));
+
 		vkGetImageMemoryRequirements(appState.Device, keyboardTexture.image, &memoryRequirements);
+
 		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+
 		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &keyboardTexture.memory));
 		CHECK_VKCMD(vkBindImageMemory(appState.Device, keyboardTexture.image, keyboardTexture.memory, 0));
 	}
@@ -231,15 +240,13 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.LeftArrowsSwapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)images.data()));
 
-	VkBufferCreateInfo bufferCreateInfo { };
-	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 	bufferCreateInfo.size = swapchainCreateInfo.width * swapchainCreateInfo.height * 4;
 	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	VkBuffer buffer;
 	VkDeviceMemory memoryBlock;
-	VkImageMemoryBarrier imageMemoryBarrier { };
-	imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	VkImageMemoryBarrier imageMemoryBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -388,8 +395,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	VkDescriptorSetLayoutBinding descriptorSetBindings[3] { };
 	descriptorSetBindings[1].binding = 1;
 	descriptorSetBindings[2].binding = 2;
-	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo { };
-	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
 	descriptorSetLayoutCreateInfo.pBindings = descriptorSetBindings;
 	descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorSetBindings[0].descriptorCount = 1;
@@ -413,54 +419,44 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetLayoutCreateInfo.bindingCount = 2;
 	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &doubleImageLayout));
 
-	VkPipelineTessellationStateCreateInfo tessellationStateCreateInfo { };
-	tessellationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
-	VkPipelineViewportStateCreateInfo viewportStateCreateInfo { };
-	viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	VkPipelineTessellationStateCreateInfo tessellationStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO };
+
+	VkPipelineViewportStateCreateInfo viewportStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
 	viewportStateCreateInfo.viewportCount = 1;
 	viewportStateCreateInfo.scissorCount = 1;
-	VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo { };
-	rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
-	rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterizationStateCreateInfo.lineWidth = 1.0f;
-	VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo { };
-	multisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+
+	VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
+	rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizationStateCreateInfo.lineWidth = 1;
+
+	VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
 	multisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_4_BIT;
-	multisampleStateCreateInfo.minSampleShading = 1.0f;
-	VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo { };
-	depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	multisampleStateCreateInfo.minSampleShading = 1;
+
+	VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
 	depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
 	depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
 	depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-	depthStencilStateCreateInfo.front.failOp = VK_STENCIL_OP_KEEP;
-	depthStencilStateCreateInfo.front.passOp = VK_STENCIL_OP_KEEP;
-	depthStencilStateCreateInfo.front.depthFailOp = VK_STENCIL_OP_KEEP;
 	depthStencilStateCreateInfo.front.compareOp = VK_COMPARE_OP_ALWAYS;
-	depthStencilStateCreateInfo.back.failOp = VK_STENCIL_OP_KEEP;
-	depthStencilStateCreateInfo.back.passOp = VK_STENCIL_OP_KEEP;
-	depthStencilStateCreateInfo.back.depthFailOp = VK_STENCIL_OP_KEEP;
 	depthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
-	depthStencilStateCreateInfo.minDepthBounds = 0.0f;
-	depthStencilStateCreateInfo.maxDepthBounds = 1.0f;
+	depthStencilStateCreateInfo.maxDepthBounds = 1;
+
 	VkPipelineColorBlendAttachmentState colorBlendAttachmentState { };
 	colorBlendAttachmentState.blendEnable = VK_TRUE;
 	colorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	colorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
 	colorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	colorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 	colorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo { };
-	colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_CLEAR;
+
+	VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO };
 	colorBlendStateCreateInfo.attachmentCount = 1;
 	colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;
+
 	VkDynamicState dynamicStateEnables[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-	VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo { };
-	pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+
+	VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
 	pipelineDynamicStateCreateInfo.dynamicStateCount = 2;
 	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
 
@@ -672,6 +668,12 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	floorAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	floorAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
+	VkDescriptorSetLayout descriptorSetLayouts[3] { };
+
+	VkPushConstantRange pushConstantInfo { };
+
+	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+
 	surfaces.stages.resize(2);
 	surfaces.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfaces.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -681,15 +683,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaces.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfaces.stages[1].module = surfaceFragment;
 	surfaces.stages[1].pName = "main";
-	VkDescriptorSetLayout descriptorSetLayouts[3] { };
 	descriptorSetLayouts[0] = bufferAndTwoImagesLayout;
 	descriptorSetLayouts[1] = singleImageLayout;
 	descriptorSetLayouts[2] = singleImageLayout;
-	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo { };
-	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
-	VkPushConstantRange pushConstantInfo { };
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	pushConstantInfo.size = 6 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
@@ -759,11 +757,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	sprites.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	sprites.stages[1].module = spriteFragment;
 	sprites.stages[1].pName = "main";
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	descriptorSetLayouts[0] = bufferAndImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
-	pushConstantInfo.size = 6 * sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sprites.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = sprites.stages.size();
 	graphicsPipelineCreateInfo.pStages = sprites.stages.data();
@@ -818,11 +815,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	alias.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	alias.stages[1].module = aliasFragment;
 	alias.stages[1].pName = "main";
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	pushConstantInfo.size = 16 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
-	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &alias.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = alias.stages.size();
 	graphicsPipelineCreateInfo.pStages = alias.stages.data();
@@ -857,9 +854,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	colored.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	colored.stages[1].module = coloredFragment;
 	colored.stages[1].pName = "main";
+	pipelineLayoutCreateInfo.setLayoutCount = 1;
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-	pipelineLayoutCreateInfo.setLayoutCount = 1;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &colored.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = colored.stages.size();
 	graphicsPipelineCreateInfo.pStages = colored.stages.data();
@@ -877,12 +874,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	sky.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	sky.stages[1].module = skyFragment;
 	sky.stages[1].pName = "main";
+	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = 13 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
-	pipelineLayoutCreateInfo.setLayoutCount = 2;
-	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sky.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = sky.stages.size();
 	graphicsPipelineCreateInfo.pStages = sky.stages.data();
@@ -933,9 +929,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	matrices.CreateUniformBuffer(appState, 2 * 2 * sizeof(XrMatrix4x4f));
 
-	VkSamplerCreateInfo samplerCreateInfo { };
-	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerCreateInfo.maxLod = 0;
+	VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
 	samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
 	samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
 	samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -957,10 +951,11 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 	{
 		THROW(Fmt("Scene::CreateShader(): %s is not 4-byte aligned.", filename));
 	}
+
 	std::vector<unsigned char> buffer(length);
 	AAsset_read(file, buffer.data(), length);
-	VkShaderModuleCreateInfo moduleCreateInfo { };
-	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+
+	VkShaderModuleCreateInfo moduleCreateInfo { VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO };
 	moduleCreateInfo.pCode = (uint32_t *)buffer.data();
 	moduleCreateInfo.codeSize = length;
 	CHECK_VKCMD(vkCreateShaderModule(appState.Device, &moduleCreateInfo, nullptr, shaderModule));
@@ -987,6 +982,7 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	{
 		stagingBuffer.bufferBarriers.emplace_back();
 	}
+
 	auto& barrier = stagingBuffer.bufferBarriers[stagingBuffer.lastBarrier];
 	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
 	barrier.buffer = buffer;
