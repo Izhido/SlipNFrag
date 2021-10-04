@@ -679,14 +679,24 @@ void Host_Loadgame_f (void)
         entnum++;
         len = Sys_FileRead (f, &onechar, 1);
     }
-    auto tocreate = MAX_EDICTS;
+
+	auto tocreate = MAX_EDICTS;
     while (tocreate < entnum + 1)
     {
         tocreate += MAX_EDICTS;
     }
-	SV_ResizeEdicts(tocreate * pr_edict_size);
-    sv.edicts_reallocation_sequence++;
-    sv.num_edicts = entnum;
+	if (tocreate * pr_edict_size != sv.edicts.size())
+	{
+		for (auto j = 0, k = 0; j < sv.num_edicts; j++, k += pr_edict_size)
+		{
+			auto e = (edict_t*)(sv.edicts.data() + k);
+			SV_UnlinkEdict(e);
+		}
+		SV_ResizeEdicts(tocreate * pr_edict_size);
+		sv.edicts_reallocation_sequence++;
+		sv.num_edicts = entnum;
+	}
+
 // load the edicts out of the savegame file
 	entnum = -1;		// -1 is the globals
     for (auto& str : edictstrings)

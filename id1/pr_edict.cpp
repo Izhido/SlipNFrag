@@ -307,9 +307,10 @@ PR_ValueString
 Returns a string describing *data in a type specific manner
 =============
 */
-char *PR_ValueString (etype_t type, eval_t *val)
+const char *PR_ValueString (etype_t type, eval_t *val)
 {
-	static char	line[256];
+	static std::string	line;
+	static char fline[16];
 	ddef_t		*def;
 	dfunction_t	*f;
 	
@@ -318,37 +319,43 @@ char *PR_ValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		sprintf (line, "%s", pr_strings + val->string);
+		line = pr_strings + val->string;
 		break;
-	case ev_entity:	
-		sprintf (line, "entity %i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)) );
+	case ev_entity:
+		line = std::string("entity ") + std::to_string(NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
 		break;
 	case ev_function:
 		f = pr_functions + val->function;
-		sprintf (line, "%s()", pr_strings + f->s_name);
+		line = std::string(pr_strings + f->s_name) + "()";
 		break;
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		sprintf (line, ".%s", pr_strings + def->s_name);
+		line = std::string(".") + std::string(pr_strings + def->s_name);
 		break;
 	case ev_void:
-		sprintf (line, "void");
+		line = "void";
 		break;
 	case ev_float:
-		sprintf (line, "%5.1f", val->_float);
+		sprintf (fline, "%5.1f", val->_float);
+		line = fline;
 		break;
 	case ev_vector:
-		sprintf (line, "'%5.1f %5.1f %5.1f'", val->vector[0], val->vector[1], val->vector[2]);
+		sprintf (fline, "%5.1f", val->vector[0]);
+		line = fline;
+		sprintf (fline, " %5.1f", val->vector[1]);
+		line += fline;
+		sprintf (fline, " %5.1f", val->vector[2]);
+		line += fline;
 		break;
 	case ev_pointer:
-		sprintf (line, "pointer");
+		line = "pointer";
 		break;
 	default:
-		sprintf (line, "bad type %i", type);
+		line = std::string("bad type ") + std::to_string(type);
 		break;
 	}
 	
-	return line;
+	return line.c_str();
 }
 
 /*
@@ -359,9 +366,9 @@ Returns a string describing *data in a type specific manner
 Easier to parse than PR_ValueString
 =============
 */
-char *PR_UglyValueString (etype_t type, eval_t *val)
+const char *PR_UglyValueString (etype_t type, eval_t *val)
 {
-	static char	line[256];
+	static std::string	line;
 	ddef_t		*def;
 	dfunction_t	*f;
 	
@@ -370,34 +377,34 @@ char *PR_UglyValueString (etype_t type, eval_t *val)
 	switch (type)
 	{
 	case ev_string:
-		sprintf (line, "%s", pr_strings + val->string);
+		line = pr_strings + val->string;
 		break;
 	case ev_entity:	
-		sprintf (line, "%i", NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
+		line = std::to_string(NUM_FOR_EDICT(PROG_TO_EDICT(val->edict)));
 		break;
 	case ev_function:
 		f = pr_functions + val->function;
-		sprintf (line, "%s", pr_strings + f->s_name);
+		line = pr_strings + f->s_name;
 		break;
 	case ev_field:
 		def = ED_FieldAtOfs ( val->_int );
-		sprintf (line, "%s", pr_strings + def->s_name);
+		line = pr_strings + def->s_name;
 		break;
 	case ev_void:
-		sprintf (line, "void");
+		line = "void";
 		break;
 	case ev_float:
-		sprintf (line, "%f", val->_float);
+		line = std::to_string(val->_float);
 		break;
 	case ev_vector:
-		sprintf (line, "%f %f %f", val->vector[0], val->vector[1], val->vector[2]);
+		line = std::to_string(val->vector[0]) + " " + std::to_string(val->vector[1]) + " " + std::to_string(val->vector[2]);
 		break;
 	default:
-		sprintf (line, "bad type %i", type);
+		line = std::string("bad type ") + std::to_string(type);
 		break;
 	}
 	
-	return line;
+	return line.c_str();
 }
 
 /*
@@ -410,7 +417,6 @@ padded to 20 field width
 */
 const char *PR_GlobalString (int ofs)
 {
-	char	*s;
 	ddef_t	*def;
 	void	*val;
     static std::string line;
@@ -421,7 +427,7 @@ const char *PR_GlobalString (int ofs)
         line = std::to_string(ofs) + "(???)";
 	else
 	{
-		s = PR_ValueString ((etype_t)def->type, (eval_t*)val);
+		auto s = PR_ValueString ((etype_t)def->type, (eval_t*)val);
 		line = std::to_string(ofs) + "(" + (pr_strings + def->s_name) + ")" + s;
 	}
 	
