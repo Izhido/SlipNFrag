@@ -1490,7 +1490,7 @@ void android_main(struct android_app* app)
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "OXR 1.0.9";
+						sys_version = "OXR 1.0.10";
 						const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 						std::vector<std::string> arguments;
 						arguments.emplace_back("SlipNFrag");

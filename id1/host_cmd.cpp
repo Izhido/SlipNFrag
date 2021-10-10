@@ -681,7 +681,7 @@ void Host_Loadgame_f (void)
     }
 
 	auto tocreate = MAX_EDICTS;
-    while (tocreate < entnum + 1)
+    while (tocreate < entnum)
     {
         tocreate += MAX_EDICTS;
     }
@@ -694,8 +694,8 @@ void Host_Loadgame_f (void)
 		}
 		SV_ResizeEdicts(tocreate * pr_edict_size);
 		sv.edicts_reallocation_sequence++;
-		sv.num_edicts = entnum;
 	}
+	sv.num_edicts = entnum;
 
 // load the edicts out of the savegame file
 	entnum = -1;		// -1 is the globals
