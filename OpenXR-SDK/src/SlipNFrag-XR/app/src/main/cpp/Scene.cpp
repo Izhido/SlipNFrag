@@ -617,7 +617,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	pushConstantInfo.size = 6 * sizeof(float);
+	pushConstantInfo.size = 4 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfaces.pipelineLayout));
@@ -637,7 +637,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfacesRotated.stages[1].module = surfaceFragment;
 	surfacesRotated.stages[1].pName = "main";
-	pushConstantInfo.size = 9 * sizeof(float);
+	pushConstantInfo.size = 7 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfacesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfacesRotated.stages.data();
@@ -653,7 +653,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fences.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fences.stages[1].module = fenceFragment;
 	fences.stages[1].pName = "main";
-	pushConstantInfo.size = 6 * sizeof(float);
+	pushConstantInfo.size = 4 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fences.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fences.stages.size();
 	graphicsPipelineCreateInfo.pStages = fences.stages.data();
@@ -669,7 +669,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fencesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fencesRotated.stages[1].module = fenceFragment;
 	fencesRotated.stages[1].pName = "main";
-	pushConstantInfo.size = 9 * sizeof(float);
+	pushConstantInfo.size = 7 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fencesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = fencesRotated.stages.data();

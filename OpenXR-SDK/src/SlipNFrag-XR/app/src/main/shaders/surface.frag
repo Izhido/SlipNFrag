@@ -17,7 +17,9 @@ layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
-	vec4 lightmapEntry = texture(fragmentLightmap, fragmentLightmapCoords);
+	vec3 lightmapSize = textureSize(fragmentLightmap, 0);
+	vec3 lightmapCoords = vec3(fragmentLightmapCoords.xy / lightmapSize.xy, fragmentLightmapCoords.z);
+	vec4 lightmapEntry = texture(fragmentLightmap, lightmapCoords);
 	uint light = (uint(lightmapEntry.x) / 256) % 64;
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentTexCoords);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));

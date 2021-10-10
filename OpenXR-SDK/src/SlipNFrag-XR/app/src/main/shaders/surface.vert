@@ -20,8 +20,6 @@ layout(push_constant) uniform Transforms
 	layout(offset = 4) float originY;
 	layout(offset = 8) float originZ;
 	layout(offset = 12) float lightmapIndex;
-	layout(offset = 16) float lightmapWidth;
-	layout(offset = 20) float lightmapHeight;
 };
 
 layout(location = 0) in vec3 vertexPosition;
@@ -42,6 +40,6 @@ void main(void)
 	vec2 texCoords = vec2(dot(position4, texturePosition[0]), dot(position4, texturePosition[1]));
 	vec2 lightmapSize = vec2((int(texturePosition[2].z) >> 4) + 1, (int(texturePosition[2].w) >> 4) + 1);
 	vec2 lightmapCoords = ((texCoords - texturePosition[2].xy) * (lightmapSize - 1) / texturePosition[2].zw) + 0.5;
-	fragmentLightmapCoords = vec3(lightmapCoords.x / lightmapWidth, lightmapCoords.y / lightmapHeight, lightmapIndex);
+	fragmentLightmapCoords = vec3(lightmapCoords.x, lightmapCoords.y, lightmapIndex);
 	fragmentTexCoords = texCoords / texturePosition[3].xy;
 }

@@ -1422,8 +1422,6 @@ void PerImage::SetPushConstants(const LoadedSurface& loaded, float pushConstants
 	pushConstants[1] = loaded.originY;
 	pushConstants[2] = loaded.originZ;
 	pushConstants[3] = loaded.lightmap.lightmap->allocatedIndex;
-	pushConstants[4] = loaded.lightmap.lightmap->texture->width;
-	pushConstants[5] = loaded.lightmap.lightmap->texture->height;
 }
 
 void PerImage::SetPushConstants(const LoadedSurfaceRotated& loaded, float pushConstants[])
@@ -1435,8 +1433,6 @@ void PerImage::SetPushConstants(const LoadedSurfaceRotated& loaded, float pushCo
 	pushConstants[4] = loaded.pitch * M_PI / 180;
 	pushConstants[5] = -loaded.roll * M_PI / 180;
 	pushConstants[6] = loaded.lightmap.lightmap->allocatedIndex;
-	pushConstants[7] = loaded.lightmap.lightmap->texture->width;
-	pushConstants[8] = loaded.lightmap.lightmap->texture->height;
 }
 
 void PerImage::SetPushConstants(const LoadedTurbulent& loaded, float pushConstants[])
@@ -1646,7 +1642,7 @@ void PerImage::Render(AppState& appState)
 					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 6 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 4 * sizeof(float), pushConstants);
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
@@ -1692,7 +1688,7 @@ void PerImage::Render(AppState& appState)
 					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 6 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 4 * sizeof(float), pushConstants);
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
@@ -1743,7 +1739,7 @@ void PerImage::Render(AppState& appState)
 					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 9 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 7 * sizeof(float), pushConstants);
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
@@ -1789,7 +1785,7 @@ void PerImage::Render(AppState& appState)
 					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 9 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 7 * sizeof(float), pushConstants);
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
@@ -1840,7 +1836,7 @@ void PerImage::Render(AppState& appState)
 					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 6 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 4 * sizeof(float), pushConstants);
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
@@ -1886,7 +1882,7 @@ void PerImage::Render(AppState& appState)
 					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 6 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 4 * sizeof(float), pushConstants);
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
@@ -1937,7 +1933,7 @@ void PerImage::Render(AppState& appState)
 					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 9 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 7 * sizeof(float), pushConstants);
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
@@ -1983,7 +1979,7 @@ void PerImage::Render(AppState& appState)
 					previousTexture = texture;
 				}
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 9 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 7 * sizeof(float), pushConstants);
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
