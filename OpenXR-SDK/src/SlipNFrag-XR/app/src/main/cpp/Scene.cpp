@@ -471,8 +471,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.renderPass = appState.RenderPass;
 
 	PipelineAttributes surfaceAttributes { };
-	surfaceAttributes.vertexAttributes.resize(9);
-	surfaceAttributes.vertexBindings.resize(3);
+	surfaceAttributes.vertexAttributes.resize(5);
+	surfaceAttributes.vertexBindings.resize(2);
 	surfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	surfaceAttributes.vertexBindings[0].stride = 3 * sizeof(float);
 	surfaceAttributes.vertexAttributes[1].location = 1;
@@ -493,24 +493,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaceAttributes.vertexBindings[1].binding = 1;
 	surfaceAttributes.vertexBindings[1].stride = 16 * sizeof(float);
 	surfaceAttributes.vertexBindings[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-	surfaceAttributes.vertexAttributes[5].location = 5;
-	surfaceAttributes.vertexAttributes[5].binding = 2;
-	surfaceAttributes.vertexAttributes[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	surfaceAttributes.vertexAttributes[6].location = 6;
-	surfaceAttributes.vertexAttributes[6].binding = 2;
-	surfaceAttributes.vertexAttributes[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	surfaceAttributes.vertexAttributes[6].offset = 4 * sizeof(float);
-	surfaceAttributes.vertexAttributes[7].location = 7;
-	surfaceAttributes.vertexAttributes[7].binding = 2;
-	surfaceAttributes.vertexAttributes[7].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	surfaceAttributes.vertexAttributes[7].offset = 8 * sizeof(float);
-	surfaceAttributes.vertexAttributes[8].location = 8;
-	surfaceAttributes.vertexAttributes[8].binding = 2;
-	surfaceAttributes.vertexAttributes[8].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	surfaceAttributes.vertexAttributes[8].offset = 12 * sizeof(float);
-	surfaceAttributes.vertexBindings[2].binding = 2;
-	surfaceAttributes.vertexBindings[2].stride = 16 * sizeof(float);
-	surfaceAttributes.vertexBindings[2].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 	surfaceAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	surfaceAttributes.vertexInputState.vertexBindingDescriptionCount = surfaceAttributes.vertexBindings.size();
 	surfaceAttributes.vertexInputState.pVertexBindingDescriptions = surfaceAttributes.vertexBindings.data();
@@ -520,8 +502,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaceAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
 	PipelineAttributes spriteAttributes { };
-	spriteAttributes.vertexAttributes.resize(6);
-	spriteAttributes.vertexBindings.resize(3);
+	spriteAttributes.vertexAttributes.resize(2);
+	spriteAttributes.vertexBindings.resize(2);
 	spriteAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	spriteAttributes.vertexBindings[0].stride = 3 * sizeof(float);
 	spriteAttributes.vertexAttributes[1].location = 1;
@@ -529,24 +511,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	spriteAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
 	spriteAttributes.vertexBindings[1].binding = 1;
 	spriteAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	spriteAttributes.vertexAttributes[2].location = 2;
-	spriteAttributes.vertexAttributes[2].binding = 2;
-	spriteAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	spriteAttributes.vertexAttributes[3].location = 3;
-	spriteAttributes.vertexAttributes[3].binding = 2;
-	spriteAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	spriteAttributes.vertexAttributes[3].offset = 4 * sizeof(float);
-	spriteAttributes.vertexAttributes[4].location = 4;
-	spriteAttributes.vertexAttributes[4].binding = 2;
-	spriteAttributes.vertexAttributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	spriteAttributes.vertexAttributes[4].offset = 8 * sizeof(float);
-	spriteAttributes.vertexAttributes[5].location = 5;
-	spriteAttributes.vertexAttributes[5].binding = 2;
-	spriteAttributes.vertexAttributes[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	spriteAttributes.vertexAttributes[5].offset = 12 * sizeof(float);
-	spriteAttributes.vertexBindings[2].binding = 2;
-	spriteAttributes.vertexBindings[2].stride = 16 * sizeof(float);
-	spriteAttributes.vertexBindings[2].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 	spriteAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	spriteAttributes.vertexInputState.vertexBindingDescriptionCount = spriteAttributes.vertexBindings.size();
 	spriteAttributes.vertexInputState.pVertexBindingDescriptions = spriteAttributes.vertexBindings.data();
@@ -556,8 +520,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	spriteAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
 	PipelineAttributes colormappedAttributes { };
-	colormappedAttributes.vertexAttributes.resize(7);
-	colormappedAttributes.vertexBindings.resize(4);
+	colormappedAttributes.vertexAttributes.resize(3);
+	colormappedAttributes.vertexBindings.resize(3);
 	colormappedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	colormappedAttributes.vertexBindings[0].stride = 4 * sizeof(float);
 	colormappedAttributes.vertexAttributes[1].location = 1;
@@ -570,24 +534,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	colormappedAttributes.vertexAttributes[2].format = VK_FORMAT_R32_SFLOAT;
 	colormappedAttributes.vertexBindings[2].binding = 2;
 	colormappedAttributes.vertexBindings[2].stride = sizeof(float);
-	colormappedAttributes.vertexAttributes[3].location = 3;
-	colormappedAttributes.vertexAttributes[3].binding = 3;
-	colormappedAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	colormappedAttributes.vertexAttributes[4].location = 4;
-	colormappedAttributes.vertexAttributes[4].binding = 3;
-	colormappedAttributes.vertexAttributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	colormappedAttributes.vertexAttributes[4].offset = 4 * sizeof(float);
-	colormappedAttributes.vertexAttributes[5].location = 5;
-	colormappedAttributes.vertexAttributes[5].binding = 3;
-	colormappedAttributes.vertexAttributes[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	colormappedAttributes.vertexAttributes[5].offset = 8 * sizeof(float);
-	colormappedAttributes.vertexAttributes[6].location = 6;
-	colormappedAttributes.vertexAttributes[6].binding = 3;
-	colormappedAttributes.vertexAttributes[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	colormappedAttributes.vertexAttributes[6].offset = 12 * sizeof(float);
-	colormappedAttributes.vertexBindings[3].binding = 3;
-	colormappedAttributes.vertexBindings[3].stride = 16 * sizeof(float);
-	colormappedAttributes.vertexBindings[3].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 	colormappedAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	colormappedAttributes.vertexInputState.vertexBindingDescriptionCount = colormappedAttributes.vertexBindings.size();
 	colormappedAttributes.vertexInputState.pVertexBindingDescriptions = colormappedAttributes.vertexBindings.data();
@@ -597,33 +543,15 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	colormappedAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	PipelineAttributes coloredAttributes { };
-	coloredAttributes.vertexAttributes.resize(6);
-	coloredAttributes.vertexBindings.resize(3);
+	coloredAttributes.vertexAttributes.resize(2);
+	coloredAttributes.vertexBindings.resize(2);
 	coloredAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	coloredAttributes.vertexBindings[0].stride = 3 * sizeof(float);
 	coloredAttributes.vertexAttributes[1].location = 1;
 	coloredAttributes.vertexAttributes[1].binding = 1;
-	coloredAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	coloredAttributes.vertexAttributes[2].location = 2;
-	coloredAttributes.vertexAttributes[2].binding = 1;
-	coloredAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	coloredAttributes.vertexAttributes[2].offset = 4 * sizeof(float);
-	coloredAttributes.vertexAttributes[3].location = 3;
-	coloredAttributes.vertexAttributes[3].binding = 1;
-	coloredAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	coloredAttributes.vertexAttributes[3].offset = 8 * sizeof(float);
-	coloredAttributes.vertexAttributes[4].location = 4;
-	coloredAttributes.vertexAttributes[4].binding = 1;
-	coloredAttributes.vertexAttributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	coloredAttributes.vertexAttributes[4].offset = 12 * sizeof(float);
+	coloredAttributes.vertexAttributes[1].format = VK_FORMAT_R32_SFLOAT;
 	coloredAttributes.vertexBindings[1].binding = 1;
-	coloredAttributes.vertexBindings[1].stride = 16 * sizeof(float);
-	coloredAttributes.vertexBindings[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-	coloredAttributes.vertexAttributes[5].location = 5;
-	coloredAttributes.vertexAttributes[5].binding = 2;
-	coloredAttributes.vertexAttributes[5].format = VK_FORMAT_R32_SFLOAT;
-	coloredAttributes.vertexBindings[2].binding = 2;
-	coloredAttributes.vertexBindings[2].stride = sizeof(float);
+	coloredAttributes.vertexBindings[1].stride = sizeof(float);
 	coloredAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	coloredAttributes.vertexInputState.vertexBindingDescriptionCount = coloredAttributes.vertexBindings.size();
 	coloredAttributes.vertexInputState.pVertexBindingDescriptions = coloredAttributes.vertexBindings.data();
@@ -927,7 +855,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, surfaceRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 
-	matrices.CreateUniformBuffer(appState, 2 * 2 * sizeof(XrMatrix4x4f));
+	for (auto& perImage : appState.PerImage)
+	{
+		perImage.matrices.CreateUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
+	}
 
 	VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
 	samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
@@ -1238,27 +1169,42 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		auto entry = texturePositionsPerKey.find(surface.surface);
 		if (entry == texturePositionsPerKey.end())
 		{
-			loaded.texturePosition.size = 16 * sizeof(float);
-			loaded.texturePosition.buffer = new SharedMemoryBuffer { };
-			loaded.texturePosition.buffer->CreateVertexBuffer(appState, loaded.texturePosition.size);
-			buffers.MoveToFront(loaded.texturePosition.buffer);
-			size += loaded.texturePosition.size;
-			loaded.texturePosition.source = surface.surface;
-			buffers.SetupSurfaceTexturePosition(loaded.texturePosition);
-			texturePositionsPerKey.insert({ surface.surface, loaded.texturePosition.buffer });
+			loaded.texturePositions.size = 16 * sizeof(float);
+			if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
+			{
+				loaded.texturePositions.buffer = new SharedMemoryBuffer { };
+				loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.texturePositions.buffer);
+				latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+				usedInLatestSharedMemoryTexturePositionBuffer = 0;
+			}
+			else
+			{
+				loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+				loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
+			}
+			usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
+			size += loaded.texturePositions.size;
+			loaded.texturePositions.source = surface.surface;
+			buffers.SetupSurfaceTexturePosition(loaded.texturePositions);
+			SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
+			texturePositionsPerKey.insert({ surface.surface, newEntry });
 		}
 		else
 		{
-			loaded.texturePosition.size = 0;
-			loaded.texturePosition.buffer = entry->second;
+			loaded.texturePositions.size = 0;
+			loaded.texturePositions.buffer = entry->second.buffer;
+			loaded.texturePositions.offset = entry->second.offset;
 		}
 		previousSurface = surface.surface;
-		previousTexturePosition = loaded.texturePosition.buffer;
+		previousTexturePosition = loaded.texturePositions.buffer;
+		previousTexturePositionOffset = loaded.texturePositions.offset;
 	}
 	else
 	{
-		loaded.texturePosition.size = 0;
-		loaded.texturePosition.buffer = previousTexturePosition;
+		loaded.texturePositions.size = 0;
+		loaded.texturePositions.buffer = previousTexturePosition;
+		loaded.texturePositions.offset = previousTexturePositionOffset;
 	}
 	auto entry = lightmaps.lightmaps.find({ surface.surface, surface.entity });
 	if (entry == lightmaps.lightmaps.end())
@@ -1405,27 +1351,42 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 		auto entry = texturePositionsPerKey.find(surface.surface);
 		if (entry == texturePositionsPerKey.end())
 		{
-			loaded.texturePosition.size = 16 * sizeof(float);
-			loaded.texturePosition.buffer = new SharedMemoryBuffer { };
-			loaded.texturePosition.buffer->CreateVertexBuffer(appState, loaded.texturePosition.size);
-			buffers.MoveToFront(loaded.texturePosition.buffer);
-			size += loaded.texturePosition.size;
-			loaded.texturePosition.source = surface.surface;
-			buffers.SetupSurfaceTexturePosition(loaded.texturePosition);
-			texturePositionsPerKey.insert({ surface.surface, loaded.texturePosition.buffer });
+			loaded.texturePositions.size = 16 * sizeof(float);
+			if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
+			{
+				loaded.texturePositions.buffer = new SharedMemoryBuffer { };
+				loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.texturePositions.buffer);
+				latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+				usedInLatestSharedMemoryTexturePositionBuffer = 0;
+			}
+			else
+			{
+				loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+				loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
+			}
+			usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
+			size += loaded.texturePositions.size;
+			loaded.texturePositions.source = surface.surface;
+			buffers.SetupSurfaceTexturePosition(loaded.texturePositions);
+			SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
+			texturePositionsPerKey.insert({ surface.surface, newEntry });
 		}
 		else
 		{
-			loaded.texturePosition.size = 0;
-			loaded.texturePosition.buffer = entry->second;
+			loaded.texturePositions.size = 0;
+			loaded.texturePositions.buffer = entry->second.buffer;
+			loaded.texturePositions.offset = entry->second.offset;
 		}
 		previousSurface = surface.surface;
-		previousTexturePosition = loaded.texturePosition.buffer;
+		previousTexturePosition = loaded.texturePositions.buffer;
+		previousTexturePositionOffset = loaded.texturePositions.offset;
 	}
 	else
 	{
-		loaded.texturePosition.size = 0;
-		loaded.texturePosition.buffer = previousTexturePosition;
+		loaded.texturePositions.size = 0;
+		loaded.texturePositions.buffer = previousTexturePosition;
+		loaded.texturePositions.offset = previousTexturePositionOffset;
 	}
 	auto entry = lightmaps.lightmaps.find({ surface.surface, surface.entity });
 	if (entry == lightmaps.lightmaps.end())
@@ -1575,27 +1536,42 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		auto entry = texturePositionsPerKey.find(turbulent.surface);
 		if (entry == texturePositionsPerKey.end())
 		{
-			loaded.texturePosition.size = 16 * sizeof(float);
-			loaded.texturePosition.buffer = new SharedMemoryBuffer { };
-			loaded.texturePosition.buffer->CreateVertexBuffer(appState, loaded.texturePosition.size);
-			buffers.MoveToFront(loaded.texturePosition.buffer);
-			size += loaded.texturePosition.size;
-			loaded.texturePosition.source = turbulent.surface;
-			buffers.SetupTurbulentTexturePosition(loaded.texturePosition);
-			texturePositionsPerKey.insert({ turbulent.surface, loaded.texturePosition.buffer });
+			loaded.texturePositions.size = 16 * sizeof(float);
+			if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
+			{
+				loaded.texturePositions.buffer = new SharedMemoryBuffer { };
+				loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.texturePositions.buffer);
+				latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+				usedInLatestSharedMemoryTexturePositionBuffer = 0;
+			}
+			else
+			{
+				loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+				loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
+			}
+			usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
+			size += loaded.texturePositions.size;
+			loaded.texturePositions.source = turbulent.surface;
+			buffers.SetupTurbulentTexturePosition(loaded.texturePositions);
+			SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
+			texturePositionsPerKey.insert({ turbulent.surface, newEntry });
 		}
 		else
 		{
-			loaded.texturePosition.size = 0;
-			loaded.texturePosition.buffer = entry->second;
+			loaded.texturePositions.size = 0;
+			loaded.texturePositions.buffer = entry->second.buffer;
+			loaded.texturePositions.offset = entry->second.offset;
 		}
 		previousSurface = turbulent.surface;
-		previousTexturePosition = loaded.texturePosition.buffer;
+		previousTexturePosition = loaded.texturePositions.buffer;
+		previousTexturePositionOffset = loaded.texturePositions.offset;
 	}
 	else
 	{
-		loaded.texturePosition.size = 0;
-		loaded.texturePosition.buffer = previousTexturePosition;
+		loaded.texturePositions.size = 0;
+		loaded.texturePositions.buffer = previousTexturePosition;
+		loaded.texturePositions.offset = previousTexturePositionOffset;
 	}
 	if (previousTexture != turbulent.texture)
 	{
@@ -1667,27 +1643,42 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& 
 		auto entry = texturePositionsPerKey.find(turbulent.surface);
 		if (entry == texturePositionsPerKey.end())
 		{
-			loaded.texturePosition.size = 16 * sizeof(float);
-			loaded.texturePosition.buffer = new SharedMemoryBuffer { };
-			loaded.texturePosition.buffer->CreateVertexBuffer(appState, loaded.texturePosition.size);
-			buffers.MoveToFront(loaded.texturePosition.buffer);
-			size += loaded.texturePosition.size;
-			loaded.texturePosition.source = turbulent.surface;
-			buffers.SetupTurbulentTexturePosition(loaded.texturePosition);
-			texturePositionsPerKey.insert({ turbulent.surface, loaded.texturePosition.buffer });
+			loaded.texturePositions.size = 16 * sizeof(float);
+			if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
+			{
+				loaded.texturePositions.buffer = new SharedMemoryBuffer { };
+				loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.texturePositions.buffer);
+				latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+				usedInLatestSharedMemoryTexturePositionBuffer = 0;
+			}
+			else
+			{
+				loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+				loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
+			}
+			usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
+			size += loaded.texturePositions.size;
+			loaded.texturePositions.source = turbulent.surface;
+			buffers.SetupTurbulentTexturePosition(loaded.texturePositions);
+			SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
+			texturePositionsPerKey.insert({ turbulent.surface, newEntry });
 		}
 		else
 		{
-			loaded.texturePosition.size = 0;
-			loaded.texturePosition.buffer = entry->second;
+			loaded.texturePositions.size = 0;
+			loaded.texturePositions.buffer = entry->second.buffer;
+			loaded.texturePositions.offset = entry->second.offset;
 		}
 		previousSurface = turbulent.surface;
-		previousTexturePosition = loaded.texturePosition.buffer;
+		previousTexturePosition = loaded.texturePositions.buffer;
+		previousTexturePositionOffset = loaded.texturePositions.offset;
 	}
 	else
 	{
-		loaded.texturePosition.size = 0;
-		loaded.texturePosition.buffer = previousTexturePosition;
+		loaded.texturePositions.size = 0;
+		loaded.texturePositions.buffer = previousTexturePosition;
+		loaded.texturePositions.offset = previousTexturePositionOffset;
 	}
 	if (previousTexture != turbulent.texture)
 	{
@@ -1744,6 +1735,8 @@ void Scene::Reset()
 	usedInLatestSharedMemoryIndexBuffer32 = 0;
 	latestSharedMemoryIndexBuffer16 = nullptr;
 	usedInLatestSharedMemoryIndexBuffer16 = 0;
+	latestSharedMemoryTexturePositionBuffer = nullptr;
+	usedInLatestSharedMemoryTexturePositionBuffer = 0;
 	latestBufferSharedMemory = nullptr;
 	usedInLatestBufferSharedMemory = 0;
 	Skybox::MoveToPrevious(*this);

@@ -6,13 +6,13 @@
 
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
-	layout(offset = 0) mat4 ViewMatrix[2];
-	layout(offset = 128) mat4 ProjectionMatrix[2];
+	layout(offset = 0) mat4 viewMatrix[2];
+	layout(offset = 128) mat4 projectionMatrix[2];
+	layout(offset = 256) mat4 vertexTransform;
 };
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
-layout(location = 2) in mat4 vertexTransform;
 layout(location = 0) out mediump vec2 fragmentTexCoords;
 
 out gl_PerVertex
@@ -22,6 +22,6 @@ out gl_PerVertex
 
 void main(void)
 {
-	gl_Position = ProjectionMatrix[gl_ViewID_OVR] * (ViewMatrix[gl_ViewID_OVR] * (vertexTransform * vec4(vertexPosition, 1)));
+	gl_Position = projectionMatrix[gl_ViewID_OVR] * (viewMatrix[gl_ViewID_OVR] * (vertexTransform * vec4(vertexPosition, 1)));
 	fragmentTexCoords = vertexTexCoords;
 }

@@ -3,6 +3,7 @@
 #include "LoadedSharedMemoryBuffer.h"
 #include "LoadedSharedMemoryIndexBuffer.h"
 #include "LoadedSharedMemoryAliasIndexBuffer.h"
+#include "LoadedSharedMemoryTexturePositionBuffer.h"
 #include "LoadedSharedMemoryTexCoordsBuffer.h"
 
 struct CachedSharedMemoryBuffers
@@ -19,10 +20,10 @@ struct CachedSharedMemoryBuffers
 	LoadedSharedMemoryAliasIndexBuffer* currentAliasIndices16;
 	LoadedSharedMemoryAliasIndexBuffer* firstAliasIndices32;
 	LoadedSharedMemoryAliasIndexBuffer* currentAliasIndices32;
-	LoadedSharedMemoryBuffer* firstSurfaceTexturePosition;
-	LoadedSharedMemoryBuffer* currentSurfaceTexturePosition;
-	LoadedSharedMemoryBuffer* firstTurbulentTexturePosition;
-	LoadedSharedMemoryBuffer* currentTurbulentTexturePosition;
+	LoadedSharedMemoryTexturePositionBuffer* firstSurfaceTexturePosition;
+	LoadedSharedMemoryTexturePositionBuffer* currentSurfaceTexturePosition;
+	LoadedSharedMemoryTexturePositionBuffer* firstTurbulentTexturePosition;
+	LoadedSharedMemoryTexturePositionBuffer* currentTurbulentTexturePosition;
 	LoadedSharedMemoryBuffer* firstAliasVertices;
 	LoadedSharedMemoryBuffer* currentAliasVertices;
 	LoadedSharedMemoryTexCoordsBuffer* firstAliasTexCoords;
@@ -34,8 +35,8 @@ struct CachedSharedMemoryBuffers
 	void SetupIndices32(LoadedSharedMemoryIndexBuffer& loaded);
 	void SetupAliasIndices16(LoadedSharedMemoryAliasIndexBuffer& loaded);
 	void SetupAliasIndices32(LoadedSharedMemoryAliasIndexBuffer& loaded);
-	void SetupSurfaceTexturePosition(LoadedSharedMemoryBuffer& loaded);
-	void SetupTurbulentTexturePosition(LoadedSharedMemoryBuffer& loaded);
+	void SetupSurfaceTexturePosition(LoadedSharedMemoryTexturePositionBuffer& loaded);
+	void SetupTurbulentTexturePosition(LoadedSharedMemoryTexturePositionBuffer& loaded);
 	void SetupAliasVertices(LoadedSharedMemoryBuffer& loaded);
 	void SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer& loaded);
 	void DisposeFront();

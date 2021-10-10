@@ -2569,6 +2569,7 @@ void android_main(struct android_app* app)
 				perImage.cachedIndices16.Delete(appState);
 				perImage.cachedAttributes.Delete(appState);
 				perImage.cachedVertices.Delete(appState);
+				perImage.matrices.Delete(appState);
 			}
 	
 			if (appState.RenderPass != VK_NULL_HANDLE)
@@ -2612,7 +2613,6 @@ void android_main(struct android_app* app)
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndTwoImagesLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndImageLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
-			appState.Scene.matrices.Delete(appState);
 
 			vkDestroyCommandPool(appState.Device, appState.CommandPool, nullptr);
 		}

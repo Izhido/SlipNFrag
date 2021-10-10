@@ -9,8 +9,8 @@ precision highp int;
 
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
-	layout(offset = 0) mat4 ViewMatrix[2];
-	layout(offset = 128) mat4 ProjectionMatrix[2];
+	layout(offset = 0) mat4 viewMatrix[2];
+	layout(offset = 128) mat4 projectionMatrix[2];
 };
 
 layout(location = 0) in vec3 vertexPosition;
@@ -24,6 +24,6 @@ out gl_PerVertex
 
 void main(void)
 {
-	gl_Position = ProjectionMatrix[gl_ViewID_OVR] * vec4(vertexPosition, 1);
+	gl_Position = projectionMatrix[gl_ViewID_OVR] * vec4(vertexPosition, 1);
 	fragmentTexCoords = vertexTexCoords;
 }

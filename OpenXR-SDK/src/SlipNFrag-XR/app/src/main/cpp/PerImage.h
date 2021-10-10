@@ -28,6 +28,7 @@ struct PerImage
 	Texture* palette;
 	Texture* host_colormap;
 	int hostClearCount;
+	Buffer matrices;
 	Buffer* vertices;
 	Buffer* attributes;
 	Buffer* indices16;
@@ -47,7 +48,6 @@ struct PerImage
 	VkDeviceSize controllerVertexBase;
 	VkDeviceSize texturedAttributeBase;
 	VkDeviceSize colormappedAttributeBase;
-	VkDeviceSize vertexTransformBase;
 	VkDeviceSize controllerAttributeBase;
 	VkDeviceSize coloredIndex16Base;
 	VkDeviceSize controllerIndex16Base;
@@ -61,6 +61,7 @@ struct PerImage
 	void FillColormapTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryAliasIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
+	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryTexturePositionBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	static void SetPushConstants(const LoadedSurface& loaded, float pushConstants[]);

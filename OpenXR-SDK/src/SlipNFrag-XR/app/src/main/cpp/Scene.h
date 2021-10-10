@@ -41,11 +41,10 @@ struct Scene
 	Pipeline colored;
 	Pipeline sky;
 	Pipeline floor;
-	Buffer matrices;
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
-	std::unordered_map<void*, SharedMemoryBuffer*> texturePositionsPerKey;
+	std::unordered_map<void*, SharedMemoryBufferWithOffset> texturePositionsPerKey;
 	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
 	std::unordered_map<TwinKey, SharedMemoryBufferWithOffset> indicesPerKey;
 	std::unordered_map<void*, SharedMemoryBufferWithOffset> aliasIndicesPerKey;
@@ -101,6 +100,8 @@ struct Scene
 	VkSampler lightmapSampler;
 	SharedMemory* latestBufferSharedMemory;
 	VkDeviceSize usedInLatestBufferSharedMemory;
+	SharedMemoryBuffer* latestSharedMemoryTexturePositionBuffer;
+	VkDeviceSize usedInLatestSharedMemoryTexturePositionBuffer;
 	SharedMemoryBuffer* latestSharedMemoryIndexBuffer16;
 	VkDeviceSize usedInLatestSharedMemoryIndexBuffer16;
 	SharedMemoryBuffer* latestSharedMemoryIndexBuffer32;
@@ -118,7 +119,6 @@ struct Scene
 	VkDeviceSize floorAttributesSize;
 	VkDeviceSize texturedAttributesSize;
 	VkDeviceSize colormappedLightsSize;
-	VkDeviceSize vertexTransformSize;
 	VkDeviceSize controllerAttributesSize;
 	VkDeviceSize attributesSize;
 	VkDeviceSize floorIndicesSize;
@@ -137,6 +137,7 @@ struct Scene
 	void* previousApverts;
 	SharedMemoryBuffer* previousVertexBuffer;
 	SharedMemoryBuffer* previousTexturePosition;
+	VkDeviceSize previousTexturePositionOffset;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	SharedMemoryTexture* previousSharedMemoryTexture;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;

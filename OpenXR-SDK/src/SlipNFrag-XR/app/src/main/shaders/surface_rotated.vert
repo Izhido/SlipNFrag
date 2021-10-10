@@ -9,8 +9,9 @@ precision mediump int;
 
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
-	layout(offset = 0) mat4 ViewMatrix[2];
-	layout(offset = 128) mat4 ProjectionMatrix[2];
+	layout(offset = 0) mat4 viewMatrix[2];
+	layout(offset = 128) mat4 projectionMatrix[2];
+	layout(offset = 256) mat4 vertexTransform;
 };
 
 layout(push_constant) uniform Transforms
@@ -27,8 +28,7 @@ layout(push_constant) uniform Transforms
 };
 
 layout(location = 0) in vec3 vertexPosition;
-layout(location = 1) in mat4 vertexTransform;
-layout(location = 5) in mat4 texturePosition;
+layout(location = 1) in mat4 texturePosition;
 layout(location = 0) out vec3 fragmentLightmapCoords;
 layout(location = 1) out vec2 fragmentTexCoords;
 
@@ -46,7 +46,7 @@ void main(void)
 	mat4 yawRotation = mat4(cosine.x, 0, sine.x, 0, 0, 1, 0, 0, -sine.x, 0, cosine.x, 0, 0, 0, 0, 1);
 	mat4 pitchRotation = mat4(cosine.y, -sine.y, 0, 0, sine.y, cosine.y, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 	mat4 rollRotation = mat4(1, 0, 0, 0, 0, cosine.z, -sine.z, 0, 0, sine.z, cosine.z, 0, 0, 0, 0, 1);
-	gl_Position = ProjectionMatrix[gl_ViewID_OVR] * ViewMatrix[gl_ViewID_OVR] * vertexTransform * translation * rollRotation * pitchRotation * yawRotation * position;
+	gl_Position = projectionMatrix[gl_ViewID_OVR] * viewMatrix[gl_ViewID_OVR] * vertexTransform * translation * rollRotation * pitchRotation * yawRotation * position;
 	vec4 position4 = vec4(vertexPosition, 1);
 	vec2 texCoords = vec2(dot(position4, texturePosition[0]), dot(position4, texturePosition[1]));
 	vec2 lightmapSize = vec2((int(texturePosition[2].z) >> 4) + 1, (int(texturePosition[2].w) >> 4) + 1);
