@@ -3,7 +3,7 @@
   <Identity
     Name="4741HeribertoDelgado.SlipFrag"
     Publisher="CN=Heriberto Delgado"
-    Version="1.0.6.0" />
+    Version="1.0.10.0" />
   <mp:PhoneIdentity PhoneProductId="815943e4-ddf2-4f55-a25a-df093834bc52" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
   <Properties>
     <DisplayName>Slip &amp; Frag</DisplayName>
