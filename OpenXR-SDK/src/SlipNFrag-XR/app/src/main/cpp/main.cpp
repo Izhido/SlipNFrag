@@ -1775,15 +1775,14 @@ void android_main(struct android_app* app)
 						appState.ViewmodelForwardY = appState.EngineForwardZ / appState.Scale;
 						appState.ViewmodelForwardZ = -appState.EngineForwardY / appState.Scale;
 
-						if (appState.FOV == 0)
+						auto minHorizontal = FLT_MAX;
+						auto maxHorizontal = FLT_MIN;
+						for (size_t i = 0; i < viewCountOutput; i++)
 						{
-							for (size_t i = 0; i < viewCountOutput; i++)
-							{
-								auto fov = (views[i].fov.angleRight - views[i].fov.angleLeft) * 180 / M_PI;
-								appState.FOV += fov;
-							}
-							appState.FOV /= viewCountOutput;
+							minHorizontal = std::min(minHorizontal, views[i].fov.angleLeft);
+							maxHorizontal = std::max(maxHorizontal, views[i].fov.angleRight);
 						}
+						appState.FOV = (maxHorizontal - minHorizontal) * 180 / M_PI;
 					}
 					
 					projectionLayerViews.resize(viewCountOutput);
