@@ -873,7 +873,6 @@ void R_EdgeDrawing (void)
 	R_SurfacePatch ();
 		
 	r_fences =  r_fencestack[r_edgesurfstackindex].data();
-	r_fence_max = &r_fences[r_surfssize];
 
 	r_increaseledges = false;
 	r_increaselsurfs = false;

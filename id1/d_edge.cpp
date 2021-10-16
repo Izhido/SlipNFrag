@@ -454,7 +454,7 @@ void D_DrawSurfacesToLists (void)
 	{
 		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
-			if (!s->spans || s->flags & SURF_DRAWSKYBOX)
+			if (!s->draw || s->flags & SURF_DRAWSKYBOX)
 				continue;
 
 			auto data_ptr = (size_t)s->data;
@@ -472,7 +472,7 @@ void D_DrawSurfacesToLists (void)
 	{
 		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
-			if (!s->spans)
+			if (!s->draw)
 				continue;
 
 			r_drawnpolycount++;
@@ -486,7 +486,7 @@ void D_DrawSurfacesToLists (void)
 						R_MakeSky ();
 					}
 
-					D_AddSkyToLists(s);
+					D_AddSkyToLists();
 				}
 			}
 			else if (s->flags & SURF_DRAWSKYBOX)
@@ -608,7 +608,7 @@ void D_DrawSurfacesToListsIfNeeded (void)
 
 			r_drawnsurfaces.insert(s);
 
-			if (!s->spans || s->flags & SURF_DRAWSKYBOX)
+			if (!s->draw || s->flags & SURF_DRAWSKYBOX)
 				continue;
 
 			auto data_ptr = (size_t)s->data;
@@ -626,13 +626,13 @@ void D_DrawSurfacesToListsIfNeeded (void)
 	{
 		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
+			if (!s->draw)
+				continue;
+
 			if (r_drawnsurfaces.find(s) != r_drawnsurfaces.end())
 				continue;
 
 			r_drawnsurfaces.insert(s);
-
-			if (!s->spans)
-				continue;
 
 			r_drawnpolycount++;
 
@@ -645,7 +645,7 @@ void D_DrawSurfacesToListsIfNeeded (void)
 						R_MakeSky ();
 					}
 
-					D_AddSkyToLists(s);
+					D_AddSkyToLists();
 				}
 			}
 			else if (s->flags & SURF_DRAWSKYBOX)

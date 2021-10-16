@@ -195,6 +195,6 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddParticleToLists (particle_t* part);
-void D_AddSkyToLists (surf_t* surf);
+void D_AddSkyToLists ();
 void D_AddSkyboxToLists (mtexinfo_t* textures);
 void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color);
