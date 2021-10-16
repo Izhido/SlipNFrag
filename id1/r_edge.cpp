@@ -198,6 +198,7 @@ R_StepActiveU
 void R_StepActiveU (edge_t *pedge)
 {
 	edge_t		*pnext_edge, *pwedge;
+	edge_t		*plastset = pedge;
 
 	while (1)
 	{
@@ -236,7 +237,10 @@ pushback:
 		pedge->prev->next = pedge->next;
 
 	// find out where the edge goes in the edge list
-		pwedge = pedge->prev->prev;
+		if (plastset->u > pedge->u)
+			pwedge = plastset;
+		else
+			pwedge = pedge->prev->prev;
 
 		while (pwedge->u > pedge->u)
 		{
@@ -248,6 +252,8 @@ pushback:
 		pedge->prev = pwedge;
 		pedge->next->prev = pedge;
 		pwedge->next = pedge;
+
+		plastset = pedge;
 
 		pedge = pnext_edge;
 		if (pedge == r_edge_tail)
