@@ -88,7 +88,7 @@ void SV_InitBoxHull (void)
 			box_clipnodes[i].children[side^1] = CONTENTS_SOLID;
 		
 		box_planes[i].type = i>>1;
-		box_planes[i].normal[i>>1] = 1;
+		box_planes[i].normal_dist[i>>1] = 1;
 	}
 	
 }
@@ -104,12 +104,12 @@ BSP trees instead of being compared directly.
 */
 hull_t	*SV_HullForBox (const vec3_t mins, const vec3_t maxs)
 {
-	box_planes[0].dist = maxs[0];
-	box_planes[1].dist = mins[0];
-	box_planes[2].dist = maxs[1];
-	box_planes[3].dist = mins[1];
-	box_planes[4].dist = maxs[2];
-	box_planes[5].dist = mins[2];
+	box_planes[0].normal_dist[3] = maxs[0];
+	box_planes[1].normal_dist[3] = mins[0];
+	box_planes[2].normal_dist[3] = maxs[1];
+	box_planes[3].normal_dist[3] = mins[1];
+	box_planes[4].normal_dist[3] = maxs[2];
+	box_planes[5].normal_dist[3] = mins[2];
 
 	return &box_hull;
 }
@@ -497,9 +497,9 @@ int SV_HullPointContents (hull_t *hull, int num, const vec3_t p)
 		plane = hull->planes + node->planenum;
 		
 		if (plane->type < 3)
-			d = p[plane->type] - plane->dist;
+			d = p[plane->type] - plane->normal_dist[3];
 		else
-			d = DotProduct (plane->normal, p) - plane->dist;
+			d = DotProduct (plane->normal_dist, p) - plane->normal_dist[3];
 		if (d < 0)
 			num = node->children[1];
 		else
@@ -610,13 +610,13 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 
 	if (plane->type < 3)
 	{
-		t1 = p1[plane->type] - plane->dist;
-		t2 = p2[plane->type] - plane->dist;
+		t1 = p1[plane->type] - plane->normal_dist[3];
+		t2 = p2[plane->type] - plane->normal_dist[3];
 	}
 	else
 	{
-		t1 = DotProduct (plane->normal, p1) - plane->dist;
-		t2 = DotProduct (plane->normal, p2) - plane->dist;
+		t1 = DotProduct (plane->normal_dist, p1) - plane->normal_dist[3];
+		t2 = DotProduct (plane->normal_dist, p2) - plane->normal_dist[3];
 	}
 	
 #if 1
@@ -673,13 +673,12 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 //==================
 	if (!side)
 	{
-		VectorCopy (plane->normal, trace->plane.normal);
-		trace->plane.dist = plane->dist;
+		VectorCopy4 (plane->normal_dist, trace->plane);
 	}
 	else
 	{
-		VectorSubtract (vec3_origin, plane->normal, trace->plane.normal);
-		trace->plane.dist = -plane->dist;
+		VectorSubtract (vec3_origin, plane->normal_dist, trace->plane);
+		trace->plane[3] = -plane->normal_dist[3];
 	}
 
 	while (SV_HullPointContents (hull, hull->firstclipnode, mid)

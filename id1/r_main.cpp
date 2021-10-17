@@ -396,32 +396,32 @@ void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect)
 	yscaleshrink = xscaleshrink*pixelAspect;
 
 // left side clip
-	screenedge[0].normal[0] = -1.0 / (xOrigin*r_refdef.horizontalFieldOfView);
-	screenedge[0].normal[1] = 0;
-	screenedge[0].normal[2] = 1;
+	screenedge[0].normal_dist[0] = -1.0 / (xOrigin*r_refdef.horizontalFieldOfView);
+	screenedge[0].normal_dist[1] = 0;
+	screenedge[0].normal_dist[2] = 1;
 	screenedge[0].type = PLANE_ANYZ;
 	
 // right side clip
-	screenedge[1].normal[0] =
+	screenedge[1].normal_dist[0] =
 			1.0 / ((1.0-xOrigin)*r_refdef.horizontalFieldOfView);
-	screenedge[1].normal[1] = 0;
-	screenedge[1].normal[2] = 1;
+	screenedge[1].normal_dist[1] = 0;
+	screenedge[1].normal_dist[2] = 1;
 	screenedge[1].type = PLANE_ANYZ;
 	
 // top side clip
-	screenedge[2].normal[0] = 0;
-	screenedge[2].normal[1] = -1.0 / (yOrigin*verticalFieldOfView);
-	screenedge[2].normal[2] = 1;
+	screenedge[2].normal_dist[0] = 0;
+	screenedge[2].normal_dist[1] = -1.0 / (yOrigin*verticalFieldOfView);
+	screenedge[2].normal_dist[2] = 1;
 	screenedge[2].type = PLANE_ANYZ;
 	
 // bottom side clip
-	screenedge[3].normal[0] = 0;
-	screenedge[3].normal[1] = 1.0 / ((1.0-yOrigin)*verticalFieldOfView);
-	screenedge[3].normal[2] = 1;	
+	screenedge[3].normal_dist[0] = 0;
+	screenedge[3].normal_dist[1] = 1.0 / ((1.0-yOrigin)*verticalFieldOfView);
+	screenedge[3].normal_dist[2] = 1;
 	screenedge[3].type = PLANE_ANYZ;
 	
 	for (i=0 ; i<4 ; i++)
-		VectorNormalize (screenedge[i].normal);
+		VectorNormalize (screenedge[i].normal_dist);
 
 	res_scale = sqrt ((double)(r_refdef.vrect.width * r_refdef.vrect.height) /
 			          (320.0 * 152.0)) *

@@ -578,9 +578,9 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 
 	pplane = fa->plane;
 // FIXME: cache this?
-	TransformVector (pplane->normal, p_normal);
+	TransformVector (pplane->normal_dist, p_normal);
 // FIXME: cache this?
-	distinv = 1.0 / (pplane->dist - DotProduct (modelorg, pplane->normal));
+	distinv = 1.0 / (pplane->normal_dist[3] - DotProduct (modelorg, pplane->normal_dist));
 
 	surface_p->d_zistepu = p_normal[0] * xscaleinv * distinv;
 	surface_p->d_zistepv = -p_normal[1] * yscaleinv * distinv;
@@ -704,9 +704,9 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 
 	pplane = psurf->plane;
 // FIXME: cache this?
-	TransformVector (pplane->normal, p_normal);
+	TransformVector (pplane->normal_dist, p_normal);
 // FIXME: cache this?
-	distinv = 1.0 / (pplane->dist - DotProduct (modelorg, pplane->normal));
+	distinv = 1.0 / (pplane->normal_dist[3] - DotProduct (modelorg, pplane->normal_dist));
 
 	surface_p->d_zistepu = p_normal[0] * xscaleinv * distinv;
 	surface_p->d_zistepv = -p_normal[1] * yscaleinv * distinv;

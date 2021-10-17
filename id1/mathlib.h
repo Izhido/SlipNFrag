@@ -45,6 +45,7 @@ extern	int nanmask;
 #define VectorSubtract(a,b,c) {c[0]=a[0]-b[0];c[1]=a[1]-b[1];c[2]=a[2]-b[2];}
 #define VectorAdd(a,b,c) {c[0]=a[0]+b[0];c[1]=a[1]+b[1];c[2]=a[2]+b[2];}
 #define VectorCopy(a,b) {b[0]=a[0];b[1]=a[1];b[2]=a[2];}
+#define VectorCopy4(a,b) {b[0]=a[0];b[1]=a[1];b[2]=a[2];b[3]=a[3];}
 
 void VectorMA (const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc);
 
@@ -78,11 +79,11 @@ float	anglemod(float a);
 #define BOX_ON_PLANE_SIDE(emins, emaxs, p)	\
 	(((p)->type < 3)?						\
 	(										\
-		((p)->dist <= (emins)[(p)->type])?	\
+		((p)->normal_dist[3] <= (emins)[(p)->type])?	\
 			1								\
 		:									\
 		(									\
-			((p)->dist >= (emaxs)[(p)->type])?\
+			((p)->normal_dist[3] >= (emaxs)[(p)->type])?\
 				2							\
 			:								\
 				3							\

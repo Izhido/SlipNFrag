@@ -121,7 +121,8 @@ mleaf_t *Mod_PointInLeaf (const vec3_t p, model_t *model)
 	mnode_t		*node;
 	float		d;
 	mplane_t	*plane;
-	
+	vec4_t		p4 { p[0], p[1], p[2], -1 };
+
 	if (!model || !model->nodes)
 		Sys_Error ("Mod_PointInLeaf: bad model");
 
@@ -131,7 +132,7 @@ mleaf_t *Mod_PointInLeaf (const vec3_t p, model_t *model)
 		if (node->contents < 0)
 			return (mleaf_t *)node;
 		plane = node->plane;
-		d = DotProduct (p,plane->normal) - plane->dist;
+		d = DotProduct4 (p4,plane->normal_dist);
 		if (d > 0)
 			node = node->children[0];
 		else
@@ -1681,12 +1682,12 @@ void Mod_LoadPlanes (lump_t *l)
 		bits = 0;
 		for (j=0 ; j<3 ; j++)
 		{
-			out->normal[j] = LittleFloat (in->normal[j]);
-			if (out->normal[j] < 0)
+			out->normal_dist[j] = LittleFloat (in->normal[j]);
+			if (out->normal_dist[j] < 0)
 				bits |= 1<<j;
 		}
 
-		out->dist = LittleFloat (in->dist);
+		out->normal_dist[3] = LittleFloat (in->dist);
 		out->type = LittleLong (in->type);
 		out->signbits = bits;
 	}

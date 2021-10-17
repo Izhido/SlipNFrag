@@ -278,7 +278,7 @@ void R_PrintAliasStats (void);
 void R_PrintTimes (void);
 void R_PrintDSpeeds (void);
 void R_AnimateLight (void);
-int R_LightPoint (vec3_t p);
+int R_LightPoint (const vec3_t p);
 void R_SetupFrame (void);
 void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1);
 void R_ClipEdge (const mvertex_t *pv0, const mvertex_t *pv1, clipplane_t *clip);

@@ -454,8 +454,7 @@ void SV_AddToFatPVS (vec3_t org, mnode_t *node)
 		}
 	
 		plane = node->plane;
-		float* normal_dist = &plane->normal[0];
-		d = DotProduct4 (org4, normal_dist);
+		d = DotProduct4 (org4, plane->normal_dist);
 		if (d > 8)
 			node = node->children[0];
 		else if (d < -8)

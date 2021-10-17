@@ -85,8 +85,8 @@ void R_AddDynamicLights (void)
 			continue;		// not lit by this light
 
 		rad = cl_dlights[lnum].radius;
-		dist = DotProduct (cl_dlights[lnum].origin, surf->plane->normal) -
-				surf->plane->dist;
+		dist = DotProduct (cl_dlights[lnum].origin, surf->plane->normal_dist) -
+				surf->plane->normal_dist[3];
 		rad -= fabs(dist);
 		minlight = cl_dlights[lnum].minlight;
 		if (rad < minlight)
@@ -96,7 +96,7 @@ void R_AddDynamicLights (void)
 		for (i=0 ; i<3 ; i++)
 		{
 			impact[i] = cl_dlights[lnum].origin[i] -
-					surf->plane->normal[i]*dist;
+					surf->plane->normal_dist[i]*dist;
 		}
 
 		local[0] = DotProduct (impact, tex->vecs[0]) + tex->vecs[0][3];

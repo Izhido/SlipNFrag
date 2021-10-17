@@ -166,8 +166,8 @@ void R_InitSkyBox (void)
 
 	for (i=0 ; i<6 ; i++)
 	{
-		r_skyplanes[i].normal[skybox_planes[i*2]] = 1;
-		r_skyplanes[i].dist = skybox_planes[i*2+1];
+		r_skyplanes[i].normal_dist[skybox_planes[i*2]] = 1;
+		r_skyplanes[i].normal_dist[3] = skybox_planes[i*2+1];
 
 		VectorCopy (box_vecs[i][0], r_skytexinfo[i].vecs[0]);
 		VectorCopy (box_vecs[i][1], r_skytexinfo[i].vecs[1]);
@@ -817,9 +817,9 @@ void R_EmitSkyBox (void)
 	for (i=0 ; i<6 ; i++)
         if (r_skyfaces[i].texinfo->texture != nullptr)
             if (skybox_planes[i*2+1] > 0)
-                r_skyplanes[i].dist = r_origin[skybox_planes[i*2]]+r_skyfaces[i].texinfo->texture->width / 2;
+                r_skyplanes[i].normal_dist[3] = r_origin[skybox_planes[i*2]]+r_skyfaces[i].texinfo->texture->width / 2;
             else
-                r_skyplanes[i].dist = r_origin[skybox_planes[i*2]]-r_skyfaces[i].texinfo->texture->height / 2;
+                r_skyplanes[i].normal_dist[3] = r_origin[skybox_planes[i*2]]-r_skyfaces[i].texinfo->texture->height / 2;
 
 	// fix texture offseets
 	for (i=0 ; i<6 ; i++)

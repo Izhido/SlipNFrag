@@ -277,9 +277,9 @@ void R_TransformFrustum (void)
 	
 	for (i=0 ; i<4 ; i++)
 	{
-		v[0] = screenedge[i].normal[2];
-		v[1] = -screenedge[i].normal[0];
-		v[2] = screenedge[i].normal[1];
+		v[0] = screenedge[i].normal_dist[2];
+		v[1] = -screenedge[i].normal_dist[0];
+		v[2] = screenedge[i].normal_dist[1];
 
 		v2[0] = v[1]*vright[0] + v[2]*vup[0] + v[0]*vpn[0];
 		v2[1] = v[1]*vright[1] + v[2]*vup[1] + v[0]*vpn[1];
