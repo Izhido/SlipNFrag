@@ -742,7 +742,7 @@ void D_AddParticleToLists (particle_t* part)
 	}
 }
 
-void D_AddSkyToLists ()
+void D_AddSkyToLists (qboolean full_area)
 {
 	if (d_lists.last_sky >= 0)
 	{
@@ -754,16 +754,26 @@ void D_AddSkyToLists ()
 		d_lists.sky.emplace_back();
 	}
 	auto& sky = d_lists.sky[d_lists.last_sky];
-	auto left = r_skyleft;
-    auto right = r_skyright;
-    auto top = r_skytop;
-    auto bottom = r_skybottom;
-    int extra_horizontal = vid.width / 10;
-    int extra_vertical = vid.height / 10;
-	sky.left = (float)(left - extra_horizontal) / (float)vid.width;
-	sky.right = (float)(right + extra_horizontal) / (float)vid.width;
-	sky.top = (float)(top - extra_vertical) / (float)vid.height;
-	sky.bottom = (float)(bottom + extra_vertical) / (float)vid.height;
+	if (full_area)
+	{
+		sky.left = -0.1;
+		sky.right = 1.1;
+		sky.top = -0.1;
+		sky.bottom = 1.1;
+	}
+	else
+	{
+		auto left = r_skyleft;
+		auto right = r_skyright;
+		auto top = r_skytop;
+		auto bottom = r_skybottom;
+		int extra_horizontal = vid.width / 10;
+		int extra_vertical = vid.height / 10;
+		sky.left = (float)(left - extra_horizontal) / (float)vid.width;
+		sky.right = (float)(right + extra_horizontal) / (float)vid.width;
+		sky.top = (float)(top - extra_vertical) / (float)vid.height;
+		sky.bottom = (float)(bottom + extra_vertical) / (float)vid.height;
+	}
 	sky.first_vertex = (d_lists.last_textured_vertex + 1) / 3;
 	sky.count = 4;
 	auto new_size = d_lists.last_textured_vertex + 1 + 3 * 4;

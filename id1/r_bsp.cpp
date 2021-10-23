@@ -54,6 +54,8 @@ static qboolean		makeclippededge;
 
 vec4_t				r_modelorg4;
 
+extern qboolean		d_uselists;
+
 
 //===========================================================================
 
@@ -466,6 +468,188 @@ void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags)
 
 /*
 ================
+R_RenderOneFace
+================
+*/
+void R_RenderOneFace (msurface_t* surf)
+{
+	D_DrawOneSurface (surf);
+}
+
+
+/*
+================
+R_RenderAllWorldNodes
+================
+*/
+void R_RenderAllWorldNodes (model_t *world)
+{
+	for (auto j=1 ; j<=world->numleafs ; j++)
+	{
+		auto& leaf = world->leafs[j];
+
+		if (leaf.contents == CONTENTS_SOLID)
+			continue;		// solid
+
+		if (leaf.visframe != r_visframecount)
+			continue;
+
+// cull the clipping planes if not trivial accept
+// FIXME: the compiler is doing a lousy job of optimizing here; it could be
+//  twice as fast in ASM
+		auto discarded = false;
+		for (auto i=0 ; i<4 ; i++)
+		{
+		// generate reject points
+		// FIXME: do with fast look-ups or integer tests based on the sign bit
+		// of the floating point values
+
+			auto pindex = pfrustum_indexes[i];
+
+			vec3_t rejectpt;
+			rejectpt[0] = (float)leaf.minmaxs[pindex[0]];
+			rejectpt[1] = (float)leaf.minmaxs[pindex[1]];
+			rejectpt[2] = (float)leaf.minmaxs[pindex[2]];
+			
+			auto d = DotProduct (rejectpt, view_clipplanes[i].normal);
+			d -= view_clipplanes[i].dist;
+
+			if (d <= 0)
+			{
+				discarded = true;
+				break;
+			}
+		}
+		if (discarded)
+			continue;
+
+// if a leaf node, draw stuff
+		auto mark = leaf.firstmarksurface;
+		auto c = leaf.nummarksurfaces;
+
+		if (c)
+		{
+			do
+			{
+				(*mark)->visframe = r_framecount;
+				mark++;
+			} while (--c);
+		}
+
+	// deal with model fragments in this leaf
+		if (leaf.efrags)
+		{
+			R_StoreEfrags (&leaf.efrags);
+		}
+
+		leaf.key = r_currentkey;
+		r_currentkey++;		// all bmodels in a leaf share the same key
+	}
+
+	for (auto j=0 ; j<world->numnodes ; j++)
+	{
+		auto& node = world->nodes[j];
+
+		if (node.contents == CONTENTS_SOLID)
+			continue;		// solid
+
+		if (node.visframe != r_visframecount)
+			continue;
+
+// cull the clipping planes if not trivial accept
+// FIXME: the compiler is doing a lousy job of optimizing here; it could be
+//  twice as fast in ASM
+		auto discarded = false;
+		for (auto i=0 ; i<4 ; i++)
+		{
+			// generate reject points
+			// FIXME: do with fast look-ups or integer tests based on the sign bit
+			// of the floating point values
+
+			auto pindex = pfrustum_indexes[i];
+
+			vec3_t rejectpt;
+			rejectpt[0] = (float)node.minmaxs[pindex[0]];
+			rejectpt[1] = (float)node.minmaxs[pindex[1]];
+			rejectpt[2] = (float)node.minmaxs[pindex[2]];
+
+			auto d = DotProduct (rejectpt, view_clipplanes[i].normal);
+			d -= view_clipplanes[i].dist;
+
+			if (d <= 0)
+			{
+				discarded = true;
+				break;
+			}
+		}
+		if (discarded)
+			continue;
+
+	// node is just a decision point, so go down the apropriate sides
+
+	// find which side of the node we are on
+		auto plane = node.plane;
+
+		float dot;
+		switch (plane->type)
+		{
+		case PLANE_X:
+			dot = modelorg[0] - plane->normal_dist[3];
+			break;
+		case PLANE_Y:
+			dot = modelorg[1] - plane->normal_dist[3];
+			break;
+		case PLANE_Z:
+			dot = modelorg[2] - plane->normal_dist[3];
+			break;
+		default:
+			dot = DotProduct4 (r_modelorg4, plane->normal_dist);
+			break;
+		}
+	
+	// draw stuff
+		auto c = node.numsurfaces;
+
+		if (c)
+		{
+			auto surf = cl.worldmodel->surfaces + node.firstsurface;
+
+			if (dot < -BACKFACE_EPSILON)
+			{
+				do
+				{
+					if ((surf->flags & SURF_PLANEBACK) &&
+						(surf->visframe == r_framecount))
+					{
+							R_RenderOneFace (surf);
+					}
+
+					surf++;
+				} while (--c);
+			}
+			else if (dot > BACKFACE_EPSILON)
+			{
+				do
+				{
+					if (!(surf->flags & SURF_PLANEBACK) &&
+						(surf->visframe == r_framecount))
+					{
+							R_RenderOneFace (surf);
+					}
+
+					surf++;
+				} while (--c);
+			}
+
+		// all surfaces on the same node share the same sequence number
+			r_currentkey++;
+		}
+	}
+}
+
+
+/*
+================
 R_RecursiveWorldNode
 ================
 */
@@ -641,7 +825,10 @@ void R_RenderWorld (void)
 	r_modelorg4[2] = modelorg[2];
 	r_modelorg4[3] = -1;
 
-	R_RecursiveWorldNode (clmodel->nodes, 15);
+	if (d_uselists && clmodel->numsurfaces < 8192)
+		R_RenderAllWorldNodes (clmodel);
+	else
+		R_RecursiveWorldNode (clmodel->nodes, 15);
 }
 
 

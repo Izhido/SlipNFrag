@@ -475,11 +475,14 @@ void R_MarkLeaves (void)
 
 	vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
 		
-	for (i=0 ; i<cl.worldmodel->numleafs ; i++)
+	auto p = 0;
+	unsigned char m = 1;
+	unsigned char v = vis[p];
+	for (i=1 ; i<=cl.worldmodel->numleafs ; i++)
 	{
-		if (vis[i>>3] & (1<<(i&7)))
+		if (v & m)
 		{
-			node = (mnode_t *)&cl.worldmodel->leafs[i+1];
+			node = (mnode_t *)&cl.worldmodel->leafs[i];
 			do
 			{
 				if (node->visframe == r_visframecount)
@@ -487,6 +490,16 @@ void R_MarkLeaves (void)
 				node->visframe = r_visframecount;
 				node = node->parent;
 			} while (node);
+		}
+		if (m == 128)
+		{
+			m = 1;
+			p++;
+			v = vis[p];
+		}
+		else
+		{
+			m <<= 1;
 		}
 	}
 }
@@ -851,19 +864,19 @@ void R_EdgeDrawing (void)
     {
 		r_edgestack.emplace_back(4 + r_edgessize + 1); // to include all of edge_max and the (former static) edge heads and tails...
     }
-    else if (r_edgessize >= r_edgestack[r_edgesurfstackindex].size())
+    else if (4 + r_edgessize + 1 > r_edgestack[r_edgesurfstackindex].size())
     {
-		r_edgestack[r_edgesurfstackindex].resize(r_edgessize);
+		r_edgestack[r_edgesurfstackindex].resize(4 + r_edgessize + 1);
     }
     if (r_edgesurfstackindex >= r_surfstack.size())
     {
 		r_surfstack.emplace_back(r_surfssize + 1);
 		r_fencestack.emplace_back(r_surfssize + 1);
     }
-    else if (r_surfssize >= r_surfstack[r_edgesurfstackindex].size())
+    else if (r_surfssize + 1 > r_surfstack[r_edgesurfstackindex].size())
     {
-		r_surfstack[r_edgesurfstackindex].resize(r_surfssize);
-		r_fencestack[r_edgesurfstackindex].resize(r_surfssize);
+		r_surfstack[r_edgesurfstackindex].resize(r_surfssize + 1);
+		r_fencestack[r_edgesurfstackindex].resize(r_surfssize + 1);
     }
 	r_edges =  r_edgestack[r_edgesurfstackindex].data();
 	surfaces =  r_surfstack[r_edgesurfstackindex].data();

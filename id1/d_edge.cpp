@@ -486,7 +486,7 @@ void D_DrawSurfacesToLists (void)
 						R_MakeSky ();
 					}
 
-					D_AddSkyToLists();
+					D_AddSkyToLists(false);
 				}
 			}
 			else if (s->flags & SURF_DRAWSKYBOX)
@@ -645,7 +645,7 @@ void D_DrawSurfacesToListsIfNeeded (void)
 						R_MakeSky ();
 					}
 
-					D_AddSkyToLists();
+					D_AddSkyToLists(false);
 				}
 			}
 			else if (s->flags & SURF_DRAWSKYBOX)
@@ -738,6 +738,96 @@ void D_DrawSurfacesToListsIfNeeded (void)
 				// TODO: speed up
 				//
 					currententity = &cl_entities[0];
+				}
+			}
+		}
+	}
+}
+
+
+/*
+==============
+D_DrawOneSurface
+==============
+*/
+void D_DrawOneSurface (msurface_t* surf)
+{
+	if (r_drawflat.value)
+	{
+		if (surf->flags & SURF_DRAWSKYBOX)
+			return;
+
+		auto data_ptr = (size_t)surf;
+		int data = (int)data_ptr & 0xFF;
+
+		D_AddColoredSurfaceToLists (surf, currententity, data);
+	}
+	else
+	{
+		r_drawnpolycount++;
+
+		if (surf->flags & SURF_DRAWSKY)
+		{
+			if (r_skyinitialized)
+			{
+				if (!r_skymade)
+				{
+					R_MakeSky ();
+				}
+
+				D_AddSkyToLists(true);
+			}
+		}
+		else if (surf->flags & SURF_DRAWSKYBOX)
+		{
+			D_AddSkyboxToLists(r_skytexinfo);
+		}
+		else if (surf->flags & SURF_DRAWBACKGROUND)
+		{
+			d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+		}
+		else if (surf->flags & SURF_DRAWTURB)
+		{
+			miplevel = 0;
+			cacheblock = (pixel_t *)
+					((byte *)surf->texinfo->texture +
+					 surf->texinfo->texture->offsets[0]);
+			cachewidth = surf->texinfo->texture->width;
+
+			if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+			{
+				D_AddTurbulentToLists (surf, currententity);
+			}
+			else
+			{
+				D_AddTurbulentRotatedToLists (surf, currententity);
+			}
+		}
+		else
+		{
+			surfcache_s* pcurrentcache = nullptr;
+			auto created = D_CacheLightmap (surf, &pcurrentcache);
+
+			if (pcurrentcache != nullptr)
+			{
+				if (surf->texinfo->texture->name[0] == '{')
+				{
+					if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+					{
+						D_AddFenceToLists (surf, pcurrentcache, currententity, created);
+					}
+					else
+					{
+						D_AddFenceRotatedToLists (surf, pcurrentcache, currententity, created);
+					}
+				}
+				else if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+				{
+					D_AddSurfaceToLists (surf, pcurrentcache, currententity, created);
+				}
+				else
+				{
+					D_AddSurfaceRotatedToLists (surf, pcurrentcache, currententity, created);
 				}
 			}
 		}
