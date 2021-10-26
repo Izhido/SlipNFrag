@@ -274,25 +274,81 @@ void SV_UnlinkEdict (edict_t *ent)
 
 /*
 ====================
+SV_AreaTriggerEdicts
+(Shamelessly ripped off, and then mercilessly modified, from code in QuakeSpasm,
+provided by esteemed Quake community member Spike)
+====================
+*/
+void SV_AreaTriggerEdicts (edict_t* ent, areanode_t* node, std::vector<edict_t*>& list, int& listcount)
+{
+	link_t		*l, *next;
+	edict_t		*touch;
+
+// touch linked edicts
+	for (l = node->trigger_edicts.next ; l != &node->trigger_edicts ; l = next)
+	{
+		if (l == nullptr)
+		{
+			Sys_Error ("SV_AreaTriggerEdicts: NULL trigger edict");
+		}
+		next = l->next;
+		auto base_ptr = (size_t)&(((edict_t*)0)->area);
+		touch = ((edict_t*)((byte *)l - (int)base_ptr));
+		if (touch == ent)
+			continue;
+		if (!touch->v.touch || touch->v.solid != SOLID_TRIGGER)
+			continue;
+		if (ent->v.absmin[0] > touch->v.absmax[0]
+			|| ent->v.absmin[1] > touch->v.absmax[1]
+			|| ent->v.absmin[2] > touch->v.absmax[2]
+			|| ent->v.absmax[0] < touch->v.absmin[0]
+			|| ent->v.absmax[1] < touch->v.absmin[1]
+			|| ent->v.absmax[2] < touch->v.absmin[2] )
+			continue;
+
+		if (list.size() <= listcount)
+			list.resize(list.size() + sv.num_edicts*sizeof(edict_t *));
+
+		list[listcount] = touch;
+		listcount++;
+	}
+
+// recurse down both sides
+	if (node->axis == -1)
+		return;
+
+	if ( ent->v.absmax[node->axis] > node->dist )
+		SV_AreaTriggerEdicts ( ent, node->children[0], list, listcount );
+	if ( ent->v.absmin[node->axis] < node->dist )
+		SV_AreaTriggerEdicts ( ent, node->children[1], list, listcount );
+}
+
+std::vector<std::vector<edict_t*>> sv_touchstack;
+int sv_touchstackindex = -1;
+
+/*
+====================
 SV_TouchLinks
 ====================
 */
 void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 {
-	link_t		*l, *next;
-	edict_t		*touch;
 	int			old_self, old_other;
 
-// touch linked edicts
-	for (l = node->trigger_edicts.next ; l != &node->trigger_edicts ; l = next)
+	sv_touchstackindex++;
+	if (sv_touchstackindex >= sv_touchstack.size())
 	{
-        if (l == nullptr)
-        {
-            Sys_Error ("SV_TouchLinks: NULL trigger edict");
-        }
-		next = l->next;
-        auto base_ptr = (size_t)&(((edict_t*)0)->area);
-        touch = ((edict_t*)((byte *)l - (int)base_ptr));
+		sv_touchstack.emplace_back();
+	}
+	auto listcount = 0;
+	SV_AreaTriggerEdicts (ent, sv_areanodes, sv_touchstack[sv_touchstackindex], listcount);
+
+// touch linked edicts
+	for (auto i = 0; i < listcount; i++)
+	{
+		auto touch = sv_touchstack[sv_touchstackindex][i]; // done this way since PR_ExecuteProgram() can recursively modify the contents of sv_touchstack
+	// re-validate in case of PR_ExecuteProgram having side effects that make
+	// edicts later in the list no longer touch
 		if (touch == ent)
 			continue;
 		if (!touch->v.touch || touch->v.solid != SOLID_TRIGGER)
@@ -315,15 +371,8 @@ void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 		pr_global_struct->self = old_self;
 		pr_global_struct->other = old_other;
 	}
-	
-// recurse down both sides
-	if (node->axis == -1)
-		return;
-	
-	if ( ent->v.absmax[node->axis] > node->dist )
-		SV_TouchLinks ( ent, node->children[0] );
-	if ( ent->v.absmin[node->axis] < node->dist )
-		SV_TouchLinks ( ent, node->children[1] );
+
+	sv_touchstackindex--;
 }
 
 

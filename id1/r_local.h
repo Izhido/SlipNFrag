@@ -272,6 +272,8 @@ extern qboolean	r_fov_greater_than_90;
 extern vec3_t 	r_modelorg_delta;
 extern qboolean	r_skybox_as_rgba;
 
+extern qboolean	d_uselists;
+
 void R_StoreEfrags (efrag_t **ppefrag);
 void R_TimeRefresh_f (void);
 void R_TimeGraph (void);

@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 
 
+qboolean r_olduselists;
+
+
 /*
 ===============
 R_CheckVariables
@@ -417,7 +420,15 @@ r_refdef.viewangles[2]=    0;
 	AngleVectors (r_refdef.viewangles, vpn, vright, vup);
 
 // current viewleaf
-	r_oldviewleaf = r_viewleaf;
+	if (r_olduselists != d_uselists)
+	{
+		r_olduselists = d_uselists;
+		r_oldviewleaf = nullptr;
+	}
+	else
+	{
+		r_oldviewleaf = r_viewleaf;
+	}
 	r_viewleaf = Mod_PointInLeaf (r_origin, cl.worldmodel);
 
 	r_dowarpold = r_dowarp;

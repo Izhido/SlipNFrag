@@ -16,6 +16,8 @@ std::string sys_errormessage;
 int sys_nogamedata;
 int sys_quitcalled;
 
+unsigned int sys_randseed;
+
 int findhandle()
 {
     for (size_t i = 0; i < sys_handles.size(); i++)
@@ -213,7 +215,7 @@ void Sys_LowFPPrecision()
 
 int Sys_Random()
 {
-    return rand();
+    return rand_r(&sys_randseed);
 }
 
 void Sys_Init(int argc, char** argv)

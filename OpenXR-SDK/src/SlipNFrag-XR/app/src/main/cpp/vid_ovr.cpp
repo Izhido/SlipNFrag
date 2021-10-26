@@ -18,6 +18,8 @@ int pal_changed;
 unsigned short d_8to16table[256];
 unsigned d_8to24table[256];
 
+extern unsigned int sys_randseed;
+
 void VID_SetPalette(unsigned char *palette)
 {
     byte    *pal;
@@ -71,7 +73,7 @@ void VID_Init(unsigned char *palette)
     vid.conrowbytes = con_width;
     zbuffer.resize(vid_width * vid_height);
     d_pzbuffer = zbuffer.data();
-    srand(time(nullptr));
+    sys_randseed = time(nullptr);
     int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
     surfcache.resize(surfcachesize);
     D_InitCaches(surfcache.data(), (int)surfcache.size());

@@ -36,6 +36,9 @@ typedef struct
 #define	MOVE_MISSILE	2
 
 
+extern int sv_touchstackindex;
+
+
 void SV_ClearWorld (void);
 // called after the world model has been loaded, before linking any entities
 

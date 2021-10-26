@@ -54,8 +54,11 @@ static qboolean		makeclippededge;
 
 vec4_t				r_modelorg4;
 
-extern qboolean		d_uselists;
+extern std::vector<int> r_visleaves;
+extern std::vector<int> r_visnodes;
 
+extern int		*r_visleaf_p;
+extern int		*r_visnode_p;
 
 //===========================================================================
 
@@ -484,15 +487,12 @@ R_RenderAllWorldNodes
 */
 void R_RenderAllWorldNodes (model_t *world)
 {
-	for (auto j=1 ; j<=world->numleafs ; j++)
+	for (auto leafp=r_visleaves.data() ; leafp<r_visleaf_p ; leafp++)
 	{
-		auto& leaf = world->leafs[j];
+		auto& leaf = world->leafs[*leafp];
 
 		if (leaf.contents == CONTENTS_SOLID)
 			continue;		// solid
-
-		if (leaf.visframe != r_visframecount)
-			continue;
 
 // cull the clipping planes if not trivial accept
 // FIXME: the compiler is doing a lousy job of optimizing here; it could be
@@ -546,15 +546,12 @@ void R_RenderAllWorldNodes (model_t *world)
 		r_currentkey++;		// all bmodels in a leaf share the same key
 	}
 
-	for (auto j=0 ; j<world->numnodes ; j++)
+	for (auto nodep=r_visnodes.data() ; nodep<r_visnode_p ; nodep++)
 	{
-		auto& node = world->nodes[j];
+		auto& node = world->nodes[*nodep];
 
 		if (node.contents == CONTENTS_SOLID)
 			continue;		// solid
-
-		if (node.visframe != r_visframecount)
-			continue;
 
 // cull the clipping planes if not trivial accept
 // FIXME: the compiler is doing a lousy job of optimizing here; it could be
@@ -825,7 +822,7 @@ void R_RenderWorld (void)
 	r_modelorg4[2] = modelorg[2];
 	r_modelorg4[3] = -1;
 
-	if (d_uselists && clmodel->numsurfaces < 8192)
+	if (d_uselists && (r_visleaf_p - r_visleaves.data()) < 1024)
 		R_RenderAllWorldNodes (clmodel);
 	else
 		R_RecursiveWorldNode (clmodel->nodes, 15);
