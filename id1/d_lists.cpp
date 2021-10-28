@@ -843,16 +843,17 @@ void D_AddSkyToLists (qboolean full_area)
 
 void D_AddSkyboxToLists (mtexinfo_t* textures)
 {
-    if (d_lists.last_skybox < 0)
-    {
-        d_lists.last_skybox++;
-        if (d_lists.last_skybox >= d_lists.skyboxes.size())
-        {
-            d_lists.skyboxes.emplace_back();
-        }
-        auto& sky = d_lists.skyboxes[d_lists.last_skybox];
-        sky.textures = textures;
-    }
+    if (d_lists.last_skybox >= 0)
+	{
+		return;
+	}
+	d_lists.last_skybox++;
+	if (d_lists.last_skybox >= d_lists.skyboxes.size())
+	{
+		d_lists.skyboxes.emplace_back();
+	}
+	auto& sky = d_lists.skyboxes[d_lists.last_skybox];
+	sky.textures = textures;
 }
 
 void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)

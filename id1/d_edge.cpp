@@ -37,6 +37,7 @@ extern void			R_TransformFrustum (void);
 vec3_t		transformed_modelorg;
 
 extern qboolean r_skyinitialized;
+extern qboolean r_skyboxinitialized;
 extern mtexinfo_t r_skytexinfo[6];
 
 std::unordered_set<surf_t*> r_drawnsurfaces;
@@ -768,7 +769,11 @@ void D_DrawOneSurface (msurface_t* surf)
 
 		if (surf->flags & SURF_DRAWSKY)
 		{
-			if (r_skyinitialized)
+			if (r_skyboxinitialized)
+			{
+				D_AddSkyboxToLists(r_skytexinfo);
+			}
+			else if (r_skyinitialized)
 			{
 				if (!r_skymade)
 				{
