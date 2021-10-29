@@ -143,6 +143,7 @@ void R_GenSkyTile16 (void *pdest);
 void R_Surf8Patch (void);
 void R_Surf16Patch (void);
 void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags);
+void R_DrawSubmodelPolygonsToLists (model_t* pmodel);
 void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel);
 
 void R_AliasDrawModel (alight_t *plighting);

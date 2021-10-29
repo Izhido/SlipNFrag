@@ -359,7 +359,7 @@ void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel)
 	numsurfaces = pmodel->nummodelsurfaces;
 	pedges = pmodel->edges;
 
-	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1};
+	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1 };
 	for (i=0 ; i<numsurfaces ; i++, psurf++)
 	{
 	// find which side of the node we are on
@@ -448,7 +448,7 @@ void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags)
 	psurf = &pmodel->surfaces[pmodel->firstmodelsurface];
 	numsurfaces = pmodel->nummodelsurfaces;
 
-	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1};
+	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1 };
 	for (i=0 ; i<numsurfaces ; i++, psurf++)
 	{
 	// find which side of the node we are on
@@ -471,12 +471,37 @@ void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags)
 
 /*
 ================
-R_RenderOneFace
+R_DrawSubmodelPolygonsToLists
 ================
 */
-void R_RenderOneFace (msurface_t* surf)
+void R_DrawSubmodelPolygonsToLists (model_t *pmodel)
 {
-	D_DrawOneSurface (surf);
+	int			i;
+	vec_t		dot;
+	msurface_t	*psurf;
+	int			numsurfaces;
+	mplane_t	*pplane;
+
+	psurf = &pmodel->surfaces[pmodel->firstmodelsurface];
+	numsurfaces = pmodel->nummodelsurfaces;
+
+	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1 };
+	for (i=0 ; i<numsurfaces ; i++, psurf++)
+	{
+	// find which side of the node we are on
+		pplane = psurf->plane;
+
+		dot = DotProduct4 (modelorg4, pplane->normal_dist);
+
+	// draw the polygon
+		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
+			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
+		{
+			r_currentkey = ((mleaf_t *)currententity->topnode)->key;
+
+			D_DrawOneSurface (psurf);
+		}
+	}
 }
 
 
@@ -618,7 +643,7 @@ void R_RenderAllWorldNodes (model_t *world)
 					if ((surf->flags & SURF_PLANEBACK) &&
 						(surf->visframe == r_framecount))
 					{
-							R_RenderOneFace (surf);
+							D_DrawOneSurface (surf);
 					}
 
 					surf++;
@@ -631,7 +656,7 @@ void R_RenderAllWorldNodes (model_t *world)
 					if (!(surf->flags & SURF_PLANEBACK) &&
 						(surf->visframe == r_framecount))
 					{
-							R_RenderOneFace (surf);
+							D_DrawOneSurface (surf);
 					}
 
 					surf++;

@@ -872,8 +872,13 @@ void R_DrawBEntitiesOnList (void)
 					if (r_pefragtopnode)
 					{
 						currententity->topnode = r_pefragtopnode;
-	
-						if (r_pefragtopnode->contents >= 0)
+
+						if (d_uselists)
+						{
+						// skip all checks, draw directly using lists
+							R_DrawSubmodelPolygonsToLists (clmodel);
+						}
+						else if (r_pefragtopnode->contents >= 0)
 						{
 						// not a leaf; has to be clipped to the world BSP
 							r_clipflags = clipflags;
