@@ -1589,6 +1589,13 @@ void android_main(struct android_app* app)
 						Cvar_SetValue("joyadvaxisz", AxisNada);
 						Cvar_SetValue("joyadvaxisr", AxisNada);
 						Joy_AdvancedUpdate_f();
+
+						// The following is to prevent having stuck arrow keys at transition time:
+						Input::AddKeyInput(K_DOWNARROW, false);
+						Input::AddKeyInput(K_UPARROW, false);
+						Input::AddKeyInput(K_LEFTARROW, false);
+						Input::AddKeyInput(K_RIGHTARROW, false);
+
 						vid_width = appState.EyeTextureMaxDimension;
 						vid_height = appState.EyeTextureMaxDimension;
 						con_width = appState.ConsoleWidth;

@@ -44,10 +44,11 @@ void server_t::Clear()
     model_index.clear();
     models.clear();
     sound_precache.clear();
+    lightstyles.clear();
     num_edicts = 0;
 	SV_DeleteEdictLeafs(0, edicts.size());
     memset(edicts.data(), 0, edicts.size());
-    memset(&state, 0, sizeof(state));
+    state = ss_loading;
     datagram.Clear();
     reliable_datagram.Clear();
     signon.Clear();
