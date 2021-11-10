@@ -16,16 +16,14 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 
 layout(push_constant) uniform Transforms
 {
-	layout(offset = 0) float originX;
-	layout(offset = 4) float originY;
-	layout(offset = 8) float originZ;
-	layout(offset = 12) float lightmapIndex;
+	layout(offset = 4) float originX;
+	layout(offset = 8) float originY;
+	layout(offset = 12) float originZ;
 };
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in mat4 texturePosition;
-layout(location = 0) out vec3 fragmentLightmapCoords;
-layout(location = 1) out vec2 fragmentTexCoords;
+layout(location = 0) out vec4 fragmentData;
 
 out gl_PerVertex
 {
@@ -40,6 +38,5 @@ void main(void)
 	vec2 texCoords = vec2(dot(position4, texturePosition[0]), dot(position4, texturePosition[1]));
 	vec2 lightmapSize = vec2((int(texturePosition[2].z) >> 4) + 1, (int(texturePosition[2].w) >> 4) + 1);
 	vec2 lightmapCoords = ((texCoords - texturePosition[2].xy) * (lightmapSize - 1) / texturePosition[2].zw) + 0.5;
-	fragmentLightmapCoords = vec3(lightmapCoords.x, lightmapCoords.y, lightmapIndex);
-	fragmentTexCoords = texCoords / texturePosition[3].xy;
+	fragmentData = vec4(lightmapCoords.xy, texCoords / texturePosition[3].xy);
 }

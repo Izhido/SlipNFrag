@@ -616,7 +616,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetLayouts[2] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = 4 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
@@ -706,7 +706,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulent.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	turbulent.stages[1].module = turbulentFragment;
 	turbulent.stages[1].pName = "main";
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = 4 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;

@@ -1418,21 +1418,21 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 
 void PerImage::SetPushConstants(const LoadedSurface& loaded, float pushConstants[])
 {
-	pushConstants[0] = loaded.originX;
-	pushConstants[1] = loaded.originY;
-	pushConstants[2] = loaded.originZ;
-	pushConstants[3] = loaded.lightmap.lightmap->allocatedIndex;
+	pushConstants[0] = loaded.lightmap.lightmap->allocatedIndex;
+	pushConstants[1] = loaded.originX;
+	pushConstants[2] = loaded.originY;
+	pushConstants[3] = loaded.originZ;
 }
 
 void PerImage::SetPushConstants(const LoadedSurfaceRotated& loaded, float pushConstants[])
 {
-	pushConstants[0] = loaded.originX;
-	pushConstants[1] = loaded.originY;
-	pushConstants[2] = loaded.originZ;
-	pushConstants[3] = loaded.yaw * M_PI / 180;
-	pushConstants[4] = loaded.pitch * M_PI / 180;
-	pushConstants[5] = -loaded.roll * M_PI / 180;
-	pushConstants[6] = loaded.lightmap.lightmap->allocatedIndex;
+	pushConstants[0] = loaded.lightmap.lightmap->allocatedIndex;
+	pushConstants[1] = loaded.originX;
+	pushConstants[2] = loaded.originY;
+	pushConstants[3] = loaded.originZ;
+	pushConstants[4] = loaded.yaw * M_PI / 180;
+	pushConstants[5] = loaded.pitch * M_PI / 180;
+	pushConstants[6] = -loaded.roll * M_PI / 180;
 }
 
 void PerImage::SetPushConstants(const LoadedTurbulent& loaded, float pushConstants[])

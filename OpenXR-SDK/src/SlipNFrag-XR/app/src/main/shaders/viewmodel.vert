@@ -23,9 +23,7 @@ layout(push_constant) uniform Transforms
 layout(location = 0) in vec4 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
 layout(location = 2) in float vertexLight;
-layout(location = 0) out mediump vec2 fragmentTexCoords;
-layout(location = 1) out mediump float fragmentLight;
-layout(location = 2) out mediump float fragmentAlpha;
+layout(location = 0) out mediump vec4 fragmentData;
 
 out gl_PerVertex
 {
@@ -36,8 +34,6 @@ void main(void)
 {
 	vec4 position = vertexTransform * (aliasTransform * vertexPosition);
 	gl_Position = projectionMatrix[gl_ViewID_OVR] * (viewMatrix[gl_ViewID_OVR] * position);
-	fragmentTexCoords = vertexTexCoords;
-	fragmentLight = vertexLight;
 	float projection = offset + position.x * forwardX + position.y * forwardY + position.z * forwardZ;
-	fragmentAlpha = min(max(projection / 8, 0), 1);
+	fragmentData = vec4(vertexTexCoords, vertexLight, clamp(projection / 8, 0, 1));
 }
