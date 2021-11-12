@@ -45,6 +45,7 @@ void server_t::Clear()
     models.clear();
     sound_precache.clear();
     lightstyles.clear();
+    lightstyles.resize(MAX_LIGHTSTYLES);
     num_edicts = 0;
 	SV_DeleteEdictLeafs(0, edicts.size());
     memset(edicts.data(), 0, edicts.size());

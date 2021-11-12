@@ -1161,7 +1161,7 @@ void PF_lightstyle (void)
 // bounds check to avoid clobbering sv struct
 	if (style < 0 || style >= sv.lightstyles.size())
 	{
-		Con_Printf("PF_lightstyle: style %d exceeds count %d", style, sv.lightstyles.size());
+		Con_Printf("PF_lightstyle: style %d exceeds count %d\n", style, sv.lightstyles.size());
 		return;
 	}
 
