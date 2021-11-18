@@ -60,7 +60,7 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	surface.texture_height = texture->height;
 	surface.texture_size = surface.texture_width * surface.texture_height;
 	surface.texture = (unsigned char *)(texture + 1);
-	surface.lightmap_width = cache->width / sizeof(float);
+	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
 	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
@@ -87,7 +87,7 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	surface.texture_height = texture->height;
 	surface.texture_size = surface.texture_width * surface.texture_height;
 	surface.texture = (unsigned char *)(texture + 1);
-	surface.lightmap_width = cache->width / sizeof(float);
+	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
 	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())

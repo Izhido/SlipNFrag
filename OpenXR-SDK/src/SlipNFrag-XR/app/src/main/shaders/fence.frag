@@ -11,7 +11,11 @@ layout(push_constant) uniform Lightmap
 	layout(offset = 0) float lightmapIndex;
 };
 
-layout(set = 0, binding = 1) uniform sampler2D fragmentPalette;
+layout(set = 0, binding = 1) uniform Palette
+{
+	layout(offset = 0) vec4 palette[256];
+};
+
 layout(set = 0, binding = 2) uniform usampler2D fragmentColormap;
 layout(set = 1, binding = 0) uniform sampler2DArray fragmentLightmap;
 layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
@@ -35,7 +39,7 @@ void main()
 	{
 		discard;
 	}
-	vec4 lowColor = texelFetch(fragmentPalette, ivec2(lowColormapped.x, 0), 0);
-	vec4 highColor = texelFetch(fragmentPalette, ivec2(highColormapped.x, 0), 0);
+	vec4 lowColor = palette[lowColormapped.x];
+	vec4 highColor = palette[highColormapped.x];
 	outColor = mix(lowColor, highColor, texLevel.y - texMip.x);
 }

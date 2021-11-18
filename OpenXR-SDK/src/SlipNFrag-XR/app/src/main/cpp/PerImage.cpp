@@ -208,12 +208,18 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	appState.Scene.paletteSize = 0;
 	if (palette == nullptr || paletteChanged != pal_changed)
 	{
+		if (paletteAsBuffer == nullptr)
+		{
+			paletteAsBuffer = new Buffer();
+			paletteAsBuffer->CreateUniformBuffer(appState, 256 * 4 * sizeof(float));
+		}
+		appState.Scene.paletteSize += paletteAsBuffer->size;
 		if (palette == nullptr)
 		{
 			palette = new Texture();
 			palette->Create(appState, 256, 1, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
-		appState.Scene.paletteSize = 1024;
+		appState.Scene.paletteSize += palette->width * 4;
 		size += appState.Scene.paletteSize;
 		paletteChanged = pal_changed;
 	}
@@ -634,6 +640,23 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	return size;
 }
 
+float PerImage::GammaCorrect(float component)
+{
+	if (std::isnan(component) || component <= 0)
+	{
+		return 0;
+	}
+	else if (component >= 1)
+	{
+		return 1;
+	}
+	else if (component < 0.04045)
+	{
+		return component / 12.92;
+	}
+	return std::pow((component + 0.055f) / 1.055f, 2.4f);
+}
+
 void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 {
 	VkDeviceSize offset = 0;
@@ -1018,8 +1041,19 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	offset += appState.Scene.colorsSize;
 	if (appState.Scene.paletteSize > 0)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_8to24table, appState.Scene.paletteSize);
-		offset += appState.Scene.paletteSize;
+		auto source = d_8to24table;
+		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		for (auto i = 0; i < 256; i++)
+		{
+			auto entry = *source++;
+			*target++ = GammaCorrect((float)(entry & 255) / 255);
+			*target++ = GammaCorrect((float)((entry >> 8) & 255) / 255);
+			*target++ = GammaCorrect((float)((entry >> 16) & 255) / 255);
+			*target++ = (float)((entry >> 24) & 255) / 255;
+		}
+		offset += paletteAsBuffer->size;
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_8to24table, palette->width * 4);
+		offset += palette->width * 4;
 	}
 	if (appState.Scene.host_colormapSize > 0)
 	{
@@ -1349,6 +1383,13 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		bufferCopy.srcOffset += bufferCopy.size;
 		appState.Scene.AddToBufferBarrier(colors->buffer);
 	}
+	if (appState.Scene.paletteSize > 0)
+	{
+		bufferCopy.size = paletteAsBuffer->size;
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, paletteAsBuffer->buffer, 1, &bufferCopy);
+		bufferCopy.srcOffset += bufferCopy.size;
+		appState.Scene.AddToBufferBarrier(paletteAsBuffer->buffer);
+	}
 
 	if (appState.Scene.stagingBuffer.lastBarrier >= 0)
 	{
@@ -1363,7 +1404,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	if (appState.Scene.paletteSize > 0)
 	{
 		palette->Fill(appState, appState.Scene.stagingBuffer);
-		appState.Scene.stagingBuffer.offset += appState.Scene.paletteSize;
+		appState.Scene.stagingBuffer.offset += palette->width * 4;
 	}
 	if (appState.Scene.host_colormapSize > 0)
 	{
@@ -1536,11 +1577,11 @@ void PerImage::Render(AppState& appState)
 	{
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[0].descriptorCount = 1;
-		VkDescriptorBufferInfo bufferInfo { };
-		bufferInfo.buffer = matrices.buffer;
-		bufferInfo.range = matrices.size;
+		VkDescriptorBufferInfo bufferInfo[2] { };
+		bufferInfo[0].buffer = matrices.buffer;
+		bufferInfo[0].range = matrices.size;
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		writes[0].pBufferInfo = &bufferInfo;
+		writes[0].pBufferInfo = bufferInfo;
 		if (!sceneMatricesResources.created)
 		{
 			descriptorPoolCreateInfo.poolSizeCount = 1;
@@ -1552,7 +1593,7 @@ void PerImage::Render(AppState& appState)
 			vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 			sceneMatricesResources.created = true;
 		}
-		if (!sceneMatricesAndPaletteResources.created || (!sceneMatricesAndColormapResources.created && host_colormap != nullptr))
+		if (!sceneMatricesAndPaletteResources.created)
 		{
 			poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			poolSizes[1].descriptorCount = 1;
@@ -1572,25 +1613,31 @@ void PerImage::Render(AppState& appState)
 				vkUpdateDescriptorSets(appState.Device, 2, writes, 0, nullptr);
 				sceneMatricesAndPaletteResources.created = true;
 			}
-			if (!sceneMatricesAndColormapResources.created && host_colormap != nullptr)
-			{
-				poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				poolSizes[2].descriptorCount = 1;
-				textureInfo[1].sampler = appState.Scene.samplers[host_colormap->mipCount];
-				textureInfo[1].imageView = host_colormap->view;
-				writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writes[2].pImageInfo = textureInfo + 1;
-				descriptorPoolCreateInfo.poolSizeCount = 3;
-				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesAndColormapResources.descriptorPool));
-				descriptorSetAllocateInfo.descriptorPool = sceneMatricesAndColormapResources.descriptorPool;
-				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.bufferAndTwoImagesLayout;
-				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &sceneMatricesAndColormapResources.descriptorSet));
-				writes[0].dstSet = sceneMatricesAndColormapResources.descriptorSet;
-				writes[1].dstSet = sceneMatricesAndColormapResources.descriptorSet;
-				writes[2].dstSet = sceneMatricesAndColormapResources.descriptorSet;
-				vkUpdateDescriptorSets(appState.Device, 3, writes, 0, nullptr);
-				sceneMatricesAndColormapResources.created = true;
-			}
+		}
+		if (!sceneMatricesAndColormapResources.created && host_colormap != nullptr)
+		{
+			poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			poolSizes[1].descriptorCount = 1;
+			poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			poolSizes[2].descriptorCount = 1;
+			bufferInfo[1].buffer = paletteAsBuffer->buffer;
+			bufferInfo[1].range = paletteAsBuffer->size;
+			textureInfo[0].sampler = appState.Scene.samplers[host_colormap->mipCount];
+			textureInfo[0].imageView = host_colormap->view;
+			writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			writes[1].pBufferInfo = bufferInfo + 1;
+			writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writes[2].pImageInfo = textureInfo;
+			descriptorPoolCreateInfo.poolSizeCount = 3;
+			CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesAndColormapResources.descriptorPool));
+			descriptorSetAllocateInfo.descriptorPool = sceneMatricesAndColormapResources.descriptorPool;
+			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.twoBuffersAndImageLayout;
+			CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &sceneMatricesAndColormapResources.descriptorSet));
+			writes[0].dstSet = sceneMatricesAndColormapResources.descriptorSet;
+			writes[1].dstSet = sceneMatricesAndColormapResources.descriptorSet;
+			writes[2].dstSet = sceneMatricesAndColormapResources.descriptorSet;
+			vkUpdateDescriptorSets(appState.Device, 3, writes, 0, nullptr);
+			sceneMatricesAndColormapResources.created = true;
 		}
 	}
 	if (appState.Mode == AppWorldMode)

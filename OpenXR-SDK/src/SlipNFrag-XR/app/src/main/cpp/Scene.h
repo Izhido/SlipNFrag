@@ -26,7 +26,7 @@ struct Scene
 	bool created;
 	VkDescriptorSetLayout singleBufferLayout;
 	VkDescriptorSetLayout bufferAndImageLayout;
-	VkDescriptorSetLayout bufferAndTwoImagesLayout;
+	VkDescriptorSetLayout twoBuffersAndImageLayout;
 	VkDescriptorSetLayout singleImageLayout;
 	VkDescriptorSetLayout doubleImageLayout;
 	Pipeline surfaces;

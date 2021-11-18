@@ -6,7 +6,7 @@ plugins {
 android {
     compileSdkVersion 31
     buildToolsVersion '31.0.0'
-    ndkVersion '23.1.7779620'
+    ndkVersion '22.1.7171670'
 
     defaultConfig {
         applicationId "com.heribertodelgado.slipnfrag_xr"
@@ -67,5 +67,5 @@ android {
 dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.6.0'
+    implementation 'androidx.core:core-ktx:1.7.0'
 }

@@ -407,15 +407,19 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 2;
 	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &bufferAndImageLayout));
+	descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorSetBindings[2].descriptorCount = 1;
 	descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 3;
-	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &bufferAndTwoImagesLayout));
+	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &twoBuffersAndImageLayout));
 	descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 1;
 	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &singleImageLayout));
+	descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 2;
 	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &doubleImageLayout));
 
@@ -611,7 +615,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaces.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfaces.stages[1].module = surfaceFragment;
 	surfaces.stages[1].pName = "main";
-	descriptorSetLayouts[0] = bufferAndTwoImagesLayout;
+	descriptorSetLayouts[0] = twoBuffersAndImageLayout;
 	descriptorSetLayouts[1] = singleImageLayout;
 	descriptorSetLayouts[2] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
