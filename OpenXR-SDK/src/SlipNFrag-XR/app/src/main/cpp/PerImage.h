@@ -25,8 +25,7 @@ struct PerImage
 	CachedTextures colormaps;
 	int colormapCount;
 	int paletteChanged;
-	Texture* palette;
-	Buffer* paletteAsBuffer;
+	Buffer* palette;
 	Texture* host_colormap;
 	int hostClearCount;
 	Buffer matrices;

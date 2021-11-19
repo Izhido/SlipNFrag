@@ -6,7 +6,11 @@
 precision mediump float;
 precision mediump int;
 
-layout(set = 0, binding = 1) uniform sampler2D fragmentPalette;
+layout(set = 0, binding = 1) uniform Palette
+{
+	layout(offset = 0) vec4 palette[256];
+};
+
 layout(set = 1, binding = 0) uniform usampler2D fragmentColormap;
 layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
 
@@ -21,7 +25,7 @@ void main()
 	uvec4 highEntry = textureLod(fragmentTexture, fragmentData.xy, mip.y);
 	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowEntry.x, fragmentData.z), 0);
 	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x, fragmentData.z), 0);
-	vec4 lowColor = texelFetch(fragmentPalette, ivec2(lowColormapped.x, 0), 0);
-	vec4 highColor = texelFetch(fragmentPalette, ivec2(highColormapped.x, 0), 0);
+	vec4 lowColor = palette[lowColormapped.x];
+	vec4 highColor = palette[highColormapped.x];
 	outColor = mix(lowColor, highColor, level.y - mip.x);
 }

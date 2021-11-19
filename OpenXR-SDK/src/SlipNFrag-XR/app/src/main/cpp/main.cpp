@@ -2571,10 +2571,6 @@ void android_main(struct android_app* app)
 				{
 					perImage.palette->Delete(appState);
 				}
-				if (perImage.paletteAsBuffer != nullptr)
-				{
-					perImage.paletteAsBuffer->Delete(appState);
-				}
 				perImage.colormaps.Delete(appState);
 				perImage.stagingBuffers.Delete(appState);
 				perImage.cachedColors.Delete(appState);
@@ -2621,10 +2617,9 @@ void android_main(struct android_app* app)
 			appState.Scene.fences.Delete(appState);
 			appState.Scene.surfacesRotated.Delete(appState);
 			appState.Scene.surfaces.Delete(appState);
-			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.doubleImageLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.twoBuffersAndImageLayout, nullptr);
-			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.bufferAndImageLayout, nullptr);
+			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.doubleBufferLayout, nullptr);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
 
 			vkDestroyCommandPool(appState.Device, appState.CommandPool, nullptr);

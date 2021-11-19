@@ -6,13 +6,16 @@
 precision mediump float;
 precision mediump int;
 
-layout(set = 0, binding = 1) uniform sampler2D fragmentPalette;
+layout(set = 0, binding = 1) uniform Palette
+{
+	layout(offset = 0) vec4 palette[256];
+};
 
-layout(location = 0) in float fragmentColor;
+layout(location = 0) in flat int fragmentColor;
 
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
-	outColor = texelFetch(fragmentPalette, ivec2(fragmentColor, 0), 0);
+	outColor = palette[fragmentColor];
 }

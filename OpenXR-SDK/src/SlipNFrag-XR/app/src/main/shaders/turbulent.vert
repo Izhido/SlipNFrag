@@ -16,9 +16,9 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 
 layout(push_constant) uniform Transforms
 {
-	layout(offset = 0) float originX;
-	layout(offset = 4) float originY;
-	layout(offset = 8) float originZ;
+	layout(offset = 4) float originX;
+	layout(offset = 8) float originY;
+	layout(offset = 12) float originZ;
 };
 
 layout(location = 0) in vec3 vertexPosition;

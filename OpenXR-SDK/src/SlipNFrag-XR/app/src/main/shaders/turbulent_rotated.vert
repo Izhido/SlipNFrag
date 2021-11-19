@@ -16,12 +16,12 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 
 layout(push_constant) uniform Transforms
 {
-	layout(offset = 0) float originX;
-	layout(offset = 4) float originY;
-	layout(offset = 8) float originZ;
-	layout(offset = 12) float yaw;
-	layout(offset = 16) float pitch;
-	layout(offset = 20) float roll;
+	layout(offset = 4) float originX;
+	layout(offset = 8) float originY;
+	layout(offset = 12) float originZ;
+	layout(offset = 16) float yaw;
+	layout(offset = 20) float pitch;
+	layout(offset = 24) float roll;
 };
 
 layout(location = 0) in vec3 vertexPosition;

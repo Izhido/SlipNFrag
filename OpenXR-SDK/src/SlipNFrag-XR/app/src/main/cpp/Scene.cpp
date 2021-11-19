@@ -369,8 +369,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/turbulent.frag.spv", &turbulentFragment);
 	VkShaderModule turbulentRotatedVertex;
 	CreateShader(appState, app, "shaders/turbulent_rotated.vert.spv", &turbulentRotatedVertex);
-	VkShaderModule turbulentRotatedFragment;
-	CreateShader(appState, app, "shaders/turbulent_rotated.frag.spv", &turbulentRotatedFragment);
 	VkShaderModule aliasVertex;
 	CreateShader(appState, app, "shaders/alias.vert.spv", &aliasVertex);
 	VkShaderModule aliasFragment;
@@ -393,8 +391,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/floor.frag.spv", &floorFragment);
 
 	VkDescriptorSetLayoutBinding descriptorSetBindings[3] { };
-	descriptorSetBindings[1].binding = 1;
-	descriptorSetBindings[2].binding = 2;
 	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
 	descriptorSetLayoutCreateInfo.pBindings = descriptorSetBindings;
 	descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -402,13 +398,13 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 1;
 	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &singleBufferLayout));
-	descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorSetBindings[1].binding = 1;
+	descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorSetBindings[1].descriptorCount = 1;
 	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 2;
-	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &bufferAndImageLayout));
-	descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &doubleBufferLayout));
+	descriptorSetBindings[2].binding = 2;
 	descriptorSetBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorSetBindings[2].descriptorCount = 1;
 	descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -418,10 +414,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	descriptorSetLayoutCreateInfo.bindingCount = 1;
 	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &singleImageLayout));
-	descriptorSetBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorSetBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	descriptorSetLayoutCreateInfo.bindingCount = 2;
-	CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &doubleImageLayout));
 
 	VkPipelineTessellationStateCreateInfo tessellationStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO };
 
@@ -689,7 +681,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	sprites.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	sprites.stages[1].module = spriteFragment;
 	sprites.stages[1].pName = "main";
-	descriptorSetLayouts[0] = bufferAndImageLayout;
+	descriptorSetLayouts[0] = doubleBufferLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
@@ -728,7 +720,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulentRotated.stages[0].pName = "main";
 	turbulentRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	turbulentRotated.stages[1].module = turbulentRotatedFragment;
+	turbulentRotated.stages[1].module = turbulentFragment;
 	turbulentRotated.stages[1].pName = "main";
 	pushConstantInfo.size = 7 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentRotated.pipelineLayout));
@@ -847,7 +839,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, viewmodelVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, aliasFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, aliasVertex, nullptr);
-	vkDestroyShaderModule(appState.Device, turbulentRotatedFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentVertex, nullptr);

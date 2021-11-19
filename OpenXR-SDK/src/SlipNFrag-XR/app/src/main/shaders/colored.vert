@@ -16,7 +16,7 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in float vertexColor;
-layout(location = 0) out float fragmentColor;
+layout(location = 0) out int fragmentColor;
 
 out gl_PerVertex
 {
@@ -26,5 +26,5 @@ out gl_PerVertex
 void main(void)
 {
 	gl_Position = projectionMatrix[gl_ViewID_OVR] * (viewMatrix[gl_ViewID_OVR] * (vertexTransform * vec4(vertexPosition, 1)));
-	fragmentColor = vertexColor;
+	fragmentColor = int(vertexColor);
 }
