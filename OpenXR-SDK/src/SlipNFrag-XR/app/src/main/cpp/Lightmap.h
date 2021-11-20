@@ -1,6 +1,5 @@
 #pragma once
 
-#include "TwinKey.h"
 #include <list>
 #include "LightmapTexture.h"
 #include "Buffer.h"
@@ -9,7 +8,7 @@
 struct Lightmap
 {
 	Lightmap* next;
-	TwinKey key;
+	void* key;
 	int unusedCount;
 	int width;
 	int height;

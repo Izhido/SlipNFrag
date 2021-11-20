@@ -334,8 +334,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 		auto& turbulent = d_lists.turbulent16[i];
 		auto& loaded = appState.Scene.loadedTurbulent16[i];
 		appState.Scene.GetStagingBufferSize(appState, turbulent, loaded, size);
-		TwinKey key { turbulent.surface, turbulent.entity };
-		auto entry = appState.Scene.indicesPerKey.find(key);
+		auto entry = appState.Scene.indicesPerKey.find(turbulent.surface);
 		if (entry == appState.Scene.indicesPerKey.end())
 		{
 			loaded.indices.size = turbulent.count * sizeof(uint16_t);
@@ -358,7 +357,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			loaded.indices.secondSource = turbulent.model;
 			appState.Scene.buffers.SetupIndices16(loaded.indices);
 			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-			appState.Scene.indicesPerKey.insert({ key, newEntry });
+			appState.Scene.indicesPerKey.insert({ turbulent.surface, newEntry });
 		}
 		else
 		{
@@ -375,8 +374,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 		auto& turbulent = d_lists.turbulent32[i];
 		auto& loaded = appState.Scene.loadedTurbulent32[i];
 		appState.Scene.GetStagingBufferSize(appState, turbulent, loaded, size);
-		TwinKey key { turbulent.surface, turbulent.entity };
-		auto entry = appState.Scene.indicesPerKey.find(key);
+		auto entry = appState.Scene.indicesPerKey.find(turbulent.surface);
 		if (entry == appState.Scene.indicesPerKey.end())
 		{
 			loaded.indices.size = turbulent.count * sizeof(uint32_t);
@@ -399,7 +397,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			loaded.indices.secondSource = turbulent.model;
 			appState.Scene.buffers.SetupIndices32(loaded.indices);
 			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-			appState.Scene.indicesPerKey.insert({ key, newEntry });
+			appState.Scene.indicesPerKey.insert({ turbulent.surface, newEntry });
 		}
 		else
 		{
@@ -416,8 +414,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 		auto& turbulent = d_lists.turbulent_rotated16[i];
 		auto& loaded = appState.Scene.loadedTurbulentRotated16[i];
 		appState.Scene.GetStagingBufferSize(appState, turbulent, loaded, size);
-		TwinKey key { turbulent.surface, turbulent.entity };
-		auto entry = appState.Scene.indicesPerKey.find(key);
+		auto entry = appState.Scene.indicesPerKey.find(turbulent.surface);
 		if (entry == appState.Scene.indicesPerKey.end())
 		{
 			loaded.indices.size = turbulent.count * sizeof(uint16_t);
@@ -440,7 +437,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			loaded.indices.secondSource = turbulent.model;
 			appState.Scene.buffers.SetupIndices16(loaded.indices);
 			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-			appState.Scene.indicesPerKey.insert({ key, newEntry });
+			appState.Scene.indicesPerKey.insert({ turbulent.surface, newEntry });
 		}
 		else
 		{
@@ -457,8 +454,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 		auto& turbulent = d_lists.turbulent_rotated32[i];
 		auto& loaded = appState.Scene.loadedTurbulentRotated32[i];
 		appState.Scene.GetStagingBufferSize(appState, turbulent, loaded, size);
-		TwinKey key { turbulent.surface, turbulent.entity };
-		auto entry = appState.Scene.indicesPerKey.find(key);
+		auto entry = appState.Scene.indicesPerKey.find(turbulent.surface);
 		if (entry == appState.Scene.indicesPerKey.end())
 		{
 			loaded.indices.size = turbulent.count * sizeof(uint32_t);
@@ -481,7 +477,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			loaded.indices.secondSource = turbulent.model;
 			appState.Scene.buffers.SetupIndices32(loaded.indices);
 			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-			appState.Scene.indicesPerKey.insert({ key, newEntry });
+			appState.Scene.indicesPerKey.insert({ turbulent.surface, newEntry });
 		}
 		else
 		{

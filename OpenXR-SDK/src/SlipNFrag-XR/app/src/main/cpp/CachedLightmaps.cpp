@@ -32,7 +32,7 @@ void CachedLightmaps::DisposeFront()
 
 void CachedLightmaps::DeleteOld(AppState& appState)
 {
-	std::vector<TwinKey> toDelete;
+	std::vector<void*> toDelete;
 	for (auto& entry : lightmaps)
 	{
 		auto total = 0;

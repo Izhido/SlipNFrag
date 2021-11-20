@@ -918,8 +918,7 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 
 void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
-	TwinKey key { surface.surface, surface.entity };
-	auto entry = indicesPerKey.find(key);
+	auto entry = indicesPerKey.find(surface.surface);
 	if (entry == indicesPerKey.end())
 	{
 		loaded.indices.size = surface.count * sizeof(uint16_t);
@@ -942,7 +941,7 @@ void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surfac
 		loaded.indices.secondSource = surface.model;
 		buffers.SetupIndices16(loaded.indices);
 		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-		indicesPerKey.insert({ key, newEntry });
+		indicesPerKey.insert({ surface.surface, newEntry });
 	}
 	else
 	{
@@ -954,8 +953,7 @@ void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surfac
 
 void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
-	TwinKey key { surface.surface, surface.entity };
-	auto entry = indicesPerKey.find(key);
+	auto entry = indicesPerKey.find(surface.surface);
 	if (entry == indicesPerKey.end())
 	{
 		loaded.indices.size = surface.count * sizeof(uint32_t);
@@ -978,7 +976,7 @@ void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surfac
 		loaded.indices.secondSource = surface.model;
 		buffers.SetupIndices32(loaded.indices);
 		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-		indicesPerKey.insert({ key, newEntry });
+		indicesPerKey.insert({ surface.surface, newEntry });
 	}
 	else
 	{
@@ -990,8 +988,7 @@ void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surfac
 
 void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
 {
-	TwinKey key { surface.surface, surface.entity };
-	auto entry = indicesPerKey.find(key);
+	auto entry = indicesPerKey.find(surface.surface);
 	if (entry == indicesPerKey.end())
 	{
 		loaded.indices.size = surface.count * sizeof(uint16_t);
@@ -1014,7 +1011,7 @@ void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t&
 		loaded.indices.secondSource = surface.model;
 		buffers.SetupIndices16(loaded.indices);
 		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-		indicesPerKey.insert({ key, newEntry });
+		indicesPerKey.insert({ surface.surface, newEntry });
 	}
 	else
 	{
@@ -1026,8 +1023,7 @@ void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t&
 
 void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
 {
-	TwinKey key { surface.surface, surface.entity };
-	auto entry = indicesPerKey.find(key);
+	auto entry = indicesPerKey.find(surface.surface);
 	if (entry == indicesPerKey.end())
 	{
 		loaded.indices.size = surface.count * sizeof(uint32_t);
@@ -1050,7 +1046,7 @@ void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurfacerotated_t&
 		loaded.indices.secondSource = surface.model;
 		buffers.SetupIndices32(loaded.indices);
 		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-		indicesPerKey.insert({ key, newEntry });
+		indicesPerKey.insert({ surface.surface, newEntry });
 	}
 	else
 	{
@@ -1200,13 +1196,12 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.texturePositions.buffer = previousTexturePosition;
 		loaded.texturePositions.offset = previousTexturePositionOffset;
 	}
-	auto entry = lightmaps.lightmaps.find({ surface.surface, surface.entity });
+	auto entry = lightmaps.lightmaps.find(surface.surface);
 	if (entry == lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap { };
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		lightmap->key.first = surface.surface;
-		lightmap->key.second = surface.entity;
+		lightmap->key = surface.surface;
 		loaded.lightmap.lightmap = lightmap;
 		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
 		size += loaded.lightmap.size;
@@ -1229,8 +1224,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			{
 				auto lightmap = new Lightmap { };
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				lightmap->key.first = surface.surface;
-				lightmap->key.second = surface.entity;
+				lightmap->key = surface.surface;
 				lightmap->next = first;
 				entry->second = lightmap;
 				loaded.lightmap.lightmap = lightmap;
@@ -1256,8 +1250,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			{
 				auto lightmap = new Lightmap { };
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				lightmap->key.first = surface.surface;
-				lightmap->key.second = surface.entity;
+				lightmap->key = surface.surface;
 				lightmap->next = entry->second;
 				entry->second = lightmap;
 				loaded.lightmap.lightmap = lightmap;
@@ -1382,13 +1375,12 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 		loaded.texturePositions.buffer = previousTexturePosition;
 		loaded.texturePositions.offset = previousTexturePositionOffset;
 	}
-	auto entry = lightmaps.lightmaps.find({ surface.surface, surface.entity });
+	auto entry = lightmaps.lightmaps.find(surface.surface);
 	if (entry == lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap { };
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		lightmap->key.first = surface.surface;
-		lightmap->key.second = surface.entity;
+		lightmap->key = surface.surface;
 		loaded.lightmap.lightmap = lightmap;
 		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
 		size += loaded.lightmap.size;
@@ -1411,8 +1403,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 			{
 				auto lightmap = new Lightmap { };
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				lightmap->key.first = surface.surface;
-				lightmap->key.second = surface.entity;
+				lightmap->key = surface.surface;
 				lightmap->next = first;
 				entry->second = lightmap;
 				loaded.lightmap.lightmap = lightmap;
@@ -1438,8 +1429,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 			{
 				auto lightmap = new Lightmap { };
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				lightmap->key.first = surface.surface;
-				lightmap->key.second = surface.entity;
+				lightmap->key = surface.surface;
 				lightmap->next = entry->second;
 				entry->second = lightmap;
 				loaded.lightmap.lightmap = lightmap;

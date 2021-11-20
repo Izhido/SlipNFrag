@@ -5,7 +5,7 @@
 
 struct CachedLightmaps
 {
-	std::unordered_map<TwinKey, Lightmap*> lightmaps;
+	std::unordered_map<void*, Lightmap*> lightmaps;
 	Lightmap* oldLightmaps;
 	LoadedLightmap* first;
 	LoadedLightmap* current;
