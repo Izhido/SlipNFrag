@@ -130,12 +130,9 @@ struct Scene
 	VkDeviceSize skySize;
 	StagingBuffer stagingBuffer;
 	void* previousVertexes;
-	void* previousSurface;
 	void* previousTexture;
 	void* previousApverts;
 	SharedMemoryBuffer* previousVertexBuffer;
-	SharedMemoryBuffer* previousTexturePosition;
-	VkDeviceSize previousTexturePositionOffset;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	SharedMemoryTexture* previousSharedMemoryTexture;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;

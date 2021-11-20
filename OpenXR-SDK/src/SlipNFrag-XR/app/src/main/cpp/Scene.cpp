@@ -1154,50 +1154,38 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
-	if (previousSurface != surface.surface)
+	auto texturePositionEntry = texturePositionsPerKey.find(surface.surface);
+	if (texturePositionEntry == texturePositionsPerKey.end())
 	{
-		auto entry = texturePositionsPerKey.find(surface.surface);
-		if (entry == texturePositionsPerKey.end())
+		loaded.texturePositions.size = 16 * sizeof(float);
+		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
 		{
-			loaded.texturePositions.size = 16 * sizeof(float);
-			if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
-			{
-				loaded.texturePositions.buffer = new SharedMemoryBuffer { };
-				loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
-				buffers.MoveToFront(loaded.texturePositions.buffer);
-				latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
-				usedInLatestSharedMemoryTexturePositionBuffer = 0;
-			}
-			else
-			{
-				loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-				loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
-			}
-			usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
-			size += loaded.texturePositions.size;
-			loaded.texturePositions.source = surface.surface;
-			buffers.SetupSurfaceTexturePosition(loaded.texturePositions);
-			SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
-			texturePositionsPerKey.insert({ surface.surface, newEntry });
+			loaded.texturePositions.buffer = new SharedMemoryBuffer { };
+			loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.texturePositions.buffer);
+			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+			usedInLatestSharedMemoryTexturePositionBuffer = 0;
 		}
 		else
 		{
-			loaded.texturePositions.size = 0;
-			loaded.texturePositions.buffer = entry->second.buffer;
-			loaded.texturePositions.offset = entry->second.offset;
+			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+			loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		}
-		previousSurface = surface.surface;
-		previousTexturePosition = loaded.texturePositions.buffer;
-		previousTexturePositionOffset = loaded.texturePositions.offset;
+		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
+		size += loaded.texturePositions.size;
+		loaded.texturePositions.source = surface.surface;
+		buffers.SetupSurfaceTexturePosition(loaded.texturePositions);
+		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
+		texturePositionsPerKey.insert({ surface.surface, newEntry });
 	}
 	else
 	{
 		loaded.texturePositions.size = 0;
-		loaded.texturePositions.buffer = previousTexturePosition;
-		loaded.texturePositions.offset = previousTexturePositionOffset;
+		loaded.texturePositions.buffer = texturePositionEntry->second.buffer;
+		loaded.texturePositions.offset = texturePositionEntry->second.offset;
 	}
-	auto entry = lightmaps.lightmaps.find(surface.surface);
-	if (entry == lightmaps.lightmaps.end())
+	auto lightmapEntry = lightmaps.lightmaps.find(surface.surface);
+	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap { };
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1211,7 +1199,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	}
 	else if (surface.created)
 	{
-		auto first = entry->second;
+		auto first = lightmapEntry->second;
 		auto available = (first->unusedCount >= appState.PerImage.size());
 		if (first->next == nullptr || available)
 		{
@@ -1226,7 +1214,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				lightmap->key = surface.surface;
 				lightmap->next = first;
-				entry->second = lightmap;
+				lightmapEntry->second = lightmap;
 				loaded.lightmap.lightmap = lightmap;
 			}
 		}
@@ -1241,7 +1229,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 					lightmap->unusedCount = 0;
 					previous->next = lightmap->next;
 					lightmap->next = first;
-					entry->second = lightmap;
+					lightmapEntry->second = lightmap;
 					loaded.lightmap.lightmap = lightmap;
 					break;
 				}
@@ -1251,8 +1239,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 				auto lightmap = new Lightmap { };
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				lightmap->key = surface.surface;
-				lightmap->next = entry->second;
-				entry->second = lightmap;
+				lightmap->next = lightmapEntry->second;
+				lightmapEntry->second = lightmap;
 				loaded.lightmap.lightmap = lightmap;
 			}
 		}
@@ -1263,7 +1251,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	}
 	else
 	{
-		auto lightmap = entry->second;
+		auto lightmap = lightmapEntry->second;
 		lightmap->unusedCount = 0;
 		loaded.lightmap.lightmap = lightmap;
 		loaded.lightmap.size = 0;
@@ -1333,50 +1321,38 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
-	if (previousSurface != surface.surface)
+	auto texturePositionEntry = texturePositionsPerKey.find(surface.surface);
+	if (texturePositionEntry == texturePositionsPerKey.end())
 	{
-		auto entry = texturePositionsPerKey.find(surface.surface);
-		if (entry == texturePositionsPerKey.end())
+		loaded.texturePositions.size = 16 * sizeof(float);
+		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
 		{
-			loaded.texturePositions.size = 16 * sizeof(float);
-			if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
-			{
-				loaded.texturePositions.buffer = new SharedMemoryBuffer { };
-				loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
-				buffers.MoveToFront(loaded.texturePositions.buffer);
-				latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
-				usedInLatestSharedMemoryTexturePositionBuffer = 0;
-			}
-			else
-			{
-				loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-				loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
-			}
-			usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
-			size += loaded.texturePositions.size;
-			loaded.texturePositions.source = surface.surface;
-			buffers.SetupSurfaceTexturePosition(loaded.texturePositions);
-			SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
-			texturePositionsPerKey.insert({ surface.surface, newEntry });
+			loaded.texturePositions.buffer = new SharedMemoryBuffer { };
+			loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.texturePositions.buffer);
+			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+			usedInLatestSharedMemoryTexturePositionBuffer = 0;
 		}
 		else
 		{
-			loaded.texturePositions.size = 0;
-			loaded.texturePositions.buffer = entry->second.buffer;
-			loaded.texturePositions.offset = entry->second.offset;
+			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+			loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		}
-		previousSurface = surface.surface;
-		previousTexturePosition = loaded.texturePositions.buffer;
-		previousTexturePositionOffset = loaded.texturePositions.offset;
+		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
+		size += loaded.texturePositions.size;
+		loaded.texturePositions.source = surface.surface;
+		buffers.SetupSurfaceTexturePosition(loaded.texturePositions);
+		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
+		texturePositionsPerKey.insert({ surface.surface, newEntry });
 	}
 	else
 	{
 		loaded.texturePositions.size = 0;
-		loaded.texturePositions.buffer = previousTexturePosition;
-		loaded.texturePositions.offset = previousTexturePositionOffset;
+		loaded.texturePositions.buffer = texturePositionEntry->second.buffer;
+		loaded.texturePositions.offset = texturePositionEntry->second.offset;
 	}
-	auto entry = lightmaps.lightmaps.find(surface.surface);
-	if (entry == lightmaps.lightmaps.end())
+	auto lightmapEntry = lightmaps.lightmaps.find(surface.surface);
+	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap { };
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1390,7 +1366,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 	}
 	else if (surface.created)
 	{
-		auto first = entry->second;
+		auto first = lightmapEntry->second;
 		auto available = (first->unusedCount >= appState.PerImage.size());
 		if (first->next == nullptr || available)
 		{
@@ -1405,7 +1381,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				lightmap->key = surface.surface;
 				lightmap->next = first;
-				entry->second = lightmap;
+				lightmapEntry->second = lightmap;
 				loaded.lightmap.lightmap = lightmap;
 			}
 		}
@@ -1420,7 +1396,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 					lightmap->unusedCount = 0;
 					previous->next = lightmap->next;
 					lightmap->next = first;
-					entry->second = lightmap;
+					lightmapEntry->second = lightmap;
 					loaded.lightmap.lightmap = lightmap;
 					break;
 				}
@@ -1430,8 +1406,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 				auto lightmap = new Lightmap { };
 				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				lightmap->key = surface.surface;
-				lightmap->next = entry->second;
-				entry->second = lightmap;
+				lightmap->next = lightmapEntry->second;
+				lightmapEntry->second = lightmap;
 				loaded.lightmap.lightmap = lightmap;
 			}
 		}
@@ -1442,7 +1418,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 	}
 	else
 	{
-		auto lightmap = entry->second;
+		auto lightmap = lightmapEntry->second;
 		lightmap->unusedCount = 0;
 		loaded.lightmap.lightmap = lightmap;
 		loaded.lightmap.size = 0;
@@ -1515,47 +1491,35 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
-	if (previousSurface != turbulent.surface)
+	auto entry = texturePositionsPerKey.find(turbulent.surface);
+	if (entry == texturePositionsPerKey.end())
 	{
-		auto entry = texturePositionsPerKey.find(turbulent.surface);
-		if (entry == texturePositionsPerKey.end())
+		loaded.texturePositions.size = 16 * sizeof(float);
+		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
 		{
-			loaded.texturePositions.size = 16 * sizeof(float);
-			if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
-			{
-				loaded.texturePositions.buffer = new SharedMemoryBuffer { };
-				loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
-				buffers.MoveToFront(loaded.texturePositions.buffer);
-				latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
-				usedInLatestSharedMemoryTexturePositionBuffer = 0;
-			}
-			else
-			{
-				loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-				loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
-			}
-			usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
-			size += loaded.texturePositions.size;
-			loaded.texturePositions.source = turbulent.surface;
-			buffers.SetupTurbulentTexturePosition(loaded.texturePositions);
-			SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
-			texturePositionsPerKey.insert({ turbulent.surface, newEntry });
+			loaded.texturePositions.buffer = new SharedMemoryBuffer { };
+			loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.texturePositions.buffer);
+			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+			usedInLatestSharedMemoryTexturePositionBuffer = 0;
 		}
 		else
 		{
-			loaded.texturePositions.size = 0;
-			loaded.texturePositions.buffer = entry->second.buffer;
-			loaded.texturePositions.offset = entry->second.offset;
+			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+			loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		}
-		previousSurface = turbulent.surface;
-		previousTexturePosition = loaded.texturePositions.buffer;
-		previousTexturePositionOffset = loaded.texturePositions.offset;
+		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
+		size += loaded.texturePositions.size;
+		loaded.texturePositions.source = turbulent.surface;
+		buffers.SetupTurbulentTexturePosition(loaded.texturePositions);
+		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
+		texturePositionsPerKey.insert({ turbulent.surface, newEntry });
 	}
 	else
 	{
 		loaded.texturePositions.size = 0;
-		loaded.texturePositions.buffer = previousTexturePosition;
-		loaded.texturePositions.offset = previousTexturePositionOffset;
+		loaded.texturePositions.buffer = entry->second.buffer;
+		loaded.texturePositions.offset = entry->second.offset;
 	}
 	if (previousTexture != turbulent.texture)
 	{
@@ -1622,47 +1586,35 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& 
 		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
-	if (previousSurface != turbulent.surface)
+	auto entry = texturePositionsPerKey.find(turbulent.surface);
+	if (entry == texturePositionsPerKey.end())
 	{
-		auto entry = texturePositionsPerKey.find(turbulent.surface);
-		if (entry == texturePositionsPerKey.end())
+		loaded.texturePositions.size = 16 * sizeof(float);
+		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
 		{
-			loaded.texturePositions.size = 16 * sizeof(float);
-			if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
-			{
-				loaded.texturePositions.buffer = new SharedMemoryBuffer { };
-				loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
-				buffers.MoveToFront(loaded.texturePositions.buffer);
-				latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
-				usedInLatestSharedMemoryTexturePositionBuffer = 0;
-			}
-			else
-			{
-				loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-				loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
-			}
-			usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
-			size += loaded.texturePositions.size;
-			loaded.texturePositions.source = turbulent.surface;
-			buffers.SetupTurbulentTexturePosition(loaded.texturePositions);
-			SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
-			texturePositionsPerKey.insert({ turbulent.surface, newEntry });
+			loaded.texturePositions.buffer = new SharedMemoryBuffer { };
+			loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.texturePositions.buffer);
+			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+			usedInLatestSharedMemoryTexturePositionBuffer = 0;
 		}
 		else
 		{
-			loaded.texturePositions.size = 0;
-			loaded.texturePositions.buffer = entry->second.buffer;
-			loaded.texturePositions.offset = entry->second.offset;
+			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+			loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		}
-		previousSurface = turbulent.surface;
-		previousTexturePosition = loaded.texturePositions.buffer;
-		previousTexturePositionOffset = loaded.texturePositions.offset;
+		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
+		size += loaded.texturePositions.size;
+		loaded.texturePositions.source = turbulent.surface;
+		buffers.SetupTurbulentTexturePosition(loaded.texturePositions);
+		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
+		texturePositionsPerKey.insert({ turbulent.surface, newEntry });
 	}
 	else
 	{
 		loaded.texturePositions.size = 0;
-		loaded.texturePositions.buffer = previousTexturePosition;
-		loaded.texturePositions.offset = previousTexturePositionOffset;
+		loaded.texturePositions.buffer = entry->second.buffer;
+		loaded.texturePositions.offset = entry->second.offset;
 	}
 	if (previousTexture != turbulent.texture)
 	{
