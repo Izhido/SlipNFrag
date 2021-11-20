@@ -1200,7 +1200,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	else if (surface.created)
 	{
 		auto first = lightmapEntry->second;
-		auto available = (first->unusedCount >= appState.PerImage.size());
+		auto available = (first->unusedCount >= Constants::maxUnusedCount);
 		if (first->next == nullptr || available)
 		{
 			if (available)
@@ -1223,7 +1223,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			auto found = false;
 			for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
 			{
-				if (lightmap->unusedCount >= appState.PerImage.size())
+				if (lightmap->unusedCount >= Constants::maxUnusedCount)
 				{
 					found = true;
 					lightmap->unusedCount = 0;
@@ -1367,7 +1367,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 	else if (surface.created)
 	{
 		auto first = lightmapEntry->second;
-		auto available = (first->unusedCount >= appState.PerImage.size());
+		auto available = (first->unusedCount >= Constants::maxUnusedCount);
 		if (first->next == nullptr || available)
 		{
 			if (available)
@@ -1390,7 +1390,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 			auto found = false;
 			for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
 			{
-				if (lightmap->unusedCount >= appState.PerImage.size())
+				if (lightmap->unusedCount >= Constants::maxUnusedCount)
 				{
 					found = true;
 					lightmap->unusedCount = 0;
