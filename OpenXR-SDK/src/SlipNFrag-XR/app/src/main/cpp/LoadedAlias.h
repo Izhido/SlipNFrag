@@ -2,14 +2,14 @@
 
 #include "LoadedSharedMemoryBuffer.h"
 #include "LoadedSharedMemoryTexCoordsBuffer.h"
+#include "LoadedSharedMemoryWithOffsetBuffer.h"
 #include "LoadedColormappedTexture.h"
-#include "LoadedSharedMemoryAliasIndexBuffer.h"
 
 struct LoadedAlias
 {
 	LoadedSharedMemoryBuffer vertices;
 	LoadedSharedMemoryTexCoordsBuffer texCoords;
-	LoadedSharedMemoryAliasIndexBuffer indices;
+	LoadedSharedMemoryWithOffsetBuffer indices;
 	LoadedColormappedTexture colormapped;
 	int firstAttribute;
 	bool isHostColormap;

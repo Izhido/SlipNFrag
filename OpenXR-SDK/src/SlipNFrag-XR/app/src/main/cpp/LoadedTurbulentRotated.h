@@ -1,14 +1,14 @@
 #pragma once
 
 #include "LoadedSharedMemoryBuffer.h"
-#include "LoadedSharedMemoryTexturePositionBuffer.h"
+#include "LoadedSharedMemoryWithOffsetBuffer.h"
 #include "LoadedSharedMemoryIndexBuffer.h"
 #include "LoadedSharedMemoryTexture.h"
 
 struct LoadedTurbulentRotated
 {
 	LoadedSharedMemoryBuffer vertices;
-	LoadedSharedMemoryTexturePositionBuffer texturePositions;
+	LoadedSharedMemoryWithOffsetBuffer texturePositions;
 	LoadedSharedMemoryIndexBuffer indices;
 	LoadedSharedMemoryTexture texture;
 	uint32_t count;

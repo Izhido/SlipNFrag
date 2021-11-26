@@ -1166,7 +1166,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 }
 
-void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryAliasIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
+void PerImage::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryWithOffsetBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;
 	auto delayed = false;
@@ -1205,7 +1205,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 }
 
-void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryTexturePositionBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
+void PerImage::FillTexturePositionsFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryWithOffsetBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;
 	auto delayed = false;
@@ -1286,7 +1286,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 
 	SharedMemoryBuffer* previousBuffer = nullptr;
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstIndices16, bufferCopy, previousBuffer);
-	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices16, bufferCopy, previousBuffer);
+	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices16, bufferCopy, previousBuffer);
 
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
@@ -1294,10 +1294,10 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstIndices32, bufferCopy, previousBuffer);
-	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices32, bufferCopy, previousBuffer);
+	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices32, bufferCopy, previousBuffer);
 
-	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstSurfaceTexturePosition, bufferCopy, previousBuffer);
-	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstTurbulentTexturePosition, bufferCopy, previousBuffer);
+	FillTexturePositionsFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstSurfaceTexturePosition, bufferCopy, previousBuffer);
+	FillTexturePositionsFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstTurbulentTexturePosition, bufferCopy, previousBuffer);
 
 	bufferCopy.dstOffset = 0;
 

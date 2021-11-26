@@ -2,11 +2,11 @@
 
 #include "SharedMemoryBuffer.h"
 
-struct LoadedSharedMemoryTexturePositionBuffer
+struct LoadedSharedMemoryWithOffsetBuffer
 {
 	SharedMemoryBuffer* buffer;
 	VkDeviceSize size;
 	VkDeviceSize offset;
 	void* source;
-	LoadedSharedMemoryTexturePositionBuffer* next;
+	LoadedSharedMemoryWithOffsetBuffer* next;
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "LoadedSharedMemoryBuffer.h"
-#include "LoadedSharedMemoryTexturePositionBuffer.h"
+#include "LoadedSharedMemoryWithOffsetBuffer.h"
 #include "LoadedSharedMemoryIndexBuffer.h"
 #include "LoadedLightmap.h"
 #include "LoadedSharedMemoryTexture.h"
@@ -9,7 +9,7 @@
 struct LoadedSurfaceRotated
 {
 	LoadedSharedMemoryBuffer vertices;
-	LoadedSharedMemoryTexturePositionBuffer texturePositions;
+	LoadedSharedMemoryWithOffsetBuffer texturePositions;
 	LoadedSharedMemoryIndexBuffer indices;
 	LoadedLightmap lightmap;
 	LoadedSharedMemoryTexture texture;
