@@ -113,8 +113,7 @@ typedef struct msurface_s
 	int			numedges;	// are backwards edges
 	
 // surface generation data
-	struct surfcache_s	*surfcachespots[MIPLEVELS];
-	struct surfcache_s	*lightmapcachespot;
+	struct surfcache_s	*cachespots[MIPLEVELS];
 
 	int			texturemins[2];
 	int			extents[2];

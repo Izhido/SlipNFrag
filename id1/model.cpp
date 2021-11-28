@@ -233,11 +233,7 @@ void Mod_ClearCacheSurfaces()
 	{
 		for (auto& surface : list)
 		{
-			for (auto i = 0; i < MIPLEVELS; i++)
-			{
-				surface.surfcachespots[i] = nullptr;
-				surface.lightmapcachespot = nullptr;
-			}
+			std::fill(surface.cachespots, surface.cachespots + MIPLEVELS, nullptr);
 		}
 	}
 }

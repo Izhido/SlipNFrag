@@ -301,7 +301,7 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 //
 // see if the cache holds apropriate data
 //
-	cache = surface->surfcachespots[miplevel];
+	cache = surface->cachespots[miplevel];
 
 	if (cache && !cache->dlight && surface->dlightframe != r_framecount
 			&& cache->texture == r_drawsurf.texture
@@ -333,8 +333,8 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 		{
 			return false;
 		}
-		surface->surfcachespots[miplevel] = cache;
-		cache->owner = &surface->surfcachespots[miplevel];
+		surface->cachespots[miplevel] = cache;
+		cache->owner = &surface->cachespots[miplevel];
 		cache->mipscale = surfscale;
 	}
 	
@@ -368,7 +368,7 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 	c_surf++;
 	R_DrawSurface ();
 
-	(*result) = surface->surfcachespots[miplevel];
+	(*result) = surface->cachespots[miplevel];
 	return true;
 }
 
@@ -395,7 +395,7 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 //
 // see if the cache holds apropriate data
 //
-	cache = surface->lightmapcachespot;
+	cache = surface->cachespots[0];
 
 	if (cache && !cache->dlight && surface->dlightframe != r_framecount
 		&& cache->texture == r_drawsurf.texture
@@ -424,8 +424,8 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 		{
 			return false;
 		}
-		surface->lightmapcachespot = cache;
-		cache->owner = &surface->lightmapcachespot;
+		surface->cachespots[0] = cache;
+		cache->owner = &surface->cachespots[0];
 	}
 
 	if (surface->dlightframe == r_framecount)
@@ -452,7 +452,7 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 	c_surf++;
 	R_BuildLightMap ();
 
-	(*result) = surface->lightmapcachespot;
+	(*result) = surface->cachespots[0];
 	return true;
 }
 
