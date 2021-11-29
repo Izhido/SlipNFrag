@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "d_local.h"
 #include "r_local.h"
 
+float           surfscale;
 qboolean        r_cache_thrash;         // set if surface cache is thrashing
 
 int                                     sc_size;
@@ -285,7 +286,7 @@ int D_log2 (int num)
 D_CacheSurface
 ================
 */
-qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result)
+surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 {
 	surfcache_t     *cache;
 
@@ -309,14 +310,12 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 			&& cache->lightadj[1] == r_drawsurf.lightadj[1]
 			&& cache->lightadj[2] == r_drawsurf.lightadj[2]
 			&& cache->lightadj[3] == r_drawsurf.lightadj[3] )
-	{
-		(*result) = cache;
-		return false;
-	}
+		return cache;
+
 //
 // determine shape of surface
 //
-	float surfscale = 1.0 / (1<<miplevel);
+	surfscale = 1.0 / (1<<miplevel);
 	r_drawsurf.surfmip = miplevel;
 	r_drawsurf.surfwidth = surface->extents[0] >> miplevel;
 	r_drawsurf.rowbytes = r_drawsurf.surfwidth;
@@ -329,11 +328,11 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 	{
 		cache = D_SCAlloc (r_drawsurf.surfwidth,
 						   r_drawsurf.surfwidth * r_drawsurf.surfheight);
+		surface->cachespots[miplevel] = cache;
 		if (cache == nullptr)
 		{
-			return false;
+			return cache;
 		}
-		surface->cachespots[miplevel] = cache;
 		cache->owner = &surface->cachespots[miplevel];
 		cache->mipscale = surfscale;
 	}
@@ -368,8 +367,7 @@ qboolean D_CacheSurface (msurface_t *surface, int miplevel, surfcache_t **result
 	c_surf++;
 	R_DrawSurface ();
 
-	(*result) = surface->cachespots[miplevel];
-	return true;
+	return surface->cachespots[miplevel];
 }
 
 //=============================================================================
@@ -420,11 +418,11 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 	{
 		cache = D_SCAlloc (r_blocklights_smax * sizeof(unsigned),
 						   r_blocklights_smax * sizeof(unsigned) * r_blocklights_tmax);
+		surface->cachespots[0] = cache;
 		if (cache == nullptr)
 		{
 			return false;
 		}
-		surface->cachespots[0] = cache;
 		cache->owner = &surface->cachespots[0];
 	}
 

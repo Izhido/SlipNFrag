@@ -187,10 +187,7 @@ void D_DrawSurfaces (void)
 			d_zistepv = s->d_zistepv;
             d_ziorigin = s->d_ziorigin;
 
-			auto data_ptr = (size_t)s->data;
-            int data = (int)data_ptr & 0xFF;
-
-			D_DrawSolidSurface (s, data);
+			D_DrawSolidSurface (s, (int)((size_t)s->data) & 0xFF);
 			(*d_drawzspans) (s->spans);
 		}
 	}
@@ -338,8 +335,7 @@ void D_DrawSurfaces (void)
 				* pface->texinfo->mipadjust);
 
 			// FIXME: make this passed in to D_CacheSurface
-				pcurrentcache = nullptr;
-				D_CacheSurface (pface, miplevel, &pcurrentcache);
+				pcurrentcache = D_CacheSurface (pface, miplevel);
 
 				if (pcurrentcache != nullptr)
 				{
@@ -404,8 +400,7 @@ void D_DrawSurfaces (void)
 			* pface->texinfo->mipadjust);
 
 		// FIXME: make this passed in to D_CacheSurface
-			pcurrentcache = nullptr;
-			D_CacheSurface (pface, miplevel, &pcurrentcache);
+			pcurrentcache = D_CacheSurface (pface, miplevel);
 
 			if (pcurrentcache != nullptr)
 			{
