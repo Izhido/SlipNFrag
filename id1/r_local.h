@@ -110,8 +110,6 @@ extern	float	xOrigin, yOrigin;
 
 extern	int		r_visframecount;
 
-extern std::unordered_set<surf_t*> r_drawnsurfaces;
-
 //=============================================================================
 
 //

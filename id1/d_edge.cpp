@@ -40,7 +40,7 @@ extern qboolean r_skyinitialized;
 extern qboolean r_skyboxinitialized;
 extern mtexinfo_t r_skytexinfo[6];
 
-std::unordered_set<surf_t*> r_drawnsurfaces;
+std::unordered_set<surf_t*> d_drawnsurfaces;
 
 /*
 =============
@@ -634,10 +634,10 @@ void D_DrawSurfacesToListsIfNeeded (void)
 	{
 		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
-			if (r_drawnsurfaces.find(s) != r_drawnsurfaces.end())
+			if (d_drawnsurfaces.find(s) != d_drawnsurfaces.end())
 				continue;
 
-			r_drawnsurfaces.insert(s);
+			d_drawnsurfaces.insert(s);
 
 			if (!s->draw || s->flags & SURF_DRAWSKYBOX)
 				continue;
@@ -660,10 +660,10 @@ void D_DrawSurfacesToListsIfNeeded (void)
 			if (!s->draw)
 				continue;
 
-			if (r_drawnsurfaces.find(s) != r_drawnsurfaces.end())
+			if (d_drawnsurfaces.find(s) != d_drawnsurfaces.end())
 				continue;
 
-			r_drawnsurfaces.insert(s);
+			d_drawnsurfaces.insert(s);
 
 			r_drawnpolycount++;
 
