@@ -1620,7 +1620,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastSurface16 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -1633,11 +1633,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
@@ -1666,7 +1666,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastSurface32 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -1679,11 +1679,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
@@ -1717,7 +1717,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastSurfaceRotated16 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -1730,11 +1730,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
@@ -1763,7 +1763,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastSurfaceRotated32 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -1776,11 +1776,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
@@ -1814,7 +1814,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastFence16 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -1827,11 +1827,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
@@ -1860,7 +1860,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastFence32 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -1873,11 +1873,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
@@ -1911,7 +1911,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastFenceRotated16 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -1924,11 +1924,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
@@ -1957,7 +1957,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastFenceRotated32 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -1970,11 +1970,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				auto lightmap = loaded.lightmap.lightmap;
 				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
@@ -2028,7 +2028,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastTurbulent16 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastTurbulent16; i++)
@@ -2040,11 +2040,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), pushConstants);
@@ -2066,7 +2066,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastTurbulent32 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastTurbulent32; i++)
@@ -2078,11 +2078,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), pushConstants);
@@ -2110,7 +2110,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastTurbulentRotated16 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastTurbulentRotated16; i++)
@@ -2122,11 +2122,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 7 * sizeof(float), pushConstants);
@@ -2148,7 +2148,7 @@ void PerImage::Render(AppState& appState)
 		if (appState.Scene.lastTurbulentRotated32 >= 0)
 		{
 			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePosition = nullptr;
+			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastTurbulentRotated32; i++)
@@ -2160,11 +2160,11 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 					previousVertices = vertices;
 				}
-				auto texturePosition = loaded.texturePositions.buffer;
-				if (previousTexturePosition != texturePosition)
+				auto texturePositions = loaded.texturePositions.buffer;
+				if (previousTexturePositions != texturePositions)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePosition->buffer, &appState.NoOffset);
-					previousTexturePosition = texturePosition;
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+					previousTexturePositions = texturePositions;
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 7 * sizeof(float), pushConstants);
