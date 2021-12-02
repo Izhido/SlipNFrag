@@ -812,7 +812,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += loadedAliasIndexBuffer->size;
 		loadedAliasIndexBuffer = loadedAliasIndexBuffer->next;
 	}
-	auto loadedTexturePositionBuffer = appState.Scene.buffers.firstSurfaceTexturePosition;
+	auto loadedTexturePositionBuffer = appState.Scene.buffers.firstSurfaceTexturePositions;
 	while (loadedTexturePositionBuffer != nullptr)
 	{
 		auto source = (msurface_t*)loadedTexturePositionBuffer->source;
@@ -834,7 +834,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += loadedTexturePositionBuffer->size;
 		loadedTexturePositionBuffer = loadedTexturePositionBuffer->next;
 	}
-	loadedTexturePositionBuffer = appState.Scene.buffers.firstTurbulentTexturePosition;
+	loadedTexturePositionBuffer = appState.Scene.buffers.firstTurbulentTexturePositions;
 	while (loadedTexturePositionBuffer != nullptr)
 	{
 		auto source = (msurface_t*)loadedTexturePositionBuffer->source;
@@ -1296,8 +1296,8 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstIndices32, bufferCopy, previousBuffer);
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasIndices32, bufferCopy, previousBuffer);
 
-	FillTexturePositionsFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstSurfaceTexturePosition, bufferCopy, previousBuffer);
-	FillTexturePositionsFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstTurbulentTexturePosition, bufferCopy, previousBuffer);
+	FillTexturePositionsFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstSurfaceTexturePositions, bufferCopy, previousBuffer);
+	FillTexturePositionsFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstTurbulentTexturePositions, bufferCopy, previousBuffer);
 
 	bufferCopy.dstOffset = 0;
 

@@ -13,10 +13,10 @@ void CachedSharedMemoryBuffers::Initialize()
 	currentAliasIndices16 = nullptr;
 	firstAliasIndices32 = nullptr;
 	currentAliasIndices32 = nullptr;
-	firstSurfaceTexturePosition = nullptr;
-	currentSurfaceTexturePosition = nullptr;
-	firstTurbulentTexturePosition = nullptr;
-	currentTurbulentTexturePosition = nullptr;
+	firstSurfaceTexturePositions = nullptr;
+	currentSurfaceTexturePositions = nullptr;
+	firstTurbulentTexturePositions = nullptr;
+	currentTurbulentTexturePositions = nullptr;
 	firstAliasVertices = nullptr;
 	currentAliasVertices = nullptr;
 	firstAliasTexCoords = nullptr;
@@ -93,32 +93,32 @@ void CachedSharedMemoryBuffers::SetupAliasIndices32(LoadedSharedMemoryWithOffset
 	currentAliasIndices32 = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupSurfaceTexturePosition(LoadedSharedMemoryWithOffsetBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupSurfaceTexturePositions(LoadedSharedMemoryWithOffsetBuffer& loaded)
 {
 	loaded.next = nullptr;
-	if (currentSurfaceTexturePosition == nullptr)
+	if (currentSurfaceTexturePositions == nullptr)
 	{
-		firstSurfaceTexturePosition = &loaded;
+		firstSurfaceTexturePositions = &loaded;
 	}
 	else
 	{
-		currentSurfaceTexturePosition->next = &loaded;
+		currentSurfaceTexturePositions->next = &loaded;
 	}
-	currentSurfaceTexturePosition = &loaded;
+	currentSurfaceTexturePositions = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupTurbulentTexturePosition(LoadedSharedMemoryWithOffsetBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupTurbulentTexturePositions(LoadedSharedMemoryWithOffsetBuffer& loaded)
 {
 	loaded.next = nullptr;
-	if (currentTurbulentTexturePosition == nullptr)
+	if (currentTurbulentTexturePositions == nullptr)
 	{
-		firstTurbulentTexturePosition = &loaded;
+		firstTurbulentTexturePositions = &loaded;
 	}
 	else
 	{
-		currentTurbulentTexturePosition->next = &loaded;
+		currentTurbulentTexturePositions->next = &loaded;
 	}
-	currentTurbulentTexturePosition = &loaded;
+	currentTurbulentTexturePositions = &loaded;
 }
 
 void CachedSharedMemoryBuffers::SetupAliasVertices(LoadedSharedMemoryBuffer& loaded)

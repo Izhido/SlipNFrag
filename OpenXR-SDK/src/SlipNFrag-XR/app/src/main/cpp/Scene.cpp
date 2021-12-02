@@ -1174,7 +1174,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = surface.surface;
-		buffers.SetupSurfaceTexturePosition(loaded.texturePositions);
+		buffers.SetupSurfaceTexturePositions(loaded.texturePositions);
 		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
 		texturePositionsPerKey.insert({ surface.surface, newEntry });
 	}
@@ -1341,7 +1341,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = surface.surface;
-		buffers.SetupSurfaceTexturePosition(loaded.texturePositions);
+		buffers.SetupSurfaceTexturePositions(loaded.texturePositions);
 		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
 		texturePositionsPerKey.insert({ surface.surface, newEntry });
 	}
@@ -1511,7 +1511,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = turbulent.surface;
-		buffers.SetupTurbulentTexturePosition(loaded.texturePositions);
+		buffers.SetupTurbulentTexturePositions(loaded.texturePositions);
 		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
 		texturePositionsPerKey.insert({ turbulent.surface, newEntry });
 	}
@@ -1606,7 +1606,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& 
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = turbulent.surface;
-		buffers.SetupTurbulentTexturePosition(loaded.texturePositions);
+		buffers.SetupTurbulentTexturePositions(loaded.texturePositions);
 		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
 		texturePositionsPerKey.insert({ turbulent.surface, newEntry });
 	}
