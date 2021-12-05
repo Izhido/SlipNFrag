@@ -46,6 +46,6 @@ void main(void)
 	vec4 position4 = vec4(vertexPosition, 1);
 	vec2 texCoords = vec2(dot(position4, texturePosition[0]), dot(position4, texturePosition[1]));
 	vec2 lightmapSize = vec2((int(texturePosition[2].z) >> 4) + 1, (int(texturePosition[2].w) >> 4) + 1);
-	vec2 lightmapCoords = ((texCoords - texturePosition[2].xy) * (lightmapSize - 1) / texturePosition[2].zw) + 0.5;
+	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * (lightmapSize - 1) / texturePosition[2].zw;
 	fragmentData = vec4(lightmapCoords.xy, texCoords / texturePosition[3].xy);
 }

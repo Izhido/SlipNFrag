@@ -25,10 +25,16 @@ layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
-	vec3 lightmapSize = textureSize(fragmentLightmap, 0);
-	vec3 lightmapCoords = vec3(fragmentData.xy / lightmapSize.xy, lightmapIndex);
-	vec4 lightmapEntry = texture(fragmentLightmap, lightmapCoords);
-	uint light = (uint(lightmapEntry.x) / 256) % 64;
+	ivec2 lightmapCoords = ivec2(floor(fragmentData.xy));
+	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords, lightmapIndex), 0);
+	vec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y, lightmapIndex), 0);
+	vec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y + 1, lightmapIndex), 0);
+	vec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x, lightmapCoords.y + 1, lightmapIndex), 0);
+	vec2 lightmapCoordsDelta = floor(((fragmentData.xy - lightmapCoords) + 0.125) * 4) / 4;
+	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
+	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
+	float lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);
+	uint light = (uint(lightmapEntry) / 256) % 64;
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentData.zw);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
 	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentData.zw, texMip.x);
