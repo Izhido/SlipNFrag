@@ -30,7 +30,7 @@ void main()
 	vec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y, lightmapIndex), 0);
 	vec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y + 1, lightmapIndex), 0);
 	vec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x, lightmapCoords.y + 1, lightmapIndex), 0);
-	vec2 lightmapCoordsDelta = floor(((fragmentData.xy - lightmapCoords) + 0.125) * 4) / 4;
+	vec2 lightmapCoordsDelta = floor(((fragmentData.xy - lightmapCoords) + 0.03125) * 16) / 16;
 	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
 	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
 	float lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);
