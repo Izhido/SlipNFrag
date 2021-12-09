@@ -55,7 +55,7 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	surface.entity = entity;
 	surface.model = entity->model;
 	surface.created = (created ? 1: 0);
-	auto texture = R_TextureAnimation(face->texinfo->texture);
+	auto texture = (texture_t*)(cache->texture);
 	surface.texture_width = texture->width;
 	surface.texture_height = texture->height;
 	surface.texture_size = surface.texture_width * surface.texture_height;
@@ -82,7 +82,7 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	surface.entity = entity;
 	surface.model = entity->model;
 	surface.created = (created ? 1: 0);
-	auto texture = R_TextureAnimation(face->texinfo->texture);
+	auto texture = (texture_t*)(cache->texture);
 	surface.texture_width = texture->width;
 	surface.texture_height = texture->height;
 	surface.texture_size = surface.texture_width * surface.texture_height;

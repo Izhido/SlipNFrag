@@ -384,7 +384,7 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 //
 // if the surface is animating or flashing, flush the cache
 //
-	r_drawsurf.texture = surface->texinfo->texture;
+	r_drawsurf.texture = R_TextureAnimation (surface->texinfo->texture);
 	r_drawsurf.lightadj[0] = d_lightstylevalue[surface->styles[0]];
 	r_drawsurf.lightadj[1] = d_lightstylevalue[surface->styles[1]];
 	r_drawsurf.lightadj[2] = d_lightstylevalue[surface->styles[2]];
@@ -424,6 +424,7 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 			return false;
 		}
 		cache->owner = &surface->cachespots[0];
+		cache->mipscale = 1;
 	}
 
 	if (surface->dlightframe == r_framecount)
