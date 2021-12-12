@@ -49,12 +49,12 @@ void D_ResetLists ()
 	d_lists.clear_color = -1;
 }
 
-void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, int created)
 {
 	surface.surface = face;
 	surface.entity = entity;
 	surface.model = entity->model;
-	surface.created = (created ? 1: 0);
+	surface.created = created;
 	auto texture = (texture_t*)(cache->texture);
 	surface.texture_width = texture->width;
 	surface.texture_height = texture->height;
@@ -76,12 +76,12 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	surface.origin_z = entity->origin[2];
 }
 
-void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, int created)
 {
 	surface.surface = face;
 	surface.entity = entity;
 	surface.model = entity->model;
-	surface.created = (created ? 1: 0);
+	surface.created = created;
 	auto texture = (texture_t*)(cache->texture);
 	surface.texture_width = texture->width;
 	surface.texture_height = texture->height;
@@ -106,7 +106,7 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	surface.roll = entity->angles[ROLL];
 }
 
-void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, int created)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
 	{
@@ -132,7 +132,7 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 	D_FillSurfaceData(surface, face, cache, entity, created);
 }
 
-void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, int created)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
 	{
@@ -158,7 +158,7 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_t* cache, entity_t*
 	D_FillSurfaceRotatedData(surface, face, cache, entity, created);
 }
 
-void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, int created)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
 	{
@@ -184,7 +184,7 @@ void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, 
 	D_FillSurfaceData(fence, face, cache, entity, created);
 }
 
-void D_AddFenceRotatedToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, qboolean created)
+void D_AddFenceRotatedToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, int created)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
 	{

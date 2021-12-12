@@ -9,6 +9,7 @@ struct Lightmap
 {
 	Lightmap* next;
 	void* key;
+	int createdFrameCount;
 	int unusedCount;
 	int width;
 	int height;

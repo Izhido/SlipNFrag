@@ -185,10 +185,10 @@ extern qboolean d_uselists;
 extern qboolean d_awayfromviewmodel;
 
 void D_ResetLists ();
-void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
-void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
-void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
-void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, qboolean created);
+void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, int created);
+void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, int created);
+void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, int created);
+void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, int created);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);

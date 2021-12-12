@@ -377,7 +377,7 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 D_CacheLightmap
 ================
 */
-qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
+int D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 {
 	surfcache_t     *cache;
 
@@ -403,7 +403,7 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 		&& cache->lightadj[3] == r_drawsurf.lightadj[3] )
 	{
 		(*result) = cache;
-		return false;
+		return 0;
 	}
 //
 // determine shape of surface
@@ -421,7 +421,7 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 		surface->cachespots[0] = cache;
 		if (cache == nullptr)
 		{
-			return false;
+			return 0;
 		}
 		cache->owner = &surface->cachespots[0];
 		cache->mipscale = 1;
@@ -452,7 +452,7 @@ qboolean D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 	R_BuildLightMap ();
 
 	(*result) = surface->cachespots[0];
-	return true;
+	return r_framecount;
 }
 
 

@@ -1187,6 +1187,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		auto lightmap = new Lightmap { };
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		lightmap->key = surface.surface;
+		lightmap->createdFrameCount = surface.created;
 		loaded.lightmap.lightmap = lightmap;
 		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
 		size += loaded.lightmap.size;
@@ -1194,64 +1195,71 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		lightmaps.Setup(loaded.lightmap);
 		lightmaps.lightmaps.insert({ lightmap->key, lightmap });
 	}
-	else if (surface.created)
+	else 
 	{
 		auto first = lightmapEntry->second;
-		auto available = (first->unusedCount >= Constants::maxUnusedCount);
-		if (first->next == nullptr || available)
+		if (surface.created != first->createdFrameCount)
 		{
-			if (available)
+			auto available = (first->unusedCount >= Constants::maxUnusedCount);
+			if (first->next == nullptr || available)
 			{
-				first->unusedCount = 0;
-				loaded.lightmap.lightmap = first;
+				if (available)
+				{
+					first->unusedCount = 0;
+					first->createdFrameCount = surface.created;
+					loaded.lightmap.lightmap = first;
+				}
+				else
+				{
+					auto lightmap = new Lightmap { };
+					lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+					lightmap->key = surface.surface;
+					lightmap->next = first;
+					lightmap->createdFrameCount = surface.created;
+					lightmapEntry->second = lightmap;
+					loaded.lightmap.lightmap = lightmap;
+				}
 			}
 			else
 			{
-				auto lightmap = new Lightmap { };
-				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				lightmap->key = surface.surface;
-				lightmap->next = first;
-				lightmapEntry->second = lightmap;
-				loaded.lightmap.lightmap = lightmap;
+				auto found = false;
+				for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
+				{
+					if (lightmap->unusedCount >= Constants::maxUnusedCount)
+					{
+						found = true;
+						lightmap->unusedCount = 0;
+						previous->next = lightmap->next;
+						lightmap->next = first;
+						lightmap->createdFrameCount = surface.created;
+						lightmapEntry->second = lightmap;
+						loaded.lightmap.lightmap = lightmap;
+						break;
+					}
+				}
+				if (!found)
+				{
+					auto lightmap = new Lightmap { };
+					lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+					lightmap->key = surface.surface;
+					lightmap->next = lightmapEntry->second;
+					lightmap->createdFrameCount = surface.created;
+					lightmapEntry->second = lightmap;
+					loaded.lightmap.lightmap = lightmap;
+				}
 			}
+			loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+			size += loaded.lightmap.size;
+			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+			lightmaps.Setup(loaded.lightmap);
 		}
 		else
 		{
-			auto found = false;
-			for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
-			{
-				if (lightmap->unusedCount >= Constants::maxUnusedCount)
-				{
-					found = true;
-					lightmap->unusedCount = 0;
-					previous->next = lightmap->next;
-					lightmap->next = first;
-					lightmapEntry->second = lightmap;
-					loaded.lightmap.lightmap = lightmap;
-					break;
-				}
-			}
-			if (!found)
-			{
-				auto lightmap = new Lightmap { };
-				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				lightmap->key = surface.surface;
-				lightmap->next = lightmapEntry->second;
-				lightmapEntry->second = lightmap;
-				loaded.lightmap.lightmap = lightmap;
-			}
-		}
-		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
-		size += loaded.lightmap.size;
-		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
-		lightmaps.Setup(loaded.lightmap);
-	}
-	else
-	{
-		auto lightmap = lightmapEntry->second;
-		lightmap->unusedCount = 0;
-		loaded.lightmap.lightmap = lightmap;
-		loaded.lightmap.size = 0;
+			auto lightmap = lightmapEntry->second;
+			lightmap->unusedCount = 0;
+			loaded.lightmap.lightmap = lightmap;
+			loaded.lightmap.size = 0;
+		}		
 	}
 	if (previousTexture != surface.texture)
 	{
@@ -1354,6 +1362,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 		auto lightmap = new Lightmap { };
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		lightmap->key = surface.surface;
+		lightmap->createdFrameCount = surface.created;
 		loaded.lightmap.lightmap = lightmap;
 		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
 		size += loaded.lightmap.size;
@@ -1361,64 +1370,71 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 		lightmaps.Setup(loaded.lightmap);
 		lightmaps.lightmaps.insert({ lightmap->key, lightmap });
 	}
-	else if (surface.created)
+	else 
 	{
 		auto first = lightmapEntry->second;
-		auto available = (first->unusedCount >= Constants::maxUnusedCount);
-		if (first->next == nullptr || available)
+		if (surface.created != first->createdFrameCount)
 		{
-			if (available)
+			auto available = (first->unusedCount >= Constants::maxUnusedCount);
+			if (first->next == nullptr || available)
 			{
-				first->unusedCount = 0;
-				loaded.lightmap.lightmap = first;
+				if (available)
+				{
+					first->unusedCount = 0;
+					first->createdFrameCount = surface.created;
+					loaded.lightmap.lightmap = first;
+				}
+				else
+				{
+					auto lightmap = new Lightmap { };
+					lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+					lightmap->key = surface.surface;
+					lightmap->next = first;
+					lightmap->createdFrameCount = surface.created;
+					lightmapEntry->second = lightmap;
+					loaded.lightmap.lightmap = lightmap;
+				}
 			}
 			else
 			{
-				auto lightmap = new Lightmap { };
-				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				lightmap->key = surface.surface;
-				lightmap->next = first;
-				lightmapEntry->second = lightmap;
-				loaded.lightmap.lightmap = lightmap;
+				auto found = false;
+				for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
+				{
+					if (lightmap->unusedCount >= Constants::maxUnusedCount)
+					{
+						found = true;
+						lightmap->unusedCount = 0;
+						previous->next = lightmap->next;
+						lightmap->next = first;
+						lightmap->createdFrameCount = surface.created;
+						lightmapEntry->second = lightmap;
+						loaded.lightmap.lightmap = lightmap;
+						break;
+					}
+				}
+				if (!found)
+				{
+					auto lightmap = new Lightmap { };
+					lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+					lightmap->key = surface.surface;
+					lightmap->next = lightmapEntry->second;
+					lightmap->createdFrameCount = surface.created;
+					lightmapEntry->second = lightmap;
+					loaded.lightmap.lightmap = lightmap;
+				}
 			}
+			loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+			size += loaded.lightmap.size;
+			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+			lightmaps.Setup(loaded.lightmap);
 		}
 		else
 		{
-			auto found = false;
-			for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
-			{
-				if (lightmap->unusedCount >= Constants::maxUnusedCount)
-				{
-					found = true;
-					lightmap->unusedCount = 0;
-					previous->next = lightmap->next;
-					lightmap->next = first;
-					lightmapEntry->second = lightmap;
-					loaded.lightmap.lightmap = lightmap;
-					break;
-				}
-			}
-			if (!found)
-			{
-				auto lightmap = new Lightmap { };
-				lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				lightmap->key = surface.surface;
-				lightmap->next = lightmapEntry->second;
-				lightmapEntry->second = lightmap;
-				loaded.lightmap.lightmap = lightmap;
-			}
-		}
-		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
-		size += loaded.lightmap.size;
-		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
-		lightmaps.Setup(loaded.lightmap);
-	}
-	else
-	{
-		auto lightmap = lightmapEntry->second;
-		lightmap->unusedCount = 0;
-		loaded.lightmap.lightmap = lightmap;
-		loaded.lightmap.size = 0;
+			auto lightmap = lightmapEntry->second;
+			lightmap->unusedCount = 0;
+			loaded.lightmap.lightmap = lightmap;
+			loaded.lightmap.size = 0;
+		}		
 	}
 	if (previousTexture != surface.texture)
 	{
