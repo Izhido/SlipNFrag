@@ -1197,57 +1197,17 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	}
 	else 
 	{
-		auto first = lightmapEntry->second;
-		if (surface.created != first->createdFrameCount)
+		auto lightmap = lightmapEntry->second;
+		if (lightmap->createdFrameCount != surface.created)
 		{
-			auto available = (first->unusedCount >= Constants::maxUnusedCount);
-			if (first->next == nullptr || available)
-			{
-				if (available)
-				{
-					first->unusedCount = 0;
-					first->createdFrameCount = surface.created;
-					loaded.lightmap.lightmap = first;
-				}
-				else
-				{
-					auto lightmap = new Lightmap { };
-					lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-					lightmap->key = surface.surface;
-					lightmap->next = first;
-					lightmap->createdFrameCount = surface.created;
-					lightmapEntry->second = lightmap;
-					loaded.lightmap.lightmap = lightmap;
-				}
-			}
-			else
-			{
-				auto found = false;
-				for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
-				{
-					if (lightmap->unusedCount >= Constants::maxUnusedCount)
-					{
-						found = true;
-						lightmap->unusedCount = 0;
-						previous->next = lightmap->next;
-						lightmap->next = first;
-						lightmap->createdFrameCount = surface.created;
-						lightmapEntry->second = lightmap;
-						loaded.lightmap.lightmap = lightmap;
-						break;
-					}
-				}
-				if (!found)
-				{
-					auto lightmap = new Lightmap { };
-					lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-					lightmap->key = surface.surface;
-					lightmap->next = lightmapEntry->second;
-					lightmap->createdFrameCount = surface.created;
-					lightmapEntry->second = lightmap;
-					loaded.lightmap.lightmap = lightmap;
-				}
-			}
+			lightmap->next = lightmaps.oldLightmaps;
+			lightmaps.oldLightmaps = lightmap;
+			lightmap = new Lightmap { };
+			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			lightmap->key = surface.surface;
+			lightmap->createdFrameCount = surface.created;
+			lightmapEntry->second = lightmap;
+			loaded.lightmap.lightmap = lightmap;
 			loaded.lightmap.size = surface.lightmap_size * sizeof(float);
 			size += loaded.lightmap.size;
 			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
@@ -1255,8 +1215,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		}
 		else
 		{
-			auto lightmap = lightmapEntry->second;
-			lightmap->unusedCount = 0;
 			loaded.lightmap.lightmap = lightmap;
 			loaded.lightmap.size = 0;
 		}		
@@ -1372,57 +1330,17 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 	}
 	else 
 	{
-		auto first = lightmapEntry->second;
-		if (surface.created != first->createdFrameCount)
+		auto lightmap = lightmapEntry->second;
+		if (lightmap->createdFrameCount != surface.created)
 		{
-			auto available = (first->unusedCount >= Constants::maxUnusedCount);
-			if (first->next == nullptr || available)
-			{
-				if (available)
-				{
-					first->unusedCount = 0;
-					first->createdFrameCount = surface.created;
-					loaded.lightmap.lightmap = first;
-				}
-				else
-				{
-					auto lightmap = new Lightmap { };
-					lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-					lightmap->key = surface.surface;
-					lightmap->next = first;
-					lightmap->createdFrameCount = surface.created;
-					lightmapEntry->second = lightmap;
-					loaded.lightmap.lightmap = lightmap;
-				}
-			}
-			else
-			{
-				auto found = false;
-				for (auto previous = first, lightmap = first->next; lightmap != nullptr; previous = lightmap, lightmap = lightmap->next)
-				{
-					if (lightmap->unusedCount >= Constants::maxUnusedCount)
-					{
-						found = true;
-						lightmap->unusedCount = 0;
-						previous->next = lightmap->next;
-						lightmap->next = first;
-						lightmap->createdFrameCount = surface.created;
-						lightmapEntry->second = lightmap;
-						loaded.lightmap.lightmap = lightmap;
-						break;
-					}
-				}
-				if (!found)
-				{
-					auto lightmap = new Lightmap { };
-					lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-					lightmap->key = surface.surface;
-					lightmap->next = lightmapEntry->second;
-					lightmap->createdFrameCount = surface.created;
-					lightmapEntry->second = lightmap;
-					loaded.lightmap.lightmap = lightmap;
-				}
-			}
+			lightmap->next = lightmaps.oldLightmaps;
+			lightmaps.oldLightmaps = lightmap;
+			auto lightmap = new Lightmap { };
+			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			lightmap->key = surface.surface;
+			lightmap->createdFrameCount = surface.created;
+			lightmapEntry->second = lightmap;
+			loaded.lightmap.lightmap = lightmap;
 			loaded.lightmap.size = surface.lightmap_size * sizeof(float);
 			size += loaded.lightmap.size;
 			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
@@ -1430,8 +1348,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 		}
 		else
 		{
-			auto lightmap = lightmapEntry->second;
-			lightmap->unusedCount = 0;
 			loaded.lightmap.lightmap = lightmap;
 			loaded.lightmap.size = 0;
 		}		

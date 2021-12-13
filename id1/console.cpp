@@ -265,7 +265,7 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the notify window will pop up.
 ================
 */
-void Con_Print (char *txt)
+void Con_Print (const std::vector<char>& txt)
 {
 	int		y;
 	int		c, l;
@@ -274,34 +274,37 @@ void Con_Print (char *txt)
 	
 	con_backscroll = 0;
 
-	if (txt[0] == 1)
+	auto position = 0;
+	auto size = (int)txt.size();
+
+	if (txt[position] == 1)
 	{
 		mask = 128;		// go to colored text
 		S_LocalSound ("misc/talk.wav");
 	// play talk wav
-		txt++;
+		position++;
 	}
-	else if (txt[0] == 2)
+	else if (txt[position] == 2)
 	{
 		mask = 128;		// go to colored text
-		txt++;
+		position++;
 	}
 	else
 		mask = 0;
 
 
-	while ( (c = *txt) )
+	while ( (c = txt[position]) )
 	{
 	// count word length
-		for (l=0 ; l< con_linewidth ; l++)
+		for (l=position ; l< size ; l++)
 			if ( txt[l] <= ' ')
 				break;
 
 	// word wrap
-		if (l != con_linewidth && (con_x + l > con_linewidth) )
+		if ((l - position) <= con_linewidth && (con_x + l - position > con_linewidth) )
 			con_x = 0;
 
-		txt++;
+		position++;
 
 		if (cr)
 		{
@@ -416,7 +419,7 @@ void Con_Printf (const char *fmt, ...)
 		return;		// no graphics mode
 
 // write it to the scrollable buffer
-	Con_Print (msg.data());
+	Con_Print (msg);
 	
 // update the screen if the console is displayed
 	if (cls.signon != SIGNONS && !scr_disabled_for_loading )

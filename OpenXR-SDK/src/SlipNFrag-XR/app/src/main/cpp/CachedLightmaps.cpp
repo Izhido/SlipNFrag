@@ -32,37 +32,6 @@ void CachedLightmaps::DisposeFront()
 
 void CachedLightmaps::DeleteOld(AppState& appState)
 {
-	std::vector<void*> toDelete;
-	for (auto& entry : lightmaps)
-	{
-		auto total = 0;
-		auto erased = 0;
-		for (auto l = &entry.second; *l != nullptr; )
-		{
-			(*l)->unusedCount++;
-			if ((*l)->unusedCount >= Constants::maxUnusedCount)
-			{
-				auto next = (*l)->next;
-				(*l)->next = oldLightmaps;
-				oldLightmaps = *l;
-				*l = next;
-				erased++;
-			}
-			else
-			{
-				l = &(*l)->next;
-			}
-			total++;
-		}
-		if (total == erased)
-		{
-			toDelete.push_back(entry.first);
-		}
-	}
-	for (auto& entry : toDelete)
-	{
-		lightmaps.erase(entry);
-	}
 	if (oldLightmaps != nullptr)
 	{
 		for (auto l = &oldLightmaps; *l != nullptr; )
