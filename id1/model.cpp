@@ -785,7 +785,7 @@ void Mod_LoadEntities (lump_t *l)
 			Sys_Error ("Mod_LoadEntities: closing brace without data");
 		}
 		std::string value = com_token;
-		if (key == "sky")
+		if (key.find("sky") == 0)
 		{
 			r_skyboxprefix = value;
 		}

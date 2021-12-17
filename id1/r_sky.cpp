@@ -414,6 +414,8 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
 	byte	*buffer;
 	TargaHeader		targa_header;
 	byte			*targa_rgba;
+	int				realrow; //johnfitz -- fix for upside-down targas
+	qboolean		upside_down; //johnfitz -- fix for upside-down targas
 	byte tmp[2];
 
 	*pic = NULL;
@@ -466,6 +468,7 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
 	columns = targa_header.width;
 	rows = targa_header.height;
 	numPixels = columns * rows;
+	upside_down = !(targa_header.attributes & 0x20); //johnfitz -- fix for upside-down targas
 
 	if (width)
 		*width = columns;
@@ -489,7 +492,10 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
         {
             for(row=rows-1; row>=0; row--)
             {
-                pixbuf = targa_rgba + offset + row*columns*4;
+				//johnfitz -- fix for upside-down targas
+				realrow = upside_down ? row : rows - 1 - row;
+				pixbuf = targa_rgba + offset + realrow*columns*4;
+				//johnfitz
                 for(column=0; column<columns; column++)
                 {
                     auto blue = *buf_p++;
@@ -507,7 +513,10 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
             auto span = columns * 4;
             for(row=rows-1; row>=0; row--)
             {
-                pixbuf = targa_rgba + offset + row*span;
+				//johnfitz -- fix for upside-down targas
+				realrow = upside_down ? row : rows - 1 - row;
+				pixbuf = targa_rgba + offset + realrow*span;
+				//johnfitz
                 Q_memcpy(pixbuf, buf_p, span);
                 pixbuf += span;
                 buf_p += span;
@@ -520,7 +529,10 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
         {
             unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
             for(row=rows-1; row>=0; row--) {
-                pixbuf = targa_rgba + offset + row*columns*4;
+				//johnfitz -- fix for upside-down targas
+				realrow = upside_down ? row : rows - 1 - row;
+				pixbuf = targa_rgba + offset + realrow*columns*4;
+				//johnfitz
                 for(column=0; column<columns; ) {
                     packetHeader= *buf_p++;
                     packetSize = 1 + (packetHeader & 0x7f);
@@ -542,7 +554,10 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
                                     row--;
                                 else
                                     goto breakOut24;
-                                pixbuf = targa_rgba + offset + row*columns*4;
+								//johnfitz -- fix for upside-down targas
+								realrow = upside_down ? row : rows - 1 - row;
+								pixbuf = targa_rgba + offset + realrow*columns*4;
+								//johnfitz
                             }
                         }
                     }
@@ -562,7 +577,10 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
                                     row--;
                                 else
                                     goto breakOut24;
-                                pixbuf = targa_rgba + offset + row*columns*4;
+								//johnfitz -- fix for upside-down targas
+								realrow = upside_down ? row : rows - 1 - row;
+								pixbuf = targa_rgba + offset + realrow*columns*4;
+								//johnfitz
                             }
                         }
                     }
@@ -574,7 +592,10 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
         {
             unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
             for(row=rows-1; row>=0; row--) {
-                pixbuf = targa_rgba + offset + row*columns*4;
+				//johnfitz -- fix for upside-down targas
+				realrow = upside_down ? row : rows - 1 - row;
+				pixbuf = targa_rgba + offset + realrow*columns*4;
+				//johnfitz
                 for(column=0; column<columns; ) {
                     packetHeader= *buf_p++;
                     packetSize = 1 + (packetHeader & 0x7f);
@@ -596,7 +617,10 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
                                     row--;
                                 else
                                     goto breakOut32;
-                                pixbuf = targa_rgba + offset + row*columns*4;
+								//johnfitz -- fix for upside-down targas
+								realrow = upside_down ? row : rows - 1 - row;
+								pixbuf = targa_rgba + offset + realrow*columns*4;
+								//johnfitz
                             }
                         }
                     }
@@ -617,7 +641,10 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
                                     row--;
                                 else
                                     goto breakOut32;
-                                pixbuf = targa_rgba + offset + row*columns*4;
+								//johnfitz -- fix for upside-down targas
+								realrow = upside_down ? row : rows - 1 - row;
+								pixbuf = targa_rgba + offset + realrow*columns*4;
+								//johnfitz
                             }
                         }
                     }
