@@ -656,7 +656,7 @@ void R_LoadTGA (const char *name, int start, qboolean extra, byte **pic, int *wi
 }
 
 
-void R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*& texture)
+qboolean R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*& texture)
 {
 	if (texture != nullptr)
 	{
@@ -790,7 +790,9 @@ void R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*& te
 			delete[] pic;
         }
 		Draw_EndDisc ();
+		return true;
 	}
+	return false;
 }
 
 /*
@@ -801,7 +803,7 @@ R_SetSkyBox
 const char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 int	r_skysideimage[6] = {5, 2, 4, 1, 0, 3};
 
-void R_SetSkyBox (float rotate, const vec3_t axis)
+qboolean R_SetSkyBox (float rotate, const vec3_t axis)
 {
 	r_skyrotate = rotate;
 	VectorCopy (axis, r_skyaxis);
@@ -810,12 +812,19 @@ void R_SetSkyBox (float rotate, const vec3_t axis)
 	{
 		std::string prefix = suf[r_skysideimage[i]];
 		std::string path = "gfx/env/" + r_skyboxprefix + prefix + ".tga";
-		R_LoadSkyImage(path, prefix, r_skytexinfo[i].texture);
-        r_skyfaces[i].texturemins[0] = -(int)r_skytexinfo[i].texture->width / 2;
-        r_skyfaces[i].texturemins[1] = -(int)r_skytexinfo[i].texture->height / 2;
-        r_skyfaces[i].extents[0] = r_skytexinfo[i].texture->width;
-        r_skyfaces[i].extents[1] = r_skytexinfo[i].texture->height;
+		if (R_LoadSkyImage(path, prefix, r_skytexinfo[i].texture))
+		{
+			r_skyfaces[i].texturemins[0] = -(int)r_skytexinfo[i].texture->width / 2;
+			r_skyfaces[i].texturemins[1] = -(int)r_skytexinfo[i].texture->height / 2;
+			r_skyfaces[i].extents[0] = r_skytexinfo[i].texture->width;
+			r_skyfaces[i].extents[1] = r_skytexinfo[i].texture->height;
+		}
+		else
+		{
+			return false;
+		}
 	}
+	return true;
 }
 
 /*

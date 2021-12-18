@@ -785,7 +785,7 @@ void Mod_LoadEntities (lump_t *l)
 			Sys_Error ("Mod_LoadEntities: closing brace without data");
 		}
 		std::string value = com_token;
-		if (key.find("sky") == 0)
+		if (Q_strcasecmp (key.c_str(), "sky") == 0 || Q_strcasecmp (key.c_str(), "sky0") == 0)
 		{
 			r_skyboxprefix = value;
 		}
@@ -1819,15 +1819,17 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 
 	if (!r_skyboxinitialized && r_skyboxprefix.length() > 0)
 	{
-        r_skyinitialized = false;
-        r_skyboxinitialized = true;
 		float rotate = 0;
 		vec3_t axis;
 		axis[0] = 0;
 		axis[1] = 1;
 		axis[2] = 0;
 		R_InitSkyBox ();
-		R_SetSkyBox (rotate, axis);
+		if (R_SetSkyBox (rotate, axis))
+		{
+			r_skyinitialized = false;
+			r_skyboxinitialized = true;
+		}
 	}
 }
 
