@@ -156,6 +156,7 @@ void CDAudio_Play(byte track, qboolean looping)
 	{
 		if (cdaudio_playTrack == track)
 			return;
+		cdaudio_playing = false;
 		CDAudio_DisposeBuffers();
 	}
 
