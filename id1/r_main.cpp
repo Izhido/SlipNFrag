@@ -571,7 +571,6 @@ void R_MarkLeavesForLists (void)
 			m <<= 1;
 		}
 	}
-	Sys_Printf("%i of %i leaves, %i of %i nodes\n", r_visleaf_p - r_visleaves.data(), cl.worldmodel->numleafs, r_visnode_p - r_visnodes.data(), cl.worldmodel->numnodes);
 }
 
 

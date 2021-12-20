@@ -295,13 +295,13 @@ void SV_SendServerinfo (client_t *client)
 
 	if (sv_protocol_version == PROTOCOL_VERSION && client->message.cursize < MAX_MSGLEN - 64)
 	{
-		host_client->message.maxsize = MAX_MSGLEN;
+		client->message.maxsize = MAX_MSGLEN;
 	}
 
 	if (sv_protocol_version == PROTOCOL_VERSION && host_client->message.maxsize == 0)
 	{
 		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
-		MSG_WriteLong(host_client->message.data.data() + protocol_offset, sv_protocol_version);
+		MSG_WriteLong(client->message.data.data() + protocol_offset, sv_protocol_version);
 	}
 
 	client->sendsignon = true;
