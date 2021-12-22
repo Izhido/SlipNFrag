@@ -224,9 +224,6 @@ void CL_ParseExpandedStartSoundPacket(void)
     ent = channel >> 3;
     channel &= 7;
 
-    if (ent > sv.edicts.size() / pr_edict_size)
-        Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
-    
     for (i=0 ; i<3 ; i++)
         pos[i] = MSG_ReadCoord ();
  

@@ -137,8 +137,6 @@ int CL_GetMessage (void)
 		{
 			net_message.data.resize(net_message.cursize);
 		}
-		if (net_message.cursize > MAX_MSGLEN)
-			Sys_Error ("Demo message > MAX_MSGLEN");
 		r = Sys_FileRead (cls.demofile, net_message.data.data(), net_message.cursize);
 		if (r != size)
 		{
