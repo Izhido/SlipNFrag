@@ -106,6 +106,15 @@
 		{
 			mx += event.deltaX;
 			my += event.deltaY;
+			NSScreen* screen = self.view.window.screen;
+			CGDirectDisplayID displayId = [[screen.deviceDescription objectForKey:@"NSScreenNumber"] intValue];
+			NSRect screenFrame = screen.frame;
+			NSRect frame = self->mtkView.frame;
+			NSRect centerFrame = NSMakeRect(NSMidX(frame), NSMidY(frame), 1, 1);
+			NSRect centerFrameInWindow = [self->mtkView convertRect:centerFrame toView:nil];
+			NSRect centerFrameInScreen = [self.view.window convertRectToScreen:centerFrameInWindow];
+			CGPoint point = CGPointMake(centerFrameInScreen.origin.x, screenFrame.size.height - centerFrameInScreen.origin.y);
+			CGDisplayMoveCursorToPoint(displayId, point);
 			return YES;
 		}
 	}
