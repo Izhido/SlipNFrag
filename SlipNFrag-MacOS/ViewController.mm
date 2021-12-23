@@ -97,23 +97,51 @@
     [blankCursor set];
 }
 
+-(BOOL)performMouseMove:(NSEvent *)event
+{
+	if (mouseinitialized && key_dest == key_game)
+	{
+		CGPoint point = [self->mtkView convertPoint:event.locationInWindow fromView:nil];
+		if ([self->mtkView mouse:point inRect:self->mtkView.bounds])
+		{
+			mx += event.deltaX;
+			my += event.deltaY;
+			return YES;
+		}
+	}
+	return NO;
+}
+
 -(void)mouseMoved:(NSEvent *)event
 {
-    BOOL handled = NO;
-    if (mouseinitialized && key_dest == key_game)
-    {
-        CGPoint point = [self->mtkView convertPoint:event.locationInWindow fromView:nil];
-        if ([self->mtkView mouse:point inRect:self->mtkView.bounds])
-        {
-            mx += event.deltaX;
-            my += event.deltaY;
-            handled = YES;
-        }
-    }
-    if (!handled)
+    if (![self performMouseMove:event])
     {
         [super mouseMoved:event];
     }
+}
+
+-(void)mouseDragged:(NSEvent *)event
+{
+	if (![self performMouseMove:event])
+	{
+		[super mouseDragged:event];
+	}
+}
+
+-(void)rightMouseDragged:(NSEvent *)event
+{
+	if (![self performMouseMove:event])
+	{
+		[super rightMouseDragged:event];
+	}
+}
+
+-(void)otherMouseDragged:(NSEvent *)event
+{
+	if (![self performMouseMove:event])
+	{
+		[super otherMouseDragged:event];
+	}
 }
 
 -(void)mouseDown:(NSEvent *)event
