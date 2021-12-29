@@ -1104,9 +1104,9 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 }
 
-void PerImage::FillColormapTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias)
+void PerImage::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 {
-	if (!alias.is_host_colormap)
+	if (!loaded.isHostColormap)
 	{
 		Texture* texture;
 		if (colormaps.oldTextures != nullptr)
@@ -1122,7 +1122,7 @@ void PerImage::FillColormapTextures(AppState& appState, LoadedColormappedTexture
 		texture->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += 16384;
 		colormaps.MoveToFront(texture);
-		loadedTexture.colormap.texture = texture;
+		loaded.colormapped.colormap.texture = texture;
 		colormapCount++;
 	}
 }
@@ -1396,26 +1396,24 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		appState.Scene.stagingBuffer.offset += loadedTexture->size;
 		loadedTexture = loadedTexture->next;
 	}
+
 	for (auto i = 0; i <= appState.Scene.lastAlias16; i++)
 	{
-		auto& alias = d_lists.alias16[i];
-		FillColormapTextures(appState, appState.Scene.loadedAlias16[i].colormapped, alias);
+		FillColormapTextures(appState, appState.Scene.loadedAlias16[i]);
 	}
 	for (auto i = 0; i <= appState.Scene.lastAlias32; i++)
 	{
-		auto& alias = d_lists.alias32[i];
-		FillColormapTextures(appState, appState.Scene.loadedAlias32[i].colormapped, alias);
+		FillColormapTextures(appState, appState.Scene.loadedAlias32[i]);
 	}
 	for (auto i = 0; i <= appState.Scene.lastViewmodel16; i++)
 	{
-		auto& viewmodel = d_lists.viewmodels16[i];
-		FillColormapTextures(appState, appState.Scene.loadedViewmodels16[i].colormapped, viewmodel);
+		FillColormapTextures(appState, appState.Scene.loadedViewmodels16[i]);
 	}
 	for (auto i = 0; i <= appState.Scene.lastViewmodel32; i++)
 	{
-		auto& viewmodel = d_lists.viewmodels32[i];
-		FillColormapTextures(appState, appState.Scene.loadedViewmodels32[i].colormapped, viewmodel);
+		FillColormapTextures(appState, appState.Scene.loadedViewmodels32[i]);
 	}
+
 	if (appState.Scene.lastSky >= 0)
 	{
 		sky->FillMipmapped(appState, appState.Scene.stagingBuffer);

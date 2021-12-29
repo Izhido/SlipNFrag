@@ -27,7 +27,6 @@ struct PerImage
 	int paletteChanged;
 	Buffer* palette;
 	Texture* host_colormap;
-	int hostClearCount;
 	Buffer matrices;
 	Buffer* vertices;
 	Buffer* attributes;
@@ -59,7 +58,7 @@ struct PerImage
 	VkDeviceSize GetStagingBufferSize(AppState& appState);
 	static float GammaCorrect(float component);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
-	void FillColormapTextures(AppState& appState, LoadedColormappedTexture& loadedTexture, dalias_t& alias);
+	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryWithOffsetBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillTexturePositionsFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryWithOffsetBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
