@@ -930,8 +930,8 @@ void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surfac
 		else
 		{
 			loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
-			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
 		}
+		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
 		usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.firstSource = surface.surface;
@@ -965,8 +965,8 @@ void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surfac
 		else
 		{
 			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
-			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
 		}
+		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
 		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.firstSource = surface.surface;
@@ -1000,8 +1000,8 @@ void Scene::GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t&
 		else
 		{
 			loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
-			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
 		}
+		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
 		usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.firstSource = surface.surface;
@@ -1035,8 +1035,8 @@ void Scene::GetIndices32StagingBufferSize(AppState& appState, dsurfacerotated_t&
 		else
 		{
 			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
-			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
 		}
+		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
 		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.firstSource = surface.surface;
@@ -1070,8 +1070,8 @@ void Scene::GetAliasIndices16StagingBufferSize(AppState& appState, dalias_t& ali
 		else
 		{
 			loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
-			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
 		}
+		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
 		usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.source = alias.aliashdr;
@@ -1104,8 +1104,8 @@ void Scene::GetAliasIndices32StagingBufferSize(AppState& appState, dalias_t& ali
 		else
 		{
 			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
-			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
 		}
+		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
 		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.source = alias.aliashdr;
@@ -1166,8 +1166,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		else
 		{
 			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-			loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		}
+		loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = surface.surface;
@@ -1299,8 +1299,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 		else
 		{
 			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-			loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		}
+		loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = surface.surface;
@@ -1435,8 +1435,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		else
 		{
 			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-			loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		}
+		loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = turbulent.surface;
@@ -1530,8 +1530,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& 
 		else
 		{
 			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-			loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		}
+		loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = turbulent.surface;

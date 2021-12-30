@@ -340,8 +340,8 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			else
 			{
 				loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer16;
-				loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer16;
 			}
+			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer16;
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 			size += loaded.indices.size;
 			loaded.indices.firstSource = turbulent.surface;
@@ -379,8 +379,8 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			else
 			{
 				loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer32;
-				loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer32;
 			}
+			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer32;
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 			size += loaded.indices.size;
 			loaded.indices.firstSource = turbulent.surface;
@@ -418,8 +418,8 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			else
 			{
 				loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer16;
-				loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer16;
 			}
+			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer16;
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 			size += loaded.indices.size;
 			loaded.indices.firstSource = turbulent.surface;
@@ -457,8 +457,8 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 			else
 			{
 				loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer32;
-				loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer32;
 			}
+			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer32;
 			appState.Scene.usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 			size += loaded.indices.size;
 			loaded.indices.firstSource = turbulent.surface;
