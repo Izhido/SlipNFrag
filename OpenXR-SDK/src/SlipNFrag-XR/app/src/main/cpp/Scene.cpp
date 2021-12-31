@@ -1583,6 +1583,100 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& 
 	loaded.roll = turbulent.roll;
 }
 
+void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size)
+{
+	if (previousApverts != alias.apverts)
+	{
+		auto entry = aliasVerticesPerKey.find(alias.apverts);
+		if (entry == aliasVerticesPerKey.end())
+		{
+			loaded.vertices.size = alias.vertex_count * 2 * 4 * sizeof(float);
+			loaded.vertices.buffer = new SharedMemoryBuffer { };
+			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
+			buffers.MoveToFront(loaded.vertices.buffer);
+			size += loaded.vertices.size;
+			loaded.vertices.source = alias.apverts;
+			buffers.SetupAliasVertices(loaded.vertices);
+			loaded.texCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
+			loaded.texCoords.buffer = new SharedMemoryBuffer { };
+			loaded.texCoords.buffer->CreateVertexBuffer(appState, loaded.texCoords.size);
+			buffers.MoveToFront(loaded.texCoords.buffer);
+			size += loaded.texCoords.size;
+			loaded.texCoords.source = alias.texture_coordinates;
+			loaded.texCoords.width = alias.width;
+			loaded.texCoords.height = alias.height;
+			buffers.SetupAliasTexCoords(loaded.texCoords);
+			aliasVerticesPerKey.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
+		}
+		else
+		{
+			loaded.vertices.size = 0;
+			loaded.vertices.buffer = entry->second.vertices;
+			loaded.texCoords.size = 0;
+			loaded.texCoords.buffer = entry->second.texCoords;
+		}
+		previousApverts = alias.apverts;
+		previousVertexBuffer = loaded.vertices.buffer;
+		previousTexCoordsBuffer = loaded.texCoords.buffer;
+	}
+	else
+	{
+		loaded.vertices.size = 0;
+		loaded.vertices.buffer = previousVertexBuffer;
+		loaded.texCoords.size = 0;
+		loaded.texCoords.buffer = previousTexCoordsBuffer;
+	}
+	if (alias.is_host_colormap)
+	{
+		loaded.colormapped.colormap.size = 0;
+		loaded.colormapped.colormap.texture = host_colormap;
+	}
+	else
+	{
+		loaded.colormapped.colormap.size = 16384;
+		size += loaded.colormapped.colormap.size;
+	}
+	if (previousTexture != alias.data)
+	{
+		auto entry = aliasTexturesPerKey.find(alias.data);
+		if (entry == aliasTexturesPerKey.end())
+		{
+			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
+			auto texture = new SharedMemoryTexture { };
+			texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			textures.MoveToFront(texture);
+			loaded.colormapped.texture.size = alias.size;
+			size += loaded.colormapped.texture.size;
+			loaded.colormapped.texture.texture = texture;
+			loaded.colormapped.texture.source = alias.data;
+			textures.Setup(loaded.colormapped.texture);
+			aliasTexturesPerKey.insert({ alias.data, texture });
+		}
+		else
+		{
+			loaded.colormapped.texture.size = 0;
+			loaded.colormapped.texture.texture = entry->second;
+		}
+		previousTexture = alias.data;
+		previousSharedMemoryTexture = loaded.colormapped.texture.texture;
+	}
+	else
+	{
+		loaded.colormapped.texture.size = 0;
+		loaded.colormapped.texture.texture = previousSharedMemoryTexture;
+	}
+	loaded.firstAttribute = alias.first_attribute;
+	loaded.isHostColormap = alias.is_host_colormap;
+	loaded.count = alias.count;
+	for (auto j = 0; j < 3; j++)
+	{
+		for (auto i = 0; i < 4; i++)
+		{
+			loaded.transform[j][i] = alias.transform[j][i];
+		}
+	}
+}
+
 void Scene::Reset()
 {
 	D_ResetLists();

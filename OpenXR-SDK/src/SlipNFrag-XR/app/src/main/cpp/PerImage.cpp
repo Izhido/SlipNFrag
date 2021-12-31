@@ -20,100 +20,6 @@ void PerImage::Reset(AppState& appState)
 	colors = nullptr;
 }
 
-void PerImage::GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size) const
-{
-	if (appState.Scene.previousApverts != alias.apverts)
-	{
-		auto entry = appState.Scene.aliasVerticesPerKey.find(alias.apverts);
-		if (entry == appState.Scene.aliasVerticesPerKey.end())
-		{
-			loaded.vertices.size = alias.vertex_count * 2 * 4 * sizeof(float);
-			loaded.vertices.buffer = new SharedMemoryBuffer { };
-			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
-			appState.Scene.buffers.MoveToFront(loaded.vertices.buffer);
-			size += loaded.vertices.size;
-			loaded.vertices.source = alias.apverts;
-			appState.Scene.buffers.SetupAliasVertices(loaded.vertices);
-			loaded.texCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
-			loaded.texCoords.buffer = new SharedMemoryBuffer { };
-			loaded.texCoords.buffer->CreateVertexBuffer(appState, loaded.texCoords.size);
-			appState.Scene.buffers.MoveToFront(loaded.texCoords.buffer);
-			size += loaded.texCoords.size;
-			loaded.texCoords.source = alias.texture_coordinates;
-			loaded.texCoords.width = alias.width;
-			loaded.texCoords.height = alias.height;
-			appState.Scene.buffers.SetupAliasTexCoords(loaded.texCoords);
-			appState.Scene.aliasVerticesPerKey.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
-		}
-		else
-		{
-			loaded.vertices.size = 0;
-			loaded.vertices.buffer = entry->second.vertices;
-			loaded.texCoords.size = 0;
-			loaded.texCoords.buffer = entry->second.texCoords;
-		}
-		appState.Scene.previousApverts = alias.apverts;
-		appState.Scene.previousVertexBuffer = loaded.vertices.buffer;
-		appState.Scene.previousTexCoordsBuffer = loaded.texCoords.buffer;
-	}
-	else
-	{
-		loaded.vertices.size = 0;
-		loaded.vertices.buffer = appState.Scene.previousVertexBuffer;
-		loaded.texCoords.size = 0;
-		loaded.texCoords.buffer = appState.Scene.previousTexCoordsBuffer;
-	}
-	if (alias.is_host_colormap)
-	{
-		loaded.colormapped.colormap.size = 0;
-		loaded.colormapped.colormap.texture = host_colormap;
-	}
-	else
-	{
-		loaded.colormapped.colormap.size = 16384;
-		size += loaded.colormapped.colormap.size;
-	}
-	if (appState.Scene.previousTexture != alias.data)
-	{
-		auto entry = appState.Scene.aliasTexturesPerKey.find(alias.data);
-		if (entry == appState.Scene.aliasTexturesPerKey.end())
-		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
-			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			appState.Scene.textures.MoveToFront(texture);
-			loaded.colormapped.texture.size = alias.size;
-			size += loaded.colormapped.texture.size;
-			loaded.colormapped.texture.texture = texture;
-			loaded.colormapped.texture.source = alias.data;
-			appState.Scene.textures.Setup(loaded.colormapped.texture);
-			appState.Scene.aliasTexturesPerKey.insert({ alias.data, texture });
-		}
-		else
-		{
-			loaded.colormapped.texture.size = 0;
-			loaded.colormapped.texture.texture = entry->second;
-		}
-		appState.Scene.previousTexture = alias.data;
-		appState.Scene.previousSharedMemoryTexture = loaded.colormapped.texture.texture;
-	}
-	else
-	{
-		loaded.colormapped.texture.size = 0;
-		loaded.colormapped.texture.texture = appState.Scene.previousSharedMemoryTexture;
-	}
-	loaded.firstAttribute = alias.first_attribute;
-	loaded.isHostColormap = alias.is_host_colormap;
-	loaded.count = alias.count;
-	for (auto j = 0; j < 3; j++)
-	{
-		for (auto i = 0; i < 4; i++)
-		{
-			loaded.transform[j][i] = alias.transform[j][i];
-		}
-	}
-}
-
 VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 {
 	appState.Scene.lastSurface16 = d_lists.last_surface16;
@@ -478,29 +384,29 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastAlias16; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias16[i], appState.Scene.loadedAlias16[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.alias16[i], appState.Scene.loadedAlias16[i], host_colormap, size);
 		appState.Scene.GetAliasIndices16StagingBufferSize(appState, d_lists.alias16[i], appState.Scene.loadedAlias16[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastAlias32; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias32[i], appState.Scene.loadedAlias32[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.alias32[i], appState.Scene.loadedAlias32[i], host_colormap, size);
 		appState.Scene.GetAliasIndices32StagingBufferSize(appState, d_lists.alias32[i], appState.Scene.loadedAlias32[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastViewmodel16; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.viewmodels16[i], appState.Scene.loadedViewmodels16[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.viewmodels16[i], appState.Scene.loadedViewmodels16[i], host_colormap, size);
 		appState.Scene.GetAliasIndices16StagingBufferSize(appState, d_lists.viewmodels16[i], appState.Scene.loadedViewmodels16[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastViewmodel32; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], size);
-		appState.Scene.GetAliasIndices16StagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], host_colormap, size);
+		appState.Scene.GetAliasIndices32StagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], size);
 	}
 	if (appState.Scene.lastSky >= 0)
 	{

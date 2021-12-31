@@ -54,7 +54,6 @@ struct PerImage
 	VkSubmitInfo submitInfo;
 
 	void Reset(AppState& appState);
-	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size) const;
 	VkDeviceSize GetStagingBufferSize(AppState& appState);
 	static float GammaCorrect(float component);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
