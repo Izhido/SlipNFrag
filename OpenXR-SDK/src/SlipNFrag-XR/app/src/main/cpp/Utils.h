@@ -3,6 +3,7 @@
 #include <string>
 #include <openxr/openxr.h>
 #include <openxr/openxr_reflection.h>
+#include <ctime>
 
 #define CHK_STRINGIFY(x) #x
 #define TOSTRING(x) CHK_STRINGIFY(x)
@@ -204,4 +205,11 @@ inline VkResult CheckVkResult(VkResult res, const char* originator = nullptr, co
     }
 
     return res;
+}
+
+inline double GetTime()
+{
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (now.tv_sec * 1e9 + now.tv_nsec) * 0.000000001;
 }

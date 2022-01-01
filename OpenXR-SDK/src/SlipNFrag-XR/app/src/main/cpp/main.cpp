@@ -7,10 +7,8 @@
 #include <vector>
 #include <cmath>
 #include "AppState.h"
-#include "Time.h"
 #include <list>
 #include <map>
-#include "vid_ovr.h"
 #include "sys_ovr.h"
 #include "r_local.h"
 #include "EngineThread.h"
@@ -201,15 +199,6 @@ static VkBool32 DebugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectType
 	}
 
 	__android_log_print(priority, "slipnfrag_native", "%s (%s 0x%llx) [%s] %s", flagNames.c_str(), objName.c_str(), object, pLayerPrefix, pMessage);
-	if ((flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) != 0u)
-	{
-		return VK_FALSE;
-	}
-	if ((flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) != 0u)
-	{
-		return VK_FALSE;
-	}
-	return VK_FALSE;
 }
 
 void LogExtensions(const char* layerName, int indent = 0)
@@ -249,7 +238,7 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onResume()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_RESUME");
 			appState->Resumed = true;
-			delta = getTime() - appState->PausedTime;
+			delta = GetTime() - appState->PausedTime;
 			if (appState->PreviousTime > 0)
 			{
 				appState->PreviousTime += delta;

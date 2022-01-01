@@ -1,6 +1,5 @@
 #include "Input.h"
 #include "AppState.h"
-#include "vid_ovr.h"
 #include "in_ovr.h"
 #include "Utils.h"
 

@@ -1,6 +1,5 @@
 #include "EngineThread.h"
 #include "AppState.h"
-#include "Time.h"
 #include "sys_ovr.h"
 #include "Input.h"
 #include "r_local.h"
@@ -49,16 +48,16 @@ void runEngine(AppState* appState, struct android_app* app)
 		{
 			if (appState->PreviousTime < 0)
 			{
-				appState->PreviousTime = getTime();
+				appState->PreviousTime = GetTime();
 			}
 			else if (appState->CurrentTime < 0)
 			{
-				appState->CurrentTime = getTime();
+				appState->CurrentTime = GetTime();
 			}
 			else
 			{
 				appState->PreviousTime = appState->CurrentTime;
-				appState->CurrentTime = getTime();
+				appState->CurrentTime = GetTime();
 				frame_lapse = (float) (appState->CurrentTime - appState->PreviousTime);
 			}
 			if (r_cache_thrash)
@@ -104,16 +103,16 @@ void runEngine(AppState* appState, struct android_app* app)
 			}
 			if (appState->PreviousTime < 0)
 			{
-				appState->PreviousTime = getTime();
+				appState->PreviousTime = GetTime();
 			}
 			else if (appState->CurrentTime < 0)
 			{
-				appState->CurrentTime = getTime();
+				appState->CurrentTime = GetTime();
 			}
 			else
 			{
 				appState->PreviousTime = appState->CurrentTime;
-				appState->CurrentTime = getTime();
+				appState->CurrentTime = GetTime();
 				frame_lapse = (float) (appState->CurrentTime - appState->PreviousTime);
 				appState->TimeInWorldMode += frame_lapse;
 				if (!appState->ControlsMessageDisplayed && appState->TimeInWorldMode > 4)
