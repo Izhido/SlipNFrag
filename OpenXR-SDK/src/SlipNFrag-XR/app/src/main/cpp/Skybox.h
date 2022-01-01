@@ -1,8 +1,7 @@
 #pragma once
 
-#include <jni.h>
-#include <EGL/egl.h>
 #include <vulkan/vulkan.h>
+#include <common/xr_dependencies.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 #include <vector>

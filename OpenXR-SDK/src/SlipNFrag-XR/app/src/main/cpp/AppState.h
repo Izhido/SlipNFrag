@@ -4,8 +4,8 @@
 #include "d_lists.h"
 #include <android_native_app_glue.h>
 #include "AppMode.h"
-#include <EGL/egl.h>
 #include <vulkan/vulkan.h>
+#include <common/xr_dependencies.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 #include "Keyboard.h"
