@@ -521,7 +521,12 @@ void D_DrawSurfacesToLists (void)
 										// make entity passed in
 				}
 
-				if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+				if (currententity->origin[0] == 0 &&
+					currententity->origin[1] == 0 &&
+					currententity->origin[2] == 0 &&
+					currententity->angles[YAW] == 0 &&
+					currententity->angles[PITCH] == 0 &&
+					currententity->angles[ROLL] == 0)
 				{
 					D_AddTurbulentToLists (pface, currententity);
 				}
@@ -569,20 +574,25 @@ void D_DrawSurfacesToLists (void)
 
 				if (pcurrentcache != nullptr)
 				{
-					if (s->isfence)
+					if (currententity->origin[0] == 0 &&
+						currententity->origin[1] == 0 &&
+						currententity->origin[2] == 0 &&
+						currententity->angles[YAW] == 0 &&
+						currententity->angles[PITCH] == 0 &&
+						currententity->angles[ROLL] == 0)
 					{
-						if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+						if (s->isfence)
 						{
 							D_AddFenceToLists (pface, pcurrentcache, currententity, created);
 						}
 						else
 						{
-							D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, created);
+							D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
 						}
 					}
-					else if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+					else if (s->isfence)
 					{
-						D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+						D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, created);
 					}
 					else
 					{
@@ -710,7 +720,12 @@ void D_DrawSurfacesToListsIfNeeded (void)
 										// make entity passed in
 				}
 
-				if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+				if (currententity->origin[0] == 0 &&
+					currententity->origin[1] == 0 &&
+					currententity->origin[2] == 0 &&
+					currententity->angles[YAW] == 0 &&
+					currententity->angles[PITCH] == 0 &&
+					currententity->angles[ROLL] == 0)
 				{
 					D_AddTurbulentToLists (pface, currententity);
 				}
@@ -758,20 +773,25 @@ void D_DrawSurfacesToListsIfNeeded (void)
 
 				if (pcurrentcache != nullptr)
 				{
-					if (s->isfence)
+					if (currententity->origin[0] == 0 &&
+						currententity->origin[1] == 0 &&
+						currententity->origin[2] == 0 &&
+						currententity->angles[YAW] == 0 &&
+						currententity->angles[PITCH] == 0 &&
+						currententity->angles[ROLL] == 0)
 					{
-						if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+						if (s->isfence)
 						{
 							D_AddFenceToLists (pface, pcurrentcache, currententity, created);
 						}
 						else
 						{
-							D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, created);
+							D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
 						}
 					}
-					else if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+					else if (s->isfence)
 					{
-						D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+						D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, created);
 					}
 					else
 					{
@@ -854,7 +874,12 @@ void D_DrawOneSurface (msurface_t* surf)
 					 surf->texinfo->texture->offsets[0]);
 			cachewidth = surf->texinfo->texture->width;
 
-			if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+			if (currententity->origin[0] == 0 &&
+				currententity->origin[1] == 0 &&
+				currententity->origin[2] == 0 &&
+				currententity->angles[YAW] == 0 &&
+				currententity->angles[PITCH] == 0 &&
+				currententity->angles[ROLL] == 0)
 			{
 				D_AddTurbulentToLists (surf, currententity);
 			}
@@ -870,20 +895,25 @@ void D_DrawOneSurface (msurface_t* surf)
 
 			if (pcurrentcache != nullptr)
 			{
-				if (surf->texinfo->texture->name[0] == '{')
+				if (currententity->origin[0] == 0 &&
+					currententity->origin[1] == 0 &&
+					currententity->origin[2] == 0 &&
+					currententity->angles[YAW] == 0 &&
+					currententity->angles[PITCH] == 0 &&
+					currententity->angles[ROLL] == 0)
 				{
-					if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+					if (surf->texinfo->texture->name[0] == '{')
 					{
 						D_AddFenceToLists (surf, pcurrentcache, currententity, created);
 					}
 					else
 					{
-						D_AddFenceRotatedToLists (surf, pcurrentcache, currententity, created);
+						D_AddSurfaceToLists (surf, pcurrentcache, currententity, created);
 					}
 				}
-				else if (currententity->angles[YAW] == 0 && currententity->angles[PITCH] == 0 && currententity->angles[ROLL] == 0)
+				else if (surf->texinfo->texture->name[0] == '{')
 				{
-					D_AddSurfaceToLists (surf, pcurrentcache, currententity, created);
+					D_AddFenceRotatedToLists (surf, pcurrentcache, currententity, created);
 				}
 				else
 				{

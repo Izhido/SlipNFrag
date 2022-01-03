@@ -71,9 +71,6 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 	d_lists.last_lightmap_texel += surface.lightmap_size;
 	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
 	surface.count = face->numedges;
-	surface.origin_x = entity->origin[0];
-	surface.origin_y = entity->origin[1];
-	surface.origin_z = entity->origin[2];
 }
 
 void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, int created)
@@ -309,9 +306,6 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	turbulent.size = turbulent.width * turbulent.height;
 	turbulent.data = (unsigned char*)texture + texture->offsets[0];
 	turbulent.count = face->numedges;
-	turbulent.origin_x = entity->origin[0];
-	turbulent.origin_y = entity->origin[1];
-	turbulent.origin_z = entity->origin[2];
 }
 
 void D_FillTurbulentRotatedData (dturbulentrotated_t& turbulent, msurface_t* face, entity_t* entity)

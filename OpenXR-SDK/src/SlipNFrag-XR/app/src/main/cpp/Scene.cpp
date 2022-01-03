@@ -613,7 +613,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	pushConstantInfo.size = 4 * sizeof(float);
+	pushConstantInfo.size = sizeof(uint32_t);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfaces.pipelineLayout));
@@ -649,7 +649,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fences.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fences.stages[1].module = fenceFragment;
 	fences.stages[1].pName = "main";
-	pushConstantInfo.size = 4 * sizeof(float);
+	pushConstantInfo.size = sizeof(uint32_t);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fences.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fences.stages.size();
 	graphicsPipelineCreateInfo.pStages = fences.stages.data();
@@ -702,8 +702,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulent.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	turbulent.stages[1].module = turbulentFragment;
 	turbulent.stages[1].pName = "main";
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 4 * sizeof(float);
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulent.pipelineLayout));
@@ -723,6 +723,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulentRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	turbulentRotated.stages[1].module = turbulentFragment;
 	turbulentRotated.stages[1].pName = "main";
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = 7 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = turbulentRotated.stages.size();
@@ -1250,9 +1251,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.texture.texture = previousSharedMemoryTexture;
 	}
 	loaded.count = surface.count;
-	loaded.originX = surface.origin_x;
-	loaded.originY = surface.origin_y;
-	loaded.originZ = surface.origin_z;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
@@ -1481,9 +1479,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		loaded.texture.texture = previousSharedMemoryTexture;
 	}
 	loaded.count = turbulent.count;
-	loaded.originX = turbulent.origin_x;
-	loaded.originY = turbulent.origin_y;
-	loaded.originZ = turbulent.origin_z;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size)

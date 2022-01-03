@@ -16,10 +16,7 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 
 layout(push_constant) uniform Transforms
 {
-	layout(offset = 0) float lightmapIndex;
-	layout(offset = 4) float originX;
-	layout(offset = 8) float originY;
-	layout(offset = 12) float originZ;
+	layout(offset = 0) int lightmapIndex;
 };
 
 layout(location = 0) in vec3 vertexPosition;
@@ -34,12 +31,12 @@ out gl_PerVertex
 
 void main(void)
 {
-	vec4 position = vec4(vertexPosition.x + originX, vertexPosition.z + originZ, -vertexPosition.y - originY, 1);
+	vec4 position = vec4(vertexPosition.x, vertexPosition.z, -vertexPosition.y, 1);
 	gl_Position = projectionMatrix[gl_ViewID_OVR] * viewMatrix[gl_ViewID_OVR] * vertexTransform * position;
 	vec4 position4 = vec4(vertexPosition, 1);
 	vec2 texCoords = vec2(dot(position4, texturePosition[0]), dot(position4, texturePosition[1]));
 	vec2 lightmapSize = vec2((int(texturePosition[2].z) >> 4) + 1, (int(texturePosition[2].w) >> 4) + 1);
 	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * (lightmapSize - 1) / texturePosition[2].zw;
 	fragmentData = vec4(lightmapCoords.xy, texCoords / texturePosition[3].xy);
-	fragmentLightmapIndex = int(lightmapIndex);
+	fragmentLightmapIndex = lightmapIndex;
 }

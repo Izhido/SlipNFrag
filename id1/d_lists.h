@@ -15,9 +15,6 @@ struct dsurface_t
 	int lightmap_size;
 	int lightmap_texels;
 	int count;
-	float origin_x;
-	float origin_y;
-	float origin_z;
 };
 
 struct dsurfacerotated_t
@@ -64,9 +61,6 @@ struct dturbulent_t
 	int size;
 	unsigned char* data;
 	int count;
-	float origin_x;
-	float origin_y;
-	float origin_z;
 };
 
 struct dturbulentrotated_t

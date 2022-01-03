@@ -63,9 +63,7 @@ struct PerImage
 	void FillTexturePositionsFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryWithOffsetBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
-	static void SetPushConstants(const LoadedSurface& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedSurfaceRotated& loaded, float pushConstants[]);
-	static void SetPushConstants(const LoadedTurbulent& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedTurbulentRotated& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	void Render(AppState& appState);

@@ -14,7 +14,4 @@ struct LoadedSurface
 	LoadedLightmap lightmap;
 	LoadedSharedMemoryTexture texture;
 	uint32_t count;
-	float originX;
-	float originY;
-	float originZ;
 };

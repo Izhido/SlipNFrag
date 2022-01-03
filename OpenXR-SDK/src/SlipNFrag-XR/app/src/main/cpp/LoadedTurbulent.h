@@ -12,7 +12,4 @@ struct LoadedTurbulent
 	LoadedSharedMemoryIndexBuffer indices;
 	LoadedSharedMemoryTexture texture;
 	uint32_t count;
-	float originX;
-	float originY;
-	float originZ;
 };
