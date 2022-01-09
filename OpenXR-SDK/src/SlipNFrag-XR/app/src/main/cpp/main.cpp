@@ -199,6 +199,8 @@ static VkBool32 DebugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectType
 	}
 
 	__android_log_print(priority, "slipnfrag_native", "%s (%s 0x%llx) [%s] %s", flagNames.c_str(), objName.c_str(), object, pLayerPrefix, pMessage);
+	
+	return VK_FALSE;
 }
 
 void LogExtensions(const char* layerName, int indent = 0)
@@ -488,7 +490,6 @@ void android_main(struct android_app* app)
 		std::vector<const char*> validationLayerNames 
 		{ 
 			"VK_LAYER_KHRONOS_validation",
-			"VK_LAYER_LUNARG_standard_validation",
 			"VK_LAYER_ADRENO_debug"
 		};
 
@@ -637,56 +638,51 @@ void android_main(struct android_app* app)
 			{
 				enabledExtensions.push_back(deviceCreateInfo.vulkanCreateInfo->ppEnabledExtensionNames[i]);
 			}
+			enabledExtensions.push_back(VK_KHR_MULTIVIEW_EXTENSION_NAME);
 
-			bool supportsMultiview = false;
+			VkPhysicalDeviceFeatures2 physicalDeviceFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+			VkPhysicalDeviceProperties2 physicalDeviceProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+
+			VkPhysicalDeviceMultiviewFeatures deviceMultiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
+			VkPhysicalDeviceMultiviewProperties deviceMultiviewProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES};
+
+			physicalDeviceFeatures.pNext = &deviceMultiviewFeatures;
+			physicalDeviceProperties.pNext = &deviceMultiviewProperties;
+
+			auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceFeatures2KHR");
+			vkGetPhysicalDeviceFeatures2KHR(vulkanPhysicalDevice, &physicalDeviceFeatures);
+
+			auto vkGetPhysicalDeviceProperties2KHR = (PFN_vkGetPhysicalDeviceProperties2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceProperties2KHR");
+			vkGetPhysicalDeviceProperties2KHR(vulkanPhysicalDevice, &physicalDeviceProperties);
+
 			auto vkEnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)vkGetInstanceProcAddr(vulkanInstance, "vkEnumerateDeviceExtensionProperties");
 			uint32_t availableExtensionCount = 0;
 			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, nullptr);
 			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
 			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
-			for (int extensionIdx = 0; extensionIdx < availableExtensionCount; extensionIdx++)
+			const std::string indentStr(4, ' ');
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
+			for (uint32_t i = 0; i < availableExtensionCount; ++i)
 			{
-				if (strcmp(availableExtensions[extensionIdx].extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME) == 0)
-				{
-					supportsMultiview = true;
-
-					VkPhysicalDeviceFeatures2 physicalDeviceFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
-
-					VkPhysicalDeviceProperties2 physicalDeviceProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
-
-					VkPhysicalDeviceMultiviewFeatures deviceMultiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
-
-					VkPhysicalDeviceMultiviewProperties deviceMultiviewProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES};
-
-					physicalDeviceFeatures.pNext = &deviceMultiviewFeatures;
-					physicalDeviceProperties.pNext = &deviceMultiviewProperties;
-
-					auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceFeatures2KHR");
-					vkGetPhysicalDeviceFeatures2KHR(vulkanPhysicalDevice, &physicalDeviceFeatures);
-
-					auto vkGetPhysicalDeviceProperties2KHR = (PFN_vkGetPhysicalDeviceProperties2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceProperties2KHR");
-					vkGetPhysicalDeviceProperties2KHR(vulkanPhysicalDevice, &physicalDeviceProperties);
-
-					supportsMultiview = (bool)deviceMultiviewFeatures.multiview;
-					if (supportsMultiview)
-					{
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device supports multiview rendering, with %d views and %u max instances", deviceMultiviewProperties.maxMultiviewViewCount, deviceMultiviewProperties.maxMultiviewInstanceIndex);
-						char *extensionNameToAdd = new char[strlen(VK_KHR_MULTIVIEW_EXTENSION_NAME) + 1];
-						strcpy(extensionNameToAdd, VK_KHR_MULTIVIEW_EXTENSION_NAME);
-						enabledExtensions.push_back(extensionNameToAdd);
-					}
-
-					break;
-				}
+				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
 			}
-
-			if (!supportsMultiview)
+			
+			if ((bool)deviceMultiviewFeatures.multiview)
+			{
+				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device supports multiview rendering, with %d views and %u max instances", deviceMultiviewProperties.maxMultiviewViewCount, deviceMultiviewProperties.maxMultiviewInstanceIndex);
+			}
+			else
 			{
 				THROW("Device does not support multiview rendering.");
 			}
 
 			memcpy(&features, deviceCreateInfo.vulkanCreateInfo->pEnabledFeatures, sizeof(features));
 			memcpy(&deviceInfo, deviceCreateInfo.vulkanCreateInfo, sizeof(deviceInfo));
+
+			VkPhysicalDeviceMultiviewFeaturesKHR multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES_KHR };
+			multiviewFeatures.multiview = VK_TRUE;
+			deviceInfo.pNext = &multiviewFeatures;
+			
 			deviceInfo.pEnabledFeatures = &features;
 			deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
 			deviceInfo.ppEnabledExtensionNames = (enabledExtensions.empty() ? nullptr : enabledExtensions.data());
@@ -1182,7 +1178,7 @@ void android_main(struct android_app* app)
 		VkAttachmentReference depthRef { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 		VkAttachmentReference resolveRef { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
-		VkAttachmentDescription attachments[3];
+		VkAttachmentDescription attachments[3] { };
 
 		VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
 		rpInfo.attachmentCount = 3;
@@ -1479,7 +1475,7 @@ void android_main(struct android_app* app)
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "OXR 1.0.12";
+						sys_version = "OXR 1.0.13";
 						const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 						std::vector<std::string> arguments;
 						arguments.emplace_back("SlipNFrag");

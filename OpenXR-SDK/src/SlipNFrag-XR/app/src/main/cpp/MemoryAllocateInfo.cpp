@@ -1,7 +1,6 @@
 #include "MemoryAllocateInfo.h"
 #include "AppState.h"
 #include <android/log.h>
-#include "sys_ovr.h"
 #include "Utils.h"
 
 void createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties, VkMemoryAllocateInfo& memoryAllocateInfo)
