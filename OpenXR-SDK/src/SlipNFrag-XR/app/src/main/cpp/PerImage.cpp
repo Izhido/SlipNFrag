@@ -23,17 +23,12 @@ void PerImage::Reset(AppState& appState)
 VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 {
 	appState.Scene.lastSurface = d_lists.last_surface;
-	appState.Scene.lastSurfaceRotated16 = d_lists.last_surface_rotated16;
-	appState.Scene.lastSurfaceRotated32 = d_lists.last_surface_rotated32;
-	appState.Scene.lastFence16 = d_lists.last_fence16;
-	appState.Scene.lastFence32 = d_lists.last_fence32;
-	appState.Scene.lastFenceRotated16 = d_lists.last_fence_rotated16;
-	appState.Scene.lastFenceRotated32 = d_lists.last_fence_rotated32;
+	appState.Scene.lastSurfaceRotated = d_lists.last_surface_rotated;
+	appState.Scene.lastFence = d_lists.last_fence;
+	appState.Scene.lastFenceRotated = d_lists.last_fence_rotated;
 	appState.Scene.lastSprite = d_lists.last_sprite;
-	appState.Scene.lastTurbulent16 = d_lists.last_turbulent16;
-	appState.Scene.lastTurbulent32 = d_lists.last_turbulent32;
-	appState.Scene.lastTurbulentRotated16 = d_lists.last_turbulent_rotated16;
-	appState.Scene.lastTurbulentRotated32 = d_lists.last_turbulent_rotated32;
+	appState.Scene.lastTurbulent = d_lists.last_turbulent;
+	appState.Scene.lastTurbulentRotated = d_lists.last_turbulent_rotated;
 	appState.Scene.lastAlias16 = d_lists.last_alias16;
 	appState.Scene.lastAlias32 = d_lists.last_alias32;
 	appState.Scene.lastViewmodel16 = d_lists.last_viewmodel16;
@@ -45,49 +40,29 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	{
 		appState.Scene.loadedSurfaces.resize(appState.Scene.lastSurface + 1);
 	}
-	if (appState.Scene.lastSurfaceRotated16 >= appState.Scene.loadedSurfacesRotated16.size())
+	if (appState.Scene.lastSurfaceRotated >= appState.Scene.loadedSurfacesRotated.size())
 	{
-		appState.Scene.loadedSurfacesRotated16.resize(appState.Scene.lastSurfaceRotated16 + 1);
+		appState.Scene.loadedSurfacesRotated.resize(appState.Scene.lastSurfaceRotated + 1);
 	}
-	if (appState.Scene.lastSurfaceRotated32 >= appState.Scene.loadedSurfacesRotated32.size())
+	if (appState.Scene.lastFence >= appState.Scene.loadedFences.size())
 	{
-		appState.Scene.loadedSurfacesRotated32.resize(appState.Scene.lastSurfaceRotated32 + 1);
+		appState.Scene.loadedFences.resize(appState.Scene.lastFence + 1);
 	}
-	if (appState.Scene.lastFence16 >= appState.Scene.loadedFences16.size())
+	if (appState.Scene.lastFenceRotated >= appState.Scene.loadedFencesRotated.size())
 	{
-		appState.Scene.loadedFences16.resize(appState.Scene.lastFence16 + 1);
-	}
-	if (appState.Scene.lastFence32 >= appState.Scene.loadedFences32.size())
-	{
-		appState.Scene.loadedFences32.resize(appState.Scene.lastFence32 + 1);
-	}
-	if (appState.Scene.lastFenceRotated16 >= appState.Scene.loadedFencesRotated16.size())
-	{
-		appState.Scene.loadedFencesRotated16.resize(appState.Scene.lastFenceRotated16 + 1);
-	}
-	if (appState.Scene.lastFenceRotated32 >= appState.Scene.loadedFencesRotated32.size())
-	{
-		appState.Scene.loadedFencesRotated32.resize(appState.Scene.lastFenceRotated32 + 1);
+		appState.Scene.loadedFencesRotated.resize(appState.Scene.lastFenceRotated + 1);
 	}
 	if (appState.Scene.lastSprite >= appState.Scene.loadedSprites.size())
 	{
 		appState.Scene.loadedSprites.resize(appState.Scene.lastSprite + 1);
 	}
-	if (appState.Scene.lastTurbulent16 >= appState.Scene.loadedTurbulent16.size())
+	if (appState.Scene.lastTurbulent >= appState.Scene.loadedTurbulent.size())
 	{
-		appState.Scene.loadedTurbulent16.resize(appState.Scene.lastTurbulent16 + 1);
+		appState.Scene.loadedTurbulent.resize(appState.Scene.lastTurbulent + 1);
 	}
-	if (appState.Scene.lastTurbulent32 >= appState.Scene.loadedTurbulent32.size())
+	if (appState.Scene.lastTurbulentRotated >= appState.Scene.loadedTurbulentRotated.size())
 	{
-		appState.Scene.loadedTurbulent32.resize(appState.Scene.lastTurbulent32 + 1);
-	}
-	if (appState.Scene.lastTurbulentRotated16 >= appState.Scene.loadedTurbulentRotated16.size())
-	{
-		appState.Scene.loadedTurbulentRotated16.resize(appState.Scene.lastTurbulentRotated16 + 1);
-	}
-	if (appState.Scene.lastTurbulentRotated32 >= appState.Scene.loadedTurbulentRotated32.size())
-	{
-		appState.Scene.loadedTurbulentRotated32.resize(appState.Scene.lastTurbulentRotated32 + 1);
+		appState.Scene.loadedTurbulentRotated.resize(appState.Scene.lastTurbulentRotated + 1);
 	}
 	if (appState.Scene.lastAlias16 >= appState.Scene.loadedAlias16.size())
 	{
@@ -131,49 +106,28 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	for (auto i = 0; i <= d_lists.last_surface; i++)
 	{
 		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
-		appState.Scene.GetSurfaceIndicesStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
+		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastSurfaceRotated16; i++)
+	for (auto i = 0; i <= appState.Scene.lastSurfaceRotated; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces_rotated16[i], appState.Scene.loadedSurfacesRotated16[i], size);
-		appState.Scene.GetIndices16StagingBufferSize(appState, d_lists.surfaces_rotated16[i], appState.Scene.loadedSurfacesRotated16[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], appState.Scene.loadedSurfacesRotated[i], size);
+		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.surfaces_rotated[i], appState.Scene.loadedSurfacesRotated[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastSurfaceRotated32; i++)
+	for (auto i = 0; i <= appState.Scene.lastFence; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces_rotated32[i], appState.Scene.loadedSurfacesRotated32[i], size);
-		appState.Scene.GetIndices32StagingBufferSize(appState, d_lists.surfaces_rotated32[i], appState.Scene.loadedSurfacesRotated32[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.fences[i], appState.Scene.loadedFences[i], size);
+		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.fences[i], appState.Scene.loadedFences[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastFence16; i++)
+	for (auto i = 0; i <= appState.Scene.lastFenceRotated; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.fences16[i], appState.Scene.loadedFences16[i], size);
-		appState.Scene.GetIndices16StagingBufferSize(appState, d_lists.fences16[i], appState.Scene.loadedFences16[i], size);
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastFence32; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.fences32[i], appState.Scene.loadedFences32[i], size);
-		appState.Scene.GetIndices32StagingBufferSize(appState, d_lists.fences32[i], appState.Scene.loadedFences32[i], size);
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastFenceRotated16; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.fences_rotated16[i], appState.Scene.loadedFencesRotated16[i], size);
-		appState.Scene.GetIndices16StagingBufferSize(appState, d_lists.fences_rotated16[i], appState.Scene.loadedFencesRotated16[i], size);
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastFenceRotated32; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.fences_rotated32[i], appState.Scene.loadedFencesRotated32[i], size);
-		appState.Scene.GetIndices32StagingBufferSize(appState, d_lists.fences_rotated32[i], appState.Scene.loadedFencesRotated32[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.fences_rotated[i], appState.Scene.loadedFencesRotated[i], size);
+		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.fences_rotated[i], appState.Scene.loadedFencesRotated[i], size);
 	}
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastSprite; i++)
@@ -214,187 +168,45 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastTurbulent16; i++)
+	for (auto i = 0; i <= appState.Scene.lastTurbulent; i++)
 	{
-		auto& turbulent = d_lists.turbulent16[i];
-		auto& loaded = appState.Scene.loadedTurbulent16[i];
-		appState.Scene.GetStagingBufferSize(appState, turbulent, loaded, size);
-		auto entry = appState.Scene.indicesPerKey.find(turbulent.surface);
-		if (entry == appState.Scene.indicesPerKey.end())
-		{
-			loaded.indices.size = turbulent.count * sizeof(uint16_t);
-			if (appState.Scene.latestSharedMemoryIndexBuffer16 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer16->size)
-			{
-				loaded.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-				appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
-				appState.Scene.latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
-				appState.Scene.usedInLatestSharedMemoryIndexBuffer16 = 0;
-			}
-			else
-			{
-				loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer16;
-			}
-			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer16;
-			appState.Scene.usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.model;
-			appState.Scene.buffers.SetupIndices16(loaded.indices);
-			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-			appState.Scene.indicesPerKey.insert({ turbulent.surface, newEntry });
-		}
-		else
-		{
-			loaded.indices.size = 0;
-			loaded.indices.buffer = entry->second.buffer;
-			loaded.indices.offset = entry->second.offset;
-		}
+		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent[i], appState.Scene.loadedTurbulent[i], size);
+		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.turbulent[i], appState.Scene.loadedTurbulent[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastTurbulent32; i++)
+	for (auto i = 0; i <= appState.Scene.lastTurbulentRotated; i++)
 	{
-		auto& turbulent = d_lists.turbulent32[i];
-		auto& loaded = appState.Scene.loadedTurbulent32[i];
-		appState.Scene.GetStagingBufferSize(appState, turbulent, loaded, size);
-		auto entry = appState.Scene.indicesPerKey.find(turbulent.surface);
-		if (entry == appState.Scene.indicesPerKey.end())
-		{
-			loaded.indices.size = turbulent.count * sizeof(uint32_t);
-			if (appState.Scene.latestSharedMemoryIndexBuffer32 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer32->size)
-			{
-				loaded.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-				appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
-				appState.Scene.latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
-				appState.Scene.usedInLatestSharedMemoryIndexBuffer32 = 0;
-			}
-			else
-			{
-				loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer32;
-			}
-			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer32;
-			appState.Scene.usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.model;
-			appState.Scene.buffers.SetupIndices32(loaded.indices);
-			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-			appState.Scene.indicesPerKey.insert({ turbulent.surface, newEntry });
-		}
-		else
-		{
-			loaded.indices.size = 0;
-			loaded.indices.buffer = entry->second.buffer;
-			loaded.indices.offset = entry->second.offset;
-		}
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastTurbulentRotated16; i++)
-	{
-		auto& turbulent = d_lists.turbulent_rotated16[i];
-		auto& loaded = appState.Scene.loadedTurbulentRotated16[i];
-		appState.Scene.GetStagingBufferSize(appState, turbulent, loaded, size);
-		auto entry = appState.Scene.indicesPerKey.find(turbulent.surface);
-		if (entry == appState.Scene.indicesPerKey.end())
-		{
-			loaded.indices.size = turbulent.count * sizeof(uint16_t);
-			if (appState.Scene.latestSharedMemoryIndexBuffer16 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer16->size)
-			{
-				loaded.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-				appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
-				appState.Scene.latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
-				appState.Scene.usedInLatestSharedMemoryIndexBuffer16 = 0;
-			}
-			else
-			{
-				loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer16;
-			}
-			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer16;
-			appState.Scene.usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.model;
-			appState.Scene.buffers.SetupIndices16(loaded.indices);
-			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-			appState.Scene.indicesPerKey.insert({ turbulent.surface, newEntry });
-		}
-		else
-		{
-			loaded.indices.size = 0;
-			loaded.indices.buffer = entry->second.buffer;
-			loaded.indices.offset = entry->second.offset;
-		}
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastTurbulentRotated32; i++)
-	{
-		auto& turbulent = d_lists.turbulent_rotated32[i];
-		auto& loaded = appState.Scene.loadedTurbulentRotated32[i];
-		appState.Scene.GetStagingBufferSize(appState, turbulent, loaded, size);
-		auto entry = appState.Scene.indicesPerKey.find(turbulent.surface);
-		if (entry == appState.Scene.indicesPerKey.end())
-		{
-			loaded.indices.size = turbulent.count * sizeof(uint32_t);
-			if (appState.Scene.latestSharedMemoryIndexBuffer32 == nullptr || appState.Scene.usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > appState.Scene.latestSharedMemoryIndexBuffer32->size)
-			{
-				loaded.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-				appState.Scene.buffers.MoveToFront(loaded.indices.buffer);
-				appState.Scene.latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
-				appState.Scene.usedInLatestSharedMemoryIndexBuffer32 = 0;
-			}
-			else
-			{
-				loaded.indices.buffer = appState.Scene.latestSharedMemoryIndexBuffer32;
-			}
-			loaded.indices.offset = appState.Scene.usedInLatestSharedMemoryIndexBuffer32;
-			appState.Scene.usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.model;
-			appState.Scene.buffers.SetupIndices32(loaded.indices);
-			SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
-			appState.Scene.indicesPerKey.insert({ turbulent.surface, newEntry });
-		}
-		else
-		{
-			loaded.indices.size = 0;
-			loaded.indices.buffer = entry->second.buffer;
-			loaded.indices.offset = entry->second.offset;
-		}
+		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent_rotated[i], appState.Scene.loadedTurbulentRotated[i], size);
+		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.turbulent_rotated[i], appState.Scene.loadedTurbulentRotated[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastAlias16; i++)
 	{
 		appState.Scene.GetStagingBufferSize(appState, d_lists.alias16[i], appState.Scene.loadedAlias16[i], host_colormap, size);
-		appState.Scene.GetAliasIndices16StagingBufferSize(appState, d_lists.alias16[i], appState.Scene.loadedAlias16[i], size);
+		appState.Scene.GetIndices16StagingBufferSize(appState, d_lists.alias16[i], appState.Scene.loadedAlias16[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastAlias32; i++)
 	{
 		appState.Scene.GetStagingBufferSize(appState, d_lists.alias32[i], appState.Scene.loadedAlias32[i], host_colormap, size);
-		appState.Scene.GetAliasIndices32StagingBufferSize(appState, d_lists.alias32[i], appState.Scene.loadedAlias32[i], size);
+		appState.Scene.GetIndices32StagingBufferSize(appState, d_lists.alias32[i], appState.Scene.loadedAlias32[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastViewmodel16; i++)
 	{
 		appState.Scene.GetStagingBufferSize(appState, d_lists.viewmodels16[i], appState.Scene.loadedViewmodels16[i], host_colormap, size);
-		appState.Scene.GetAliasIndices16StagingBufferSize(appState, d_lists.viewmodels16[i], appState.Scene.loadedViewmodels16[i], size);
+		appState.Scene.GetIndices16StagingBufferSize(appState, d_lists.viewmodels16[i], appState.Scene.loadedViewmodels16[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastViewmodel32; i++)
 	{
 		appState.Scene.GetStagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], host_colormap, size);
-		appState.Scene.GetAliasIndices32StagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], size);
+		appState.Scene.GetIndices32StagingBufferSize(appState, d_lists.viewmodels32[i], appState.Scene.loadedViewmodels32[i], size);
 	}
 	if (appState.Scene.lastSky >= 0)
 	{
@@ -1360,16 +1172,11 @@ void PerImage::SetPushConstants(const LoadedAlias& loaded, float pushConstants[]
 void PerImage::Render(AppState& appState)
 {
 	if (appState.Scene.lastSurface < 0 &&
-		appState.Scene.lastSurfaceRotated16 < 0 &&
-		appState.Scene.lastSurfaceRotated32 < 0 &&
-		appState.Scene.lastFence16 < 0 &&
-		appState.Scene.lastFence32 < 0 &&
-		appState.Scene.lastFenceRotated16 < 0 &&
-		appState.Scene.lastFenceRotated32 < 0 &&
-		appState.Scene.lastTurbulent16 < 0 &&
-		appState.Scene.lastTurbulent32 < 0 &&
-		appState.Scene.lastTurbulentRotated16 < 0 &&
-		appState.Scene.lastTurbulentRotated32 < 0 &&
+		appState.Scene.lastSurfaceRotated < 0 &&
+		appState.Scene.lastFence < 0 &&
+		appState.Scene.lastFenceRotated < 0 &&
+		appState.Scene.lastTurbulent < 0 &&
+		appState.Scene.lastTurbulentRotated < 0 &&
 		appState.Scene.lastAlias16 < 0 &&
 		appState.Scene.lastAlias32 < 0 &&
 		appState.Scene.lastViewmodel16 < 0 &&
@@ -1536,21 +1343,18 @@ void PerImage::Render(AppState& appState)
 				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
-		if (appState.Scene.lastSurfaceRotated16 >= 0 || appState.Scene.lastSurfaceRotated32 >= 0)
+		if (appState.Scene.lastSurfaceRotated >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-		}
-		if (appState.Scene.lastSurfaceRotated16 >= 0)
-		{
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastSurfaceRotated16; i++)
+			for (auto i = 0; i <= appState.Scene.lastSurfaceRotated; i++)
 			{
-				auto& loaded = appState.Scene.loadedSurfacesRotated16[i];
+				auto& loaded = appState.Scene.loadedSurfacesRotated[i];
 				auto vertices = loaded.vertices.buffer;
 				if (previousVertices != vertices)
 				{
@@ -1581,73 +1385,24 @@ void PerImage::Render(AppState& appState)
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT16);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 2, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
-		if (appState.Scene.lastSurfaceRotated32 >= 0)
-		{
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePositions = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastSurfaceRotated32; i++)
-			{
-				auto& loaded = appState.Scene.loadedSurfacesRotated32[i];
-				auto vertices = loaded.vertices.buffer;
-				if (previousVertices != vertices)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-					previousVertices = vertices;
-				}
-				auto texturePositions = loaded.texturePositions.buffer;
-				if (previousTexturePositions != texturePositions)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
-					previousTexturePositions = texturePositions;
-				}
-				auto lightmap = loaded.lightmap.lightmap;
-				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
-				if (previousLightmapDescriptorSet != lightmapDescriptorSet)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
-					previousLightmapDescriptorSet = lightmapDescriptorSet;
-				}
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
-				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 7 * sizeof(float), pushConstants);
-				auto indices = loaded.indices.buffer;
-				if (previousIndices != indices)
-				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT32);
-					previousIndices = indices;
-				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 4, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
-			}
-		}
-		if (appState.Scene.lastFence16 >= 0 || appState.Scene.lastFence32 >= 0)
+		if (appState.Scene.lastFence >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-		}
-		if (appState.Scene.lastFence16 >= 0)
-		{
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastFence16; i++)
+			for (auto i = 0; i <= appState.Scene.lastFence; i++)
 			{
-				auto& loaded = appState.Scene.loadedFences16[i];
+				auto& loaded = appState.Scene.loadedFences[i];
 				auto vertices = loaded.vertices.buffer;
 				if (previousVertices != vertices)
 				{
@@ -1678,73 +1433,24 @@ void PerImage::Render(AppState& appState)
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT16);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 2, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
-		if (appState.Scene.lastFence32 >= 0)
-		{
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePositions = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastFence32; i++)
-			{
-				auto& loaded = appState.Scene.loadedFences32[i];
-				auto vertices = loaded.vertices.buffer;
-				if (previousVertices != vertices)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-					previousVertices = vertices;
-				}
-				auto texturePositions = loaded.texturePositions.buffer;
-				if (previousTexturePositions != texturePositions)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
-					previousTexturePositions = texturePositions;
-				}
-				auto lightmap = loaded.lightmap.lightmap;
-				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
-				if (previousLightmapDescriptorSet != lightmapDescriptorSet)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
-					previousLightmapDescriptorSet = lightmapDescriptorSet;
-				}
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
-				uint32_t lightmapIndex = loaded.lightmap.lightmap->allocatedIndex;
-				vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &lightmapIndex);
-				auto indices = loaded.indices.buffer;
-				if (previousIndices != indices)
-				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT32);
-					previousIndices = indices;
-				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 4, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
-			}
-		}
-		if (appState.Scene.lastFenceRotated16 >= 0 || appState.Scene.lastFenceRotated32 >= 0)
+		if (appState.Scene.lastFenceRotated >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-		}
-		if (appState.Scene.lastFenceRotated16 >= 0)
-		{
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastFenceRotated16; i++)
+			for (auto i = 0; i <= appState.Scene.lastFenceRotated; i++)
 			{
-				auto& loaded = appState.Scene.loadedFencesRotated16[i];
+				auto& loaded = appState.Scene.loadedFencesRotated[i];
 				auto vertices = loaded.vertices.buffer;
 				if (previousVertices != vertices)
 				{
@@ -1775,56 +1481,10 @@ void PerImage::Render(AppState& appState)
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT16);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 2, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
-			}
-		}
-		if (appState.Scene.lastFenceRotated32 >= 0)
-		{
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePositions = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastFenceRotated32; i++)
-			{
-				auto& loaded = appState.Scene.loadedFencesRotated32[i];
-				auto vertices = loaded.vertices.buffer;
-				if (previousVertices != vertices)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-					previousVertices = vertices;
-				}
-				auto texturePositions = loaded.texturePositions.buffer;
-				if (previousTexturePositions != texturePositions)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
-					previousTexturePositions = texturePositions;
-				}
-				auto lightmap = loaded.lightmap.lightmap;
-				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
-				if (previousLightmapDescriptorSet != lightmapDescriptorSet)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
-					previousLightmapDescriptorSet = lightmapDescriptorSet;
-				}
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
-				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 7 * sizeof(float), pushConstants);
-				auto indices = loaded.indices.buffer;
-				if (previousIndices != indices)
-				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT32);
-					previousIndices = indices;
-				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 4, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
 		if (appState.Scene.lastSprite >= 0)
@@ -1846,21 +1506,18 @@ void PerImage::Render(AppState& appState)
 				vkCmdDraw(commandBuffer, loaded.count, 1, loaded.firstVertex, 0);
 			}
 		}
-		if (appState.Scene.lastTurbulent16 >= 0 || appState.Scene.lastTurbulent32 >= 0)
+		if (appState.Scene.lastTurbulent >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
 			pushConstants[0] = (float)cl.time;
-		}
-		if (appState.Scene.lastTurbulent16 >= 0)
-		{
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastTurbulent16; i++)
+			for (auto i = 0; i <= appState.Scene.lastTurbulent; i++)
 			{
-				auto& loaded = appState.Scene.loadedTurbulent16[i];
+				auto& loaded = appState.Scene.loadedTurbulent[i];
 				auto vertices = loaded.vertices.buffer;
 				if (previousVertices != vertices)
 				{
@@ -1883,64 +1540,24 @@ void PerImage::Render(AppState& appState)
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT16);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 2, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
-		if (appState.Scene.lastTurbulent32 >= 0)
-		{
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePositions = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastTurbulent32; i++)
-			{
-				auto& loaded = appState.Scene.loadedTurbulent32[i];
-				auto vertices = loaded.vertices.buffer;
-				if (previousVertices != vertices)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-					previousVertices = vertices;
-				}
-				auto texturePositions = loaded.texturePositions.buffer;
-				if (previousTexturePositions != texturePositions)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
-					previousTexturePositions = texturePositions;
-				}
-				vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), pushConstants);
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
-				auto indices = loaded.indices.buffer;
-				if (previousIndices != indices)
-				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT32);
-					previousIndices = indices;
-				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 4, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
-			}
-		}
-		if (appState.Scene.lastTurbulentRotated16 >= 0 || appState.Scene.lastTurbulentRotated32 >= 0)
+		if (appState.Scene.lastTurbulentRotated >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
 			pushConstants[0] = (float)cl.time;
-		}
-		if (appState.Scene.lastTurbulentRotated16 >= 0)
-		{
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastTurbulentRotated16; i++)
+			for (auto i = 0; i <= appState.Scene.lastTurbulentRotated; i++)
 			{
-				auto& loaded = appState.Scene.loadedTurbulentRotated16[i];
+				auto& loaded = appState.Scene.loadedTurbulentRotated[i];
 				auto vertices = loaded.vertices.buffer;
 				if (previousVertices != vertices)
 				{
@@ -1964,48 +1581,10 @@ void PerImage::Render(AppState& appState)
 				auto indices = loaded.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT16);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 2, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
-			}
-		}
-		if (appState.Scene.lastTurbulentRotated32 >= 0)
-		{
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePositions = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastTurbulentRotated32; i++)
-			{
-				auto& loaded = appState.Scene.loadedTurbulentRotated32[i];
-				auto vertices = loaded.vertices.buffer;
-				if (previousVertices != vertices)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-					previousVertices = vertices;
-				}
-				auto texturePositions = loaded.texturePositions.buffer;
-				if (previousTexturePositions != texturePositions)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
-					previousTexturePositions = texturePositions;
-				}
-				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 7 * sizeof(float), pushConstants);
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
-				auto indices = loaded.indices.buffer;
-				if (previousIndices != indices)
-				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, VK_INDEX_TYPE_UINT32);
-					previousIndices = indices;
-				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.offset / 4, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
 		if (colormapCount == 0)

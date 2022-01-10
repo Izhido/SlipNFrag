@@ -117,17 +117,12 @@ struct dskybox_t
 struct dlists_t
 {
 	int last_surface;
-	int last_surface_rotated16;
-	int last_surface_rotated32;
-	int last_fence16;
-	int last_fence32;
-	int last_fence_rotated16;
-	int last_fence_rotated32;
+	int last_surface_rotated;
+	int last_fence;
+	int last_fence_rotated;
 	int last_sprite;
-	int last_turbulent16;
-	int last_turbulent32;
-	int last_turbulent_rotated16;
-	int last_turbulent_rotated32;
+	int last_turbulent;
+	int last_turbulent_rotated;
 	int last_alias16;
 	int last_alias32;
 	int last_viewmodel16;
@@ -144,17 +139,12 @@ struct dlists_t
 	int last_lightmap_texel;
 	int clear_color;
 	std::vector<dsurface_t> surfaces;
-	std::vector<dsurfacerotated_t> surfaces_rotated16;
-	std::vector<dsurfacerotated_t> surfaces_rotated32;
-	std::vector<dsurface_t> fences16;
-	std::vector<dsurface_t> fences32;
-	std::vector<dsurfacerotated_t> fences_rotated16;
-	std::vector<dsurfacerotated_t> fences_rotated32;
+	std::vector<dsurfacerotated_t> surfaces_rotated;
+	std::vector<dsurface_t> fences;
+	std::vector<dsurfacerotated_t> fences_rotated;
 	std::vector<dspritedata_t> sprites;
-	std::vector<dturbulent_t> turbulent16;
-	std::vector<dturbulent_t> turbulent32;
-	std::vector<dturbulentrotated_t> turbulent_rotated16;
-	std::vector<dturbulentrotated_t> turbulent_rotated32;
+	std::vector<dturbulent_t> turbulent;
+	std::vector<dturbulentrotated_t> turbulent_rotated;
 	std::vector<dalias_t> alias16;
 	std::vector<dalias_t> alias32;
 	std::vector<dalias_t> viewmodels16;

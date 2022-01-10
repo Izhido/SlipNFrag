@@ -6,7 +6,7 @@
 
 #define UPPER_16BIT_LIMIT 65520
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -20,17 +20,12 @@ extern vec3_t r_plightvec;
 void D_ResetLists ()
 {
 	d_lists.last_surface = -1;
-	d_lists.last_surface_rotated16 = -1;
-	d_lists.last_surface_rotated32 = -1;
-	d_lists.last_fence16 = -1;
-	d_lists.last_fence32 = -1;
-	d_lists.last_fence_rotated16 = -1;
-	d_lists.last_fence_rotated32 = -1;
+	d_lists.last_surface_rotated = -1;
+	d_lists.last_fence = -1;
+	d_lists.last_fence_rotated = -1;
 	d_lists.last_sprite = -1;
-	d_lists.last_turbulent16 = -1;
-	d_lists.last_turbulent32 = -1;
-	d_lists.last_turbulent_rotated16 = -1;
-	d_lists.last_turbulent_rotated32 = -1;
+	d_lists.last_turbulent = -1;
+	d_lists.last_turbulent_rotated = -1;
 	d_lists.last_alias16 = -1;
 	d_lists.last_alias32 = -1;
 	d_lists.last_viewmodel16 = -1;
@@ -123,23 +118,12 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_t* cache, entity_t*
 	{
 		return;
 	}
-	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
+	d_lists.last_surface_rotated++;
+	if (d_lists.last_surface_rotated >= d_lists.surfaces_rotated.size())
 	{
-		d_lists.last_surface_rotated16++;
-		if (d_lists.last_surface_rotated16 >= d_lists.surfaces_rotated16.size())
-		{
-			d_lists.surfaces_rotated16.emplace_back();
-		}
-		auto& surface = d_lists.surfaces_rotated16[d_lists.last_surface_rotated16];
-		D_FillSurfaceRotatedData(surface, face, cache, entity, created);
-		return;
+		d_lists.surfaces_rotated.emplace_back();
 	}
-	d_lists.last_surface_rotated32++;
-	if (d_lists.last_surface_rotated32 >= d_lists.surfaces_rotated32.size())
-	{
-		d_lists.surfaces_rotated32.emplace_back();
-	}
-	auto& surface = d_lists.surfaces_rotated32[d_lists.last_surface_rotated32];
+	auto& surface = d_lists.surfaces_rotated[d_lists.last_surface_rotated];
 	D_FillSurfaceRotatedData(surface, face, cache, entity, created);
 }
 
@@ -149,23 +133,12 @@ void D_AddFenceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity, 
 	{
 		return;
 	}
-	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
+	d_lists.last_fence++;
+	if (d_lists.last_fence >= d_lists.fences.size())
 	{
-		d_lists.last_fence16++;
-		if (d_lists.last_fence16 >= d_lists.fences16.size())
-		{
-			d_lists.fences16.emplace_back();
-		}
-		auto& fence = d_lists.fences16[d_lists.last_fence16];
-		D_FillSurfaceData(fence, face, cache, entity, created);
-		return;
+		d_lists.fences.emplace_back();
 	}
-	d_lists.last_fence32++;
-	if (d_lists.last_fence32 >= d_lists.fences32.size())
-	{
-		d_lists.fences32.emplace_back();
-	}
-	auto& fence = d_lists.fences32[d_lists.last_fence32];
+	auto& fence = d_lists.fences[d_lists.last_fence];
 	D_FillSurfaceData(fence, face, cache, entity, created);
 }
 
@@ -175,23 +148,12 @@ void D_AddFenceRotatedToLists (msurface_t* face, surfcache_t* cache, entity_t* e
 	{
 		return;
 	}
-	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
+	d_lists.last_fence_rotated++;
+	if (d_lists.last_fence_rotated >= d_lists.fences_rotated.size())
 	{
-		d_lists.last_fence_rotated16++;
-		if (d_lists.last_fence_rotated16 >= d_lists.fences_rotated16.size())
-		{
-			d_lists.fences_rotated16.emplace_back();
-		}
-		auto& fence = d_lists.fences_rotated16[d_lists.last_fence_rotated16];
-		D_FillSurfaceRotatedData(fence, face, cache, entity, created);
-		return;
+		d_lists.fences_rotated.emplace_back();
 	}
-	d_lists.last_fence_rotated32++;
-	if (d_lists.last_fence_rotated32 >= d_lists.fences_rotated32.size())
-	{
-		d_lists.fences_rotated32.emplace_back();
-	}
-	auto& fence = d_lists.fences_rotated32[d_lists.last_fence_rotated32];
+	auto& fence = d_lists.fences_rotated[d_lists.last_fence_rotated];
 	D_FillSurfaceRotatedData(fence, face, cache, entity, created);
 }
 
@@ -281,8 +243,18 @@ void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
 }
 
-void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity)
+void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 {
+	if (face->numedges < 3)
+	{
+		return;
+	}
+	d_lists.last_turbulent++;
+	if (d_lists.last_turbulent >= d_lists.turbulent.size())
+	{
+		d_lists.turbulent.emplace_back();
+	}
+	auto& turbulent = d_lists.turbulent[d_lists.last_turbulent];
 	auto texinfo = face->texinfo;
 	auto texture = texinfo->texture;
 	turbulent.surface = face;
@@ -296,8 +268,18 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	turbulent.count = face->numedges;
 }
 
-void D_FillTurbulentRotatedData (dturbulentrotated_t& turbulent, msurface_t* face, entity_t* entity)
+void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity)
 {
+	if (face->numedges < 3)
+	{
+		return;
+	}
+	d_lists.last_turbulent_rotated++;
+	if (d_lists.last_turbulent_rotated >= d_lists.turbulent_rotated.size())
+	{
+		d_lists.turbulent_rotated.emplace_back();
+	}
+	auto& turbulent = d_lists.turbulent_rotated[d_lists.last_turbulent_rotated];
 	auto texinfo = face->texinfo;
 	auto texture = texinfo->texture;
 	turbulent.surface = face;
@@ -315,58 +297,6 @@ void D_FillTurbulentRotatedData (dturbulentrotated_t& turbulent, msurface_t* fac
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
-}
-
-void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
-{
-	if (face->numedges < 3)
-	{
-		return;
-	}
-	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
-	{
-		d_lists.last_turbulent16++;
-		if (d_lists.last_turbulent16 >= d_lists.turbulent16.size())
-		{
-			d_lists.turbulent16.emplace_back();
-		}
-		auto& turbulent = d_lists.turbulent16[d_lists.last_turbulent16];
-		D_FillTurbulentData(turbulent, face, entity);
-		return;
-	}
-	d_lists.last_turbulent32++;
-	if (d_lists.last_turbulent32 >= d_lists.turbulent32.size())
-	{
-		d_lists.turbulent32.emplace_back();
-	}
-	auto& turbulent = d_lists.turbulent32[d_lists.last_turbulent32];
-	D_FillTurbulentData(turbulent, face, entity);
-}
-
-void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity)
-{
-	if (face->numedges < 3)
-	{
-		return;
-	}
-	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
-	{
-		d_lists.last_turbulent_rotated16++;
-		if (d_lists.last_turbulent_rotated16 >= d_lists.turbulent_rotated16.size())
-		{
-			d_lists.turbulent_rotated16.emplace_back();
-		}
-		auto& turbulent = d_lists.turbulent_rotated16[d_lists.last_turbulent_rotated16];
-		D_FillTurbulentRotatedData(turbulent, face, entity);
-		return;
-	}
-	d_lists.last_turbulent_rotated32++;
-	if (d_lists.last_turbulent_rotated32 >= d_lists.turbulent_rotated32.size())
-	{
-		d_lists.turbulent_rotated32.emplace_back();
-	}
-	auto& turbulent = d_lists.turbulent_rotated32[d_lists.last_turbulent_rotated32];
-	D_FillTurbulentRotatedData(turbulent, face, entity);
 }
 
 void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)
