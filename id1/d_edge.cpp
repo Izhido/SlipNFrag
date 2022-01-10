@@ -569,8 +569,7 @@ void D_DrawSurfacesToLists (void)
 
 				pface = (msurface_t*)s->data;
 
-				pcurrentcache = nullptr;
-				auto created = D_CacheLightmap (pface, &pcurrentcache);
+				pcurrentcache = D_CacheLightmap (pface);
 
 				if (pcurrentcache != nullptr)
 				{
@@ -583,20 +582,20 @@ void D_DrawSurfacesToLists (void)
 					{
 						if (s->isfence)
 						{
-							D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+							D_AddFenceToLists (pface, pcurrentcache, currententity);
 						}
 						else
 						{
-							D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+							D_AddSurfaceToLists (pface, pcurrentcache, currententity);
 						}
 					}
 					else if (s->isfence)
 					{
-						D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, created);
+						D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 					else
 					{
-						D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity, created);
+						D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 				}
 
@@ -768,8 +767,7 @@ void D_DrawSurfacesToListsIfNeeded (void)
 
 				pface = (msurface_t*)s->data;
 
-				pcurrentcache = nullptr;
-				auto created = D_CacheLightmap (pface, &pcurrentcache);
+				pcurrentcache = D_CacheLightmap (pface);
 
 				if (pcurrentcache != nullptr)
 				{
@@ -782,20 +780,20 @@ void D_DrawSurfacesToListsIfNeeded (void)
 					{
 						if (s->isfence)
 						{
-							D_AddFenceToLists (pface, pcurrentcache, currententity, created);
+							D_AddFenceToLists (pface, pcurrentcache, currententity);
 						}
 						else
 						{
-							D_AddSurfaceToLists (pface, pcurrentcache, currententity, created);
+							D_AddSurfaceToLists (pface, pcurrentcache, currententity);
 						}
 					}
 					else if (s->isfence)
 					{
-						D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, created);
+						D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 					else
 					{
-						D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity, created);
+						D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 				}
 
@@ -890,8 +888,7 @@ void D_DrawOneSurface (msurface_t* surf)
 		}
 		else
 		{
-			surfcache_s* pcurrentcache = nullptr;
-			auto created = D_CacheLightmap (surf, &pcurrentcache);
+			auto pcurrentcache = D_CacheLightmap (surf);
 
 			if (pcurrentcache != nullptr)
 			{
@@ -904,20 +901,20 @@ void D_DrawOneSurface (msurface_t* surf)
 				{
 					if (surf->texinfo->texture->name[0] == '{')
 					{
-						D_AddFenceToLists (surf, pcurrentcache, currententity, created);
+						D_AddFenceToLists (surf, pcurrentcache, currententity);
 					}
 					else
 					{
-						D_AddSurfaceToLists (surf, pcurrentcache, currententity, created);
+						D_AddSurfaceToLists (surf, pcurrentcache, currententity);
 					}
 				}
 				else if (surf->texinfo->texture->name[0] == '{')
 				{
-					D_AddFenceRotatedToLists (surf, pcurrentcache, currententity, created);
+					D_AddFenceRotatedToLists (surf, pcurrentcache, currententity);
 				}
 				else
 				{
-					D_AddSurfaceRotatedToLists (surf, pcurrentcache, currententity, created);
+					D_AddSurfaceRotatedToLists (surf, pcurrentcache, currententity);
 				}
 			}
 		}

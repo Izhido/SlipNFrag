@@ -350,6 +350,8 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 	cache->lightadj[2] = r_drawsurf.lightadj[2];
 	cache->lightadj[3] = r_drawsurf.lightadj[3];
 
+	cache->created = r_framecount;
+
 //
 // draw and light the surface texture
 //
@@ -377,7 +379,7 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 D_CacheLightmap
 ================
 */
-int D_CacheLightmap (msurface_t *surface, surfcache_t **result)
+surfcache_t* D_CacheLightmap (msurface_t *surface)
 {
 	surfcache_t     *cache;
 
@@ -396,15 +398,12 @@ int D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 	cache = surface->cachespots[0];
 
 	if (cache && !cache->dlight && surface->dlightframe != r_framecount
-		&& cache->texture == r_drawsurf.texture
-		&& cache->lightadj[0] == r_drawsurf.lightadj[0]
-		&& cache->lightadj[1] == r_drawsurf.lightadj[1]
-		&& cache->lightadj[2] == r_drawsurf.lightadj[2]
-		&& cache->lightadj[3] == r_drawsurf.lightadj[3] )
-	{
-		(*result) = cache;
-		return 0;
-	}
+			&& cache->texture == r_drawsurf.texture
+			&& cache->lightadj[0] == r_drawsurf.lightadj[0]
+			&& cache->lightadj[1] == r_drawsurf.lightadj[1]
+			&& cache->lightadj[2] == r_drawsurf.lightadj[2]
+			&& cache->lightadj[3] == r_drawsurf.lightadj[3] )
+		return cache;
 //
 // determine shape of surface
 //
@@ -421,7 +420,7 @@ int D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 		surface->cachespots[0] = cache;
 		if (cache == nullptr)
 		{
-			return 0;
+			return cache;
 		}
 		cache->owner = &surface->cachespots[0];
 		cache->mipscale = 1;
@@ -440,6 +439,8 @@ int D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 	cache->lightadj[2] = r_drawsurf.lightadj[2];
 	cache->lightadj[3] = r_drawsurf.lightadj[3];
 
+	cache->created = r_framecount;
+
 //
 // draw and light the surface texture
 //
@@ -451,8 +452,7 @@ int D_CacheLightmap (msurface_t *surface, surfcache_t **result)
 	c_surf++;
 	R_BuildLightMap ();
 
-	(*result) = surface->cachespots[0];
-	return r_framecount;
+	return surface->cachespots[0];;
 }
 
 
