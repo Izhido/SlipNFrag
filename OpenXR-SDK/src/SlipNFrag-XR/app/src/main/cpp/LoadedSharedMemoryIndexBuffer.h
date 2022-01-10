@@ -7,5 +7,7 @@ struct LoadedSharedMemoryIndexBuffer
 	VkDeviceSize size;
 	void* firstSource;
 	void* secondSource;
+	VkIndexType indexType;
+	uint32_t firstIndex;
 	LoadedSharedMemoryIndexBuffer* next;
 };

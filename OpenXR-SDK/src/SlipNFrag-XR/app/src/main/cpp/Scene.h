@@ -6,6 +6,7 @@
 #include "CachedSharedMemoryBuffers.h"
 #include <unordered_map>
 #include "AliasVertices.h"
+#include "SharedMemoryIndexBuffer.h"
 #include "SharedMemoryBufferWithOffset.h"
 #include "LoadedSurface.h"
 #include "LoadedSurfaceRotated.h"
@@ -44,10 +45,10 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
 	std::unordered_map<void*, SharedMemoryBufferWithOffset> texturePositionsPerKey;
 	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
+	std::unordered_map<void*, SharedMemoryIndexBuffer> surfaceIndicesPerKey;
 	std::unordered_map<void*, SharedMemoryBufferWithOffset> indicesPerKey;
 	std::unordered_map<void*, SharedMemoryBufferWithOffset> aliasIndicesPerKey;
-	int lastSurface16;
-	int lastSurface32;
+	int lastSurface;
 	int lastSurfaceRotated16;
 	int lastSurfaceRotated32;
 	int lastFence16;
@@ -66,8 +67,7 @@ struct Scene
 	int lastColoredIndex16;
 	int lastColoredIndex32;
 	int lastSky;
-	std::vector<LoadedSurface> loadedSurfaces16;
-	std::vector<LoadedSurface> loadedSurfaces32;
+	std::vector<LoadedSurface> loadedSurfaces;
 	std::vector<LoadedSurfaceRotated> loadedSurfacesRotated16;
 	std::vector<LoadedSurfaceRotated> loadedSurfacesRotated32;
 	std::vector<LoadedSurface> loadedFences16;
@@ -142,6 +142,7 @@ struct Scene
 	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app);
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
+	void GetSurfaceIndicesStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetIndices16StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetIndices32StagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetIndices16StagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);

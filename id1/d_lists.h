@@ -116,8 +116,7 @@ struct dskybox_t
 
 struct dlists_t
 {
-	int last_surface16;
-	int last_surface32;
+	int last_surface;
 	int last_surface_rotated16;
 	int last_surface_rotated32;
 	int last_fence16;
@@ -144,8 +143,7 @@ struct dlists_t
 	int last_colored_index32;
 	int last_lightmap_texel;
 	int clear_color;
-	std::vector<dsurface_t> surfaces16;
-	std::vector<dsurface_t> surfaces32;
+	std::vector<dsurface_t> surfaces;
 	std::vector<dsurfacerotated_t> surfaces_rotated16;
 	std::vector<dsurfacerotated_t> surfaces_rotated32;
 	std::vector<dsurface_t> fences16;

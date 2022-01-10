@@ -6,7 +6,7 @@
 
 #define UPPER_16BIT_LIMIT 65520
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -19,8 +19,7 @@ extern vec3_t r_plightvec;
 
 void D_ResetLists ()
 {
-	d_lists.last_surface16 = -1;
-	d_lists.last_surface32 = -1;
+	d_lists.last_surface = -1;
 	d_lists.last_surface_rotated16 = -1;
 	d_lists.last_surface_rotated32 = -1;
 	d_lists.last_fence16 = -1;
@@ -109,23 +108,12 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_t* cache, entity_t* entity
 	{
 		return;
 	}
-	if (entity->model->numvertexes <= UPPER_16BIT_LIMIT)
+	d_lists.last_surface++;
+	if (d_lists.last_surface >= d_lists.surfaces.size())
 	{
-		d_lists.last_surface16++;
-		if (d_lists.last_surface16 >= d_lists.surfaces16.size())
-		{
-			d_lists.surfaces16.emplace_back();
-		}
-		auto& surface = d_lists.surfaces16[d_lists.last_surface16];
-		D_FillSurfaceData(surface, face, cache, entity, created);
-		return;
+		d_lists.surfaces.emplace_back();
 	}
-	d_lists.last_surface32++;
-	if (d_lists.last_surface32 >= d_lists.surfaces32.size())
-	{
-		d_lists.surfaces32.emplace_back();
-	}
-	auto& surface = d_lists.surfaces32[d_lists.last_surface32];
+	auto& surface = d_lists.surfaces[d_lists.last_surface];
 	D_FillSurfaceData(surface, face, cache, entity, created);
 }
 
