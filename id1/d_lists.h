@@ -17,21 +17,8 @@ struct dsurface_t
 	int count;
 };
 
-struct dsurfacerotated_t
+struct dsurfacerotated_t : dsurface_t
 {
-	void* surface;
-	void* entity;
-	void* model;
-	int created;
-	int texture_width;
-	int texture_height;
-	int texture_size;
-	unsigned char* texture;
-	int lightmap_width;
-	int lightmap_height;
-	int lightmap_size;
-	int lightmap_texels;
-	int count;
 	float origin_x;
 	float origin_y;
 	float origin_z;
@@ -63,17 +50,8 @@ struct dturbulent_t
 	int count;
 };
 
-struct dturbulentrotated_t
+struct dturbulentrotated_t : dturbulent_t
 {
-	void* surface;
-	void* entity;
-	void* model;
-	void* texture;
-	int width;
-	int height;
-	int size;
-	unsigned char* data;
-	int count;
 	float origin_x;
 	float origin_y;
 	float origin_z;

@@ -46,7 +46,6 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryBufferWithOffset> texturePositionsPerKey;
 	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
 	std::unordered_map<void*, SharedMemoryIndexBuffer> surfaceIndicesPerKey;
-	std::unordered_map<void*, SharedMemoryBufferWithOffset> indicesPerKey;
 	std::unordered_map<void*, SharedMemoryBufferWithOffset> aliasIndicesPerKey;
 	int lastSurface;
 	int lastSurfaceRotated;
@@ -133,15 +132,13 @@ struct Scene
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
 	void GetIndicesStagingBufferSize(AppState& appState, dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
-	void GetIndicesStagingBufferSize(AppState& appState, dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetIndicesStagingBufferSize(AppState& appState, dturbulent_t& surface, LoadedTurbulent& loaded, VkDeviceSize& size);
-	void GetIndicesStagingBufferSize(AppState& appState, dturbulentrotated_t& surface, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetIndices16StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
 	void GetIndices32StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
+	void GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetSurfaceRotatedStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
+	void GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
+	void GetTurbulentRotatedStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	void AddToBufferBarrier(VkBuffer buffer);
 	void Reset();

@@ -105,28 +105,28 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= d_lists.last_surface; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
+		appState.Scene.GetSurfaceStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
 		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastSurfaceRotated; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], appState.Scene.loadedSurfacesRotated[i], size);
+		appState.Scene.GetSurfaceRotatedStagingBufferSize(appState, d_lists.surfaces_rotated[i], appState.Scene.loadedSurfacesRotated[i], size);
 		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.surfaces_rotated[i], appState.Scene.loadedSurfacesRotated[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastFence; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.fences[i], appState.Scene.loadedFences[i], size);
+		appState.Scene.GetSurfaceStagingBufferSize(appState, d_lists.fences[i], appState.Scene.loadedFences[i], size);
 		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.fences[i], appState.Scene.loadedFences[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastFenceRotated; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.fences_rotated[i], appState.Scene.loadedFencesRotated[i], size);
+		appState.Scene.GetSurfaceRotatedStagingBufferSize(appState, d_lists.fences_rotated[i], appState.Scene.loadedFencesRotated[i], size);
 		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.fences_rotated[i], appState.Scene.loadedFencesRotated[i], size);
 	}
 	appState.Scene.previousTexture = nullptr;
@@ -170,14 +170,14 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastTurbulent; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent[i], appState.Scene.loadedTurbulent[i], size);
+		appState.Scene.GetTurbulentStagingBufferSize(appState, d_lists.turbulent[i], appState.Scene.loadedTurbulent[i], size);
 		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.turbulent[i], appState.Scene.loadedTurbulent[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastTurbulentRotated; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent_rotated[i], appState.Scene.loadedTurbulentRotated[i], size);
+		appState.Scene.GetTurbulentRotatedStagingBufferSize(appState, d_lists.turbulent_rotated[i], appState.Scene.loadedTurbulentRotated[i], size);
 		appState.Scene.GetIndicesStagingBufferSize(appState, d_lists.turbulent_rotated[i], appState.Scene.loadedTurbulentRotated[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;

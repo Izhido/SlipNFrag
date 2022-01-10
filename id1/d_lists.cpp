@@ -69,26 +69,7 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_t* cach
 
 void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_t* cache, entity_t* entity, int created)
 {
-	surface.surface = face;
-	surface.entity = entity;
-	surface.model = entity->model;
-	surface.created = created;
-	auto texture = (texture_t*)(cache->texture);
-	surface.texture_width = texture->width;
-	surface.texture_height = texture->height;
-	surface.texture_size = surface.texture_width * surface.texture_height;
-	surface.texture = (unsigned char *)(texture + 1);
-	surface.lightmap_width = cache->width / sizeof(unsigned);
-	surface.lightmap_height = cache->height;
-	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
-	{
-		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
-	}
-	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
-	d_lists.last_lightmap_texel += surface.lightmap_size;
-	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
-	surface.count = face->numedges;
+	D_FillSurfaceData(surface, face, cache, entity, created);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -243,6 +224,21 @@ void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
 }
 
+void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity)
+{
+	auto texinfo = face->texinfo;
+	auto texture = texinfo->texture;
+	turbulent.surface = face;
+	turbulent.entity = entity;
+	turbulent.model = entity->model;
+	turbulent.texture = texture;
+	turbulent.width = texture->width;
+	turbulent.height = texture->height;
+	turbulent.size = turbulent.width * turbulent.height;
+	turbulent.data = (unsigned char*)texture + texture->offsets[0];
+	turbulent.count = face->numedges;
+}
+
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 {
 	if (face->numedges < 3)
@@ -255,17 +251,7 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 		d_lists.turbulent.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent[d_lists.last_turbulent];
-	auto texinfo = face->texinfo;
-	auto texture = texinfo->texture;
-	turbulent.surface = face;
-	turbulent.entity = entity;
-	turbulent.model = entity->model;
-	turbulent.texture = texture;
-	turbulent.width = texture->width;
-	turbulent.height = texture->height;
-	turbulent.size = turbulent.width * turbulent.height;
-	turbulent.data = (unsigned char*)texture + texture->offsets[0];
-	turbulent.count = face->numedges;
+	D_FillTurbulentData(turbulent, face, entity);
 }
 
 void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity)
@@ -280,17 +266,7 @@ void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity)
 		d_lists.turbulent_rotated.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rotated[d_lists.last_turbulent_rotated];
-	auto texinfo = face->texinfo;
-	auto texture = texinfo->texture;
-	turbulent.surface = face;
-	turbulent.entity = entity;
-	turbulent.model = entity->model;
-	turbulent.texture = texture;
-	turbulent.width = texture->width;
-	turbulent.height = texture->height;
-	turbulent.size = turbulent.width * turbulent.height;
-	turbulent.data = (unsigned char*)texture + texture->offsets[0];
-	turbulent.count = face->numedges;
+	D_FillTurbulentData(turbulent, face, entity);
 	turbulent.origin_x = entity->origin[0];
 	turbulent.origin_y = entity->origin[1];
 	turbulent.origin_z = entity->origin[2];
