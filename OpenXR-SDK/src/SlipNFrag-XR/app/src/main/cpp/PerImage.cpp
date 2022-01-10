@@ -841,7 +841,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	{
 		if (delayed)
 		{
-			if (previousBuffer == loaded->buffer && bufferCopy.dstOffset + bufferCopy.size == loaded->offset)
+			if (previousBuffer == loaded->indices.buffer && bufferCopy.dstOffset + bufferCopy.size == loaded->indices.offset)
 			{
 				bufferCopy.size += loaded->size;
 			}
@@ -854,14 +854,14 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		}
 		else
 		{
-			bufferCopy.dstOffset = loaded->offset;
+			bufferCopy.dstOffset = loaded->indices.offset;
 			bufferCopy.size = loaded->size;
 			delayed = true;
 		}
-		if (previousBuffer != loaded->buffer)
+		if (previousBuffer != loaded->indices.buffer)
 		{
-			appState.Scene.AddToBufferBarrier(loaded->buffer->buffer);
-			previousBuffer = loaded->buffer;
+			appState.Scene.AddToBufferBarrier(loaded->indices.buffer->buffer);
+			previousBuffer = loaded->indices.buffer;
 		}
 		loaded = loaded->next;
 	}
@@ -1334,13 +1334,13 @@ void PerImage::Render(AppState& appState)
 				}
 				uint32_t lightmapIndex = loaded.lightmap.lightmap->allocatedIndex;
 				vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &lightmapIndex);
-				auto indices = loaded.indices.buffer;
+				auto indices = loaded.indices.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
 		if (appState.Scene.lastSurfaceRotated >= 0)
@@ -1382,13 +1382,13 @@ void PerImage::Render(AppState& appState)
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 7 * sizeof(float), pushConstants);
-				auto indices = loaded.indices.buffer;
+				auto indices = loaded.indices.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
 		if (appState.Scene.lastFence >= 0)
@@ -1430,13 +1430,13 @@ void PerImage::Render(AppState& appState)
 				}
 				uint32_t lightmapIndex = loaded.lightmap.lightmap->allocatedIndex;
 				vkCmdPushConstants(commandBuffer, appState.Scene.fences.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &lightmapIndex);
-				auto indices = loaded.indices.buffer;
+				auto indices = loaded.indices.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
 		if (appState.Scene.lastFenceRotated >= 0)
@@ -1478,13 +1478,13 @@ void PerImage::Render(AppState& appState)
 				}
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 7 * sizeof(float), pushConstants);
-				auto indices = loaded.indices.buffer;
+				auto indices = loaded.indices.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
 		if (appState.Scene.lastSprite >= 0)
@@ -1537,13 +1537,13 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
 					previousTexture = texture;
 				}
-				auto indices = loaded.indices.buffer;
+				auto indices = loaded.indices.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
 		if (appState.Scene.lastTurbulentRotated >= 0)
@@ -1578,13 +1578,13 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
 					previousTexture = texture;
 				}
-				auto indices = loaded.indices.buffer;
+				auto indices = loaded.indices.indices.buffer;
 				if (previousIndices != indices)
 				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indexType);
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
 					previousIndices = indices;
 				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.offset / (16 * sizeof(float)));
 			}
 		}
 		if (colormapCount == 0)

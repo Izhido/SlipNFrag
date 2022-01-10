@@ -1,13 +1,12 @@
 #pragma once
 
+#include "SharedMemoryIndexBuffer.h"
+
 struct LoadedSharedMemoryIndexBuffer
 {
-	SharedMemoryBuffer* buffer;
-	VkDeviceSize offset;
+	SharedMemoryIndexBuffer indices;
 	VkDeviceSize size;
 	void* firstSource;
 	void* secondSource;
-	VkIndexType indexType;
-	uint32_t firstIndex;
 	LoadedSharedMemoryIndexBuffer* next;
 };

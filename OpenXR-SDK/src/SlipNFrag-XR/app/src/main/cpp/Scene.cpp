@@ -940,58 +940,53 @@ void Scene::GetIndicesStagingBufferSize(AppState& appState, dsurface_t& surface,
 			loaded.indices.size = surface.count * sizeof(uint16_t);
 			if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
 			{
-				loaded.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-				buffers.MoveToFront(loaded.indices.buffer);
-				latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer16 = loaded.indices.indices.buffer;
 				usedInLatestSharedMemoryIndexBuffer16 = 0;
 			}
 			else
 			{
-				loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer16;
 			}
-			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
 			usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 			size += loaded.indices.size;
 			loaded.indices.firstSource = surface.surface;
 			loaded.indices.secondSource = surface.model;
-			loaded.indices.indexType = VK_INDEX_TYPE_UINT16;
-			loaded.indices.firstIndex = loaded.indices.offset / 2;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
 			buffers.SetupIndices16(loaded.indices);
-			SharedMemoryIndexBuffer newEntry { loaded.indices.buffer, loaded.indices.offset, loaded.indices.indexType, loaded.indices.firstIndex };
-			surfaceIndicesPerKey.insert({ surface.surface, newEntry });
+			surfaceIndicesPerKey.insert({ surface.surface, loaded.indices.indices });
 			return;
 		}
 		loaded.indices.size = surface.count * sizeof(uint32_t);
 		if (latestSharedMemoryIndexBuffer32 == nullptr || usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > latestSharedMemoryIndexBuffer32->size)
 		{
-			loaded.indices.buffer = new SharedMemoryBuffer { };
-			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-			buffers.MoveToFront(loaded.indices.buffer);
-			latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
+			loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.indices.indices.buffer);
+			latestSharedMemoryIndexBuffer32 = loaded.indices.indices.buffer;
 			usedInLatestSharedMemoryIndexBuffer32 = 0;
 		}
 		else
 		{
-			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
+			loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer32;
 		}
-		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
+		loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
 		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.firstSource = surface.surface;
 		loaded.indices.secondSource = surface.model;
-		loaded.indices.indexType = VK_INDEX_TYPE_UINT32;
-		loaded.indices.firstIndex = loaded.indices.offset / 4;
+		loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
+		loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 		buffers.SetupIndices32(loaded.indices);
-		SharedMemoryIndexBuffer newEntry { loaded.indices.buffer, loaded.indices.offset, loaded.indices.indexType, loaded.indices.firstIndex };
-		surfaceIndicesPerKey.insert({ surface.surface, newEntry });
+		surfaceIndicesPerKey.insert({ surface.surface, loaded.indices.indices });
 		return;
 	}
 	loaded.indices.size = 0;
-	loaded.indices.buffer = entry->second.buffer;
-	loaded.indices.offset = entry->second.offset;
-	loaded.indices.indexType = entry->second.indexType;
-	loaded.indices.firstIndex = entry->second.firstIndex;
+	loaded.indices.indices = entry->second;
 }
 
 void Scene::GetIndicesStagingBufferSize(AppState& appState, dturbulent_t& surface, LoadedTurbulent& loaded, VkDeviceSize& size)
@@ -1019,58 +1014,53 @@ void Scene::GetIndicesStagingBufferSize(AppState& appState, dturbulent_t& surfac
 			loaded.indices.size = surface.count * sizeof(uint16_t);
 			if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
 			{
-				loaded.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-				buffers.MoveToFront(loaded.indices.buffer);
-				latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer16 = loaded.indices.indices.buffer;
 				usedInLatestSharedMemoryIndexBuffer16 = 0;
 			}
 			else
 			{
-				loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer16;
 			}
-			loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
 			usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
 			size += loaded.indices.size;
 			loaded.indices.firstSource = surface.surface;
 			loaded.indices.secondSource = surface.model;
-			loaded.indices.indexType = VK_INDEX_TYPE_UINT16;
-			loaded.indices.firstIndex = loaded.indices.offset / 2;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
 			buffers.SetupIndices16(loaded.indices);
-			SharedMemoryIndexBuffer newEntry { loaded.indices.buffer, loaded.indices.offset, loaded.indices.indexType, loaded.indices.firstIndex };
-			surfaceIndicesPerKey.insert({ surface.surface, newEntry });
+			surfaceIndicesPerKey.insert({ surface.surface, loaded.indices.indices });
 			return;
 		}
 		loaded.indices.size = surface.count * sizeof(uint32_t);
 		if (latestSharedMemoryIndexBuffer32 == nullptr || usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > latestSharedMemoryIndexBuffer32->size)
 		{
-			loaded.indices.buffer = new SharedMemoryBuffer { };
-			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-			buffers.MoveToFront(loaded.indices.buffer);
-			latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
+			loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+			loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.indices.indices.buffer);
+			latestSharedMemoryIndexBuffer32 = loaded.indices.indices.buffer;
 			usedInLatestSharedMemoryIndexBuffer32 = 0;
 		}
 		else
 		{
-			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
+			loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer32;
 		}
-		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
+		loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
 		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
 		size += loaded.indices.size;
 		loaded.indices.firstSource = surface.surface;
 		loaded.indices.secondSource = surface.model;
-		loaded.indices.indexType = VK_INDEX_TYPE_UINT32;
-		loaded.indices.firstIndex = loaded.indices.offset / 4;
+		loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
+		loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 		buffers.SetupIndices32(loaded.indices);
-		SharedMemoryIndexBuffer newEntry { loaded.indices.buffer, loaded.indices.offset, loaded.indices.indexType, loaded.indices.firstIndex };
-		surfaceIndicesPerKey.insert({ surface.surface, newEntry });
+		surfaceIndicesPerKey.insert({ surface.surface, loaded.indices.indices });
 		return;
 	}
 	loaded.indices.size = 0;
-	loaded.indices.buffer = entry->second.buffer;
-	loaded.indices.offset = entry->second.offset;
-	loaded.indices.indexType = entry->second.indexType;
-	loaded.indices.firstIndex = entry->second.firstIndex;
+	loaded.indices.indices = entry->second;
 }
 
 void Scene::GetIndices16StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
