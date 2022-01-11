@@ -93,7 +93,7 @@ void CachedSharedMemoryBuffers::SetupAliasIndices32(LoadedSharedMemoryWithOffset
 	currentAliasIndices32 = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupSurfaceTexturePositions(LoadedSharedMemoryWithOffsetBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupSurfaceTexturePositions(LoadedSharedMemoryTexturePositionsBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentSurfaceTexturePositions == nullptr)
@@ -107,7 +107,7 @@ void CachedSharedMemoryBuffers::SetupSurfaceTexturePositions(LoadedSharedMemoryW
 	currentSurfaceTexturePositions = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupTurbulentTexturePositions(LoadedSharedMemoryWithOffsetBuffer& loaded)
+void CachedSharedMemoryBuffers::SetupTurbulentTexturePositions(LoadedSharedMemoryTexturePositionsBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentTurbulentTexturePositions == nullptr)

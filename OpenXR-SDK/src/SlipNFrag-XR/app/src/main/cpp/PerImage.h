@@ -4,6 +4,7 @@
 #include "CachedTextures.h"
 #include "PipelineDescriptorResources.h"
 #include "UpdatablePipelineDescriptorResources.h"
+#include "SurfaceRotatedPushConstants.h"
 
 struct PerImage
 {
@@ -60,10 +61,10 @@ struct PerImage
 	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryWithOffsetBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
-	void FillTexturePositionsFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryWithOffsetBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
+	void FillTexturePositionsFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryTexturePositionsBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
-	static void SetPushConstants(const LoadedSurfaceRotated& loaded, float pushConstants[]);
+	static void SetPushConstants(const LoadedSurfaceRotated& loaded, SurfaceRotatedPushConstants& pushConstants);
 	static void SetPushConstants(const LoadedTurbulentRotated& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	void Render(AppState& appState);

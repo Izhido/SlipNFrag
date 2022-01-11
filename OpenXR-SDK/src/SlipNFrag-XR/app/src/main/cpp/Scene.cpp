@@ -612,7 +612,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetLayouts[2] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(uint32_t);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
@@ -633,7 +633,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfacesRotated.stages[1].module = surfaceFragment;
 	surfacesRotated.stages[1].pName = "main";
-	pushConstantInfo.size = 7 * sizeof(float);
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = sizeof(uint32_t) + 6 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfacesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfacesRotated.stages.data();
@@ -649,6 +650,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fences.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fences.stages[1].module = fenceFragment;
 	fences.stages[1].pName = "main";
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(uint32_t);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fences.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fences.stages.size();
@@ -665,7 +667,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fencesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fencesRotated.stages[1].module = fenceFragment;
 	fencesRotated.stages[1].pName = "main";
-	pushConstantInfo.size = 7 * sizeof(float);
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = sizeof(uint32_t) + 6 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fencesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = fencesRotated.stages.data();
@@ -1086,7 +1089,7 @@ void Scene::GetIndices16StagingBufferSize(AppState& appState, dalias_t& alias, L
 		size += loaded.indices.size;
 		loaded.indices.source = alias.aliashdr;
 		buffers.SetupAliasIndices16(loaded.indices);
-		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		SharedMemoryWithOffsetBuffer newEntry { loaded.indices.buffer, loaded.indices.offset };
 		aliasIndicesPerKey.insert({ alias.aliashdr, newEntry });
 	}
 	else
@@ -1120,7 +1123,7 @@ void Scene::GetIndices32StagingBufferSize(AppState& appState, dalias_t& alias, L
 		size += loaded.indices.size;
 		loaded.indices.source = alias.aliashdr;
 		buffers.SetupAliasIndices32(loaded.indices);
-		SharedMemoryBufferWithOffset newEntry { loaded.indices.buffer, loaded.indices.offset };
+		SharedMemoryWithOffsetBuffer newEntry { loaded.indices.buffer, loaded.indices.offset };
 		aliasIndicesPerKey.insert({ alias.aliashdr, newEntry });
 	}
 	else
@@ -1167,29 +1170,28 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 		loaded.texturePositions.size = 16 * sizeof(float);
 		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
 		{
-			loaded.texturePositions.buffer = new SharedMemoryBuffer { };
-			loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
-			buffers.MoveToFront(loaded.texturePositions.buffer);
-			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+			loaded.texturePositions.texturePositions.buffer = new SharedMemoryBuffer { };
+			loaded.texturePositions.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.texturePositions.texturePositions.buffer);
+			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.texturePositions.buffer;
 			usedInLatestSharedMemoryTexturePositionBuffer = 0;
 		}
 		else
 		{
-			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+			loaded.texturePositions.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
 		}
-		loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
+		loaded.texturePositions.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = surface.surface;
+		loaded.texturePositions.texturePositions.firstInstance = loaded.texturePositions.texturePositions.offset / (16 * sizeof(float));
 		buffers.SetupSurfaceTexturePositions(loaded.texturePositions);
-		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
-		texturePositionsPerKey.insert({ surface.surface, newEntry });
+		texturePositionsPerKey.insert({ surface.surface, loaded.texturePositions.texturePositions });
 	}
 	else
 	{
 		loaded.texturePositions.size = 0;
-		loaded.texturePositions.buffer = texturePositionEntry->second.buffer;
-		loaded.texturePositions.offset = texturePositionEntry->second.offset;
+		loaded.texturePositions.texturePositions = texturePositionEntry->second;
 	}
 	auto lightmapEntry = lightmaps.lightmaps.find(surface.surface);
 	if (lightmapEntry == lightmaps.lightmaps.end())
@@ -1308,29 +1310,28 @@ void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t
 		loaded.texturePositions.size = 16 * sizeof(float);
 		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
 		{
-			loaded.texturePositions.buffer = new SharedMemoryBuffer { };
-			loaded.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
-			buffers.MoveToFront(loaded.texturePositions.buffer);
-			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.buffer;
+			loaded.texturePositions.texturePositions.buffer = new SharedMemoryBuffer { };
+			loaded.texturePositions.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
+			buffers.MoveToFront(loaded.texturePositions.texturePositions.buffer);
+			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.texturePositions.buffer;
 			usedInLatestSharedMemoryTexturePositionBuffer = 0;
 		}
 		else
 		{
-			loaded.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
+			loaded.texturePositions.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
 		}
-		loaded.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
+		loaded.texturePositions.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
 		loaded.texturePositions.source = turbulent.surface;
+		loaded.texturePositions.texturePositions.firstInstance = loaded.texturePositions.texturePositions.offset / (16 * sizeof(float));
 		buffers.SetupTurbulentTexturePositions(loaded.texturePositions);
-		SharedMemoryBufferWithOffset newEntry { loaded.texturePositions.buffer, loaded.texturePositions.offset };
-		texturePositionsPerKey.insert({ turbulent.surface, newEntry });
+		texturePositionsPerKey.insert({ turbulent.surface, loaded.texturePositions.texturePositions });
 	}
 	else
 	{
 		loaded.texturePositions.size = 0;
-		loaded.texturePositions.buffer = entry->second.buffer;
-		loaded.texturePositions.offset = entry->second.offset;
+		loaded.texturePositions.texturePositions = entry->second;
 	}
 	if (previousTexture != turbulent.texture)
 	{
