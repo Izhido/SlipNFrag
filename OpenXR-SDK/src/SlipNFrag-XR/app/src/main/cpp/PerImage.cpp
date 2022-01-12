@@ -1289,11 +1289,6 @@ void PerImage::Render(AppState& appState)
 	}
 	if (appState.Mode == AppWorldMode)
 	{
-		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		poolSizes[0].descriptorCount = 1;
-		descriptorPoolCreateInfo.poolSizeCount = 1;
-		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		writes[0].pImageInfo = &textureInfo;
 		if (appState.Scene.lastSurface >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipeline);
@@ -1506,12 +1501,11 @@ void PerImage::Render(AppState& appState)
 				vkCmdDraw(commandBuffer, loaded.count, 1, loaded.firstVertex, 0);
 			}
 		}
-		float pushConstants[24];
 		if (appState.Scene.lastTurbulent >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
-			pushConstants[0] = (float)cl.time;
+			auto time = (float)cl.time;
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
@@ -1531,7 +1525,7 @@ void PerImage::Render(AppState& appState)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
 					previousTexturePositions = texturePositions;
 				}
-				vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
 				auto texture = loaded.texture.texture;
 				if (previousTexture != texture)
 				{
@@ -1547,6 +1541,7 @@ void PerImage::Render(AppState& appState)
 				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
 			}
 		}
+		float pushConstants[24];
 		if (appState.Scene.lastTurbulentRotated >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipeline);
@@ -1588,6 +1583,11 @@ void PerImage::Render(AppState& appState)
 				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
 			}
 		}
+		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes[0].descriptorCount = 1;
+		descriptorPoolCreateInfo.poolSizeCount = 1;
+		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writes[0].pImageInfo = &textureInfo;
 		if (colormapCount == 0)
 		{
 			colormapResources.Delete(appState);
