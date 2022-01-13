@@ -1295,46 +1295,150 @@ void PerImage::Render(AppState& appState)
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastSurface; i++)
+			if (appState.Scene.lastSurface >= 511)
 			{
-				auto& loaded = appState.Scene.loadedSurfaces[i];
-				auto vertices = loaded.vertices.buffer;
-				if (previousVertices != vertices)
+				for (auto& entry : appState.Scene.sortedSurfaces)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-					previousVertices = vertices;
+					for (auto& subEntry : entry.lightmapDescriptorSets)
+					{
+						subEntry.entries.clear();
+					}
 				}
-				auto texturePositions = loaded.texturePositions.texturePositions.buffer;
-				if (previousTexturePositions != texturePositions)
+				for (auto i = 0; i <= appState.Scene.lastSurface; i++)
 				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
-					previousTexturePositions = texturePositions;
+					auto& loaded = appState.Scene.loadedSurfaces[i];
+					auto textureDescriptorSet = loaded.texture.texture->descriptorSet;
+					auto lightmapDescriptorSet = loaded.lightmap.lightmap->texture->descriptorSet;
+					auto entryFound = false;
+					for (auto& entry : appState.Scene.sortedSurfaces)
+					{
+						if (entry.textureDescriptorSet == textureDescriptorSet)
+						{
+							entryFound = true;
+							auto subEntryFound = false;
+							for (auto& subEntry : entry.lightmapDescriptorSets)
+							{
+								if (subEntry.lightmapDescriptorSet == lightmapDescriptorSet)
+								{
+									subEntryFound = true;
+									subEntry.entries.push_back(i);
+									break;
+								}
+							}
+							if (!subEntryFound)
+							{
+								entry.lightmapDescriptorSets.push_back({ lightmapDescriptorSet });
+								entry.lightmapDescriptorSets.back().entries.push_back(i);
+							}
+							break;
+						}
+					}
+					if (!entryFound)
+					{
+						appState.Scene.sortedSurfaces.push_back({ textureDescriptorSet });
+						appState.Scene.sortedSurfaces.back().lightmapDescriptorSets.push_back({ lightmapDescriptorSet });
+						appState.Scene.sortedSurfaces.back().lightmapDescriptorSets.back().entries.push_back(i);
+					}
+					for (auto entry = appState.Scene.sortedSurfaces.begin(); entry != appState.Scene.sortedSurfaces.end(); )
+					{
+						for (auto subEntry = entry->lightmapDescriptorSets.begin(); subEntry != entry->lightmapDescriptorSets.end(); )
+						{
+							if (subEntry->entries.size() == 0)
+							{
+								subEntry = entry->lightmapDescriptorSets.erase(subEntry);
+							}
+							else
+							{
+								subEntry++;
+							}
+						}
+						if (entry->lightmapDescriptorSets.size() == 0)
+						{
+							entry = appState.Scene.sortedSurfaces.erase(entry);
+						}
+						else
+						{
+							entry++;
+						}
+					}
 				}
-				auto lightmap = loaded.lightmap.lightmap;
-				auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
-				if (previousLightmapDescriptorSet != lightmapDescriptorSet)
+				for (auto& entry : appState.Scene.sortedSurfaces)
 				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
-					previousLightmapDescriptorSet = lightmapDescriptorSet;
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &entry.textureDescriptorSet, 0, nullptr);
+					for (auto& subEntry : entry.lightmapDescriptorSets)
+					{
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &subEntry.lightmapDescriptorSet, 0, nullptr);
+						for (auto i : subEntry.entries)
+						{
+							auto& loaded = appState.Scene.loadedSurfaces[i];
+							auto vertices = loaded.vertices.buffer;
+							if (previousVertices != vertices)
+							{
+								vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+								previousVertices = vertices;
+							}
+							auto texturePositions = loaded.texturePositions.texturePositions.buffer;
+							if (previousTexturePositions != texturePositions)
+							{
+								vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+								previousTexturePositions = texturePositions;
+							}
+							uint32_t lightmapIndex = loaded.lightmap.lightmap->allocatedIndex;
+							vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32_t), &lightmapIndex);
+							auto indices = loaded.indices.indices.buffer;
+							if (previousIndices != indices)
+							{
+								vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
+								previousIndices = indices;
+							}
+							vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
+						}
+					}
 				}
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
+			}
+			else
+			{
+				VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
+				VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
+				for (auto i = 0; i <= appState.Scene.lastSurface; i++)
 				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
+					auto& loaded = appState.Scene.loadedSurfaces[i];
+					auto vertices = loaded.vertices.buffer;
+					if (previousVertices != vertices)
+					{
+						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+						previousVertices = vertices;
+					}
+					auto texturePositions = loaded.texturePositions.texturePositions.buffer;
+					if (previousTexturePositions != texturePositions)
+					{
+						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
+						previousTexturePositions = texturePositions;
+					}
+					auto lightmap = loaded.lightmap.lightmap;
+					auto lightmapDescriptorSet = lightmap->texture->descriptorSet;
+					if (previousLightmapDescriptorSet != lightmapDescriptorSet)
+					{
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &lightmapDescriptorSet, 0, nullptr);
+						previousLightmapDescriptorSet = lightmapDescriptorSet;
+					}
+					auto textureDescriptorSet = loaded.texture.texture->descriptorSet;
+					if (previousTextureDescriptorSet != textureDescriptorSet)
+					{
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &textureDescriptorSet, 0, nullptr);
+						previousTextureDescriptorSet = textureDescriptorSet;
+					}
+					uint32_t lightmapIndex = loaded.lightmap.lightmap->allocatedIndex;
+					vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32_t), &lightmapIndex);
+					auto indices = loaded.indices.indices.buffer;
+					if (previousIndices != indices)
+					{
+						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
+						previousIndices = indices;
+					}
+					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
 				}
-				uint32_t lightmapIndex = loaded.lightmap.lightmap->allocatedIndex;
-				vkCmdPushConstants(commandBuffer, appState.Scene.surfaces.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(uint32_t), &lightmapIndex);
-				auto indices = loaded.indices.indices.buffer;
-				if (previousIndices != indices)
-				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-					previousIndices = indices;
-				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
 			}
 		}
 		SurfaceRotatedPushConstants surfaceRotatedPushConstants;

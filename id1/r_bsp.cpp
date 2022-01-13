@@ -847,7 +847,7 @@ void R_RenderWorld (void)
 	r_modelorg4[2] = modelorg[2];
 	r_modelorg4[3] = -1;
 
-	if (d_uselists && (r_visleaf_p - r_visleaves.data()) < 1024)
+	if (d_uselists && (r_visleaf_p - r_visleaves.data()) < 512)
 		R_RenderAllWorldNodes (clmodel);
 	else
 		R_RecursiveWorldNode (clmodel->nodes, 15);

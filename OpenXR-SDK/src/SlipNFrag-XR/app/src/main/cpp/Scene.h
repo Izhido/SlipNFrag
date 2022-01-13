@@ -18,6 +18,7 @@
 #include "CachedSharedMemoryTextures.h"
 #include "Skybox.h"
 #include <common/xr_linear.h>
+#include "SortedSurfaceTexture.h"
 
 struct AppState;
 
@@ -125,6 +126,7 @@ struct Scene
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	SharedMemoryTexture* previousSharedMemoryTexture;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+	std::list<SortedSurfaceTexture> sortedSurfaces;
 
 	static void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	static void AddBorder(AppState& appState, std::vector<uint32_t>& target);
