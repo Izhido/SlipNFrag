@@ -6,7 +6,7 @@
 #include "CachedSharedMemoryBuffers.h"
 #include <unordered_map>
 #include "AliasVertices.h"
-#include "SharedMemoryIndexBuffer.h"
+#include "PerSurface.h"
 #include "SharedMemoryWithOffsetBuffer.h"
 #include "LoadedSurface.h"
 #include "LoadedSurfaceRotated.h"
@@ -44,9 +44,8 @@ struct Scene
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
-	std::unordered_map<void*, SharedMemoryTexturePositionsBuffer> texturePositionsPerKey;
+	std::unordered_map<void*, PerSurface> perSurface;
 	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
-	std::unordered_map<void*, SharedMemoryIndexBuffer> surfaceIndicesPerKey;
 	std::unordered_map<void*, SharedMemoryWithOffsetBuffer> aliasIndicesPerKey;
 	int lastSurface;
 	int lastSurfaceRotated;
