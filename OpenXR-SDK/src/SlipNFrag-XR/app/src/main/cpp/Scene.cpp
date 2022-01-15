@@ -1052,7 +1052,7 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 		{
 			loaded.lightmap.lightmap = lightmap;
 			loaded.lightmap.size = 0;
-		}		
+		}
 	}
 	if (previousTexture != surface.texture)
 	{

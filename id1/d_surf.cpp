@@ -452,7 +452,7 @@ surfcache_t* D_CacheLightmap (msurface_t *surface)
 	c_surf++;
 	R_BuildLightMap ();
 
-	return surface->cachespots[0];;
+	return surface->cachespots[0];
 }
 
 
