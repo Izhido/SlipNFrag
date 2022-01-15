@@ -270,6 +270,7 @@ void D_DrawSurfaces (void)
 						((byte *)pface->texinfo->texture +
 						 pface->texinfo->texture->offsets[0]);
 				cachewidth = pface->texinfo->texture->width;
+				r_turb_cacheheight = pface->texinfo->texture->height;
 
 				if (s->insubmodel)
 				{
@@ -286,13 +287,12 @@ void D_DrawSurfaces (void)
 				}
 
 				D_CalcGradients (pface);
-                if (cachewidth == 64)
+                if (cachewidth == 64 && r_turb_cacheheight == 64)
                 {
                     Turbulent8 (s->spans);
                 }
                 else
                 {
-					r_turb_cacheheight = pface->texinfo->texture->height;
                     Turbulent8Non64 (s->spans);
                 }
 				(*d_drawzspans) (s->spans);
