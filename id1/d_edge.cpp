@@ -292,6 +292,7 @@ void D_DrawSurfaces (void)
                 }
                 else
                 {
+					r_turb_cacheheight = pface->texinfo->texture->height;
                     Turbulent8Non64 (s->spans);
                 }
 				(*d_drawzspans) (s->spans);

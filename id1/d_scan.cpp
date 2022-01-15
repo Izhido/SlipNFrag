@@ -139,11 +139,11 @@ void D_DrawTurbulent8SpanNon64 (void)
         tturb = ((r_turb_t + r_turb_turb[(r_turb_s>>16)&(CYCLE-1)])>>16);
 		if (tturb >= 0)
 		{
-			tturb = tturb % cachewidth;
+			tturb = tturb % r_turb_cacheheight;
 		}
 		else
 		{
-			tturb = cachewidth - (-tturb) % cachewidth;
+			tturb = r_turb_cacheheight - (-tturb) % r_turb_cacheheight;
 		}
 		*r_turb_pdest++ = *(r_turb_pbase + (tturb*cachewidth) + sturb);
         r_turb_s += r_turb_sstep;
@@ -292,8 +292,8 @@ void Turbulent8Non64 (espan_t *pspan)
                 }
             }
 
-            r_turb_s = r_turb_s & ((CYCLE<<16)-1);
-            r_turb_t = r_turb_t & ((CYCLE<<16)-1);
+            r_turb_s = r_turb_s % ((2*cachewidth)<<16);
+            r_turb_t = r_turb_t % ((2*r_turb_cacheheight)<<16);
 
             D_DrawTurbulent8SpanNon64 ();
 
