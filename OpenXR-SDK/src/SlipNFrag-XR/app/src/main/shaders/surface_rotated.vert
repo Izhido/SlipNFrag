@@ -45,7 +45,7 @@ void main(void)
 	gl_Position = projectionMatrix[gl_ViewID_OVR] * viewMatrix[gl_ViewID_OVR] * vertexTransform * translation * rollRotation * pitchRotation * yawRotation * position;
 	vec4 position4 = vec4(vertexPosition, 1);
 	vec2 texCoords = vec2(dot(position4, texturePosition[0]), dot(position4, texturePosition[1]));
-	vec2 lightmapSize = vec2((int(texturePosition[2].z) >> 4) + 1, (int(texturePosition[2].w) >> 4) + 1);
-	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * (lightmapSize - 1) / texturePosition[2].zw;
+	vec2 lightmapSizeMinusOne = vec2(int(texturePosition[2].z) >> 4, int(texturePosition[2].w) >> 4);
+	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * lightmapSizeMinusOne / texturePosition[2].zw;
 	fragmentData = vec4(lightmapCoords, texCoords / texturePosition[3].xy);
 }
