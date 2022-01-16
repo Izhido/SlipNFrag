@@ -157,6 +157,44 @@ void D_CalcGradients (msurface_t *pface)
 	bbextentt = ((pface->extents[1] << 16) >> miplevel) - 1;
 }
 
+/*
+==============
+D_TurbCalcGradients
+==============
+*/
+// Special version for turbulent surfaces - assumes miplevel = 0, texturemins = -8192 and extents = 16384
+void D_TurbCalcGradients (msurface_t *pface)
+{
+	vec3_t		p_saxis, p_taxis;
+
+	TransformVector (pface->texinfo->vecs[0], p_saxis);
+	TransformVector (pface->texinfo->vecs[1], p_taxis);
+
+	d_sdivzstepu = p_saxis[0] * xscaleinv;
+	d_tdivzstepu = p_taxis[0] * xscaleinv;
+
+	d_sdivzstepv = -p_saxis[1] * yscaleinv;
+	d_tdivzstepv = -p_taxis[1] * yscaleinv;
+
+	d_sdivzorigin = p_saxis[2] - xcenter * d_sdivzstepu -
+					ycenter * d_sdivzstepv;
+	d_tdivzorigin = p_taxis[2] - xcenter * d_tdivzstepu -
+					ycenter * d_tdivzstepv;
+
+	sadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_saxis) * 0x10000 + 0.5)) -
+			  (-8192 * 0x10000)
+			  + pface->texinfo->vecs[0][3]*0x10000;
+	tadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_taxis) * 0x10000 + 0.5)) -
+			  (-8192 * 0x10000)
+			  + pface->texinfo->vecs[1][3]*0x10000;
+
+//
+// -1 (-epsilon) so we never wander off the edge of the texture
+//
+	bbextents = (16384 << 16) - 1;
+	bbextentt = (16384 << 16) - 1;
+}
+
 
 /*
 ==============
@@ -286,7 +324,7 @@ void D_DrawSurfaces (void)
 										// make entity passed in
 				}
 
-				D_CalcGradients (pface);
+				D_TurbCalcGradients (pface);
                 if (cachewidth == 64 && r_turb_cacheheight == 64)
                 {
                     Turbulent8 (s->spans);
