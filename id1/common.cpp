@@ -284,7 +284,13 @@ int Q_atoi (const char *str)
 	int             c;
 
 	while (*str <= ' ')
+	{
+		if (*str == 0)
+		{
+			return 0;
+		}
 		str++;
+	}
 
 	if (*str == '-')
 	{
@@ -347,7 +353,13 @@ float Q_atof (const char *str)
 	int             decimal, total;
 
 	while (*str <= ' ')
+	{
+		if (*str == 0)
+		{
+			return 0;
+		}
 		str++;
+	}
 
 	if (*str == '-')
 	{
