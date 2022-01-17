@@ -127,7 +127,7 @@ void D_DrawTurbulent8SpanNon64 (void)
 
     do
     {
-		sturb = ((r_turb_s + r_turb_turb[(r_turb_t>>16)%(2*cachewidth)])>>16);
+		sturb = ((r_turb_s + r_turb_turb[(r_turb_t>>16)&(CYCLE-1)])>>16);
 		if (sturb >= 0)
 		{
 			sturb = sturb % cachewidth;
@@ -136,7 +136,7 @@ void D_DrawTurbulent8SpanNon64 (void)
 		{
 			sturb = cachewidth - (-sturb) % cachewidth;
 		}
-		tturb = ((r_turb_t + r_turb_turb[(r_turb_s>>16)%(2*r_turb_cacheheight)])>>16);
+		tturb = ((r_turb_t + r_turb_turb[(r_turb_s>>16)&(CYCLE-1)])>>16);
 		if (tturb >= 0)
 		{
 			tturb = tturb % r_turb_cacheheight;
@@ -184,6 +184,7 @@ void Turbulent8Non64 (espan_t *pspan)
     fixed16_t        snext, tnext;
     float            sdivz, tdivz, zi, z, du, dv, spancountminus1;
     float            sdivz16stepu, tdivz16stepu, zi16stepu;
+	fixed16_t        cachewidth16, cacheheight16;
     
     r_turb_turb = sintable.data() + ((int)(cl.time*SPEED)&(CYCLE-1));
 
@@ -196,7 +197,10 @@ void Turbulent8Non64 (espan_t *pspan)
     tdivz16stepu = d_tdivzstepu * 16;
     zi16stepu = d_zistepu * 16;
 
-    do
+	cachewidth16 = (2*cachewidth)<<16;
+	cacheheight16 = (2*r_turb_cacheheight)<<16;
+
+	do
     {
         r_turb_pdest = (unsigned char *)((byte *)d_viewbuffer +
                 (screenwidth * pspan->v) + pspan->u);
@@ -292,8 +296,22 @@ void Turbulent8Non64 (espan_t *pspan)
                 }
             }
 
-            r_turb_s = r_turb_s % ((2*cachewidth)<<16);
-            r_turb_t = r_turb_t % ((2*r_turb_cacheheight)<<16);
+			if (r_turb_s >= 0)
+			{
+				r_turb_s = r_turb_s % cachewidth16;
+			}
+			else
+			{
+				r_turb_s = cachewidth16 - (-r_turb_s) % cachewidth16;
+			}
+			if (r_turb_t >= 0)
+			{
+				r_turb_t = r_turb_t % cacheheight16;
+			}
+			else
+			{
+				r_turb_t = cacheheight16 - (-r_turb_t) & cacheheight16;
+			}
 
             D_DrawTurbulent8SpanNon64 ();
 
