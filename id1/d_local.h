@@ -70,6 +70,11 @@ extern float	d_sdivzorigin, d_tdivzorigin, d_ziorigin;
 extern fixed16_t	sadjust, tadjust;
 extern fixed16_t	bbextents, bbextentt;
 
+extern fixed16_t	r_turb_lm_sadjust, r_turb_lm_tadjust;
+extern fixed16_t	r_turb_lm_bbextents, r_turb_lm_bbextentt;
+
+extern int			r_turb_extents0, r_turb_extents1;
+
 
 void D_DrawLittleSpans64 (espan_t *pspans);
 void D_DrawBigSpans64 (espan_t *pspans);
@@ -77,6 +82,7 @@ void D_DrawLittleZSpans64 (espan_t *pspans);
 void D_DrawBigZSpans64 (espan_t *pspans);
 void Turbulent8 (espan_t *pspan);
 void Turbulent8Non64 (espan_t *pspan);
+void TurbulentLit8 (espan_t *pspan);
 void D_SpriteDrawSpans (sspan_t *pspan);
 
 void D_DrawSkyScans8 (espan_t *pspan);

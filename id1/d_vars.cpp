@@ -38,10 +38,18 @@ float	d_sdivzstepv, d_tdivzstepv, d_zistepv;
 float	d_sdivzorigin, d_tdivzorigin, d_ziorigin;
 
 fixed16_t	sadjust, tadjust, bbextents, bbextentt;
+fixed16_t	r_turb_lm_sadjust, r_turb_lm_tadjust, r_turb_lm_bbextents, r_turb_lm_bbextentt;
+
+int			r_turb_extents0, r_turb_extents1;
 
 pixel_t			*cacheblock;
 int				cachewidth;
 int				r_turb_cacheheight;
+unsigned		*r_turb_lightmapblock;
+int				r_turb_lightmapwidthminusone;
+int				r_turb_lightmapheightminusone;
+fixed16_t		r_turb_lightmapwidthminusone16;
+fixed16_t		r_turb_lightmapheightminusone16;
 pixel_t			*d_viewbuffer;
 short			*d_pzbuffer;
 unsigned int	d_zrowbytes;

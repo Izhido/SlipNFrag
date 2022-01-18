@@ -27,10 +27,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 unsigned char	*r_turb_pbase, *r_turb_pdest;
 fixed16_t		r_turb_s, r_turb_t, r_turb_sstep, r_turb_tstep;
+fixed16_t		r_turb_lm_s, r_turb_lm_t, r_turb_lm_sstep, r_turb_lm_tstep;
 int				*r_turb_turb;
 int				r_turb_spancount;
 
 void D_DrawTurbulent8Span (void);
+void D_DrawTurbulent8Non64Span (void);
+void D_DrawTurbulentLit8Span (void);
 
 std::vector<std::vector<byte*>> warp_rowptr_stack;
 std::vector<std::vector<int>> warp_column_stack;
@@ -118,10 +121,86 @@ void D_WarpScreen (void)
 
 /*
 =============
-D_DrawTurbulent8SpanNon64
+D_DrawTurbulentLit8Span
 =============
 */
-void D_DrawTurbulent8SpanNon64 (void)
+void D_DrawTurbulentLit8Span (void)
+{
+	int        sturb, tturb;
+	long long  lm_sturb, lm_tturb;
+	unsigned   light;
+	byte       pix;
+
+	do
+	{
+		sturb = ((r_turb_s + r_turb_turb[(r_turb_t>>16)&(CYCLE-1)])>>16);
+		if (sturb >= 0)
+		{
+			sturb = sturb % cachewidth;
+		}
+		else
+		{
+			sturb = cachewidth - (-sturb) % cachewidth;
+		}
+		tturb = ((r_turb_t + r_turb_turb[(r_turb_s>>16)&(CYCLE-1)])>>16);
+		if (tturb >= 0)
+		{
+			tturb = tturb % r_turb_cacheheight;
+		}
+		else
+		{
+			tturb = r_turb_cacheheight - (-tturb) % r_turb_cacheheight;
+		}
+
+		lm_sturb = ((long long)r_turb_lm_s * r_turb_lightmapwidthminusone / r_turb_extents0);
+		if (lm_sturb >= 0)
+		{
+			lm_sturb = lm_sturb % r_turb_lightmapwidthminusone16;
+		}
+		else
+		{
+			lm_sturb = r_turb_lightmapwidthminusone16 - (-lm_sturb) % r_turb_lightmapwidthminusone16;
+		}
+		lm_tturb = (long long)r_turb_lm_t * r_turb_lightmapheightminusone / r_turb_extents1;
+		if (lm_tturb >= 0)
+		{
+			lm_tturb = lm_tturb % r_turb_lightmapheightminusone16;
+		}
+		else
+		{
+			lm_tturb = r_turb_lightmapheightminusone16 - (-lm_tturb) % r_turb_lightmapheightminusone16;
+		}
+
+		pix = *(r_turb_pbase + (tturb*cachewidth) + sturb);
+		
+		auto position = ((lm_tturb>>16)*(r_turb_lightmapwidthminusone + 1)) + (lm_sturb>>16);
+		long long light00 = *(r_turb_lightmapblock + position);
+		long long light01 = *(r_turb_lightmapblock + position + 1);
+		long long light10 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1);
+		long long light11 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1 + 1);
+		auto lm_sturb_frac = lm_sturb & 0xFFFF;
+		auto lm_tturb_frac = lm_tturb & 0xFFFF;
+		auto light0 = light00 + (light01 - light00) * lm_sturb_frac / 0x10000;
+		auto light1 = light10 + (light11 - light10) * lm_sturb_frac / 0x10000;
+		light = (int)(light0 + (light1 - light0) * lm_tturb_frac / 0x10000);
+
+		*r_turb_pdest++ = ((unsigned char *)vid.colormap)
+				[(light & 0xFF00) + pix];
+
+		r_turb_s += r_turb_sstep;
+		r_turb_t += r_turb_tstep;
+
+		r_turb_lm_s += r_turb_lm_sstep;
+		r_turb_lm_t += r_turb_lm_tstep;
+	} while (--r_turb_spancount > 0);
+}
+
+/*
+=============
+D_DrawTurbulent8Non64Span
+=============
+*/
+void D_DrawTurbulent8Non64Span (void)
 {
     int        sturb, tturb;
 
@@ -171,6 +250,208 @@ void D_DrawTurbulent8Span (void)
 }
 
 #endif	// !id386
+
+
+/*
+=============
+TurbulentLit8
+=============
+*/
+void TurbulentLit8 (espan_t *pspan)
+{
+	int                count;
+	fixed16_t        snext, tnext, lm_snext, lm_tnext;
+	float            sdivz, tdivz, zi, z, du, dv, spancountminus1;
+	float            sdivz16stepu, tdivz16stepu, zi16stepu;
+	fixed16_t        cachewidth16, cacheheight16;
+	
+	r_turb_turb = sintable.data() + ((int)(cl.time*SPEED)&(CYCLE-1));
+
+	r_turb_sstep = 0;    // keep compiler happy
+	r_turb_tstep = 0;    // ditto
+	r_turb_lm_sstep = 0;
+	r_turb_lm_tstep = 0;
+
+	r_turb_pbase = (unsigned char *)cacheblock;
+
+	sdivz16stepu = d_sdivzstepu * 16;
+	tdivz16stepu = d_tdivzstepu * 16;
+	zi16stepu = d_zistepu * 16;
+
+	cachewidth16 = (2*cachewidth)<<16;
+	cacheheight16 = (2*r_turb_cacheheight)<<16;
+
+	do
+	{
+		r_turb_pdest = (unsigned char *)((byte *)d_viewbuffer +
+				(screenwidth * pspan->v) + pspan->u);
+
+		count = pspan->count;
+
+	// calculate the initial s/z, t/z, 1/z, s, and t and clamp
+		du = (float)pspan->u;
+		dv = (float)pspan->v;
+
+		sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu;
+		tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu;
+		zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
+		z = (float)0x10000 / zi;    // prescale to 16.16 fixed-point
+
+		r_turb_s = (int)(sdivz * z) + sadjust;
+		if (r_turb_s > bbextents)
+			r_turb_s = bbextents;
+		else if (r_turb_s < 0)
+			r_turb_s = 0;
+
+		r_turb_t = (int)(tdivz * z) + tadjust;
+		if (r_turb_t > bbextentt)
+			r_turb_t = bbextentt;
+		else if (r_turb_t < 0)
+			r_turb_t = 0;
+
+		r_turb_lm_s = (int)(sdivz * z) + r_turb_lm_sadjust;
+		if (r_turb_lm_s > r_turb_lm_bbextents)
+			r_turb_lm_s = r_turb_lm_bbextents;
+		else if (r_turb_lm_s < 0)
+			r_turb_lm_s = 0;
+
+		r_turb_lm_t = (int)(tdivz * z) + r_turb_lm_tadjust;
+		if (r_turb_lm_t > r_turb_lm_bbextentt)
+			r_turb_lm_t = r_turb_lm_bbextentt;
+		else if (r_turb_lm_t < 0)
+			r_turb_lm_t = 0;
+
+		do
+		{
+		// calculate s and t at the far end of the span
+			if (count >= 16)
+				r_turb_spancount = 16;
+			else
+				r_turb_spancount = count;
+
+			count -= r_turb_spancount;
+
+			if (count)
+			{
+			// calculate s/z, t/z, zi->fixed s and t at far end of span,
+			// calculate s and t steps across span by shifting
+				sdivz += sdivz16stepu;
+				tdivz += tdivz16stepu;
+				zi += zi16stepu;
+				z = (float)0x10000 / zi;    // prescale to 16.16 fixed-point
+
+				snext = (int)(sdivz * z) + sadjust;
+				if (snext > bbextents)
+					snext = bbextents;
+				else if (snext < 16)
+					snext = 16;    // prevent round-off error on <0 steps from
+								//  from causing overstepping & running off the
+								//  edge of the texture
+
+				tnext = (int)(tdivz * z) + tadjust;
+				if (tnext > bbextentt)
+					tnext = bbextentt;
+				else if (tnext < 16)
+					tnext = 16;    // guard against round-off error on <0 steps
+
+				lm_snext = (int)(sdivz * z) + r_turb_lm_sadjust;
+				if (lm_snext > r_turb_lm_bbextents)
+					lm_snext = r_turb_lm_bbextents;
+				else if (lm_snext < 16)
+					lm_snext = 16;    // prevent round-off error on <0 steps from
+								//  from causing overstepping & running off the
+								//  edge of the texture
+
+				lm_tnext = (int)(tdivz * z) + r_turb_lm_tadjust;
+				if (lm_tnext > r_turb_lm_bbextentt)
+					lm_tnext = r_turb_lm_bbextentt;
+				else if (lm_tnext < 16)
+					lm_tnext = 16;    // guard against round-off error on <0 steps
+
+				r_turb_sstep = (snext - r_turb_s) >> 4;
+				r_turb_tstep = (tnext - r_turb_t) >> 4;
+
+				r_turb_lm_sstep = (lm_snext - r_turb_lm_s) >> 4;
+				r_turb_lm_tstep = (lm_tnext - r_turb_lm_t) >> 4;
+			}
+			else
+			{
+			// calculate s/z, t/z, zi->fixed s and t at last pixel in span (so
+			// can't step off polygon), clamp, calculate s and t steps across
+			// span by division, biasing steps low so we don't run off the
+			// texture
+				spancountminus1 = (float)(r_turb_spancount - 1);
+				sdivz += d_sdivzstepu * spancountminus1;
+				tdivz += d_tdivzstepu * spancountminus1;
+				zi += d_zistepu * spancountminus1;
+				z = (float)0x10000 / zi;    // prescale to 16.16 fixed-point
+
+				snext = (int)(sdivz * z) + sadjust;
+				if (snext > bbextents)
+					snext = bbextents;
+				else if (snext < 16)
+					snext = 16;    // prevent round-off error on <0 steps from
+								//  from causing overstepping & running off the
+								//  edge of the texture
+
+				tnext = (int)(tdivz * z) + tadjust;
+				if (tnext > bbextentt)
+					tnext = bbextentt;
+				else if (tnext < 16)
+					tnext = 16;    // guard against round-off error on <0 steps
+
+				lm_snext = (int)(sdivz * z) + r_turb_lm_sadjust;
+				if (lm_snext > r_turb_lm_bbextents)
+					lm_snext = r_turb_lm_bbextents;
+				else if (lm_snext < 16)
+					lm_snext = 16;    // prevent round-off error on <0 steps from
+								//  from causing overstepping & running off the
+								//  edge of the texture
+
+				lm_tnext = (int)(tdivz * z) + r_turb_lm_tadjust;
+				if (lm_tnext > r_turb_lm_bbextentt)
+					lm_tnext = r_turb_lm_bbextentt;
+				else if (lm_tnext < 16)
+					lm_tnext = 16;    // guard against round-off error on <0 steps
+
+				if (r_turb_spancount > 1)
+				{
+					r_turb_sstep = (snext - r_turb_s) / (r_turb_spancount - 1);
+					r_turb_tstep = (tnext - r_turb_t) / (r_turb_spancount - 1);
+
+					r_turb_lm_sstep = (lm_snext - r_turb_lm_s) / (r_turb_spancount - 1);
+					r_turb_lm_tstep = (lm_tnext - r_turb_lm_t) / (r_turb_spancount - 1);
+				}
+			}
+
+			if (r_turb_s >= 0)
+			{
+				r_turb_s = r_turb_s % cachewidth16;
+			}
+			else
+			{
+				r_turb_s = cachewidth16 - (-r_turb_s) % cachewidth16;
+			}
+			if (r_turb_t >= 0)
+			{
+				r_turb_t = r_turb_t % cacheheight16;
+			}
+			else
+			{
+				r_turb_t = cacheheight16 - (-r_turb_t) & cacheheight16;
+			}
+
+			D_DrawTurbulentLit8Span ();
+
+			r_turb_s = snext;
+			r_turb_t = tnext;
+
+			r_turb_lm_s = lm_snext;
+			r_turb_lm_t = lm_tnext;
+		} while (count > 0);
+
+	} while ((pspan = pspan->pnext) != NULL);
+}
 
 
 /*
@@ -313,7 +594,7 @@ void Turbulent8Non64 (espan_t *pspan)
 				r_turb_t = cacheheight16 - (-r_turb_t) & cacheheight16;
 			}
 
-            D_DrawTurbulent8SpanNon64 ();
+            D_DrawTurbulent8Non64Span ();
 
             r_turb_s = snext;
             r_turb_t = tnext;

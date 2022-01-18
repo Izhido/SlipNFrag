@@ -177,22 +177,35 @@ void D_TurbCalcGradients (msurface_t *pface)
 	d_tdivzstepv = -p_taxis[1] * yscaleinv;
 
 	d_sdivzorigin = p_saxis[2] - xcenter * d_sdivzstepu -
-					ycenter * d_sdivzstepv;
+			ycenter * d_sdivzstepv;
 	d_tdivzorigin = p_taxis[2] - xcenter * d_tdivzstepu -
-					ycenter * d_tdivzstepv;
+			ycenter * d_tdivzstepv;
 
 	sadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_saxis) * 0x10000 + 0.5)) -
-			  (-8192 * 0x10000)
-			  + pface->texinfo->vecs[0][3]*0x10000;
+			(-8192 * 0x10000)
+			+ pface->texinfo->vecs[0][3]*0x10000;
 	tadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_taxis) * 0x10000 + 0.5)) -
-			  (-8192 * 0x10000)
-			  + pface->texinfo->vecs[1][3]*0x10000;
+			(-8192 * 0x10000)
+			+ pface->texinfo->vecs[1][3]*0x10000;
+
+	r_turb_lm_sadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_saxis) * 0x10000 + 0.5)) -
+			(pface->texturemins[0] * 0x10000)
+			+ pface->texinfo->vecs[0][3]*0x10000;
+	r_turb_lm_tadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_taxis) * 0x10000 + 0.5)) -
+			(pface->texturemins[1] * 0x10000)
+			+ pface->texinfo->vecs[1][3]*0x10000;
 
 //
 // -1 (-epsilon) so we never wander off the edge of the texture
 //
 	bbextents = (16384 << 16) - 1;
 	bbextentt = (16384 << 16) - 1;
+
+	r_turb_lm_bbextents = (pface->extents[0] << 16) - 1;
+	r_turb_lm_bbextentt = (pface->extents[1] << 16) - 1;
+	
+	r_turb_extents0 = pface->extents[0];
+	r_turb_extents1 = pface->extents[1];
 }
 
 
@@ -325,7 +338,24 @@ void D_DrawSurfaces (void)
 				}
 
 				D_TurbCalcGradients (pface);
-                if (cachewidth == 64 && r_turb_cacheheight == 64)
+				if (pface->samples != nullptr)
+				{
+					pcurrentcache = D_CacheLightmap (pface);
+					if (pcurrentcache == nullptr)
+					{
+						Turbulent8Non64 (s->spans);
+					}
+					else
+					{
+						r_turb_lightmapblock = (unsigned*)&(pcurrentcache->data[0]);
+						r_turb_lightmapwidthminusone = (pcurrentcache->width / sizeof(unsigned)) - 1;
+						r_turb_lightmapheightminusone = pcurrentcache->height - 1;
+						r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
+						r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
+						TurbulentLit8 (s->spans);
+					}
+				}
+                else if (cachewidth == 64 && r_turb_cacheheight == 64)
                 {
                     Turbulent8 (s->spans);
                 }

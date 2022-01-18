@@ -35,6 +35,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern int		cachewidth;
 extern int		r_turb_cacheheight;
 extern pixel_t	*cacheblock;
+extern int		r_turb_lightmapwidthminusone;
+extern int		r_turb_lightmapheightminusone;
+extern fixed16_t	r_turb_lightmapwidthminusone16;
+extern fixed16_t	r_turb_lightmapheightminusone16;
+extern unsigned	*r_turb_lightmapblock;
 extern int		screenwidth;
 
 extern	float	pixelAspect;
