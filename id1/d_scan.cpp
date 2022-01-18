@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 unsigned char	*r_turb_pbase, *r_turb_pdest;
 fixed16_t		r_turb_s, r_turb_t, r_turb_sstep, r_turb_tstep;
-fixed16_t		r_turb_lm_s, r_turb_lm_t, r_turb_lm_sstep, r_turb_lm_tstep;
+long long		r_turb_lm_s, r_turb_lm_t, r_turb_lm_sstep, r_turb_lm_tstep;
 int				*r_turb_turb;
 int				r_turb_spancount;
 
@@ -152,23 +152,21 @@ void D_DrawTurbulentLit8Span (void)
 			tturb = r_turb_cacheheight - (-tturb) % r_turb_cacheheight;
 		}
 
-		lm_sturb = ((long long)r_turb_lm_s * r_turb_lightmapwidthminusone / r_turb_extents0);
-		if (lm_sturb >= 0)
+		if (r_turb_lm_s >= 0)
 		{
-			lm_sturb = lm_sturb % r_turb_lightmapwidthminusone16;
+			lm_sturb = r_turb_lm_s % r_turb_lightmapwidthminusone16;
 		}
 		else
 		{
-			lm_sturb = r_turb_lightmapwidthminusone16 - (-lm_sturb) % r_turb_lightmapwidthminusone16;
+			lm_sturb = r_turb_lightmapwidthminusone16 - (-r_turb_lm_s) % r_turb_lightmapwidthminusone16;
 		}
-		lm_tturb = (long long)r_turb_lm_t * r_turb_lightmapheightminusone / r_turb_extents1;
-		if (lm_tturb >= 0)
+		if (r_turb_lm_t >= 0)
 		{
-			lm_tturb = lm_tturb % r_turb_lightmapheightminusone16;
+			lm_tturb = r_turb_lm_t % r_turb_lightmapheightminusone16;
 		}
 		else
 		{
-			lm_tturb = r_turb_lightmapheightminusone16 - (-lm_tturb) % r_turb_lightmapheightminusone16;
+			lm_tturb = r_turb_lightmapheightminusone16 - (-r_turb_lm_t) % r_turb_lightmapheightminusone16;
 		}
 
 		pix = *(r_turb_pbase + (tturb*cachewidth) + sturb);
@@ -260,7 +258,8 @@ TurbulentLit8
 void TurbulentLit8 (espan_t *pspan)
 {
 	int                count;
-	fixed16_t        snext, tnext, lm_snext, lm_tnext;
+	fixed16_t        snext, tnext;
+	long long        lm_snext, lm_tnext;
 	float            sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float            sdivz16stepu, tdivz16stepu, zi16stepu;
 	fixed16_t        cachewidth16, cacheheight16;
@@ -314,12 +313,14 @@ void TurbulentLit8 (espan_t *pspan)
 			r_turb_lm_s = r_turb_lm_bbextents;
 		else if (r_turb_lm_s < 0)
 			r_turb_lm_s = 0;
+		r_turb_lm_s = r_turb_lm_s * r_turb_lightmapwidthminusone / r_turb_extents0;
 
 		r_turb_lm_t = (int)(tdivz * z) + r_turb_lm_tadjust;
 		if (r_turb_lm_t > r_turb_lm_bbextentt)
 			r_turb_lm_t = r_turb_lm_bbextentt;
 		else if (r_turb_lm_t < 0)
 			r_turb_lm_t = 0;
+		r_turb_lm_t = r_turb_lm_t * r_turb_lightmapheightminusone / r_turb_extents1;
 
 		do
 		{
@@ -361,12 +362,14 @@ void TurbulentLit8 (espan_t *pspan)
 					lm_snext = 16;    // prevent round-off error on <0 steps from
 								//  from causing overstepping & running off the
 								//  edge of the texture
+				lm_snext = lm_snext * r_turb_lightmapwidthminusone / r_turb_extents0;
 
 				lm_tnext = (int)(tdivz * z) + r_turb_lm_tadjust;
 				if (lm_tnext > r_turb_lm_bbextentt)
 					lm_tnext = r_turb_lm_bbextentt;
 				else if (lm_tnext < 16)
 					lm_tnext = 16;    // guard against round-off error on <0 steps
+				lm_tnext = lm_tnext * r_turb_lightmapheightminusone / r_turb_extents1;
 
 				r_turb_sstep = (snext - r_turb_s) >> 4;
 				r_turb_tstep = (tnext - r_turb_t) >> 4;
@@ -407,12 +410,14 @@ void TurbulentLit8 (espan_t *pspan)
 					lm_snext = 16;    // prevent round-off error on <0 steps from
 								//  from causing overstepping & running off the
 								//  edge of the texture
+				lm_snext = lm_snext * r_turb_lightmapwidthminusone / r_turb_extents0;
 
 				lm_tnext = (int)(tdivz * z) + r_turb_lm_tadjust;
 				if (lm_tnext > r_turb_lm_bbextentt)
 					lm_tnext = r_turb_lm_bbextentt;
 				else if (lm_tnext < 16)
 					lm_tnext = 16;    // guard against round-off error on <0 steps
+				lm_tnext = lm_tnext * r_turb_lightmapheightminusone / r_turb_extents1;
 
 				if (r_turb_spancount > 1)
 				{
