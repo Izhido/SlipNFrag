@@ -597,11 +597,41 @@ void D_DrawSurfacesToLists (void)
 					currententity->angles[PITCH] == 0 &&
 					currententity->angles[ROLL] == 0)
 				{
-					D_AddTurbulentToLists (pface, currententity);
+					if (pface->samples != nullptr)
+					{
+						pcurrentcache = D_CacheLightmap (pface);
+						if (pcurrentcache == nullptr)
+						{
+							D_AddTurbulentToLists (pface, currententity);
+						}
+						else
+						{
+							D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
+						}
+					}
+					else
+					{
+						D_AddTurbulentToLists (pface, currententity);
+					}
 				}
 				else
 				{
-					D_AddTurbulentRotatedToLists (pface, currententity);
+					if (pface->samples != nullptr)
+					{
+						pcurrentcache = D_CacheLightmap (pface);
+						if (pcurrentcache == nullptr)
+						{
+							D_AddTurbulentRotatedToLists (pface, currententity);
+						}
+						else
+						{
+							D_AddTurbulentRotatedLitToLists (pface, pcurrentcache, currententity);
+						}
+					}
+					else
+					{
+						D_AddTurbulentRotatedToLists (pface, currententity);
+					}
 				}
 
 				if (s->insubmodel)
@@ -795,11 +825,41 @@ void D_DrawSurfacesToListsIfNeeded (void)
 					currententity->angles[PITCH] == 0 &&
 					currententity->angles[ROLL] == 0)
 				{
-					D_AddTurbulentToLists (pface, currententity);
+					if (pface->samples != nullptr)
+					{
+						pcurrentcache = D_CacheLightmap (pface);
+						if (pcurrentcache == nullptr)
+						{
+							D_AddTurbulentToLists (pface, currententity);
+						}
+						else
+						{
+							D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
+						}
+					}
+					else
+					{
+						D_AddTurbulentToLists (pface, currententity);
+					}
 				}
 				else
 				{
-					D_AddTurbulentRotatedToLists (pface, currententity);
+					if (pface->samples != nullptr)
+					{
+						pcurrentcache = D_CacheLightmap (pface);
+						if (pcurrentcache == nullptr)
+						{
+							D_AddTurbulentRotatedToLists (pface, currententity);
+						}
+						else
+						{
+							D_AddTurbulentRotatedLitToLists (pface, pcurrentcache, currententity);
+						}
+					}
+					else
+					{
+						D_AddTurbulentRotatedToLists (pface, currententity);
+					}
 				}
 
 				if (s->insubmodel)
@@ -948,11 +1008,41 @@ void D_DrawOneSurface (msurface_t* surf)
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0)
 			{
-				D_AddTurbulentToLists (surf, currententity);
+				if (surf->samples != nullptr)
+				{
+					auto pcurrentcache = D_CacheLightmap (surf);
+					if (pcurrentcache == nullptr)
+					{
+						D_AddTurbulentToLists (surf, currententity);
+					}
+					else
+					{
+						D_AddTurbulentLitToLists (surf, pcurrentcache, currententity);
+					}
+				}
+				else
+				{
+					D_AddTurbulentToLists (surf, currententity);
+				}
 			}
 			else
 			{
-				D_AddTurbulentRotatedToLists (surf, currententity);
+				if (surf->samples != nullptr)
+				{
+					auto pcurrentcache = D_CacheLightmap (surf);
+					if (pcurrentcache == nullptr)
+					{
+						D_AddTurbulentRotatedToLists (surf, currententity);
+					}
+					else
+					{
+						D_AddTurbulentRotatedLitToLists (surf, pcurrentcache, currententity);
+					}
+				}
+				else
+				{
+					D_AddTurbulentRotatedToLists (surf, currententity);
+				}
 			}
 		}
 		else

@@ -50,6 +50,15 @@ struct dturbulent_t
 	int count;
 };
 
+struct dturbulentlit_t : dturbulent_t
+{
+	int created;
+	int lightmap_width;
+	int lightmap_height;
+	int lightmap_size;
+	int lightmap_texels;
+};
+
 struct dturbulentrotated_t : dturbulent_t
 {
 	float origin_x;
@@ -58,6 +67,15 @@ struct dturbulentrotated_t : dturbulent_t
 	float yaw;
 	float pitch;
 	float roll;
+};
+
+struct dturbulentrotatedlit_t : dturbulentrotated_t
+{
+	int created;
+	int lightmap_width;
+	int lightmap_height;
+	int lightmap_size;
+	int lightmap_texels;
 };
 
 struct dalias_t
@@ -100,7 +118,9 @@ struct dlists_t
 	int last_fence_rotated;
 	int last_sprite;
 	int last_turbulent;
+	int last_turbulent_lit;
 	int last_turbulent_rotated;
+	int last_turbulent_rotated_lit;
 	int last_alias16;
 	int last_alias32;
 	int last_viewmodel16;
@@ -122,7 +142,9 @@ struct dlists_t
 	std::vector<dsurfacerotated_t> fences_rotated;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dturbulent_t> turbulent;
+	std::vector<dturbulentlit_t> turbulent_lit;
 	std::vector<dturbulentrotated_t> turbulent_rotated;
+	std::vector<dturbulentrotatedlit_t> turbulent_rotated_lit;
 	std::vector<dalias_t> alias16;
 	std::vector<dalias_t> alias32;
 	std::vector<dalias_t> viewmodels16;
@@ -150,8 +172,10 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, en
 void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
-void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
+void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
+void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity);
+void D_AddTurbulentRotatedLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddParticleToLists (particle_t* part);

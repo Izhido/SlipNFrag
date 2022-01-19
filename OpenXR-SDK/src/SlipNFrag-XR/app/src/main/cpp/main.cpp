@@ -2597,7 +2597,9 @@ void android_main(struct android_app* app)
 			appState.Scene.colored.Delete(appState);
 			appState.Scene.viewmodel.Delete(appState);
 			appState.Scene.alias.Delete(appState);
+			appState.Scene.turbulentRotatedLit.Delete(appState);
 			appState.Scene.turbulentRotated.Delete(appState);
+			appState.Scene.turbulentLit.Delete(appState);
 			appState.Scene.turbulent.Delete(appState);
 			appState.Scene.sprites.Delete(appState);
 			appState.Scene.fencesRotated.Delete(appState);

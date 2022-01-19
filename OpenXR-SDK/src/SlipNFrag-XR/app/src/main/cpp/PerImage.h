@@ -5,6 +5,8 @@
 #include "PipelineDescriptorResources.h"
 #include "UpdatablePipelineDescriptorResources.h"
 #include "SurfaceRotatedPushConstants.h"
+#include "TurbulentLitPushConstants.h"
+#include "TurbulentRotatedLitPushConstants.h"
 
 struct PerImage
 {
@@ -65,7 +67,6 @@ struct PerImage
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	static void SetPushConstants(const LoadedSurfaceRotated& loaded, SurfaceRotatedPushConstants& pushConstants);
-	static void SetPushConstants(const LoadedTurbulentRotated& loaded, float pushConstants[]);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	void Render(AppState& appState);
 };
