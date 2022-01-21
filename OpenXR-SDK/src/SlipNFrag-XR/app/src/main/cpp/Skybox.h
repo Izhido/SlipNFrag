@@ -14,7 +14,7 @@ struct Skybox
 	Skybox* next;
 	int unusedCount;
 	XrSwapchain swapchain;
-	std::vector<XrSwapchainImageVulkanKHR> images;
+	std::vector<XrSwapchainImageVulkan2KHR> images;
 	
 	void Delete(AppState& appState) const;
 	static void MoveToPrevious(Scene& scene);

@@ -305,7 +305,7 @@ void android_main(struct android_app* app)
 		app->userData = &appState;
 		app->onAppCmd = AppHandleCommand;
 
-		XrGraphicsBindingVulkanKHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN2_KHR };
+		XrGraphicsBindingVulkan2KHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN2_KHR };
 
 		VkInstance vulkanInstance = VK_NULL_HANDLE;
 		VkPhysicalDevice vulkanPhysicalDevice = VK_NULL_HANDLE;
@@ -1069,7 +1069,7 @@ void android_main(struct android_app* app)
 		uint32_t imageCount;
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr));
 
-		std::vector<XrSwapchainImageVulkanKHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
+		std::vector<XrSwapchainImageVulkan2KHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
 		appState.PerImage.resize(imageCount);
