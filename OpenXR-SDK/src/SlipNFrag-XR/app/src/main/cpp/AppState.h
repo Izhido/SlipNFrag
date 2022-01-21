@@ -26,7 +26,6 @@ struct AppState
 	VkCommandPool CommandPool;
 	VkQueue Queue;
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
-	bool IndexAs8BitEnabled;
 	int DefaultFOV;
 	int FOV;
 	uint32_t SwapchainWidth;

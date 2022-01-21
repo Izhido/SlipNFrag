@@ -76,7 +76,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	uint32_t imageCount;
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Screen.Swapchain, 0, &imageCount, nullptr));
 
-	std::vector<XrSwapchainImageVulkanKHR> images(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+	std::vector<XrSwapchainImageVulkanKHR> images(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Screen.Swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)images.data()));
 	
 	appState.Screen.PerImage.resize(imageCount);
@@ -158,7 +158,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.Swapchain, 0, &imageCount, nullptr));
 	
-	images.resize(imageCount,  { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+	images.resize(imageCount,  { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.Swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)images.data()));
 
 	appState.Keyboard.Screen.PerImage.resize(imageCount);
@@ -238,7 +238,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.LeftArrowsSwapchain, 0, &imageCount, nullptr));
 
-	images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+	images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.LeftArrowsSwapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)images.data()));
 
 	VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -307,7 +307,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.RightArrowsSwapchain, 0, &imageCount, nullptr));
 
-	images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+	images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.RightArrowsSwapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)images.data()));
  
  	bufferCreateInfo.size = swapchainCreateInfo.width * swapchainCreateInfo.height * 4;
@@ -1098,7 +1098,7 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		if (maxIndex < UPPER_8BIT_LIMIT)
 		{
 			loaded.indices.size = surface.count;
 			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
@@ -1289,7 +1289,7 @@ void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		if (maxIndex < UPPER_8BIT_LIMIT)
 		{
 			loaded.indices.size = turbulent.count;
 			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
@@ -1469,7 +1469,7 @@ void Scene::GetTurbulentLitStagingBufferSize(AppState& appState, const dturbulen
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		if (maxIndex < UPPER_8BIT_LIMIT)
 		{
 			loaded.indices.size = turbulent.count;
 			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
@@ -1698,7 +1698,7 @@ void Scene::GetTurbulentRotatedLitStagingBufferSize(AppState& appState, const dt
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		if (maxIndex < UPPER_8BIT_LIMIT)
 		{
 			loaded.indices.size = turbulent.count;
 			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
@@ -1923,7 +1923,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			maxIndex = std::max(maxIndex, (unsigned int)(v2 * 2 + (v2back ? 1 : 0)));
 			triangle++;
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		if (maxIndex < UPPER_8BIT_LIMIT)
 		{
 			loaded.indices.size = alias.count;
 			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)

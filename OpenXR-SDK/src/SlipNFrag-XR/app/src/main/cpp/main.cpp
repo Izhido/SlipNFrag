@@ -305,7 +305,7 @@ void android_main(struct android_app* app)
 		app->userData = &appState;
 		app->onAppCmd = AppHandleCommand;
 
-		XrGraphicsBindingVulkanKHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR };
+		XrGraphicsBindingVulkanKHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN2_KHR };
 
 		VkInstance vulkanInstance = VK_NULL_HANDLE;
 		VkPhysicalDevice vulkanPhysicalDevice = VK_NULL_HANDLE;
@@ -352,7 +352,7 @@ void android_main(struct android_app* app)
 		std::vector<std::string> xrInstanceExtensionSources
 		{
 			XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME,
-			XR_KHR_VULKAN_ENABLE_EXTENSION_NAME,
+			XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
 			XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME,
 			XR_KHR_ANDROID_THREAD_SETTINGS_EXTENSION_NAME,
 			XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME,
@@ -466,16 +466,12 @@ void android_main(struct android_app* app)
 			CHECK(blendModeFound);
 		}
 
-		XrGraphicsRequirementsVulkanKHR graphicsRequirements { XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR };
+		XrGraphicsRequirementsVulkan2KHR graphicsRequirements { XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN2_KHR };
 
-		PFN_xrGetVulkanGraphicsRequirementsKHR xrGetVulkanGraphicsRequirementsKHR = nullptr;
-		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsRequirementsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsRequirementsKHR)));
+		PFN_xrGetVulkanGraphicsRequirements2KHR xrGetVulkanGraphicsRequirements2KHR = nullptr;
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsRequirements2KHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsRequirements2KHR)));
 
-		XrGraphicsRequirementsVulkanKHR legacyRequirements { XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR };
-		CHECK_XRCMD(xrGetVulkanGraphicsRequirementsKHR(instance, systemId, &legacyRequirements));
-
-		graphicsRequirements.maxApiVersionSupported = legacyRequirements.maxApiVersionSupported;
-		graphicsRequirements.minApiVersionSupported = legacyRequirements.minApiVersionSupported;
+		CHECK_XRCMD(xrGetVulkanGraphicsRequirements2KHR(instance, systemId, &graphicsRequirements));
 
 		std::vector<const char*> layers;
 		
@@ -533,30 +529,12 @@ void android_main(struct android_app* app)
 			vulkanCreateInfo.vulkanCreateInfo = &instInfo;
 			vulkanCreateInfo.vulkanAllocator = nullptr;
 
-			PFN_xrGetVulkanInstanceExtensionsKHR xrGetVulkanInstanceExtensionsKHR = nullptr;
-			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanInstanceExtensionsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanInstanceExtensionsKHR)));
+			PFN_xrCreateVulkanInstanceKHR xrCreateVulkanInstanceKHR = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrCreateVulkanInstanceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrCreateVulkanInstanceKHR)));
 
-			uint32_t extensionNamesSize = 0;
-			CHECK_XRCMD(xrGetVulkanInstanceExtensionsKHR(instance, vulkanCreateInfo.systemId, 0, &extensionNamesSize, nullptr));
-
-			std::vector<char> extensionNames(extensionNamesSize);
-			CHECK_XRCMD(xrGetVulkanInstanceExtensionsKHR(instance, vulkanCreateInfo.systemId, extensionNamesSize, &extensionNamesSize, &extensionNames[0]));
-			{
-				std::vector<const char*> extensions = ParseExtensionString(&extensionNames[0]);
-
-				for (uint32_t i = 0; i < vulkanCreateInfo.vulkanCreateInfo->enabledExtensionCount; ++i)
-				{
-					extensions.push_back(vulkanCreateInfo.vulkanCreateInfo->ppEnabledExtensionNames[i]);
-				}
-
-				VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
-				memcpy(&instInfo, vulkanCreateInfo.vulkanCreateInfo, sizeof(instInfo));
-				instInfo.enabledExtensionCount = (uint32_t) extensions.size();
-				instInfo.ppEnabledExtensionNames = extensions.empty() ? nullptr : extensions.data();
-
-				auto vkCreateInstance = (PFN_vkCreateInstance)vulkanCreateInfo.pfnGetInstanceProcAddr(nullptr, "vkCreateInstance");
-				CHECK_VKCMD(vkCreateInstance(&instInfo, vulkanCreateInfo.vulkanAllocator, &vulkanInstance));
-			}
+			VkResult errCreateVulkanInstance;
+			CHECK_XRCMD(xrCreateVulkanInstanceKHR(instance, &vulkanCreateInfo, &vulkanInstance, &errCreateVulkanInstance));
+			CHECK_VKCMD(errCreateVulkanInstance);
 
 			vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugReportCallbackEXT");
 			vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugReportCallbackEXT");
@@ -572,15 +550,10 @@ void android_main(struct android_app* app)
 			deviceGetInfo.systemId = systemId;
 			deviceGetInfo.vulkanInstance = vulkanInstance;
 
-			PFN_xrGetVulkanGraphicsDeviceKHR xrGetVulkanGraphicsDeviceKHR = nullptr;
-			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsDeviceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsDeviceKHR)));
+			PFN_xrGetVulkanGraphicsDevice2KHR xrGetVulkanGraphicsDevice2KHR = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsDevice2KHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsDevice2KHR)));
 
-			if (deviceGetInfo.next != nullptr)
-			{
-				CHECK_XRCMD(XR_ERROR_FEATURE_UNSUPPORTED);
-			}
-
-			CHECK_XRCMD(xrGetVulkanGraphicsDeviceKHR(instance, deviceGetInfo.systemId, deviceGetInfo.vulkanInstance, &vulkanPhysicalDevice));
+			CHECK_XRCMD(xrGetVulkanGraphicsDevice2KHR(instance, &deviceGetInfo, &vulkanPhysicalDevice));
 
 			VkDeviceQueueCreateInfo queueInfo { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 			float queuePriorities = 0;
@@ -601,7 +574,11 @@ void android_main(struct android_app* app)
 				}
 			}
 
-			std::vector<const char*> deviceExtensions;
+			std::vector<const char*> deviceExtensions
+			{
+				VK_KHR_MULTIVIEW_EXTENSION_NAME,
+				VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME
+			};
 
 			VkPhysicalDeviceFeatures features { };
 			features.samplerAnisotropy = VK_TRUE;
@@ -609,10 +586,8 @@ void android_main(struct android_app* app)
 			VkDeviceCreateInfo deviceInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 			deviceInfo.queueCreateInfoCount = 1;
 			deviceInfo.pQueueCreateInfos = &queueInfo;
-			deviceInfo.enabledLayerCount = 0;
-			deviceInfo.ppEnabledLayerNames = nullptr;
-			deviceInfo.enabledExtensionCount = (uint32_t) deviceExtensions.size();
-			deviceInfo.ppEnabledExtensionNames = deviceExtensions.empty() ? nullptr : deviceExtensions.data();
+			deviceInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
+			deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 			deviceInfo.pEnabledFeatures = &features;
 
 			XrVulkanDeviceCreateInfoKHR deviceCreateInfo { XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR };
@@ -620,89 +595,13 @@ void android_main(struct android_app* app)
 			deviceCreateInfo.pfnGetInstanceProcAddr = &vkGetInstanceProcAddr;
 			deviceCreateInfo.vulkanCreateInfo = &deviceInfo;
 			deviceCreateInfo.vulkanPhysicalDevice = vulkanPhysicalDevice;
-			deviceCreateInfo.vulkanAllocator = nullptr;
 
-			PFN_xrGetVulkanDeviceExtensionsKHR xrGetVulkanDeviceExtensionsKHR = nullptr;
-			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanDeviceExtensionsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanDeviceExtensionsKHR)));
+			PFN_xrCreateVulkanDeviceKHR xrCreateVulkanDeviceKHR = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrCreateVulkanDeviceKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrCreateVulkanDeviceKHR)));
 
-			uint32_t deviceExtensionNamesSize = 0;
-			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(instance, vulkanCreateInfo.systemId, 0, &deviceExtensionNamesSize, nullptr));
-			std::vector<char> deviceExtensionNames(deviceExtensionNamesSize);
-			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(instance, vulkanCreateInfo.systemId, deviceExtensionNamesSize, &deviceExtensionNamesSize, &deviceExtensionNames[0]));
-
-			VkPhysicalDeviceFeatures2 physicalDeviceFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
-			VkPhysicalDeviceProperties2 physicalDeviceProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
-
-			VkPhysicalDeviceMultiviewFeatures deviceMultiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
-			VkPhysicalDeviceMultiviewProperties deviceMultiviewProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES};
-
-			VkPhysicalDeviceIndexTypeUint8FeaturesEXT deviceIndexTypeUint8Features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT };
-
-			physicalDeviceFeatures.pNext = &deviceMultiviewFeatures;
-			physicalDeviceProperties.pNext = &deviceMultiviewProperties;
-
-			deviceMultiviewFeatures.pNext = &deviceIndexTypeUint8Features;
-			
-			auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceFeatures2KHR");
-			vkGetPhysicalDeviceFeatures2KHR(vulkanPhysicalDevice, &physicalDeviceFeatures);
-
-			auto vkGetPhysicalDeviceProperties2KHR = (PFN_vkGetPhysicalDeviceProperties2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceProperties2KHR");
-			vkGetPhysicalDeviceProperties2KHR(vulkanPhysicalDevice, &physicalDeviceProperties);
-
-			auto vkEnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)vkGetInstanceProcAddr(vulkanInstance, "vkEnumerateDeviceExtensionProperties");
-			uint32_t availableExtensionCount = 0;
-			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, nullptr);
-			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
-			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
-			const std::string indentStr(4, ' ');
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
-			for (uint32_t i = 0; i < availableExtensionCount; ++i)
-			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
-			}
-			
-			if ((bool)deviceMultiviewFeatures.multiview)
-			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device supports multiview rendering, with %d views and %u max instances", deviceMultiviewProperties.maxMultiviewViewCount, deviceMultiviewProperties.maxMultiviewInstanceIndex);
-			}
-			else
-			{
-				THROW("Device does not support multiview rendering.");
-			}
-
-			if ((bool)deviceIndexTypeUint8Features.indexTypeUint8)
-			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device supports indices as 8-bit values");
-				appState.IndexAs8BitEnabled = true;
-			}
-			else
-			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device does not support indices as 8-bit values");
-			}
-
-			memcpy(&features, deviceCreateInfo.vulkanCreateInfo->pEnabledFeatures, sizeof(features));
-			memcpy(&deviceInfo, deviceCreateInfo.vulkanCreateInfo, sizeof(deviceInfo));
-
-			deviceInfo.pNext = &deviceMultiviewFeatures;
-			
-			std::vector<const char*> enabledExtensions = ParseExtensionString(&deviceExtensionNames[0]);
-
-			for (uint32_t i = 0; i < deviceCreateInfo.vulkanCreateInfo->enabledExtensionCount; ++i)
-			{
-				enabledExtensions.push_back(deviceCreateInfo.vulkanCreateInfo->ppEnabledExtensionNames[i]);
-			}
-			enabledExtensions.push_back(VK_KHR_MULTIVIEW_EXTENSION_NAME);
-			if (appState.IndexAs8BitEnabled)
-			{
-				enabledExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
-			}
-
-			deviceInfo.pEnabledFeatures = &features;
-			deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
-			deviceInfo.ppEnabledExtensionNames = (enabledExtensions.empty() ? nullptr : enabledExtensions.data());
-
-			auto vkCreateDevice = (PFN_vkCreateDevice)deviceCreateInfo.pfnGetInstanceProcAddr(vulkanInstance, "vkCreateDevice");
-			CHECK_VKCMD(vkCreateDevice(vulkanPhysicalDevice, &deviceInfo, deviceCreateInfo.vulkanAllocator, &appState.Device));
+			VkResult errCreateVulkanDevice;
+			CHECK_XRCMD(xrCreateVulkanDeviceKHR(instance, &deviceCreateInfo, &appState.Device, &errCreateVulkanDevice));
+			CHECK_VKCMD(errCreateVulkanDevice);
 
 			vkGetDeviceQueue(appState.Device, queueInfo.queueFamilyIndex, 0, &appState.Queue);
 
@@ -1170,7 +1069,7 @@ void android_main(struct android_app* app)
 		uint32_t imageCount;
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr));
 
-		std::vector<XrSwapchainImageVulkanKHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+		std::vector<XrSwapchainImageVulkanKHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
 		appState.PerImage.resize(imageCount);
@@ -2334,7 +2233,7 @@ void android_main(struct android_app* app)
 								uint32_t imageCount;
 								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, 0, &imageCount, nullptr));
 
-								appState.Scene.skybox->images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+								appState.Scene.skybox->images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
 								
 								VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
