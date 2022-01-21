@@ -5,6 +5,7 @@
 #include "PipelineAttributes.h"
 #include "Constants.h"
 #include "MemoryAllocateInfo.h"
+#include <android_native_app_glue.h>
 
 void Scene::CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height)
 {
@@ -963,74 +964,6 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
-void Scene::GetIndices16StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
-{
-	auto entry = aliasIndicesPerKey.find(alias.aliashdr);
-	if (entry == aliasIndicesPerKey.end())
-	{
-		loaded.indices.size = alias.count * sizeof(uint16_t);
-		if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
-		{
-			loaded.indices.buffer = new SharedMemoryBuffer { };
-			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-			buffers.MoveToFront(loaded.indices.buffer);
-			latestSharedMemoryIndexBuffer16 = loaded.indices.buffer;
-			usedInLatestSharedMemoryIndexBuffer16 = 0;
-		}
-		else
-		{
-			loaded.indices.buffer = latestSharedMemoryIndexBuffer16;
-		}
-		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
-		usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
-		size += loaded.indices.size;
-		loaded.indices.source = alias.aliashdr;
-		buffers.SetupAliasIndices16(loaded.indices);
-		SharedMemoryWithOffsetBuffer newEntry { loaded.indices.buffer, loaded.indices.offset };
-		aliasIndicesPerKey.insert({ alias.aliashdr, newEntry });
-	}
-	else
-	{
-		loaded.indices.size = 0;
-		loaded.indices.buffer = entry->second.buffer;
-		loaded.indices.offset = entry->second.offset;
-	}
-}
-
-void Scene::GetIndices32StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
-{
-	auto entry = aliasIndicesPerKey.find(alias.aliashdr);
-	if (entry == aliasIndicesPerKey.end())
-	{
-		loaded.indices.size = alias.count * sizeof(uint32_t);
-		if (latestSharedMemoryIndexBuffer32 == nullptr || usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > latestSharedMemoryIndexBuffer32->size)
-		{
-			loaded.indices.buffer = new SharedMemoryBuffer { };
-			loaded.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
-			buffers.MoveToFront(loaded.indices.buffer);
-			latestSharedMemoryIndexBuffer32 = loaded.indices.buffer;
-			usedInLatestSharedMemoryIndexBuffer32 = 0;
-		}
-		else
-		{
-			loaded.indices.buffer = latestSharedMemoryIndexBuffer32;
-		}
-		loaded.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
-		usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
-		size += loaded.indices.size;
-		loaded.indices.source = alias.aliashdr;
-		buffers.SetupAliasIndices32(loaded.indices);
-		SharedMemoryWithOffsetBuffer newEntry { loaded.indices.buffer, loaded.indices.offset };
-		aliasIndicesPerKey.insert({ alias.aliashdr, newEntry });
-	}
-	else
-	{
-		loaded.indices.size = 0;
-		loaded.indices.buffer = entry->second.buffer;
-		loaded.indices.offset = entry->second.offset;
-	}
-}
-
 void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
 	auto vertexes = ((model_t*)surface.model)->vertexes;
@@ -1165,7 +1098,31 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < 65520)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		{
+			loaded.indices.size = surface.count;
+			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
+			{
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer8 = loaded.indices.indices.buffer;
+				usedInLatestSharedMemoryIndexBuffer8 = 0;
+			}
+			else
+			{
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer8;
+			}
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer8;
+			usedInLatestSharedMemoryIndexBuffer8 += loaded.indices.size;
+			size += loaded.indices.size;
+			loaded.indices.firstSource = surface.surface;
+			loaded.indices.secondSource = surface.model;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
+			buffers.SetupIndices8(loaded.indices);
+		}
+		else if (maxIndex < UPPER_16BIT_LIMIT)
 		{
 			loaded.indices.size = surface.count * sizeof(uint16_t);
 			if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
@@ -1332,7 +1289,31 @@ void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < 65520)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		{
+			loaded.indices.size = turbulent.count;
+			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
+			{
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer8 = loaded.indices.indices.buffer;
+				usedInLatestSharedMemoryIndexBuffer8 = 0;
+			}
+			else
+			{
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer8;
+			}
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer8;
+			usedInLatestSharedMemoryIndexBuffer8 += loaded.indices.size;
+			size += loaded.indices.size;
+			loaded.indices.firstSource = turbulent.surface;
+			loaded.indices.secondSource = turbulent.model;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
+			buffers.SetupIndices8(loaded.indices);
+		}
+		else if (maxIndex < UPPER_16BIT_LIMIT)
 		{
 			loaded.indices.size = turbulent.count * sizeof(uint16_t);
 			if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
@@ -1488,7 +1469,31 @@ void Scene::GetTurbulentLitStagingBufferSize(AppState& appState, const dturbulen
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < 65520)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		{
+			loaded.indices.size = turbulent.count;
+			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
+			{
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer8 = loaded.indices.indices.buffer;
+				usedInLatestSharedMemoryIndexBuffer8 = 0;
+			}
+			else
+			{
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer8;
+			}
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer8;
+			usedInLatestSharedMemoryIndexBuffer8 += loaded.indices.size;
+			size += loaded.indices.size;
+			loaded.indices.firstSource = turbulent.surface;
+			loaded.indices.secondSource = turbulent.model;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
+			buffers.SetupIndices8(loaded.indices);
+		}
+		else if (maxIndex < UPPER_16BIT_LIMIT)
 		{
 			loaded.indices.size = turbulent.count * sizeof(uint16_t);
 			if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
@@ -1693,7 +1698,31 @@ void Scene::GetTurbulentRotatedLitStagingBufferSize(AppState& appState, const dt
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < 65520)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		{
+			loaded.indices.size = turbulent.count;
+			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
+			{
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer8 = loaded.indices.indices.buffer;
+				usedInLatestSharedMemoryIndexBuffer8 = 0;
+			}
+			else
+			{
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer8;
+			}
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer8;
+			usedInLatestSharedMemoryIndexBuffer8 += loaded.indices.size;
+			size += loaded.indices.size;
+			loaded.indices.firstSource = turbulent.surface;
+			loaded.indices.secondSource = turbulent.model;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
+			buffers.SetupIndices8(loaded.indices);
+		}
+		else if (maxIndex < UPPER_16BIT_LIMIT)
 		{
 			loaded.indices.size = turbulent.count * sizeof(uint16_t);
 			if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
@@ -1873,6 +1902,106 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		loaded.colormapped.texture.size = 0;
 		loaded.colormapped.texture.texture = previousSharedMemoryTexture;
 	}
+	auto entry = aliasIndicesPerKey.find(alias.aliashdr);
+	if (entry == aliasIndicesPerKey.end())
+	{
+		auto aliashdr = (aliashdr_t *)alias.aliashdr;
+		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
+		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
+		auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
+		unsigned int maxIndex = 0;
+		for (auto i = 0; i < mdl->numtris; i++)
+		{
+			auto v0 = triangle->vertindex[0];
+			auto v1 = triangle->vertindex[1];
+			auto v2 = triangle->vertindex[2];
+			auto v0back = (((stverts[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			auto v1back = (((stverts[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			auto v2back = (((stverts[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+			maxIndex = std::max(maxIndex, (unsigned int)(v0 * 2 + (v0back ? 1 : 0)));
+			maxIndex = std::max(maxIndex, (unsigned int)(v1 * 2 + (v1back ? 1 : 0)));
+			maxIndex = std::max(maxIndex, (unsigned int)(v2 * 2 + (v2back ? 1 : 0)));
+			triangle++;
+		}
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexAs8BitEnabled)
+		{
+			loaded.indices.size = alias.count;
+			if (latestSharedMemoryIndexBuffer8 == nullptr || usedInLatestSharedMemoryIndexBuffer8 + loaded.indices.size > latestSharedMemoryIndexBuffer8->size)
+			{
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer8 = loaded.indices.indices.buffer;
+				usedInLatestSharedMemoryIndexBuffer8 = 0;
+			}
+			else
+			{
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer8;
+			}
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer8;
+			usedInLatestSharedMemoryIndexBuffer8 += loaded.indices.size;
+			size += loaded.indices.size;
+			loaded.indices.firstSource = alias.aliashdr;
+			loaded.indices.secondSource = nullptr;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
+			buffers.SetupAliasIndices8(loaded.indices);
+		}
+		else if (maxIndex < UPPER_16BIT_LIMIT)
+		{
+			loaded.indices.size = alias.count * sizeof(uint16_t);
+			if (latestSharedMemoryIndexBuffer16 == nullptr || usedInLatestSharedMemoryIndexBuffer16 + loaded.indices.size > latestSharedMemoryIndexBuffer16->size)
+			{
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer16 = loaded.indices.indices.buffer;
+				usedInLatestSharedMemoryIndexBuffer16 = 0;
+			}
+			else
+			{
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer16;
+			}
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer16;
+			usedInLatestSharedMemoryIndexBuffer16 += loaded.indices.size;
+			size += loaded.indices.size;
+			loaded.indices.firstSource = alias.aliashdr;
+			loaded.indices.secondSource = nullptr;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
+			buffers.SetupAliasIndices16(loaded.indices);
+		}
+		else
+		{
+			loaded.indices.size = alias.count * sizeof(uint32_t);
+			if (latestSharedMemoryIndexBuffer32 == nullptr || usedInLatestSharedMemoryIndexBuffer32 + loaded.indices.size > latestSharedMemoryIndexBuffer32->size)
+			{
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::memoryBlockSize);
+				buffers.MoveToFront(loaded.indices.indices.buffer);
+				latestSharedMemoryIndexBuffer32 = loaded.indices.indices.buffer;
+				usedInLatestSharedMemoryIndexBuffer32 = 0;
+			}
+			else
+			{
+				loaded.indices.indices.buffer = latestSharedMemoryIndexBuffer32;
+			}
+			loaded.indices.indices.offset = usedInLatestSharedMemoryIndexBuffer32;
+			usedInLatestSharedMemoryIndexBuffer32 += loaded.indices.size;
+			size += loaded.indices.size;
+			loaded.indices.firstSource = alias.aliashdr;
+			loaded.indices.secondSource = nullptr;
+			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
+			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
+			buffers.SetupAliasIndices32(loaded.indices);
+		}
+		aliasIndicesPerKey.insert({ alias.aliashdr, loaded.indices.indices });
+	}
+	else
+	{
+		loaded.indices.size = 0;
+		loaded.indices.indices = entry->second;
+	}
 	loaded.firstAttribute = alias.first_attribute;
 	loaded.isHostColormap = alias.is_host_colormap;
 	loaded.count = alias.count;
@@ -1902,6 +2031,8 @@ void Scene::Reset()
 	usedInLatestSharedMemoryIndexBuffer32 = 0;
 	latestSharedMemoryIndexBuffer16 = nullptr;
 	usedInLatestSharedMemoryIndexBuffer16 = 0;
+	latestSharedMemoryIndexBuffer8 = nullptr;
+	usedInLatestSharedMemoryIndexBuffer8 = 0;
 	latestSharedMemoryTexturePositionBuffer = nullptr;
 	usedInLatestSharedMemoryTexturePositionBuffer = 0;
 	latestBufferSharedMemory = nullptr;

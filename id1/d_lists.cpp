@@ -4,9 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-#define UPPER_16BIT_LIMIT 65520
-
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -28,10 +26,8 @@ void D_ResetLists ()
 	d_lists.last_turbulent_lit = -1;
 	d_lists.last_turbulent_rotated = -1;
 	d_lists.last_turbulent_rotated_lit = -1;
-	d_lists.last_alias16 = -1;
-	d_lists.last_alias32 = -1;
-	d_lists.last_viewmodel16 = -1;
-	d_lists.last_viewmodel32 = -1;
+	d_lists.last_alias = -1;
+	d_lists.last_viewmodel = -1;
 	d_lists.last_sky = -1;
     d_lists.last_skybox = -1;
 	d_lists.last_textured_vertex = -1;
@@ -426,23 +422,12 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 	{
 		return;
 	}
-	if (mdl->numverts * 2 <= UPPER_16BIT_LIMIT)
+	d_lists.last_alias++;
+	if (d_lists.last_alias >= d_lists.alias.size())
 	{
-		d_lists.last_alias16++;
-		if (d_lists.last_alias16 >= d_lists.alias16.size())
-		{
-			d_lists.alias16.emplace_back();
-		}
-		auto& alias = d_lists.alias16[d_lists.last_alias16];
-		D_FillAliasData(alias, aliashdr, mdl, skindesc, colormap, apverts);
-		return;
+		d_lists.alias.emplace_back();
 	}
-	d_lists.last_alias32++;
-	if (d_lists.last_alias32 >= d_lists.alias32.size())
-	{
-		d_lists.alias32.emplace_back();
-	}
-	auto& alias = d_lists.alias32[d_lists.last_alias32];
+	auto& alias = d_lists.alias[d_lists.last_alias];
 	D_FillAliasData(alias, aliashdr, mdl, skindesc, colormap, apverts);
 }
 
@@ -559,23 +544,12 @@ void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 	{
 		return;
 	}
-	if (mdl->numverts * 2 <= UPPER_16BIT_LIMIT)
+	d_lists.last_viewmodel++;
+	if (d_lists.last_viewmodel >= d_lists.viewmodels.size())
 	{
-		d_lists.last_viewmodel16++;
-		if (d_lists.last_viewmodel16 >= d_lists.viewmodels16.size())
-		{
-			d_lists.viewmodels16.emplace_back();
-		}
-		auto& viewmodel = d_lists.viewmodels16[d_lists.last_viewmodel16];
-		D_FillViewmodelData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
-		return;
+		d_lists.viewmodels.emplace_back();
 	}
-	d_lists.last_viewmodel32++;
-	if (d_lists.last_viewmodel32 >= d_lists.viewmodels32.size())
-	{
-		d_lists.viewmodels32.emplace_back();
-	}
-	auto& viewmodel = d_lists.viewmodels32[d_lists.last_viewmodel32];
+	auto& viewmodel = d_lists.viewmodels[d_lists.last_viewmodel];
 	D_FillViewmodelData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
 }
 

@@ -5,14 +5,12 @@ void CachedSharedMemoryBuffers::Initialize()
 {
 	firstVertices = nullptr;
 	currentVertices = nullptr;
+	firstIndices8 = nullptr;
+	currentIndices8 = nullptr;
 	firstIndices16 = nullptr;
 	currentIndices16 = nullptr;
 	firstIndices32 = nullptr;
 	currentIndices32 = nullptr;
-	firstAliasIndices16 = nullptr;
-	currentAliasIndices16 = nullptr;
-	firstAliasIndices32 = nullptr;
-	currentAliasIndices32 = nullptr;
 	firstSurfaceTexturePositions = nullptr;
 	currentSurfaceTexturePositions = nullptr;
 	firstTurbulentTexturePositions = nullptr;
@@ -21,6 +19,12 @@ void CachedSharedMemoryBuffers::Initialize()
 	currentAliasVertices = nullptr;
 	firstAliasTexCoords = nullptr;
 	currentAliasTexCoords = nullptr;
+	firstAliasIndices8 = nullptr;
+	currentAliasIndices8 = nullptr;
+	firstAliasIndices16 = nullptr;
+	currentAliasIndices16 = nullptr;
+	firstAliasIndices32 = nullptr;
+	currentAliasIndices32 = nullptr;
 }
 
 void CachedSharedMemoryBuffers::SetupVertices(LoadedSharedMemoryBuffer& loaded)
@@ -35,6 +39,20 @@ void CachedSharedMemoryBuffers::SetupVertices(LoadedSharedMemoryBuffer& loaded)
 		currentVertices->next = &loaded;
 	}
 	currentVertices = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupIndices8(LoadedSharedMemoryIndexBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentIndices8 == nullptr)
+	{
+		firstIndices8 = &loaded;
+	}
+	else
+	{
+		currentIndices8->next = &loaded;
+	}
+	currentIndices8 = &loaded;
 }
 
 void CachedSharedMemoryBuffers::SetupIndices16(LoadedSharedMemoryIndexBuffer& loaded)
@@ -63,34 +81,6 @@ void CachedSharedMemoryBuffers::SetupIndices32(LoadedSharedMemoryIndexBuffer& lo
 		currentIndices32->next = &loaded;
 	}
 	currentIndices32 = &loaded;
-}
-
-void CachedSharedMemoryBuffers::SetupAliasIndices16(LoadedSharedMemoryWithOffsetBuffer& loaded)
-{
-	loaded.next = nullptr;
-	if (currentAliasIndices16 == nullptr)
-	{
-		firstAliasIndices16 = &loaded;
-	}
-	else
-	{
-		currentAliasIndices16->next = &loaded;
-	}
-	currentAliasIndices16 = &loaded;
-}
-
-void CachedSharedMemoryBuffers::SetupAliasIndices32(LoadedSharedMemoryWithOffsetBuffer& loaded)
-{
-	loaded.next = nullptr;
-	if (currentAliasIndices32 == nullptr)
-	{
-		firstAliasIndices32 = &loaded;
-	}
-	else
-	{
-		currentAliasIndices32->next = &loaded;
-	}
-	currentAliasIndices32 = &loaded;
 }
 
 void CachedSharedMemoryBuffers::SetupSurfaceTexturePositions(LoadedSharedMemoryTexturePositionsBuffer& loaded)
@@ -147,6 +137,48 @@ void CachedSharedMemoryBuffers::SetupAliasTexCoords(LoadedSharedMemoryTexCoordsB
 		currentAliasTexCoords->next = &loaded;
 	}
 	currentAliasTexCoords = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupAliasIndices8(LoadedSharedMemoryIndexBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentAliasIndices8 == nullptr)
+	{
+		firstAliasIndices8 = &loaded;
+	}
+	else
+	{
+		currentAliasIndices8->next = &loaded;
+	}
+	currentAliasIndices8 = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupAliasIndices16(LoadedSharedMemoryIndexBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentAliasIndices16 == nullptr)
+	{
+		firstAliasIndices16 = &loaded;
+	}
+	else
+	{
+		currentAliasIndices16->next = &loaded;
+	}
+	currentAliasIndices16 = &loaded;
+}
+
+void CachedSharedMemoryBuffers::SetupAliasIndices32(LoadedSharedMemoryIndexBuffer& loaded)
+{
+	loaded.next = nullptr;
+	if (currentAliasIndices32 == nullptr)
+	{
+		firstAliasIndices32 = &loaded;
+	}
+	else
+	{
+		currentAliasIndices32->next = &loaded;
+	}
+	currentAliasIndices32 = &loaded;
 }
 
 void CachedSharedMemoryBuffers::DisposeFront()

@@ -1,5 +1,8 @@
 #include "r_shared.h"
 
+#define UPPER_8BIT_LIMIT 240
+#define UPPER_16BIT_LIMIT 65520
+
 struct dsurface_t
 {
 	void* surface;
@@ -121,10 +124,8 @@ struct dlists_t
 	int last_turbulent_lit;
 	int last_turbulent_rotated;
 	int last_turbulent_rotated_lit;
-	int last_alias16;
-	int last_alias32;
-	int last_viewmodel16;
-	int last_viewmodel32;
+	int last_alias;
+	int last_viewmodel;
 	int last_sky;
     int last_skybox;
 	int last_textured_vertex;
@@ -145,10 +146,8 @@ struct dlists_t
 	std::vector<dturbulentlit_t> turbulent_lit;
 	std::vector<dturbulentrotated_t> turbulent_rotated;
 	std::vector<dturbulentrotatedlit_t> turbulent_rotated_lit;
-	std::vector<dalias_t> alias16;
-	std::vector<dalias_t> alias32;
-	std::vector<dalias_t> viewmodels16;
-	std::vector<dalias_t> viewmodels32;
+	std::vector<dalias_t> alias;
+	std::vector<dalias_t> viewmodels;
 	std::vector<dsky_t> sky;
     std::vector<dskybox_t> skyboxes;
 	std::vector<float> textured_vertices;

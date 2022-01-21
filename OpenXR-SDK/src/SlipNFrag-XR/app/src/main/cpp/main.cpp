@@ -22,6 +22,7 @@
 #include <pthread.h>
 #include <sys/prctl.h>
 #include <unistd.h>
+#include <android_native_app_glue.h>
 
 std::string GetXrVersionString(XrVersion ver)
 {
@@ -265,19 +266,16 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 		case APP_CMD_DESTROY:
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onDestroy()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_DESTROY");
-			appState->NativeWindow = nullptr;
 			break;
 
 		case APP_CMD_INIT_WINDOW:
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "surfaceCreated()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_INIT_WINDOW");
-			appState->NativeWindow = app->window;
 			break;
 
 		case APP_CMD_TERM_WINDOW:
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "surfaceDestroyed()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_TERM_WINDOW");
-			appState->NativeWindow = nullptr;
 			break;
 
 		default:
@@ -632,23 +630,19 @@ void android_main(struct android_app* app)
 			std::vector<char> deviceExtensionNames(deviceExtensionNamesSize);
 			CHECK_XRCMD(xrGetVulkanDeviceExtensionsKHR(instance, vulkanCreateInfo.systemId, deviceExtensionNamesSize, &deviceExtensionNamesSize, &deviceExtensionNames[0]));
 
-			std::vector<const char*> enabledExtensions = ParseExtensionString(&deviceExtensionNames[0]);
-
-			for (uint32_t i = 0; i < deviceCreateInfo.vulkanCreateInfo->enabledExtensionCount; ++i)
-			{
-				enabledExtensions.push_back(deviceCreateInfo.vulkanCreateInfo->ppEnabledExtensionNames[i]);
-			}
-			enabledExtensions.push_back(VK_KHR_MULTIVIEW_EXTENSION_NAME);
-
 			VkPhysicalDeviceFeatures2 physicalDeviceFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 			VkPhysicalDeviceProperties2 physicalDeviceProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
 
 			VkPhysicalDeviceMultiviewFeatures deviceMultiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
 			VkPhysicalDeviceMultiviewProperties deviceMultiviewProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES};
 
+			VkPhysicalDeviceIndexTypeUint8FeaturesEXT deviceIndexTypeUint8Features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT };
+
 			physicalDeviceFeatures.pNext = &deviceMultiviewFeatures;
 			physicalDeviceProperties.pNext = &deviceMultiviewProperties;
 
+			deviceMultiviewFeatures.pNext = &deviceIndexTypeUint8Features;
+			
 			auto vkGetPhysicalDeviceFeatures2KHR = (PFN_vkGetPhysicalDeviceFeatures2KHR) vkGetInstanceProcAddr(vulkanInstance, "vkGetPhysicalDeviceFeatures2KHR");
 			vkGetPhysicalDeviceFeatures2KHR(vulkanPhysicalDevice, &physicalDeviceFeatures);
 
@@ -676,13 +670,33 @@ void android_main(struct android_app* app)
 				THROW("Device does not support multiview rendering.");
 			}
 
+			if ((bool)deviceIndexTypeUint8Features.indexTypeUint8)
+			{
+				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device supports indices as 8-bit values");
+				appState.IndexAs8BitEnabled = true;
+			}
+			else
+			{
+				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Device does not support indices as 8-bit values");
+			}
+
 			memcpy(&features, deviceCreateInfo.vulkanCreateInfo->pEnabledFeatures, sizeof(features));
 			memcpy(&deviceInfo, deviceCreateInfo.vulkanCreateInfo, sizeof(deviceInfo));
 
-			VkPhysicalDeviceMultiviewFeaturesKHR multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES_KHR };
-			multiviewFeatures.multiview = VK_TRUE;
-			deviceInfo.pNext = &multiviewFeatures;
+			deviceInfo.pNext = &deviceMultiviewFeatures;
 			
+			std::vector<const char*> enabledExtensions = ParseExtensionString(&deviceExtensionNames[0]);
+
+			for (uint32_t i = 0; i < deviceCreateInfo.vulkanCreateInfo->enabledExtensionCount; ++i)
+			{
+				enabledExtensions.push_back(deviceCreateInfo.vulkanCreateInfo->ppEnabledExtensionNames[i]);
+			}
+			enabledExtensions.push_back(VK_KHR_MULTIVIEW_EXTENSION_NAME);
+			if (appState.IndexAs8BitEnabled)
+			{
+				enabledExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
+			}
+
 			deviceInfo.pEnabledFeatures = &features;
 			deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
 			deviceInfo.ppEnabledExtensionNames = (enabledExtensions.empty() ? nullptr : enabledExtensions.data());

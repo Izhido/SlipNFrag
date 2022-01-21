@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include "AliasVertices.h"
 #include "PerSurface.h"
-#include "SharedMemoryWithOffsetBuffer.h"
 #include "LoadedSurfaceRotated.h"
 #include "LoadedSprite.h"
 #include "LoadedTurbulentLit.h"
@@ -47,7 +46,7 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
 	std::unordered_map<void*, PerSurface> perSurface;
 	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
-	std::unordered_map<void*, SharedMemoryWithOffsetBuffer> aliasIndicesPerKey;
+	std::unordered_map<void*, SharedMemoryIndexBuffer> aliasIndicesPerKey;
 	int lastSurface;
 	int lastSurfaceRotated;
 	int lastFence;
@@ -57,10 +56,8 @@ struct Scene
 	int lastTurbulentLit;
 	int lastTurbulentRotated;
 	int lastTurbulentRotatedLit;
-	int lastAlias16;
-	int lastAlias32;
-	int lastViewmodel16;
-	int lastViewmodel32;
+	int lastAlias;
+	int lastViewmodel;
 	int lastColoredIndex16;
 	int lastColoredIndex32;
 	int lastSky;
@@ -73,10 +70,8 @@ struct Scene
 	std::vector<LoadedTurbulentLit> loadedTurbulentLit;
 	std::vector<LoadedTurbulentRotated> loadedTurbulentRotated;
 	std::vector<LoadedTurbulentRotatedLit> loadedTurbulentRotatedLit;
-	std::vector<LoadedAlias> loadedAlias16;
-	std::vector<LoadedAlias> loadedAlias32;
-	std::vector<LoadedAlias> loadedViewmodels16;
-	std::vector<LoadedAlias> loadedViewmodels32;
+	std::vector<LoadedAlias> loadedAlias;
+	std::vector<LoadedAlias> loadedViewmodels;
 	int skyCount;
 	int firstSkyVertex;
 	std::unordered_map<VkDeviceSize, std::list<LightmapTexture>> lightmapTextures;
@@ -94,6 +89,8 @@ struct Scene
 	VkDeviceSize usedInLatestBufferSharedMemory;
 	SharedMemoryBuffer* latestSharedMemoryTexturePositionBuffer;
 	VkDeviceSize usedInLatestSharedMemoryTexturePositionBuffer;
+	SharedMemoryBuffer* latestSharedMemoryIndexBuffer8;
+	VkDeviceSize usedInLatestSharedMemoryIndexBuffer8;
 	SharedMemoryBuffer* latestSharedMemoryIndexBuffer16;
 	VkDeviceSize usedInLatestSharedMemoryIndexBuffer16;
 	SharedMemoryBuffer* latestSharedMemoryIndexBuffer32;
@@ -137,8 +134,6 @@ struct Scene
 	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app);
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
-	void GetIndices16StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
-	void GetIndices32StagingBufferSize(AppState& appState, dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
 	void GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetSurfaceRotatedStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);

@@ -2,7 +2,6 @@
 
 #include "vid_ovr.h"
 #include "d_lists.h"
-#include <android_native_app_glue.h>
 #include "AppMode.h"
 #include <vulkan/vulkan.h>
 #include <common/xr_dependencies.h>
@@ -17,7 +16,6 @@
 
 struct AppState
 {
-	ANativeWindow* NativeWindow;
 	AppMode Mode;
 	AppMode PreviousMode;
 	bool StartupButtonsPressed;
@@ -28,6 +26,7 @@ struct AppState
 	VkCommandPool CommandPool;
 	VkQueue Queue;
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
+	bool IndexAs8BitEnabled;
 	int DefaultFOV;
 	int FOV;
 	uint32_t SwapchainWidth;

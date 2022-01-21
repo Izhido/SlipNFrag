@@ -7,6 +7,7 @@
 #include <sys/prctl.h>
 #include <unistd.h>
 #include "Utils.h"
+#include <android_native_app_glue.h>
 //#include <android/log.h>
 
 void runEngine(AppState* appState, struct android_app* app)
