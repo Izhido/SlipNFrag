@@ -305,7 +305,7 @@ void android_main(struct android_app* app)
 		app->userData = &appState;
 		app->onAppCmd = AppHandleCommand;
 
-		XrGraphicsBindingVulkan2KHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR };
+		XrGraphicsBindingVulkanKHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR };
 
 		VkInstance vulkanInstance = VK_NULL_HANDLE;
 		VkPhysicalDevice vulkanPhysicalDevice = VK_NULL_HANDLE;
@@ -466,7 +466,7 @@ void android_main(struct android_app* app)
 			CHECK(blendModeFound);
 		}
 
-		XrGraphicsRequirementsVulkan2KHR graphicsRequirements { XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN2_KHR };
+		XrGraphicsRequirementsVulkanKHR graphicsRequirements { XR_TYPE_GRAPHICS_REQUIREMENTS_VULKAN_KHR };
 
 		PFN_xrGetVulkanGraphicsRequirementsKHR xrGetVulkanGraphicsRequirementsKHR = nullptr;
 		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetVulkanGraphicsRequirementsKHR", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetVulkanGraphicsRequirementsKHR)));
@@ -1170,7 +1170,7 @@ void android_main(struct android_app* app)
 		uint32_t imageCount;
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr));
 
-		std::vector<XrSwapchainImageVulkan2KHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
+		std::vector<XrSwapchainImageVulkanKHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
 		appState.PerImage.resize(imageCount);
