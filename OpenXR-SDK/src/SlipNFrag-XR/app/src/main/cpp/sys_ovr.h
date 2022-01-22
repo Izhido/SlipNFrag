@@ -2,8 +2,6 @@
 
 #include <string>
 
-#define LOG_TAG "SlipNFrag"
-
 extern int sys_argc;
 extern char** sys_argv;
 extern float frame_lapse;

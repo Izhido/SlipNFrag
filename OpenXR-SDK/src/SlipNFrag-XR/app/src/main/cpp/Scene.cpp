@@ -1099,7 +1099,7 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
 		{
 			loaded.indices.size = surface.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
@@ -1290,7 +1290,7 @@ void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
 		{
 			loaded.indices.size = turbulent.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
@@ -1470,7 +1470,7 @@ void Scene::GetTurbulentLitStagingBufferSize(AppState& appState, const dturbulen
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
 		{
 			loaded.indices.size = turbulent.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
@@ -1699,7 +1699,7 @@ void Scene::GetTurbulentRotatedLitStagingBufferSize(AppState& appState, const dt
 				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
 			}
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
 		{
 			loaded.indices.size = turbulent.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
@@ -1924,7 +1924,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			maxIndex = std::max(maxIndex, (unsigned int)(v2 * 2 + (v2back ? 1 : 0)));
 			triangle++;
 		}
-		if (maxIndex < UPPER_8BIT_LIMIT)
+		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
 		{
 			loaded.indices.size = alias.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)

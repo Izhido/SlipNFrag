@@ -198,7 +198,14 @@ void LogExtensions(const char* layerName, int indent = 0)
 	CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layerName, (uint32_t) extensions.size(), &instanceExtensionCount, extensions.data()));
 
 	const std::string indentStr(indent, ' ');
-	__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable Extensions: (%d)", indentStr.c_str(), instanceExtensionCount);
+	if (layerName == nullptr)
+	{
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable OpenXR extensions: (%d)", indentStr.c_str(), instanceExtensionCount);
+	}
+	else
+	{
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable OpenXR extensions for layer %s: (%d)", indentStr.c_str(), layerName, instanceExtensionCount);
+	}
 	for (const XrExtensionProperties& extension : extensions)
 	{
 		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), extension.extensionName, extension.extensionVersion);
@@ -554,11 +561,47 @@ void android_main(struct android_app* app)
 				}
 			}
 
+			auto vkEnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)vkGetInstanceProcAddr(vulkanInstance, "vkEnumerateDeviceExtensionProperties");
+
+			uint32_t availableExtensionCount = 0;
+			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, nullptr);
+
+			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
+
+			auto multiviewEnabled = false;
+			auto indexTypeUInt8Enabled = false;
+			
+			const std::string indentStr(4, ' ');
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
+			for (uint32_t i = 0; i < availableExtensionCount; ++i)
+			{
+				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
+
+				if (strcmp(availableExtensions[i].extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME) == 0)
+				{
+					multiviewEnabled = true;
+				}
+				if (strcmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME) == 0)
+				{
+					indexTypeUInt8Enabled = true;
+				}
+			}
+
+			if (!multiviewEnabled)
+			{
+				THROW(Fmt("Device does not support %s extension", VK_KHR_MULTIVIEW_EXTENSION_NAME));
+			}
+
 			std::vector<const char*> deviceExtensions
 			{
-				VK_KHR_MULTIVIEW_EXTENSION_NAME,
-				VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME
+				VK_KHR_MULTIVIEW_EXTENSION_NAME
 			};
+			if (indexTypeUInt8Enabled)
+			{
+				deviceExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
+				appState.IndexTypeUInt8Enabled = true;
+			}
 
 			VkPhysicalDeviceFeatures features { };
 			features.samplerAnisotropy = VK_TRUE;

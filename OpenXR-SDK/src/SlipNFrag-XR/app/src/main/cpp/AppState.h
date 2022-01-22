@@ -22,6 +22,7 @@ struct AppState
 	bool Resumed;
 	double PausedTime;
 	VkDevice Device;
+	bool IndexTypeUInt8Enabled;
 	XrSession Session;
 	VkCommandPool CommandPool;
 	VkQueue Queue;
