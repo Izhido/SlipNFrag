@@ -2,7 +2,7 @@
 
 #include "LoadedSharedMemoryBuffer.h"
 #include "LoadedSharedMemoryTexturePositionsBuffer.h"
-#include "LoadedSharedMemoryIndexBuffer.h"
+#include "LoadedIndexBuffer.h"
 #include "LoadedLightmap.h"
 #include "LoadedSharedMemoryTexture.h"
 
@@ -10,7 +10,7 @@ struct LoadedSurface
 {
 	LoadedSharedMemoryBuffer vertices;
 	LoadedSharedMemoryTexturePositionsBuffer texturePositions;
-	LoadedSharedMemoryIndexBuffer indices;
+	LoadedIndexBuffer indices;
 	LoadedLightmap lightmap;
 	LoadedSharedMemoryTexture texture;
 	uint32_t count;

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "SharedMemoryTexturePositionsBuffer.h"
-#include "SharedMemoryIndexBuffer.h"
+#include "IndexBuffer.h"
 
 struct PerSurface
 {
 	SharedMemoryTexturePositionsBuffer texturePosition;
-	SharedMemoryIndexBuffer indices;
+	IndexBuffer indices;
 };

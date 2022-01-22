@@ -9,5 +9,8 @@ struct Constants
 	static const int screenToConsoleMultiplier = 3;
 	static const int maxUnusedCount = 16;
 	static const int memoryBlockSize = 1024 * 1024;
+	static const int indexBuffer8BitSize = 16 * 256;
+	static const int indexBuffer16BitSize = 16 * 65536;
+	static const int indexBuffer32BitSize = 16 * 65536;
 	static const int descriptorSetCount = 256;
 };

@@ -91,26 +91,6 @@ const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer
 	THROW_XR(xr, "xrPollEvent");
 }
 
-// Note: The output must not outlive the input - this modifies the input and returns a collection of views into that modified
-// input!
-std::vector<const char*> ParseExtensionString(char* names)
-{
-	std::vector<const char*> list;
-	while (*names != 0)
-	{
-		list.push_back(names);
-		while (*(++names) != 0)
-		{
-			if (*names == ' ')
-			{
-				*names++ = '\0';
-				break;
-			}
-		}
-	}
-	return list;
-}
-
 static VkBool32 DebugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t /*location*/,
 							int32_t /*messageCode*/, const char* pLayerPrefix, const char* pMessage, void* /*userData*/)
 {
@@ -1517,6 +1497,7 @@ void android_main(struct android_app* app)
 				std::lock_guard<std::mutex> lock(appState.RenderMutex);
 				appState.Scene.textures.DeleteOld(appState);
 				appState.Scene.lightmaps.DeleteOld(appState);
+				appState.Scene.indexBuffers.DeleteOld(appState);
 				appState.Scene.buffers.DeleteOld(appState);
 	
 				Skybox::DeleteOld(appState);
@@ -2504,6 +2485,7 @@ void android_main(struct android_app* app)
 					vkFreeMemory(appState.Device, texture.memory, nullptr);
 				}
 			}
+			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
 			appState.Scene.floor.Delete(appState);
 			appState.Scene.sky.Delete(appState);

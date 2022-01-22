@@ -2,14 +2,14 @@
 
 #include "LoadedSharedMemoryBuffer.h"
 #include "LoadedSharedMemoryTexturePositionsBuffer.h"
-#include "LoadedSharedMemoryIndexBuffer.h"
+#include "LoadedIndexBuffer.h"
 #include "LoadedSharedMemoryTexture.h"
 
 struct LoadedTurbulent
 {
 	LoadedSharedMemoryBuffer vertices;
 	LoadedSharedMemoryTexturePositionsBuffer texturePositions;
-	LoadedSharedMemoryIndexBuffer indices;
+	LoadedIndexBuffer indices;
 	LoadedSharedMemoryTexture texture;
 	uint32_t count;
 };

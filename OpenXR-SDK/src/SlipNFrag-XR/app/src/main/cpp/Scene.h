@@ -2,8 +2,8 @@
 
 #include <vulkan/vulkan.h>
 #include "Pipeline.h"
-#include "Buffer.h"
 #include "CachedSharedMemoryBuffers.h"
+#include "CachedIndexBuffers.h"
 #include <unordered_map>
 #include "AliasVertices.h"
 #include "PerSurface.h"
@@ -43,10 +43,11 @@ struct Scene
 	Pipeline floor;
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
+	CachedIndexBuffers indexBuffers;
 	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
 	std::unordered_map<void*, PerSurface> perSurface;
 	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
-	std::unordered_map<void*, SharedMemoryIndexBuffer> aliasIndicesPerKey;
+	std::unordered_map<void*, IndexBuffer> aliasIndicesPerKey;
 	int lastSurface;
 	int lastSurfaceRotated;
 	int lastFence;
@@ -89,12 +90,12 @@ struct Scene
 	VkDeviceSize usedInLatestBufferSharedMemory;
 	SharedMemoryBuffer* latestSharedMemoryTexturePositionBuffer;
 	VkDeviceSize usedInLatestSharedMemoryTexturePositionBuffer;
-	SharedMemoryBuffer* latestSharedMemoryIndexBuffer8;
-	VkDeviceSize usedInLatestSharedMemoryIndexBuffer8;
-	SharedMemoryBuffer* latestSharedMemoryIndexBuffer16;
-	VkDeviceSize usedInLatestSharedMemoryIndexBuffer16;
-	SharedMemoryBuffer* latestSharedMemoryIndexBuffer32;
-	VkDeviceSize usedInLatestSharedMemoryIndexBuffer32;
+	Buffer* latestIndexBuffer8;
+	VkDeviceSize usedInLatestIndexBuffer8;
+	Buffer* latestIndexBuffer16;
+	VkDeviceSize usedInLatestIndexBuffer16;
+	Buffer* latestIndexBuffer32;
+	VkDeviceSize usedInLatestIndexBuffer32;
 	SharedMemory* latestTextureSharedMemory;
 	VkDeviceSize usedInLatestTextureSharedMemory;
 	DescriptorSets* latestTextureDescriptorSets;
