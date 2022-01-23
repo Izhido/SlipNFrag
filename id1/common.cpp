@@ -1829,7 +1829,7 @@ void COM_InitFilesystem (void)
     {
         basedir = com_argv[i + 1];
     }
-	else if (host_parms.basedir.length() == 0)
+	else
     {
         basedir = host_parms.basedir;
     }
