@@ -51,8 +51,8 @@ struct PerImage
 	VkDeviceSize texturedAttributeBase;
 	VkDeviceSize colormappedAttributeBase;
 	VkDeviceSize controllerAttributeBase;
+	VkDeviceSize controllerIndexBase;
 	VkDeviceSize coloredIndex16Base;
-	VkDeviceSize controllerIndex16Base;
 	VkCommandBuffer commandBuffer;
 	VkSubmitInfo submitInfo;
 

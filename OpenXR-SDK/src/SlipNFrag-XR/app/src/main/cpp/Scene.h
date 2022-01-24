@@ -112,8 +112,8 @@ struct Scene
 	VkDeviceSize controllerAttributesSize;
 	VkDeviceSize attributesSize;
 	VkDeviceSize floorIndicesSize;
+	VkDeviceSize controllerIndicesSize;
 	VkDeviceSize coloredIndices16Size;
-	VkDeviceSize controllerIndices16Size;
 	VkDeviceSize indices16Size;
 	VkDeviceSize indices32Size;
 	VkDeviceSize colorsSize;

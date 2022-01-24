@@ -272,20 +272,20 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	{
 		appState.Scene.floorIndicesSize = 0;
 	}
-	appState.Scene.coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
-	appState.Scene.controllerIndices16Size = 0;
+	appState.Scene.controllerIndicesSize = 0;
 	if (appState.Scene.controllerVerticesSize > 0)
 	{
 		if (appState.LeftController.PoseIsValid)
 		{
-			appState.Scene.controllerIndices16Size += 2 * 36 * sizeof(uint16_t);
+			appState.Scene.controllerIndicesSize += 2 * 36 * sizeof(uint16_t);
 		}
 		if (appState.RightController.PoseIsValid)
 		{
-			appState.Scene.controllerIndices16Size += 2 * 36 * sizeof(uint16_t);
+			appState.Scene.controllerIndicesSize += 2 * 36 * sizeof(uint16_t);
 		}
 	}
-	appState.Scene.indices16Size = appState.Scene.floorIndicesSize + appState.Scene.coloredIndices16Size + appState.Scene.controllerIndices16Size;
+	appState.Scene.coloredIndices16Size = (d_lists.last_colored_index16 + 1) * sizeof(uint16_t);
+	appState.Scene.indices16Size = appState.Scene.floorIndicesSize + appState.Scene.controllerIndicesSize + appState.Scene.coloredIndices16Size;
 	if (appState.Scene.indices16Size > 0)
 	{
 		indices16 = cachedIndices16.GetIndexBuffer(appState, appState.Scene.indices16Size);
@@ -758,11 +758,8 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			*target++ = 0;
 			offset += appState.Scene.floorIndicesSize;
 		}
-		coloredIndex16Base = appState.Scene.floorIndicesSize;
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
-		offset += appState.Scene.coloredIndices16Size;
-		controllerIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices16Size;
-		if (appState.Scene.controllerIndices16Size > 0)
+		controllerIndexBase = appState.Scene.floorIndicesSize;
+		if (appState.Scene.controllerIndicesSize > 0)
 		{
 			auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
 			auto controllerOffset = 0;
@@ -779,8 +776,11 @@ void PerImage::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 				controllerOffset += 8;
 				target = Controller::WriteIndices(target, controllerOffset);
 			}
-			offset += appState.Scene.controllerIndices16Size;
+			offset += appState.Scene.controllerIndicesSize;
 		}
+		coloredIndex16Base = controllerIndexBase + appState.Scene.controllerIndicesSize;
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
+		offset += appState.Scene.coloredIndices16Size;
 	}
 	while (offset % 4 != 0)
 	{
@@ -2146,7 +2146,7 @@ void PerImage::Render(AppState& appState)
 		descriptorSets[0] = sceneMatricesResources.descriptorSet;
 		descriptorSets[1] = controllerResources.descriptorSet;
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
-		vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllerIndex16Base, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllerIndexBase, VK_INDEX_TYPE_UINT16);
 		VkDeviceSize size = 0;
 		if (appState.LeftController.PoseIsValid)
 		{
