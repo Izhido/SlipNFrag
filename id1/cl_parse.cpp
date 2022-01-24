@@ -311,7 +311,7 @@ void CL_ParseServerInfo (void)
 	i = MSG_ReadLong ();
 	if (i != PROTOCOL_VERSION && i != EXPANDED_PROTOCOL_VERSION)
 	{
-		Con_Printf ("Server returned version %i, not %i ir %i", i, PROTOCOL_VERSION, EXPANDED_PROTOCOL_VERSION);
+		Con_Printf ("Server returned version %i, not %i ir %i\n", i, PROTOCOL_VERSION, EXPANDED_PROTOCOL_VERSION);
 		return;
     }
     cl_protocol_version_from_server = i;
