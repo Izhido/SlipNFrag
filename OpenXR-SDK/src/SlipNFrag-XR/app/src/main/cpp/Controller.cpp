@@ -109,7 +109,54 @@ float* Controller::WriteAttributes(float* attributes)
 	return attributes;
 }
 
-uint16_t* Controller::WriteIndices(uint16_t* indices, uint16_t offset)
+unsigned char* Controller::WriteIndices8(unsigned char* indices, unsigned char offset)
+{
+	*indices++ = 0 + offset;
+	*indices++ = 1 + offset;
+	*indices++ = 2 + offset;
+	*indices++ = 2 + offset;
+	*indices++ = 3 + offset;
+	*indices++ = 0 + offset;
+
+	*indices++ = 0 + offset;
+	*indices++ = 4 + offset;
+	*indices++ = 5 + offset;
+	*indices++ = 5 + offset;
+	*indices++ = 1 + offset;
+	*indices++ = 0 + offset;
+
+	*indices++ = 1 + offset;
+	*indices++ = 5 + offset;
+	*indices++ = 6 + offset;
+	*indices++ = 6 + offset;
+	*indices++ = 2 + offset;
+	*indices++ = 1 + offset;
+
+	*indices++ = 2 + offset;
+	*indices++ = 6 + offset;
+	*indices++ = 7 + offset;
+	*indices++ = 7 + offset;
+	*indices++ = 3 + offset;
+	*indices++ = 2 + offset;
+
+	*indices++ = 3 + offset;
+	*indices++ = 7 + offset;
+	*indices++ = 4 + offset;
+	*indices++ = 4 + offset;
+	*indices++ = 0 + offset;
+	*indices++ = 3 + offset;
+
+	*indices++ = 5 + offset;
+	*indices++ = 4 + offset;
+	*indices++ = 7 + offset;
+	*indices++ = 7 + offset;
+	*indices++ = 6 + offset;
+	*indices++ = 5 + offset;
+
+	return indices;
+}
+
+uint16_t* Controller::WriteIndices16(uint16_t* indices, uint16_t offset)
 {
 	*indices++ = 0 + offset;
 	*indices++ = 1 + offset;

@@ -2500,6 +2500,7 @@ void android_main(struct android_app* app)
 				perImage.cachedColors.Delete(appState);
 				perImage.cachedIndices32.Delete(appState);
 				perImage.cachedIndices16.Delete(appState);
+				perImage.cachedIndices8.Delete(appState);
 				perImage.cachedAttributes.Delete(appState);
 				perImage.cachedVertices.Delete(appState);
 				perImage.matrices.Delete(appState);

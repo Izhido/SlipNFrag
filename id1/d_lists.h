@@ -133,6 +133,7 @@ struct dlists_t
 	int last_colormapped_attribute;
 	int last_colored_vertex;
 	int last_colored_attribute;
+	int last_colored_index8;
 	int last_colored_index16;
 	int last_colored_index32;
 	int last_lightmap_texel;
@@ -155,6 +156,7 @@ struct dlists_t
 	std::vector<float> colormapped_attributes;
 	std::vector<float> colored_vertices;
 	std::vector<float> colored_attributes;
+	std::vector<unsigned char> colored_indices8;
 	std::vector<uint16_t> colored_indices16;
 	std::vector<uint32_t> colored_indices32;
 	std::vector<unsigned> lightmap_texels;

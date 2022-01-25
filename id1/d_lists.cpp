@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -35,6 +35,7 @@ void D_ResetLists ()
 	d_lists.last_colormapped_attribute = -1;
 	d_lists.last_colored_vertex = -1;
 	d_lists.last_colored_attribute = -1;
+	d_lists.last_colored_index8 = -1;
 	d_lists.last_colored_index16 = -1;
 	d_lists.last_colored_index32 = -1;
 	d_lists.last_lightmap_texel = -1;
@@ -610,7 +611,33 @@ void D_AddParticleToLists (particle_t* part)
 	d_lists.last_colored_attribute++;
 	d_lists.colored_attributes[d_lists.last_colored_attribute] = part->color;
 	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
-	if (first_vertex + 4 <= UPPER_16BIT_LIMIT)
+	if (first_vertex + 4 <= UPPER_8BIT_LIMIT)
+	{
+		new_size = d_lists.last_colored_index8 + 1 + 6;
+		if (d_lists.colored_indices8.size() < new_size)
+		{
+			d_lists.colored_indices8.resize(new_size);
+		}
+		auto v0 = first_vertex;
+		auto v1 = first_vertex + 1;
+		auto v2 = first_vertex + 2;
+		d_lists.last_colored_index8++;
+		d_lists.colored_indices8[d_lists.last_colored_index8] = v0;
+		d_lists.last_colored_index8++;
+		d_lists.colored_indices8[d_lists.last_colored_index8] = v1;
+		d_lists.last_colored_index8++;
+		d_lists.colored_indices8[d_lists.last_colored_index8] = v2;
+		v0 = first_vertex + 2;
+		v1 = first_vertex + 3;
+		v2 = first_vertex;
+		d_lists.last_colored_index8++;
+		d_lists.colored_indices8[d_lists.last_colored_index8] = v0;
+		d_lists.last_colored_index8++;
+		d_lists.colored_indices8[d_lists.last_colored_index8] = v1;
+		d_lists.last_colored_index8++;
+		d_lists.colored_indices8[d_lists.last_colored_index8] = v2;
+	}
+	else if (first_vertex + 4 <= UPPER_16BIT_LIMIT)
 	{
 		new_size = d_lists.last_colored_index16 + 1 + 6;
 		if (d_lists.colored_indices16.size() < new_size)
@@ -795,7 +822,97 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 		d_lists.colored_attributes.resize(new_size);
 	}
 	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
-	if (first_vertex + face->numedges <= UPPER_16BIT_LIMIT)
+	if (first_vertex + face->numedges <= UPPER_8BIT_LIMIT)
+	{
+		auto edge = entity->model->surfedges[face->firstedge];
+		unsigned int index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		new_size = d_lists.last_colored_index8 + 1 + (face->numedges - 2) * 3;
+		if (d_lists.colored_indices8.size() < new_size)
+		{
+			d_lists.colored_indices8.resize(new_size);
+		}
+		auto& vertex = entity->model->vertexes[index];
+		auto x = vertex.position[0];
+		auto y = vertex.position[1];
+		auto z = vertex.position[2];
+		auto target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1;
+		*target++ = x;
+		*target++ = z;
+		*target = -y;
+		target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1;
+		*target = color;
+		d_lists.last_colored_index8++;
+		d_lists.colored_indices8[d_lists.last_colored_index8] = first_vertex;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		unsigned char previous_index = 0;
+		unsigned char before_previous_index;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			unsigned char current_index;
+			if (use_back)
+			{
+				next_back--;
+				current_index = next_back;
+			}
+			else
+			{
+				next_front++;
+				current_index = next_front;
+			}
+			edge = entity->model->surfedges[face->firstedge + current_index];
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			use_back = !use_back;
+			auto& vertex = entity->model->vertexes[index];
+			x = vertex.position[0];
+			y = vertex.position[1];
+			z = vertex.position[2];
+			target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1 + current_index * 3;
+			*target++ = x;
+			*target++ = z;
+			*target = -y;
+			target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1 + current_index;
+			*target = color;
+			if (i >= 3)
+			{
+				if (use_back)
+				{
+					d_lists.last_colored_index8++;
+					d_lists.colored_indices8[d_lists.last_colored_index8] = first_vertex + previous_index;
+					d_lists.last_colored_index8++;
+					d_lists.colored_indices8[d_lists.last_colored_index8] = first_vertex + before_previous_index;
+				}
+				else
+				{
+					d_lists.last_colored_index8++;
+					d_lists.colored_indices8[d_lists.last_colored_index8] = first_vertex + before_previous_index;
+					d_lists.last_colored_index8++;
+					d_lists.colored_indices8[d_lists.last_colored_index8] = first_vertex + previous_index;
+				}
+			}
+			d_lists.last_colored_index8++;
+			d_lists.colored_indices8[d_lists.last_colored_index8] = first_vertex + current_index;
+			before_previous_index = previous_index;
+			previous_index = current_index;
+		}
+	}
+	else if (first_vertex + face->numedges <= UPPER_16BIT_LIMIT)
 	{
 		auto edge = entity->model->surfedges[face->firstedge];
 		unsigned int index;

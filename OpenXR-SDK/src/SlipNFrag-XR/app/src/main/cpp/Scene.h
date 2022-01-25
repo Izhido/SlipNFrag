@@ -59,6 +59,7 @@ struct Scene
 	int lastTurbulentRotatedLit;
 	int lastAlias;
 	int lastViewmodel;
+	int lastColoredIndex8;
 	int lastColoredIndex16;
 	int lastColoredIndex32;
 	int lastSky;
@@ -113,7 +114,9 @@ struct Scene
 	VkDeviceSize attributesSize;
 	VkDeviceSize floorIndicesSize;
 	VkDeviceSize controllerIndicesSize;
+	VkDeviceSize coloredIndices8Size;
 	VkDeviceSize coloredIndices16Size;
+	VkDeviceSize indices8Size;
 	VkDeviceSize indices16Size;
 	VkDeviceSize indices32Size;
 	VkDeviceSize colorsSize;

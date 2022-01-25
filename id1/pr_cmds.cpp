@@ -89,8 +89,9 @@ void PF_objerror (void)
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 	ED_Free (ed);
-	
-	Host_Error ("Program error");
+
+	// Disabled until we can finally understand how to selectively turn this on or off:
+	//Host_Error ("Program error");
 }
 
 

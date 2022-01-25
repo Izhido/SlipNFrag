@@ -21,6 +21,7 @@ struct PerImage
 	VkFramebuffer framebuffer;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
+	CachedBuffers cachedIndices8;
 	CachedBuffers cachedIndices16;
 	CachedBuffers cachedIndices32;
 	CachedBuffers cachedColors;
@@ -33,6 +34,7 @@ struct PerImage
 	Buffer matrices;
 	Buffer* vertices;
 	Buffer* attributes;
+	Buffer* indices8;
 	Buffer* indices16;
 	Buffer* indices32;
 	Buffer* colors;
@@ -52,6 +54,7 @@ struct PerImage
 	VkDeviceSize colormappedAttributeBase;
 	VkDeviceSize controllerAttributeBase;
 	VkDeviceSize controllerIndexBase;
+	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
 	VkCommandBuffer commandBuffer;
 	VkSubmitInfo submitInfo;
