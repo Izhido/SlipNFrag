@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -33,8 +33,10 @@ void D_ResetLists ()
 	d_lists.last_textured_vertex = -1;
 	d_lists.last_textured_attribute = -1;
 	d_lists.last_colormapped_attribute = -1;
+	d_lists.last_particle_position = -1;
+	d_lists.last_particle_color = -1;
 	d_lists.last_colored_vertex = -1;
-	d_lists.last_colored_attribute = -1;
+	d_lists.last_colored_color = -1;
 	d_lists.last_colored_index8 = -1;
 	d_lists.last_colored_index16 = -1;
 	d_lists.last_colored_index32 = -1;
@@ -556,139 +558,27 @@ void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 
 void D_AddParticleToLists (particle_t* part)
 {
-	auto new_size = d_lists.last_colored_vertex + 1 + 3 * 4;
-	if (d_lists.colored_vertices.size() < new_size)
+	auto new_size = d_lists.last_particle_position + 1 + 3;
+	if (d_lists.particle_positions.size() < new_size)
 	{
-		d_lists.colored_vertices.resize(new_size);
+		d_lists.particle_positions.resize(new_size);
 	}
-	new_size = d_lists.last_colored_attribute + 1 + 4;
-	if (d_lists.colored_attributes.size() < new_size)
+	auto x = part->org[0];
+	auto y = part->org[1];
+	auto z = part->org[2];
+	d_lists.last_particle_position++;
+	d_lists.particle_positions[d_lists.last_particle_position] = x;
+	d_lists.last_particle_position++;
+	d_lists.particle_positions[d_lists.last_particle_position] = z;
+	d_lists.last_particle_position++;
+	d_lists.particle_positions[d_lists.last_particle_position] = -y;
+	new_size = d_lists.last_particle_color + 1 + 1;
+	if (d_lists.particle_colors.size() < new_size)
 	{
-		d_lists.colored_attributes.resize(new_size);
+		d_lists.particle_colors.resize(new_size);
 	}
-	auto x = part->org[0] - vright[0] * 0.5 + vup[0] * 0.5;
-	auto y = part->org[1] - vright[1] * 0.5 + vup[1] * 0.5;
-	auto z = part->org[2] - vright[2] * 0.5 + vup[2] * 0.5;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = x;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = z;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = -y;
-	d_lists.last_colored_attribute++;
-	d_lists.colored_attributes[d_lists.last_colored_attribute] = part->color;
-	x += vright[0];
-	y += vright[1];
-	z += vright[2];
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = x;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = z;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = -y;
-	d_lists.last_colored_attribute++;
-	d_lists.colored_attributes[d_lists.last_colored_attribute] = part->color;
-	x -= vup[0];
-	y -= vup[1];
-	z -= vup[2];
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = x;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = z;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = -y;
-	d_lists.last_colored_attribute++;
-	d_lists.colored_attributes[d_lists.last_colored_attribute] = part->color;
-	x -= vright[0];
-	y -= vright[1];
-	z -= vright[2];
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = x;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = z;
-	d_lists.last_colored_vertex++;
-	d_lists.colored_vertices[d_lists.last_colored_vertex] = -y;
-	d_lists.last_colored_attribute++;
-	d_lists.colored_attributes[d_lists.last_colored_attribute] = part->color;
-	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
-	if (first_vertex + 4 <= UPPER_8BIT_LIMIT)
-	{
-		new_size = d_lists.last_colored_index8 + 1 + 6;
-		if (d_lists.colored_indices8.size() < new_size)
-		{
-			d_lists.colored_indices8.resize(new_size);
-		}
-		auto v0 = first_vertex;
-		auto v1 = first_vertex + 1;
-		auto v2 = first_vertex + 2;
-		d_lists.last_colored_index8++;
-		d_lists.colored_indices8[d_lists.last_colored_index8] = v0;
-		d_lists.last_colored_index8++;
-		d_lists.colored_indices8[d_lists.last_colored_index8] = v1;
-		d_lists.last_colored_index8++;
-		d_lists.colored_indices8[d_lists.last_colored_index8] = v2;
-		v0 = first_vertex + 2;
-		v1 = first_vertex + 3;
-		v2 = first_vertex;
-		d_lists.last_colored_index8++;
-		d_lists.colored_indices8[d_lists.last_colored_index8] = v0;
-		d_lists.last_colored_index8++;
-		d_lists.colored_indices8[d_lists.last_colored_index8] = v1;
-		d_lists.last_colored_index8++;
-		d_lists.colored_indices8[d_lists.last_colored_index8] = v2;
-	}
-	else if (first_vertex + 4 <= UPPER_16BIT_LIMIT)
-	{
-		new_size = d_lists.last_colored_index16 + 1 + 6;
-		if (d_lists.colored_indices16.size() < new_size)
-		{
-			d_lists.colored_indices16.resize(new_size);
-		}
-		auto v0 = first_vertex;
-		auto v1 = first_vertex + 1;
-		auto v2 = first_vertex + 2;
-		d_lists.last_colored_index16++;
-		d_lists.colored_indices16[d_lists.last_colored_index16] = v0;
-		d_lists.last_colored_index16++;
-		d_lists.colored_indices16[d_lists.last_colored_index16] = v1;
-		d_lists.last_colored_index16++;
-		d_lists.colored_indices16[d_lists.last_colored_index16] = v2;
-		v0 = first_vertex + 2;
-		v1 = first_vertex + 3;
-		v2 = first_vertex;
-		d_lists.last_colored_index16++;
-		d_lists.colored_indices16[d_lists.last_colored_index16] = v0;
-		d_lists.last_colored_index16++;
-		d_lists.colored_indices16[d_lists.last_colored_index16] = v1;
-		d_lists.last_colored_index16++;
-		d_lists.colored_indices16[d_lists.last_colored_index16] = v2;
-	}
-	else
-	{
-		new_size = d_lists.last_colored_index32 + 1 + 6;
-		if (d_lists.colored_indices32.size() < new_size)
-		{
-			d_lists.colored_indices32.resize(new_size);
-		}
-		auto v0 = first_vertex;
-		auto v1 = first_vertex + 1;
-		auto v2 = first_vertex + 2;
-		d_lists.last_colored_index32++;
-		d_lists.colored_indices32[d_lists.last_colored_index32] = v0;
-		d_lists.last_colored_index32++;
-		d_lists.colored_indices32[d_lists.last_colored_index32] = v1;
-		d_lists.last_colored_index32++;
-		d_lists.colored_indices32[d_lists.last_colored_index32] = v2;
-		v0 = first_vertex + 2;
-		v1 = first_vertex + 3;
-		v2 = first_vertex;
-		d_lists.last_colored_index32++;
-		d_lists.colored_indices32[d_lists.last_colored_index32] = v0;
-		d_lists.last_colored_index32++;
-		d_lists.colored_indices32[d_lists.last_colored_index32] = v1;
-		d_lists.last_colored_index32++;
-		d_lists.colored_indices32[d_lists.last_colored_index32] = v2;
-	}
+	d_lists.last_particle_color++;
+	d_lists.particle_colors[d_lists.last_particle_color] = part->color;
 }
 
 void D_AddSkyToLists (qboolean full_area)
@@ -816,10 +706,10 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 	{
 		d_lists.colored_vertices.resize(new_size);
 	}
-	new_size = d_lists.last_colored_attribute + 1 + face->numedges;
-	if (d_lists.colored_attributes.size() < new_size)
+	new_size = d_lists.last_colored_color + 1 + face->numedges;
+	if (d_lists.colored_colors.size() < new_size)
 	{
-		d_lists.colored_attributes.resize(new_size);
+		d_lists.colored_colors.resize(new_size);
 	}
 	auto first_vertex = (d_lists.last_colored_vertex + 1) / 3;
 	if (first_vertex + face->numedges <= UPPER_8BIT_LIMIT)
@@ -847,7 +737,7 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 		*target++ = x;
 		*target++ = z;
 		*target = -y;
-		target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1;
+		target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1;
 		*target = color;
 		d_lists.last_colored_index8++;
 		d_lists.colored_indices8[d_lists.last_colored_index8] = first_vertex;
@@ -887,7 +777,7 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 			*target++ = x;
 			*target++ = z;
 			*target = -y;
-			target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1 + current_index;
+			target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1 + current_index;
 			*target = color;
 			if (i >= 3)
 			{
@@ -937,7 +827,7 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 		*target++ = x;
 		*target++ = z;
 		*target = -y;
-		target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1;
+		target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1;
 		*target = color;
 		d_lists.last_colored_index16++;
 		d_lists.colored_indices16[d_lists.last_colored_index16] = first_vertex;
@@ -977,7 +867,7 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 			*target++ = x;
 			*target++ = z;
 			*target = -y;
-			target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1 + current_index;
+			target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1 + current_index;
 			*target = color;
 			if (i >= 3)
 			{
@@ -1027,7 +917,7 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 		*target++ = x;
 		*target++ = z;
 		*target = -y;
-		target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1;
+		target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1;
 		*target = color;
 		d_lists.last_colored_index32++;
 		d_lists.colored_indices32[d_lists.last_colored_index32] = first_vertex;
@@ -1067,7 +957,7 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 			*target++ = x;
 			*target++ = z;
 			*target = -y;
-			target = d_lists.colored_attributes.data() + d_lists.last_colored_attribute + 1 + current_index;
+			target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1 + current_index;
 			*target = color;
 			if (i >= 3)
 			{
@@ -1093,5 +983,5 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 		}
 	}
 	d_lists.last_colored_vertex += 3 * face->numedges;
-	d_lists.last_colored_attribute += face->numedges;
+	d_lists.last_colored_color += face->numedges;
 }

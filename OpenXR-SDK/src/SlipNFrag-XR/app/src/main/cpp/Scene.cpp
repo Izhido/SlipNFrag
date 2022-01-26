@@ -384,14 +384,16 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/viewmodel.vert.spv", &viewmodelVertex);
 	VkShaderModule viewmodelFragment;
 	CreateShader(appState, app, "shaders/viewmodel.frag.spv", &viewmodelFragment);
-	VkShaderModule coloredVertex;
-	CreateShader(appState, app, "shaders/colored.vert.spv", &coloredVertex);
-	VkShaderModule coloredFragment;
-	CreateShader(appState, app, "shaders/colored.frag.spv", &coloredFragment);
+	VkShaderModule particleVertex;
+	CreateShader(appState, app, "shaders/particle.vert.spv", &particleVertex);
 	VkShaderModule skyVertex;
 	CreateShader(appState, app, "shaders/sky.vert.spv", &skyVertex);
 	VkShaderModule skyFragment;
 	CreateShader(appState, app, "shaders/sky.frag.spv", &skyFragment);
+	VkShaderModule coloredVertex;
+	CreateShader(appState, app, "shaders/colored.vert.spv", &coloredVertex);
+	VkShaderModule coloredFragment;
+	CreateShader(appState, app, "shaders/colored.frag.spv", &coloredFragment);
 	VkShaderModule floorVertex;
 	CreateShader(appState, app, "shaders/floor.vert.spv", &floorVertex);
 	VkShaderModule floorFragment;
@@ -545,23 +547,25 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	colormappedAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	colormappedAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-	PipelineAttributes coloredAttributes { };
-	coloredAttributes.vertexAttributes.resize(2);
-	coloredAttributes.vertexBindings.resize(2);
-	coloredAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-	coloredAttributes.vertexBindings[0].stride = 3 * sizeof(float);
-	coloredAttributes.vertexAttributes[1].location = 1;
-	coloredAttributes.vertexAttributes[1].binding = 1;
-	coloredAttributes.vertexAttributes[1].format = VK_FORMAT_R32_SFLOAT;
-	coloredAttributes.vertexBindings[1].binding = 1;
-	coloredAttributes.vertexBindings[1].stride = sizeof(float);
-	coloredAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	coloredAttributes.vertexInputState.vertexBindingDescriptionCount = coloredAttributes.vertexBindings.size();
-	coloredAttributes.vertexInputState.pVertexBindingDescriptions = coloredAttributes.vertexBindings.data();
-	coloredAttributes.vertexInputState.vertexAttributeDescriptionCount = coloredAttributes.vertexAttributes.size();
-	coloredAttributes.vertexInputState.pVertexAttributeDescriptions = coloredAttributes.vertexAttributes.data();
-	coloredAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	coloredAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	PipelineAttributes particleAttributes { };
+	particleAttributes.vertexAttributes.resize(2);
+	particleAttributes.vertexBindings.resize(2);
+	particleAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	particleAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+	particleAttributes.vertexBindings[0].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+	particleAttributes.vertexAttributes[1].location = 1;
+	particleAttributes.vertexAttributes[1].binding = 1;
+	particleAttributes.vertexAttributes[1].format = VK_FORMAT_R32_SFLOAT;
+	particleAttributes.vertexBindings[1].binding = 1;
+	particleAttributes.vertexBindings[1].stride = sizeof(float);
+	particleAttributes.vertexBindings[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+	particleAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	particleAttributes.vertexInputState.vertexBindingDescriptionCount = particleAttributes.vertexBindings.size();
+	particleAttributes.vertexInputState.pVertexBindingDescriptions = particleAttributes.vertexBindings.data();
+	particleAttributes.vertexInputState.vertexAttributeDescriptionCount = particleAttributes.vertexAttributes.size();
+	particleAttributes.vertexInputState.pVertexAttributeDescriptions = particleAttributes.vertexAttributes.data();
+	particleAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	particleAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	PipelineAttributes skyAttributes { };
 	skyAttributes.vertexAttributes.resize(2);
@@ -580,6 +584,24 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	skyAttributes.vertexInputState.pVertexAttributeDescriptions = skyAttributes.vertexAttributes.data();
 	skyAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	skyAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+
+	PipelineAttributes coloredAttributes { };
+	coloredAttributes.vertexAttributes.resize(2);
+	coloredAttributes.vertexBindings.resize(2);
+	coloredAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	coloredAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+	coloredAttributes.vertexAttributes[1].location = 1;
+	coloredAttributes.vertexAttributes[1].binding = 1;
+	coloredAttributes.vertexAttributes[1].format = VK_FORMAT_R32_SFLOAT;
+	coloredAttributes.vertexBindings[1].binding = 1;
+	coloredAttributes.vertexBindings[1].stride = sizeof(float);
+	coloredAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	coloredAttributes.vertexInputState.vertexBindingDescriptionCount = coloredAttributes.vertexBindings.size();
+	coloredAttributes.vertexInputState.pVertexBindingDescriptions = coloredAttributes.vertexBindings.data();
+	coloredAttributes.vertexInputState.vertexAttributeDescriptionCount = coloredAttributes.vertexAttributes.size();
+	coloredAttributes.vertexInputState.pVertexAttributeDescriptions = coloredAttributes.vertexAttributes.data();
+	coloredAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	coloredAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	PipelineAttributes floorAttributes { };
 	floorAttributes.vertexAttributes.resize(2);
@@ -819,6 +841,26 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.layout = viewmodel.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodel.pipeline));
 
+	particle.stages.resize(2);
+	particle.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	particle.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	particle.stages[0].module = particleVertex;
+	particle.stages[0].pName = "main";
+	particle.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	particle.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	particle.stages[1].module = coloredFragment;
+	particle.stages[1].pName = "main";
+	pipelineLayoutCreateInfo.setLayoutCount = 1;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	pushConstantInfo.size = 8 * sizeof(float);
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particle.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = particle.stages.size();
+	graphicsPipelineCreateInfo.pStages = particle.stages.data();
+	graphicsPipelineCreateInfo.pVertexInputState = &particleAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &particleAttributes.inputAssemblyState;
+	graphicsPipelineCreateInfo.layout = particle.pipelineLayout;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &particle.pipeline));
+
 	colored.stages.resize(2);
 	colored.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	colored.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -828,7 +870,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	colored.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	colored.stages[1].module = coloredFragment;
 	colored.stages[1].pName = "main";
-	pipelineLayoutCreateInfo.setLayoutCount = 1;
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &colored.pipelineLayout));
@@ -882,10 +923,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	vkDestroyShaderModule(appState.Device, floorFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, floorVertex, nullptr);
-	vkDestroyShaderModule(appState.Device, skyFragment, nullptr);
-	vkDestroyShaderModule(appState.Device, skyVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, coloredFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, coloredVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, skyFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, skyVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, particleVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, viewmodelFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, viewmodelVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, aliasFragment, nullptr);

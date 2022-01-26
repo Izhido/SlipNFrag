@@ -47,12 +47,14 @@ struct PerImage
 	PipelineDescriptorResources skyResources;
 	PipelineDescriptorResources floorResources;
 	PipelineDescriptorResources controllerResources;
-	VkDeviceSize texturedVertexBase;
-	VkDeviceSize coloredVertexBase;
 	VkDeviceSize controllerVertexBase;
+	VkDeviceSize texturedVertexBase;
+	VkDeviceSize particlePositionBase;
+	VkDeviceSize coloredVertexBase;
+	VkDeviceSize controllerAttributeBase;
 	VkDeviceSize texturedAttributeBase;
 	VkDeviceSize colormappedAttributeBase;
-	VkDeviceSize controllerAttributeBase;
+	VkDeviceSize coloredColorBase;
 	VkDeviceSize controllerIndexBase;
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
