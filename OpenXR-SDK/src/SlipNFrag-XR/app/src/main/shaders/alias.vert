@@ -2,7 +2,7 @@
 
 #extension GL_EXT_shader_io_blocks : enable
 #extension GL_ARB_enhanced_layouts : enable
-#extension GL_OVR_multiview2 : enable
+#extension GL_EXT_multiview : enable
 
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
@@ -28,6 +28,6 @@ out gl_PerVertex
 
 void main(void)
 {
-	gl_Position = projectionMatrix[gl_ViewID_OVR] * (viewMatrix[gl_ViewID_OVR] * (vertexTransform * (aliasTransform * vertexPosition)));
+	gl_Position = projectionMatrix[gl_ViewIndex] * (viewMatrix[gl_ViewIndex] * (vertexTransform * (aliasTransform * vertexPosition)));
 	fragmentData = vec3(vertexTexCoords, vertexLight);
 }

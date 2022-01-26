@@ -2,7 +2,7 @@
 
 #extension GL_EXT_shader_io_blocks : enable
 #extension GL_ARB_enhanced_layouts : enable
-#extension GL_OVR_multiview2 : enable
+#extension GL_EXT_multiview : enable
 
 precision highp float;
 precision highp int;
@@ -24,6 +24,6 @@ out gl_PerVertex
 
 void main(void)
 {
-	gl_Position = projectionMatrix[gl_ViewID_OVR] * vec4(vertexPosition, 1);
+	gl_Position = projectionMatrix[gl_ViewIndex] * vec4(vertexPosition, 1);
 	fragmentTexCoords = vertexTexCoords;
 }

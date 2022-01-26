@@ -2,7 +2,7 @@
 
 #extension GL_EXT_shader_io_blocks : enable
 #extension GL_ARB_enhanced_layouts : enable
-#extension GL_OVR_multiview2 : enable
+#extension GL_EXT_multiview : enable
 
 precision highp float;
 precision mediump int;
@@ -26,7 +26,7 @@ out gl_PerVertex
 void main(void)
 {
 	vec4 position = vec4(vertexPosition.x, vertexPosition.z, -vertexPosition.y, 1);
-	gl_Position = projectionMatrix[gl_ViewID_OVR] * viewMatrix[gl_ViewID_OVR] * vertexTransform * position;
+	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * position;
 	vec4 position4 = vec4(vertexPosition, 1);
 	vec2 texCoords = vec2(dot(position4, texturePosition[0]), dot(position4, texturePosition[1]));
 	vec2 lightmapSizeMinusOne = vec2(int(texturePosition[2].z) >> 4, int(texturePosition[2].w) >> 4);
