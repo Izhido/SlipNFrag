@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 		package="com.heribertodelgado.slipnfrag_xr"
-		android:versionCode="11"
-		android:versionName="1.0.13"
+		android:versionCode="14"
+		android:versionName="1.0.14"
         android:installLocation="auto" >
 	<uses-feature android:glEsVersion="0x00030001" android:required="true"/>
-	<uses-feature android:name="android.hardware.vr.headtracking" android:required="true" />
+	<uses-feature android:name="android.hardware.vr.headtracking" android:required="true" android:version="1" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-sdk android:minSdkVersion="25"
+        android:targetSdkVersion="32"/>
 	<application android:allowBackup="false" android:label="Slip &amp; Frag" android:hasCode="false">
-        <meta-data android:name="com.oculus.supportedDevices" android:value="all" />
+        <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2" />
 		<activity
 				android:name="android.app.NativeActivity"
 				android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
 				android:launchMode="singleTask"
 				android:screenOrientation="landscape"
-				android:excludeFromRecents="false"
+				android:excludeFromRecents="true"
 				android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
-                android:taskAffinity="">
+                android:taskAffinity=""
+                android:exported="true">
 			<meta-data android:name="android.app.lib_name" android:value="slipnfrag_native" />
             <meta-data android:name="com.oculus.vr.focusaware" android:value="true"/>
 			<intent-filter>
