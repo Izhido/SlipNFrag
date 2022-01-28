@@ -8,8 +8,6 @@
 	<uses-feature android:name="android.hardware.vr.headtracking" android:required="true" android:version="1" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-sdk android:minSdkVersion="25"
-        android:targetSdkVersion="32"/>
 	<application android:allowBackup="false" android:label="Slip &amp; Frag" android:hasCode="false">
         <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2" />
 		<activity
