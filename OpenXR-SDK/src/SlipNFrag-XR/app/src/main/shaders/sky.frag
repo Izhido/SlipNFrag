@@ -58,5 +58,4 @@ void main()
 	vec4 lowColor = palette[lowEntry.x];
 	vec4 highColor = palette[highEntry.x];
 	outColor = mix(lowColor, highColor, level.y - mip.x);
-	gl_FragDepth = 1;
 }

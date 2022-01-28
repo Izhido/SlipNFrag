@@ -1433,6 +1433,52 @@ void PerImage::Render(AppState& appState)
 	}
 	if (appState.Mode == AppWorldMode)
 	{
+		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writes[0].pImageInfo = &textureInfo;
+		float pushConstants[24];
+		if (appState.Scene.lastSky >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipeline);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
+			poolSizes[0].descriptorCount = 1;
+			descriptorPoolCreateInfo.poolSizeCount = 1;
+			if (!skyResources.created)
+			{
+				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &skyResources.descriptorPool));
+				descriptorSetAllocateInfo.descriptorPool = skyResources.descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &skyResources.descriptorSet));
+				textureInfo.sampler = appState.Scene.samplers[sky->mipCount];
+				textureInfo.imageView = sky->view;
+				writes[0].dstSet = skyResources.descriptorSet;
+				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
+				skyResources.created = true;
+			}
+			VkDescriptorSet descriptorSets[2];
+			descriptorSets[0] = sceneMatricesAndPaletteResources.descriptorSet;
+			descriptorSets[1] = skyResources.descriptorSet;
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+			XrMatrix4x4f orientation;
+			XrMatrix4x4f_CreateFromQuaternion(&orientation, &appState.CameraLocation.pose.orientation);
+			pushConstants[0] = -orientation.m[8];
+			pushConstants[1] = orientation.m[10];
+			pushConstants[2] = -orientation.m[9];
+			pushConstants[3] = orientation.m[0];
+			pushConstants[4] = -orientation.m[2];
+			pushConstants[5] = orientation.m[1];
+			pushConstants[6] = orientation.m[4];
+			pushConstants[7] = -orientation.m[6];
+			pushConstants[8] = orientation.m[5];
+			pushConstants[9] = appState.EyeTextureWidth;
+			pushConstants[10] = appState.EyeTextureHeight;
+			pushConstants[11] = appState.EyeTextureMaxDimension;
+			pushConstants[12] = skytime*skyspeed;
+			vkCmdPushConstants(commandBuffer, appState.Scene.sky.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 13 * sizeof(float), &pushConstants);
+			vkCmdDraw(commandBuffer, appState.Scene.skyCount, 1, appState.Scene.firstSkyVertex, 0);
+		}
 		if (appState.Scene.lastSurface >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipeline);
@@ -1836,7 +1882,6 @@ void PerImage::Render(AppState& appState)
 				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
 			}
 		}
-		float pushConstants[24];
 		if (appState.Scene.lastTurbulentRotated >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipeline);
@@ -2184,48 +2229,6 @@ void PerImage::Render(AppState& appState)
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32);
 				vkCmdDrawIndexed(commandBuffer, appState.Scene.lastColoredIndex32 + 1, 1, 0, 0, 0);
 			}
-		}
-		if (appState.Scene.lastSky >= 0)
-		{
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipeline);
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
-			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
-			poolSizes[0].descriptorCount = 1;
-			descriptorPoolCreateInfo.poolSizeCount = 1;
-			if (!skyResources.created)
-			{
-				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &skyResources.descriptorPool));
-				descriptorSetAllocateInfo.descriptorPool = skyResources.descriptorPool;
-				descriptorSetAllocateInfo.descriptorSetCount = 1;
-				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
-				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &skyResources.descriptorSet));
-				textureInfo.sampler = appState.Scene.samplers[sky->mipCount];
-				textureInfo.imageView = sky->view;
-				writes[0].dstSet = skyResources.descriptorSet;
-				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
-				skyResources.created = true;
-			}
-			VkDescriptorSet descriptorSets[2];
-			descriptorSets[0] = sceneMatricesAndPaletteResources.descriptorSet;
-			descriptorSets[1] = skyResources.descriptorSet;
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
-			XrMatrix4x4f orientation;
-			XrMatrix4x4f_CreateFromQuaternion(&orientation, &appState.CameraLocation.pose.orientation);
-			pushConstants[0] = -orientation.m[8];
-			pushConstants[1] = orientation.m[10];
-			pushConstants[2] = -orientation.m[9];
-			pushConstants[3] = orientation.m[0];
-			pushConstants[4] = -orientation.m[2];
-			pushConstants[5] = orientation.m[1];
-			pushConstants[6] = orientation.m[4];
-			pushConstants[7] = -orientation.m[6];
-			pushConstants[8] = orientation.m[5];
-			pushConstants[9] = appState.EyeTextureWidth;
-			pushConstants[10] = appState.EyeTextureHeight;
-			pushConstants[11] = appState.EyeTextureMaxDimension;
-			pushConstants[12] = skytime*skyspeed;
-			vkCmdPushConstants(commandBuffer, appState.Scene.sky.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 13 * sizeof(float), &pushConstants);
-			vkCmdDraw(commandBuffer, appState.Scene.skyCount, 1, appState.Scene.firstSkyVertex, 0);
 		}
 	}
 	else

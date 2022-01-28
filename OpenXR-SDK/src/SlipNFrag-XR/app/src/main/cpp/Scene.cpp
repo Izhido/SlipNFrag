@@ -895,6 +895,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sky.pipelineLayout));
+	graphicsPipelineCreateInfo.pDepthStencilState = nullptr;
 	graphicsPipelineCreateInfo.stageCount = sky.stages.size();
 	graphicsPipelineCreateInfo.pStages = sky.stages.data();
 	graphicsPipelineCreateInfo.pVertexInputState = &skyAttributes.vertexInputState;
@@ -914,6 +915,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetLayouts[0] = singleBufferLayout;
 	descriptorSetLayouts[1] = singleImageLayout;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &floor.pipelineLayout));
+	graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
 	graphicsPipelineCreateInfo.stageCount = floor.stages.size();
 	graphicsPipelineCreateInfo.pStages = floor.stages.data();
 	graphicsPipelineCreateInfo.pVertexInputState = &floorAttributes.vertexInputState;
