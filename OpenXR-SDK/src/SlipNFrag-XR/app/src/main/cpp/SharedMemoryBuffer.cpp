@@ -35,6 +35,10 @@ void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferU
 			sharedMemory = entry->memory;
 			CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, sharedMemory->memory, entry->used + alignmentCorrection));
 			entry->used += (alignmentCorrection + memoryAllocateInfo.allocationSize);
+			if (entry->used >= entry->memory->size)
+			{
+				latestMemory.erase(entry);
+			}
 			break;
 		}
 	}
@@ -43,14 +47,19 @@ void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferU
 	{
 		sharedMemory = new SharedMemory { };
 		sharedMemory->size = Constants::memoryBlockSize;
+		auto add = true;
 		if (sharedMemory->size < memoryAllocateInfo.allocationSize)
 		{
 			sharedMemory->size = memoryAllocateInfo.allocationSize;
+			add = false;
 		}
 		auto memoryBlockAllocateInfo = memoryAllocateInfo;
 		memoryBlockAllocateInfo.allocationSize = sharedMemory->size;
 		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryBlockAllocateInfo, nullptr, &sharedMemory->memory));
-		latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
+		if (add)
+		{
+			latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
+		}
 		CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, sharedMemory->memory, 0));
 	}
 

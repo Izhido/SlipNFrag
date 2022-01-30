@@ -45,6 +45,10 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 			sharedMemory = entry->memory;
 			CHECK_VKCMD(vkBindImageMemory(appState.Device, image, sharedMemory->memory, entry->used + alignmentCorrection));
 			entry->used += (alignmentCorrection + memoryAllocateInfo.allocationSize);
+			if (entry->used >= entry->memory->size)
+			{
+				latestMemory.erase(entry);
+			}
 			break;
 		}
 	}
@@ -53,14 +57,19 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	{
 		sharedMemory = new SharedMemory { };
 		sharedMemory->size = Constants::memoryBlockSize;
+		auto add = true;
 		if (sharedMemory->size < memoryAllocateInfo.allocationSize)
 		{
 			sharedMemory->size = memoryAllocateInfo.allocationSize;
+			add = false;
 		}
 		auto memoryBlockAllocateInfo = memoryAllocateInfo;
 		memoryBlockAllocateInfo.allocationSize = sharedMemory->size;
 		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryBlockAllocateInfo, nullptr, &sharedMemory->memory));
-		latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
+		if (add)
+		{
+			latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
+		}
 		CHECK_VKCMD(vkBindImageMemory(appState.Device, image, sharedMemory->memory, 0));
 	}
 
