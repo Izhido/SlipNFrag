@@ -2071,8 +2071,6 @@ void Scene::Reset()
 	indexBuffers.DisposeFront();
 	buffers.DisposeFront();
 	latestTextureDescriptorSets = nullptr;
-	latestTextureSharedMemory = nullptr;
-	usedInLatestTextureSharedMemory = 0;
 	latestIndexBuffer32 = nullptr;
 	usedInLatestIndexBuffer32 = 0;
 	latestIndexBuffer16 = nullptr;
@@ -2081,8 +2079,7 @@ void Scene::Reset()
 	usedInLatestIndexBuffer8 = 0;
 	latestSharedMemoryTexturePositionBuffer = nullptr;
 	usedInLatestSharedMemoryTexturePositionBuffer = 0;
-	latestBufferSharedMemory = nullptr;
-	usedInLatestBufferSharedMemory = 0;
+	latestMemory.clear();
 	Skybox::MoveToPrevious(*this);
 	aliasIndicesPerKey.clear();
 	aliasVerticesPerKey.clear();

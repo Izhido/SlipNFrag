@@ -29,33 +29,42 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	VkMemoryAllocateInfo memoryAllocateInfo { };
 	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
 
-	VkDeviceSize alignmentCorrection = 0;
-	VkDeviceSize alignmentExcess = appState.Scene.usedInLatestTextureSharedMemory % memoryRequirements.alignment;
-	if (alignmentExcess > 0)
+	auto create = true;
+	auto& latestMemory = appState.Scene.latestMemory[memoryAllocateInfo.memoryTypeIndex];
+	for (auto entry = latestMemory.begin(); entry != latestMemory.end(); entry++)
 	{
-		alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
-	}
-	if (appState.Scene.latestTextureSharedMemory == nullptr || appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > Constants::memoryBlockSize)
-	{
-		VkDeviceSize size = Constants::memoryBlockSize;
-		if (size < memoryAllocateInfo.allocationSize)
+		VkDeviceSize alignmentCorrection = 0;
+		VkDeviceSize alignmentExcess = entry->used % memoryRequirements.alignment;
+		if (alignmentExcess > 0)
 		{
-			size = memoryAllocateInfo.allocationSize;
+			alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
+		}
+		if (entry->used + alignmentCorrection + memoryAllocateInfo.allocationSize <= entry->memory->size)
+		{
+			create = false;
+			sharedMemory = entry->memory;
+			CHECK_VKCMD(vkBindImageMemory(appState.Device, image, sharedMemory->memory, entry->used + alignmentCorrection));
+			entry->used += (alignmentCorrection + memoryAllocateInfo.allocationSize);
+			break;
+		}
+	}
+
+	if (create)
+	{
+		sharedMemory = new SharedMemory { };
+		sharedMemory->size = Constants::memoryBlockSize;
+		if (sharedMemory->size < memoryAllocateInfo.allocationSize)
+		{
+			sharedMemory->size = memoryAllocateInfo.allocationSize;
 		}
 		auto memoryBlockAllocateInfo = memoryAllocateInfo;
-		memoryBlockAllocateInfo.allocationSize = size;
-		appState.Scene.latestTextureSharedMemory = new SharedMemory { };
-		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryBlockAllocateInfo, nullptr, &appState.Scene.latestTextureSharedMemory->memory));
-		appState.Scene.usedInLatestTextureSharedMemory = 0;
-		alignmentCorrection = 0;
+		memoryBlockAllocateInfo.allocationSize = sharedMemory->size;
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryBlockAllocateInfo, nullptr, &sharedMemory->memory));
+		latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
+		CHECK_VKCMD(vkBindImageMemory(appState.Device, image, sharedMemory->memory, 0));
 	}
 
-	CHECK_VKCMD(vkBindImageMemory(appState.Device, image, appState.Scene.latestTextureSharedMemory->memory, appState.Scene.usedInLatestTextureSharedMemory + alignmentCorrection));
-
-	appState.Scene.usedInLatestTextureSharedMemory += (alignmentCorrection + memoryAllocateInfo.allocationSize);
-	appState.Scene.latestTextureSharedMemory->referenceCount++;
-
-	sharedMemory = appState.Scene.latestTextureSharedMemory;
+	sharedMemory->referenceCount++;
 
 	VkImageViewCreateInfo imageViewCreateInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 	imageViewCreateInfo.image = image;

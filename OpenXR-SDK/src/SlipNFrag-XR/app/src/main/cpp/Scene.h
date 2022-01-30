@@ -17,6 +17,7 @@
 #include "Skybox.h"
 #include <common/xr_linear.h>
 #include "SortedSurfaceTexture.h"
+#include "UsedInSharedMemory.h"
 
 struct AppState;
 
@@ -95,8 +96,7 @@ struct Scene
 	Texture controllerTexture;
 	std::vector<VkSampler> samplers;
 	VkSampler lightmapSampler;
-	SharedMemory* latestBufferSharedMemory;
-	VkDeviceSize usedInLatestBufferSharedMemory;
+	std::unordered_map<uint32_t, std::list<UsedInSharedMemory>> latestMemory;
 	SharedMemoryBuffer* latestSharedMemoryTexturePositionBuffer;
 	VkDeviceSize usedInLatestSharedMemoryTexturePositionBuffer;
 	Buffer* latestIndexBuffer8;
@@ -105,8 +105,6 @@ struct Scene
 	VkDeviceSize usedInLatestIndexBuffer16;
 	Buffer* latestIndexBuffer32;
 	VkDeviceSize usedInLatestIndexBuffer32;
-	SharedMemory* latestTextureSharedMemory;
-	VkDeviceSize usedInLatestTextureSharedMemory;
 	DescriptorSets* latestTextureDescriptorSets;
 	Skybox* previousSkyboxes;
 	Skybox* skybox;

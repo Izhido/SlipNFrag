@@ -19,33 +19,42 @@ void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferU
 	VkMemoryAllocateInfo memoryAllocateInfo { };
 	createMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo);
 
-	VkDeviceSize alignmentCorrection = 0;
-	VkDeviceSize alignmentExcess = appState.Scene.usedInLatestBufferSharedMemory % memoryRequirements.alignment;
-	if (alignmentExcess > 0)
+	auto create = true;
+	auto& latestMemory = appState.Scene.latestMemory[memoryAllocateInfo.memoryTypeIndex];
+	for (auto entry = latestMemory.begin(); entry != latestMemory.end(); entry++)
 	{
-		alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
-	}
-	if (appState.Scene.latestBufferSharedMemory == nullptr || appState.Scene.usedInLatestBufferSharedMemory + alignmentCorrection + memoryAllocateInfo.allocationSize > Constants::memoryBlockSize)
-	{
-		VkDeviceSize size = Constants::memoryBlockSize;
-		if (size < memoryAllocateInfo.allocationSize)
+		VkDeviceSize alignmentCorrection = 0;
+		VkDeviceSize alignmentExcess = entry->used % memoryRequirements.alignment;
+		if (alignmentExcess > 0)
 		{
-			size = memoryAllocateInfo.allocationSize;
+			alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
+		}
+		if (entry->used + alignmentCorrection + memoryAllocateInfo.allocationSize <= entry->memory->size)
+		{
+			create = false;
+			sharedMemory = entry->memory;
+			CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, sharedMemory->memory, entry->used + alignmentCorrection));
+			entry->used += (alignmentCorrection + memoryAllocateInfo.allocationSize);
+			break;
+		}
+	}
+
+	if (create)
+	{
+		sharedMemory = new SharedMemory { };
+		sharedMemory->size = Constants::memoryBlockSize;
+		if (sharedMemory->size < memoryAllocateInfo.allocationSize)
+		{
+			sharedMemory->size = memoryAllocateInfo.allocationSize;
 		}
 		auto memoryBlockAllocateInfo = memoryAllocateInfo;
-		memoryBlockAllocateInfo.allocationSize = size;
-		appState.Scene.latestBufferSharedMemory = new SharedMemory { };
-		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryBlockAllocateInfo, nullptr, &appState.Scene.latestBufferSharedMemory->memory));
-		appState.Scene.usedInLatestBufferSharedMemory = 0;
-		alignmentCorrection = 0;
+		memoryBlockAllocateInfo.allocationSize = sharedMemory->size;
+		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryBlockAllocateInfo, nullptr, &sharedMemory->memory));
+		latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
+		CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, sharedMemory->memory, 0));
 	}
 
-	CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, appState.Scene.latestBufferSharedMemory->memory, appState.Scene.usedInLatestBufferSharedMemory + alignmentCorrection));
-
-	appState.Scene.usedInLatestBufferSharedMemory += (alignmentCorrection + memoryAllocateInfo.allocationSize);
-	appState.Scene.latestBufferSharedMemory->referenceCount++;
-
-	sharedMemory = appState.Scene.latestBufferSharedMemory;
+	sharedMemory->referenceCount++;
 }
 
 void SharedMemoryBuffer::CreateVertexBuffer(AppState& appState, VkDeviceSize size)
