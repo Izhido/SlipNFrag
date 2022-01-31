@@ -99,11 +99,11 @@ struct Scene
 	std::unordered_map<uint32_t, std::list<UsedInSharedMemory>> latestMemory;
 	SharedMemoryBuffer* latestSharedMemoryTexturePositionBuffer;
 	VkDeviceSize usedInLatestSharedMemoryTexturePositionBuffer;
-	Buffer* latestIndexBuffer8;
+	SharedMemoryBuffer* latestIndexBuffer8;
 	VkDeviceSize usedInLatestIndexBuffer8;
-	Buffer* latestIndexBuffer16;
+	SharedMemoryBuffer* latestIndexBuffer16;
 	VkDeviceSize usedInLatestIndexBuffer16;
-	Buffer* latestIndexBuffer32;
+	SharedMemoryBuffer* latestIndexBuffer32;
 	VkDeviceSize usedInLatestIndexBuffer32;
 	DescriptorSets* latestTextureDescriptorSets;
 	Skybox* previousSkyboxes;

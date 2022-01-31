@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Buffer.h"
+#include "SharedMemoryBuffer.h"
 
 struct IndexBuffer
 {
-	Buffer* buffer;
+	SharedMemoryBuffer* buffer;
 	VkDeviceSize offset;
 	VkIndexType indexType;
 	uint32_t firstIndex;

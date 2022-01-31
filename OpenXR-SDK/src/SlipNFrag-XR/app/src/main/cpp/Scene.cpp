@@ -1148,7 +1148,7 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 			loaded.indices.size = surface.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer8 = loaded.indices.indices.buffer;
@@ -1172,7 +1172,7 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 			loaded.indices.size = surface.count * sizeof(uint16_t);
 			if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer16 = loaded.indices.indices.buffer;
@@ -1196,7 +1196,7 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 			loaded.indices.size = surface.count * sizeof(uint32_t);
 			if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer32 = loaded.indices.indices.buffer;
@@ -1339,7 +1339,7 @@ void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t
 			loaded.indices.size = turbulent.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer8 = loaded.indices.indices.buffer;
@@ -1363,7 +1363,7 @@ void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t
 			loaded.indices.size = turbulent.count * sizeof(uint16_t);
 			if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer16 = loaded.indices.indices.buffer;
@@ -1387,7 +1387,7 @@ void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t
 			loaded.indices.size = turbulent.count * sizeof(uint32_t);
 			if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer32 = loaded.indices.indices.buffer;
@@ -1519,7 +1519,7 @@ void Scene::GetTurbulentLitStagingBufferSize(AppState& appState, const dturbulen
 			loaded.indices.size = turbulent.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer8 = loaded.indices.indices.buffer;
@@ -1543,7 +1543,7 @@ void Scene::GetTurbulentLitStagingBufferSize(AppState& appState, const dturbulen
 			loaded.indices.size = turbulent.count * sizeof(uint16_t);
 			if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer16 = loaded.indices.indices.buffer;
@@ -1567,7 +1567,7 @@ void Scene::GetTurbulentLitStagingBufferSize(AppState& appState, const dturbulen
 			loaded.indices.size = turbulent.count * sizeof(uint32_t);
 			if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer32 = loaded.indices.indices.buffer;
@@ -1748,7 +1748,7 @@ void Scene::GetTurbulentRotatedLitStagingBufferSize(AppState& appState, const dt
 			loaded.indices.size = turbulent.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer8 = loaded.indices.indices.buffer;
@@ -1772,7 +1772,7 @@ void Scene::GetTurbulentRotatedLitStagingBufferSize(AppState& appState, const dt
 			loaded.indices.size = turbulent.count * sizeof(uint16_t);
 			if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer16 = loaded.indices.indices.buffer;
@@ -1796,7 +1796,7 @@ void Scene::GetTurbulentRotatedLitStagingBufferSize(AppState& appState, const dt
 			loaded.indices.size = turbulent.count * sizeof(uint32_t);
 			if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer32 = loaded.indices.indices.buffer;
@@ -1973,7 +1973,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.indices.size = alias.count;
 			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer8 = loaded.indices.indices.buffer;
@@ -1997,7 +1997,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.indices.size = alias.count * sizeof(uint16_t);
 			if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer16 = loaded.indices.indices.buffer;
@@ -2021,7 +2021,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.indices.size = alias.count * sizeof(uint32_t);
 			if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
 			{
-				loaded.indices.indices.buffer = new Buffer { };
+				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
 				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
 				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
 				latestIndexBuffer32 = loaded.indices.indices.buffer;

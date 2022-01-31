@@ -975,7 +975,7 @@ void PerImage::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 	}
 }
 
-void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const
+void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;
 	auto delayed = false;
@@ -1014,7 +1014,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 }
 
-void PerImage::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const
+void PerImage::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;
 	auto delayed = false;
@@ -1132,7 +1132,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		loadedBuffer = loadedBuffer->next;
 	}
 
-	Buffer* previousBuffer = nullptr;
+	SharedMemoryBuffer* previousBuffer = nullptr;
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstIndices8, bufferCopy, previousBuffer);
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
 
@@ -1550,7 +1550,7 @@ void PerImage::Render(AppState& appState)
 			}
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto& entry : appState.Scene.sortedSurfaces)
 			{
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &entry.textureDescriptorSet, 0, nullptr);
@@ -1594,7 +1594,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastSurfaceRotated; i++)
 			{
 				auto& loaded = appState.Scene.loadedSurfacesRotated[i];
@@ -1641,7 +1641,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastFence; i++)
 			{
 				auto& loaded = appState.Scene.loadedFences[i];
@@ -1689,7 +1689,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastFenceRotated; i++)
 			{
 				auto& loaded = appState.Scene.loadedFencesRotated[i];
@@ -1756,7 +1756,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastTurbulent; i++)
 			{
 				auto& loaded = appState.Scene.loadedTurbulent[i];
@@ -1798,7 +1798,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastTurbulentLit; i++)
 			{
 				auto& loaded = appState.Scene.loadedTurbulentLit[i];
@@ -1845,7 +1845,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastTurbulentRotated; i++)
 			{
 				auto& loaded = appState.Scene.loadedTurbulentRotated[i];
@@ -1893,7 +1893,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexturePositions = nullptr;
 			VkDescriptorSet previousLightmapDescriptorSet = VK_NULL_HANDLE;
 			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastTurbulentRotatedLit; i++)
 			{
 				auto& loaded = appState.Scene.loadedTurbulentRotatedLit[i];
@@ -1985,7 +1985,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastAlias; i++)
 			{
 				auto& loaded = appState.Scene.loadedAlias[i];
@@ -2077,7 +2077,7 @@ void PerImage::Render(AppState& appState)
 			SharedMemoryBuffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto i = 0; i <= appState.Scene.lastViewmodel; i++)
 			{
 				auto& loaded = appState.Scene.loadedViewmodels[i];

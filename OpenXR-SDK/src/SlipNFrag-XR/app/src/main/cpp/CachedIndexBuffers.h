@@ -4,8 +4,8 @@
 
 struct CachedIndexBuffers
 {
-	Buffer* buffers;
-	Buffer* oldBuffers;
+	SharedMemoryBuffer* buffers;
+	SharedMemoryBuffer* oldBuffers;
 	LoadedIndexBuffer* firstIndices8;
 	LoadedIndexBuffer* currentIndices8;
 	LoadedIndexBuffer* firstIndices16;
@@ -27,7 +27,7 @@ struct CachedIndexBuffers
 	void SetupAliasIndices16(LoadedIndexBuffer& loaded);
 	void SetupAliasIndices32(LoadedIndexBuffer& loaded);
 	void DisposeFront();
-	void MoveToFront(Buffer* buffer);
+	void MoveToFront(SharedMemoryBuffer* buffer);
 	void Delete(AppState& appState) const;
 	void DeleteOld(AppState& appState);
 };
