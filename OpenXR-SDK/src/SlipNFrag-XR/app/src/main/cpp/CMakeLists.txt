@@ -13,7 +13,7 @@ add_library(slipnfrag_native MODULE
 
 add_library(ovr_openxr_loader SHARED IMPORTED)
 set_property(TARGET ovr_openxr_loader PROPERTY IMPORTED_LOCATION 
-        ${PROJECT_SOURCE_DIR}/../ovr_openxr_mobile_sdk_35.0.0/OpenXR/Libs/Android/${ANDROID_ABI}/Release/libopenxr_loader.so
+        ${PROJECT_SOURCE_DIR}/../ovr_openxr_mobile_sdk_37.0/OpenXR/Libs/Android/${ANDROID_ABI}/Release/libopenxr_loader.so
 )
 
 target_compile_options(slipnfrag_native PRIVATE -Wno-unused-parameter)
