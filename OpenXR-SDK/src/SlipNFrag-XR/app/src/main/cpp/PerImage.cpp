@@ -115,86 +115,54 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState)
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= d_lists.last_surface; i++)
 	{
-		appState.Scene.GetSurfaceStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastSurfaceRotated; i++)
 	{
-		appState.Scene.GetSurfaceRotatedStagingBufferSize(appState, d_lists.surfaces_rotated[i], appState.Scene.loadedSurfacesRotated[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], appState.Scene.loadedSurfacesRotated[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastFence; i++)
 	{
-		appState.Scene.GetSurfaceStagingBufferSize(appState, d_lists.fences[i], appState.Scene.loadedFences[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.fences[i], appState.Scene.loadedFences[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastFenceRotated; i++)
 	{
-		appState.Scene.GetSurfaceRotatedStagingBufferSize(appState, d_lists.fences_rotated[i], appState.Scene.loadedFencesRotated[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.fences_rotated[i], appState.Scene.loadedFencesRotated[i], size);
 	}
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastSprite; i++)
 	{
-		auto& sprite = d_lists.sprites[i];
-		auto& loaded = appState.Scene.loadedSprites[i];
-		if (appState.Scene.previousTexture != sprite.data)
-		{
-			auto entry = appState.Scene.spritesPerKey.find(sprite.data);
-			if (entry == appState.Scene.spritesPerKey.end())
-			{
-				auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
-				auto texture = new SharedMemoryTexture { };
-				texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				appState.Scene.textures.MoveToFront(texture);
-				loaded.texture.size = sprite.size;
-				size += loaded.texture.size;
-				loaded.texture.texture = texture;
-				loaded.texture.source = sprite.data;
-				appState.Scene.textures.Setup(loaded.texture);
-				appState.Scene.spritesPerKey.insert({ sprite.data, texture });
-			}
-			else
-			{
-				loaded.texture.size = 0;
-				loaded.texture.texture = entry->second;
-			}
-			appState.Scene.previousTexture = sprite.data;
-			appState.Scene.previousSharedMemoryTexture = loaded.texture.texture;
-		}
-		else
-		{
-			loaded.texture.size = 0;
-			loaded.texture.texture = appState.Scene.previousSharedMemoryTexture;
-		}
-		loaded.count = sprite.count;
-		loaded.firstVertex = sprite.first_vertex;
+		appState.Scene.GetStagingBufferSize(appState, d_lists.sprites[i], appState.Scene.loadedSprites[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastTurbulent; i++)
 	{
-		appState.Scene.GetTurbulentStagingBufferSize(appState, d_lists.turbulent[i], appState.Scene.loadedTurbulent[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent[i], appState.Scene.loadedTurbulent[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastTurbulentLit; i++)
 	{
-		appState.Scene.GetTurbulentLitStagingBufferSize(appState, d_lists.turbulent_lit[i], appState.Scene.loadedTurbulentLit[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent_lit[i], appState.Scene.loadedTurbulentLit[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastTurbulentRotated; i++)
 	{
-		appState.Scene.GetTurbulentRotatedStagingBufferSize(appState, d_lists.turbulent_rotated[i], appState.Scene.loadedTurbulentRotated[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent_rotated[i], appState.Scene.loadedTurbulentRotated[i], size);
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastTurbulentRotatedLit; i++)
 	{
-		appState.Scene.GetTurbulentRotatedLitStagingBufferSize(appState, d_lists.turbulent_rotated_lit[i], appState.Scene.loadedTurbulentRotatedLit[i], size);
+		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent_rotated_lit[i], appState.Scene.loadedTurbulentRotatedLit[i], size);
 	}
 	appState.Scene.previousApverts = nullptr;
 	appState.Scene.previousTexture = nullptr;

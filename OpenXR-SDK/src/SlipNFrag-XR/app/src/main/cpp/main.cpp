@@ -302,16 +302,15 @@ void android_main(struct android_app* app)
 		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = nullptr;
 		VkDebugReportCallbackEXT vulkanDebugReporter = VK_NULL_HANDLE;
 
-		PFN_xrInitializeLoaderKHR initializeLoader = nullptr;
-		XrResult res = xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*) (&initializeLoader));
+		PFN_xrInitializeLoaderKHR xrInitializeLoaderKHR = nullptr;
+		XrResult res = xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*) (&xrInitializeLoaderKHR));
 		CHECK_XRRESULT(res, "xrGetInstanceProcAddr");
-		XrLoaderInitInfoAndroidKHR loaderInitInfoAndroid;
-		memset(&loaderInitInfoAndroid, 0, sizeof(loaderInitInfoAndroid));
+
+		XrLoaderInitInfoAndroidKHR loaderInitInfoAndroid { };
 		loaderInitInfoAndroid.type = XR_TYPE_LOADER_INIT_INFO_ANDROID_KHR;
-		loaderInitInfoAndroid.next = nullptr;
 		loaderInitInfoAndroid.applicationVM = app->activity->vm;
 		loaderInitInfoAndroid.applicationContext = app->activity->clazz;
-		initializeLoader((const XrLoaderInitInfoBaseHeaderKHR*) &loaderInitInfoAndroid);
+		CHECK_XRCMD(xrInitializeLoaderKHR((const XrLoaderInitInfoBaseHeaderKHR*)&loaderInitInfoAndroid));
 
 		LogExtensions(nullptr);
 

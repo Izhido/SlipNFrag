@@ -895,7 +895,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sky.pipelineLayout));
-	graphicsPipelineCreateInfo.pDepthStencilState = nullptr;
+	depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
 	graphicsPipelineCreateInfo.stageCount = sky.stages.size();
 	graphicsPipelineCreateInfo.pStages = sky.stages.data();
 	graphicsPipelineCreateInfo.pVertexInputState = &skyAttributes.vertexInputState;
@@ -915,7 +915,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetLayouts[0] = singleBufferLayout;
 	descriptorSetLayouts[1] = singleImageLayout;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &floor.pipelineLayout));
-	graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
+	depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
 	graphicsPipelineCreateInfo.stageCount = floor.stages.size();
 	graphicsPipelineCreateInfo.pStages = floor.stages.data();
 	graphicsPipelineCreateInfo.pVertexInputState = &floorAttributes.vertexInputState;
@@ -1009,7 +1009,7 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
-void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
 	auto vertexes = ((model_t*)surface.model)->vertexes;
 	if (previousVertexes != vertexes)
@@ -1227,9 +1227,9 @@ void Scene::GetSurfaceStagingBufferSize(AppState& appState, const dsurface_t& su
 	loaded.count = surface.count;
 }
 
-void Scene::GetSurfaceRotatedStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
 {
-	GetSurfaceStagingBufferSize(appState, surface, loaded, size);
+	GetStagingBufferSize(appState, (const dsurface_t&)surface, loaded, size);
 	loaded.originX = surface.origin_x;
 	loaded.originY = surface.origin_y;
 	loaded.originZ = surface.origin_z;
@@ -1238,7 +1238,42 @@ void Scene::GetSurfaceRotatedStagingBufferSize(AppState& appState, const dsurfac
 	loaded.roll = surface.roll;
 }
 
-void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size)
+{
+	if (appState.Scene.previousTexture != sprite.data)
+	{
+		auto entry = appState.Scene.spritesPerKey.find(sprite.data);
+		if (entry == appState.Scene.spritesPerKey.end())
+		{
+			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
+			auto texture = new SharedMemoryTexture { };
+			texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			appState.Scene.textures.MoveToFront(texture);
+			loaded.texture.size = sprite.size;
+			size += loaded.texture.size;
+			loaded.texture.texture = texture;
+			loaded.texture.source = sprite.data;
+			appState.Scene.textures.Setup(loaded.texture);
+			appState.Scene.spritesPerKey.insert({ sprite.data, texture });
+		}
+		else
+		{
+			loaded.texture.size = 0;
+			loaded.texture.texture = entry->second;
+		}
+		appState.Scene.previousTexture = sprite.data;
+		appState.Scene.previousSharedMemoryTexture = loaded.texture.texture;
+	}
+	else
+	{
+		loaded.texture.size = 0;
+		loaded.texture.texture = appState.Scene.previousSharedMemoryTexture;
+	}
+	loaded.count = sprite.count;
+	loaded.firstVertex = sprite.first_vertex;
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
 	auto vertexes = ((model_t*)turbulent.model)->vertexes;
 	if (previousVertexes != vertexes)
@@ -1418,7 +1453,7 @@ void Scene::GetTurbulentStagingBufferSize(AppState& appState, const dturbulent_t
 	loaded.count = turbulent.count;
 }
 
-void Scene::GetTurbulentLitStagingBufferSize(AppState& appState, const dturbulentlit_t& turbulent, LoadedTurbulentLit& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turbulent, LoadedTurbulentLit& loaded, VkDeviceSize& size)
 {
 	auto vertexes = ((model_t*)turbulent.model)->vertexes;
 	if (previousVertexes != vertexes)
@@ -1636,9 +1671,9 @@ void Scene::GetTurbulentLitStagingBufferSize(AppState& appState, const dturbulen
 	}
 }
 
-void Scene::GetTurbulentRotatedStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size)
 {
-	GetTurbulentStagingBufferSize(appState, turbulent, loaded, size);
+	GetStagingBufferSize(appState, (const dturbulent_t&)turbulent, loaded, size);
 	loaded.originX = turbulent.origin_x;
 	loaded.originY = turbulent.origin_y;
 	loaded.originZ = turbulent.origin_z;
@@ -1647,7 +1682,7 @@ void Scene::GetTurbulentRotatedStagingBufferSize(AppState& appState, const dturb
 	loaded.roll = turbulent.roll;
 }
 
-void Scene::GetTurbulentRotatedLitStagingBufferSize(AppState& appState, const dturbulentrotatedlit_t& turbulent, LoadedTurbulentRotatedLit& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_t& turbulent, LoadedTurbulentRotatedLit& loaded, VkDeviceSize& size)
 {
 	auto vertexes = ((model_t*)turbulent.model)->vertexes;
 	if (previousVertexes != vertexes)
