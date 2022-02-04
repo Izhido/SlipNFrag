@@ -1106,6 +1106,8 @@ void android_main(struct android_app* app)
 			perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
 		}
 
+		appState.PerFrame.resize(imageCount);
+
 		VkSubpassDescription subpass { };
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
@@ -1718,10 +1720,8 @@ void android_main(struct android_app* app)
 					
 					projectionLayerViews.resize(viewCountOutput);
 					
-					XrSwapchainImageAcquireInfo acquireInfo { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
-
 					uint32_t swapchainImageIndex;
-					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, &acquireInfo, &swapchainImageIndex));
+					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, nullptr, &swapchainImageIndex));
 
 					for (auto i = 0; i < viewCountOutput; i++)
 					{
@@ -1739,6 +1739,18 @@ void android_main(struct android_app* app)
 					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
 
 					auto& perImage = appState.PerImage[swapchainImageIndex];
+
+					for (auto& perFrame : appState.PerFrame)
+					{
+						for (size_t i = 0; i < perFrame.inFlight.size(); i++)
+						{
+							if (perFrame.inFlight[i] == swapchainImageIndex)
+							{
+								perFrame.inFlight.erase(perFrame.inFlight.begin() + i);
+								break;
+							}
+						}
+					}
 
 					CHECK_VKCMD(vkResetCommandBuffer(perImage.commandBuffer, 0));
 					CHECK_VKCMD(vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
@@ -1758,9 +1770,10 @@ void android_main(struct android_app* app)
 					{
 						readClearColor = true;
 					}
-					  
+					
 					{
 						std::lock_guard<std::mutex> lock(appState.RenderMutex);
+
 						if (readClearColor && d_lists.clear_color >= 0)
 						{
 							auto color = d_8to24table[d_lists.clear_color];
@@ -1769,12 +1782,24 @@ void android_main(struct android_app* app)
 							clearB = (color >> 16 & 255) / 255.0f;
 							clearA = (color >> 24) / 255.0f;
 						}
-						perImage.Reset(appState);
+
+						size_t i = 0;
+						while (appState.PerFrame[i].inFlight.size() > 0)
+						{
+							i++;
+						}
+						
+						appState.PerFrameIndex = i;
+						auto& perFrame = appState.PerFrame[appState.PerFrameIndex];
+
+ 						perFrame.Reset(appState);
+
 						appState.Scene.Initialize();
-						auto stagingBufferSize = perImage.GetStagingBufferSize(appState);
-						auto stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
-						perImage.LoadStagingBuffer(appState, stagingBuffer);
-						perImage.FillFromStagingBuffer(appState, stagingBuffer);
+
+						auto stagingBufferSize = perImage.GetStagingBufferSize(appState, perFrame);
+						auto stagingBuffer = perFrame.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
+						perImage.LoadStagingBuffer(appState, perFrame, stagingBuffer);
+						perImage.FillFromStagingBuffer(appState, perFrame, stagingBuffer);
 					}
 
 					VkClearValue clearValues[2] { };
@@ -1904,7 +1929,9 @@ void android_main(struct android_app* app)
 					vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport);
 					vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect);
 
-					perImage.Render(appState);
+					auto& perFrame = appState.PerFrame[appState.PerFrameIndex];
+					perFrame.Render(appState, perImage.commandBuffer);
+					perFrame.inFlight.push_back(swapchainImageIndex);
 
 					vkCmdEndRenderPass(perImage.commandBuffer);
 
@@ -1931,7 +1958,7 @@ void android_main(struct android_app* app)
 					
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
-					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.Swapchain, &acquireInfo, &swapchainImageIndex));
+					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.Swapchain, nullptr, &swapchainImageIndex));
 
 					appState.RenderScreen(swapchainImageIndex);
 
@@ -2067,7 +2094,7 @@ void android_main(struct android_app* app)
 					
 					if (appState.Keyboard.Draw(appState))
 					{
-						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.Swapchain, &acquireInfo, &swapchainImageIndex));
+						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.Swapchain, nullptr, &swapchainImageIndex));
 
 						appState.RenderKeyboard(swapchainImageIndex);
 
@@ -2282,7 +2309,7 @@ void android_main(struct android_app* app)
 								region.imageExtent.height = height;
 								region.imageExtent.depth = 1;
 
-								CHECK_XRCMD(xrAcquireSwapchainImage(appState.Scene.skybox->swapchain, &acquireInfo, &swapchainImageIndex));
+								CHECK_XRCMD(xrAcquireSwapchainImage(appState.Scene.skybox->swapchain, nullptr, &swapchainImageIndex));
 
 								CHECK_XRCMD(xrWaitSwapchainImage(appState.Scene.skybox->swapchain, &waitInfo));
 
@@ -2470,36 +2497,36 @@ void android_main(struct android_app* app)
 				perImage.stagingBuffer.Delete(appState);
 			}
 
-			for (auto& perImage : appState.PerImage)
+			for (auto& perFrame : appState.PerFrame)
 			{
-				perImage.controllerResources.Delete(appState);
-				perImage.floorResources.Delete(appState);
-				perImage.skyResources.Delete(appState);
-				perImage.sceneMatricesAndColormapResources.Delete(appState);
-				perImage.sceneMatricesAndPaletteResources.Delete(appState);
-				perImage.sceneMatricesResources.Delete(appState);
-				perImage.host_colormapResources.Delete(appState);
-				if (perImage.sky != nullptr)
+				perFrame.controllerResources.Delete(appState);
+				perFrame.floorResources.Delete(appState);
+				perFrame.skyResources.Delete(appState);
+				perFrame.sceneMatricesAndColormapResources.Delete(appState);
+				perFrame.sceneMatricesAndPaletteResources.Delete(appState);
+				perFrame.sceneMatricesResources.Delete(appState);
+				perFrame.host_colormapResources.Delete(appState);
+				if (perFrame.sky != nullptr)
 				{
-					perImage.sky->Delete(appState);
+					perFrame.sky->Delete(appState);
 				}
-				if (perImage.host_colormap != nullptr)
+				if (perFrame.host_colormap != nullptr)
 				{
-					perImage.host_colormap->Delete(appState);
+					perFrame.host_colormap->Delete(appState);
 				}
-				if (perImage.palette != nullptr)
+				if (perFrame.palette != nullptr)
 				{
-					perImage.palette->Delete(appState);
+					perFrame.palette->Delete(appState);
 				}
-				perImage.colormaps.Delete(appState);
-				perImage.stagingBuffers.Delete(appState);
-				perImage.cachedColors.Delete(appState);
-				perImage.cachedIndices32.Delete(appState);
-				perImage.cachedIndices16.Delete(appState);
-				perImage.cachedIndices8.Delete(appState);
-				perImage.cachedAttributes.Delete(appState);
-				perImage.cachedVertices.Delete(appState);
-				perImage.matrices.Delete(appState);
+				perFrame.colormaps.Delete(appState);
+				perFrame.stagingBuffers.Delete(appState);
+				perFrame.cachedColors.Delete(appState);
+				perFrame.cachedIndices32.Delete(appState);
+				perFrame.cachedIndices16.Delete(appState);
+				perFrame.cachedIndices8.Delete(appState);
+				perFrame.cachedAttributes.Delete(appState);
+				perFrame.cachedVertices.Delete(appState);
+				perFrame.matrices.Delete(appState);
 			}
 	
 			if (appState.RenderPass != VK_NULL_HANDLE)

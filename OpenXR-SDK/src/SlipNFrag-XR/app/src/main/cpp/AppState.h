@@ -10,6 +10,7 @@
 #include "Keyboard.h"
 #include "Scene.h"
 #include "PerImage.h"
+#include "PerFrame.h"
 #include <mutex>
 #include <thread>
 #include "Controller.h"
@@ -43,6 +44,8 @@ struct AppState
 	XrSwapchain RightArrowsSwapchain;
 	Scene Scene;
 	std::vector<PerImage> PerImage;
+	std::vector<PerFrame> PerFrame;
+	int PerFrameIndex;
 	int EyeTextureWidth;
 	int EyeTextureHeight;
 	int EyeTextureMaxDimension;

@@ -260,9 +260,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	region.imageExtent.height = swapchainCreateInfo.height;
 	region.imageExtent.depth = 1;
 
-	XrSwapchainImageAcquireInfo acquireInfo { XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
 	uint32_t swapchainImageIndex;
-	CHECK_XRCMD(xrAcquireSwapchainImage(appState.LeftArrowsSwapchain, &acquireInfo, &swapchainImageIndex));
+	CHECK_XRCMD(xrAcquireSwapchainImage(appState.LeftArrowsSwapchain, nullptr, &swapchainImageIndex));
 
 	XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
 	waitInfo.timeout = XR_INFINITE_DURATION;
@@ -314,7 +313,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	region.imageExtent.width = swapchainCreateInfo.width;
 	region.imageExtent.height = swapchainCreateInfo.height;
 
-	CHECK_XRCMD(xrAcquireSwapchainImage(appState.RightArrowsSwapchain, &acquireInfo, &swapchainImageIndex));
+	CHECK_XRCMD(xrAcquireSwapchainImage(appState.RightArrowsSwapchain, nullptr, &swapchainImageIndex));
 
 	CHECK_XRCMD(xrWaitSwapchainImage(appState.RightArrowsSwapchain, &waitInfo));
 
@@ -944,9 +943,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, surfaceRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 
-	for (auto& perImage : appState.PerImage)
+	for (auto& perFrame : appState.PerFrame)
 	{
-		perImage.matrices.CreateUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
+		perFrame.matrices.CreateUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
 	}
 
 	VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
