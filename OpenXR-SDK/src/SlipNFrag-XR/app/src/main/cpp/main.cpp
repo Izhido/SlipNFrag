@@ -1759,8 +1759,6 @@ void android_main(struct android_app* app)
 						readClearColor = true;
 					}
 					  
-					Buffer* stagingBuffer;
-					
 					{
 						std::lock_guard<std::mutex> lock(appState.RenderMutex);
 						if (readClearColor && d_lists.clear_color >= 0)
@@ -1774,7 +1772,7 @@ void android_main(struct android_app* app)
 						perImage.Reset(appState);
 						appState.Scene.Initialize();
 						auto stagingBufferSize = perImage.GetStagingBufferSize(appState);
-						stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
+						auto stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
 						perImage.LoadStagingBuffer(appState, stagingBuffer);
 						perImage.FillFromStagingBuffer(appState, stagingBuffer);
 					}
