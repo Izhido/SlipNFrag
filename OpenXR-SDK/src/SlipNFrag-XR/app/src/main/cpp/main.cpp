@@ -1776,9 +1776,8 @@ void android_main(struct android_app* app)
 						auto stagingBufferSize = perImage.GetStagingBufferSize(appState);
 						stagingBuffer = perImage.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
 						perImage.LoadStagingBuffer(appState, stagingBuffer);
+						perImage.FillFromStagingBuffer(appState, stagingBuffer);
 					}
-
-					perImage.FillFromStagingBuffer(appState, stagingBuffer);
 
 					VkClearValue clearValues[2] { };
 					clearValues[0].color.float32[0] = clearR;
