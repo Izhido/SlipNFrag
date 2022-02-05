@@ -1915,31 +1915,6 @@ void android_main(struct android_app* app)
 						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
 
-					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-					renderPassBeginInfo.clearValueCount = 2;
-					renderPassBeginInfo.pClearValues = clearValues;
-					
-					renderPassBeginInfo.renderPass = appState.RenderPass;
-					renderPassBeginInfo.framebuffer = perImage.framebuffer;
-					renderPassBeginInfo.renderArea.offset = {0, 0};
-					renderPassBeginInfo.renderArea.extent.width = appState.SwapchainWidth;
-					renderPassBeginInfo.renderArea.extent.height = appState.SwapchainHeight;
-					vkCmdBeginRenderPass(perImage.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-					VkRect2D screenRect { };
-					screenRect.extent.width = appState.SwapchainWidth;
-					screenRect.extent.height = appState.SwapchainHeight;
-					
-					VkViewport viewport;
-					viewport.x = (float)screenRect.offset.x;
-					viewport.y = (float)screenRect.offset.y;
-					viewport.width = (float)screenRect.extent.width;
-					viewport.height = (float)screenRect.extent.height;
-					viewport.minDepth = 0.0f;
-					viewport.maxDepth = 1.0f;
-					vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport);
-					vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect);
-
 					auto& perFrame = appState.PerFrame[appState.PerFrameIndex];
 
 					VkBufferMemoryBarrier barrier { VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER };
@@ -1983,6 +1958,31 @@ void android_main(struct android_app* app)
 					barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 					barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
 					vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
+
+					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+					renderPassBeginInfo.clearValueCount = 2;
+					renderPassBeginInfo.pClearValues = clearValues;
+					
+					renderPassBeginInfo.renderPass = appState.RenderPass;
+					renderPassBeginInfo.framebuffer = perImage.framebuffer;
+					renderPassBeginInfo.renderArea.offset = {0, 0};
+					renderPassBeginInfo.renderArea.extent.width = appState.SwapchainWidth;
+					renderPassBeginInfo.renderArea.extent.height = appState.SwapchainHeight;
+					vkCmdBeginRenderPass(perImage.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+					VkRect2D screenRect { };
+					screenRect.extent.width = appState.SwapchainWidth;
+					screenRect.extent.height = appState.SwapchainHeight;
+					
+					VkViewport viewport;
+					viewport.x = (float)screenRect.offset.x;
+					viewport.y = (float)screenRect.offset.y;
+					viewport.width = (float)screenRect.extent.width;
+					viewport.height = (float)screenRect.extent.height;
+					viewport.minDepth = 0.0f;
+					viewport.maxDepth = 1.0f;
+					vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport);
+					vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect);
 
 					perFrame.Render(appState, perImage.commandBuffer);
 					perFrame.inFlight.push_back(swapchainImageIndex);
