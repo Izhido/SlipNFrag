@@ -140,6 +140,12 @@ struct dlists_t
 	int last_colored_index32;
 	int last_lightmap_texel;
 	int clear_color;
+	float vieworg0;
+	float vieworg1;
+	float vieworg2;
+	float vpn0;
+	float vpn1;
+	float vpn2;
 	float vright0;
 	float vright1;
 	float vright2;

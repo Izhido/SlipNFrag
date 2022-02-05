@@ -9,6 +9,7 @@
 #include <openxr/openxr_platform.h>
 #include "Keyboard.h"
 #include "Scene.h"
+#include "FromEngine.h"
 #include "PerImage.h"
 #include "PerFrame.h"
 #include <mutex>
@@ -43,6 +44,7 @@ struct AppState
 	XrSwapchain LeftArrowsSwapchain;
 	XrSwapchain RightArrowsSwapchain;
 	Scene Scene;
+	FromEngine FromEngine;
 	std::vector<PerImage> PerImage;
 	std::vector<PerFrame> PerFrame;
 	int PerFrameIndex;
@@ -57,9 +59,6 @@ struct AppState
 	float Roll;
 	float DistanceToFloor;
 	float Scale;
-	float EngineForwardX;
-	float EngineForwardY;
-	float EngineForwardZ;
 	float ViewmodelForwardX;
 	float ViewmodelForwardY;
 	float ViewmodelForwardZ;

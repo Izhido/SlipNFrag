@@ -98,9 +98,6 @@ void runEngine(AppState* appState, struct android_app* app)
 				positionY = appState->CameraLocation.pose.position.y;
 				positionZ = appState->CameraLocation.pose.position.z;
 				scale = appState->Scale;
-				appState->EngineForwardX = vpn[0];
-				appState->EngineForwardY = vpn[1];
-				appState->EngineForwardZ = vpn[2];
 			}
 			if (appState->PreviousTime < 0)
 			{

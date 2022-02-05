@@ -66,12 +66,6 @@ struct Scene
 	int lastColoredIndex16;
 	int lastColoredIndex32;
 	int lastSky;
-	float vright0;
-	float vright1;
-	float vright2;
-	float vup0;
-	float vup1;
-	float vup2;
 	std::vector<LoadedSurface> loadedSurfaces;
 	std::vector<LoadedSurfaceRotated> loadedSurfacesRotated;
 	std::vector<LoadedSurface> loadedFences;

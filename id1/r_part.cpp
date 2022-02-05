@@ -817,12 +817,6 @@ void R_DrawParticles (void)
 
     if (d_uselists)
     {
-    	d_lists.vright0 = vright[0];
-		d_lists.vright1 = vright[1];
-		d_lists.vright2 = vright[2];
-		d_lists.vup0 = vup[0];
-		d_lists.vup1 = vup[1];
-		d_lists.vup2 = vup[2];
         for (p=active_particles ; p ; p=p->next)
         {
             D_AddParticleToLists(p);

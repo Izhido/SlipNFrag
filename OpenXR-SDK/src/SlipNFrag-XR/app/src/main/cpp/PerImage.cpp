@@ -21,12 +21,18 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, PerFrame& perFra
 	appState.Scene.lastColoredIndex16 = d_lists.last_colored_index16;
 	appState.Scene.lastColoredIndex32 = d_lists.last_colored_index32;
 	appState.Scene.lastSky = d_lists.last_sky;
-	appState.Scene.vright0 = d_lists.vright0;
-	appState.Scene.vright1 = d_lists.vright1;
-	appState.Scene.vright2 = d_lists.vright2;
-	appState.Scene.vup0 = d_lists.vup0;
-	appState.Scene.vup1 = d_lists.vup1;
-	appState.Scene.vup2 = d_lists.vup2;
+	appState.FromEngine.vieworg0 = d_lists.vieworg0;
+	appState.FromEngine.vieworg1 = d_lists.vieworg1;
+	appState.FromEngine.vieworg2 = d_lists.vieworg2;
+	appState.FromEngine.vpn0 = d_lists.vpn0;
+	appState.FromEngine.vpn1 = d_lists.vpn1;
+	appState.FromEngine.vpn2 = d_lists.vpn2;
+	appState.FromEngine.vright0 = d_lists.vright0;
+	appState.FromEngine.vright1 = d_lists.vright1;
+	appState.FromEngine.vright2 = d_lists.vright2;
+	appState.FromEngine.vup0 = d_lists.vup0;
+	appState.FromEngine.vup1 = d_lists.vup1;
+	appState.FromEngine.vup2 = d_lists.vup2;
 	if (appState.Scene.lastSurface >= appState.Scene.loadedSurfaces.size())
 	{
 		appState.Scene.loadedSurfaces.resize(appState.Scene.lastSurface + 1);
@@ -328,9 +334,9 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	*target++ = 0;
 	*target++ = appState.Scale;
 	*target++ = 0;
-	*target++ = -r_refdef.vieworg[0] * appState.Scale;
-	*target++ = -r_refdef.vieworg[2] * appState.Scale;
-	*target++ = r_refdef.vieworg[1] * appState.Scale;
+	*target++ = -appState.FromEngine.vieworg0 * appState.Scale;
+	*target++ = -appState.FromEngine.vieworg2 * appState.Scale;
+	*target++ = appState.FromEngine.vieworg1 * appState.Scale;
 	*target++ = 1;
 	offset += sizeof(XrMatrix4x4f);
 	auto loadedBuffer = appState.Scene.buffers.firstVertices;
