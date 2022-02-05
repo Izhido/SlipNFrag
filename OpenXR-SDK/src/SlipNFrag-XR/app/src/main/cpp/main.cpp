@@ -1797,9 +1797,20 @@ void android_main(struct android_app* app)
 						appState.Scene.Initialize();
 
 						auto stagingBufferSize = perImage.GetStagingBufferSize(appState, perFrame);
-						auto stagingBuffer = perFrame.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
-						perImage.LoadStagingBuffer(appState, perFrame, stagingBuffer);
-						perImage.FillFromStagingBuffer(appState, perFrame, stagingBuffer);
+						if (stagingBufferSize > 0)
+						{
+							if (stagingBufferSize < Constants::memoryBlockSize)
+							{
+								stagingBufferSize = Constants::memoryBlockSize;
+							}
+							auto stagingBuffer = perFrame.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
+							if (stagingBuffer->mapped == nullptr)
+							{
+								CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
+							}
+							perImage.LoadStagingBuffer(appState, perFrame, stagingBuffer);
+							perImage.FillFromStagingBuffer(appState, perFrame, stagingBuffer);
+						}
 					}
 
 					VkClearValue clearValues[2] { };

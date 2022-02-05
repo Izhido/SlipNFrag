@@ -20,19 +20,9 @@ Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
 VkDeviceSize CachedBuffers::MinimumAllocationFor(VkDeviceSize size)
 {
 	VkDeviceSize result = size * 5 / 4;
-	if (result < minimumAllocation)
+	if (result < Constants::minimumBufferAllocation)
 	{
-		result = minimumAllocation;
-	}
-	return result;
-}
-
-VkDeviceSize CachedBuffers::MinimumStorageAllocationFor(VkDeviceSize size)
-{
-	VkDeviceSize result = Constants::memoryBlockSize;
-	while (result < size)
-	{
-		result += Constants::memoryBlockSize;
+		result = Constants::minimumBufferAllocation;
 	}
 	return result;
 }
@@ -63,13 +53,11 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 
 Buffer* CachedBuffers::GetStorageBuffer(AppState& appState, VkDeviceSize size)
 {
-	auto actualSize = MinimumStorageAllocationFor(size);
-	auto buffer = Get(appState, actualSize);
+	auto buffer = Get(appState, size);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateStorageBuffer(appState, actualSize);
-		CHECK_VKCMD(vkMapMemory(appState.Device, buffer->memory, 0, VK_WHOLE_SIZE, 0, &buffer->mapped));
+		buffer->CreateStorageBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
 	return buffer;
