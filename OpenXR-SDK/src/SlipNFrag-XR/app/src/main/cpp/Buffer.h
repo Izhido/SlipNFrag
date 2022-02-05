@@ -19,5 +19,6 @@ struct Buffer
 	void CreateStagingBuffer(AppState& appState, VkDeviceSize size);
 	void CreateStorageBuffer(AppState& appState, VkDeviceSize size);
 	void CreateUniformBuffer(AppState& appState, VkDeviceSize size);
+	void CreateUpdatableUniformBuffer(AppState& appState, VkDeviceSize size);
 	void Delete(AppState& appState) const;
 };

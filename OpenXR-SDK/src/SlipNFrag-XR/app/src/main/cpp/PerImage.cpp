@@ -77,7 +77,7 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, PerFrame& perFra
 	{
 		appState.Scene.loadedViewmodels.resize(appState.Scene.lastViewmodel + 1);
 	}
-	auto size = perFrame.matrices.size;
+	VkDeviceSize size = 0;
 	appState.Scene.paletteSize = 0;
 	if (perFrame.palette == nullptr || perFrame.paletteChanged != pal_changed)
 	{
@@ -316,29 +316,6 @@ float PerImage::GammaCorrect(float component)
 void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer)
 {
 	VkDeviceSize offset = 0;
-	static const size_t matricesSize = 2 * sizeof(XrMatrix4x4f);
-	memcpy(stagingBuffer->mapped, appState.ViewMatrices.data(), matricesSize);
-	offset += matricesSize;
-	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.ProjectionMatrices.data(), matricesSize);
-	offset += matricesSize;
-	auto target = ((float*)stagingBuffer->mapped) + offset / sizeof(float);
-	*target++ = appState.Scale;
-	*target++ = 0;
-	*target++ = 0;
-	*target++ = 0;
-	*target++ = 0;
-	*target++ = appState.Scale;
-	*target++ = 0;
-	*target++ = 0;
-	*target++ = 0;
-	*target++ = 0;
-	*target++ = appState.Scale;
-	*target++ = 0;
-	*target++ = -appState.FromEngine.vieworg0 * appState.Scale;
-	*target++ = -appState.FromEngine.vieworg2 * appState.Scale;
-	*target++ = appState.FromEngine.vieworg1 * appState.Scale;
-	*target++ = 1;
-	offset += sizeof(XrMatrix4x4f);
 	auto loadedBuffer = appState.Scene.buffers.firstVertices;
 	while (loadedBuffer != nullptr)
 	{
@@ -1066,17 +1043,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 	appState.Scene.stagingBuffer.descriptorSetsInUse.clear();
 
 	VkBufferCopy bufferCopy { };
-	bufferCopy.size = perFrame.matrices.size;
-	vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, perFrame.matrices.buffer, 1, &bufferCopy);
 
-	VkBufferMemoryBarrier barrier { VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER };
-	barrier.buffer = perFrame.matrices.buffer;
-	barrier.size = VK_WHOLE_SIZE;
-	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
-
-	bufferCopy.srcOffset += perFrame.matrices.size;
 	auto loadedBuffer = appState.Scene.buffers.firstVertices;
 	while (loadedBuffer != nullptr)
 	{
