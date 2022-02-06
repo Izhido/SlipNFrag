@@ -1917,19 +1917,10 @@ void android_main(struct android_app* app)
 
 					auto& perFrame = appState.PerFrame[appState.PerFrameIndex];
 
-					VkBufferMemoryBarrier barrier { VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER };
-					barrier.buffer = perFrame.matrices.buffer;
-					barrier.size = VK_WHOLE_SIZE;
 					if (perFrame.matrices.mapped == nullptr)
 					{
 						CHECK_VKCMD(vkMapMemory(appState.Device, perFrame.matrices.memory, 0, VK_WHOLE_SIZE, 0, &perFrame.matrices.mapped));
 					}
-					else
-					{
-						barrier.srcAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
-					}
-					barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-					vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
 
 					static const size_t matricesSize = 2 * sizeof(XrMatrix4x4f);
 					memcpy(perFrame.matrices.mapped, appState.ViewMatrices.data(), matricesSize);
@@ -1954,10 +1945,6 @@ void android_main(struct android_app* app)
 					*target++ = appState.FromEngine.vieworg1 * appState.Scale;
 					*target++ = 1;
 					offset += sizeof(XrMatrix4x4f);
-
-					barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-					barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
-					vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
 
 					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 					renderPassBeginInfo.clearValueCount = 2;
