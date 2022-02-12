@@ -1,5 +1,10 @@
 #pragma once
 
+#include "CachedBuffers.h"
+#include "CachedTextures.h"
+#include "UpdatablePipelineDescriptorResources.h"
+#include "SurfaceRotatedPushConstants.h"
+
 struct PerFrame
 {
 	std::vector<int> inFlight;

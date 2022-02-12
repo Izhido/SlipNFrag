@@ -18,6 +18,7 @@
 #include <common/xr_linear.h>
 #include "SortedSurfaceLightmap.h"
 #include "UsedInSharedMemory.h"
+#include "PerFrame.h"
 
 struct AppState;
 
@@ -144,6 +145,7 @@ struct Scene
 	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app);
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
+	void AddToBufferBarrier(VkBuffer buffer);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
@@ -152,6 +154,6 @@ struct Scene
 	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_t& turbulent, LoadedTurbulentRotatedLit& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
-	void AddToBufferBarrier(VkBuffer buffer);
+	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);
 	void Reset();
 };

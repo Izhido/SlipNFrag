@@ -1796,7 +1796,7 @@ void android_main(struct android_app* app)
 
 						appState.Scene.Initialize();
 
-						auto stagingBufferSize = perImage.GetStagingBufferSize(appState, perFrame);
+						auto stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
 						if (stagingBufferSize > 0)
 						{
 							if (stagingBufferSize < Constants::memoryBlockSize)

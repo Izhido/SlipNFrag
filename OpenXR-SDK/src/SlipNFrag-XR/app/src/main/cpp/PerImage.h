@@ -23,7 +23,6 @@ struct PerImage
 	VkCommandBuffer commandBuffer;
 	VkSubmitInfo submitInfo;
 
-	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);
 	static float GammaCorrect(float component);
 	void LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer);
 	void FillColormapTextures(AppState& appState, PerFrame& perFrame, LoadedAlias& loaded);

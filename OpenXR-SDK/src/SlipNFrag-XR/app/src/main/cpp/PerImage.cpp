@@ -3,421 +3,6 @@
 #include "Constants.h"
 #include "Utils.h"
 
-VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
-{
-	appState.Scene.lastSurface = d_lists.last_surface;
-	appState.Scene.lastSurfaceRotated = d_lists.last_surface_rotated;
-	appState.Scene.lastFence = d_lists.last_fence;
-	appState.Scene.lastFenceRotated = d_lists.last_fence_rotated;
-	appState.Scene.lastSprite = d_lists.last_sprite;
-	appState.Scene.lastTurbulent = d_lists.last_turbulent;
-	appState.Scene.lastTurbulentLit = d_lists.last_turbulent_lit;
-	appState.Scene.lastTurbulentRotated = d_lists.last_turbulent_rotated;
-	appState.Scene.lastTurbulentRotatedLit = d_lists.last_turbulent_rotated_lit;
-	appState.Scene.lastAlias = d_lists.last_alias;
-	appState.Scene.lastViewmodel = d_lists.last_viewmodel;
-	appState.Scene.lastParticle = d_lists.last_particle_color;
-	appState.Scene.lastColoredIndex8 = d_lists.last_colored_index8;
-	appState.Scene.lastColoredIndex16 = d_lists.last_colored_index16;
-	appState.Scene.lastColoredIndex32 = d_lists.last_colored_index32;
-	appState.Scene.lastSky = d_lists.last_sky;
-	appState.FromEngine.vieworg0 = d_lists.vieworg0;
-	appState.FromEngine.vieworg1 = d_lists.vieworg1;
-	appState.FromEngine.vieworg2 = d_lists.vieworg2;
-	appState.FromEngine.vpn0 = d_lists.vpn0;
-	appState.FromEngine.vpn1 = d_lists.vpn1;
-	appState.FromEngine.vpn2 = d_lists.vpn2;
-	appState.FromEngine.vright0 = d_lists.vright0;
-	appState.FromEngine.vright1 = d_lists.vright1;
-	appState.FromEngine.vright2 = d_lists.vright2;
-	appState.FromEngine.vup0 = d_lists.vup0;
-	appState.FromEngine.vup1 = d_lists.vup1;
-	appState.FromEngine.vup2 = d_lists.vup2;
-	if (appState.Scene.lastSurface >= appState.Scene.loadedSurfaces.size())
-	{
-		appState.Scene.loadedSurfaces.resize(appState.Scene.lastSurface + 1);
-	}
-	if (appState.Scene.lastSurfaceRotated >= appState.Scene.loadedSurfacesRotated.size())
-	{
-		appState.Scene.loadedSurfacesRotated.resize(appState.Scene.lastSurfaceRotated + 1);
-	}
-	if (appState.Scene.lastFence >= appState.Scene.loadedFences.size())
-	{
-		appState.Scene.loadedFences.resize(appState.Scene.lastFence + 1);
-	}
-	if (appState.Scene.lastFenceRotated >= appState.Scene.loadedFencesRotated.size())
-	{
-		appState.Scene.loadedFencesRotated.resize(appState.Scene.lastFenceRotated + 1);
-	}
-	if (appState.Scene.lastSprite >= appState.Scene.loadedSprites.size())
-	{
-		appState.Scene.loadedSprites.resize(appState.Scene.lastSprite + 1);
-	}
-	if (appState.Scene.lastTurbulent >= appState.Scene.loadedTurbulent.size())
-	{
-		appState.Scene.loadedTurbulent.resize(appState.Scene.lastTurbulent + 1);
-	}
-	if (appState.Scene.lastTurbulentLit >= appState.Scene.loadedTurbulentLit.size())
-	{
-		appState.Scene.loadedTurbulentLit.resize(appState.Scene.lastTurbulentLit + 1);
-	}
-	if (appState.Scene.lastTurbulentRotated >= appState.Scene.loadedTurbulentRotated.size())
-	{
-		appState.Scene.loadedTurbulentRotated.resize(appState.Scene.lastTurbulentRotated + 1);
-	}
-	if (appState.Scene.lastTurbulentRotatedLit >= appState.Scene.loadedTurbulentRotatedLit.size())
-	{
-		appState.Scene.loadedTurbulentRotatedLit.resize(appState.Scene.lastTurbulentRotatedLit + 1);
-	}
-	if (appState.Scene.lastAlias >= appState.Scene.loadedAlias.size())
-	{
-		appState.Scene.loadedAlias.resize(appState.Scene.lastAlias + 1);
-	}
-	if (appState.Scene.lastViewmodel >= appState.Scene.loadedViewmodels.size())
-	{
-		appState.Scene.loadedViewmodels.resize(appState.Scene.lastViewmodel + 1);
-	}
-	VkDeviceSize size = 0;
-	appState.Scene.paletteSize = 0;
-	if (perFrame.palette == nullptr || perFrame.paletteChanged != pal_changed)
-	{
-		if (perFrame.palette == nullptr)
-		{
-			perFrame.palette = new Buffer();
-			perFrame.palette->CreateUniformBuffer(appState, 256 * 4 * sizeof(float));
-		}
-		appState.Scene.paletteSize = perFrame.palette->size;
-		size += appState.Scene.paletteSize;
-		perFrame.paletteChanged = pal_changed;
-	}
-	appState.Scene.host_colormapSize = 0;
-	if (!::host_colormap.empty() && perFrame.host_colormap == nullptr)
-	{
-		perFrame.host_colormap = new Texture();
-		perFrame.host_colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		appState.Scene.host_colormapSize = 16384;
-		size += appState.Scene.host_colormapSize;
-	}
-	for (auto& entry : appState.Scene.sortedSurfaces)
-	{
-		for (auto& subEntry : entry.textures)
-		{
-			subEntry.entries.clear();
-		}
-	}
-	appState.Scene.addedInSortedSurfaces.clear();
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= d_lists.last_surface; i++)
-	{
-		auto& loaded = appState.Scene.loadedSurfaces[i];
-		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
-		auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
-		auto texture = loaded.texture.texture->descriptorSet;
-		auto entry = appState.Scene.addedInSortedSurfaces.find(lightmap);
-		if (entry == appState.Scene.addedInSortedSurfaces.end())
-		{
-			appState.Scene.sortedSurfaces.push_back({ lightmap });
-			auto lightmapEntry = appState.Scene.sortedSurfaces.end();
-			lightmapEntry--;
-			lightmapEntry->textures.push_back({ texture });
-			lightmapEntry->textures.back().entries.push_back(i);
-			appState.Scene.addedInSortedSurfaces.insert({ lightmap, lightmapEntry });
-		}
-		else
-		{
-			auto subEntryFound = false;
-			for (auto& subEntry : entry->second->textures)
-			{
-				if (subEntry.texture == texture)
-				{
-					subEntryFound = true;
-					subEntry.entries.push_back(i);
-					break;
-				}
-			}
-			if (!subEntryFound)
-			{
-				entry->second->textures.push_back({ texture });
-				entry->second->textures.back().entries.push_back(i);
-			}
-		}
-		for (auto entry = appState.Scene.sortedSurfaces.begin(); entry != appState.Scene.sortedSurfaces.end(); )
-		{
-			for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
-			{
-				if (subEntry->entries.size() == 0)
-				{
-					subEntry = entry->textures.erase(subEntry);
-				}
-				else
-				{
-					subEntry++;
-				}
-			}
-			if (entry->textures.size() == 0)
-			{
-				entry = appState.Scene.sortedSurfaces.erase(entry);
-			}
-			else
-			{
-				entry++;
-			}
-		}
-	}
-	for (auto& entry : appState.Scene.sortedSurfacesRotated)
-	{
-		for (auto& subEntry : entry.textures)
-		{
-			subEntry.entries.clear();
-		}
-	}
-	appState.Scene.addedInSortedSurfacesRotated.clear();
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastSurfaceRotated; i++)
-	{
-		auto& loaded = appState.Scene.loadedSurfacesRotated[i];
-		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], loaded, size);
-		auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
-		auto texture = loaded.texture.texture->descriptorSet;
-		auto entry = appState.Scene.addedInSortedSurfacesRotated.find(lightmap);
-		if (entry == appState.Scene.addedInSortedSurfacesRotated.end())
-		{
-			appState.Scene.sortedSurfacesRotated.push_back({ lightmap });
-			auto lightmapEntry = appState.Scene.sortedSurfacesRotated.end();
-			lightmapEntry--;
-			lightmapEntry->textures.push_back({ texture });
-			lightmapEntry->textures.back().entries.push_back(i);
-			appState.Scene.addedInSortedSurfacesRotated.insert({ lightmap, lightmapEntry });
-		}
-		else
-		{
-			auto subEntryFound = false;
-			for (auto& subEntry : entry->second->textures)
-			{
-				if (subEntry.texture == texture)
-				{
-					subEntryFound = true;
-					subEntry.entries.push_back(i);
-					break;
-				}
-			}
-			if (!subEntryFound)
-			{
-				entry->second->textures.push_back({ texture });
-				entry->second->textures.back().entries.push_back(i);
-			}
-		}
-		for (auto entry = appState.Scene.sortedSurfacesRotated.begin(); entry != appState.Scene.sortedSurfacesRotated.end(); )
-		{
-			for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
-			{
-				if (subEntry->entries.size() == 0)
-				{
-					subEntry = entry->textures.erase(subEntry);
-				}
-				else
-				{
-					subEntry++;
-				}
-			}
-			if (entry->textures.size() == 0)
-			{
-				entry = appState.Scene.sortedSurfacesRotated.erase(entry);
-			}
-			else
-			{
-				entry++;
-			}
-		}
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastFence; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.fences[i], appState.Scene.loadedFences[i], size);
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastFenceRotated; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.fences_rotated[i], appState.Scene.loadedFencesRotated[i], size);
-	}
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastSprite; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.sprites[i], appState.Scene.loadedSprites[i], size);
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastTurbulent; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent[i], appState.Scene.loadedTurbulent[i], size);
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastTurbulentLit; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent_lit[i], appState.Scene.loadedTurbulentLit[i], size);
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastTurbulentRotated; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent_rotated[i], appState.Scene.loadedTurbulentRotated[i], size);
-	}
-	appState.Scene.previousVertexes = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastTurbulentRotatedLit; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.turbulent_rotated_lit[i], appState.Scene.loadedTurbulentRotatedLit[i], size);
-	}
-	appState.Scene.previousApverts = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastAlias; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.alias[i], appState.Scene.loadedAlias[i], perFrame.host_colormap, size);
-	}
-	appState.Scene.previousApverts = nullptr;
-	appState.Scene.previousTexture = nullptr;
-	for (auto i = 0; i <= appState.Scene.lastViewmodel; i++)
-	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.viewmodels[i], appState.Scene.loadedViewmodels[i], perFrame.host_colormap, size);
-	}
-	if (appState.Scene.lastSky >= 0)
-	{
-		if (perFrame.sky == nullptr)
-		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(128, 128)))) + 1;
-			perFrame.sky = new Texture();
-			perFrame.sky->Create(appState, 128, 128, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		}
-		appState.Scene.skySize = 16384;
-		size += appState.Scene.skySize;
-		appState.Scene.skyCount = d_lists.sky[0].count;
-		appState.Scene.firstSkyVertex = d_lists.sky[0].first_vertex;
-	}
-	appState.Scene.floorVerticesSize = 0;
-	if (appState.Mode != AppWorldMode)
-	{
-		appState.Scene.floorVerticesSize += 3 * 4 * sizeof(float);
-	}
-	appState.Scene.controllerVerticesSize = 0;
-	if (appState.Focused && (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
-	{
-		if (appState.LeftController.PoseIsValid)
-		{
-			appState.Scene.controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
-		}
-		if (appState.RightController.PoseIsValid)
-		{
-			appState.Scene.controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
-		}
-	}
-	appState.Scene.texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
-	appState.Scene.particlePositionsSize = (d_lists.last_particle_position + 1) * sizeof(float);
-	appState.Scene.coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-	appState.Scene.verticesSize = appState.Scene.floorVerticesSize + appState.Scene.controllerVerticesSize + appState.Scene.texturedVerticesSize + appState.Scene.particlePositionsSize + appState.Scene.coloredVerticesSize;
-	if (appState.Scene.verticesSize > 0)
-	{
-		perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, appState.Scene.verticesSize);
-	}
-	size += appState.Scene.verticesSize;
-	appState.Scene.floorAttributesSize = 0;
-	if (appState.Mode != AppWorldMode)
-	{
-		appState.Scene.floorAttributesSize += 2 * 4 * sizeof(float);
-	}
-	appState.Scene.controllerAttributesSize = 0;
-	if (appState.Scene.controllerVerticesSize > 0)
-	{
-		if (appState.LeftController.PoseIsValid)
-		{
-			appState.Scene.controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
-		}
-		if (appState.RightController.PoseIsValid)
-		{
-			appState.Scene.controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
-		}
-	}
-	appState.Scene.texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
-	appState.Scene.colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
-	appState.Scene.attributesSize = appState.Scene.floorAttributesSize + appState.Scene.controllerAttributesSize + appState.Scene.texturedAttributesSize + appState.Scene.colormappedLightsSize;
-	if (appState.Scene.attributesSize > 0)
-	{
-		perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, appState.Scene.attributesSize);
-	}
-	size += appState.Scene.attributesSize;
-	appState.Scene.particleColorsSize = (d_lists.last_particle_color + 1) * sizeof(float);
-	appState.Scene.coloredColorsSize = (d_lists.last_colored_color + 1) * sizeof(float);
-	appState.Scene.colorsSize = appState.Scene.particleColorsSize + appState.Scene.coloredColorsSize;
-	if (appState.Scene.colorsSize > 0)
-	{
-		perFrame.colors = perFrame.cachedColors.GetVertexBuffer(appState, appState.Scene.colorsSize);
-	}
-	size += appState.Scene.colorsSize;
-	appState.Scene.floorIndicesSize = 0;
-	if (appState.Mode != AppWorldMode)
-	{
-		appState.Scene.floorIndicesSize = 6;
-	}
-	appState.Scene.controllerIndicesSize = 0;
-	if (appState.Scene.controllerVerticesSize > 0)
-	{
-		if (appState.LeftController.PoseIsValid)
-		{
-			appState.Scene.controllerIndicesSize += 2 * 36;
-		}
-		if (appState.RightController.PoseIsValid)
-		{
-			appState.Scene.controllerIndicesSize += 2 * 36;
-		}
-	}
-	appState.Scene.coloredIndices8Size = appState.Scene.lastColoredIndex8 + 1;
-	appState.Scene.coloredIndices16Size = (appState.Scene.lastColoredIndex16 + 1) * sizeof(uint16_t);
-	if (appState.IndexTypeUInt8Enabled)
-	{
-		appState.Scene.indices8Size = appState.Scene.floorIndicesSize + appState.Scene.controllerIndicesSize + appState.Scene.coloredIndices8Size;
-		appState.Scene.indices16Size = appState.Scene.coloredIndices16Size;
-	}
-	else
-	{
-		appState.Scene.floorIndicesSize *= sizeof(uint16_t);
-		appState.Scene.controllerIndicesSize *= sizeof(uint16_t);
-		appState.Scene.indices8Size = 0;
-		appState.Scene.indices16Size = appState.Scene.floorIndicesSize + appState.Scene.controllerIndicesSize + appState.Scene.coloredIndices8Size * sizeof(uint16_t) + appState.Scene.coloredIndices16Size;
-	}
-	if (appState.Scene.indices8Size > 0)
-	{
-		perFrame.indices8 = perFrame.cachedIndices8.GetIndexBuffer(appState, appState.Scene.indices8Size);
-	}
-	size += appState.Scene.indices8Size;
-	if (appState.Scene.indices16Size > 0)
-	{
-		perFrame.indices16 = perFrame.cachedIndices16.GetIndexBuffer(appState, appState.Scene.indices16Size);
-	}
-	size += appState.Scene.indices16Size;
-	appState.Scene.indices32Size = (appState.Scene.lastColoredIndex32 + 1) * sizeof(uint32_t);
-	if (appState.Scene.indices32Size > 0)
-	{
-		perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, appState.Scene.indices32Size);
-	}
-	size += appState.Scene.indices32Size;
-
-	// Add extra space (and also realign to a 4-byte boundary), due to potential alignment issues between 8, 16 and 32-bit index data:
-	if (size > 0)
-	{
-		size += 16;
-		while (size % 4 != 0)
-		{
-			size++;
-		}
-	}
-
-	return size;
-}
-
 float PerImage::GammaCorrect(float component)
 {
 	if (std::isnan(component) || component <= 0)
@@ -754,7 +339,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	{
 		if (appState.Scene.floorVerticesSize > 0)
 		{
-			auto target = ((float*)stagingBuffer->mapped) + offset / sizeof(float);
+			auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 			*target++ = -0.5;
 			*target++ = appState.DistanceToFloor;
 			*target++ = -0.5;
@@ -772,7 +357,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 		perFrame.controllerVertexBase = appState.Scene.floorVerticesSize;
 		if (appState.Scene.controllerVerticesSize > 0)
 		{
-			auto target = ((float*)stagingBuffer->mapped) + offset / sizeof(float);
+			auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 			if (appState.LeftController.PoseIsValid)
 			{
 				target = appState.LeftController.WriteVertices(target);
@@ -795,7 +380,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	}
 	if (appState.Scene.floorAttributesSize > 0)
 	{
-		auto target = ((float*)stagingBuffer->mapped) + offset / sizeof(float);
+		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 		*target++ = 0;
 		*target++ = 0;
 		*target++ = 1;
@@ -809,7 +394,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	perFrame.controllerAttributeBase = appState.Scene.floorAttributesSize;
 	if (appState.Scene.controllerAttributesSize > 0)
 	{
-		auto target = ((float*)stagingBuffer->mapped) + offset / sizeof(float);
+		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 		if (appState.LeftController.PoseIsValid)
 		{
 			target = Controller::WriteAttributes(target);
@@ -885,55 +470,52 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 			}
 		}
 	}
-	else
+	else if (appState.Scene.indices16Size > 0)
 	{
-		if (appState.Scene.indices16Size > 0)
+		if (appState.Scene.floorIndicesSize > 0)
 		{
-			if (appState.Scene.floorIndicesSize > 0)
-			{
-				auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
-				*target++ = 0;
-				*target++ = 1;
-				*target++ = 2;
-				*target++ = 2;
-				*target++ = 3;
-				*target++ = 0;
-				offset += appState.Scene.floorIndicesSize;
-			}
-			perFrame.controllerIndexBase = appState.Scene.floorIndicesSize;
-			if (appState.Scene.controllerIndicesSize > 0)
-			{
-				auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
-				auto controllerOffset = 0;
-				if (appState.LeftController.PoseIsValid)
-				{
-					target = Controller::WriteIndices16(target, controllerOffset);
-					controllerOffset += 8;
-					target = Controller::WriteIndices16(target, controllerOffset);
-					controllerOffset += 8;
-				}
-				if (appState.RightController.PoseIsValid)
-				{
-					target = Controller::WriteIndices16(target, controllerOffset);
-					controllerOffset += 8;
-					target = Controller::WriteIndices16(target, controllerOffset);
-				}
-				offset += appState.Scene.controllerIndicesSize;
-			}
-			perFrame.coloredIndex16Base = perFrame.controllerIndexBase + appState.Scene.controllerIndicesSize;
 			auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
-			for (auto i = 0; i < appState.Scene.coloredIndices8Size; i++)
-			{
-				*target++ = d_lists.colored_indices8[i];
-			}
-			offset += appState.Scene.coloredIndices8Size * sizeof(uint16_t);
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
-			offset += appState.Scene.coloredIndices16Size;
+			*target++ = 0;
+			*target++ = 1;
+			*target++ = 2;
+			*target++ = 2;
+			*target++ = 3;
+			*target++ = 0;
+			offset += appState.Scene.floorIndicesSize;
 		}
-	}
-	while (offset % 4 != 0)
-	{
-		offset++;
+		perFrame.controllerIndexBase = appState.Scene.floorIndicesSize;
+		if (appState.Scene.controllerIndicesSize > 0)
+		{
+			auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
+			auto controllerOffset = 0;
+			if (appState.LeftController.PoseIsValid)
+			{
+				target = Controller::WriteIndices16(target, controllerOffset);
+				controllerOffset += 8;
+				target = Controller::WriteIndices16(target, controllerOffset);
+				controllerOffset += 8;
+			}
+			if (appState.RightController.PoseIsValid)
+			{
+				target = Controller::WriteIndices16(target, controllerOffset);
+				controllerOffset += 8;
+				target = Controller::WriteIndices16(target, controllerOffset);
+			}
+			offset += appState.Scene.controllerIndicesSize;
+		}
+		perFrame.coloredIndex16Base = perFrame.controllerIndexBase + appState.Scene.controllerIndicesSize;
+		auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
+		for (auto i = 0; i < appState.Scene.coloredIndices8Size; i++)
+		{
+			*target++ = d_lists.colored_indices8[i];
+		}
+		offset += appState.Scene.coloredIndices8Size * sizeof(uint16_t);
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
+		offset += appState.Scene.coloredIndices16Size;
+		while (offset % 4 != 0)
+		{
+			offset++;
+		}
 	}
 	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices32.data(), appState.Scene.indices32Size);
 	offset += appState.Scene.indices32Size;
