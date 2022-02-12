@@ -98,17 +98,139 @@ VkDeviceSize PerImage::GetStagingBufferSize(AppState& appState, PerFrame& perFra
 		appState.Scene.host_colormapSize = 16384;
 		size += appState.Scene.host_colormapSize;
 	}
+	for (auto& entry : appState.Scene.sortedSurfaces)
+	{
+		for (auto& subEntry : entry.textures)
+		{
+			subEntry.entries.clear();
+		}
+	}
+	appState.Scene.addedInSortedSurfaces.clear();
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= d_lists.last_surface; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces[i], appState.Scene.loadedSurfaces[i], size);
+		auto& loaded = appState.Scene.loadedSurfaces[i];
+		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
+		auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
+		auto texture = loaded.texture.texture->descriptorSet;
+		auto entry = appState.Scene.addedInSortedSurfaces.find(lightmap);
+		if (entry == appState.Scene.addedInSortedSurfaces.end())
+		{
+			appState.Scene.sortedSurfaces.push_back({ lightmap });
+			auto lightmapEntry = appState.Scene.sortedSurfaces.end();
+			lightmapEntry--;
+			lightmapEntry->textures.push_back({ texture });
+			lightmapEntry->textures.back().entries.push_back(i);
+			appState.Scene.addedInSortedSurfaces.insert({ lightmap, lightmapEntry });
+		}
+		else
+		{
+			auto subEntryFound = false;
+			for (auto& subEntry : entry->second->textures)
+			{
+				if (subEntry.texture == texture)
+				{
+					subEntryFound = true;
+					subEntry.entries.push_back(i);
+					break;
+				}
+			}
+			if (!subEntryFound)
+			{
+				entry->second->textures.push_back({ texture });
+				entry->second->textures.back().entries.push_back(i);
+			}
+		}
+		for (auto entry = appState.Scene.sortedSurfaces.begin(); entry != appState.Scene.sortedSurfaces.end(); )
+		{
+			for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
+			{
+				if (subEntry->entries.size() == 0)
+				{
+					subEntry = entry->textures.erase(subEntry);
+				}
+				else
+				{
+					subEntry++;
+				}
+			}
+			if (entry->textures.size() == 0)
+			{
+				entry = appState.Scene.sortedSurfaces.erase(entry);
+			}
+			else
+			{
+				entry++;
+			}
+		}
 	}
+	for (auto& entry : appState.Scene.sortedSurfacesRotated)
+	{
+		for (auto& subEntry : entry.textures)
+		{
+			subEntry.entries.clear();
+		}
+	}
+	appState.Scene.addedInSortedSurfacesRotated.clear();
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
 	for (auto i = 0; i <= appState.Scene.lastSurfaceRotated; i++)
 	{
-		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], appState.Scene.loadedSurfacesRotated[i], size);
+		auto& loaded = appState.Scene.loadedSurfacesRotated[i];
+		appState.Scene.GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], loaded, size);
+		auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
+		auto texture = loaded.texture.texture->descriptorSet;
+		auto entry = appState.Scene.addedInSortedSurfacesRotated.find(lightmap);
+		if (entry == appState.Scene.addedInSortedSurfacesRotated.end())
+		{
+			appState.Scene.sortedSurfacesRotated.push_back({ lightmap });
+			auto lightmapEntry = appState.Scene.sortedSurfacesRotated.end();
+			lightmapEntry--;
+			lightmapEntry->textures.push_back({ texture });
+			lightmapEntry->textures.back().entries.push_back(i);
+			appState.Scene.addedInSortedSurfacesRotated.insert({ lightmap, lightmapEntry });
+		}
+		else
+		{
+			auto subEntryFound = false;
+			for (auto& subEntry : entry->second->textures)
+			{
+				if (subEntry.texture == texture)
+				{
+					subEntryFound = true;
+					subEntry.entries.push_back(i);
+					break;
+				}
+			}
+			if (!subEntryFound)
+			{
+				entry->second->textures.push_back({ texture });
+				entry->second->textures.back().entries.push_back(i);
+			}
+		}
+		for (auto entry = appState.Scene.sortedSurfacesRotated.begin(); entry != appState.Scene.sortedSurfacesRotated.end(); )
+		{
+			for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
+			{
+				if (subEntry->entries.size() == 0)
+				{
+					subEntry = entry->textures.erase(subEntry);
+				}
+				else
+				{
+					subEntry++;
+				}
+			}
+			if (entry->textures.size() == 0)
+			{
+				entry = appState.Scene.sortedSurfacesRotated.erase(entry);
+			}
+			else
+			{
+				entry++;
+			}
+		}
 	}
 	appState.Scene.previousVertexes = nullptr;
 	appState.Scene.previousTexture = nullptr;
