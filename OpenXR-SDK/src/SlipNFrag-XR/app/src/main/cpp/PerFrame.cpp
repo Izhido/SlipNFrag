@@ -391,25 +391,6 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
 			}
 		}
-		if (appState.Scene.lastSprite >= 0)
-		{
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipeline);
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
-			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
-			SharedMemoryTexture* previousTexture = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastSprite; i++)
-			{
-				auto& loaded = appState.Scene.loadedSprites[i];
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
-				vkCmdDraw(commandBuffer, loaded.count, 1, loaded.firstVertex, 0);
-			}
-		}
 		if (appState.Scene.lastTurbulent >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline);
@@ -598,6 +579,25 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 					previousIndices = indices;
 				}
 				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
+			}
+		}
+		if (appState.Scene.lastSprite >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipeline);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
+			SharedMemoryTexture* previousTexture = nullptr;
+			for (auto i = 0; i <= appState.Scene.lastSprite; i++)
+			{
+				auto& loaded = appState.Scene.loadedSprites[i];
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
+				}
+				vkCmdDraw(commandBuffer, loaded.count, 1, loaded.firstVertex, 0);
 			}
 		}
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

@@ -8,9 +8,9 @@
 #include "AliasVertices.h"
 #include "PerSurface.h"
 #include "LoadedSurfaceRotated.h"
-#include "LoadedSprite.h"
 #include "LoadedTurbulentLit.h"
 #include "LoadedTurbulentRotatedLit.h"
+#include "LoadedSprite.h"
 #include "LoadedAlias.h"
 #include "CachedLightmaps.h"
 #include "CachedSharedMemoryTextures.h"
@@ -33,11 +33,11 @@ struct Scene
 	Pipeline surfacesRotated;
 	Pipeline fences;
 	Pipeline fencesRotated;
-	Pipeline sprites;
 	Pipeline turbulent;
 	Pipeline turbulentLit;
 	Pipeline turbulentRotated;
 	Pipeline turbulentRotatedLit;
+	Pipeline sprites;
 	Pipeline alias;
 	Pipeline viewmodel;
 	Pipeline particle;
@@ -55,11 +55,11 @@ struct Scene
 	int lastSurfaceRotated;
 	int lastFence;
 	int lastFenceRotated;
-	int lastSprite;
 	int lastTurbulent;
 	int lastTurbulentLit;
 	int lastTurbulentRotated;
 	int lastTurbulentRotatedLit;
+	int lastSprite;
 	int lastAlias;
 	int lastViewmodel;
 	int lastParticle;
@@ -71,11 +71,11 @@ struct Scene
 	std::vector<LoadedSurfaceRotated> loadedSurfacesRotated;
 	std::vector<LoadedSurface> loadedFences;
 	std::vector<LoadedSurfaceRotated> loadedFencesRotated;
-	std::vector<LoadedSprite> loadedSprites;
 	std::vector<LoadedTurbulent> loadedTurbulent;
 	std::vector<LoadedTurbulentLit> loadedTurbulentLit;
 	std::vector<LoadedTurbulentRotated> loadedTurbulentRotated;
 	std::vector<LoadedTurbulentRotatedLit> loadedTurbulentRotatedLit;
+	std::vector<LoadedSprite> loadedSprites;
 	std::vector<LoadedAlias> loadedAlias;
 	std::vector<LoadedAlias> loadedViewmodels;
 	int skyCount;
@@ -84,8 +84,8 @@ struct Scene
 	CachedLightmaps lightmaps;
 	CachedSharedMemoryTextures textures;
 	std::unordered_map<void*, SharedMemoryTexture*> surfaceTexturesPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> turbulentPerKey;
+	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
 	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesPerKey;
 	Texture floorTexture;
 	Texture controllerTexture;
@@ -148,11 +148,11 @@ struct Scene
 	void AddToBufferBarrier(VkBuffer buffer);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turbulent, LoadedTurbulentLit& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_t& turbulent, LoadedTurbulentRotatedLit& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);
 	void Reset();
