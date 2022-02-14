@@ -2187,151 +2187,41 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		host_colormapSize = 16384;
 		size += host_colormapSize;
 	}
-	for (auto& entry : sortedSurfaces)
-	{
-		for (auto& subEntry : entry.textures)
-		{
-			subEntry.entries.clear();
-		}
-	}
-	addedInSortedSurfaces.clear();
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
+	sorted.Initialize(sorted.surfaces);
 	for (auto i = 0; i <= d_lists.last_surface; i++)
 	{
 		auto& loaded = loadedSurfaces[i];
 		GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
-		auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
-		auto texture = loaded.texture.texture->descriptorSet;
-		auto entry = addedInSortedSurfaces.find(lightmap);
-		if (entry == addedInSortedSurfaces.end())
-		{
-			sortedSurfaces.push_back({ lightmap });
-			auto lightmapEntry = sortedSurfaces.end();
-			lightmapEntry--;
-			lightmapEntry->textures.push_back({ texture });
-			lightmapEntry->textures.back().entries.push_back(i);
-			addedInSortedSurfaces.insert({ lightmap, lightmapEntry });
-		}
-		else
-		{
-			auto subEntryFound = false;
-			for (auto& subEntry : entry->second->textures)
-			{
-				if (subEntry.texture == texture)
-				{
-					subEntryFound = true;
-					subEntry.entries.push_back(i);
-					break;
-				}
-			}
-			if (!subEntryFound)
-			{
-				entry->second->textures.push_back({ texture });
-				entry->second->textures.back().entries.push_back(i);
-			}
-		}
-		for (auto entry = sortedSurfaces.begin(); entry != sortedSurfaces.end(); )
-		{
-			for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
-			{
-				if (subEntry->entries.size() == 0)
-				{
-					subEntry = entry->textures.erase(subEntry);
-				}
-				else
-				{
-					subEntry++;
-				}
-			}
-			if (entry->textures.size() == 0)
-			{
-				entry = sortedSurfaces.erase(entry);
-			}
-			else
-			{
-				entry++;
-			}
-		}
+		sorted.Sort(loaded, i, sorted.surfaces);
 	}
-	for (auto& entry : sortedSurfacesRotated)
-	{
-		for (auto& subEntry : entry.textures)
-		{
-			subEntry.entries.clear();
-		}
-	}
-	addedInSortedSurfacesRotated.clear();
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
+	sorted.Initialize(sorted.surfacesRotated);
 	for (auto i = 0; i <= lastSurfaceRotated; i++)
 	{
 		auto& loaded = loadedSurfacesRotated[i];
 		GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], loaded, size);
-		auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
-		auto texture = loaded.texture.texture->descriptorSet;
-		auto entry = addedInSortedSurfacesRotated.find(lightmap);
-		if (entry == addedInSortedSurfacesRotated.end())
-		{
-			sortedSurfacesRotated.push_back({ lightmap });
-			auto lightmapEntry = sortedSurfacesRotated.end();
-			lightmapEntry--;
-			lightmapEntry->textures.push_back({ texture });
-			lightmapEntry->textures.back().entries.push_back(i);
-			addedInSortedSurfacesRotated.insert({ lightmap, lightmapEntry });
-		}
-		else
-		{
-			auto subEntryFound = false;
-			for (auto& subEntry : entry->second->textures)
-			{
-				if (subEntry.texture == texture)
-				{
-					subEntryFound = true;
-					subEntry.entries.push_back(i);
-					break;
-				}
-			}
-			if (!subEntryFound)
-			{
-				entry->second->textures.push_back({ texture });
-				entry->second->textures.back().entries.push_back(i);
-			}
-		}
-		for (auto entry = sortedSurfacesRotated.begin(); entry != sortedSurfacesRotated.end(); )
-		{
-			for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
-			{
-				if (subEntry->entries.size() == 0)
-				{
-					subEntry = entry->textures.erase(subEntry);
-				}
-				else
-				{
-					subEntry++;
-				}
-			}
-			if (entry->textures.size() == 0)
-			{
-				entry = sortedSurfacesRotated.erase(entry);
-			}
-			else
-			{
-				entry++;
-			}
-		}
+		sorted.Sort(loaded, i, sorted.surfacesRotated);
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
+	sorted.Initialize(sorted.fences);
 	for (auto i = 0; i <= lastFence; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.fences[i], loadedFences[i], size);
+		auto& loaded = loadedFences[i];
+		GetStagingBufferSize(appState, d_lists.fences[i], loaded, size);
+		sorted.Sort(loaded, i, sorted.fences);
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
+	sorted.Initialize(sorted.fencesRotated);
 	for (auto i = 0; i <= lastFenceRotated; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.fences_rotated[i], loadedFencesRotated[i], size);
+		auto& loaded = loadedFencesRotated[i];
+		GetStagingBufferSize(appState, d_lists.fences_rotated[i], loaded, size);
+		sorted.Sort(loaded, i, sorted.fencesRotated);
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;

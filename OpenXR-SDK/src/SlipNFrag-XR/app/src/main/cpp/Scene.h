@@ -19,6 +19,7 @@
 #include "SortedSurfaceLightmap.h"
 #include "UsedInSharedMemory.h"
 #include "PerFrame.h"
+#include "SortedSurfaces.h"
 
 struct AppState;
 
@@ -135,10 +136,7 @@ struct Scene
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	SharedMemoryTexture* previousSharedMemoryTexture;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-	std::list<SortedSurfaceLightmap> sortedSurfaces;
-	std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceLightmap>::iterator> addedInSortedSurfaces;
-	std::list<SortedSurfaceLightmap> sortedSurfacesRotated;
-	std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceLightmap>::iterator> addedInSortedSurfacesRotated;
+	SortedSurfaces sorted;
 
 	static void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	static void AddBorder(AppState& appState, std::vector<uint32_t>& target);
