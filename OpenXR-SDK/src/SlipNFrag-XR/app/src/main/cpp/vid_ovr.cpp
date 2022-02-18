@@ -1,6 +1,7 @@
 #include "vid_ovr.h"
 #include "d_local.h"
 #include "DirectRect.h"
+#include "Locks.h"
 
 extern viddef_t vid;
 
@@ -126,7 +127,7 @@ void VID_Update(vrect_t *rects)
 
 void D_BeginDirectRect(int x, int y, byte *pbitmap, int width, int height)
 {
-    std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+    std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
     auto found = false;
     for (auto& directRect : DirectRect::directRects)
     {
@@ -145,7 +146,7 @@ void D_BeginDirectRect(int x, int y, byte *pbitmap, int width, int height)
 
 void D_EndDirectRect(int x, int y, int width, int height)
 {
-    std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+    std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
     for (auto directRect = DirectRect::directRects.begin(); directRect != DirectRect::directRects.end(); directRect++)
     {
         if (directRect->x == x && directRect->y == y && directRect->width == width && directRect->height == height)

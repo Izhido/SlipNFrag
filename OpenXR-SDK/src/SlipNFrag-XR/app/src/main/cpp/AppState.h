@@ -12,7 +12,6 @@
 #include "FromEngine.h"
 #include "PerImage.h"
 #include "PerFrame.h"
-#include <mutex>
 #include <thread>
 #include "Controller.h"
 
@@ -76,10 +75,6 @@ struct AppState
 	double TimeInWorldMode;
 	bool ControlsMessageDisplayed;
 	bool ControlsMessageClosed;
-	std::mutex ModeChangeMutex;
-	std::mutex InputMutex;
-	std::mutex RenderInputMutex;
-	std::mutex RenderMutex;
 	std::thread EngineThread;
 	bool EngineThreadStopped;
 	XrActionSet ActionSet;

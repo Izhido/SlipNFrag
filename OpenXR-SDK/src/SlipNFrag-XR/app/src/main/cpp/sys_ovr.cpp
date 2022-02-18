@@ -3,6 +3,7 @@
 #include "errno.h"
 #include <sys/stat.h>
 #include <android/log.h>
+#include "Locks.h"
 
 int sys_argc;
 char** sys_argv;
@@ -216,6 +217,16 @@ void Sys_LowFPPrecision()
 int Sys_Random()
 {
     return rand_r(&sys_randseed);
+}
+
+void Sys_BeginClearMemory()
+{
+    Locks::RenderMutex.lock();
+}
+
+void Sys_EndClearMemory()
+{
+    Locks::RenderMutex.unlock();
 }
 
 void Sys_Init(int argc, char** argv)

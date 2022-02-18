@@ -9,6 +9,7 @@
 #include "Utils.h"
 #include <android_native_app_glue.h>
 //#include <android/log.h>
+#include "Locks.h"
 
 void runEngine(AppState* appState, struct android_app* app)
 {
@@ -25,7 +26,7 @@ void runEngine(AppState* appState, struct android_app* app)
 			continue;
 		}
 		{
-			std::lock_guard<std::mutex> lock(appState->InputMutex);
+			std::lock_guard<std::mutex> lock(Locks::InputMutex);
 			for (auto i = 0; i <= Input::lastInputQueueItem; i++)
 			{
 				auto& input = Input::inputQueue[i];
@@ -42,7 +43,7 @@ void runEngine(AppState* appState, struct android_app* app)
 		}
 		AppMode mode;
 		{
-			std::lock_guard<std::mutex> lock(appState->ModeChangeMutex);
+			std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
 			mode = appState->Mode;
 		}
 		if (mode == AppScreenMode)
@@ -73,7 +74,7 @@ void runEngine(AppState* appState, struct android_app* app)
 			}
 			if (updated)
 			{
-				std::lock_guard<std::mutex> lock(appState->RenderMutex);
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				if (appState->Scene.hostClearCount != host_clearcount)
 				{
 					appState->Scene.Reset();
@@ -90,7 +91,7 @@ void runEngine(AppState* appState, struct android_app* app)
 			float positionZ;
 			float scale;
 			{
-				std::lock_guard<std::mutex> lock(appState->RenderInputMutex);
+				std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
 				cl.viewangles[YAW] = appState->Yaw * 180 / M_PI + 90;
 				cl.viewangles[PITCH] = -appState->Pitch * 180 / M_PI;
 				cl.viewangles[ROLL] = -appState->Roll * 180 / M_PI;
@@ -131,7 +132,7 @@ void runEngine(AppState* appState, struct android_app* app)
 			}
 			if (updated)
 			{
-				std::lock_guard<std::mutex> lock(appState->RenderMutex);
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				if (appState->Scene.hostClearCount != host_clearcount)
 				{
 					appState->Scene.Reset();

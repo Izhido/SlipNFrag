@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_local.h"
+#include "d_lists.h"
 
 /*
 
@@ -508,7 +509,10 @@ not reinitialize anything.
 */
 void Host_ClearMemory (void)
 {
+	Sys_BeginClearMemory();
+
 	Con_DPrintf ("Clearing memory\n");
+	D_ResetLists ();
 	D_FlushCaches ();
 	Mod_ClearAll ();
 	r_skyinitialized = false;
@@ -520,6 +524,8 @@ void Host_ClearMemory (void)
     cl.Clear();
     cl_static_entities.clear();
     host_clearcount++;
+
+	Sys_EndClearMemory();
 }
 
 

@@ -351,12 +351,18 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyBuffer(appState.Device, buffer, nullptr);
 	vkFreeMemory(appState.Device, memoryBlock, nullptr);
 
+	VkShaderModule sortedSurfaceVertex;
+	CreateShader(appState, app, "shaders/sorted_surface.vert.spv", &sortedSurfaceVertex);
+	VkShaderModule sortedSurfaceFragment;
+	CreateShader(appState, app, "shaders/sorted_surface.frag.spv", &sortedSurfaceFragment);
 	VkShaderModule surfaceVertex;
 	CreateShader(appState, app, "shaders/surface.vert.spv", &surfaceVertex);
 	VkShaderModule surfaceRotatedVertex;
 	CreateShader(appState, app, "shaders/surface_rotated.vert.spv", &surfaceRotatedVertex);
 	VkShaderModule surfaceFragment;
 	CreateShader(appState, app, "shaders/surface.frag.spv", &surfaceFragment);
+	VkShaderModule sortedFenceFragment;
+	CreateShader(appState, app, "shaders/sorted_fence.frag.spv", &sortedFenceFragment);
 	VkShaderModule fenceFragment;
 	CreateShader(appState, app, "shaders/fence.frag.spv", &fenceFragment);
 	VkShaderModule turbulentVertex;
@@ -473,6 +479,36 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
 	graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
 	graphicsPipelineCreateInfo.renderPass = appState.RenderPass;
+
+	PipelineAttributes sortedSurfaceAttributes { };
+	sortedSurfaceAttributes.vertexAttributes.resize(5);
+	sortedSurfaceAttributes.vertexBindings.resize(2);
+	sortedSurfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	sortedSurfaceAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+	sortedSurfaceAttributes.vertexAttributes[1].location = 1;
+	sortedSurfaceAttributes.vertexAttributes[1].binding = 1;
+	sortedSurfaceAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceAttributes.vertexAttributes[2].location = 2;
+	sortedSurfaceAttributes.vertexAttributes[2].binding = 1;
+	sortedSurfaceAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceAttributes.vertexAttributes[2].offset = 4 * sizeof(float);
+	sortedSurfaceAttributes.vertexAttributes[3].location = 3;
+	sortedSurfaceAttributes.vertexAttributes[3].binding = 1;
+	sortedSurfaceAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceAttributes.vertexAttributes[3].offset = 8 * sizeof(float);
+	sortedSurfaceAttributes.vertexAttributes[4].location = 4;
+	sortedSurfaceAttributes.vertexAttributes[4].binding = 1;
+	sortedSurfaceAttributes.vertexAttributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceAttributes.vertexAttributes[4].offset = 12 * sizeof(float);
+	sortedSurfaceAttributes.vertexBindings[1].binding = 1;
+	sortedSurfaceAttributes.vertexBindings[1].stride = 16 * sizeof(float);
+	sortedSurfaceAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	sortedSurfaceAttributes.vertexInputState.vertexBindingDescriptionCount = sortedSurfaceAttributes.vertexBindings.size();
+	sortedSurfaceAttributes.vertexInputState.pVertexBindingDescriptions = sortedSurfaceAttributes.vertexBindings.data();
+	sortedSurfaceAttributes.vertexInputState.vertexAttributeDescriptionCount = sortedSurfaceAttributes.vertexAttributes.size();
+	sortedSurfaceAttributes.vertexInputState.pVertexAttributeDescriptions = sortedSurfaceAttributes.vertexAttributes.data();
+	sortedSurfaceAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	sortedSurfaceAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	PipelineAttributes surfaceAttributes { };
 	surfaceAttributes.vertexAttributes.resize(5);
@@ -629,27 +665,23 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaces.stages.resize(2);
 	surfaces.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfaces.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	surfaces.stages[0].module = surfaceVertex;
+	surfaces.stages[0].module = sortedSurfaceVertex;
 	surfaces.stages[0].pName = "main";
 	surfaces.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfaces.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	surfaces.stages[1].module = surfaceFragment;
+	surfaces.stages[1].module = sortedSurfaceFragment;
 	surfaces.stages[1].pName = "main";
 	descriptorSetLayouts[0] = twoBuffersAndImageLayout;
 	descriptorSetLayouts[1] = singleImageLayout;
 	descriptorSetLayouts[2] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = sizeof(uint32_t);
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfaces.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfaces.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfaces.stages.data();
-	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	graphicsPipelineCreateInfo.layout = surfaces.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfaces.pipeline));
 
 	surfacesRotated.stages.resize(2);
@@ -663,27 +695,33 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRotated.stages[1].pName = "main";
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(uint32_t) + 6 * sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfacesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfacesRotated.stages.data();
 	graphicsPipelineCreateInfo.layout = surfacesRotated.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRotated.pipeline));
 
 	fences.stages.resize(2);
 	fences.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fences.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	fences.stages[0].module = surfaceVertex;
+	fences.stages[0].module = sortedSurfaceVertex;
 	fences.stages[0].pName = "main";
 	fences.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fences.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fences.stages[1].module = fenceFragment;
+	fences.stages[1].module = sortedFenceFragment;
 	fences.stages[1].pName = "main";
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = sizeof(uint32_t);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fences.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fences.stages.size();
 	graphicsPipelineCreateInfo.pStages = fences.stages.data();
 	graphicsPipelineCreateInfo.layout = fences.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fences.pipeline));
 
 	fencesRotated.stages.resize(2);
@@ -697,10 +735,14 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fencesRotated.stages[1].pName = "main";
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(uint32_t) + 6 * sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fencesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = fencesRotated.stages.data();
 	graphicsPipelineCreateInfo.layout = fencesRotated.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotated.pipeline));
 
 	turbulent.stages.resize(2);
@@ -719,8 +761,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulent.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = turbulent.stages.size();
 	graphicsPipelineCreateInfo.pStages = turbulent.stages.data();
-	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	graphicsPipelineCreateInfo.layout = turbulent.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulent.pipeline));
 
@@ -795,9 +835,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sprites.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = sprites.stages.size();
 	graphicsPipelineCreateInfo.pStages = sprites.stages.data();
+	graphicsPipelineCreateInfo.layout = sprites.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &spriteAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &spriteAttributes.inputAssemblyState;
-	graphicsPipelineCreateInfo.layout = sprites.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &sprites.pipeline));
 
 	alias.stages.resize(2);
@@ -817,9 +857,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &alias.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = alias.stages.size();
 	graphicsPipelineCreateInfo.pStages = alias.stages.data();
+	graphicsPipelineCreateInfo.layout = alias.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &colormappedAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &colormappedAttributes.inputAssemblyState;
-	graphicsPipelineCreateInfo.layout = alias.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &alias.pipeline));
 
 	viewmodel.stages.resize(2);
@@ -854,9 +894,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particle.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = particle.stages.size();
 	graphicsPipelineCreateInfo.pStages = particle.stages.data();
+	graphicsPipelineCreateInfo.layout = particle.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &particleAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &particleAttributes.inputAssemblyState;
-	graphicsPipelineCreateInfo.layout = particle.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &particle.pipeline));
 
 	colored.stages.resize(2);
@@ -873,9 +913,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &colored.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = colored.stages.size();
 	graphicsPipelineCreateInfo.pStages = colored.stages.data();
+	graphicsPipelineCreateInfo.layout = colored.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &coloredAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &coloredAttributes.inputAssemblyState;
-	graphicsPipelineCreateInfo.layout = colored.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &colored.pipeline));
 
 	sky.stages.resize(2);
@@ -896,9 +936,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
 	graphicsPipelineCreateInfo.stageCount = sky.stages.size();
 	graphicsPipelineCreateInfo.pStages = sky.stages.data();
+	graphicsPipelineCreateInfo.layout = sky.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &skyAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &skyAttributes.inputAssemblyState;
-	graphicsPipelineCreateInfo.layout = sky.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &sky.pipeline));
 
 	floor.stages.resize(2);
@@ -916,9 +956,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
 	graphicsPipelineCreateInfo.stageCount = floor.stages.size();
 	graphicsPipelineCreateInfo.pStages = floor.stages.data();
+	graphicsPipelineCreateInfo.layout = floor.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &floorAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &floorAttributes.inputAssemblyState;
-	graphicsPipelineCreateInfo.layout = floor.pipelineLayout;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &floor.pipeline));
 
 	vkDestroyShaderModule(appState.Device, floorFragment, nullptr);
@@ -938,9 +978,12 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, turbulentFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, fenceFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, sortedFenceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, sortedSurfaceFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, sortedSurfaceVertex, nullptr);
 
 	for (auto& perFrame : appState.PerFrame)
 	{
@@ -978,7 +1021,9 @@ void Scene::CreateShader(AppState& appState, struct android_app* app, const char
 
 void Scene::Initialize()
 {
-	verticesSize = 0;
+	sortedVerticesSize = 0;
+	sortedAttributesSize = 0;
+	sortedIndicesSize = 0;
 	paletteSize = 0;
 	host_colormapSize = 0;
 	skySize = 0;
@@ -1012,17 +1057,16 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	auto vertexes = ((model_t*)surface.model)->vertexes;
 	if (previousVertexes != vertexes)
 	{
-		auto entry = verticesPerKey.find(vertexes);
-		if (entry == verticesPerKey.end())
+		auto entry = vertexCache.find(vertexes);
+		if (entry == vertexCache.end())
 		{
 			loaded.vertices.size = ((model_t*)surface.model)->numvertexes * 3 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
 			buffers.MoveToFront(loaded.vertices.buffer);
 			size += loaded.vertices.size;
-			loaded.vertices.source = vertexes;
 			buffers.SetupVertices(loaded.vertices);
-			verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
+			vertexCache.insert({ vertexes, loaded.vertices.buffer });
 		}
 		else
 		{
@@ -1037,6 +1081,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
+	loaded.vertices.source = vertexes;
 	auto lightmapEntry = lightmaps.lightmaps.find(surface.surface);
 	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
@@ -1104,8 +1149,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 	}
-	auto entry = perSurface.find(surface.surface);
-	if (entry == perSurface.end())
+	auto entry = perSurfaceCache.find(surface.surface);
+	if (entry == perSurfaceCache.end())
 	{
 		loaded.texturePositions.size = 16 * sizeof(float);
 		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
@@ -1123,7 +1168,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.texturePositions.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
-		loaded.texturePositions.source = surface.surface;
 		loaded.texturePositions.texturePositions.firstInstance = loaded.texturePositions.texturePositions.offset / (16 * sizeof(float));
 		buffers.SetupSurfaceTexturePositions(loaded.texturePositions);
 		auto face = (msurface_t*)surface.surface;
@@ -1159,8 +1203,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			loaded.indices.indices.offset = usedInLatestIndexBuffer8;
 			usedInLatestIndexBuffer8 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = surface.surface;
-			loaded.indices.secondSource = surface.model;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
 			indexBuffers.SetupIndices8(loaded.indices);
@@ -1183,8 +1225,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			loaded.indices.indices.offset = usedInLatestIndexBuffer16;
 			usedInLatestIndexBuffer16 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = surface.surface;
-			loaded.indices.secondSource = surface.model;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
 			indexBuffers.SetupIndices16(loaded.indices);
@@ -1207,13 +1247,12 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			loaded.indices.indices.offset = usedInLatestIndexBuffer32;
 			usedInLatestIndexBuffer32 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = surface.surface;
-			loaded.indices.secondSource = surface.model;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupIndices32(loaded.indices);
 		}
-		perSurface.insert({ surface.surface, { loaded.texturePositions.texturePositions, loaded.indices.indices } });
+		PerSurface perSurface { loaded.texturePositions.texturePositions, loaded.indices.indices };
+		perSurfaceCache.insert({ surface.surface, perSurface });
 	}
 	else
 	{
@@ -1222,6 +1261,9 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.indices.size = 0;
 		loaded.indices.indices = entry->second.indices;
 	}
+	loaded.texturePositions.source = surface.surface;
+	loaded.indices.firstSource = surface.surface;
+	loaded.indices.secondSource = surface.model;
 	loaded.count = surface.count;
 }
 
@@ -1241,8 +1283,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 	auto vertexes = ((model_t*)turbulent.model)->vertexes;
 	if (previousVertexes != vertexes)
 	{
-		auto entry = verticesPerKey.find(vertexes);
-		if (entry == verticesPerKey.end())
+		auto entry = vertexCache.find(vertexes);
+		if (entry == vertexCache.end())
 		{
 			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
@@ -1251,7 +1293,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			size += loaded.vertices.size;
 			loaded.vertices.source = vertexes;
 			buffers.SetupVertices(loaded.vertices);
-			verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
+			vertexCache.insert({ vertexes, loaded.vertices.buffer });
 		}
 		else
 		{
@@ -1295,8 +1337,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 	}
-	auto entry = perSurface.find(turbulent.surface);
-	if (entry == perSurface.end())
+	auto entry = perSurfaceCache.find(turbulent.surface);
+	if (entry == perSurfaceCache.end())
 	{
 		loaded.texturePositions.size = 16 * sizeof(float);
 		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
@@ -1404,7 +1446,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupIndices32(loaded.indices);
 		}
-		perSurface.insert({ turbulent.surface, { loaded.texturePositions.texturePositions, loaded.indices.indices } });
+		PerSurface perSurface { loaded.texturePositions.texturePositions, loaded.indices.indices };
+		perSurfaceCache.insert({ turbulent.surface, perSurface });
 	}
 	else
 	{
@@ -1421,8 +1464,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turb
 	auto vertexes = ((model_t*)turbulent.model)->vertexes;
 	if (previousVertexes != vertexes)
 	{
-		auto entry = verticesPerKey.find(vertexes);
-		if (entry == verticesPerKey.end())
+		auto entry = vertexCache.find(vertexes);
+		if (entry == vertexCache.end())
 		{
 			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
@@ -1431,7 +1474,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turb
 			size += loaded.vertices.size;
 			loaded.vertices.source = vertexes;
 			buffers.SetupVertices(loaded.vertices);
-			verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
+			vertexCache.insert({ vertexes, loaded.vertices.buffer });
 		}
 		else
 		{
@@ -1475,8 +1518,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turb
 		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 	}
-	auto entry = perSurface.find(turbulent.surface);
-	if (entry == perSurface.end())
+	auto entry = perSurfaceCache.find(turbulent.surface);
+	if (entry == perSurfaceCache.end())
 	{
 		loaded.texturePositions.size = 16 * sizeof(float);
 		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
@@ -1584,7 +1627,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turb
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupIndices32(loaded.indices);
 		}
-		perSurface.insert({ turbulent.surface, { loaded.texturePositions.texturePositions, loaded.indices.indices } });
+		PerSurface perSurface { loaded.texturePositions.texturePositions, loaded.indices.indices };
+		perSurfaceCache.insert({ turbulent.surface, perSurface });
 	}
 	else
 	{
@@ -1650,8 +1694,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_
 	auto vertexes = ((model_t*)turbulent.model)->vertexes;
 	if (previousVertexes != vertexes)
 	{
-		auto entry = verticesPerKey.find(vertexes);
-		if (entry == verticesPerKey.end())
+		auto entry = vertexCache.find(vertexes);
+		if (entry == vertexCache.end())
 		{
 			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
@@ -1660,7 +1704,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_
 			size += loaded.vertices.size;
 			loaded.vertices.source = vertexes;
 			buffers.SetupVertices(loaded.vertices);
-			verticesPerKey.insert({ vertexes, loaded.vertices.buffer });
+			vertexCache.insert({ vertexes, loaded.vertices.buffer });
 		}
 		else
 		{
@@ -1704,8 +1748,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_
 		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 	}
-	auto entry = perSurface.find(turbulent.surface);
-	if (entry == perSurface.end())
+	auto entry = perSurfaceCache.find(turbulent.surface);
+	if (entry == perSurfaceCache.end())
 	{
 		loaded.texturePositions.size = 16 * sizeof(float);
 		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
@@ -1813,7 +1857,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupIndices32(loaded.indices);
 		}
-		perSurface.insert({ turbulent.surface, { loaded.texturePositions.texturePositions, loaded.indices.indices } });
+		PerSurface perSurface { loaded.texturePositions.texturePositions, loaded.indices.indices };
+		perSurfaceCache.insert({ turbulent.surface, perSurface });
 	}
 	else
 	{
@@ -1902,8 +1947,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 {
 	if (previousApverts != alias.apverts)
 	{
-		auto entry = aliasVerticesPerKey.find(alias.apverts);
-		if (entry == aliasVerticesPerKey.end())
+		auto entry = aliasVerticesCache.find(alias.apverts);
+		if (entry == aliasVerticesCache.end())
 		{
 			loaded.vertices.size = alias.vertex_count * 2 * 4 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
@@ -1921,7 +1966,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.texCoords.width = alias.width;
 			loaded.texCoords.height = alias.height;
 			buffers.SetupAliasTexCoords(loaded.texCoords);
-			aliasVerticesPerKey.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
+			aliasVerticesCache.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
 		}
 		else
 		{
@@ -1980,8 +2025,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		loaded.colormapped.texture.size = 0;
 		loaded.colormapped.texture.texture = previousSharedMemoryTexture;
 	}
-	auto entry = aliasIndicesPerKey.find(alias.aliashdr);
-	if (entry == aliasIndicesPerKey.end())
+	auto entry = aliasIndicesCache.find(alias.aliashdr);
+	if (entry == aliasIndicesCache.end())
 	{
 		auto aliashdr = (aliashdr_t *)alias.aliashdr;
 		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
@@ -2073,7 +2118,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupAliasIndices32(loaded.indices);
 		}
-		aliasIndicesPerKey.insert({ alias.aliashdr, loaded.indices.indices });
+		aliasIndicesCache.insert({ alias.aliashdr, loaded.indices.indices });
 	}
 	else
 	{
@@ -2167,7 +2212,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		loadedViewmodels.resize(lastViewmodel + 1);
 	}
 	VkDeviceSize size = 0;
-	paletteSize = 0;
 	if (perFrame.palette == nullptr || perFrame.paletteChanged != pal_changed)
 	{
 		if (perFrame.palette == nullptr)
@@ -2179,7 +2223,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		size += paletteSize;
 		perFrame.paletteChanged = pal_changed;
 	}
-	host_colormapSize = 0;
 	if (!::host_colormap.empty() && perFrame.host_colormap == nullptr)
 	{
 		perFrame.host_colormap = new Texture();
@@ -2194,7 +2237,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedSurfaces[i];
 		GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.surfaces);
+		sorted.SortAndAccumulate(appState, loaded, i, sorted.surfaces);
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
@@ -2212,7 +2255,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedFences[i];
 		GetStagingBufferSize(appState, d_lists.fences[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.fences);
+		sorted.SortAndAccumulate(appState, loaded, i, sorted.fences);
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
@@ -2282,7 +2325,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		floorVerticesSize += 3 * 4 * sizeof(float);
 	}
-	controllerVerticesSize = 0;
 	if (appState.Focused && (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
 	{
 		if (appState.LeftController.PoseIsValid)
@@ -2298,11 +2340,12 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	particlePositionsSize = (d_lists.last_particle_position + 1) * sizeof(float);
 	coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
 	verticesSize = floorVerticesSize + controllerVerticesSize + texturedVerticesSize + particlePositionsSize + coloredVerticesSize;
-	if (verticesSize > 0)
+	if (verticesSize + sortedVerticesSize > 0)
 	{
-		perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
+		perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize + sortedVerticesSize);
 	}
 	size += verticesSize;
+	size += sortedVerticesSize;
 	floorAttributesSize = 0;
 	if (appState.Mode != AppWorldMode)
 	{
@@ -2323,11 +2366,12 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
 	colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
 	attributesSize = floorAttributesSize + controllerAttributesSize + texturedAttributesSize + colormappedLightsSize;
-	if (attributesSize > 0)
+	if (attributesSize + sortedAttributesSize> 0)
 	{
-		perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
+		perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize + sortedAttributesSize);
 	}
 	size += attributesSize;
+	size += sortedAttributesSize;
 	particleColorsSize = (d_lists.last_particle_color + 1) * sizeof(float);
 	coloredColorsSize = (d_lists.last_colored_color + 1) * sizeof(float);
 	colorsSize = particleColorsSize + coloredColorsSize;
@@ -2378,16 +2422,17 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
 	size += indices16Size;
 	indices32Size = (lastColoredIndex32 + 1) * sizeof(uint32_t);
-	if (indices32Size > 0)
+	if (indices32Size + sortedIndicesSize > 0)
 	{
-		perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, indices32Size);
+		perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, indices32Size + sortedIndicesSize);
 	}
 	size += indices32Size;
+	size += sortedIndicesSize;
 
-	// Add extra space (and also realign to a 4-byte boundary), due to potential alignment issues between 8, 16 and 32-bit index data:
+	// Add extra space (and also realign to a 4-byte boundary), due to potential alignment issues among 8, 16 and 32-bit index data:
 	if (size > 0)
 	{
-		size += 16;
+		size += 32;
 		while (size % 4 != 0)
 		{
 			size++;
@@ -2419,8 +2464,8 @@ void Scene::Reset()
 	usedInLatestSharedMemoryTexturePositionBuffer = 0;
 	latestMemory.clear();
 	Skybox::MoveToPrevious(*this);
-	aliasIndicesPerKey.clear();
-	aliasVerticesPerKey.clear();
-	perSurface.clear();
-	verticesPerKey.clear();
+	aliasIndicesCache.clear();
+	aliasVerticesCache.clear();
+	perSurfaceCache.clear();
+	vertexCache.clear();
 }

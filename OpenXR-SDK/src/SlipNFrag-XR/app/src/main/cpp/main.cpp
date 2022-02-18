@@ -23,6 +23,7 @@
 #include <sys/prctl.h>
 #include <unistd.h>
 #include <android_native_app_glue.h>
+#include "Locks.h"
 
 std::string GetXrVersionString(XrVersion ver)
 {
@@ -1396,7 +1397,7 @@ void android_main(struct android_app* app)
 			}
 
 			{
-				std::lock_guard<std::mutex> lock(appState.ModeChangeMutex);
+				std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
 				if (appState.Mode != AppStartupMode && appState.Mode != AppNoGameDataMode)
 				{
 					if (cls.demoplayback || cl.intermission || con_forcedup || scr_disabled_for_loading)
@@ -1477,7 +1478,7 @@ void android_main(struct android_app* app)
 					}
 					if (appState.Mode == AppScreenMode)
 					{
-						std::lock_guard<std::mutex> lock(appState.RenderMutex);
+						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = false;
 						r_skip_fov_check = false;
@@ -1500,7 +1501,7 @@ void android_main(struct android_app* app)
 					}
 					else if (appState.Mode == AppWorldMode)
 					{
-						std::lock_guard<std::mutex> lock(appState.RenderMutex);
+						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = true;
 						r_skip_fov_check = true;
@@ -1527,7 +1528,7 @@ void android_main(struct android_app* app)
 					}
 					else if (appState.Mode == AppNoGameDataMode)
 					{
-						std::lock_guard<std::mutex> lock(appState.RenderMutex);
+						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = false;
 						r_skip_fov_check = false;
@@ -1538,7 +1539,7 @@ void android_main(struct android_app* app)
 			}
 
 			{
-				std::lock_guard<std::mutex> lock(appState.RenderMutex);
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				appState.Scene.textures.DeleteOld(appState);
 				appState.Scene.lightmaps.DeleteOld(appState);
 				appState.Scene.indexBuffers.DeleteOld(appState);
@@ -1642,7 +1643,7 @@ void android_main(struct android_app* app)
 					}
 
 					{
-						std::lock_guard<std::mutex> lock(appState.RenderInputMutex);
+						std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
 						
 						appState.CameraLocation.type = XR_TYPE_SPACE_LOCATION;
 						res = xrLocateSpace(screenSpace, appSpace, frameState.predictedDisplayTime, &appState.CameraLocation);
@@ -1772,7 +1773,7 @@ void android_main(struct android_app* app)
 					}
 					
 					{
-						std::lock_guard<std::mutex> lock(appState.RenderMutex);
+						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 
 						if (readClearColor && d_lists.clear_color >= 0)
 						{

@@ -236,6 +236,14 @@ int Sys_Random()
 	return rand();
 }
 
+void Sys_BeginClearMemory()
+{
+}
+
+void Sys_EndClearMemory()
+{
+}
+
 //=============================================================================
 
 int main (int argc, char **argv)

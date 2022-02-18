@@ -68,3 +68,6 @@ void Sys_LowFPPrecision (void);
 void Sys_HighFPPrecision (void);
 
 int Sys_Random (void);
+
+void Sys_BeginClearMemory(void);
+void Sys_EndClearMemory(void);

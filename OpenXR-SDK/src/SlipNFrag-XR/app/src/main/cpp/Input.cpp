@@ -2,6 +2,7 @@
 #include "AppState.h"
 #include "in_ovr.h"
 #include "Utils.h"
+#include "Locks.h"
 
 extern m_state_t m_state;
 
@@ -36,7 +37,7 @@ void Input::AddCommandInput(const char* command)
 
 void Input::Handle(AppState& appState, bool keyPressHandled)
 {
-	std::lock_guard<std::mutex> lock(appState.InputMutex);
+	std::lock_guard<std::mutex> lock(Locks::InputMutex);
 	
 	XrActionStateGetInfo actionGetInfo { XR_TYPE_ACTION_STATE_GET_INFO };
 	XrActionStateBoolean booleanActionState { XR_TYPE_ACTION_STATE_BOOLEAN };

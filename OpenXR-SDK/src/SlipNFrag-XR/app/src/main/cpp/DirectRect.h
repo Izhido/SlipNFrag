@@ -12,5 +12,4 @@ struct DirectRect
 	unsigned char* data;
 
 	static std::vector<DirectRect> directRects;
-	static std::mutex DirectRectMutex;
 };

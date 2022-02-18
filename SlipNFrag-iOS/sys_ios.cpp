@@ -194,6 +194,14 @@ int Sys_Random()
     return rand();
 }
 
+void Sys_BeginClearMemory()
+{
+}
+
+void Sys_EndClearMemory()
+{
+}
+
 void Sys_Init(int argc, char** argv)
 {
     static quakeparms_t parms;

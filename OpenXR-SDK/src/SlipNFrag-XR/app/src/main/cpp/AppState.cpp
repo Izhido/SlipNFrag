@@ -1,6 +1,7 @@
 #include "AppState.h"
 #include "Constants.h"
 #include "DirectRect.h"
+#include "Locks.h"
 
 void AppState::RenderScreen(uint32_t swapchainImageIndex)
 {
@@ -10,7 +11,7 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 		{
 			if (key_dest == key_game)
 			{
-				std::lock_guard<std::mutex> lock(RenderMutex);
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				auto console = con_buffer.data();
 				auto previousConsole = console;
 				auto screen = vid_buffer.data();
@@ -54,7 +55,7 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 			}
 			else
 			{
-				std::lock_guard<std::mutex> lock(RenderMutex);
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				auto console = con_buffer.data();
 				auto previousConsole = console;
 				auto screen = vid_buffer.data();
@@ -107,7 +108,7 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 				}
 			}
 			{
-				std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
 				for (auto& directRect : DirectRect::directRects)
 				{
 					auto width = directRect.width * Constants::screenToConsoleMultiplier;
@@ -142,7 +143,7 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 		}
 		else if (key_dest == key_game)
 		{
-			std::lock_guard<std::mutex> lock(RenderMutex);
+			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 			auto source = con_buffer.data();
 			auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped);
 			auto count = ConsoleWidth * ConsoleHeight;
@@ -153,7 +154,7 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 				count--;
 			}
 			{
-				std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
 				for (auto& directRect : DirectRect::directRects)
 				{
 					auto source = directRect.data;
@@ -171,7 +172,7 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 		}
 		else
 		{
-			std::lock_guard<std::mutex> lock(RenderMutex);
+			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 			auto source = con_buffer.data();
 			auto previousSource = source;
 			auto target = (uint32_t*)(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped);
@@ -279,7 +280,7 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 				y++;
 			}
 			{
-				std::lock_guard<std::mutex> lock(DirectRect::DirectRectMutex);
+				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
 				for (auto& directRect : DirectRect::directRects)
 				{
 					auto width = directRect.width * Constants::screenToConsoleMultiplier;
