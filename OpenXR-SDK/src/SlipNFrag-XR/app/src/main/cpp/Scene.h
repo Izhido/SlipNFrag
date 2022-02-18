@@ -48,10 +48,10 @@ struct Scene
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	CachedIndexBuffers indexBuffers;
-	std::unordered_map<void*, SharedMemoryBuffer*> verticesPerKey;
-	std::unordered_map<void*, PerSurface> perSurface;
-	std::unordered_map<void*, AliasVertices> aliasVerticesPerKey;
-	std::unordered_map<void*, IndexBuffer> aliasIndicesPerKey;
+	std::unordered_map<void*, SharedMemoryBuffer*> vertexCache;
+	std::unordered_map<void*, PerSurface> perSurfaceCache;
+	std::unordered_map<void*, AliasVertices> aliasVerticesCache;
+	std::unordered_map<void*, IndexBuffer> aliasIndicesCache;
 	int lastSurface;
 	int lastSurfaceRotated;
 	int lastFence;
