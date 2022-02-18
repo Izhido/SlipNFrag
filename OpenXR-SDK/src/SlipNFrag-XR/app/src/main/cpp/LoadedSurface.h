@@ -1,17 +1,9 @@
 #pragma once
 
-#include "LoadedSharedMemoryBuffer.h"
-#include "LoadedSharedMemoryTexturePositionsBuffer.h"
-#include "LoadedIndexBuffer.h"
+#include "LoadedTurbulent.h"
 #include "LoadedLightmap.h"
-#include "LoadedSharedMemoryTexture.h"
 
-struct LoadedSurface
+struct LoadedSurface : LoadedTurbulent
 {
-	LoadedSharedMemoryBuffer vertices;
-	LoadedSharedMemoryTexturePositionsBuffer texturePositions;
-	LoadedIndexBuffer indices;
 	LoadedLightmap lightmap;
-	LoadedSharedMemoryTexture texture;
-	uint32_t count;
 };

@@ -1459,7 +1459,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 	loaded.count = turbulent.count;
 }
 
-void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turbulent, LoadedTurbulentLit& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turbulent, LoadedSurface& loaded, VkDeviceSize& size)
 {
 	auto vertexes = ((model_t*)turbulent.model)->vertexes;
 	if (previousVertexes != vertexes)

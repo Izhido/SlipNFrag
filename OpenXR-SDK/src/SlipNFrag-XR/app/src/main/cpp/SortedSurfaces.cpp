@@ -49,7 +49,7 @@ void SortedSurfaces::Sort(LoadedSurface& loaded, int index, std::list<SortedSurf
 	{
 		for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
 		{
-			if (subEntry->entries.size() == 0)
+			if (subEntry->entries.empty())
 			{
 				subEntry = entry->textures.erase(subEntry);
 			}
@@ -58,7 +58,7 @@ void SortedSurfaces::Sort(LoadedSurface& loaded, int index, std::list<SortedSurf
 				subEntry++;
 			}
 		}
-		if (entry->textures.size() == 0)
+		if (entry->textures.empty())
 		{
 			entry = sorted.erase(entry);
 		}
@@ -114,7 +114,7 @@ void SortedSurfaces::SortAndAccumulate(AppState& appState, LoadedSurface& loaded
 	{
 		for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
 		{
-			if (subEntry->entries.size() == 0)
+			if (subEntry->entries.empty())
 			{
 				subEntry = entry->textures.erase(subEntry);
 			}
@@ -123,7 +123,7 @@ void SortedSurfaces::SortAndAccumulate(AppState& appState, LoadedSurface& loaded
 				subEntry++;
 			}
 		}
-		if (entry->textures.size() == 0)
+		if (entry->textures.empty())
 		{
 			entry = sorted.erase(entry);
 		}

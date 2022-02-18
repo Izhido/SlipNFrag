@@ -8,7 +8,6 @@
 #include "AliasVertices.h"
 #include "PerSurface.h"
 #include "LoadedSurfaceRotated.h"
-#include "LoadedTurbulentLit.h"
 #include "LoadedTurbulentRotatedLit.h"
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
@@ -73,7 +72,7 @@ struct Scene
 	std::vector<LoadedSurface> loadedFences;
 	std::vector<LoadedSurfaceRotated> loadedFencesRotated;
 	std::vector<LoadedTurbulent> loadedTurbulent;
-	std::vector<LoadedTurbulentLit> loadedTurbulentLit;
+	std::vector<LoadedSurface> loadedTurbulentLit;
 	std::vector<LoadedTurbulentRotated> loadedTurbulentRotated;
 	std::vector<LoadedTurbulentRotatedLit> loadedTurbulentRotatedLit;
 	std::vector<LoadedSprite> loadedSprites;
@@ -150,7 +149,7 @@ struct Scene
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turbulent, LoadedTurbulentLit& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turbulent, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_t& turbulent, LoadedTurbulentRotatedLit& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
