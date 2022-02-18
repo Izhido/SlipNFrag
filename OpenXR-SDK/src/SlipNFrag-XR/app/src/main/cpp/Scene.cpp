@@ -2237,7 +2237,10 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedSurfaces[i];
 		GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
-		sorted.SortAndAccumulate(appState, loaded, i, sorted.surfaces);
+		sorted.Sort(loaded, i, sorted.surfaces);
+		appState.Scene.sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		appState.Scene.sortedIndicesSize += ((loaded.count - 2) * 3 * sizeof(uint32_t));
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
@@ -2255,7 +2258,10 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedFences[i];
 		GetStagingBufferSize(appState, d_lists.fences[i], loaded, size);
-		sorted.SortAndAccumulate(appState, loaded, i, sorted.fences);
+		sorted.Sort(loaded, i, sorted.fences);
+		appState.Scene.sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		appState.Scene.sortedIndicesSize += ((loaded.count - 2) * 3 * sizeof(uint32_t));
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
