@@ -762,6 +762,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.stageCount = turbulent.stages.size();
 	graphicsPipelineCreateInfo.pStages = turbulent.stages.data();
 	graphicsPipelineCreateInfo.layout = turbulent.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulent.pipeline));
 
 	turbulentLit.stages.resize(2);
@@ -780,6 +782,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.stageCount = turbulentLit.stages.size();
 	graphicsPipelineCreateInfo.pStages = turbulentLit.stages.data();
 	graphicsPipelineCreateInfo.layout = turbulentLit.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentLit.pipeline));
 
 	turbulentRotated.stages.resize(2);
@@ -1291,7 +1295,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
 			buffers.MoveToFront(loaded.vertices.buffer);
 			size += loaded.vertices.size;
-			loaded.vertices.source = vertexes;
 			buffers.SetupVertices(loaded.vertices);
 			vertexCache.insert({ vertexes, loaded.vertices.buffer });
 		}
@@ -1308,6 +1311,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
+	loaded.vertices.source = vertexes;
 	if (previousTexture != turbulent.texture)
 	{
 		auto entry = turbulentPerKey.find(turbulent.texture);
@@ -1356,7 +1360,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		loaded.texturePositions.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
 		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
 		size += loaded.texturePositions.size;
-		loaded.texturePositions.source = turbulent.surface;
 		loaded.texturePositions.texturePositions.firstInstance = loaded.texturePositions.texturePositions.offset / (16 * sizeof(float));
 		buffers.SetupTurbulentTexturePositions(loaded.texturePositions);
 		auto face = (msurface_t*)turbulent.surface;
@@ -1392,8 +1395,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			loaded.indices.indices.offset = usedInLatestIndexBuffer8;
 			usedInLatestIndexBuffer8 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.model;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
 			indexBuffers.SetupIndices8(loaded.indices);
@@ -1416,8 +1417,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			loaded.indices.indices.offset = usedInLatestIndexBuffer16;
 			usedInLatestIndexBuffer16 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.model;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
 			indexBuffers.SetupIndices16(loaded.indices);
@@ -1440,8 +1439,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			loaded.indices.indices.offset = usedInLatestIndexBuffer32;
 			usedInLatestIndexBuffer32 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = turbulent.surface;
-			loaded.indices.secondSource = turbulent.model;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupIndices32(loaded.indices);
@@ -1456,6 +1453,9 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		loaded.indices.size = 0;
 		loaded.indices.indices = entry->second.indices;
 	}
+	loaded.texturePositions.source = turbulent.surface;
+	loaded.indices.firstSource = turbulent.surface;
+	loaded.indices.secondSource = turbulent.model;
 	loaded.count = turbulent.count;
 }
 
@@ -2274,9 +2274,15 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
+	sorted.Initialize(sorted.turbulent);
 	for (auto i = 0; i <= lastTurbulent; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.turbulent[i], loadedTurbulent[i], size);
+		auto& loaded = loadedTurbulent[i];
+		GetStagingBufferSize(appState, d_lists.turbulent[i], loaded, size);
+		sorted.Sort(loaded, i, sorted.turbulent);
+		appState.Scene.sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		appState.Scene.sortedIndicesSize += ((loaded.count - 2) * 3 * sizeof(uint32_t));
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;

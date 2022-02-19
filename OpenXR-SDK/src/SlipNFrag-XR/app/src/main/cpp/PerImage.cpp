@@ -524,17 +524,20 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	{
 		appState.Scene.sorted.LoadVertices(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, offset);
 		appState.Scene.sorted.LoadVertices(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+		appState.Scene.sorted.LoadVertices(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 	}
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
 		appState.Scene.sorted.LoadAttributes(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, offset);
 		appState.Scene.sorted.LoadAttributes(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+		appState.Scene.sorted.LoadAttributes(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 	}
 	uint32_t indexBase = 0;
 	if (appState.Scene.sortedIndicesSize > 0)
 	{
 		appState.Scene.sorted.LoadIndices(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
 		appState.Scene.sorted.LoadIndices(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
+		appState.Scene.sorted.LoadIndices(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
 	}
 
 	if (appState.Scene.paletteSize > 0)
