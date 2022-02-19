@@ -54,7 +54,7 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 	surface.texture_width = texture->width;
 	surface.texture_height = texture->height;
 	surface.texture_size = surface.texture_width * surface.texture_height;
-	surface.texture = (unsigned char *)(texture + 1);
+	surface.texture = (unsigned char*)texture + texture->offsets[0];
 	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
@@ -146,7 +146,6 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	turbulent.surface = face;
 	turbulent.entity = entity;
 	turbulent.model = entity->model;
-	turbulent.texture = texture;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
 	turbulent.size = turbulent.width * turbulent.height;

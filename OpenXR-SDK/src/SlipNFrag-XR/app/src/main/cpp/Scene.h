@@ -83,10 +83,9 @@ struct Scene
 	std::unordered_map<VkDeviceSize, std::list<LightmapTexture>> lightmapTextures;
 	CachedLightmaps lightmaps;
 	CachedSharedMemoryTextures textures;
-	std::unordered_map<void*, SharedMemoryTexture*> surfaceTexturesPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> turbulentPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> spritesPerKey;
-	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesPerKey;
+	std::unordered_map<void*, SharedMemoryTexture*> textureCache;
+	std::unordered_map<void*, SharedMemoryTexture*> spriteCache;
+	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesCache;
 	Texture floorTexture;
 	Texture controllerTexture;
 	std::vector<VkSampler> samplers;

@@ -1126,8 +1126,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	}
 	if (previousTexture != surface.texture)
 	{
-		auto entry = surfaceTexturesPerKey.find(surface.texture);
-		if (entry == surfaceTexturesPerKey.end())
+		auto entry = textureCache.find(surface.texture);
+		if (entry == textureCache.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(surface.texture_width, surface.texture_height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
@@ -1138,7 +1138,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			loaded.texture.texture = texture;
 			loaded.texture.source = surface.texture;
 			textures.Setup(loaded.texture);
-			surfaceTexturesPerKey.insert({ surface.texture, texture });
+			textureCache.insert({ surface.texture, texture });
 		}
 		else
 		{
@@ -1312,10 +1312,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
 	loaded.vertices.source = vertexes;
-	if (previousTexture != turbulent.texture)
+	if (previousTexture != turbulent.data)
 	{
-		auto entry = turbulentPerKey.find(turbulent.texture);
-		if (entry == turbulentPerKey.end())
+		auto entry = textureCache.find(turbulent.data);
+		if (entry == textureCache.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
@@ -1326,14 +1326,14 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			loaded.texture.texture = texture;
 			loaded.texture.source = turbulent.data;
 			textures.Setup(loaded.texture);
-			turbulentPerKey.insert({ turbulent.texture, texture });
+			textureCache.insert({ turbulent.data, texture });
 		}
 		else
 		{
 			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second;
 		}
-		previousTexture = turbulent.texture;
+		previousTexture = turbulent.data;
 		previousSharedMemoryTexture = loaded.texture.texture;
 	}
 	else
@@ -1489,10 +1489,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turb
 		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
-	if (previousTexture != turbulent.texture)
+	if (previousTexture != turbulent.data)
 	{
-		auto entry = turbulentPerKey.find(turbulent.texture);
-		if (entry == turbulentPerKey.end())
+		auto entry = textureCache.find(turbulent.data);
+		if (entry == textureCache.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
@@ -1503,14 +1503,14 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turb
 			loaded.texture.texture = texture;
 			loaded.texture.source = turbulent.data;
 			textures.Setup(loaded.texture);
-			turbulentPerKey.insert({ turbulent.texture, texture });
+			textureCache.insert({ turbulent.data, texture });
 		}
 		else
 		{
 			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second;
 		}
-		previousTexture = turbulent.texture;
+		previousTexture = turbulent.data;
 		previousSharedMemoryTexture = loaded.texture.texture;
 	}
 	else
@@ -1719,10 +1719,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_
 		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
-	if (previousTexture != turbulent.texture)
+	if (previousTexture != turbulent.data)
 	{
-		auto entry = turbulentPerKey.find(turbulent.texture);
-		if (entry == turbulentPerKey.end())
+		auto entry = textureCache.find(turbulent.data);
+		if (entry == textureCache.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
@@ -1733,14 +1733,14 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_
 			loaded.texture.texture = texture;
 			loaded.texture.source = turbulent.data;
 			textures.Setup(loaded.texture);
-			turbulentPerKey.insert({ turbulent.texture, texture });
+			textureCache.insert({ turbulent.data, texture });
 		}
 		else
 		{
 			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second;
 		}
-		previousTexture = turbulent.texture;
+		previousTexture = turbulent.data;
 		previousSharedMemoryTexture = loaded.texture.texture;
 	}
 	else
@@ -1912,8 +1912,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
 {
 	if (previousTexture != sprite.data)
 	{
-		auto entry = spritesPerKey.find(sprite.data);
-		if (entry == spritesPerKey.end())
+		auto entry = spriteCache.find(sprite.data);
+		if (entry == spriteCache.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
@@ -1924,7 +1924,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
 			loaded.texture.texture = texture;
 			loaded.texture.source = sprite.data;
 			textures.Setup(loaded.texture);
-			spritesPerKey.insert({ sprite.data, texture });
+			spriteCache.insert({ sprite.data, texture });
 		}
 		else
 		{
@@ -1998,8 +1998,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 	}
 	if (previousTexture != alias.data)
 	{
-		auto entry = aliasTexturesPerKey.find(alias.data);
-		if (entry == aliasTexturesPerKey.end())
+		auto entry = aliasTexturesCache.find(alias.data);
+		if (entry == aliasTexturesCache.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
@@ -2010,7 +2010,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.colormapped.texture.texture = texture;
 			loaded.colormapped.texture.source = alias.data;
 			textures.Setup(loaded.colormapped.texture);
-			aliasTexturesPerKey.insert({ alias.data, texture });
+			aliasTexturesCache.insert({ alias.data, texture });
 		}
 		else
 		{
@@ -2457,10 +2457,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 void Scene::Reset()
 {
 	D_ResetLists();
-	aliasTexturesPerKey.clear();
-	spritesPerKey.clear();
-	turbulentPerKey.clear();
-	surfaceTexturesPerKey.clear();
+	aliasTexturesCache.clear();
+	spriteCache.clear();
+	textureCache.clear();
 	textures.DisposeFront();
 	lightmaps.DisposeFront();
 	indexBuffers.DisposeFront();

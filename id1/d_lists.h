@@ -35,7 +35,6 @@ struct dturbulent_t
 	void* surface;
 	void* entity;
 	void* model;
-	void* texture;
 	int width;
 	int height;
 	int size;
