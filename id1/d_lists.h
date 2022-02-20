@@ -44,15 +44,6 @@ struct dturbulentrotated_t : dturbulent_t
 	float roll;
 };
 
-struct dturbulentrotatedlit_t : dturbulentrotated_t
-{
-	int created;
-	int lightmap_width;
-	int lightmap_height;
-	int lightmap_size;
-	int lightmap_texels;
-};
-
 struct dspritedata_t
 {
 	int width;
@@ -141,7 +132,7 @@ struct dlists_t
 	std::vector<dturbulent_t> turbulent;
 	std::vector<dsurface_t> turbulent_lit;
 	std::vector<dturbulentrotated_t> turbulent_rotated;
-	std::vector<dturbulentrotatedlit_t> turbulent_rotated_lit;
+	std::vector<dsurfacerotated_t> turbulent_rotated_lit;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dalias_t> alias;
 	std::vector<dalias_t> viewmodels;
