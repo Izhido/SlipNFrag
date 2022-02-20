@@ -34,15 +34,6 @@ struct dsurfacerotated_t : dsurface_t
 	float roll;
 };
 
-struct dturbulentlit_t : dturbulent_t
-{
-	int created;
-	int lightmap_width;
-	int lightmap_height;
-	int lightmap_size;
-	int lightmap_texels;
-};
-
 struct dturbulentrotated_t : dturbulent_t
 {
 	float origin_x;
@@ -148,7 +139,7 @@ struct dlists_t
 	std::vector<dsurface_t> fences;
 	std::vector<dsurfacerotated_t> fences_rotated;
 	std::vector<dturbulent_t> turbulent;
-	std::vector<dturbulentlit_t> turbulent_lit;
+	std::vector<dsurface_t> turbulent_lit;
 	std::vector<dturbulentrotated_t> turbulent_rotated;
 	std::vector<dturbulentrotatedlit_t> turbulent_rotated_lit;
 	std::vector<dspritedata_t> sprites;
