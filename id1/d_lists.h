@@ -3,33 +3,6 @@
 #define UPPER_8BIT_LIMIT 240
 #define UPPER_16BIT_LIMIT 65520
 
-struct dsurface_t
-{
-	void* surface;
-	void* entity;
-	void* model;
-	int created;
-	int texture_width;
-	int texture_height;
-	int texture_size;
-	unsigned char* texture;
-	int lightmap_width;
-	int lightmap_height;
-	int lightmap_size;
-	int lightmap_texels;
-	int count;
-};
-
-struct dsurfacerotated_t : dsurface_t
-{
-	float origin_x;
-	float origin_y;
-	float origin_z;
-	float yaw;
-	float pitch;
-	float roll;
-};
-
 struct dturbulent_t
 {
 	void* surface;
@@ -40,6 +13,25 @@ struct dturbulent_t
 	int size;
 	unsigned char* data;
 	int count;
+};
+
+struct dsurface_t : dturbulent_t
+{
+	int created;
+	int lightmap_width;
+	int lightmap_height;
+	int lightmap_size;
+	int lightmap_texels;
+};
+
+struct dsurfacerotated_t : dsurface_t
+{
+	float origin_x;
+	float origin_y;
+	float origin_z;
+	float yaw;
+	float pitch;
+	float roll;
 };
 
 struct dturbulentlit_t : dturbulent_t

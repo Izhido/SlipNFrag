@@ -1056,15 +1056,15 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
-void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+void Scene::GetVerticesStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
-	auto vertexes = ((model_t*)surface.model)->vertexes;
+	auto vertexes = ((model_t*)turbulent.model)->vertexes;
 	if (previousVertexes != vertexes)
 	{
 		auto entry = vertexCache.find(vertexes);
 		if (entry == vertexCache.end())
 		{
-			loaded.vertices.size = ((model_t*)surface.model)->numvertexes * 3 * sizeof(float);
+			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
 			buffers.MoveToFront(loaded.vertices.buffer);
@@ -1086,66 +1086,32 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.vertices.buffer = previousVertexBuffer;
 	}
 	loaded.vertices.source = vertexes;
-	auto lightmapEntry = lightmaps.lightmaps.find(surface.surface);
-	if (lightmapEntry == lightmaps.lightmaps.end())
+}
+
+void Scene::GetTextureStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
+{
+	if (previousTexture != turbulent.data)
 	{
-		auto lightmap = new Lightmap { };
-		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		lightmap->key = surface.surface;
-		lightmap->createdFrameCount = surface.created;
-		loaded.lightmap.lightmap = lightmap;
-		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
-		size += loaded.lightmap.size;
-		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
-		lightmaps.Setup(loaded.lightmap);
-		lightmaps.lightmaps.insert({ lightmap->key, lightmap });
-	}
-	else 
-	{
-		auto lightmap = lightmapEntry->second;
-		if (lightmap->createdFrameCount != surface.created)
-		{
-			lightmap->next = lightmaps.oldLightmaps;
-			lightmaps.oldLightmaps = lightmap;
-			lightmap = new Lightmap { };
-			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			lightmap->key = surface.surface;
-			lightmap->createdFrameCount = surface.created;
-			lightmapEntry->second = lightmap;
-			loaded.lightmap.lightmap = lightmap;
-			loaded.lightmap.size = surface.lightmap_size * sizeof(float);
-			size += loaded.lightmap.size;
-			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
-			lightmaps.Setup(loaded.lightmap);
-		}
-		else
-		{
-			loaded.lightmap.lightmap = lightmap;
-			loaded.lightmap.size = 0;
-		}
-	}
-	if (previousTexture != surface.texture)
-	{
-		auto entry = textureCache.find(surface.texture);
+		auto entry = textureCache.find(turbulent.data);
 		if (entry == textureCache.end())
 		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(surface.texture_width, surface.texture_height)))) + 1;
+			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, surface.texture_width, surface.texture_height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			textures.MoveToFront(texture);
-			loaded.texture.size = surface.texture_size;
+			loaded.texture.size = turbulent.size;
 			size += loaded.texture.size;
 			loaded.texture.texture = texture;
-			loaded.texture.source = surface.texture;
+			loaded.texture.source = turbulent.data;
 			textures.Setup(loaded.texture);
-			textureCache.insert({ surface.texture, texture });
+			textureCache.insert({ turbulent.data, texture });
 		}
 		else
 		{
 			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second;
 		}
-		previousTexture = surface.texture;
+		previousTexture = turbulent.data;
 		previousSharedMemoryTexture = loaded.texture.texture;
 	}
 	else
@@ -1153,6 +1119,12 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 	}
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
+{
+	GetVerticesStagingBufferSize(appState, surface, loaded, size);
+	GetTextureStagingBufferSize(appState, surface, loaded, size);
 	auto entry = perSurfaceCache.find(surface.surface);
 	if (entry == perSurfaceCache.end())
 	{
@@ -1268,6 +1240,44 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	loaded.texturePositions.source = surface.surface;
 	loaded.indices.firstSource = surface.surface;
 	loaded.indices.secondSource = surface.model;
+	auto lightmapEntry = lightmaps.lightmaps.find(surface.surface);
+	if (lightmapEntry == lightmaps.lightmaps.end())
+	{
+		auto lightmap = new Lightmap { };
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->key = surface.surface;
+		lightmap->createdFrameCount = surface.created;
+		loaded.lightmap.lightmap = lightmap;
+		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+		size += loaded.lightmap.size;
+		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+		lightmaps.Setup(loaded.lightmap);
+		lightmaps.lightmaps.insert({ lightmap->key, lightmap });
+	}
+	else
+	{
+		auto lightmap = lightmapEntry->second;
+		if (lightmap->createdFrameCount != surface.created)
+		{
+			lightmap->next = lightmaps.oldLightmaps;
+			lightmaps.oldLightmaps = lightmap;
+			lightmap = new Lightmap { };
+			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			lightmap->key = surface.surface;
+			lightmap->createdFrameCount = surface.created;
+			lightmapEntry->second = lightmap;
+			loaded.lightmap.lightmap = lightmap;
+			loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+			size += loaded.lightmap.size;
+			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+			lightmaps.Setup(loaded.lightmap);
+		}
+		else
+		{
+			loaded.lightmap.lightmap = lightmap;
+			loaded.lightmap.size = 0;
+		}
+	}
 	loaded.count = surface.count;
 }
 
@@ -1284,63 +1294,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
-	auto vertexes = ((model_t*)turbulent.model)->vertexes;
-	if (previousVertexes != vertexes)
-	{
-		auto entry = vertexCache.find(vertexes);
-		if (entry == vertexCache.end())
-		{
-			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
-			loaded.vertices.buffer = new SharedMemoryBuffer { };
-			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
-			buffers.MoveToFront(loaded.vertices.buffer);
-			size += loaded.vertices.size;
-			buffers.SetupVertices(loaded.vertices);
-			vertexCache.insert({ vertexes, loaded.vertices.buffer });
-		}
-		else
-		{
-			loaded.vertices.size = 0;
-			loaded.vertices.buffer = entry->second;
-		}
-		previousVertexes = vertexes;
-		previousVertexBuffer = loaded.vertices.buffer;
-	}
-	else
-	{
-		loaded.vertices.size = 0;
-		loaded.vertices.buffer = previousVertexBuffer;
-	}
-	loaded.vertices.source = vertexes;
-	if (previousTexture != turbulent.data)
-	{
-		auto entry = textureCache.find(turbulent.data);
-		if (entry == textureCache.end())
-		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
-			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			textures.MoveToFront(texture);
-			loaded.texture.size = turbulent.size;
-			size += loaded.texture.size;
-			loaded.texture.texture = texture;
-			loaded.texture.source = turbulent.data;
-			textures.Setup(loaded.texture);
-			textureCache.insert({ turbulent.data, texture });
-		}
-		else
-		{
-			loaded.texture.size = 0;
-			loaded.texture.texture = entry->second;
-		}
-		previousTexture = turbulent.data;
-		previousSharedMemoryTexture = loaded.texture.texture;
-	}
-	else
-	{
-		loaded.texture.size = 0;
-		loaded.texture.texture = previousSharedMemoryTexture;
-	}
+	GetVerticesStagingBufferSize(appState, turbulent, loaded, size);
+	GetTextureStagingBufferSize(appState, turbulent, loaded, size);
 	auto entry = perSurfaceCache.find(turbulent.surface);
 	if (entry == perSurfaceCache.end())
 	{
@@ -1461,63 +1416,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulentlit_t& turbulent, LoadedSurface& loaded, VkDeviceSize& size)
 {
-	auto vertexes = ((model_t*)turbulent.model)->vertexes;
-	if (previousVertexes != vertexes)
-	{
-		auto entry = vertexCache.find(vertexes);
-		if (entry == vertexCache.end())
-		{
-			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
-			loaded.vertices.buffer = new SharedMemoryBuffer { };
-			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
-			buffers.MoveToFront(loaded.vertices.buffer);
-			size += loaded.vertices.size;
-			loaded.vertices.source = vertexes;
-			buffers.SetupVertices(loaded.vertices);
-			vertexCache.insert({ vertexes, loaded.vertices.buffer });
-		}
-		else
-		{
-			loaded.vertices.size = 0;
-			loaded.vertices.buffer = entry->second;
-		}
-		previousVertexes = vertexes;
-		previousVertexBuffer = loaded.vertices.buffer;
-	}
-	else
-	{
-		loaded.vertices.size = 0;
-		loaded.vertices.buffer = previousVertexBuffer;
-	}
-	if (previousTexture != turbulent.data)
-	{
-		auto entry = textureCache.find(turbulent.data);
-		if (entry == textureCache.end())
-		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
-			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			textures.MoveToFront(texture);
-			loaded.texture.size = turbulent.size;
-			size += loaded.texture.size;
-			loaded.texture.texture = texture;
-			loaded.texture.source = turbulent.data;
-			textures.Setup(loaded.texture);
-			textureCache.insert({ turbulent.data, texture });
-		}
-		else
-		{
-			loaded.texture.size = 0;
-			loaded.texture.texture = entry->second;
-		}
-		previousTexture = turbulent.data;
-		previousSharedMemoryTexture = loaded.texture.texture;
-	}
-	else
-	{
-		loaded.texture.size = 0;
-		loaded.texture.texture = previousSharedMemoryTexture;
-	}
+	GetVerticesStagingBufferSize(appState, turbulent, loaded, size);
+	GetTextureStagingBufferSize(appState, turbulent, loaded, size);
 	auto entry = perSurfaceCache.find(turbulent.surface);
 	if (entry == perSurfaceCache.end())
 	{
@@ -1691,63 +1591,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& 
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotatedlit_t& turbulent, LoadedTurbulentRotatedLit& loaded, VkDeviceSize& size)
 {
-	auto vertexes = ((model_t*)turbulent.model)->vertexes;
-	if (previousVertexes != vertexes)
-	{
-		auto entry = vertexCache.find(vertexes);
-		if (entry == vertexCache.end())
-		{
-			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 3 * sizeof(float);
-			loaded.vertices.buffer = new SharedMemoryBuffer { };
-			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
-			buffers.MoveToFront(loaded.vertices.buffer);
-			size += loaded.vertices.size;
-			loaded.vertices.source = vertexes;
-			buffers.SetupVertices(loaded.vertices);
-			vertexCache.insert({ vertexes, loaded.vertices.buffer });
-		}
-		else
-		{
-			loaded.vertices.size = 0;
-			loaded.vertices.buffer = entry->second;
-		}
-		previousVertexes = vertexes;
-		previousVertexBuffer = loaded.vertices.buffer;
-	}
-	else
-	{
-		loaded.vertices.size = 0;
-		loaded.vertices.buffer = previousVertexBuffer;
-	}
-	if (previousTexture != turbulent.data)
-	{
-		auto entry = textureCache.find(turbulent.data);
-		if (entry == textureCache.end())
-		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
-			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			textures.MoveToFront(texture);
-			loaded.texture.size = turbulent.size;
-			size += loaded.texture.size;
-			loaded.texture.texture = texture;
-			loaded.texture.source = turbulent.data;
-			textures.Setup(loaded.texture);
-			textureCache.insert({ turbulent.data, texture });
-		}
-		else
-		{
-			loaded.texture.size = 0;
-			loaded.texture.texture = entry->second;
-		}
-		previousTexture = turbulent.data;
-		previousSharedMemoryTexture = loaded.texture.texture;
-	}
-	else
-	{
-		loaded.texture.size = 0;
-		loaded.texture.texture = previousSharedMemoryTexture;
-	}
+	GetVerticesStagingBufferSize(appState, turbulent, loaded, size);
+	GetTextureStagingBufferSize(appState, turbulent, loaded, size);
 	auto entry = perSurfaceCache.find(turbulent.surface);
 	if (entry == perSurfaceCache.end())
 	{

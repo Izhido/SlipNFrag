@@ -51,10 +51,10 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 	surface.model = entity->model;
 	surface.created = cache->created;
 	auto texture = (texture_t*)(cache->texture);
-	surface.texture_width = texture->width;
-	surface.texture_height = texture->height;
-	surface.texture_size = surface.texture_width * surface.texture_height;
-	surface.texture = (unsigned char*)texture + texture->offsets[0];
+	surface.width = texture->width;
+	surface.height = texture->height;
+	surface.size = surface.width * surface.height;
+	surface.data = (unsigned char*)texture + texture->offsets[0];
 	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
