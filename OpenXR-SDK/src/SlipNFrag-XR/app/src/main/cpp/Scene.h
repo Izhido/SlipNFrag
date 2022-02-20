@@ -125,7 +125,9 @@ struct Scene
 	VkDeviceSize indices32Size;
 	VkDeviceSize sortedVerticesSize;
 	VkDeviceSize sortedAttributesSize;
-	VkDeviceSize sortedIndicesSize;
+	VkDeviceSize sortedIndicesCount;
+	VkDeviceSize sortedIndices16Size;
+	VkDeviceSize sortedIndices32Size;
 	VkDeviceSize paletteSize;
 	VkDeviceSize host_colormapSize;
 	VkDeviceSize skySize;

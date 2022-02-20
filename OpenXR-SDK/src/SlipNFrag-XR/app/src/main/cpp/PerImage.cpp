@@ -532,12 +532,22 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 		appState.Scene.sorted.LoadAttributes(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
 		appState.Scene.sorted.LoadAttributes(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 	}
-	uint32_t indexBase = 0;
-	if (appState.Scene.sortedIndicesSize > 0)
+	if (appState.Scene.sortedIndicesCount > 0)
 	{
-		appState.Scene.sorted.LoadIndices(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
-		appState.Scene.sorted.LoadIndices(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
-		appState.Scene.sorted.LoadIndices(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
+		if (appState.Scene.sortedIndices16Size > 0)
+		{
+			uint16_t indexBase = 0;
+			appState.Scene.sorted.LoadIndices16(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
+			appState.Scene.sorted.LoadIndices16(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
+			appState.Scene.sorted.LoadIndices16(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
+		}
+		else
+		{
+			uint32_t indexBase = 0;
+			appState.Scene.sorted.LoadIndices32(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
+			appState.Scene.sorted.LoadIndices32(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
+			appState.Scene.sorted.LoadIndices32(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
+		}
 	}
 
 	if (appState.Scene.paletteSize > 0)
@@ -900,16 +910,31 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 			appState.Scene.AddToBufferBarrier(perFrame.attributes->buffer);
 		}
 	}
-	if (appState.Scene.sortedIndicesSize > 0)
+	if (appState.Scene.sortedIndicesCount > 0)
 	{
-		bufferCopy.size = appState.Scene.sortedIndicesSize;
-		bufferCopy.dstOffset = appState.Scene.indices32Size;
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, perFrame.indices32->buffer, 1, &bufferCopy);
-		bufferCopy.dstOffset = 0;
-		bufferCopy.srcOffset += bufferCopy.size;
-		if (appState.Scene.indices32Size == 0)
+		if (appState.Scene.sortedIndices16Size > 0)
 		{
-			appState.Scene.AddToBufferBarrier(perFrame.indices32->buffer);
+			bufferCopy.size = appState.Scene.sortedIndices16Size;
+			bufferCopy.dstOffset = appState.Scene.indices16Size;
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, perFrame.indices16->buffer, 1, &bufferCopy);
+			bufferCopy.dstOffset = 0;
+			bufferCopy.srcOffset += bufferCopy.size;
+			if (appState.Scene.indices16Size == 0)
+			{
+				appState.Scene.AddToBufferBarrier(perFrame.indices16->buffer);
+			}
+		}
+		else
+		{
+			bufferCopy.size = appState.Scene.sortedIndices32Size;
+			bufferCopy.dstOffset = appState.Scene.indices32Size;
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, perFrame.indices32->buffer, 1, &bufferCopy);
+			bufferCopy.dstOffset = 0;
+			bufferCopy.srcOffset += bufferCopy.size;
+			if (appState.Scene.indices32Size == 0)
+			{
+				appState.Scene.AddToBufferBarrier(perFrame.indices32->buffer);
+			}
 		}
 	}
 

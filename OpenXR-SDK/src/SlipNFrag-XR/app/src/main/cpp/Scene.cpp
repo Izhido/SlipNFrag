@@ -1027,7 +1027,7 @@ void Scene::Initialize()
 {
 	sortedVerticesSize = 0;
 	sortedAttributesSize = 0;
-	sortedIndicesSize = 0;
+	sortedIndicesCount = 0;
 	paletteSize = 0;
 	host_colormapSize = 0;
 	skySize = 0;
@@ -1757,7 +1757,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(loaded, i, sorted.surfaces);
 		appState.Scene.sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		appState.Scene.sortedIndicesSize += ((loaded.count - 2) * 3 * sizeof(uint32_t));
+		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
@@ -1778,7 +1778,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(loaded, i, sorted.fences);
 		appState.Scene.sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		appState.Scene.sortedIndicesSize += ((loaded.count - 2) * 3 * sizeof(uint32_t));
+		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
@@ -1799,7 +1799,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(loaded, i, sorted.turbulent);
 		appState.Scene.sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		appState.Scene.sortedIndicesSize += ((loaded.count - 2) * 3 * sizeof(uint32_t));
+		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
@@ -1928,6 +1928,19 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
 	coloredIndices8Size = lastColoredIndex8 + 1;
 	coloredIndices16Size = (lastColoredIndex16 + 1) * sizeof(uint16_t);
+
+	// This is only intended as an approximation - real 16-bit index limits are not even close to being reached before this happens:
+	if (sortedIndicesCount < UPPER_16BIT_LIMIT)
+	{
+		sortedIndices16Size = sortedIndicesCount * sizeof(uint16_t);
+		sortedIndices32Size = 0;
+	}
+	else
+	{
+		sortedIndices16Size = 0;
+		sortedIndices32Size = sortedIndicesCount * sizeof(uint32_t);
+	}
+
 	if (appState.IndexTypeUInt8Enabled)
 	{
 		indices8Size = floorIndicesSize + controllerIndicesSize + coloredIndices8Size;
@@ -1940,23 +1953,27 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		indices8Size = 0;
 		indices16Size = floorIndicesSize + controllerIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size;
 	}
+
 	if (indices8Size > 0)
 	{
 		perFrame.indices8 = perFrame.cachedIndices8.GetIndexBuffer(appState, indices8Size);
 	}
 	size += indices8Size;
-	if (indices16Size > 0)
+
+	if (indices16Size + sortedIndices16Size > 0)
 	{
-		perFrame.indices16 = perFrame.cachedIndices16.GetIndexBuffer(appState, indices16Size);
+		perFrame.indices16 = perFrame.cachedIndices16.GetIndexBuffer(appState, indices16Size + sortedIndices16Size);
 	}
 	size += indices16Size;
+	size += sortedIndices16Size;
+
 	indices32Size = (lastColoredIndex32 + 1) * sizeof(uint32_t);
-	if (indices32Size + sortedIndicesSize > 0)
+	if (indices32Size + sortedIndices32Size > 0)
 	{
-		perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, indices32Size + sortedIndicesSize);
+		perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, indices32Size + sortedIndices32Size);
 	}
 	size += indices32Size;
-	size += sortedIndicesSize;
+	size += sortedIndices32Size;
 
 	// Add extra space (and also realign to a 4-byte boundary), due to potential alignment issues among 8, 16 and 32-bit index data:
 	if (size > 0)
