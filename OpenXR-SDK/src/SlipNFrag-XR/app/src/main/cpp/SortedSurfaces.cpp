@@ -109,6 +109,8 @@ void SortedSurfaces::Sort(LoadedTurbulent& loaded, int index, std::list<SortedSu
 
 void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
+	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto vertexCount = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto& subEntry : entry.textures)
@@ -116,7 +118,6 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 				auto face = (msurface_t*)surface.indices.firstSource;
 				auto model = (model_t*)surface.indices.secondSource;
 				auto edge = model->surfedges[face->firstedge];
@@ -163,20 +164,22 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 					*target++ = *(source + index++);
 					*target++ = *(source + index++);
 				}
-				offset += (face->numedges * 3 * sizeof(float));
+				vertexCount += face->numedges;
 			}
 		}
 	}
+	offset += (vertexCount * 3 * sizeof(float));
 }
 
 void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
+	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto vertexCount = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto i : entry.entries)
 		{
 			auto& surface = loaded[i];
-			auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 			auto face = (msurface_t*)surface.indices.firstSource;
 			auto model = (model_t*)surface.indices.secondSource;
 			auto edge = model->surfedges[face->firstedge];
@@ -223,9 +226,10 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 				*target++ = *(source + index++);
 				*target++ = *(source + index++);
 			}
-			offset += (face->numedges * 3 * sizeof(float));
+			vertexCount += face->numedges;
 		}
 	}
+	offset += (vertexCount * 3 * sizeof(float));
 }
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
@@ -233,6 +237,8 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 	XrMatrix4x4f attributes;
 	void* previousSource = nullptr;
 	attributes.m[15] = 0;
+	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto attributeCount = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto& subEntry : entry.textures)
@@ -261,15 +267,15 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 					previousSource = source;
 				}
 				attributes.m[14] = surface.lightmap.lightmap->allocatedIndex;
-				auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
 				for (auto j = 0; j < face->numedges; j++)
 				{
 					*target++ = attributes;
 				}
-				offset += (face->numedges * 16 * sizeof(float));
+				attributeCount += face->numedges;
 			}
 		}
 	}
+	offset += (attributeCount * sizeof(XrMatrix4x4f));
 }
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
@@ -282,6 +288,8 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std
 	attributes.m[13] = 0;
 	attributes.m[14] = 0;
 	attributes.m[15] = 0;
+	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto attributeCount = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto i : entry.entries)
@@ -303,18 +311,20 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std
 				attributes.m[9] = source->texinfo->texture->height;
 				previousSource = source;
 			}
-			auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
 			for (auto j = 0; j < face->numedges; j++)
 			{
 				*target++ = attributes;
 			}
-			offset += (face->numedges * 16 * sizeof(float));
+			attributeCount += face->numedges;
 		}
 	}
+	offset += (attributeCount * sizeof(XrMatrix4x4f));
 }
 
 void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, uint16_t& indexBase, VkDeviceSize& offset)
 {
+	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto index16Count = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto& subEntry : entry.textures)
@@ -323,7 +333,6 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 				auto face = (msurface_t*)surface.indices.firstSource;
 				*target++ = indexBase++;
 				*target++ = indexBase++;
@@ -347,23 +356,25 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std
 					revert = !revert;
 				}
 				auto count = (face->numedges - 2) * 3;
-				offset += (count * sizeof(uint16_t));
 				indexCount += count;
+				index16Count += count;
 			}
 			subEntry.indexCount = indexCount;
 		}
 	}
+	offset += (index16Count * sizeof(uint16_t));
 }
 
 void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, uint16_t& indexBase, VkDeviceSize& offset)
 {
+	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto index16Count = 0;
 	for (auto& entry : sorted)
 	{
 		VkDeviceSize indexCount = 0;
 		for (auto i : entry.entries)
 		{
 			auto& surface = loaded[i];
-			auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 			auto face = (msurface_t*)surface.indices.firstSource;
 			*target++ = indexBase++;
 			*target++ = indexBase++;
@@ -387,15 +398,18 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceTexture>& sorted, std:
 				revert = !revert;
 			}
 			auto count = (face->numedges - 2) * 3;
-			offset += (count * sizeof(uint16_t));
 			indexCount += count;
+			index16Count += count;
 		}
 		entry.indexCount = indexCount;
 	}
+	offset += (index16Count * sizeof(uint16_t));
 }
 
 void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, uint32_t& indexBase, VkDeviceSize& offset)
 {
+	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto index32Count = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto& subEntry : entry.textures)
@@ -404,7 +418,6 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 				auto face = (msurface_t*)surface.indices.firstSource;
 				*target++ = indexBase++;
 				*target++ = indexBase++;
@@ -428,23 +441,25 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std
 					revert = !revert;
 				}
 				auto count = (face->numedges - 2) * 3;
-				offset += (count * sizeof(uint16_t));
 				indexCount += count;
+				index32Count += count;
 			}
 			subEntry.indexCount = indexCount;
 		}
 	}
+	offset += (index32Count * sizeof(uint32_t));
 }
 
 void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, uint32_t& indexBase, VkDeviceSize& offset)
 {
+	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto index32Count = 0;
 	for (auto& entry : sorted)
 	{
 		VkDeviceSize indexCount = 0;
 		for (auto i : entry.entries)
 		{
 			auto& surface = loaded[i];
-			auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 			auto face = (msurface_t*)surface.indices.firstSource;
 			*target++ = indexBase++;
 			*target++ = indexBase++;
@@ -468,9 +483,10 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceTexture>& sorted, std:
 				revert = !revert;
 			}
 			auto count = (face->numedges - 2) * 3;
-			offset += (count * sizeof(uint32_t));
 			indexCount += count;
+			index32Count += count;
 		}
 		entry.indexCount = indexCount;
 	}
+	offset += (index32Count * sizeof(uint32_t));
 }
