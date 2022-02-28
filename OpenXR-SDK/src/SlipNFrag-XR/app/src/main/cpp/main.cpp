@@ -1809,7 +1809,7 @@ void android_main(struct android_app* app)
 							{
 								CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
 							}
-							perImage.LoadStagingBuffer(appState, perFrame, stagingBuffer);
+							PerImage::LoadStagingBuffer(appState, perFrame, stagingBuffer);
 							perImage.FillFromStagingBuffer(appState, perFrame, stagingBuffer);
 						}
 					}

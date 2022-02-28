@@ -32,7 +32,7 @@ void SortedSurfaces::Sort(LoadedSurface& loaded, int index, std::list<SortedSurf
 		sorted.push_back({lightmap});
 		auto lightmapEntry = sorted.end();
 		lightmapEntry--;
-		lightmapEntry->textures.push_back({texture});
+		lightmapEntry->textures.push_back({ texture });
 		lightmapEntry->textures.back().entries.push_back(index);
 		addedLightmaps.insert({lightmap, lightmapEntry});
 	}
@@ -50,7 +50,7 @@ void SortedSurfaces::Sort(LoadedSurface& loaded, int index, std::list<SortedSurf
 		}
 		if (!subEntryFound)
 		{
-			entry->second->textures.push_back({texture});
+			entry->second->textures.push_back({ texture });
 			entry->second->textures.back().entries.push_back(index);
 		}
 	}
@@ -62,7 +62,7 @@ void SortedSurfaces::Sort(LoadedTurbulent& loaded, int index, std::list<SortedSu
 	auto entry = addedTextures.find(texture);
 	if (entry == addedTextures.end())
 	{
-		sorted.push_back({texture});
+		sorted.push_back({ texture });
 		auto textureEntry = sorted.end();
 		textureEntry--;
 		textureEntry->entries.push_back(index);
@@ -142,7 +142,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 				index *= 3;
 				*target++ = *(source + index++);
 				*target++ = *(source + index++);
-				*target++ = *(source + index++);
+				*target++ = *(source + index);
 				auto next_front = 0;
 				auto next_back = face->numedges;
 				auto use_back = false;
@@ -170,7 +170,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 					index *= 3;
 					*target++ = *(source + index++);
 					*target++ = *(source + index++);
-					*target++ = *(source + index++);
+					*target++ = *(source + index);
 				}
 				vertexCount += face->numedges;
 			}
@@ -204,7 +204,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 			index *= 3;
 			*target++ = *(source + index++);
 			*target++ = *(source + index++);
-			*target++ = *(source + index++);
+			*target++ = *(source + index);
 			auto next_front = 0;
 			auto next_back = face->numedges;
 			auto use_back = false;
@@ -232,7 +232,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 				index *= 3;
 				*target++ = *(source + index++);
 				*target++ = *(source + index++);
-				*target++ = *(source + index++);
+				*target++ = *(source + index);
 			}
 			vertexCount += face->numedges;
 		}
@@ -242,9 +242,8 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	XrMatrix4x4f attributes;
+	XrMatrix4x4f attributes { };
 	void* previousSource = nullptr;
-	attributes.m[15] = 0;
 	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto attributeCount = 0;
 	for (auto& entry : sorted)
@@ -288,14 +287,8 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	XrMatrix4x4f attributes;
+	XrMatrix4x4f attributes { };
 	void* previousSource = nullptr;
-	attributes.m[10] = 0;
-	attributes.m[11] = 0;
-	attributes.m[12] = 0;
-	attributes.m[13] = 0;
-	attributes.m[14] = 0;
-	attributes.m[15] = 0;
 	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto attributeCount = 0;
 	for (auto& entry : sorted)

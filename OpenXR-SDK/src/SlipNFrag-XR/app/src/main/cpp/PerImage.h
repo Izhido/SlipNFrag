@@ -24,11 +24,11 @@ struct PerImage
 	VkSubmitInfo submitInfo;
 
 	static float GammaCorrect(float component);
-	void LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer);
-	void FillColormapTextures(AppState& appState, PerFrame& perFrame, LoadedAlias& loaded);
+	static void LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer);
+	static void FillColormapTextures(AppState& appState, PerFrame& perFrame, LoadedAlias& loaded);
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillTexturePositionsFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryTexturePositionsBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
-	void FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer);
+	void FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer) const;
 };

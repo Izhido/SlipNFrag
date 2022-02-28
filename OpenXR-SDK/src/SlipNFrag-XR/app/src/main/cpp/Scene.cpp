@@ -1759,7 +1759,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	sorted.Cleanup(sorted.surfaces);
+	SortedSurfaces::Cleanup(sorted.surfaces);
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.surfacesRotated);
@@ -1769,7 +1769,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], loaded, size);
 		sorted.Sort(loaded, i, sorted.surfacesRotated);
 	}
-	sorted.Cleanup(sorted.surfacesRotated);
+	SortedSurfaces::Cleanup(sorted.surfacesRotated);
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.fences);
@@ -1782,7 +1782,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	sorted.Cleanup(sorted.fences);
+	SortedSurfaces::Cleanup(sorted.fences);
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.fencesRotated);
@@ -1792,7 +1792,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		GetStagingBufferSize(appState, d_lists.fences_rotated[i], loaded, size);
 		sorted.Sort(loaded, i, sorted.fencesRotated);
 	}
-	sorted.Cleanup(sorted.fencesRotated);
+	SortedSurfaces::Cleanup(sorted.fencesRotated);
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.turbulent);
@@ -1805,7 +1805,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	sorted.Cleanup(sorted.turbulent);
+	SortedSurfaces::Cleanup(sorted.turbulent);
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= lastTurbulentLit; i++)

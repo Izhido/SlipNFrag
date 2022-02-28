@@ -522,31 +522,31 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
-		appState.Scene.sorted.LoadVertices(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, offset);
-		appState.Scene.sorted.LoadVertices(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
-		appState.Scene.sorted.LoadVertices(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 	}
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
-		appState.Scene.sorted.LoadAttributes(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, offset);
-		appState.Scene.sorted.LoadAttributes(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
-		appState.Scene.sorted.LoadAttributes(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 	}
 	if (appState.Scene.sortedIndicesCount > 0)
 	{
 		if (appState.Scene.sortedIndices16Size > 0)
 		{
 			uint16_t indexBase = 0;
-			appState.Scene.sorted.LoadIndices16(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
-			appState.Scene.sorted.LoadIndices16(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
-			appState.Scene.sorted.LoadIndices16(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
 		}
 		else
 		{
 			uint32_t indexBase = 0;
-			appState.Scene.sorted.LoadIndices32(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
-			appState.Scene.sorted.LoadIndices32(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
-			appState.Scene.sorted.LoadIndices32(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
 		}
 	}
 
@@ -772,7 +772,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 }
 
-void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer)
+void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer) const
 {
 	appState.Scene.stagingBuffer.lastBarrier = -1;
 	appState.Scene.stagingBuffer.descriptorSetsInUse.clear();
