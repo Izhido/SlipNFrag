@@ -29,12 +29,12 @@ void SortedSurfaces::Sort(LoadedSurface& loaded, int index, std::list<SortedSurf
 	auto entry = addedLightmaps.find(lightmap);
 	if (entry == addedLightmaps.end())
 	{
-		sorted.push_back({ lightmap });
+		sorted.push_back({lightmap});
 		auto lightmapEntry = sorted.end();
 		lightmapEntry--;
-		lightmapEntry->textures.push_back({ texture });
+		lightmapEntry->textures.push_back({texture});
 		lightmapEntry->textures.back().entries.push_back(index);
-		addedLightmaps.insert({ lightmap, lightmapEntry });
+		addedLightmaps.insert({lightmap, lightmapEntry});
 	}
 	else
 	{
@@ -50,10 +50,32 @@ void SortedSurfaces::Sort(LoadedSurface& loaded, int index, std::list<SortedSurf
 		}
 		if (!subEntryFound)
 		{
-			entry->second->textures.push_back({ texture });
+			entry->second->textures.push_back({texture});
 			entry->second->textures.back().entries.push_back(index);
 		}
 	}
+}
+
+void SortedSurfaces::Sort(LoadedTurbulent& loaded, int index, std::list<SortedSurfaceTexture>& sorted)
+{
+	auto texture = loaded.texture.texture->descriptorSet;
+	auto entry = addedTextures.find(texture);
+	if (entry == addedTextures.end())
+	{
+		sorted.push_back({texture});
+		auto textureEntry = sorted.end();
+		textureEntry--;
+		textureEntry->entries.push_back(index);
+		addedTextures.insert({texture, textureEntry});
+	}
+	else
+	{
+		entry->second->entries.push_back(index);
+	}
+}
+
+void SortedSurfaces::Cleanup(std::list<SortedSurfaceLightmap>& sorted)
+{
 	for (auto entry = sorted.begin(); entry != sorted.end(); )
 	{
 		for (auto subEntry = entry->textures.begin(); subEntry != entry->textures.end(); )
@@ -78,22 +100,8 @@ void SortedSurfaces::Sort(LoadedSurface& loaded, int index, std::list<SortedSurf
 	}
 }
 
-void SortedSurfaces::Sort(LoadedTurbulent& loaded, int index, std::list<SortedSurfaceTexture>& sorted)
+void SortedSurfaces::Cleanup(std::list<SortedSurfaceTexture>& sorted)
 {
-	auto texture = loaded.texture.texture->descriptorSet;
-	auto entry = addedTextures.find(texture);
-	if (entry == addedTextures.end())
-	{
-		sorted.push_back({ texture });
-		auto textureEntry = sorted.end();
-		textureEntry--;
-		textureEntry->entries.push_back(index);
-		addedTextures.insert({ texture, textureEntry });
-	}
-	else
-	{
-		entry->second->entries.push_back(index);
-	}
 	for (auto entry = sorted.begin(); entry != sorted.end(); )
 	{
 		if (entry->entries.empty())
