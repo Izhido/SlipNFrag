@@ -5,7 +5,7 @@
 #extension GL_EXT_multiview : enable
 
 precision highp float;
-precision mediump int;
+precision highp int;
 
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
@@ -28,7 +28,7 @@ void main(void)
 	vec4 position = vec4(vertex.x, vertex.z, -vertex.y, vertex.w);
 	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * position;
 	vec2 texCoords = vec2(dot(vertex, texturePosition[0]), dot(vertex, texturePosition[1]));
-	vec2 lightmapSizeMinusOne = vec2(int(texturePosition[2].z) >> 4, int(texturePosition[2].w) >> 4);
+	vec2 lightmapSizeMinusOne = floor(texturePosition[2].zw / 16);
 	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * lightmapSizeMinusOne / texturePosition[2].zw;
 	fragmentData = vec4(lightmapCoords, texCoords / texturePosition[3].xy);
 }
