@@ -143,6 +143,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 				*target++ = *(source + index++);
 				*target++ = *(source + index++);
 				*target++ = *(source + index);
+				*target++ = 1;
 				auto next_front = 0;
 				auto next_back = face->numedges;
 				auto use_back = false;
@@ -171,12 +172,13 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 					*target++ = *(source + index++);
 					*target++ = *(source + index++);
 					*target++ = *(source + index);
+					*target++ = 1;
 				}
 				vertexCount += face->numedges;
 			}
 		}
 	}
-	offset += (vertexCount * 3 * sizeof(float));
+	offset += (vertexCount * 4 * sizeof(float));
 }
 
 void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
@@ -205,6 +207,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 			*target++ = *(source + index++);
 			*target++ = *(source + index++);
 			*target++ = *(source + index);
+			*target++ = 1;
 			auto next_front = 0;
 			auto next_back = face->numedges;
 			auto use_back = false;
@@ -233,11 +236,12 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 				*target++ = *(source + index++);
 				*target++ = *(source + index++);
 				*target++ = *(source + index);
+				*target++ = 1;
 			}
 			vertexCount += face->numedges;
 		}
 	}
-	offset += (vertexCount * 3 * sizeof(float));
+	offset += (vertexCount * 4 * sizeof(float));
 }
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)

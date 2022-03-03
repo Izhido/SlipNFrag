@@ -26,7 +26,16 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	auto loadedBuffer = appState.Scene.buffers.firstVertices;
 	while (loadedBuffer != nullptr)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedBuffer->source, loadedBuffer->size);
+		auto source = (float*)(loadedBuffer->source);
+		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto count = loadedBuffer->size / (3 * sizeof(float));
+		for (auto i = 0; i < count; i++)
+		{
+			*target++ = *source++;
+			*target++ = *source++;
+			*target++ = *source++;
+			*target++ = 1;
+		}
 		offset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
 	}
@@ -540,6 +549,10 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, indexBase, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, indexBase, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, indexBase, offset);
+			while (offset % 4 != 0)
+			{
+				offset++;
+			}
 		}
 		else
 		{
@@ -922,6 +935,10 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 			if (appState.Scene.indices16Size == 0)
 			{
 				appState.Scene.AddToBufferBarrier(perFrame.indices16->buffer);
+			}
+			while (bufferCopy.srcOffset % 4 != 0)
+			{
+				bufferCopy.srcOffset++;
 			}
 		}
 		else
