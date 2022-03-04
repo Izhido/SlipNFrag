@@ -134,6 +134,9 @@ struct Scene
 	VkDeviceSize sortedFenceVerticesBase;
 	VkDeviceSize sortedFenceAttributesBase;
 	VkDeviceSize sortedFenceIndicesBase;
+	VkDeviceSize sortedFenceRotatedVerticesBase;
+	VkDeviceSize sortedFenceRotatedAttributesBase;
+	VkDeviceSize sortedFenceRotatedIndicesBase;
 	VkDeviceSize sortedTurbulentVerticesBase;
 	VkDeviceSize sortedTurbulentAttributesBase;
 	VkDeviceSize sortedTurbulentIndicesBase;

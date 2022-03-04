@@ -4,7 +4,6 @@
 #include "CachedTextures.h"
 #include "PipelineDescriptorResources.h"
 #include "UpdatablePipelineDescriptorResources.h"
-#include "SurfaceRotatedPushConstants.h"
 #include "TurbulentLitPushConstants.h"
 #include "TurbulentRotatedLitPushConstants.h"
 #include "PerFrame.h"

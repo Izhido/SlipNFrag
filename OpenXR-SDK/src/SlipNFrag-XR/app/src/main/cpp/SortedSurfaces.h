@@ -24,6 +24,7 @@ struct SortedSurfaces
 	void Sort(LoadedTurbulent& loaded, int index, std::list<SortedSurfaceTexture>& sorted);
 	static void Cleanup(std::list<SortedSurfaceLightmap>& sorted);
 	static void Cleanup(std::list<SortedSurfaceTexture>& sorted);
+	static float* LoadVertices(LoadedTurbulent& loaded, float* target);
 	static void LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);

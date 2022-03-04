@@ -3,7 +3,6 @@
 #include "CachedBuffers.h"
 #include "CachedTextures.h"
 #include "UpdatablePipelineDescriptorResources.h"
-#include "SurfaceRotatedPushConstants.h"
 
 struct PerFrame
 {
@@ -49,7 +48,6 @@ struct PerFrame
 	VkDeviceSize coloredIndex16Base;
 
 	void Reset(AppState& appState);
-	static void SetPushConstants(const LoadedSurfaceRotated& loaded, SurfaceRotatedPushConstants& pushConstants);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	void Render(AppState& appState, VkCommandBuffer commandBuffer);
 };

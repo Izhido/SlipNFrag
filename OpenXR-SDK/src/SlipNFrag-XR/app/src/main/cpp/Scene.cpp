@@ -761,22 +761,18 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fencesRotated.stages.resize(2);
 	fencesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fencesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	fencesRotated.stages[0].module = surfaceRotatedVertex;
+	fencesRotated.stages[0].module = sortedSurfaceRotatedVertex;
 	fencesRotated.stages[0].pName = "main";
 	fencesRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fencesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fencesRotated.stages[1].module = fenceFragment;
+	fencesRotated.stages[1].module = sortedFenceFragment;
 	fencesRotated.stages[1].pName = "main";
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = sizeof(uint32_t) + 6 * sizeof(float);
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fencesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = fencesRotated.stages.data();
 	graphicsPipelineCreateInfo.layout = fencesRotated.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
+	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceRotatedAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceRotatedAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotated.pipeline));
 
 	turbulent.stages.resize(2);
@@ -792,6 +788,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulent.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = turbulent.stages.size();
 	graphicsPipelineCreateInfo.pStages = turbulent.stages.data();
@@ -1827,6 +1825,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fences);
+	sortedFenceRotatedVerticesBase = sortedVerticesSize;
+	sortedFenceRotatedAttributesBase = sortedAttributesSize;
+	sortedFenceRotatedIndicesBase = sortedIndicesCount;
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.fencesRotated);
@@ -1835,6 +1836,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedFencesRotated[i];
 		GetStagingBufferSize(appState, d_lists.fences_rotated[i], loaded, size);
 		sorted.Sort(loaded, i, sorted.fencesRotated);
+		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fencesRotated);
 	sortedTurbulentVerticesBase = sortedVerticesSize;
@@ -1988,6 +1992,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndices32Size = 0;
 		sortedSurfaceRotatedIndicesBase *= sizeof(uint16_t);
 		sortedFenceIndicesBase *= sizeof(uint16_t);
+		sortedFenceRotatedIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentIndicesBase *= sizeof(uint16_t);
 	}
 	else
@@ -1996,6 +2001,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndices32Size = sortedIndicesCount * sizeof(uint32_t);
 		sortedSurfaceRotatedIndicesBase *= sizeof(uint32_t);
 		sortedFenceIndicesBase *= sizeof(uint32_t);
+		sortedFenceRotatedIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentIndicesBase *= sizeof(uint32_t);
 	}
 

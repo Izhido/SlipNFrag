@@ -115,199 +115,102 @@ void SortedSurfaces::Cleanup(std::list<SortedSurfaceTexture>& sorted)
 	}
 }
 
+float* SortedSurfaces::LoadVertices(LoadedTurbulent& loaded, float* target)
+{
+	auto face = (msurface_t*)loaded.indices.firstSource;
+	auto model = (model_t*)loaded.indices.secondSource;
+	auto edge = model->surfedges[face->firstedge];
+	auto source = (float*)loaded.vertices.source;
+	unsigned int index;
+	if (edge >= 0)
+	{
+		index = model->edges[edge].v[0];
+	}
+	else
+	{
+		index = model->edges[-edge].v[1];
+	}
+	index *= 3;
+	*target++ = *(source + index++);
+	*target++ = *(source + index++);
+	*target++ = *(source + index);
+	*target++ = 1;
+	auto next_front = 0;
+	auto next_back = face->numedges;
+	auto use_back = false;
+	for (auto j = 1; j < face->numedges; j++)
+	{
+		if (use_back)
+		{
+			next_back--;
+			edge = model->surfedges[face->firstedge + next_back];
+		}
+		else
+		{
+			next_front++;
+			edge = model->surfedges[face->firstedge + next_front];
+		}
+		use_back = !use_back;
+		if (edge >= 0)
+		{
+			index = model->edges[edge].v[0];
+		}
+		else
+		{
+			index = model->edges[-edge].v[1];
+		}
+		index *= 3;
+		*target++ = *(source + index++);
+		*target++ = *(source + index++);
+		*target++ = *(source + index);
+		*target++ = 1;
+	}
+	return target;
+}
+
 void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-	auto vertexCount = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto& subEntry : entry.textures)
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				auto face = (msurface_t*)surface.indices.firstSource;
-				auto model = (model_t*)surface.indices.secondSource;
-				auto edge = model->surfedges[face->firstedge];
-				auto source = (float*)surface.vertices.source;
-				uint32_t index;
-				if (edge >= 0)
-				{
-					index = model->edges[edge].v[0];
-				}
-				else
-				{
-					index = model->edges[-edge].v[1];
-				}
-				index *= 3;
-				*target++ = *(source + index++);
-				*target++ = *(source + index++);
-				*target++ = *(source + index);
-				*target++ = 1;
-				auto next_front = 0;
-				auto next_back = face->numedges;
-				auto use_back = false;
-				for (auto j = 1; j < face->numedges; j++)
-				{
-					if (use_back)
-					{
-						next_back--;
-						edge = model->surfedges[face->firstedge + next_back];
-					}
-					else
-					{
-						next_front++;
-						edge = model->surfedges[face->firstedge + next_front];
-					}
-					use_back = !use_back;
-					if (edge >= 0)
-					{
-						index = model->edges[edge].v[0];
-					}
-					else
-					{
-						index = model->edges[-edge].v[1];
-					}
-					index *= 3;
-					*target++ = *(source + index++);
-					*target++ = *(source + index++);
-					*target++ = *(source + index);
-					*target++ = 1;
-				}
-				vertexCount += face->numedges;
+				target = LoadVertices(loaded[i], target);
 			}
 		}
 	}
-	offset += (vertexCount * 4 * sizeof(float));
+	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
 void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-	auto vertexCount = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto& subEntry : entry.textures)
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				auto face = (msurface_t*)surface.indices.firstSource;
-				auto model = (model_t*)surface.indices.secondSource;
-				auto edge = model->surfedges[face->firstedge];
-				auto source = (float*)surface.vertices.source;
-				uint32_t index;
-				if (edge >= 0)
-				{
-					index = model->edges[edge].v[0];
-				}
-				else
-				{
-					index = model->edges[-edge].v[1];
-				}
-				index *= 3;
-				*target++ = *(source + index++);
-				*target++ = *(source + index++);
-				*target++ = *(source + index);
-				*target++ = 1;
-				auto next_front = 0;
-				auto next_back = face->numedges;
-				auto use_back = false;
-				for (auto j = 1; j < face->numedges; j++)
-				{
-					if (use_back)
-					{
-						next_back--;
-						edge = model->surfedges[face->firstedge + next_back];
-					}
-					else
-					{
-						next_front++;
-						edge = model->surfedges[face->firstedge + next_front];
-					}
-					use_back = !use_back;
-					if (edge >= 0)
-					{
-						index = model->edges[edge].v[0];
-					}
-					else
-					{
-						index = model->edges[-edge].v[1];
-					}
-					index *= 3;
-					*target++ = *(source + index++);
-					*target++ = *(source + index++);
-					*target++ = *(source + index);
-					*target++ = 1;
-				}
-				vertexCount += face->numedges;
+				target = LoadVertices(loaded[i], target);
 			}
 		}
 	}
-	offset += (vertexCount * 4 * sizeof(float));
+	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
 void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-	auto vertexCount = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto i : entry.entries)
 		{
-			auto& surface = loaded[i];
-			auto face = (msurface_t*)surface.indices.firstSource;
-			auto model = (model_t*)surface.indices.secondSource;
-			auto edge = model->surfedges[face->firstedge];
-			auto source = (float*)surface.vertices.source;
-			uint32_t index;
-			if (edge >= 0)
-			{
-				index = model->edges[edge].v[0];
-			}
-			else
-			{
-				index = model->edges[-edge].v[1];
-			}
-			index *= 3;
-			*target++ = *(source + index++);
-			*target++ = *(source + index++);
-			*target++ = *(source + index);
-			*target++ = 1;
-			auto next_front = 0;
-			auto next_back = face->numedges;
-			auto use_back = false;
-			for (auto j = 1; j < face->numedges; j++)
-			{
-				if (use_back)
-				{
-					next_back--;
-					edge = model->surfedges[face->firstedge + next_back];
-				}
-				else
-				{
-					next_front++;
-					edge = model->surfedges[face->firstedge + next_front];
-				}
-				use_back = !use_back;
-				if (edge >= 0)
-				{
-					index = model->edges[edge].v[0];
-				}
-				else
-				{
-					index = model->edges[-edge].v[1];
-				}
-				index *= 3;
-				*target++ = *(source + index++);
-				*target++ = *(source + index++);
-				*target++ = *(source + index);
-				*target++ = 1;
-			}
-			vertexCount += face->numedges;
+			target = LoadVertices(loaded[i], target);
 		}
 	}
-	offset += (vertexCount * 4 * sizeof(float));
+	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
