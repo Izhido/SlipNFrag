@@ -34,9 +34,9 @@ struct Scene
 	Pipeline fences;
 	Pipeline fencesRotated;
 	Pipeline turbulent;
-	Pipeline turbulentLit;
 	Pipeline turbulentRotated;
-	Pipeline turbulentRotatedLit;
+	Pipeline turbulentLit;
+	Pipeline turbulentLitRotated;
 	Pipeline sprites;
 	Pipeline alias;
 	Pipeline viewmodel;
@@ -56,9 +56,9 @@ struct Scene
 	int lastFence;
 	int lastFenceRotated;
 	int lastTurbulent;
-	int lastTurbulentLit;
 	int lastTurbulentRotated;
-	int lastTurbulentRotatedLit;
+	int lastTurbulentLit;
+	int lastTurbulentLitRotated;
 	int lastSprite;
 	int lastAlias;
 	int lastViewmodel;
@@ -72,9 +72,9 @@ struct Scene
 	std::vector<LoadedSurface> loadedFences;
 	std::vector<LoadedSurfaceRotated> loadedFencesRotated;
 	std::vector<LoadedTurbulent> loadedTurbulent;
-	std::vector<LoadedSurface> loadedTurbulentLit;
 	std::vector<LoadedTurbulentRotated> loadedTurbulentRotated;
-	std::vector<LoadedSurfaceRotated> loadedTurbulentRotatedLit;
+	std::vector<LoadedSurface> loadedTurbulentLit;
+	std::vector<LoadedSurfaceRotated> loadedTurbulentLitRotated;
 	std::vector<LoadedSprite> loadedSprites;
 	std::vector<LoadedAlias> loadedAlias;
 	std::vector<LoadedAlias> loadedViewmodels;

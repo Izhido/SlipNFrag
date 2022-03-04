@@ -22,9 +22,9 @@ void D_ResetLists ()
 	d_lists.last_fence = -1;
 	d_lists.last_fence_rotated = -1;
 	d_lists.last_turbulent = -1;
-	d_lists.last_turbulent_lit = -1;
 	d_lists.last_turbulent_rotated = -1;
-	d_lists.last_turbulent_rotated_lit = -1;
+	d_lists.last_turbulent_lit = -1;
+	d_lists.last_turbulent_lit_rotated = -1;
 	d_lists.last_sprite = -1;
 	d_lists.last_alias = -1;
 	d_lists.last_viewmodel = -1;
@@ -168,6 +168,27 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	D_FillTurbulentData(turbulent, face, entity);
 }
 
+void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity)
+{
+	if (face->numedges < 3)
+	{
+		return;
+	}
+	d_lists.last_turbulent_rotated++;
+	if (d_lists.last_turbulent_rotated >= d_lists.turbulent_rotated.size())
+	{
+		d_lists.turbulent_rotated.emplace_back();
+	}
+	auto& turbulent = d_lists.turbulent_rotated[d_lists.last_turbulent_rotated];
+	D_FillTurbulentData(turbulent, face, entity);
+	turbulent.origin_x = entity->origin[0];
+	turbulent.origin_y = entity->origin[1];
+	turbulent.origin_z = entity->origin[2];
+	turbulent.yaw = entity->angles[YAW];
+	turbulent.pitch = entity->angles[PITCH];
+	turbulent.roll = entity->angles[ROLL];
+}
+
 void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3)
@@ -194,39 +215,18 @@ void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* e
 	memcpy(d_lists.lightmap_texels.data() + turbulent.lightmap_texels, &cache->data[0], turbulent.lightmap_size * sizeof(unsigned));
 }
 
-void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity)
+void D_AddTurbulentLitRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3)
 	{
 		return;
 	}
-	d_lists.last_turbulent_rotated++;
-	if (d_lists.last_turbulent_rotated >= d_lists.turbulent_rotated.size())
+	d_lists.last_turbulent_lit_rotated++;
+	if (d_lists.last_turbulent_lit_rotated >= d_lists.turbulent_lit_rotated.size())
 	{
-		d_lists.turbulent_rotated.emplace_back();
+		d_lists.turbulent_lit_rotated.emplace_back();
 	}
-	auto& turbulent = d_lists.turbulent_rotated[d_lists.last_turbulent_rotated];
-	D_FillTurbulentData(turbulent, face, entity);
-	turbulent.origin_x = entity->origin[0];
-	turbulent.origin_y = entity->origin[1];
-	turbulent.origin_z = entity->origin[2];
-	turbulent.yaw = entity->angles[YAW];
-	turbulent.pitch = entity->angles[PITCH];
-	turbulent.roll = entity->angles[ROLL];
-}
-
-void D_AddTurbulentRotatedLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
-{
-	if (face->numedges < 3)
-	{
-		return;
-	}
-	d_lists.last_turbulent_rotated_lit++;
-	if (d_lists.last_turbulent_rotated_lit >= d_lists.turbulent_rotated_lit.size())
-	{
-		d_lists.turbulent_rotated_lit.emplace_back();
-	}
-	auto& turbulent = d_lists.turbulent_rotated_lit[d_lists.last_turbulent_rotated_lit];
+	auto& turbulent = d_lists.turbulent_lit_rotated[d_lists.last_turbulent_lit_rotated];
 	D_FillTurbulentData(turbulent, face, entity);
 	turbulent.origin_x = entity->origin[0];
 	turbulent.origin_y = entity->origin[1];

@@ -4,8 +4,7 @@
 #include "CachedTextures.h"
 #include "PipelineDescriptorResources.h"
 #include "UpdatablePipelineDescriptorResources.h"
-#include "TurbulentLitPushConstants.h"
-#include "TurbulentRotatedLitPushConstants.h"
+#include "TurbulentLitRotatedPushConstants.h"
 #include "PerFrame.h"
 
 struct PerImage

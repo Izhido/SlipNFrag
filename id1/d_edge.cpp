@@ -625,7 +625,7 @@ void D_DrawSurfacesToLists (void)
 						}
 						else
 						{
-							D_AddTurbulentRotatedLitToLists (pface, pcurrentcache, currententity);
+							D_AddTurbulentLitRotatedToLists (pface, pcurrentcache, currententity);
 						}
 					}
 					else
@@ -853,7 +853,7 @@ void D_DrawSurfacesToListsIfNeeded (void)
 						}
 						else
 						{
-							D_AddTurbulentRotatedLitToLists (pface, pcurrentcache, currententity);
+							D_AddTurbulentLitRotatedToLists (pface, pcurrentcache, currententity);
 						}
 					}
 					else
@@ -1036,7 +1036,7 @@ void D_DrawOneSurface (msurface_t* surf)
 					}
 					else
 					{
-						D_AddTurbulentRotatedLitToLists (surf, pcurrentcache, currententity);
+						D_AddTurbulentLitRotatedToLists (surf, pcurrentcache, currententity);
 					}
 				}
 				else
