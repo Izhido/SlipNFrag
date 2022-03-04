@@ -355,6 +355,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/sorted_surface.vert.spv", &sortedSurfaceVertex);
 	VkShaderModule sortedSurfaceFragment;
 	CreateShader(appState, app, "shaders/sorted_surface.frag.spv", &sortedSurfaceFragment);
+	VkShaderModule sortedSurfaceRotatedVertex;
+	CreateShader(appState, app, "shaders/sorted_surface_rotated.vert.spv", &sortedSurfaceRotatedVertex);
 	VkShaderModule surfaceVertex;
 	CreateShader(appState, app, "shaders/surface.vert.spv", &surfaceVertex);
 	VkShaderModule surfaceRotatedVertex;
@@ -509,6 +511,44 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	sortedSurfaceAttributes.vertexInputState.pVertexAttributeDescriptions = sortedSurfaceAttributes.vertexAttributes.data();
 	sortedSurfaceAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	sortedSurfaceAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+	PipelineAttributes sortedSurfaceRotatedAttributes { };
+	sortedSurfaceRotatedAttributes.vertexAttributes.resize(7);
+	sortedSurfaceRotatedAttributes.vertexBindings.resize(2);
+	sortedSurfaceRotatedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceRotatedAttributes.vertexBindings[0].stride = 4 * sizeof(float);
+	sortedSurfaceRotatedAttributes.vertexAttributes[1].location = 1;
+	sortedSurfaceRotatedAttributes.vertexAttributes[1].binding = 1;
+	sortedSurfaceRotatedAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceRotatedAttributes.vertexAttributes[2].location = 2;
+	sortedSurfaceRotatedAttributes.vertexAttributes[2].binding = 1;
+	sortedSurfaceRotatedAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceRotatedAttributes.vertexAttributes[2].offset = 4 * sizeof(float);
+	sortedSurfaceRotatedAttributes.vertexAttributes[3].location = 3;
+	sortedSurfaceRotatedAttributes.vertexAttributes[3].binding = 1;
+	sortedSurfaceRotatedAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceRotatedAttributes.vertexAttributes[3].offset = 8 * sizeof(float);
+	sortedSurfaceRotatedAttributes.vertexAttributes[4].location = 4;
+	sortedSurfaceRotatedAttributes.vertexAttributes[4].binding = 1;
+	sortedSurfaceRotatedAttributes.vertexAttributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceRotatedAttributes.vertexAttributes[4].offset = 12 * sizeof(float);
+	sortedSurfaceRotatedAttributes.vertexAttributes[5].location = 5;
+	sortedSurfaceRotatedAttributes.vertexAttributes[5].binding = 1;
+	sortedSurfaceRotatedAttributes.vertexAttributes[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceRotatedAttributes.vertexAttributes[5].offset = 16 * sizeof(float);
+	sortedSurfaceRotatedAttributes.vertexAttributes[6].location = 6;
+	sortedSurfaceRotatedAttributes.vertexAttributes[6].binding = 1;
+	sortedSurfaceRotatedAttributes.vertexAttributes[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	sortedSurfaceRotatedAttributes.vertexAttributes[6].offset = 20 * sizeof(float);
+	sortedSurfaceRotatedAttributes.vertexBindings[1].binding = 1;
+	sortedSurfaceRotatedAttributes.vertexBindings[1].stride = 24 * sizeof(float);
+	sortedSurfaceRotatedAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	sortedSurfaceRotatedAttributes.vertexInputState.vertexBindingDescriptionCount = sortedSurfaceRotatedAttributes.vertexBindings.size();
+	sortedSurfaceRotatedAttributes.vertexInputState.pVertexBindingDescriptions = sortedSurfaceRotatedAttributes.vertexBindings.data();
+	sortedSurfaceRotatedAttributes.vertexInputState.vertexAttributeDescriptionCount = sortedSurfaceRotatedAttributes.vertexAttributes.size();
+	sortedSurfaceRotatedAttributes.vertexInputState.pVertexAttributeDescriptions = sortedSurfaceRotatedAttributes.vertexAttributes.data();
+	sortedSurfaceRotatedAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	sortedSurfaceRotatedAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	PipelineAttributes surfaceAttributes { };
 	surfaceAttributes.vertexAttributes.resize(5);
@@ -687,22 +727,18 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRotated.stages.resize(2);
 	surfacesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfacesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	surfacesRotated.stages[0].module = surfaceRotatedVertex;
+	surfacesRotated.stages[0].module = sortedSurfaceRotatedVertex;
 	surfacesRotated.stages[0].pName = "main";
 	surfacesRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfacesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	surfacesRotated.stages[1].module = surfaceFragment;
+	surfacesRotated.stages[1].module = sortedSurfaceFragment;
 	surfacesRotated.stages[1].pName = "main";
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = sizeof(uint32_t) + 6 * sizeof(float);
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfacesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfacesRotated.stages.data();
 	graphicsPipelineCreateInfo.layout = surfacesRotated.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
+	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceRotatedAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceRotatedAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRotated.pipeline));
 
 	fences.stages.resize(2);
@@ -714,8 +750,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fences.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fences.stages[1].module = sortedFenceFragment;
 	fences.stages[1].pName = "main";
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fences.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fences.stages.size();
 	graphicsPipelineCreateInfo.pStages = fences.stages.data();
@@ -986,6 +1020,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, surfaceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, sortedSurfaceRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, sortedSurfaceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, sortedSurfaceVertex, nullptr);
 
@@ -1755,11 +1790,14 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedSurfaces[i];
 		GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
 		sorted.Sort(loaded, i, sorted.surfaces);
-		appState.Scene.sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
+		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfaces);
+	sortedSurfaceRotatedVerticesBase = sortedVerticesSize;
+	sortedSurfaceRotatedAttributesBase = sortedAttributesSize;
+	sortedSurfaceRotatedIndicesBase = sortedIndicesCount;
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.surfacesRotated);
@@ -1768,8 +1806,14 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedSurfacesRotated[i];
 		GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], loaded, size);
 		sorted.Sort(loaded, i, sorted.surfacesRotated);
+		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfacesRotated);
+	sortedFenceVerticesBase = sortedVerticesSize;
+	sortedFenceAttributesBase = sortedAttributesSize;
+	sortedFenceIndicesBase = sortedIndicesCount;
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.fences);
@@ -1778,9 +1822,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedFences[i];
 		GetStagingBufferSize(appState, d_lists.fences[i], loaded, size);
 		sorted.Sort(loaded, i, sorted.fences);
-		appState.Scene.sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
+		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fences);
 	previousVertexes = nullptr;
@@ -1793,6 +1837,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(loaded, i, sorted.fencesRotated);
 	}
 	SortedSurfaces::Cleanup(sorted.fencesRotated);
+	sortedTurbulentVerticesBase = sortedVerticesSize;
+	sortedTurbulentAttributesBase = sortedAttributesSize;
+	sortedTurbulentIndicesBase = sortedIndicesCount;
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.turbulent);
@@ -1801,9 +1848,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedTurbulent[i];
 		GetStagingBufferSize(appState, d_lists.turbulent[i], loaded, size);
 		sorted.Sort(loaded, i, sorted.turbulent);
-		appState.Scene.sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-		appState.Scene.sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		appState.Scene.sortedIndicesCount += ((loaded.count - 2) * 3);
+		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulent);
 	previousVertexes = nullptr;
@@ -1939,11 +1986,17 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		sortedIndices16Size = sortedIndicesCount * sizeof(uint16_t);
 		sortedIndices32Size = 0;
+		sortedSurfaceRotatedIndicesBase *= sizeof(uint16_t);
+		sortedFenceIndicesBase *= sizeof(uint16_t);
+		sortedTurbulentIndicesBase *= sizeof(uint16_t);
 	}
 	else
 	{
 		sortedIndices16Size = 0;
 		sortedIndices32Size = sortedIndicesCount * sizeof(uint32_t);
+		sortedSurfaceRotatedIndicesBase *= sizeof(uint32_t);
+		sortedFenceIndicesBase *= sizeof(uint32_t);
+		sortedTurbulentIndicesBase *= sizeof(uint32_t);
 	}
 
 	if (appState.IndexTypeUInt8Enabled)

@@ -128,6 +128,15 @@ struct Scene
 	VkDeviceSize sortedIndicesCount;
 	VkDeviceSize sortedIndices16Size;
 	VkDeviceSize sortedIndices32Size;
+	VkDeviceSize sortedSurfaceRotatedVerticesBase;
+	VkDeviceSize sortedSurfaceRotatedAttributesBase;
+	VkDeviceSize sortedSurfaceRotatedIndicesBase;
+	VkDeviceSize sortedFenceVerticesBase;
+	VkDeviceSize sortedFenceAttributesBase;
+	VkDeviceSize sortedFenceIndicesBase;
+	VkDeviceSize sortedTurbulentVerticesBase;
+	VkDeviceSize sortedTurbulentAttributesBase;
+	VkDeviceSize sortedTurbulentIndicesBase;
 	VkDeviceSize paletteSize;
 	VkDeviceSize host_colormapSize;
 	VkDeviceSize skySize;
