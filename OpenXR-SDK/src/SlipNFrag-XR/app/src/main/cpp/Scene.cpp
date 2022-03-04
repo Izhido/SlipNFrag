@@ -357,16 +357,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/sorted_surface.frag.spv", &sortedSurfaceFragment);
 	VkShaderModule sortedSurfaceRotatedVertex;
 	CreateShader(appState, app, "shaders/sorted_surface_rotated.vert.spv", &sortedSurfaceRotatedVertex);
-	VkShaderModule surfaceVertex;
-	CreateShader(appState, app, "shaders/surface.vert.spv", &surfaceVertex);
-	VkShaderModule surfaceRotatedVertex;
-	CreateShader(appState, app, "shaders/surface_rotated.vert.spv", &surfaceRotatedVertex);
-	VkShaderModule surfaceFragment;
-	CreateShader(appState, app, "shaders/surface.frag.spv", &surfaceFragment);
 	VkShaderModule sortedFenceFragment;
 	CreateShader(appState, app, "shaders/sorted_fence.frag.spv", &sortedFenceFragment);
-	VkShaderModule fenceFragment;
-	CreateShader(appState, app, "shaders/fence.frag.spv", &fenceFragment);
 	VkShaderModule turbulentVertex;
 	CreateShader(appState, app, "shaders/turbulent.vert.spv", &turbulentVertex);
 	VkShaderModule turbulentFragment;
@@ -818,7 +810,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulentLit.stages.resize(2);
 	turbulentLit.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentLit.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	turbulentLit.stages[0].module = surfaceVertex;
+	turbulentLit.stages[0].module = sortedSurfaceVertex;
 	turbulentLit.stages[0].pName = "main";
 	turbulentLit.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentLit.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -827,29 +819,30 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetLayouts[0] = twoBuffersAndImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = sizeof(float) + sizeof(uint32_t);
+	pushConstantInfo.size = sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentLit.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = turbulentLit.stages.size();
 	graphicsPipelineCreateInfo.pStages = turbulentLit.stages.data();
 	graphicsPipelineCreateInfo.layout = turbulentLit.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
+	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentLit.pipeline));
 
 	turbulentLitRotated.stages.resize(2);
 	turbulentLitRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentLitRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	turbulentLitRotated.stages[0].module = surfaceRotatedVertex;
+	turbulentLitRotated.stages[0].module = sortedSurfaceRotatedVertex;
 	turbulentLitRotated.stages[0].pName = "main";
 	turbulentLitRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentLitRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	turbulentLitRotated.stages[1].module = turbulentLitRotatedFragment;
 	turbulentLitRotated.stages[1].pName = "main";
-	pushConstantInfo.size = sizeof(uint32_t) + 7 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentLitRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = turbulentLitRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = turbulentLitRotated.stages.data();
 	graphicsPipelineCreateInfo.layout = turbulentLitRotated.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceRotatedAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceRotatedAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentLitRotated.pipeline));
 
 	sprites.stages.resize(2);
@@ -1007,14 +1000,13 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, aliasVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, spriteFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, spriteVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, turbulentLitRotatedFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, turbulentLitFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, turbulentRotatedFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentVertex, nullptr);
-	vkDestroyShaderModule(appState.Device, fenceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, sortedFenceFragment, nullptr);
-	vkDestroyShaderModule(appState.Device, surfaceFragment, nullptr);
-	vkDestroyShaderModule(appState.Device, surfaceRotatedVertex, nullptr);
-	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, sortedSurfaceRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, sortedSurfaceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, sortedSurfaceVertex, nullptr);
@@ -1860,17 +1852,36 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		GetStagingBufferSize(appState, d_lists.turbulent_rotated[i], loadedTurbulentRotated[i], size);
 	}
+	sortedTurbulentLitVerticesBase = sortedVerticesSize;
+	sortedTurbulentLitAttributesBase = sortedAttributesSize;
+	sortedTurbulentLitIndicesBase = sortedIndicesCount;
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
+	sorted.Initialize(sorted.turbulentLit);
 	for (auto i = 0; i <= lastTurbulentLit; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.turbulent_lit[i], loadedTurbulentLit[i], size);
+		auto& loaded = loadedTurbulentLit[i];
+		GetStagingBufferSize(appState, d_lists.turbulent_lit[i], loaded, size);
+		sorted.Sort(loaded, i, sorted.turbulentLit);
+		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
+	SortedSurfaces::Cleanup(sorted.turbulentLit);
+	sortedTurbulentLitRotatedVerticesBase = sortedVerticesSize;
+	sortedTurbulentLitRotatedAttributesBase = sortedAttributesSize;
+	sortedTurbulentLitRotatedIndicesBase = sortedIndicesCount;
 	previousVertexes = nullptr;
 	previousTexture = nullptr;
+	sorted.Initialize(sorted.turbulentLitRotated);
 	for (auto i = 0; i <= lastTurbulentLitRotated; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.turbulent_lit_rotated[i], loadedTurbulentLitRotated[i], size);
+		auto& loaded = loadedTurbulentLitRotated[i];
+		GetStagingBufferSize(appState, d_lists.turbulent_lit_rotated[i], loaded, size);
+		sorted.Sort(loaded, i, sorted.turbulentLitRotated);
+		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	previousTexture = nullptr;
 	for (auto i = 0; i <= lastSprite; i++)
@@ -1991,6 +2002,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedFenceIndicesBase *= sizeof(uint16_t);
 		sortedFenceRotatedIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentIndicesBase *= sizeof(uint16_t);
+		sortedTurbulentLitIndicesBase *= sizeof(uint16_t);
+		sortedTurbulentLitRotatedIndicesBase *= sizeof(uint16_t);
 	}
 	else
 	{
@@ -2000,6 +2013,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedFenceIndicesBase *= sizeof(uint32_t);
 		sortedFenceRotatedIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentIndicesBase *= sizeof(uint32_t);
+		sortedTurbulentLitIndicesBase *= sizeof(uint32_t);
+		sortedTurbulentLitRotatedIndicesBase *= sizeof(uint32_t);
 	}
 
 	if (appState.IndexTypeUInt8Enabled)

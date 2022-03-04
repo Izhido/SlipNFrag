@@ -17,20 +17,20 @@ layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
 
 layout(push_constant) uniform Time
 {
-	layout(offset = 0) int lightmapIndex;
-	layout(offset = 28) float time;
+	layout(offset = 0) float time;
 };
 
 layout(location = 0) in vec4 fragmentData;
+layout(location = 1) in flat highp int fragmentLightmapIndex;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
 	ivec2 lightmapCoords = ivec2(floor(fragmentData.xy));
-	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords, lightmapIndex), 0);
-	vec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y, lightmapIndex), 0);
-	vec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y + 1, lightmapIndex), 0);
-	vec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x, lightmapCoords.y + 1, lightmapIndex), 0);
+	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords, fragmentLightmapIndex), 0);
+	vec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y, fragmentLightmapIndex), 0);
+	vec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y + 1, fragmentLightmapIndex), 0);
+	vec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x, lightmapCoords.y + 1, fragmentLightmapIndex), 0);
 	vec2 lightmapCoordsDelta = floor(((fragmentData.xy - lightmapCoords) + 0.03125) * 16) / 16;
 	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
 	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
