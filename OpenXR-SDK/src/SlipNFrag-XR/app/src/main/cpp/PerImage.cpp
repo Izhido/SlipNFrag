@@ -28,7 +28,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	{
 		auto source = (float*)(loadedBuffer->source);
 		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		auto count = loadedBuffer->size / (3 * sizeof(float));
+		auto count = loadedBuffer->size / (4 * sizeof(float));
 		for (auto i = 0; i < count; i++)
 		{
 			*target++ = *source++;

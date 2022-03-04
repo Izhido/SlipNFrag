@@ -483,7 +483,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	PipelineAttributes sortedSurfaceAttributes { };
 	sortedSurfaceAttributes.vertexAttributes.resize(5);
 	sortedSurfaceAttributes.vertexBindings.resize(2);
-	sortedSurfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	sortedSurfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	sortedSurfaceAttributes.vertexBindings[0].stride = 4 * sizeof(float);
 	sortedSurfaceAttributes.vertexAttributes[1].location = 1;
 	sortedSurfaceAttributes.vertexAttributes[1].binding = 1;
@@ -513,7 +513,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	PipelineAttributes surfaceAttributes { };
 	surfaceAttributes.vertexAttributes.resize(5);
 	surfaceAttributes.vertexBindings.resize(2);
-	surfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	surfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	surfaceAttributes.vertexBindings[0].stride = 4 * sizeof(float);
 	surfaceAttributes.vertexAttributes[1].location = 1;
 	surfaceAttributes.vertexAttributes[1].binding = 1;

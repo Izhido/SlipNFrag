@@ -330,6 +330,7 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std
 {
 	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto index16Count = 0;
+	auto index = indexBase;
 	for (auto& entry : sorted)
 	{
 		for (auto& subEntry : entry.textures)
@@ -339,25 +340,25 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.indices.firstSource;
-				*target++ = indexBase++;
-				*target++ = indexBase++;
-				*target++ = indexBase++;
+				*target++ = index++;
+				*target++ = index++;
+				*target++ = index++;
 				auto revert = true;
 				for (auto j = 1; j < face->numedges - 2; j++)
 				{
 					if (revert)
 					{
-						*target++ = indexBase;
-						*target++ = indexBase - 1;
-						*target++ = indexBase - 2;
-						indexBase++;
+						*target++ = index;
+						*target++ = index - 1;
+						*target++ = index - 2;
 					}
 					else
 					{
-						*target++ = indexBase - 2;
-						*target++ = indexBase - 1;
-						*target++ = indexBase++;
+						*target++ = index - 2;
+						*target++ = index - 1;
+						*target++ = index;
 					}
+					index++;
 					revert = !revert;
 				}
 				auto count = (face->numedges - 2) * 3;
@@ -367,6 +368,7 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std
 			subEntry.indexCount = indexCount;
 		}
 	}
+	indexBase = index;
 	offset += (index16Count * sizeof(uint16_t));
 }
 
@@ -374,6 +376,7 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceTexture>& sorted, std:
 {
 	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto index16Count = 0;
+	auto index = indexBase;
 	for (auto& entry : sorted)
 	{
 		VkDeviceSize indexCount = 0;
@@ -381,25 +384,25 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceTexture>& sorted, std:
 		{
 			auto& surface = loaded[i];
 			auto face = (msurface_t*)surface.indices.firstSource;
-			*target++ = indexBase++;
-			*target++ = indexBase++;
-			*target++ = indexBase++;
+			*target++ = index++;
+			*target++ = index++;
+			*target++ = index++;
 			auto revert = true;
 			for (auto j = 1; j < face->numedges - 2; j++)
 			{
 				if (revert)
 				{
-					*target++ = indexBase;
-					*target++ = indexBase - 1;
-					*target++ = indexBase - 2;
-					indexBase++;
+					*target++ = index;
+					*target++ = index - 1;
+					*target++ = index - 2;
 				}
 				else
 				{
-					*target++ = indexBase - 2;
-					*target++ = indexBase - 1;
-					*target++ = indexBase++;
+					*target++ = index - 2;
+					*target++ = index - 1;
+					*target++ = index;
 				}
+				index++;
 				revert = !revert;
 			}
 			auto count = (face->numedges - 2) * 3;
@@ -408,6 +411,7 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceTexture>& sorted, std:
 		}
 		entry.indexCount = indexCount;
 	}
+	indexBase = index;
 	offset += (index16Count * sizeof(uint16_t));
 }
 
@@ -415,6 +419,7 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std
 {
 	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto index32Count = 0;
+	auto index = indexBase;
 	for (auto& entry : sorted)
 	{
 		for (auto& subEntry : entry.textures)
@@ -424,25 +429,25 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.indices.firstSource;
-				*target++ = indexBase++;
-				*target++ = indexBase++;
-				*target++ = indexBase++;
+				*target++ = index++;
+				*target++ = index++;
+				*target++ = index++;
 				auto revert = true;
 				for (auto j = 1; j < face->numedges - 2; j++)
 				{
 					if (revert)
 					{
-						*target++ = indexBase;
-						*target++ = indexBase - 1;
-						*target++ = indexBase - 2;
-						indexBase++;
+						*target++ = index;
+						*target++ = index - 1;
+						*target++ = index - 2;
 					}
 					else
 					{
-						*target++ = indexBase - 2;
-						*target++ = indexBase - 1;
-						*target++ = indexBase++;
+						*target++ = index - 2;
+						*target++ = index - 1;
+						*target++ = index;
 					}
+					index++;
 					revert = !revert;
 				}
 				auto count = (face->numedges - 2) * 3;
@@ -452,6 +457,7 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std
 			subEntry.indexCount = indexCount;
 		}
 	}
+	indexBase = index;
 	offset += (index32Count * sizeof(uint32_t));
 }
 
@@ -459,6 +465,7 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceTexture>& sorted, std:
 {
 	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto index32Count = 0;
+	auto index = indexBase;
 	for (auto& entry : sorted)
 	{
 		VkDeviceSize indexCount = 0;
@@ -466,25 +473,25 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceTexture>& sorted, std:
 		{
 			auto& surface = loaded[i];
 			auto face = (msurface_t*)surface.indices.firstSource;
-			*target++ = indexBase++;
-			*target++ = indexBase++;
-			*target++ = indexBase++;
+			*target++ = index++;
+			*target++ = index++;
+			*target++ = index++;
 			auto revert = true;
 			for (auto j = 1; j < face->numedges - 2; j++)
 			{
 				if (revert)
 				{
-					*target++ = indexBase;
-					*target++ = indexBase - 1;
-					*target++ = indexBase - 2;
-					indexBase++;
+					*target++ = index;
+					*target++ = index - 1;
+					*target++ = index - 2;
 				}
 				else
 				{
-					*target++ = indexBase - 2;
-					*target++ = indexBase - 1;
-					*target++ = indexBase++;
+					*target++ = index - 2;
+					*target++ = index - 1;
+					*target++ = index;
 				}
+				index++;
 				revert = !revert;
 			}
 			auto count = (face->numedges - 2) * 3;
@@ -493,5 +500,6 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceTexture>& sorted, std:
 		}
 		entry.indexCount = indexCount;
 	}
+	indexBase = index;
 	offset += (index32Count * sizeof(uint32_t));
 }
