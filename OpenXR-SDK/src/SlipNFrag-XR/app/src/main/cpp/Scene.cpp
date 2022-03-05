@@ -351,26 +351,20 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyBuffer(appState.Device, buffer, nullptr);
 	vkFreeMemory(appState.Device, memoryBlock, nullptr);
 
-	VkShaderModule sortedSurfaceVertex;
-	CreateShader(appState, app, "shaders/sorted_surface.vert.spv", &sortedSurfaceVertex);
-	VkShaderModule sortedSurfaceFragment;
-	CreateShader(appState, app, "shaders/sorted_surface.frag.spv", &sortedSurfaceFragment);
-	VkShaderModule sortedSurfaceRotatedVertex;
-	CreateShader(appState, app, "shaders/sorted_surface_rotated.vert.spv", &sortedSurfaceRotatedVertex);
-	VkShaderModule sortedFenceFragment;
-	CreateShader(appState, app, "shaders/sorted_fence.frag.spv", &sortedFenceFragment);
+	VkShaderModule surfaceVertex;
+	CreateShader(appState, app, "shaders/surface.vert.spv", &surfaceVertex);
+	VkShaderModule surfaceFragment;
+	CreateShader(appState, app, "shaders/surface.frag.spv", &surfaceFragment);
+	VkShaderModule surfaceRotatedVertex;
+	CreateShader(appState, app, "shaders/surface_rotated.vert.spv", &surfaceRotatedVertex);
+	VkShaderModule fenceFragment;
+	CreateShader(appState, app, "shaders/fence.frag.spv", &fenceFragment);
 	VkShaderModule turbulentVertex;
 	CreateShader(appState, app, "shaders/turbulent.vert.spv", &turbulentVertex);
 	VkShaderModule turbulentFragment;
 	CreateShader(appState, app, "shaders/turbulent.frag.spv", &turbulentFragment);
-	VkShaderModule turbulentRotatedVertex;
-	CreateShader(appState, app, "shaders/turbulent_rotated.vert.spv", &turbulentRotatedVertex);
-	VkShaderModule turbulentRotatedFragment;
-	CreateShader(appState, app, "shaders/turbulent_rotated.frag.spv", &turbulentRotatedFragment);
 	VkShaderModule turbulentLitFragment;
 	CreateShader(appState, app, "shaders/turbulent_lit.frag.spv", &turbulentLitFragment);
-	VkShaderModule turbulentLitRotatedFragment;
-	CreateShader(appState, app, "shaders/turbulent_lit_rotated.frag.spv", &turbulentLitRotatedFragment);
 	VkShaderModule spriteVertex;
 	CreateShader(appState, app, "shaders/sprite.vert.spv", &spriteVertex);
 	VkShaderModule spriteFragment;
@@ -697,11 +691,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaces.stages.resize(2);
 	surfaces.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfaces.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	surfaces.stages[0].module = sortedSurfaceVertex;
+	surfaces.stages[0].module = surfaceVertex;
 	surfaces.stages[0].pName = "main";
 	surfaces.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfaces.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	surfaces.stages[1].module = sortedSurfaceFragment;
+	surfaces.stages[1].module = surfaceFragment;
 	surfaces.stages[1].pName = "main";
 	descriptorSetLayouts[0] = twoBuffersAndImageLayout;
 	descriptorSetLayouts[1] = singleImageLayout;
@@ -719,11 +713,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRotated.stages.resize(2);
 	surfacesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfacesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	surfacesRotated.stages[0].module = sortedSurfaceRotatedVertex;
+	surfacesRotated.stages[0].module = surfaceRotatedVertex;
 	surfacesRotated.stages[0].pName = "main";
 	surfacesRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfacesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	surfacesRotated.stages[1].module = sortedSurfaceFragment;
+	surfacesRotated.stages[1].module = surfaceFragment;
 	surfacesRotated.stages[1].pName = "main";
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfacesRotated.stages.size();
@@ -736,11 +730,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fences.stages.resize(2);
 	fences.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fences.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	fences.stages[0].module = sortedSurfaceVertex;
+	fences.stages[0].module = surfaceVertex;
 	fences.stages[0].pName = "main";
 	fences.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fences.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fences.stages[1].module = sortedFenceFragment;
+	fences.stages[1].module = fenceFragment;
 	fences.stages[1].pName = "main";
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fences.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fences.stages.size();
@@ -753,11 +747,11 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fencesRotated.stages.resize(2);
 	fencesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fencesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	fencesRotated.stages[0].module = sortedSurfaceRotatedVertex;
+	fencesRotated.stages[0].module = surfaceRotatedVertex;
 	fencesRotated.stages[0].pName = "main";
 	fencesRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fencesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fencesRotated.stages[1].module = sortedFenceFragment;
+	fencesRotated.stages[1].module = fenceFragment;
 	fencesRotated.stages[1].pName = "main";
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fencesRotated.stages.size();
@@ -790,27 +784,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulent.pipeline));
 
-	turbulentRotated.stages.resize(2);
-	turbulentRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	turbulentRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	turbulentRotated.stages[0].module = turbulentRotatedVertex;
-	turbulentRotated.stages[0].pName = "main";
-	turbulentRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	turbulentRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	turbulentRotated.stages[1].module = turbulentRotatedFragment;
-	turbulentRotated.stages[1].pName = "main";
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 7 * sizeof(float);
-	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentRotated.pipelineLayout));
-	graphicsPipelineCreateInfo.stageCount = turbulentRotated.stages.size();
-	graphicsPipelineCreateInfo.pStages = turbulentRotated.stages.data();
-	graphicsPipelineCreateInfo.layout = turbulentRotated.pipelineLayout;
-	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentRotated.pipeline));
-
 	turbulentLit.stages.resize(2);
 	turbulentLit.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentLit.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	turbulentLit.stages[0].module = sortedSurfaceVertex;
+	turbulentLit.stages[0].module = surfaceVertex;
 	turbulentLit.stages[0].pName = "main";
 	turbulentLit.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentLit.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -827,23 +804,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentLit.pipeline));
-
-	turbulentLitRotated.stages.resize(2);
-	turbulentLitRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	turbulentLitRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	turbulentLitRotated.stages[0].module = sortedSurfaceRotatedVertex;
-	turbulentLitRotated.stages[0].pName = "main";
-	turbulentLitRotated.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	turbulentLitRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	turbulentLitRotated.stages[1].module = turbulentLitRotatedFragment;
-	turbulentLitRotated.stages[1].pName = "main";
-	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentLitRotated.pipelineLayout));
-	graphicsPipelineCreateInfo.stageCount = turbulentLitRotated.stages.size();
-	graphicsPipelineCreateInfo.pStages = turbulentLitRotated.stages.data();
-	graphicsPipelineCreateInfo.layout = turbulentLitRotated.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &sortedSurfaceRotatedAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &sortedSurfaceRotatedAttributes.inputAssemblyState;
-	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentLitRotated.pipeline));
 
 	sprites.stages.resize(2);
 	sprites.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -1000,16 +960,13 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, aliasVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, spriteFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, spriteVertex, nullptr);
-	vkDestroyShaderModule(appState.Device, turbulentLitRotatedFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentLitFragment, nullptr);
-	vkDestroyShaderModule(appState.Device, turbulentRotatedFragment, nullptr);
-	vkDestroyShaderModule(appState.Device, turbulentRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentVertex, nullptr);
-	vkDestroyShaderModule(appState.Device, sortedFenceFragment, nullptr);
-	vkDestroyShaderModule(appState.Device, sortedSurfaceRotatedVertex, nullptr);
-	vkDestroyShaderModule(appState.Device, sortedSurfaceFragment, nullptr);
-	vkDestroyShaderModule(appState.Device, sortedSurfaceVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, fenceFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, surfaceRotatedVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, surfaceFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 
 	for (auto& perFrame : appState.PerFrame)
 	{
@@ -1436,17 +1393,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 	loaded.count = turbulent.count;
 }
 
-void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size)
-{
-	GetStagingBufferSize(appState, (const dturbulent_t&)turbulent, loaded, size);
-	loaded.originX = turbulent.origin_x;
-	loaded.originY = turbulent.origin_y;
-	loaded.originZ = turbulent.origin_z;
-	loaded.yaw = turbulent.yaw;
-	loaded.pitch = turbulent.pitch;
-	loaded.roll = turbulent.roll;
-}
-
 void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size)
 {
 	if (previousTexture != sprite.data)
@@ -1683,9 +1629,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	lastFence = d_lists.last_fence;
 	lastFenceRotated = d_lists.last_fence_rotated;
 	lastTurbulent = d_lists.last_turbulent;
-	lastTurbulentRotated = d_lists.last_turbulent_rotated;
 	lastTurbulentLit = d_lists.last_turbulent_lit;
-	lastTurbulentLitRotated = d_lists.last_turbulent_lit_rotated;
 	lastSprite = d_lists.last_sprite;
 	lastAlias = d_lists.last_alias;
 	lastViewmodel = d_lists.last_viewmodel;
@@ -1726,17 +1670,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		loadedTurbulent.resize(lastTurbulent + 1);
 	}
-	if (lastTurbulentRotated >= loadedTurbulentRotated.size())
-	{
-		loadedTurbulentRotated.resize(lastTurbulentRotated + 1);
-	}
 	if (lastTurbulentLit >= loadedTurbulentLit.size())
 	{
 		loadedTurbulentLit.resize(lastTurbulentLit + 1);
-	}
-	if (lastTurbulentLitRotated >= loadedTurbulentLitRotated.size())
-	{
-		loadedTurbulentLitRotated.resize(lastTurbulentLitRotated + 1);
 	}
 	if (lastSprite >= loadedSprites.size())
 	{
@@ -1846,12 +1782,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulent);
-	previousVertexes = nullptr;
-	previousTexture = nullptr;
-	for (auto i = 0; i <= lastTurbulentRotated; i++)
-	{
-		GetStagingBufferSize(appState, d_lists.turbulent_rotated[i], loadedTurbulentRotated[i], size);
-	}
 	sortedTurbulentLitVerticesBase = sortedVerticesSize;
 	sortedTurbulentLitAttributesBase = sortedAttributesSize;
 	sortedTurbulentLitIndicesBase = sortedIndicesCount;
@@ -1868,21 +1798,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulentLit);
-	sortedTurbulentLitRotatedVerticesBase = sortedVerticesSize;
-	sortedTurbulentLitRotatedAttributesBase = sortedAttributesSize;
-	sortedTurbulentLitRotatedIndicesBase = sortedIndicesCount;
-	previousVertexes = nullptr;
-	previousTexture = nullptr;
-	sorted.Initialize(sorted.turbulentLitRotated);
-	for (auto i = 0; i <= lastTurbulentLitRotated; i++)
-	{
-		auto& loaded = loadedTurbulentLitRotated[i];
-		GetStagingBufferSize(appState, d_lists.turbulent_lit_rotated[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.turbulentLitRotated);
-		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
-		sortedIndicesCount += ((loaded.count - 2) * 3);
-	}
 	previousTexture = nullptr;
 	for (auto i = 0; i <= lastSprite; i++)
 	{
@@ -2003,7 +1918,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedFenceRotatedIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentLitIndicesBase *= sizeof(uint16_t);
-		sortedTurbulentLitRotatedIndicesBase *= sizeof(uint16_t);
 	}
 	else
 	{
@@ -2014,7 +1928,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedFenceRotatedIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentLitIndicesBase *= sizeof(uint32_t);
-		sortedTurbulentLitRotatedIndicesBase *= sizeof(uint32_t);
 	}
 
 	if (appState.IndexTypeUInt8Enabled)

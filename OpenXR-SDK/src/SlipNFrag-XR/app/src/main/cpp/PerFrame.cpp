@@ -44,7 +44,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 		appState.Scene.lastFence < 0 &&
 		appState.Scene.lastFenceRotated < 0 &&
 		appState.Scene.lastTurbulent < 0 &&
-		appState.Scene.lastTurbulentRotated < 0 &&
+		appState.Scene.lastTurbulentLit < 0 &&
 		appState.Scene.lastAlias < 0 &&
 		appState.Scene.lastViewmodel < 0 &&
 		appState.Scene.lastSky < 0 &&
@@ -337,52 +337,6 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 				indexBase += entry.indexCount;
 			}
 		}
-		if (appState.Scene.lastTurbulentRotated >= 0)
-		{
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
-			pushConstants[6] = (float)cl.time;
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexturePositions = nullptr;
-			VkDescriptorSet previousTextureDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryBuffer* previousIndices = nullptr;
-			for (auto i = 0; i <= appState.Scene.lastTurbulentRotated; i++)
-			{
-				auto& loaded = appState.Scene.loadedTurbulentRotated[i];
-				auto vertices = loaded.vertices.buffer;
-				if (previousVertices != vertices)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-					previousVertices = vertices;
-				}
-				auto texturePositions = loaded.texturePositions.texturePositions.buffer;
-				if (previousTexturePositions != texturePositions)
-				{
-					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texturePositions->buffer, &appState.NoOffset);
-					previousTexturePositions = texturePositions;
-				}
-				auto textureDescriptorSet = loaded.texture.texture->descriptorSet;
-				if (previousTextureDescriptorSet != textureDescriptorSet)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 1, 1, &textureDescriptorSet, 0, nullptr);
-					previousTextureDescriptorSet = textureDescriptorSet;
-				}
-				pushConstants[0] = loaded.originX;
-				pushConstants[1] = loaded.originY;
-				pushConstants[2] = loaded.originZ;
-				pushConstants[3] = loaded.yaw * M_PI / 180;
-				pushConstants[4] = loaded.pitch * M_PI / 180;
-				pushConstants[5] = -loaded.roll * M_PI / 180;
-				vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotated.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 7 * sizeof(float), pushConstants);
-				auto indices = loaded.indices.indices.buffer;
-				if (previousIndices != indices)
-				{
-					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-					previousIndices = indices;
-				}
-				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, loaded.texturePositions.texturePositions.firstInstance);
-			}
-		}
 		if (appState.Scene.lastTurbulentLit >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipeline);
@@ -408,36 +362,6 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 				for (auto& subEntry : entry.textures)
 				{
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
-					indexBase += subEntry.indexCount;
-				}
-			}
-		}
-		if (appState.Scene.lastTurbulentLitRotated >= 0)
-		{
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLitRotated.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLitRotated.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-			auto verticesBase = appState.Scene.verticesSize + appState.Scene.sortedTurbulentLitRotatedVerticesBase;
-			auto attributesBase = appState.Scene.attributesSize + appState.Scene.sortedTurbulentLitRotatedAttributesBase;
-			VkDeviceSize indexBase = 0;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &verticesBase);
-			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributesBase);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.sortedTurbulentLitRotatedIndicesBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedTurbulentLitRotatedIndicesBase, VK_INDEX_TYPE_UINT32);
-			}
-			auto time = (float)cl.time;
-			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentLitRotated.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
-			for (auto& entry : appState.Scene.sorted.turbulentLitRotated)
-			{
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLitRotated.pipelineLayout, 1, 1, &entry.lightmap, 0, nullptr);
-				for (auto& subEntry : entry.textures)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLitRotated.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
 					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
 					indexBase += subEntry.indexCount;
 				}

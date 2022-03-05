@@ -18,7 +18,6 @@ struct SortedSurfaces
 	std::list<SortedSurfaceLightmap> fencesRotated;
 	std::list<SortedSurfaceTexture> turbulent;
 	std::list<SortedSurfaceLightmap> turbulentLit;
-	std::list<SortedSurfaceLightmap> turbulentLitRotated;
 
 	void Initialize(std::list<SortedSurfaceLightmap>& sorted);
 	void Initialize(std::list<SortedSurfaceTexture>& sorted);

@@ -8,7 +8,6 @@
 #include "AliasVertices.h"
 #include "PerSurface.h"
 #include "LoadedSurfaceRotated.h"
-#include "LoadedTurbulentRotated.h"
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
 #include "CachedLightmaps.h"
@@ -34,9 +33,7 @@ struct Scene
 	Pipeline fences;
 	Pipeline fencesRotated;
 	Pipeline turbulent;
-	Pipeline turbulentRotated;
 	Pipeline turbulentLit;
-	Pipeline turbulentLitRotated;
 	Pipeline sprites;
 	Pipeline alias;
 	Pipeline viewmodel;
@@ -56,9 +53,7 @@ struct Scene
 	int lastFence;
 	int lastFenceRotated;
 	int lastTurbulent;
-	int lastTurbulentRotated;
 	int lastTurbulentLit;
-	int lastTurbulentLitRotated;
 	int lastSprite;
 	int lastAlias;
 	int lastViewmodel;
@@ -72,9 +67,7 @@ struct Scene
 	std::vector<LoadedSurface> loadedFences;
 	std::vector<LoadedSurfaceRotated> loadedFencesRotated;
 	std::vector<LoadedTurbulent> loadedTurbulent;
-	std::vector<LoadedTurbulentRotated> loadedTurbulentRotated;
 	std::vector<LoadedSurface> loadedTurbulentLit;
-	std::vector<LoadedSurfaceRotated> loadedTurbulentLitRotated;
 	std::vector<LoadedSprite> loadedSprites;
 	std::vector<LoadedAlias> loadedAlias;
 	std::vector<LoadedAlias> loadedViewmodels;
@@ -143,9 +136,6 @@ struct Scene
 	VkDeviceSize sortedTurbulentLitVerticesBase;
 	VkDeviceSize sortedTurbulentLitAttributesBase;
 	VkDeviceSize sortedTurbulentLitIndicesBase;
-	VkDeviceSize sortedTurbulentLitRotatedVerticesBase;
-	VkDeviceSize sortedTurbulentLitRotatedAttributesBase;
-	VkDeviceSize sortedTurbulentLitRotatedIndicesBase;
 	VkDeviceSize paletteSize;
 	VkDeviceSize host_colormapSize;
 	VkDeviceSize skySize;
@@ -170,7 +160,6 @@ struct Scene
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);

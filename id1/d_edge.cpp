@@ -590,48 +590,21 @@ void D_DrawSurfacesToLists (void)
 										// make entity passed in
 				}
 
-				if (currententity->origin[0] == 0 &&
-					currententity->origin[1] == 0 &&
-					currententity->origin[2] == 0 &&
-					currententity->angles[YAW] == 0 &&
-					currententity->angles[PITCH] == 0 &&
-					currententity->angles[ROLL] == 0)
+				if (pface->samples != nullptr)
 				{
-					if (pface->samples != nullptr)
+					pcurrentcache = D_CacheLightmap (pface);
+					if (pcurrentcache == nullptr)
 					{
-						pcurrentcache = D_CacheLightmap (pface);
-						if (pcurrentcache == nullptr)
-						{
-							D_AddTurbulentToLists (pface, currententity);
-						}
-						else
-						{
-							D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
-						}
+						D_AddTurbulentToLists (pface, currententity);
 					}
 					else
 					{
-						D_AddTurbulentToLists (pface, currententity);
+						D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
 					}
 				}
 				else
 				{
-					if (pface->samples != nullptr)
-					{
-						pcurrentcache = D_CacheLightmap (pface);
-						if (pcurrentcache == nullptr)
-						{
-							D_AddTurbulentRotatedToLists (pface, currententity);
-						}
-						else
-						{
-							D_AddTurbulentLitRotatedToLists (pface, pcurrentcache, currententity);
-						}
-					}
-					else
-					{
-						D_AddTurbulentRotatedToLists (pface, currententity);
-					}
+					D_AddTurbulentToLists (pface, currententity);
 				}
 
 				if (s->insubmodel)
@@ -818,48 +791,21 @@ void D_DrawSurfacesToListsIfNeeded (void)
 										// make entity passed in
 				}
 
-				if (currententity->origin[0] == 0 &&
-					currententity->origin[1] == 0 &&
-					currententity->origin[2] == 0 &&
-					currententity->angles[YAW] == 0 &&
-					currententity->angles[PITCH] == 0 &&
-					currententity->angles[ROLL] == 0)
+				if (pface->samples != nullptr)
 				{
-					if (pface->samples != nullptr)
+					pcurrentcache = D_CacheLightmap (pface);
+					if (pcurrentcache == nullptr)
 					{
-						pcurrentcache = D_CacheLightmap (pface);
-						if (pcurrentcache == nullptr)
-						{
-							D_AddTurbulentToLists (pface, currententity);
-						}
-						else
-						{
-							D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
-						}
+						D_AddTurbulentToLists (pface, currententity);
 					}
 					else
 					{
-						D_AddTurbulentToLists (pface, currententity);
+						D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
 					}
 				}
 				else
 				{
-					if (pface->samples != nullptr)
-					{
-						pcurrentcache = D_CacheLightmap (pface);
-						if (pcurrentcache == nullptr)
-						{
-							D_AddTurbulentRotatedToLists (pface, currententity);
-						}
-						else
-						{
-							D_AddTurbulentLitRotatedToLists (pface, pcurrentcache, currententity);
-						}
-					}
-					else
-					{
-						D_AddTurbulentRotatedToLists (pface, currententity);
-					}
+					D_AddTurbulentToLists (pface, currententity);
 				}
 
 				if (s->insubmodel)
@@ -1001,48 +947,21 @@ void D_DrawOneSurface (msurface_t* surf)
 					 surf->texinfo->texture->offsets[0]);
 			cachewidth = surf->texinfo->texture->width;
 
-			if (currententity->origin[0] == 0 &&
-				currententity->origin[1] == 0 &&
-				currententity->origin[2] == 0 &&
-				currententity->angles[YAW] == 0 &&
-				currententity->angles[PITCH] == 0 &&
-				currententity->angles[ROLL] == 0)
+			if (surf->samples != nullptr)
 			{
-				if (surf->samples != nullptr)
+				auto pcurrentcache = D_CacheLightmap (surf);
+				if (pcurrentcache == nullptr)
 				{
-					auto pcurrentcache = D_CacheLightmap (surf);
-					if (pcurrentcache == nullptr)
-					{
-						D_AddTurbulentToLists (surf, currententity);
-					}
-					else
-					{
-						D_AddTurbulentLitToLists (surf, pcurrentcache, currententity);
-					}
+					D_AddTurbulentToLists (surf, currententity);
 				}
 				else
 				{
-					D_AddTurbulentToLists (surf, currententity);
+					D_AddTurbulentLitToLists (surf, pcurrentcache, currententity);
 				}
 			}
 			else
 			{
-				if (surf->samples != nullptr)
-				{
-					auto pcurrentcache = D_CacheLightmap (surf);
-					if (pcurrentcache == nullptr)
-					{
-						D_AddTurbulentRotatedToLists (surf, currententity);
-					}
-					else
-					{
-						D_AddTurbulentLitRotatedToLists (surf, pcurrentcache, currententity);
-					}
-				}
-				else
-				{
-					D_AddTurbulentRotatedToLists (surf, currententity);
-				}
+				D_AddTurbulentToLists (surf, currententity);
 			}
 		}
 		else
