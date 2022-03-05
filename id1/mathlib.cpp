@@ -369,17 +369,21 @@ void CrossProduct (const vec3_t v1, const vec3_t v2, vec3_t cross)
 
 double sqrt(double x);
 
-vec_t Length(const vec3_t v)
+vec_t LengthSquared(const vec3_t v)
 {
 	int		i;
 	float	length;
-	
+
 	length = 0;
 	for (i=0 ; i< 3 ; i++)
 		length += v[i]*v[i];
-	length = sqrt (length);		// FIXME
 
 	return length;
+}
+
+vec_t Length(const vec3_t v)
+{
+	return sqrt (LengthSquared(v));
 }
 
 float VectorNormalize (vec3_t v)
