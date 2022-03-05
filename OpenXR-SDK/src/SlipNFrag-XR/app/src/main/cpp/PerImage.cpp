@@ -23,22 +23,6 @@ float PerImage::GammaCorrect(float component)
 void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer)
 {
 	VkDeviceSize offset = 0;
-	auto loadedBuffer = appState.Scene.buffers.firstVertices;
-	while (loadedBuffer != nullptr)
-	{
-		auto source = (float*)(loadedBuffer->source);
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		auto count = loadedBuffer->size / (4 * sizeof(float));
-		for (auto i = 0; i < count; i++)
-		{
-			*target++ = *source++;
-			*target++ = *source++;
-			*target++ = *source++;
-			*target++ = 1;
-		}
-		offset += loadedBuffer->size;
-		loadedBuffer = loadedBuffer->next;
-	}
 	auto loadedIndexBuffer = appState.Scene.indexBuffers.firstIndices8;
 	while (loadedIndexBuffer != nullptr)
 	{
@@ -257,47 +241,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 		offset += loadedAliasIndexBuffer->size;
 		loadedAliasIndexBuffer = loadedAliasIndexBuffer->next;
 	}
-	auto loadedTexturePositionBuffer = appState.Scene.buffers.firstSurfaceTexturePositions;
-	while (loadedTexturePositionBuffer != nullptr)
-	{
-		auto source = (msurface_t*)loadedTexturePositionBuffer->source;
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		*target++ = source->texinfo->vecs[0][0];
-		*target++ = source->texinfo->vecs[0][1];
-		*target++ = source->texinfo->vecs[0][2];
-		*target++ = source->texinfo->vecs[0][3];
-		*target++ = source->texinfo->vecs[1][0];
-		*target++ = source->texinfo->vecs[1][1];
-		*target++ = source->texinfo->vecs[1][2];
-		*target++ = source->texinfo->vecs[1][3];
-		*target++ = source->texturemins[0];
-		*target++ = source->texturemins[1];
-		*target++ = source->extents[0];
-		*target++ = source->extents[1];
-		*target++ = source->texinfo->texture->width;
-		*target++ = source->texinfo->texture->height;
-		offset += loadedTexturePositionBuffer->size;
-		loadedTexturePositionBuffer = loadedTexturePositionBuffer->next;
-	}
-	loadedTexturePositionBuffer = appState.Scene.buffers.firstTurbulentTexturePositions;
-	while (loadedTexturePositionBuffer != nullptr)
-	{
-		auto source = (msurface_t*)loadedTexturePositionBuffer->source;
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		*target++ = source->texinfo->vecs[0][0];
-		*target++ = source->texinfo->vecs[0][1];
-		*target++ = source->texinfo->vecs[0][2];
-		*target++ = source->texinfo->vecs[0][3];
-		*target++ = source->texinfo->vecs[1][0];
-		*target++ = source->texinfo->vecs[1][1];
-		*target++ = source->texinfo->vecs[1][2];
-		*target++ = source->texinfo->vecs[1][3];
-		*target++ = source->texinfo->texture->width;
-		*target++ = source->texinfo->texture->height;
-		offset += loadedTexturePositionBuffer->size;
-		loadedTexturePositionBuffer = loadedTexturePositionBuffer->next;
-	}
-	loadedBuffer = appState.Scene.buffers.firstAliasVertices;
+	auto loadedBuffer = appState.Scene.buffers.firstAliasVertices;
 	while (loadedBuffer != nullptr)
 	{
 		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
@@ -743,45 +687,6 @@ void PerImage::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuf
 	}
 }
 
-void PerImage::FillTexturePositionsFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryTexturePositionsBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
-{
-	auto loaded = first;
-	auto delayed = false;
-	while (loaded != nullptr)
-	{
-		if (delayed)
-		{
-			if (previousBuffer == loaded->texturePositions.buffer && bufferCopy.dstOffset + bufferCopy.size == loaded->texturePositions.offset)
-			{
-				bufferCopy.size += loaded->size;
-			}
-			else
-			{
-				vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, previousBuffer->buffer, 1, &bufferCopy);
-				bufferCopy.srcOffset += bufferCopy.size;
-				delayed = false;
-			}
-		}
-		else
-		{
-			bufferCopy.dstOffset = loaded->texturePositions.offset;
-			bufferCopy.size = loaded->size;
-			delayed = true;
-		}
-		if (previousBuffer != loaded->texturePositions.buffer)
-		{
-			appState.Scene.AddToBufferBarrier(loaded->texturePositions.buffer->buffer);
-			previousBuffer = loaded->texturePositions.buffer;
-		}
-		loaded = loaded->next;
-	}
-	if (delayed)
-	{
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, previousBuffer->buffer, 1, &bufferCopy);
-		bufferCopy.srcOffset += bufferCopy.size;
-	}
-}
-
 void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const
 {
 	auto loaded = first;
@@ -802,16 +707,6 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 
 	VkBufferCopy bufferCopy { };
 
-	auto loadedBuffer = appState.Scene.buffers.firstVertices;
-	while (loadedBuffer != nullptr)
-	{
-		bufferCopy.size = loadedBuffer->size;
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedBuffer->buffer->buffer, 1, &bufferCopy);
-		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(loadedBuffer->buffer->buffer);
-		loadedBuffer = loadedBuffer->next;
-	}
-
 	SharedMemoryBuffer* previousBuffer = nullptr;
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstIndices8, bufferCopy, previousBuffer);
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
@@ -831,10 +726,6 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstIndices32, bufferCopy, previousBuffer);
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices32, bufferCopy, previousBuffer);
-
-	SharedMemoryBuffer* previousSharedMemoryBuffer = nullptr;
-	FillTexturePositionsFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstSurfaceTexturePositions, bufferCopy, previousSharedMemoryBuffer);
-	FillTexturePositionsFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstTurbulentTexturePositions, bufferCopy, previousSharedMemoryBuffer);
 
 	bufferCopy.dstOffset = 0;
 

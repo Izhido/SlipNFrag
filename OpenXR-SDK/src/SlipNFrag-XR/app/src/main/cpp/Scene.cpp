@@ -1035,38 +1035,6 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
-void Scene::GetVerticesStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
-{
-	auto vertexes = ((model_t*)turbulent.model)->vertexes;
-	if (previousVertexes != vertexes)
-	{
-		auto entry = vertexCache.find(vertexes);
-		if (entry == vertexCache.end())
-		{
-			loaded.vertices.size = ((model_t*)turbulent.model)->numvertexes * 4 * sizeof(float);
-			loaded.vertices.buffer = new SharedMemoryBuffer { };
-			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
-			buffers.MoveToFront(loaded.vertices.buffer);
-			size += loaded.vertices.size;
-			buffers.SetupVertices(loaded.vertices);
-			vertexCache.insert({ vertexes, loaded.vertices.buffer });
-		}
-		else
-		{
-			loaded.vertices.size = 0;
-			loaded.vertices.buffer = entry->second;
-		}
-		previousVertexes = vertexes;
-		previousVertexBuffer = loaded.vertices.buffer;
-	}
-	else
-	{
-		loaded.vertices.size = 0;
-		loaded.vertices.buffer = previousVertexBuffer;
-	}
-	loaded.vertices.source = vertexes;
-}
-
 void Scene::GetTextureStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
 	if (previousTexture != turbulent.data)
@@ -1102,30 +1070,12 @@ void Scene::GetTextureStagingBufferSize(AppState& appState, const dturbulent_t& 
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
-	GetVerticesStagingBufferSize(appState, surface, loaded, size);
+	loaded.vertexes = ((model_t*)surface.model)->vertexes;
 	GetTextureStagingBufferSize(appState, surface, loaded, size);
-	auto entry = perSurfaceCache.find(surface.surface);
+	auto entry = perSurfaceCache.find(surface.face);
 	if (entry == perSurfaceCache.end())
 	{
-		loaded.texturePositions.size = 16 * sizeof(float);
-		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
-		{
-			loaded.texturePositions.texturePositions.buffer = new SharedMemoryBuffer { };
-			loaded.texturePositions.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
-			buffers.MoveToFront(loaded.texturePositions.texturePositions.buffer);
-			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.texturePositions.buffer;
-			usedInLatestSharedMemoryTexturePositionBuffer = 0;
-		}
-		else
-		{
-			loaded.texturePositions.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-		}
-		loaded.texturePositions.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
-		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
-		size += loaded.texturePositions.size;
-		loaded.texturePositions.texturePositions.firstInstance = loaded.texturePositions.texturePositions.offset / (16 * sizeof(float));
-		buffers.SetupSurfaceTexturePositions(loaded.texturePositions);
-		auto face = (msurface_t*)surface.surface;
+		auto face = (msurface_t*)surface.face;
 		auto model = (model_t*)surface.model;
 		unsigned int maxIndex = 0;
 		for (auto i = 0; i < face->numedges; i++)
@@ -1206,25 +1156,23 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupIndices32(loaded.indices);
 		}
-		PerSurface perSurface { loaded.texturePositions.texturePositions, loaded.indices.indices };
-		perSurfaceCache.insert({ surface.surface, perSurface });
+		PerSurface perSurface { loaded.indices.indices };
+		perSurfaceCache.insert({ surface.face, perSurface });
 	}
 	else
 	{
-		loaded.texturePositions.size = 0;
-		loaded.texturePositions.texturePositions = entry->second.texturePosition;
 		loaded.indices.size = 0;
 		loaded.indices.indices = entry->second.indices;
 	}
-	loaded.texturePositions.source = surface.surface;
-	loaded.indices.firstSource = surface.surface;
+	loaded.face = surface.face;
+	loaded.indices.firstSource = surface.face;
 	loaded.indices.secondSource = surface.model;
-	auto lightmapEntry = lightmaps.lightmaps.find(surface.surface);
+	auto lightmapEntry = lightmaps.lightmaps.find(surface.face);
 	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap { };
 		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		lightmap->key = surface.surface;
+		lightmap->key = surface.face;
 		lightmap->createdFrameCount = surface.created;
 		loaded.lightmap.lightmap = lightmap;
 		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
@@ -1242,7 +1190,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			lightmaps.oldLightmaps = lightmap;
 			lightmap = new Lightmap { };
 			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			lightmap->key = surface.surface;
+			lightmap->key = surface.face;
 			lightmap->createdFrameCount = surface.created;
 			lightmapEntry->second = lightmap;
 			loaded.lightmap.lightmap = lightmap;
@@ -1273,30 +1221,12 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
-	GetVerticesStagingBufferSize(appState, turbulent, loaded, size);
+	loaded.vertexes = ((model_t*)turbulent.model)->vertexes;
 	GetTextureStagingBufferSize(appState, turbulent, loaded, size);
-	auto entry = perSurfaceCache.find(turbulent.surface);
+	auto entry = perSurfaceCache.find(turbulent.face);
 	if (entry == perSurfaceCache.end())
 	{
-		loaded.texturePositions.size = 16 * sizeof(float);
-		if (latestSharedMemoryTexturePositionBuffer == nullptr || usedInLatestSharedMemoryTexturePositionBuffer + loaded.texturePositions.size > latestSharedMemoryTexturePositionBuffer->size)
-		{
-			loaded.texturePositions.texturePositions.buffer = new SharedMemoryBuffer { };
-			loaded.texturePositions.texturePositions.buffer->CreateVertexBuffer(appState, Constants::memoryBlockSize);
-			buffers.MoveToFront(loaded.texturePositions.texturePositions.buffer);
-			latestSharedMemoryTexturePositionBuffer = loaded.texturePositions.texturePositions.buffer;
-			usedInLatestSharedMemoryTexturePositionBuffer = 0;
-		}
-		else
-		{
-			loaded.texturePositions.texturePositions.buffer = latestSharedMemoryTexturePositionBuffer;
-		}
-		loaded.texturePositions.texturePositions.offset = usedInLatestSharedMemoryTexturePositionBuffer;
-		usedInLatestSharedMemoryTexturePositionBuffer += loaded.texturePositions.size;
-		size += loaded.texturePositions.size;
-		loaded.texturePositions.texturePositions.firstInstance = loaded.texturePositions.texturePositions.offset / (16 * sizeof(float));
-		buffers.SetupTurbulentTexturePositions(loaded.texturePositions);
-		auto face = (msurface_t*)turbulent.surface;
+		auto face = (msurface_t*)turbulent.face;
 		auto model = (model_t*)turbulent.model;
 		unsigned int maxIndex = 0;
 		for (auto i = 0; i < face->numedges; i++)
@@ -1377,18 +1307,16 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupIndices32(loaded.indices);
 		}
-		PerSurface perSurface { loaded.texturePositions.texturePositions, loaded.indices.indices };
-		perSurfaceCache.insert({ turbulent.surface, perSurface });
+		PerSurface perSurface { loaded.indices.indices };
+		perSurfaceCache.insert({ turbulent.face, perSurface });
 	}
 	else
 	{
-		loaded.texturePositions.size = 0;
-		loaded.texturePositions.texturePositions = entry->second.texturePosition;
 		loaded.indices.size = 0;
 		loaded.indices.indices = entry->second.indices;
 	}
-	loaded.texturePositions.source = turbulent.surface;
-	loaded.indices.firstSource = turbulent.surface;
+	loaded.face = turbulent.face;
+	loaded.indices.firstSource = turbulent.face;
 	loaded.indices.secondSource = turbulent.model;
 	loaded.count = turbulent.count;
 }
@@ -1705,7 +1633,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		host_colormapSize = 16384;
 		size += host_colormapSize;
 	}
-	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.surfaces);
 	for (auto i = 0; i <= d_lists.last_surface; i++)
@@ -1721,7 +1648,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	sortedSurfaceRotatedVerticesBase = sortedVerticesSize;
 	sortedSurfaceRotatedAttributesBase = sortedAttributesSize;
 	sortedSurfaceRotatedIndicesBase = sortedIndicesCount;
-	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.surfacesRotated);
 	for (auto i = 0; i <= lastSurfaceRotated; i++)
@@ -1737,7 +1663,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	sortedFenceVerticesBase = sortedVerticesSize;
 	sortedFenceAttributesBase = sortedAttributesSize;
 	sortedFenceIndicesBase = sortedIndicesCount;
-	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.fences);
 	for (auto i = 0; i <= lastFence; i++)
@@ -1753,7 +1678,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	sortedFenceRotatedVerticesBase = sortedVerticesSize;
 	sortedFenceRotatedAttributesBase = sortedAttributesSize;
 	sortedFenceRotatedIndicesBase = sortedIndicesCount;
-	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.fencesRotated);
 	for (auto i = 0; i <= lastFenceRotated; i++)
@@ -1769,7 +1693,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	sortedTurbulentVerticesBase = sortedVerticesSize;
 	sortedTurbulentAttributesBase = sortedAttributesSize;
 	sortedTurbulentIndicesBase = sortedIndicesCount;
-	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.turbulent);
 	for (auto i = 0; i <= lastTurbulent; i++)
@@ -1785,7 +1708,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	sortedTurbulentLitVerticesBase = sortedVerticesSize;
 	sortedTurbulentLitAttributesBase = sortedAttributesSize;
 	sortedTurbulentLitIndicesBase = sortedIndicesCount;
-	previousVertexes = nullptr;
 	previousTexture = nullptr;
 	sorted.Initialize(sorted.turbulentLit);
 	for (auto i = 0; i <= lastTurbulentLit; i++)
@@ -1994,12 +1916,9 @@ void Scene::Reset()
 	usedInLatestIndexBuffer16 = 0;
 	latestIndexBuffer8 = nullptr;
 	usedInLatestIndexBuffer8 = 0;
-	latestSharedMemoryTexturePositionBuffer = nullptr;
-	usedInLatestSharedMemoryTexturePositionBuffer = 0;
 	latestMemory.clear();
 	Skybox::MoveToPrevious(*this);
 	aliasIndicesCache.clear();
 	aliasVerticesCache.clear();
 	perSurfaceCache.clear();
-	vertexCache.clear();
 }

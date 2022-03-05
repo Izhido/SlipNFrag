@@ -120,7 +120,7 @@ float* SortedSurfaces::LoadVertices(LoadedTurbulent& loaded, float* target)
 	auto face = (msurface_t*)loaded.indices.firstSource;
 	auto model = (model_t*)loaded.indices.secondSource;
 	auto edge = model->surfedges[face->firstedge];
-	auto source = (float*)loaded.vertices.source;
+	auto source = (float*)loaded.vertexes;
 	unsigned int index;
 	if (edge >= 0)
 	{
@@ -216,7 +216,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	XrMatrix4x4f attributes { };
-	void* previousSource = nullptr;
+	void* previousFace = nullptr;
 	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto attributeCount = 0;
 	for (auto& entry : sorted)
@@ -226,25 +226,24 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto source = (msurface_t*)surface.texturePositions.source;
-				auto face = (msurface_t*)surface.indices.firstSource;
-				if (previousSource != source)
+				auto face = (msurface_t*)surface.face;
+				if (previousFace != face)
 				{
-					attributes.m[0] = source->texinfo->vecs[0][0];
-					attributes.m[1] = source->texinfo->vecs[0][1];
-					attributes.m[2] = source->texinfo->vecs[0][2];
-					attributes.m[3] = source->texinfo->vecs[0][3];
-					attributes.m[4] = source->texinfo->vecs[1][0];
-					attributes.m[5] = source->texinfo->vecs[1][1];
-					attributes.m[6] = source->texinfo->vecs[1][2];
-					attributes.m[7] = source->texinfo->vecs[1][3];
-					attributes.m[8] = source->texturemins[0];
-					attributes.m[9] = source->texturemins[1];
-					attributes.m[10] = source->extents[0];
-					attributes.m[11] = source->extents[1];
-					attributes.m[12] = source->texinfo->texture->width;
-					attributes.m[13] = source->texinfo->texture->height;
-					previousSource = source;
+					attributes.m[0] = face->texinfo->vecs[0][0];
+					attributes.m[1] = face->texinfo->vecs[0][1];
+					attributes.m[2] = face->texinfo->vecs[0][2];
+					attributes.m[3] = face->texinfo->vecs[0][3];
+					attributes.m[4] = face->texinfo->vecs[1][0];
+					attributes.m[5] = face->texinfo->vecs[1][1];
+					attributes.m[6] = face->texinfo->vecs[1][2];
+					attributes.m[7] = face->texinfo->vecs[1][3];
+					attributes.m[8] = face->texturemins[0];
+					attributes.m[9] = face->texturemins[1];
+					attributes.m[10] = face->extents[0];
+					attributes.m[11] = face->extents[1];
+					attributes.m[12] = face->texinfo->texture->width;
+					attributes.m[13] = face->texinfo->texture->height;
+					previousFace = face;
 				}
 				attributes.m[14] = surface.lightmap.lightmap->allocatedIndex;
 				for (auto j = 0; j < face->numedges; j++)
@@ -269,24 +268,23 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto source = (msurface_t*)surface.texturePositions.source;
-				auto face = (msurface_t*)surface.indices.firstSource;
+				auto face = (msurface_t*)surface.face;
 				for (auto j = 0; j < face->numedges; j++)
 				{
-					*target++ = source->texinfo->vecs[0][0];
-					*target++ = source->texinfo->vecs[0][1];
-					*target++ = source->texinfo->vecs[0][2];
-					*target++ = source->texinfo->vecs[0][3];
-					*target++ = source->texinfo->vecs[1][0];
-					*target++ = source->texinfo->vecs[1][1];
-					*target++ = source->texinfo->vecs[1][2];
-					*target++ = source->texinfo->vecs[1][3];
-					*target++ = source->texturemins[0];
-					*target++ = source->texturemins[1];
-					*target++ = source->extents[0];
-					*target++ = source->extents[1];
-					*target++ = source->texinfo->texture->width;
-					*target++ = source->texinfo->texture->height;
+					*target++ = face->texinfo->vecs[0][0];
+					*target++ = face->texinfo->vecs[0][1];
+					*target++ = face->texinfo->vecs[0][2];
+					*target++ = face->texinfo->vecs[0][3];
+					*target++ = face->texinfo->vecs[1][0];
+					*target++ = face->texinfo->vecs[1][1];
+					*target++ = face->texinfo->vecs[1][2];
+					*target++ = face->texinfo->vecs[1][3];
+					*target++ = face->texturemins[0];
+					*target++ = face->texturemins[1];
+					*target++ = face->extents[0];
+					*target++ = face->extents[1];
+					*target++ = face->texinfo->texture->width;
+					*target++ = face->texinfo->texture->height;
 					*target++ = surface.lightmap.lightmap->allocatedIndex;
 					*target++ = 0;
 					*target++ = surface.originX;
@@ -308,29 +306,28 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	XrMatrix4x4f attributes { };
-	void* previousSource = nullptr;
+	void* previousFace = nullptr;
 	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto attributeCount = 0;
 	for (auto& entry : sorted)
 	{
 		for (auto i : entry.entries)
 		{
-			auto& surface = loaded[i];
-			auto source = (msurface_t*)surface.texturePositions.source;
-			auto face = (msurface_t*)surface.indices.firstSource;
-			if (previousSource != source)
+			auto& turbulent = loaded[i];
+			auto face = (msurface_t*)turbulent.face;
+			if (previousFace != face)
 			{
-				attributes.m[0] = source->texinfo->vecs[0][0];
-				attributes.m[1] = source->texinfo->vecs[0][1];
-				attributes.m[2] = source->texinfo->vecs[0][2];
-				attributes.m[3] = source->texinfo->vecs[0][3];
-				attributes.m[4] = source->texinfo->vecs[1][0];
-				attributes.m[5] = source->texinfo->vecs[1][1];
-				attributes.m[6] = source->texinfo->vecs[1][2];
-				attributes.m[7] = source->texinfo->vecs[1][3];
-				attributes.m[8] = source->texinfo->texture->width;
-				attributes.m[9] = source->texinfo->texture->height;
-				previousSource = source;
+				attributes.m[0] = face->texinfo->vecs[0][0];
+				attributes.m[1] = face->texinfo->vecs[0][1];
+				attributes.m[2] = face->texinfo->vecs[0][2];
+				attributes.m[3] = face->texinfo->vecs[0][3];
+				attributes.m[4] = face->texinfo->vecs[1][0];
+				attributes.m[5] = face->texinfo->vecs[1][1];
+				attributes.m[6] = face->texinfo->vecs[1][2];
+				attributes.m[7] = face->texinfo->vecs[1][3];
+				attributes.m[8] = face->texinfo->texture->width;
+				attributes.m[9] = face->texinfo->texture->height;
+				previousFace = face;
 			}
 			for (auto j = 0; j < face->numedges; j++)
 			{

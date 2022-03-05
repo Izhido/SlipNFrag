@@ -44,7 +44,7 @@ void D_ResetLists ()
 
 void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	surface.surface = face;
+	surface.face = face;
 	surface.entity = entity;
 	surface.model = entity->model;
 	surface.created = cache->created;
@@ -141,7 +141,7 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 {
 	auto texinfo = face->texinfo;
 	auto texture = texinfo->texture;
-	turbulent.surface = face;
+	turbulent.face = face;
 	turbulent.entity = entity;
 	turbulent.model = entity->model;
 	turbulent.width = texture->width;

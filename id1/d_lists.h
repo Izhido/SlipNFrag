@@ -5,7 +5,7 @@
 
 struct dturbulent_t
 {
-	void* surface;
+	void* face;
 	void* entity;
 	void* model;
 	int width;
