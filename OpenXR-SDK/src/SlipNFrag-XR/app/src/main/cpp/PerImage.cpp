@@ -23,52 +23,6 @@ float PerImage::GammaCorrect(float component)
 void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer)
 {
 	VkDeviceSize offset = 0;
-	auto loadedIndexBuffer = appState.Scene.indexBuffers.firstIndices8;
-	while (loadedIndexBuffer != nullptr)
-	{
-		auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
-		auto face = (msurface_t*)loadedIndexBuffer->firstSource;
-		auto model = (model_t*)loadedIndexBuffer->secondSource;
-		auto edge = model->surfedges[face->firstedge];
-		unsigned char index;
-		if (edge >= 0)
-		{
-			index = model->edges[edge].v[0];
-		}
-		else
-		{
-			index = model->edges[-edge].v[1];
-		}
-		*target++ = index;
-		auto next_front = 0;
-		auto next_back = face->numedges;
-		auto use_back = false;
-		for (auto i = 1; i < face->numedges; i++)
-		{
-			if (use_back)
-			{
-				next_back--;
-				edge = model->surfedges[face->firstedge + next_back];
-			}
-			else
-			{
-				next_front++;
-				edge = model->surfedges[face->firstedge + next_front];
-			}
-			use_back = !use_back;
-			if (edge >= 0)
-			{
-				index = model->edges[edge].v[0];
-			}
-			else
-			{
-				index = model->edges[-edge].v[1];
-			}
-			*target++ = index;
-		}
-		offset += loadedIndexBuffer->size;
-		loadedIndexBuffer = loadedIndexBuffer->next;
-	}
 	auto loadedAliasIndexBuffer = appState.Scene.indexBuffers.firstAliasIndices8;
 	while (loadedAliasIndexBuffer != nullptr)
 	{
@@ -97,52 +51,6 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	{
 		offset++;
 	}
-	loadedIndexBuffer = appState.Scene.indexBuffers.firstIndices16;
-	while (loadedIndexBuffer != nullptr)
-	{
-		auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		auto face = (msurface_t*)loadedIndexBuffer->firstSource;
-		auto model = (model_t*)loadedIndexBuffer->secondSource;
-		auto edge = model->surfedges[face->firstedge];
-		uint16_t index;
-		if (edge >= 0)
-		{
-			index = model->edges[edge].v[0];
-		}
-		else
-		{
-			index = model->edges[-edge].v[1];
-		}
-		*target++ = index;
-		auto next_front = 0;
-		auto next_back = face->numedges;
-		auto use_back = false;
-		for (auto i = 1; i < face->numedges; i++)
-		{
-			if (use_back)
-			{
-				next_back--;
-				edge = model->surfedges[face->firstedge + next_back];
-			}
-			else
-			{
-				next_front++;
-				edge = model->surfedges[face->firstedge + next_front];
-			}
-			use_back = !use_back;
-			if (edge >= 0)
-			{
-				index = model->edges[edge].v[0];
-			}
-			else
-			{
-				index = model->edges[-edge].v[1];
-			}
-			*target++ = index;
-		}
-		offset += loadedIndexBuffer->size;
-		loadedIndexBuffer = loadedIndexBuffer->next;
-	}
 	loadedAliasIndexBuffer = appState.Scene.indexBuffers.firstAliasIndices16;
 	while (loadedAliasIndexBuffer != nullptr)
 	{
@@ -170,52 +78,6 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	while (offset % 4 != 0)
 	{
 		offset++;
-	}
-	loadedIndexBuffer = appState.Scene.indexBuffers.firstIndices32;
-	while (loadedIndexBuffer != nullptr)
-	{
-		auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		auto face = (msurface_t*)loadedIndexBuffer->firstSource;
-		auto model = (model_t*)loadedIndexBuffer->secondSource;
-		auto edge = model->surfedges[face->firstedge];
-		uint32_t index;
-		if (edge >= 0)
-		{
-			index = model->edges[edge].v[0];
-		}
-		else
-		{
-			index = model->edges[-edge].v[1];
-		}
-		*target++ = index;
-		auto next_front = 0;
-		auto next_back = face->numedges;
-		auto use_back = false;
-		for (auto i = 1; i < face->numedges; i++)
-		{
-			if (use_back)
-			{
-				next_back--;
-				edge = model->surfedges[face->firstedge + next_back];
-			}
-			else
-			{
-				next_front++;
-				edge = model->surfedges[face->firstedge + next_front];
-			}
-			use_back = !use_back;
-			if (edge >= 0)
-			{
-				index = model->edges[edge].v[0];
-			}
-			else
-			{
-				index = model->edges[-edge].v[1];
-			}
-			*target++ = index;
-		}
-		offset += loadedIndexBuffer->size;
-		loadedIndexBuffer = loadedIndexBuffer->next;
 	}
 	loadedAliasIndexBuffer = appState.Scene.indexBuffers.firstAliasIndices32;
 	while (loadedAliasIndexBuffer != nullptr)
@@ -708,7 +570,6 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 	VkBufferCopy bufferCopy { };
 
 	SharedMemoryBuffer* previousBuffer = nullptr;
-	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstIndices8, bufferCopy, previousBuffer);
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
 
 	while (bufferCopy.srcOffset % 4 != 0)
@@ -716,7 +577,6 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 		bufferCopy.srcOffset++;
 	}
 
-	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstIndices16, bufferCopy, previousBuffer);
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices16, bufferCopy, previousBuffer);
 
 	while (bufferCopy.srcOffset % 4 != 0)
@@ -724,7 +584,6 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 		bufferCopy.srcOffset++;
 	}
 
-	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstIndices32, bufferCopy, previousBuffer);
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices32, bufferCopy, previousBuffer);
 
 	bufferCopy.dstOffset = 0;

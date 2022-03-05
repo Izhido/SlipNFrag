@@ -6,7 +6,6 @@
 #include "CachedIndexBuffers.h"
 #include <unordered_map>
 #include "AliasVertices.h"
-#include "PerSurface.h"
 #include "LoadedSurfaceRotated.h"
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
@@ -44,7 +43,6 @@ struct Scene
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	CachedIndexBuffers indexBuffers;
-	std::unordered_map<void*, PerSurface> perSurfaceCache;
 	std::unordered_map<void*, AliasVertices> aliasVerticesCache;
 	std::unordered_map<void*, IndexBuffer> aliasIndicesCache;
 	int lastSurface;
@@ -151,10 +149,9 @@ struct Scene
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
 	void AddToBufferBarrier(VkBuffer buffer);
-	void GetTextureStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);

@@ -31,7 +31,7 @@ void main(void)
 	vec4 position = vec4(vertex.x, vertex.z, -vertex.y, vertex.w);
 	mat4 translation = mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, origin.x, origin.z, -origin.y, origin.w);
 	vec3 sine = vec3(sin(-angles.x), sin(angles.y), sin(-angles.z));
-	vec3 cosine = vec3(cos(-angles.x), cos(angles.z), cos(-angles.z));
+	vec3 cosine = vec3(cos(-angles.x), cos(angles.y), cos(-angles.z));
 	mat4 yawRotation = mat4(cosine.x, 0, sine.x, 0, 0, 1, 0, 0, -sine.x, 0, cosine.x, 0, 0, 0, 0, 1);
 	mat4 pitchRotation = mat4(cosine.y, -sine.y, 0, 0, sine.y, cosine.y, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 	mat4 rollRotation = mat4(1, 0, 0, 0, 0, cosine.z, -sine.z, 0, 0, sine.z, cosine.z, 0, 0, 0, 0, 1);

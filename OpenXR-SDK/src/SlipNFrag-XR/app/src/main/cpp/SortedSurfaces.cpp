@@ -117,8 +117,8 @@ void SortedSurfaces::Cleanup(std::list<SortedSurfaceTexture>& sorted)
 
 float* SortedSurfaces::LoadVertices(LoadedTurbulent& loaded, float* target)
 {
-	auto face = (msurface_t*)loaded.indices.firstSource;
-	auto model = (model_t*)loaded.indices.secondSource;
+	auto face = (msurface_t*)loaded.face;
+	auto model = (model_t*)loaded.model;
 	auto edge = model->surfedges[face->firstedge];
 	auto source = (float*)loaded.vertexes;
 	unsigned int index;
@@ -352,7 +352,7 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto face = (msurface_t*)surface.indices.firstSource;
+				auto face = (msurface_t*)surface.face;
 				*target++ = index++;
 				*target++ = index++;
 				*target++ = index++;
@@ -397,7 +397,7 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto face = (msurface_t*)surface.indices.firstSource;
+				auto face = (msurface_t*)surface.face;
 				*target++ = index++;
 				*target++ = index++;
 				*target++ = index++;
@@ -440,7 +440,7 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceTexture>& sorted, std:
 		for (auto i : entry.entries)
 		{
 			auto& surface = loaded[i];
-			auto face = (msurface_t*)surface.indices.firstSource;
+			auto face = (msurface_t*)surface.face;
 			*target++ = index++;
 			*target++ = index++;
 			*target++ = index++;
@@ -484,7 +484,7 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto face = (msurface_t*)surface.indices.firstSource;
+				auto face = (msurface_t*)surface.face;
 				*target++ = index++;
 				*target++ = index++;
 				*target++ = index++;
@@ -529,7 +529,7 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std
 			for (auto i : subEntry.entries)
 			{
 				auto& surface = loaded[i];
-				auto face = (msurface_t*)surface.indices.firstSource;
+				auto face = (msurface_t*)surface.face;
 				*target++ = index++;
 				*target++ = index++;
 				*target++ = index++;
@@ -572,7 +572,7 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceTexture>& sorted, std:
 		for (auto i : entry.entries)
 		{
 			auto& surface = loaded[i];
-			auto face = (msurface_t*)surface.indices.firstSource;
+			auto face = (msurface_t*)surface.face;
 			*target++ = index++;
 			*target++ = index++;
 			*target++ = index++;

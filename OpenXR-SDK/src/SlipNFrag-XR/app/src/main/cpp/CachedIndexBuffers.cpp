@@ -3,60 +3,12 @@
 
 void CachedIndexBuffers::Initialize()
 {
-	firstIndices8 = nullptr;
-	currentIndices8 = nullptr;
-	firstIndices16 = nullptr;
-	currentIndices16 = nullptr;
-	firstIndices32 = nullptr;
-	currentIndices32 = nullptr;
 	firstAliasIndices8 = nullptr;
 	currentAliasIndices8 = nullptr;
 	firstAliasIndices16 = nullptr;
 	currentAliasIndices16 = nullptr;
 	firstAliasIndices32 = nullptr;
 	currentAliasIndices32 = nullptr;
-}
-
-void CachedIndexBuffers::SetupIndices8(LoadedIndexBuffer& loaded)
-{
-	loaded.next = nullptr;
-	if (currentIndices8 == nullptr)
-	{
-		firstIndices8 = &loaded;
-	}
-	else
-	{
-		currentIndices8->next = &loaded;
-	}
-	currentIndices8 = &loaded;
-}
-
-void CachedIndexBuffers::SetupIndices16(LoadedIndexBuffer& loaded)
-{
-	loaded.next = nullptr;
-	if (currentIndices16 == nullptr)
-	{
-		firstIndices16 = &loaded;
-	}
-	else
-	{
-		currentIndices16->next = &loaded;
-	}
-	currentIndices16 = &loaded;
-}
-
-void CachedIndexBuffers::SetupIndices32(LoadedIndexBuffer& loaded)
-{
-	loaded.next = nullptr;
-	if (currentIndices32 == nullptr)
-	{
-		firstIndices32 = &loaded;
-	}
-	else
-	{
-		currentIndices32->next = &loaded;
-	}
-	currentIndices32 = &loaded;
 }
 
 void CachedIndexBuffers::SetupAliasIndices8(LoadedIndexBuffer& loaded)

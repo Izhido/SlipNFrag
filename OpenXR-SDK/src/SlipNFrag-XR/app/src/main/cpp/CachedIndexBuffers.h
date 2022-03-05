@@ -6,12 +6,6 @@ struct CachedIndexBuffers
 {
 	SharedMemoryBuffer* buffers;
 	SharedMemoryBuffer* oldBuffers;
-	LoadedIndexBuffer* firstIndices8;
-	LoadedIndexBuffer* currentIndices8;
-	LoadedIndexBuffer* firstIndices16;
-	LoadedIndexBuffer* currentIndices16;
-	LoadedIndexBuffer* firstIndices32;
-	LoadedIndexBuffer* currentIndices32;
 	LoadedIndexBuffer* firstAliasIndices8;
 	LoadedIndexBuffer* currentAliasIndices8;
 	LoadedIndexBuffer* firstAliasIndices16;
@@ -20,9 +14,6 @@ struct CachedIndexBuffers
 	LoadedIndexBuffer* currentAliasIndices32;
 
 	void Initialize();
-	void SetupIndices8(LoadedIndexBuffer& loaded);
-	void SetupIndices16(LoadedIndexBuffer& loaded);
-	void SetupIndices32(LoadedIndexBuffer& loaded);
 	void SetupAliasIndices8(LoadedIndexBuffer& loaded);
 	void SetupAliasIndices16(LoadedIndexBuffer& loaded);
 	void SetupAliasIndices32(LoadedIndexBuffer& loaded);

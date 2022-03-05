@@ -1035,8 +1035,11 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
-void Scene::GetTextureStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
+	loaded.vertexes = ((model_t*)turbulent.model)->vertexes;
+	loaded.face = turbulent.face;
+	loaded.model = turbulent.model;
 	if (previousTexture != turbulent.data)
 	{
 		auto entry = textureCache.find(turbulent.data);
@@ -1066,107 +1069,12 @@ void Scene::GetTextureStagingBufferSize(AppState& appState, const dturbulent_t& 
 		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 	}
+	loaded.count = turbulent.count;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
-	loaded.vertexes = ((model_t*)surface.model)->vertexes;
-	GetTextureStagingBufferSize(appState, surface, loaded, size);
-	auto entry = perSurfaceCache.find(surface.face);
-	if (entry == perSurfaceCache.end())
-	{
-		auto face = (msurface_t*)surface.face;
-		auto model = (model_t*)surface.model;
-		unsigned int maxIndex = 0;
-		for (auto i = 0; i < face->numedges; i++)
-		{
-			auto edge = model->surfedges[face->firstedge + i];
-			if (edge >= 0)
-			{
-				maxIndex = std::max(maxIndex, model->edges[edge].v[0]);
-			}
-			else
-			{
-				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
-			}
-		}
-		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
-		{
-			loaded.indices.size = surface.count;
-			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
-			{
-				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
-				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-				latestIndexBuffer8 = loaded.indices.indices.buffer;
-				usedInLatestIndexBuffer8 = 0;
-			}
-			else
-			{
-				loaded.indices.indices.buffer = latestIndexBuffer8;
-			}
-			loaded.indices.indices.offset = usedInLatestIndexBuffer8;
-			usedInLatestIndexBuffer8 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
-			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
-			indexBuffers.SetupIndices8(loaded.indices);
-		}
-		else if (maxIndex < UPPER_16BIT_LIMIT)
-		{
-			loaded.indices.size = surface.count * sizeof(uint16_t);
-			if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
-			{
-				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
-				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-				latestIndexBuffer16 = loaded.indices.indices.buffer;
-				usedInLatestIndexBuffer16 = 0;
-			}
-			else
-			{
-				loaded.indices.indices.buffer = latestIndexBuffer16;
-			}
-			loaded.indices.indices.offset = usedInLatestIndexBuffer16;
-			usedInLatestIndexBuffer16 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
-			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
-			indexBuffers.SetupIndices16(loaded.indices);
-		}
-		else
-		{
-			loaded.indices.size = surface.count * sizeof(uint32_t);
-			if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
-			{
-				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
-				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-				latestIndexBuffer32 = loaded.indices.indices.buffer;
-				usedInLatestIndexBuffer32 = 0;
-			}
-			else
-			{
-				loaded.indices.indices.buffer = latestIndexBuffer32;
-			}
-			loaded.indices.indices.offset = usedInLatestIndexBuffer32;
-			usedInLatestIndexBuffer32 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
-			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
-			indexBuffers.SetupIndices32(loaded.indices);
-		}
-		PerSurface perSurface { loaded.indices.indices };
-		perSurfaceCache.insert({ surface.face, perSurface });
-	}
-	else
-	{
-		loaded.indices.size = 0;
-		loaded.indices.indices = entry->second.indices;
-	}
-	loaded.face = surface.face;
-	loaded.indices.firstSource = surface.face;
-	loaded.indices.secondSource = surface.model;
+	GetStagingBufferSize(appState, (const dturbulent_t&)surface, loaded, size);
 	auto lightmapEntry = lightmaps.lightmaps.find(surface.face);
 	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
@@ -1205,7 +1113,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			loaded.lightmap.size = 0;
 		}
 	}
-	loaded.count = surface.count;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
@@ -1217,108 +1124,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 	loaded.yaw = surface.yaw;
 	loaded.pitch = surface.pitch;
 	loaded.roll = surface.roll;
-}
-
-void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
-{
-	loaded.vertexes = ((model_t*)turbulent.model)->vertexes;
-	GetTextureStagingBufferSize(appState, turbulent, loaded, size);
-	auto entry = perSurfaceCache.find(turbulent.face);
-	if (entry == perSurfaceCache.end())
-	{
-		auto face = (msurface_t*)turbulent.face;
-		auto model = (model_t*)turbulent.model;
-		unsigned int maxIndex = 0;
-		for (auto i = 0; i < face->numedges; i++)
-		{
-			auto edge = model->surfedges[face->firstedge + i];
-			if (edge >= 0)
-			{
-				maxIndex = std::max(maxIndex, model->edges[edge].v[0]);
-			}
-			else
-			{
-				maxIndex = std::max(maxIndex, model->edges[-edge].v[1]);
-			}
-		}
-		if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
-		{
-			loaded.indices.size = turbulent.count;
-			if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
-			{
-				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
-				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-				latestIndexBuffer8 = loaded.indices.indices.buffer;
-				usedInLatestIndexBuffer8 = 0;
-			}
-			else
-			{
-				loaded.indices.indices.buffer = latestIndexBuffer8;
-			}
-			loaded.indices.indices.offset = usedInLatestIndexBuffer8;
-			usedInLatestIndexBuffer8 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
-			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
-			indexBuffers.SetupIndices8(loaded.indices);
-		}
-		else if (maxIndex < UPPER_16BIT_LIMIT)
-		{
-			loaded.indices.size = turbulent.count * sizeof(uint16_t);
-			if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
-			{
-				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
-				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-				latestIndexBuffer16 = loaded.indices.indices.buffer;
-				usedInLatestIndexBuffer16 = 0;
-			}
-			else
-			{
-				loaded.indices.indices.buffer = latestIndexBuffer16;
-			}
-			loaded.indices.indices.offset = usedInLatestIndexBuffer16;
-			usedInLatestIndexBuffer16 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
-			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
-			indexBuffers.SetupIndices16(loaded.indices);
-		}
-		else
-		{
-			loaded.indices.size = turbulent.count * sizeof(uint32_t);
-			if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
-			{
-				loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-				loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
-				indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-				latestIndexBuffer32 = loaded.indices.indices.buffer;
-				usedInLatestIndexBuffer32 = 0;
-			}
-			else
-			{
-				loaded.indices.indices.buffer = latestIndexBuffer32;
-			}
-			loaded.indices.indices.offset = usedInLatestIndexBuffer32;
-			usedInLatestIndexBuffer32 += loaded.indices.size;
-			size += loaded.indices.size;
-			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
-			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
-			indexBuffers.SetupIndices32(loaded.indices);
-		}
-		PerSurface perSurface { loaded.indices.indices };
-		perSurfaceCache.insert({ turbulent.face, perSurface });
-	}
-	else
-	{
-		loaded.indices.size = 0;
-		loaded.indices.indices = entry->second.indices;
-	}
-	loaded.face = turbulent.face;
-	loaded.indices.firstSource = turbulent.face;
-	loaded.indices.secondSource = turbulent.model;
-	loaded.count = turbulent.count;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size)
@@ -1920,5 +1725,4 @@ void Scene::Reset()
 	Skybox::MoveToPrevious(*this);
 	aliasIndicesCache.clear();
 	aliasVerticesCache.clear();
-	perSurfaceCache.clear();
 }
