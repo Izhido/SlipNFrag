@@ -337,12 +337,12 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
-		SortedSurfaces::LoadVertices(appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.sorted.surfacesRotated, appState.Scene.loadedSurfacesRotated, stagingBuffer, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState, appState.Scene.sorted.surfaces, appState.Scene.loadedSurfaces, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState, appState.Scene.sorted.surfacesRotated, appState.Scene.loadedSurfacesRotated, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState, appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState, appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState, appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState, appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
 	}
 	if (appState.Scene.sortedAttributesSize > 0)
 	{

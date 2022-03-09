@@ -1165,8 +1165,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 {
 	if (previousApverts != alias.apverts)
 	{
-		auto entry = aliasVerticesCache.find(alias.apverts);
-		if (entry == aliasVerticesCache.end())
+		auto entry = aliasVertexCache.find(alias.apverts);
+		if (entry == aliasVertexCache.end())
 		{
 			loaded.vertices.size = alias.vertex_count * 2 * 4 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
@@ -1184,7 +1184,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.texCoords.width = alias.width;
 			loaded.texCoords.height = alias.height;
 			buffers.SetupAliasTexCoords(loaded.texCoords);
-			aliasVerticesCache.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
+			aliasVertexCache.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
 		}
 		else
 		{
@@ -1243,8 +1243,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		loaded.colormapped.texture.size = 0;
 		loaded.colormapped.texture.texture = previousSharedMemoryTexture;
 	}
-	auto entry = aliasIndicesCache.find(alias.aliashdr);
-	if (entry == aliasIndicesCache.end())
+	auto entry = aliasIndexCache.find(alias.aliashdr);
+	if (entry == aliasIndexCache.end())
 	{
 		auto aliashdr = (aliashdr_t *)alias.aliashdr;
 		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
@@ -1336,7 +1336,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupAliasIndices32(loaded.indices);
 		}
-		aliasIndicesCache.insert({ alias.aliashdr, loaded.indices.indices });
+		aliasIndexCache.insert({ alias.aliashdr, loaded.indices.indices });
 	}
 	else
 	{
@@ -1723,6 +1723,7 @@ void Scene::Reset()
 	usedInLatestIndexBuffer8 = 0;
 	latestMemory.clear();
 	Skybox::MoveToPrevious(*this);
-	aliasIndicesCache.clear();
-	aliasVerticesCache.clear();
+	aliasIndexCache.clear();
+	aliasVertexCache.clear();
+	surfaceVertexCache.clear();
 }
