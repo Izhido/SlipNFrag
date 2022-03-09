@@ -21,14 +21,14 @@ struct SortedSurfaces
 
 	void Initialize(std::list<SortedSurfaceLightmap>& sorted);
 	void Initialize(std::list<SortedSurfaceTexture>& sorted);
-	void Sort(LoadedSurface& loaded, int index, std::list<SortedSurfaceLightmap>& sorted);
-	void Sort(LoadedTurbulent& loaded, int index, std::list<SortedSurfaceTexture>& sorted);
+	void CacheVertices(AppState& appState, LoadedTurbulent& loaded);
+	void Sort(AppState& appState, LoadedSurface& loaded, int index, std::list<SortedSurfaceLightmap>& sorted);
+	void Sort(AppState& appState, LoadedTurbulent& loaded, int index, std::list<SortedSurfaceTexture>& sorted);
 	static void Cleanup(std::list<SortedSurfaceLightmap>& sorted);
 	static void Cleanup(std::list<SortedSurfaceTexture>& sorted);
-	static float* LoadVertices(AppState& appState, LoadedTurbulent& loaded, float* target);
-	static void LoadVertices(AppState& appState, std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
-	static void LoadVertices(AppState& appState, std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
-	static void LoadVertices(AppState& appState, std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
+	static void LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
+	static void LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
+	static void LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);

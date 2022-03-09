@@ -1444,7 +1444,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedSurfaces[i];
 		GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.surfaces);
+		sorted.Sort(appState, loaded, i, sorted.surfaces);
 		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
@@ -1459,7 +1459,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedSurfacesRotated[i];
 		GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.surfacesRotated);
+		sorted.Sort(appState, loaded, i, sorted.surfacesRotated);
 		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
@@ -1474,7 +1474,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedFences[i];
 		GetStagingBufferSize(appState, d_lists.fences[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.fences);
+		sorted.Sort(appState, loaded, i, sorted.fences);
 		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
@@ -1489,7 +1489,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedFencesRotated[i];
 		GetStagingBufferSize(appState, d_lists.fences_rotated[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.fencesRotated);
+		sorted.Sort(appState, loaded, i, sorted.fencesRotated);
 		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
@@ -1504,7 +1504,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedTurbulent[i];
 		GetStagingBufferSize(appState, d_lists.turbulent[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.turbulent);
+		sorted.Sort(appState, loaded, i, sorted.turbulent);
 		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
@@ -1519,7 +1519,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		auto& loaded = loadedTurbulentLit[i];
 		GetStagingBufferSize(appState, d_lists.turbulent_lit[i], loaded, size);
-		sorted.Sort(loaded, i, sorted.turbulentLit);
+		sorted.Sort(appState, loaded, i, sorted.turbulentLit);
 		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
