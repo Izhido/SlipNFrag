@@ -28,10 +28,11 @@ void SortedSurfaces::CacheVertices(AppState& appState, LoadedTurbulent& loaded)
 	auto entry = appState.Scene.surfaceVertexCache.find(face);
 	if (entry == appState.Scene.surfaceVertexCache.end())
 	{
-		appState.Scene.surfaceVertexCache.emplace(face, face->numedges * 4);
+		auto size = face->numedges * 3;
+		appState.Scene.surfaceVertexCache.emplace(face, size);
 		auto cached = appState.Scene.surfaceVertexCache[face].data();
 		loaded.vertices = cached;
-		loaded.vertexCount = face->numedges * 4;
+		loaded.vertexCount = size;
 		auto model = (model_t*)loaded.model;
 		auto edge = model->surfedges[face->firstedge];
 		unsigned int index;
@@ -47,7 +48,6 @@ void SortedSurfaces::CacheVertices(AppState& appState, LoadedTurbulent& loaded)
 		*cached++ = *source++;
 		*cached++ = *source++;
 		*cached++ = *source;
-		*cached++ = 1;
 		auto next_front = 0;
 		auto next_back = face->numedges;
 		auto use_back = false;
@@ -76,7 +76,6 @@ void SortedSurfaces::CacheVertices(AppState& appState, LoadedTurbulent& loaded)
 			*cached++ = *source++;
 			*cached++ = *source++;
 			*cached++ = *source;
-			*cached++ = 1;
 		}
 	}
 	else

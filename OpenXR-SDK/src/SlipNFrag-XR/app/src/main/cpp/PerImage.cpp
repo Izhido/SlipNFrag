@@ -108,7 +108,7 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 	{
 		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 		auto source = (trivertx_t*)loadedBuffer->source;
-		for (auto i = 0; i < loadedBuffer->size; i += 2 * 4 * sizeof(float))
+		for (auto i = 0; i < loadedBuffer->size; i += 2 * 3 * sizeof(float))
 		{
 			auto x = (float)(source->v[0]);
 			auto y = (float)(source->v[1]);
@@ -116,11 +116,9 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 			*target++ = x;
 			*target++ = y;
 			*target++ = z;
-			*target++ = 1;
 			*target++ = x;
 			*target++ = y;
 			*target++ = z;
-			*target++ = 1;
 			source++;
 		}
 		offset += loadedBuffer->size;

@@ -30,7 +30,7 @@ const vec2 offsets[6] = vec2[]
 	vec2(-0.5, 0.5)
 );
 
-layout(location = 0) in vec3 vertexPosition;
+layout(location = 0) in vec4 vertexPosition;
 layout(location = 1) in float vertexColor;
 layout(location = 0) out int fragmentColor;
 
@@ -41,7 +41,7 @@ out gl_PerVertex
 
 void main(void)
 {
-	vec4 position = vec4(vertexPosition, 1) + vright * offsets[gl_VertexIndex].x + vup * offsets[gl_VertexIndex].y;
+	vec4 position = vertexPosition + vright * offsets[gl_VertexIndex].x + vup * offsets[gl_VertexIndex].y;
 	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * position;
 	fragmentColor = int(vertexColor);
 }

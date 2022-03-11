@@ -471,8 +471,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	PipelineAttributes sortedSurfaceAttributes { };
 	sortedSurfaceAttributes.vertexAttributes.resize(5);
 	sortedSurfaceAttributes.vertexBindings.resize(2);
-	sortedSurfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	sortedSurfaceAttributes.vertexBindings[0].stride = 4 * sizeof(float);
+	sortedSurfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	sortedSurfaceAttributes.vertexBindings[0].stride = 3 * sizeof(float);
 	sortedSurfaceAttributes.vertexAttributes[1].location = 1;
 	sortedSurfaceAttributes.vertexAttributes[1].binding = 1;
 	sortedSurfaceAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -501,8 +501,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	PipelineAttributes sortedSurfaceRotatedAttributes { };
 	sortedSurfaceRotatedAttributes.vertexAttributes.resize(7);
 	sortedSurfaceRotatedAttributes.vertexBindings.resize(2);
-	sortedSurfaceRotatedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	sortedSurfaceRotatedAttributes.vertexBindings[0].stride = 4 * sizeof(float);
+	sortedSurfaceRotatedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	sortedSurfaceRotatedAttributes.vertexBindings[0].stride = 3 * sizeof(float);
 	sortedSurfaceRotatedAttributes.vertexAttributes[1].location = 1;
 	sortedSurfaceRotatedAttributes.vertexAttributes[1].binding = 1;
 	sortedSurfaceRotatedAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -539,8 +539,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	PipelineAttributes surfaceAttributes { };
 	surfaceAttributes.vertexAttributes.resize(5);
 	surfaceAttributes.vertexBindings.resize(2);
-	surfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	surfaceAttributes.vertexBindings[0].stride = 4 * sizeof(float);
+	surfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	surfaceAttributes.vertexBindings[0].stride = 3 * sizeof(float);
 	surfaceAttributes.vertexAttributes[1].location = 1;
 	surfaceAttributes.vertexAttributes[1].binding = 1;
 	surfaceAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -588,8 +588,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	PipelineAttributes colormappedAttributes { };
 	colormappedAttributes.vertexAttributes.resize(3);
 	colormappedAttributes.vertexBindings.resize(3);
-	colormappedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	colormappedAttributes.vertexBindings[0].stride = 4 * sizeof(float);
+	colormappedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	colormappedAttributes.vertexBindings[0].stride = 3 * sizeof(float);
 	colormappedAttributes.vertexAttributes[1].location = 1;
 	colormappedAttributes.vertexAttributes[1].binding = 1;
 	colormappedAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
@@ -1168,7 +1168,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		auto entry = aliasVertexCache.find(alias.apverts);
 		if (entry == aliasVertexCache.end())
 		{
-			loaded.vertices.size = alias.vertex_count * 2 * 4 * sizeof(float);
+			loaded.vertices.size = alias.vertex_count * 2 * 3 * sizeof(float);
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
 			buffers.MoveToFront(loaded.vertices.buffer);
@@ -1445,7 +1445,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedSurfaces[i];
 		GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
 		sorted.Sort(appState, loaded, i, sorted.surfaces);
-		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
@@ -1460,7 +1460,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedSurfacesRotated[i];
 		GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], loaded, size);
 		sorted.Sort(appState, loaded, i, sorted.surfacesRotated);
-		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
@@ -1475,7 +1475,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedFences[i];
 		GetStagingBufferSize(appState, d_lists.fences[i], loaded, size);
 		sorted.Sort(appState, loaded, i, sorted.fences);
-		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
@@ -1490,7 +1490,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedFencesRotated[i];
 		GetStagingBufferSize(appState, d_lists.fences_rotated[i], loaded, size);
 		sorted.Sort(appState, loaded, i, sorted.fencesRotated);
-		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
@@ -1505,7 +1505,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedTurbulent[i];
 		GetStagingBufferSize(appState, d_lists.turbulent[i], loaded, size);
 		sorted.Sort(appState, loaded, i, sorted.turbulent);
-		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
@@ -1520,7 +1520,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		auto& loaded = loadedTurbulentLit[i];
 		GetStagingBufferSize(appState, d_lists.turbulent_lit[i], loaded, size);
 		sorted.Sort(appState, loaded, i, sorted.turbulentLit);
-		sortedVerticesSize += (loaded.count * 4 * sizeof(float));
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
