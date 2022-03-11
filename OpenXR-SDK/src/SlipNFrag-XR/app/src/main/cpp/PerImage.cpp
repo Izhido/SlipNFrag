@@ -114,12 +114,12 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 			auto y = (float)(source->v[1]);
 			auto z = (float)(source->v[2]);
 			*target++ = x;
+			*target++ = y;
 			*target++ = z;
-			*target++ = -y;
 			*target++ = 1;
 			*target++ = x;
+			*target++ = y;
 			*target++ = z;
-			*target++ = -y;
 			*target++ = 1;
 			source++;
 		}

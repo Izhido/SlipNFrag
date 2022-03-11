@@ -28,6 +28,6 @@ out gl_PerVertex
 
 void main(void)
 {
-	gl_Position = projectionMatrix[gl_ViewIndex] * (viewMatrix[gl_ViewIndex] * (vertexTransform * (aliasTransform * vertexPosition)));
+	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * aliasTransform * vertexPosition;
 	fragmentData = vec3(vertexTexCoords, vertexLight);
 }

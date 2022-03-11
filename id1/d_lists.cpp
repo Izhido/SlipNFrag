@@ -224,9 +224,9 @@ void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)
 	d_lists.last_textured_vertex++;
 	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = y;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
 	d_lists.last_textured_attribute++;
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
 	d_lists.last_textured_attribute++;
@@ -239,9 +239,9 @@ void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)
 	d_lists.last_textured_vertex++;
 	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = y;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
 	d_lists.last_textured_attribute++;
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
 	d_lists.last_textured_attribute++;
@@ -254,9 +254,9 @@ void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)
 	d_lists.last_textured_vertex++;
 	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = y;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
 	d_lists.last_textured_attribute++;
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
 	d_lists.last_textured_attribute++;
@@ -269,9 +269,9 @@ void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)
 	d_lists.last_textured_vertex++;
 	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = y;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
 	d_lists.last_textured_attribute++;
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
 	d_lists.last_textured_attribute++;
@@ -513,9 +513,9 @@ void D_AddParticleToLists (particle_t* part)
 	d_lists.last_particle_position++;
 	d_lists.particle_positions[d_lists.last_particle_position] = x;
 	d_lists.last_particle_position++;
-	d_lists.particle_positions[d_lists.last_particle_position] = z;
+	d_lists.particle_positions[d_lists.last_particle_position] = y;
 	d_lists.last_particle_position++;
-	d_lists.particle_positions[d_lists.last_particle_position] = -y;
+	d_lists.particle_positions[d_lists.last_particle_position] = z;
 	new_size = d_lists.last_particle_color + 1 + 1;
 	if (d_lists.particle_colors.size() < new_size)
 	{
@@ -679,8 +679,8 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 		auto z = vertex.position[2];
 		auto target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1;
 		*target++ = x;
-		*target++ = z;
-		*target = -y;
+		*target++ = y;
+		*target = z;
 		target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1;
 		*target = color;
 		d_lists.last_colored_index8++;
@@ -719,8 +719,8 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 			z = vertex.position[2];
 			target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1 + current_index * 3;
 			*target++ = x;
-			*target++ = z;
-			*target = -y;
+			*target++ = y;
+			*target = z;
 			target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1 + current_index;
 			*target = color;
 			if (i >= 3)
@@ -769,8 +769,8 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 		auto z = vertex.position[2];
 		auto target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1;
 		*target++ = x;
-		*target++ = z;
-		*target = -y;
+		*target++ = y;
+		*target = z;
 		target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1;
 		*target = color;
 		d_lists.last_colored_index16++;
@@ -809,8 +809,8 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 			z = vertex.position[2];
 			target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1 + current_index * 3;
 			*target++ = x;
-			*target++ = z;
-			*target = -y;
+			*target++ = y;
+			*target = z;
 			target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1 + current_index;
 			*target = color;
 			if (i >= 3)
@@ -859,8 +859,8 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 		auto z = vertex.position[2];
 		auto target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1;
 		*target++ = x;
-		*target++ = z;
-		*target = -y;
+		*target++ = y;
+		*target = z;
 		target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1;
 		*target = color;
 		d_lists.last_colored_index32++;
@@ -899,8 +899,8 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 			z = vertex.position[2];
 			target = d_lists.colored_vertices.data() + d_lists.last_colored_vertex + 1 + current_index * 3;
 			*target++ = x;
-			*target++ = z;
-			*target = -y;
+			*target++ = y;
+			*target = z;
 			target = d_lists.colored_colors.data() + d_lists.last_colored_color + 1 + current_index;
 			*target = color;
 			if (i >= 3)

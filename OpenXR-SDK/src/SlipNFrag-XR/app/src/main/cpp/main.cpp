@@ -1934,12 +1934,12 @@ void android_main(struct android_app* app)
 					*target++ = 0;
 					*target++ = 0;
 					*target++ = 0;
+					*target++ = 0;
+					*target++ = -appState.Scale;
+					*target++ = 0;
+					*target++ = 0;
 					*target++ = appState.Scale;
 					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = appState.Scale;
 					*target++ = 0;
 					*target++ = -appState.FromEngine.vieworg0 * appState.Scale;
 					*target++ = -appState.FromEngine.vieworg2 * appState.Scale;

@@ -21,6 +21,6 @@ out gl_PerVertex
 
 void main(void)
 {
-	gl_Position = projectionMatrix[gl_ViewIndex] * (viewMatrix[gl_ViewIndex] * vec4(vertexPosition, 1));
+	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vec4(vertexPosition, 1);
 	fragmentTexCoords = vertexTexCoords;
 }

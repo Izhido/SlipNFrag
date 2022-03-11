@@ -14,7 +14,7 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 	layout(offset = 256) mat4 vertexTransform;
 };
 
-layout(location = 0) in vec4 vertex;
+layout(location = 0) in vec4 vertexPosition;
 layout(location = 1) in mat4 texturePosition;
 layout(location = 0) out vec4 fragmentCoords;
 layout(location = 1) out flat int fragmentLightmapIndex;
@@ -26,9 +26,8 @@ out gl_PerVertex
 
 void main(void)
 {
-	vec4 position = vec4(vertex.x, vertex.z, -vertex.y, vertex.w);
-	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * position;
-	vec2 texCoords = vec2(dot(vertex, texturePosition[0]), dot(vertex, texturePosition[1]));
+	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * vertexPosition;
+	vec2 texCoords = vec2(dot(vertexPosition, texturePosition[0]), dot(vertexPosition, texturePosition[1]));
 	vec2 lightmapSizeMinusOne = floor(texturePosition[2].zw / 16);
 	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * lightmapSizeMinusOne / texturePosition[2].zw;
 	fragmentCoords = vec4(lightmapCoords, texCoords / texturePosition[3].xy);

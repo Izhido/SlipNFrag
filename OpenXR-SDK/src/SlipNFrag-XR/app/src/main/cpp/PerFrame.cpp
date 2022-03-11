@@ -24,17 +24,17 @@ void PerFrame::Reset(AppState& appState)
 void PerFrame::SetPushConstants(const LoadedAlias& loaded, float pushConstants[])
 {
 	pushConstants[0] = loaded.transform[0][0];
-	pushConstants[1] = loaded.transform[2][0];
-	pushConstants[2] = -loaded.transform[1][0];
-	pushConstants[4] = loaded.transform[0][2];
-	pushConstants[5] = loaded.transform[2][2];
-	pushConstants[6] = -loaded.transform[1][2];
-	pushConstants[8] = -loaded.transform[0][1];
-	pushConstants[9] = -loaded.transform[2][1];
-	pushConstants[10] = loaded.transform[1][1];
+	pushConstants[1] = loaded.transform[1][0];
+	pushConstants[2] = loaded.transform[2][0];
+	pushConstants[4] = loaded.transform[0][1];
+	pushConstants[5] = loaded.transform[1][1];
+	pushConstants[6] = loaded.transform[2][1];
+	pushConstants[8] = loaded.transform[0][2];
+	pushConstants[9] = loaded.transform[1][2];
+	pushConstants[10] = loaded.transform[2][2];
 	pushConstants[12] = loaded.transform[0][3];
-	pushConstants[13] = loaded.transform[2][3];
-	pushConstants[14] = -loaded.transform[1][3];
+	pushConstants[13] = loaded.transform[1][3];
+	pushConstants[14] = loaded.transform[2][3];
 }
 
 void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
@@ -590,12 +590,12 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &colors->buffer, &appState.NoOffset);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.particle.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
 			pushConstants[0] = appState.FromEngine.vright0;
-			pushConstants[1] = appState.FromEngine.vright2;
-			pushConstants[2] = -appState.FromEngine.vright1;
+			pushConstants[1] = appState.FromEngine.vright1;
+			pushConstants[2] = appState.FromEngine.vright2;
 			pushConstants[3] = 0;
 			pushConstants[4] = appState.FromEngine.vup0;
-			pushConstants[5] = appState.FromEngine.vup2;
-			pushConstants[6] = -appState.FromEngine.vup1;
+			pushConstants[5] = appState.FromEngine.vup1;
+			pushConstants[6] = appState.FromEngine.vup2;
 			pushConstants[7] = 0;
 			vkCmdPushConstants(commandBuffer, appState.Scene.particle.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 8 * sizeof(float), pushConstants);
 			vkCmdDraw(commandBuffer, 6, appState.Scene.lastParticle + 1, 0, 0);

@@ -42,6 +42,6 @@ out gl_PerVertex
 void main(void)
 {
 	vec4 position = vec4(vertexPosition, 1) + vright * offsets[gl_VertexIndex].x + vup * offsets[gl_VertexIndex].y;
-	gl_Position = projectionMatrix[gl_ViewIndex] * (viewMatrix[gl_ViewIndex] * (vertexTransform * position));
+	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * position;
 	fragmentColor = int(vertexColor);
 }

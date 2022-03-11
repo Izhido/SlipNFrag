@@ -32,8 +32,8 @@ out gl_PerVertex
 
 void main(void)
 {
-	vec4 position = vertexTransform * (aliasTransform * vertexPosition);
-	gl_Position = projectionMatrix[gl_ViewIndex] * (viewMatrix[gl_ViewIndex] * position);
+	vec4 position = vertexTransform * aliasTransform * vertexPosition;
+	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * position;
 	float projection = offset + position.x * forwardX + position.y * forwardY + position.z * forwardZ;
 	fragmentData = vec4(vertexTexCoords, vertexLight, clamp(projection / 8, 0, 1));
 }
