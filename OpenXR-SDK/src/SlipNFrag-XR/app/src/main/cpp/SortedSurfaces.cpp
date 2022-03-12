@@ -323,9 +323,7 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	XrMatrix4x4f attributes { };
-	void* previousFace = nullptr;
-	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto attributeCount = 0;
 	for (auto& entry : sorted)
 	{
@@ -333,28 +331,23 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std
 		{
 			auto& turbulent = loaded[i];
 			auto face = (msurface_t*)turbulent.face;
-			if (previousFace != face)
-			{
-				attributes.m[0] = face->texinfo->vecs[0][0];
-				attributes.m[1] = face->texinfo->vecs[0][1];
-				attributes.m[2] = face->texinfo->vecs[0][2];
-				attributes.m[3] = face->texinfo->vecs[0][3];
-				attributes.m[4] = face->texinfo->vecs[1][0];
-				attributes.m[5] = face->texinfo->vecs[1][1];
-				attributes.m[6] = face->texinfo->vecs[1][2];
-				attributes.m[7] = face->texinfo->vecs[1][3];
-				attributes.m[8] = face->texinfo->texture->width;
-				attributes.m[9] = face->texinfo->texture->height;
-				previousFace = face;
-			}
 			for (auto j = 0; j < face->numedges; j++)
 			{
-				*target++ = attributes;
+				*target++ = face->texinfo->vecs[0][0];
+				*target++ = face->texinfo->vecs[0][1];
+				*target++ = face->texinfo->vecs[0][2];
+				*target++ = face->texinfo->vecs[0][3];
+				*target++ = face->texinfo->vecs[1][0];
+				*target++ = face->texinfo->vecs[1][1];
+				*target++ = face->texinfo->vecs[1][2];
+				*target++ = face->texinfo->vecs[1][3];
+				*target++ = face->texinfo->texture->width;
+				*target++ = face->texinfo->texture->height;
 			}
 			attributeCount += face->numedges;
 		}
 	}
-	offset += (attributeCount * sizeof(XrMatrix4x4f));
+	offset += (attributeCount * 10 * sizeof(float));
 }
 
 void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
