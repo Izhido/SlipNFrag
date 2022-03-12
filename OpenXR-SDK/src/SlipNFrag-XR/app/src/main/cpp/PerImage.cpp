@@ -103,26 +103,59 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 		offset += loadedAliasIndexBuffer->size;
 		loadedAliasIndexBuffer = loadedAliasIndexBuffer->next;
 	}
-	auto loadedBuffer = appState.Scene.buffers.firstAliasVertices;
-	while (loadedBuffer != nullptr)
+	if (appState.UInt8VertexBufferEnabled)
 	{
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		auto source = (trivertx_t*)loadedBuffer->source;
-		for (auto i = 0; i < loadedBuffer->size; i += 2 * 3 * sizeof(float))
+		auto loadedBuffer = appState.Scene.buffers.firstAliasVertices;
+		while (loadedBuffer != nullptr)
 		{
-			auto x = (float)(source->v[0]);
-			auto y = (float)(source->v[1]);
-			auto z = (float)(source->v[2]);
-			*target++ = x;
-			*target++ = y;
-			*target++ = z;
-			*target++ = x;
-			*target++ = y;
-			*target++ = z;
-			source++;
+			auto target = (byte*)(((unsigned char*)stagingBuffer->mapped) + offset);
+			auto source = (trivertx_t*)loadedBuffer->source;
+			for (auto i = 0; i < loadedBuffer->size; i += 2 * 4 * sizeof(byte))
+			{
+				auto x = source->v[0];
+				auto y = source->v[1];
+				auto z = source->v[2];
+				*target++ = x;
+				*target++ = y;
+				*target++ = z;
+				*target++ = 1;
+				*target++ = x;
+				*target++ = y;
+				*target++ = z;
+				*target++ = 1;
+				source++;
+			}
+			offset += loadedBuffer->size;
+			loadedBuffer = loadedBuffer->next;
 		}
-		offset += loadedBuffer->size;
-		loadedBuffer = loadedBuffer->next;
+		while (offset % 4 != 0)
+		{
+			offset++;
+		}
+	}
+	else
+	{
+		auto loadedBuffer = appState.Scene.buffers.firstAliasVertices;
+		while (loadedBuffer != nullptr)
+		{
+			auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+			auto source = (trivertx_t*)loadedBuffer->source;
+			for (auto i = 0; i < loadedBuffer->size; i += 2 * 3 * sizeof(float))
+			{
+				auto x = source->v[0];
+				auto y = source->v[1];
+				auto z = source->v[2];
+				*target++ = x;
+				*target++ = y;
+				*target++ = z;
+				*target++ = x;
+				*target++ = y;
+				*target++ = z;
+				source++;
+			}
+			offset += loadedBuffer->size;
+			loadedBuffer = loadedBuffer->next;
+		}
 	}
 	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
@@ -143,10 +176,6 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 		}
 		offset += loadedTexCoordsBuffer->size;
 		loadedTexCoordsBuffer = loadedTexCoordsBuffer->next;
-	}
-	while (offset % 4 != 0)
-	{
-		offset++;
 	}
 	if (appState.Scene.verticesSize > 0)
 	{
@@ -588,6 +617,11 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 
 	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasVertices, bufferCopy);
 
+	while (bufferCopy.srcOffset % 4 != 0)
+	{
+		bufferCopy.srcOffset++;
+	}
+
 	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
@@ -596,11 +630,6 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 		bufferCopy.srcOffset += bufferCopy.size;
 		appState.Scene.AddToBufferBarrier(loadedTexCoordsBuffer->buffer->buffer);
 		loadedTexCoordsBuffer = loadedTexCoordsBuffer->next;
-	}
-
-	while (bufferCopy.srcOffset % 4 != 0)
-	{
-		bufferCopy.srcOffset++;
 	}
 
 	if (appState.Scene.verticesSize > 0)

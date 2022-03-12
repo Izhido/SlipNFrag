@@ -585,28 +585,36 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	spriteAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	spriteAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
-	PipelineAttributes colormappedAttributes { };
-	colormappedAttributes.vertexAttributes.resize(3);
-	colormappedAttributes.vertexBindings.resize(3);
-	colormappedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-	colormappedAttributes.vertexBindings[0].stride = 3 * sizeof(float);
-	colormappedAttributes.vertexAttributes[1].location = 1;
-	colormappedAttributes.vertexAttributes[1].binding = 1;
-	colormappedAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-	colormappedAttributes.vertexBindings[1].binding = 1;
-	colormappedAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	colormappedAttributes.vertexAttributes[2].location = 2;
-	colormappedAttributes.vertexAttributes[2].binding = 2;
-	colormappedAttributes.vertexAttributes[2].format = VK_FORMAT_R32_SFLOAT;
-	colormappedAttributes.vertexBindings[2].binding = 2;
-	colormappedAttributes.vertexBindings[2].stride = sizeof(float);
-	colormappedAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	colormappedAttributes.vertexInputState.vertexBindingDescriptionCount = colormappedAttributes.vertexBindings.size();
-	colormappedAttributes.vertexInputState.pVertexBindingDescriptions = colormappedAttributes.vertexBindings.data();
-	colormappedAttributes.vertexInputState.vertexAttributeDescriptionCount = colormappedAttributes.vertexAttributes.size();
-	colormappedAttributes.vertexInputState.pVertexAttributeDescriptions = colormappedAttributes.vertexAttributes.data();
-	colormappedAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	colormappedAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	PipelineAttributes aliasAttributes { };
+	aliasAttributes.vertexAttributes.resize(3);
+	aliasAttributes.vertexBindings.resize(3);
+	if (appState.UInt8VertexBufferEnabled)
+	{
+		aliasAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8A8_UINT;
+		aliasAttributes.vertexBindings[0].stride = 4 * sizeof(byte);
+	}
+	else
+	{
+		aliasAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		aliasAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+	}
+	aliasAttributes.vertexAttributes[1].location = 1;
+	aliasAttributes.vertexAttributes[1].binding = 1;
+	aliasAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+	aliasAttributes.vertexBindings[1].binding = 1;
+	aliasAttributes.vertexBindings[1].stride = 2 * sizeof(float);
+	aliasAttributes.vertexAttributes[2].location = 2;
+	aliasAttributes.vertexAttributes[2].binding = 2;
+	aliasAttributes.vertexAttributes[2].format = VK_FORMAT_R32_SFLOAT;
+	aliasAttributes.vertexBindings[2].binding = 2;
+	aliasAttributes.vertexBindings[2].stride = sizeof(float);
+	aliasAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	aliasAttributes.vertexInputState.vertexBindingDescriptionCount = aliasAttributes.vertexBindings.size();
+	aliasAttributes.vertexInputState.pVertexBindingDescriptions = aliasAttributes.vertexBindings.data();
+	aliasAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasAttributes.vertexAttributes.size();
+	aliasAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAttributes.vertexAttributes.data();
+	aliasAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	aliasAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	PipelineAttributes particleAttributes { };
 	particleAttributes.vertexAttributes.resize(2);
@@ -844,8 +852,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.stageCount = alias.stages.size();
 	graphicsPipelineCreateInfo.pStages = alias.stages.data();
 	graphicsPipelineCreateInfo.layout = alias.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &colormappedAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &colormappedAttributes.inputAssemblyState;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &aliasAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &alias.pipeline));
 
 	viewmodel.stages.resize(2);
@@ -1168,7 +1176,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		auto entry = aliasVertexCache.find(alias.apverts);
 		if (entry == aliasVertexCache.end())
 		{
-			loaded.vertices.size = alias.vertex_count * 2 * 3 * sizeof(float);
+			auto vertexSize = (appState.UInt8VertexBufferEnabled ? 4 * sizeof(byte) : 3 * sizeof(float));
+			loaded.vertices.size = alias.vertex_count * 2 * vertexSize;
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
 			buffers.MoveToFront(loaded.vertices.buffer);
