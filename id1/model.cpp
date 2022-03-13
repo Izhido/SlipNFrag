@@ -758,39 +758,6 @@ void Mod_LoadEntities (lump_t *l)
     mod_pool.entities.emplace_back(l->filelen);
 	loadmodel->entities = mod_pool.entities.back().data();
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
-	const char* data = loadmodel->entities;
-	while (1)
-	{
-		data = COM_Parse (data);
-		if (com_token[0] == '{')
-		{
-			continue;
-		}
-		if (com_token[0] == '}')
-		{
-			break;
-		}
-		if (!data)
-		{
-			Sys_Error ("Mod_LoadEntities: EOF without closing brace");
-		}
-		std::string key = com_token;
-		data = COM_Parse (data);
-		if (!data)
-		{
-			Sys_Error ("Mod_LoadEntities: EOF without closing brace");
-		}
-		if (com_token[0] == '}')
-		{
-			Sys_Error ("Mod_LoadEntities: closing brace without data");
-		}
-		std::string value = com_token;
-		if (Q_strcasecmp (key.c_str(), "sky") == 0 || Q_strcasecmp (key.c_str(), "sky0") == 0)
-		{
-			r_skyboxprefix = value;
-		}
-	}
-	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
 }
 
 
@@ -1804,21 +1771,6 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
             loadmodel->name = ED_NewString(name_len + 1);
             Q_strncpy(pr_strings + loadmodel->name, name, name_len);
 			mod = loadmodel;
-		}
-	}
-
-	if (!r_skyboxinitialized && r_skyboxprefix.length() > 0)
-	{
-		float rotate = 0;
-		vec3_t axis;
-		axis[0] = 0;
-		axis[1] = 1;
-		axis[2] = 0;
-		R_InitSkyBox ();
-		if (R_SetSkyBox (rotate, axis))
-		{
-			r_skyinitialized = false;
-			r_skyboxinitialized = true;
 		}
 	}
 }

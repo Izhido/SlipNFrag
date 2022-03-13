@@ -152,7 +152,7 @@ R_InitSkyBox
 void R_InitSkyBox (void)
 {
 	int		i;
-	extern model_t *loadmodel;
+	model_t* loadmodel = cl.worldmodel;
 
     // Using the extra space previously allocated in the various Mod_Load****() calls:
     r_skyfaces = loadmodel->surfaces + loadmodel->numsurfaces;

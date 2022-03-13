@@ -270,6 +270,56 @@ void R_NewMap (void)
 	r_viewleaf = NULL;
 	R_ClearParticles ();
 
+	const char* data = cl.worldmodel->entities;
+	while (1)
+	{
+		data = COM_Parse (data);
+		if (com_token[0] == '{')
+		{
+			continue;
+		}
+		if (com_token[0] == '}')
+		{
+			break;
+		}
+		if (!data)
+		{
+			Con_Printf ("R_NewMap: Entities: EOF without closing brace");
+			break;
+		}
+		std::string key = com_token;
+		data = COM_Parse (data);
+		if (!data)
+		{
+			Con_Printf ("R_NewMap: Entities: EOF without closing brace");
+			break;
+		}
+		if (com_token[0] == '}')
+		{
+			Con_Printf ("R_NewMap: Entities: closing brace without data");
+			break;
+		}
+		std::string value = com_token;
+		if (Q_strcasecmp (key.c_str(), "sky") == 0 || Q_strcasecmp (key.c_str(), "sky0") == 0)
+		{
+			r_skyboxprefix = value;
+			if (!r_skyboxinitialized && r_skyboxprefix.length() > 0)
+			{
+				float rotate = 0;
+				vec3_t axis;
+				axis[0] = 0;
+				axis[1] = 1;
+				axis[2] = 0;
+				R_InitSkyBox ();
+				if (R_SetSkyBox (rotate, axis))
+				{
+					r_skyinitialized = false;
+					r_skyboxinitialized = true;
+				}
+			}
+		}
+	}
+
 	r_maxedgesseen = 0;
 	r_maxsurfsseen = 0;
 
