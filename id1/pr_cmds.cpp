@@ -723,7 +723,7 @@ int PF_newcheckclient (int check)
 // get the PVS for the entity
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
 	leaf = Mod_PointInLeaf (org, sv.worldmodel);
-	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
+	pvs = Mod_LeafPVS (leaf, sv.worldmodel, true);
     checkpvs.resize((sv.worldmodel->numleafs+7)>>3);
     memcpy (checkpvs.data(), pvs, (sv.worldmodel->numleafs+7)>>3 );
 

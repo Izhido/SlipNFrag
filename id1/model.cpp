@@ -193,11 +193,19 @@ byte *Mod_DecompressVis (byte *in, model_t *model)
 	return decompressed.data();
 }
 
-byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model)
+byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model, qboolean serverside)
 {
     if (leaf == model->leafs)
     {
-        auto newsize = (sv.worldmodel->numleafs+7)>>3;
+    	size_t newsize;
+    	if (serverside)
+		{
+			newsize = (sv.worldmodel->numleafs+7)>>3;
+		}
+    	else
+		{
+			newsize = (cl.worldmodel->numleafs+7)>>3;
+		}
         if (mod_novis.size() < newsize)
         {
             mod_novis.resize(newsize);
