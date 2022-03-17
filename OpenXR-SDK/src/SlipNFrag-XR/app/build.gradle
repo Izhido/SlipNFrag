@@ -6,7 +6,7 @@ plugins {
 android {
     compileSdkVersion 32
     buildToolsVersion '32.0.0'
-    ndkVersion '22.1.7171670'
+    ndkVersion '24.0.8215888'
 
     defaultConfig {
         applicationId "com.heribertodelgado.slipnfrag_xr"

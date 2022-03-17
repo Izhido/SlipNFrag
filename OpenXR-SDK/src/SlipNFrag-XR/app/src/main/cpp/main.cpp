@@ -614,12 +614,23 @@ void android_main(struct android_app* app)
 			VkPhysicalDeviceFeatures features { };
 			features.samplerAnisotropy = VK_TRUE;
 
+			VkPhysicalDeviceMultiviewFeatures multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
+			multiviewFeatures.multiview = VK_TRUE;
+
 			VkDeviceCreateInfo deviceInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 			deviceInfo.queueCreateInfoCount = 1;
 			deviceInfo.pQueueCreateInfos = &queueInfo;
 			deviceInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
 			deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 			deviceInfo.pEnabledFeatures = &features;
+			deviceInfo.pNext = &multiviewFeatures;
+
+			VkPhysicalDeviceIndexTypeUint8FeaturesEXT indexTypeUint8Feature { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT };
+			if (indexTypeUInt8Enabled)
+			{
+				indexTypeUint8Feature.indexTypeUint8 = VK_TRUE;
+				multiviewFeatures.pNext = &indexTypeUint8Feature;
+			}
 
 			XrVulkanDeviceCreateInfoKHR deviceCreateInfo { XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR };
 			deviceCreateInfo.systemId = systemId;
