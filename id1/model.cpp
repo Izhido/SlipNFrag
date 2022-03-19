@@ -417,7 +417,7 @@ byte	*mod_base;
 Mod_AveragePixels
 =================
 */
-byte Mod_AveragePixels (std::vector<byte>& pixdata, int& d_red, int& d_green, int& d_blue)
+byte Mod_AveragePixels (std::vector<byte>& pixdata)
 {
     int        r,g,b;
     int        i;
@@ -427,63 +427,43 @@ byte Mod_AveragePixels (std::vector<byte>& pixdata, int& d_red, int& d_green, in
     int        bestdistortion, distortion;
     int        bestcolor;
     byte    *pal;
-    int        fullbright;
     int        e;
     
     vis = 0;
     r = g = b = 0;
-    fullbright = 0;
     for (i=0 ; i<pixdata.size() ; i++)
     {
         pix = pixdata[i];
         if (pix == 255)
-            fullbright = 2;
+		{
+			continue;
+		}
         else if (pix >= 240)
         {
             return pix;
         }
-        else
-        {
-            if (fullbright)
-                continue;
-        }
-        
+
         r += host_basepal[pix*3];
         g += host_basepal[pix*3+1];
         b += host_basepal[pix*3+2];
         vis++;
     }
     
-    if (fullbright == 2)
+    if (vis == 0)
         return 255;
         
     r /= vis;
     g /= vis;
     b /= vis;
     
-    if (!fullbright)
-    {
-        r += d_red;
-        g += d_green;
-        b += d_blue;
-    }
-    
 //
 // find the best color
 //
     bestdistortion = r*r + g*g + b*b;
     bestcolor = 0;
-    if (fullbright)
-    {
-        i = 240;
-        e = 255;
-    }
-    else
-    {
-        i = 0;
-        e = 240;
-    }
-    
+	i = 0;
+	e = 240;
+
     for ( ; i< e ; i++)
     {
         pix = i;    //pixdata[i];
@@ -499,21 +479,12 @@ byte Mod_AveragePixels (std::vector<byte>& pixdata, int& d_red, int& d_green, in
         {
             if (!distortion)
             {
-                d_red = d_green = d_blue = 0;    // no distortion yet
                 return pix;        // perfect match
             }
 
             bestdistortion = distortion;
             bestcolor = pix;
         }
-    }
-
-    if (!fullbright)
-    {    // error diffusion
-        pal = host_basepal.data() + bestcolor*3;
-        d_red = r - (int)pal[0];
-        d_green = g - (int)pal[1];
-        d_blue = b - (int)pal[2];
     }
 
     return bestcolor;
@@ -526,9 +497,9 @@ Mod_GenerateMipmaps
 */
 void Mod_GenerateMipmaps (byte* data, int w, int h)
 {
-    auto d_red = 0, d_green = 0, d_blue = 0;    // no distortion yet
     auto source = data;
     auto lump_p = data + w * h;
+	std::vector<byte> pixdata;
     for (auto miplevel = 1 ; miplevel<MIPLEVELS ; miplevel++)
     {
         auto mipstep = 1<<miplevel;
@@ -536,13 +507,13 @@ void Mod_GenerateMipmaps (byte* data, int w, int h)
         {
             for (auto x = 0 ; x<w ; x+= mipstep)
             {
-                std::vector<byte> pixdata;
+                pixdata.clear();
                 for (auto yy=0 ; yy<mipstep ; yy++)
                     for (auto xx=0 ; xx<mipstep ; xx++)
                     {
                         pixdata.push_back(source[ (y+yy)*w + x + xx ]);
                     }
-                *lump_p++ = Mod_AveragePixels (pixdata, d_red, d_green, d_blue);
+                *lump_p++ = Mod_AveragePixels (pixdata);
             }
         }
     }
