@@ -775,7 +775,7 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 	auto loadedTexture = appState.Scene.textures.first;
 	while (loadedTexture != nullptr)
 	{
-		loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer);
+		loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->mips);
 		appState.Scene.stagingBuffer.offset += loadedTexture->size;
 		loadedTexture = loadedTexture->next;
 	}

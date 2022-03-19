@@ -20,6 +20,6 @@ struct SharedMemoryTexture
 	DescriptorSets* descriptorSets;
 
 	void Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);
-	void FillMipmapped(AppState& appState, StagingBuffer& buffer) const;
+	void FillMipmapped(AppState& appState, StagingBuffer& buffer, int mips) const;
 	void Delete(AppState& appState) const;
 };

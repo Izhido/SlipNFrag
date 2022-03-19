@@ -1056,6 +1056,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			size += loaded.texture.size;
 			loaded.texture.texture = texture;
 			loaded.texture.source = turbulent.data;
+			loaded.texture.mips = turbulent.mips;
 			textures.Setup(loaded.texture);
 			textureCache.insert({ turbulent.data, texture });
 		}

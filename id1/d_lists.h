@@ -11,6 +11,7 @@ struct dturbulent_t
 	int width;
 	int height;
 	int size;
+	int mips;
 	unsigned char* data;
 	int count;
 };
