@@ -111,24 +111,41 @@ void Cbuf_Execute (void)
 	const char	*text;
     std::string line;
 	int		quotes;
-	
+	int		comment;
+	int		commentpos;
+
 	while (cmd_text.length() > 0)
 	{
 // find a \n or ; line break
         text = cmd_text.c_str();
 
 		quotes = 0;
+		comment = 0;
+		commentpos = -1;
 		for (i=0 ; i< cmd_text.length() ; i++)
 		{
 			if (text[i] == '"')
 				quotes++;
-			if ( !(quotes&1) &&  text[i] == ';')
-				break;	// don't break if inside a quoted string
+			if ( !(quotes&1) )	// don't break if inside a quoted string
+			{
+				if (text[i] == '/')
+				{
+					comment++;
+					if (comment == 2 && commentpos < 0)
+						commentpos = i - 1;
+				}
+				else
+				{
+					comment = 0;
+					if (text[i] == ';' && commentpos < 0)
+						break;
+				}
+			}
 			if (text[i] == '\n')
 				break;
 		}
 			
-        line = cmd_text.substr(0, i);
+        line = cmd_text.substr(0, (commentpos < 0 ? i : commentpos));
 		
 // delete the text from the command buffer and move remaining commands down
 // this is necessary because commands (exec, alias) can insert data at the
