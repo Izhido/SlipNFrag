@@ -180,8 +180,8 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 		barrier.subresourceRange.baseMipLevel = i;
 		vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		offset += mipWidth * mipHeight;
-		blit.srcOffsets[1].x = width;
-		blit.srcOffsets[1].y = height;
+		blit.srcOffsets[1].x = mipWidth;
+		blit.srcOffsets[1].y = mipHeight;
 		mipWidth /= 2;
 		if (mipWidth < 1)
 		{
@@ -196,7 +196,7 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	blit.srcOffsets[1].z = 1;
 	blit.dstOffsets[1].z = 1;
 	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	blit.srcSubresource.mipLevel = toCopy - 1;
+	blit.dstSubresource.mipLevel = toCopy - 1;
 	blit.srcSubresource.layerCount = layerCount;
 	for (auto i = toCopy; i < mipCount; i++)
 	{

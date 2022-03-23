@@ -30,18 +30,26 @@ void main()
 	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
 	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
 	float lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);
-	uint light = (uint(lightmapEntry) / 256) % 64;
+	float light = lightmapEntry / 256;
+	float lightBase = floor(light);
+	float lightFrac = light - lightBase;
+	uint lightBaseInt = uint(lightBase) % 64;
+	uint lightNextInt = min(lightBaseInt + 1, 63);
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentCoords.zw);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
 	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentCoords.zw, texMip.x);
 	uvec4 highTexEntry = textureLod(fragmentTexture, fragmentCoords.zw, texMip.y);
-	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, light), 0);
-	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highTexEntry.x, light), 0);
-	if (lowColormapped.x == 255 || highColormapped.x == 255)
+	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, lightBaseInt), 0);
+	uvec4 lowNextColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, lightNextInt), 0);
+	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highTexEntry.x, lightBaseInt), 0);
+	uvec4 highNextColormapped = texelFetch(fragmentColormap, ivec2(highTexEntry.x, lightNextInt), 0);
+	if (lowColormapped.x == 255 || lowNextColormapped.x == 255 || highColormapped.x == 255 || highNextColormapped.x == 255)
 	{
 		discard;
 	}
 	vec4 lowColor = palette[lowColormapped.x];
+	vec4 lowNextColor = palette[lowNextColormapped.x];
 	vec4 highColor = palette[highColormapped.x];
-	outColor = mix(lowColor, highColor, texLevel.y - texMip.x);
+	vec4 highNextColor = palette[highNextColormapped.x];
+	outColor = mix(mix(lowColor, lowNextColor, lightFrac), mix(highColor, highNextColor, lightFrac), texLevel.y - texMip.x);
 }
