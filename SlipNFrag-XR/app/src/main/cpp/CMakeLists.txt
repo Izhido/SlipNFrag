@@ -1,5 +1,20 @@
+cmake_minimum_required(VERSION 3.10)
+
+set(ROOT_DIR "${PROJECT_SOURCE_DIR}/../../../../..")
+set(ID1_DIR "${ROOT_DIR}/id1")
+set(STB_DIR "${ROOT_DIR}/stb")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.22")
+set(OVR_OPENXR_DIR "${ROOT_DIR}/ovr_openxr_mobile_sdk_38.0")
+set(ADRENO_DIR "${ROOT_DIR}/VkAdrenoLayer_v1.2")
+set(ANDROID_BINARIES_DIR "${ROOT_DIR}/android-binaries-1.3.204.1")
+set(ASAN_DIR "${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/14.0.1/lib/linux")
+
+option(BUILD_WITH_ASAN "Build with Address Sanitizer" OFF)
+option(BUILD_WITH_VALIDATION "Build with Vulkan validation layer" OFF)
+option(BUILD_WITH_ADRENO "Build with Adreno validation / performance layer" OFF)
+
 file(GLOB LOCAL_SOURCE "*.cpp")
-file(GLOB ID1_SOURCE "${PROJECT_SOURCE_DIR}/../id1/*.cpp")
+file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
 
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_win")
 
@@ -13,12 +28,10 @@ add_library(slipnfrag_native MODULE
 
 add_library(ovr_openxr_loader SHARED IMPORTED)
 set_property(TARGET ovr_openxr_loader PROPERTY IMPORTED_LOCATION 
-        ${PROJECT_SOURCE_DIR}/../ovr_openxr_mobile_sdk_38.0/OpenXR/Libs/Android/${ANDROID_ABI}/Release/libopenxr_loader.so
+        ${OVR_OPENXR_DIR}/OpenXR/Libs/Android/${ANDROID_ABI}/Release/libopenxr_loader.so
 )
 
 target_compile_options(slipnfrag_native PRIVATE -Wno-unused-parameter)
-
-option(BUILD_WITH_ASAN "Build with Address Sanitizer" OFF)
 
 if(BUILD_WITH_ASAN)
     target_compile_options(slipnfrag_native PUBLIC -fsanitize=address -fno-omit-frame-pointer)
@@ -26,35 +39,32 @@ if(BUILD_WITH_ASAN)
     set_target_properties(slipnfrag_native PROPERTIES LINK_FLAGS -fsanitize=address)
 endif()
 
-add_dependencies(slipnfrag_native generate_openxr_header)
+find_library(ANDROID_LIBRARY NAMES android)
+find_library(ANDROID_LOG_LIBRARY NAMES log)
+find_library(VULKAN_LIBRARY NAMES vulkan)
 
 target_include_directories(slipnfrag_native PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/src/common
-        ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_BINARY_DIR}/include
-        ${PROJECT_SOURCE_DIR}/external/include
-        ${Vulkan_INCLUDE_DIRS}
-        ${PROJECT_SOURCE_DIR}/../id1
-        ${PROJECT_SOURCE_DIR}/../stb
+        ${OPENXR_DIR}/include
+        ${OPENXR_DIR}/src
+        ${VULKAN_INCLUDE_DIRS}
+        ${ID1_DIR}
+        ${STB_DIR}
         ${ANDROID_NDK}/sources/android/native_app_glue
 )
 
 target_link_libraries(slipnfrag_native
         ${ANDROID_LIBRARY}
         ${ANDROID_LOG_LIBRARY}
+        ${VULKAN_LIBRARY}
         ovr_openxr_loader
-        ${Vulkan_LIBRARY}
         OpenSLES
 )
-
-option(BUILD_WITH_VALIDATION "Build with Vulkan validation layer" OFF)
 
 if(BUILD_WITH_VALIDATION)
     add_library(vulkan_validation SHARED IMPORTED)
 
     set_target_properties(vulkan_validation PROPERTIES IMPORTED_LOCATION
-            ${PROJECT_SOURCE_DIR}/../android-binaries-1.3.204.1/${ANDROID_ABI}/libVkLayer_khronos_validation.so
+            ${ANDROID_BINARIES_DIR}/${ANDROID_ABI}/libVkLayer_khronos_validation.so
     )
 
     target_link_libraries(slipnfrag_native vulkan_validation)
@@ -64,21 +74,18 @@ if(BUILD_WITH_ASAN)
     add_library(asan SHARED IMPORTED)
 
     set_target_properties(asan PROPERTIES IMPORTED_LOCATION
-            ${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/14.0.1/lib/linux/libclang_rt.asan-aarch64-android.so
+            ${ASAN_DIR}/libclang_rt.asan-aarch64-android.so
     )
 
     target_link_libraries(slipnfrag_native asan)
 endif()
 
-option(BUILD_WITH_ADRENO "Build with Adreno validation / performance layer" OFF)
-
 if(BUILD_WITH_ADRENO)
     add_library(adreno SHARED IMPORTED)
 
     set_target_properties(adreno PROPERTIES IMPORTED_LOCATION
-            ${PROJECT_SOURCE_DIR}/../VkAdrenoLayer_v1.2/libs/${ANDROID_ABI}/libVkLayer_adreno.so
+            ${ADRENO_DIR}/libs/${ANDROID_ABI}/libVkLayer_adreno.so
     )
 
     target_link_libraries(slipnfrag_native adreno)
 endif()
-
