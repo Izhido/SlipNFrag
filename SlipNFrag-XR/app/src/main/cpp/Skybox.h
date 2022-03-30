@@ -1,8 +1,5 @@
 #pragma once
 
-#define XR_USE_PLATFORM_ANDROID
-#define XR_USE_GRAPHICS_API_VULKAN
-
 #include <vulkan/vulkan.h>
 #include <common/xr_dependencies.h>
 #include <openxr/openxr.h>

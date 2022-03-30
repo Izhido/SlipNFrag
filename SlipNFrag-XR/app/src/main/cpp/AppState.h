@@ -1,8 +1,5 @@
 #pragma once
 
-#define XR_USE_PLATFORM_ANDROID
-#define XR_USE_GRAPHICS_API_VULKAN
-
 #include "vid_ovr.h"
 #include "d_lists.h"
 #include "AppMode.h"

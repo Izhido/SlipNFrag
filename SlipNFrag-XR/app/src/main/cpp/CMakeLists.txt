@@ -20,6 +20,11 @@ list(FILTER ID1_SOURCE EXCLUDE REGEX "net_win")
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+add_definitions(
+        -DXR_USE_PLATFORM_ANDROID=1
+        -DXR_USE_GRAPHICS_API_VULKAN=1
+)
+
 add_library(slipnfrag_native MODULE
         ${LOCAL_SOURCE}
         ${ID1_SOURCE}
