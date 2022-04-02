@@ -9,7 +9,6 @@ SLObjectItf audioPlayerObject;
 SLPlayItf audioPlayer;
 SLAndroidSimpleBufferQueueItf audioBufferQueue;
 
-volatile int snd_current_sample_pos = 0;
 qboolean snd_forceclear;
 
 void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
@@ -23,11 +22,11 @@ void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 		S_ClearBuffer();
 		snd_forceclear = false;
 	}
-	(*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data() + (snd_current_sample_pos << 1), shm->samples >> 2);
-	snd_current_sample_pos += (shm->samples >> 3);
-	if(snd_current_sample_pos >= shm->samples)
+	(*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data() + (shm->samplepos << 1), shm->samples >> 2);
+	shm->samplepos += (shm->samples >> 3);
+	if(shm->samplepos >= shm->samples)
 	{
-		snd_current_sample_pos = 0;
+		shm->samplepos = 0;
 	}
 }
 
@@ -58,10 +57,10 @@ qboolean SNDDMA_Init(void)
 	shm->speed = 44100;
 	shm->channels = 2;
 	shm->samples = 65536;
-	shm->samplepos = 0;
+	shm->samplepos = (shm->samples >> 3);
 	shm->soundalive = true;
 	shm->gamealive = true;
-	shm->submission_chunk = (shm->samples >> 3);
+	shm->submission_chunk = 1;
 	shm->buffer.resize(shm->samples * shm->samplebits/8);
 	auto result = slCreateEngine(&audioEngineObject, 0, nullptr, 0, nullptr, nullptr);
 	if (result != SL_RESULT_SUCCESS)
@@ -149,8 +148,7 @@ qboolean SNDDMA_Init(void)
 		SNDDMA_DisposeBuffers();
 		return false;
 	}
-	snd_current_sample_pos = shm->samples >> 1;
-	result = (*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data() + (snd_current_sample_pos << 1), shm->samples >> 2);
+	result = (*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data(), shm->samples >> 2);
 	if (result != SL_RESULT_SUCCESS)
 	{
 		SNDDMA_DisposeBuffers();
@@ -161,7 +159,6 @@ qboolean SNDDMA_Init(void)
 
 int SNDDMA_GetDMAPos(void)
 {
-	shm->samplepos = snd_current_sample_pos;
 	return shm->samplepos;
 }
 

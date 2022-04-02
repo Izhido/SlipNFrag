@@ -14,8 +14,6 @@ AudioQueueRef snd_audioqueue = NULL;
 
 pthread_mutex_t snd_lock;
 
-volatile int snd_current_sample_pos = 0;
-
 qboolean snd_forceclear;
 
 void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef buffer)
@@ -30,12 +28,12 @@ void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef bu
         S_ClearBuffer();
         snd_forceclear = false;
     }
-    memcpy(buffer->mAudioData, shm->buffer.data() + (snd_current_sample_pos << 1), shm->samples >> 2);
+    memcpy(buffer->mAudioData, shm->buffer.data() + (shm->samplepos << 1), shm->samples >> 2);
     AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
-    snd_current_sample_pos += (shm->samples >> 3);
-    if(snd_current_sample_pos >= shm->samples)
+    shm->samplepos += (shm->samples >> 3);
+    if(shm->samplepos >= shm->samples)
     {
-        snd_current_sample_pos = 0;
+        shm->samplepos = 0;
     }
     pthread_mutex_unlock(&snd_lock);
 }
@@ -50,10 +48,10 @@ qboolean SNDDMA_Init(void)
     shm->speed = 44100;
     shm->channels = 2;
     shm->samples = 65536;
-    shm->samplepos = 0;
+    shm->samplepos = (shm->samples >> 3);
     shm->soundalive = true;
     shm->gamealive = true;
-    shm->submission_chunk = (shm->samples >> 3);
+    shm->submission_chunk = 1;
     shm->buffer.resize(shm->samples * shm->samplebits/8);
     AudioStreamBasicDescription format { };
     format.mSampleRate = shm->speed;
@@ -115,7 +113,6 @@ qboolean SNDDMA_Init(void)
 
 int SNDDMA_GetDMAPos(void)
 {
-    shm->samplepos = snd_current_sample_pos;
     return shm->samplepos;
 }
 
