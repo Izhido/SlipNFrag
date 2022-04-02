@@ -1,5 +1,5 @@
 #include "quakedef.h"
-#include "sys_ovr.h"
+#include "sys_oxr.h"
 #include "errno.h"
 #include <sys/stat.h>
 #include <android/log.h>

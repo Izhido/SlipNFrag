@@ -9,10 +9,10 @@
 #include "AppState.h"
 #include <list>
 #include <map>
-#include "sys_ovr.h"
+#include "sys_oxr.h"
 #include "r_local.h"
 #include "EngineThread.h"
-#include "in_ovr.h"
+#include "in_oxr.h"
 #include <common/xr_linear.h>
 #include "Utils.h"
 #include "Input.h"

@@ -1,5 +1,5 @@
 #include "quakedef.h"
-#include "in_ovr.h"
+#include "in_oxr.h"
 
 float   mouse_x, mouse_y;
 float   old_mouse_x, old_mouse_y;

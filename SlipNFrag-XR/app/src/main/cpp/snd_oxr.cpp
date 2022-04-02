@@ -11,6 +11,10 @@ SLAndroidSimpleBufferQueueItf audioBufferQueue;
 
 qboolean snd_forceclear;
 
+extern int sound_started;
+
+void SNDDMA_DisposeBuffers();
+
 void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 {
 	if (audioPlayer == nullptr)
@@ -22,7 +26,13 @@ void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 		S_ClearBuffer();
 		snd_forceclear = false;
 	}
-	(*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data() + (shm->samplepos << 1), shm->samples >> 2);
+	auto result = (*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		SNDDMA_DisposeBuffers();
+		Con_Printf("SNDDMA_Callback failed.\n");
+		sound_started = 0;
+	}
 	shm->samplepos += (shm->samples >> 3);
 	if(shm->samplepos >= shm->samples)
 	{
@@ -53,7 +63,7 @@ qboolean SNDDMA_Init(void)
 {
 	shm = new dma_t;
 	shm->splitbuffer = 0;
-	shm->samplebits = 16;
+	shm->samplebits = 32;
 	shm->speed = 44100;
 	shm->channels = 2;
 	shm->samples = 65536;
@@ -61,7 +71,7 @@ qboolean SNDDMA_Init(void)
 	shm->soundalive = true;
 	shm->gamealive = true;
 	shm->submission_chunk = 1;
-	shm->buffer.resize(shm->samples * shm->samplebits/8);
+	shm->buffer.resize(shm->samples * sizeof(float));
 	auto result = slCreateEngine(&audioEngineObject, 0, nullptr, 0, nullptr, nullptr);
 	if (result != SL_RESULT_SUCCESS)
 	{
@@ -94,14 +104,15 @@ qboolean SNDDMA_Init(void)
 	SLDataLocator_AndroidSimpleBufferQueue bufferQueueLocator;
 	bufferQueueLocator.locatorType = SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE;
 	bufferQueueLocator.numBuffers = 2;
-	SLDataFormat_PCM format;
-	format.formatType = SL_DATAFORMAT_PCM;
+	SLAndroidDataFormat_PCM_EX format;
+	format.formatType = SL_ANDROID_DATAFORMAT_PCM_EX;
 	format.numChannels = shm->channels;
-	format.samplesPerSec = SL_SAMPLINGRATE_44_1;
-	format.bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
-	format.containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+	format.sampleRate = SL_SAMPLINGRATE_44_1;
+	format.bitsPerSample = 32;
+	format.containerSize = 32;
 	format.channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
 	format.endianness = SL_BYTEORDER_LITTLEENDIAN;
+	format.representation = SL_ANDROID_PCM_REPRESENTATION_FLOAT;
 	SLDataSource dataSource;
 	dataSource.pLocator = &bufferQueueLocator;
 	dataSource.pFormat = &format;
@@ -148,7 +159,7 @@ qboolean SNDDMA_Init(void)
 		SNDDMA_DisposeBuffers();
 		return false;
 	}
-	result = (*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data(), shm->samples >> 2);
+	result = (*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data(), shm->samples >> 1);
 	if (result != SL_RESULT_SUCCESS)
 	{
 		SNDDMA_DisposeBuffers();

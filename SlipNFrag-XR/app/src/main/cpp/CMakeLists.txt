@@ -17,6 +17,7 @@ file(GLOB LOCAL_SOURCE "*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
 
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_win")
+list(FILTER ID1_SOURCE EXCLUDE REGEX "snd_")
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 

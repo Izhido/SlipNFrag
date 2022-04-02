@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vid_ovr.h"
+#include "vid_oxr.h"
 #include "d_lists.h"
 #include "AppMode.h"
 #include <vulkan/vulkan.h>

@@ -1,6 +1,6 @@
 #include "EngineThread.h"
 #include "AppState.h"
-#include "sys_ovr.h"
+#include "sys_oxr.h"
 #include "Input.h"
 #include "r_local.h"
 #include <pthread.h>
