@@ -1,7 +1,5 @@
 #include "quakedef.h"
 
-#define DWORD	unsigned long
-
 #define	PAINTBUFFER_SIZE	512
 float	paintbuffer[2 * PAINTBUFFER_SIZE];
 
@@ -31,7 +29,7 @@ void S_TransferPaintBuffer(int endtime)
 		{
 			val = (*p * snd_vol);
 			p++;
-			out[out_idx] = (float)val / 32767;
+			out[out_idx] = (float)val;
 			out_idx = (out_idx + 1) & out_mask;
 		}
 	}
@@ -131,16 +129,16 @@ void SND_PaintChannel (channel_t *ch, sfxcache_t *sc, int count)
 	float *sfx;
 	int	i;
 
-	leftvol = ch->leftvol;
-	rightvol = ch->rightvol;
+	leftvol = (float)ch->leftvol / 256;
+	rightvol = (float)ch->rightvol / 256;
 	sfx = (float *)sc->data + ch->pos;
 
 	auto p = 0;
 	for (i=0 ; i<count ; i++)
 	{
 		data = sfx[i];
-		left = (data * leftvol) / 256;
-		right = (data * rightvol) / 256;
+		left = data * leftvol;
+		right = data * rightvol;
 		paintbuffer[p++] += left;
 		paintbuffer[p++] += right;
 	}

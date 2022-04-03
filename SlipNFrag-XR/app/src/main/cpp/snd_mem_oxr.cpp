@@ -91,7 +91,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
             a3 = y1;
             mu = srcsamplefrac / 256;
             mu2 = mu * mu;
-            *out++ = a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
+            *out++ = (a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3) / 32768;
         }
 	}
 }
@@ -151,9 +151,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
     s->data = new byte[len + sizeof(sfxcache_t)];
     sc = (sfxcache_t*)s->data;
-	if (!sc)
-		return NULL;
-	
+
 	sc->length = info.samples;
 	sc->loopstart = info.loopstart;
 	sc->speed = info.rate;
