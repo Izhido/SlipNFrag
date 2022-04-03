@@ -469,7 +469,7 @@ void S_StopSound(int entnum, int entchannel)
 {
 	int i;
 
-	for (i=NUM_AMBIENTS ; i<NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS ; i++)
+	for (i=0 ; i<MAX_DYNAMIC_CHANNELS ; i++)
 	{
 		if (channels[i].entnum == entnum
 			&& channels[i].entchannel == entchannel)
