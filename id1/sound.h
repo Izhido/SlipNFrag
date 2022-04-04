@@ -131,12 +131,11 @@ void SNDDMA_Shutdown(void);
 #define	MAX_DYNAMIC_CHANNELS	8
 
 
-extern	std::vector<channel_t> channels;
-// 0 to MAX_DYNAMIC_CHANNELS-1	= normal entity sounds
-// MAX_DYNAMIC_CHANNELS to MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS -1 = water, etc
-// MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS to total_channels = static sounds
+extern	std::vector<channel_t> channels; // normal entity sounds + water, etc
+extern	std::vector<channel_t> s_static_channels; // static sounds
 
 extern	int			total_channels;
+extern	int			s_total_static_channels;
 
 //
 // Fake dma is a synchronous faking of the DMA progress used for

@@ -234,6 +234,54 @@ void S_PaintChannels(int endtime)
 															  
 		}
 
+		ch = s_static_channels.data();
+		for (i=0; i<s_total_static_channels ; i++, ch++)
+		{
+			if (!ch->sfx)
+				continue;
+			if (!ch->leftvol && !ch->rightvol)
+				continue;
+			sc = S_LoadSound (ch->sfx);
+			if (!sc)
+				continue;
+
+			ltime = paintedtime;
+
+			while (ltime < end)
+			{	// paint up to end
+				if (ch->end < end)
+					count = ch->end - ltime;
+				else
+					count = end - ltime;
+
+				if (count > 0)
+				{
+					if (sc->width == 1)
+						SND_PaintChannelFrom8(ch, sc, count);
+					else
+						SND_PaintChannelFrom16(ch, sc, count);
+	
+					ltime += count;
+				}
+
+			// if at end of loop, restart
+				if (ltime >= ch->end)
+				{
+					if (sc->loopstart >= 0)
+					{
+						ch->pos = sc->loopstart;
+						ch->end = ltime + sc->length - ch->pos;
+					}
+					else
+					{	// channel just stopped
+						ch->sfx = NULL;
+						break;
+					}
+				}
+			}
+															  
+		}
+
 	// transfer out according to DMA format
 		S_TransferPaintBuffer(end);
 		paintedtime = end;

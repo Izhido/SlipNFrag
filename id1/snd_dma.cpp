@@ -32,8 +32,10 @@ void S_StopAllSoundsC(void);
 // Internal sound data & structures
 // =======================================================================
 
-std::vector<channel_t> channels(MAX_CHANNELS);
+std::vector<channel_t> channels(NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS);
 int			total_channels;
+std::vector<channel_t> s_static_channels(MAX_CHANNELS);
+int			s_total_static_channels;
 
 int				snd_blocked = 0;
 static qboolean	snd_ambient = 1;
@@ -120,6 +122,7 @@ void S_SoundInfo_f(void)
     Con_Printf("%5d speed\n", shm->speed);
     Con_Printf("0x%x dma buffer\n", shm->buffer.data());
 	Con_Printf("%5d total_channels\n", total_channels);
+	Con_Printf("%5d total_static_channels\n", s_total_static_channels);
 }
 
 
@@ -330,41 +333,42 @@ SND_PickChannel
 channel_t *SND_PickChannel(int entnum, int entchannel)
 {
     int ch_idx;
-    int first_to_die;
-    int life_left;
 
 // Check for replacement sound, or find the best one to replace
-    first_to_die = -1;
-    life_left = 0x7fffffff;
-    for (ch_idx=NUM_AMBIENTS ; ch_idx < NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS ; ch_idx++)
+	for (ch_idx=NUM_AMBIENTS ; ch_idx < total_channels ; ch_idx++)
     {
 		if (entchannel != 0		// channel 0 never overrides
 		&& channels[ch_idx].entnum == entnum
 		&& (channels[ch_idx].entchannel == entchannel || entchannel == -1) )
 		{	// allways override sound from same entity
-			first_to_die = ch_idx;
-			break;
+			channels[ch_idx].sfx = NULL;
+			return &channels[ch_idx];
 		}
+	}
 
+	for (ch_idx=NUM_AMBIENTS ; ch_idx < total_channels ; ch_idx++)
+	{
 		// don't let monster sounds override player sounds
 		if (channels[ch_idx].entnum == cl.viewentity && entnum != cl.viewentity && channels[ch_idx].sfx)
 			continue;
 
-		if (channels[ch_idx].end - paintedtime < life_left)
+		if (channels[ch_idx].end < paintedtime)
 		{
-			life_left = channels[ch_idx].end - paintedtime;
-			first_to_die = ch_idx;
+			channels[ch_idx].sfx = NULL;
+			return &channels[ch_idx];
 		}
    }
 
-	if (first_to_die == -1)
-		return NULL;
+	total_channels++;
+	if (total_channels >= channels.size())
+	{
+		channels.resize(channels.size() + MAX_DYNAMIC_CHANNELS);
+	}
 
-	if (channels[first_to_die].sfx)
-		channels[first_to_die].sfx = NULL;
+	channels[total_channels-1].sfx = NULL;
 
-    return &channels[first_to_die];    
-}       
+	return &channels[total_channels-1];
+}
 
 /*
 =================
@@ -443,8 +447,6 @@ void S_StartSound(int entnum, int entchannel, sfx_t *sfx, const vec3_t origin, f
 
 // pick a channel to play on
 	target_chan = SND_PickChannel(entnum, entchannel);
-	if (!target_chan)
-		return;
 		
 // spatialize
 	memset (target_chan, 0, sizeof(*target_chan));
@@ -473,7 +475,7 @@ void S_StartSound(int entnum, int entchannel, sfx_t *sfx, const vec3_t origin, f
 // if an identical sound has also been started this frame, offset the pos
 // a bit to keep it from just making the first one louder
 	check = &channels[NUM_AMBIENTS];
-    for (ch_idx=NUM_AMBIENTS ; ch_idx < NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS ; ch_idx++, check++)
+	for (ch_idx=NUM_AMBIENTS ; ch_idx < total_channels ; ch_idx++, check++)
     {
 		if (check == target_chan)
 			continue;
@@ -511,9 +513,11 @@ void S_StopAllSounds(qboolean clear)
 	if (!sound_started)
 		return;
 
-	total_channels = MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS;	// no statics
+	total_channels = NUM_AMBIENTS;
+	s_total_static_channels = 0;	// no statics
 
 	memset(channels.data(), 0, channels.size() * sizeof(channel_t));
+	memset(s_static_channels.data(), 0, s_static_channels.size() * sizeof(channel_t));
 
 	if (clear)
 		S_ClearBuffer ();
@@ -555,12 +559,12 @@ void S_StaticSound (sfx_t *sfx, const vec3_t origin, float vol, float attenuatio
 	if (!sfx)
 		return;
 
-    total_channels++;
-    if (total_channels >= channels.size())
+	s_total_static_channels++;
+	if (s_total_static_channels >= s_static_channels.size())
     {
-        channels.resize(channels.size() + MAX_CHANNELS);
+		s_static_channels.resize(s_static_channels.size() + MAX_CHANNELS);
     }
-	ss = &channels[total_channels];
+	ss = &s_static_channels[s_total_static_channels - 1];
 
 	sc = S_LoadSound (sfx);
 	if (!sc)
@@ -666,9 +670,18 @@ void S_Update(const vec3_t origin, const vec3_t forward, const vec3_t right, con
 
 	combine = NULL;
 
-// update spatialization for static and dynamic sounds	
+	// update spatialization for dynamic sounds
 	ch = channels.data()+NUM_AMBIENTS;
 	for (i=NUM_AMBIENTS ; i<total_channels; i++, ch++)
+	{
+		if (!ch->sfx)
+			continue;
+		SND_Spatialize(ch);         // respatialize channel
+	}
+
+// update spatialization for static sounds
+	ch = s_static_channels.data();
+	for (i=0 ; i<s_total_static_channels; i++, ch++)
 	{
 		if (!ch->sfx)
 			continue;
@@ -679,7 +692,6 @@ void S_Update(const vec3_t origin, const vec3_t forward, const vec3_t right, con
 	// try to combine static sounds with a previous channel of the same
 	// sound effect so we don't mix five torches every frame
 	
-		if (i >= MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS)
 		{
 		// see if it can just use the last one
 			if (combine && combine->sfx == ch->sfx)
@@ -690,12 +702,12 @@ void S_Update(const vec3_t origin, const vec3_t forward, const vec3_t right, con
 				continue;
 			}
 		// search for one
-			combine = channels.data()+MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS;
-			for (j=MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS ; j<i; j++, combine++)
+			combine = s_static_channels.data();
+			for (j=0 ; j<i; j++, combine++)
 				if (combine->sfx == ch->sfx)
 					break;
 					
-			if (j == total_channels)
+			if (j == s_total_static_channels)
 			{
 				combine = NULL;
 			}
@@ -720,15 +732,26 @@ void S_Update(const vec3_t origin, const vec3_t forward, const vec3_t right, con
 	if (snd_show.value)
 	{
 		total = 0;
+		auto amb_dynamic_total = 0;
+		auto static_total = 0;
 		ch = channels.data();
 		for (i=0 ; i<total_channels; i++, ch++)
 			if (ch->sfx && (ch->leftvol || ch->rightvol) )
 			{
 				//Con_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name);
-				total++;
+				amb_dynamic_total++;
 			}
 		
-		Con_Printf ("----(%i)----\n", total);
+		ch = s_static_channels.data();
+		for (i=0 ; i<s_total_static_channels; i++, ch++)
+			if (ch->sfx && (ch->leftvol || ch->rightvol) )
+			{
+				//Con_Printf ("%3i %3i %s\n", ch->leftvol, ch->rightvol, ch->sfx->name);
+				static_total++;
+			}
+
+		total = amb_dynamic_total + static_total;
+		Con_Printf ("----(%i+%i=%i)----\n", amb_dynamic_total, static_total, total);
 	}
 
 // mix some sound
