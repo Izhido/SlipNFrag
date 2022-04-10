@@ -9,7 +9,6 @@ void S_TransferPaintBuffer(int endtime)
 	int 	count;
 	int 	out_mask;
 	float 	*p;
-	float	val;
 	float	snd_vol;
 	float	*pbuf;
 
@@ -19,19 +18,24 @@ void S_TransferPaintBuffer(int endtime)
 	out_idx = paintedtime * shm->channels & out_mask;
 	snd_vol = volume.value;
 
+	while (count > 0)
 	{
-		pbuf = (float *)shm->buffer.data();
-	}
-
-	{
-		float* out = (float *) pbuf;
-		while (count--)
+		int n;
+		if (out_idx + count > shm->samples)
 		{
-			val = (*p * snd_vol);
-			p++;
-			out[out_idx] = (float)val;
-			out_idx = (out_idx + 1) & out_mask;
+			n = out_idx + count - shm->samples;
 		}
+		else
+		{
+			n = count;
+		}
+		pbuf = (float *)shm->buffer.data() + out_idx;
+		for (auto i=0; i<n; i++)
+		{
+			*pbuf++ = (*p++ * snd_vol);
+		}
+		count -= n;
+		out_idx = 0;
 	}
 }
 
