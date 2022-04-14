@@ -933,15 +933,22 @@ COM_FileExtension
 const char *COM_FileExtension (const char *in)
 {
     static std::string exten;
+	const char* pos = nullptr;
 
-	while (*in && *in != '.')
+	while (*in)
+	{
+		if (*in == '.')
+		{
+			pos = in;
+		}
 		in++;
-	if (!*in)
+	}
+	if (!pos)
 		return "";
-	in++;
+	pos++;
     exten.clear();
-	for (; *in ; in++)
-		exten.push_back(*in);
+	for (; *pos ; pos++)
+		exten.push_back(*pos);
 	return exten.c_str();
 }
 

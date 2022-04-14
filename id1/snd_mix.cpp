@@ -294,7 +294,7 @@ void SND_InitScaletable (void)
 	
 	for (i=0 ; i<32 ; i++)
 		for (j=0 ; j<256 ; j++)
-			snd_scaletable[i][j] = ((signed char)j) * i * 8;
+			snd_scaletable[i][j] = ((j < 128) ?  j : j - 256) * i * 8;
 }
 
 
