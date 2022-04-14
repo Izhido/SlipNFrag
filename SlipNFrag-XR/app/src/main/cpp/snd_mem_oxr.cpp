@@ -11,11 +11,11 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
 	int		srcsample;
-    int     srcsamplefrac;
+	float	srcsamplefrac;
 	float	stepscale;
 	int		i;
 	int		y0, y1, y2, y3, samplefrac, fracstep;
-    float   a0, a1, a2, a3, mu, mu2;
+    float	a0, a1, a2, a3, mu, mu2;
 	sfxcache_t	*sc;
 	
 	sc = (sfxcache_t*)sfx->data;

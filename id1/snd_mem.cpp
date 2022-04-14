@@ -34,11 +34,11 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
 	int		srcsample;
-    int     srcsamplefrac;
+    float	srcsamplefrac;
 	float	stepscale;
 	int		i;
 	int		y0, y1, y2, y3, samplefrac, fracstep, sample;
-    float   a0, a1, a2, a3, mu, mu2;
+    float	a0, a1, a2, a3, mu, mu2;
 	sfxcache_t	*sc;
 	
 	sc = (sfxcache_t*)sfx->data;
@@ -121,7 +121,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
             a3 = y1;
             mu = srcsamplefrac / 256;
             mu2 = mu * mu;
-            sample = (int)(a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3);
+			sample = std::min(std::max((int)(a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3), -32768), 32767);
             if (sc->width == 2)
                 ((short *)sc->data)[i] = sample;
             else
