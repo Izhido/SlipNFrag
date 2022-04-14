@@ -23,7 +23,7 @@ void S_TransferPaintBuffer(int endtime)
 		int n;
 		if (out_idx + count > shm->samples)
 		{
-			n = out_idx + count - shm->samples;
+			n = shm->samples - out_idx;
 		}
 		else
 		{
