@@ -48,7 +48,7 @@ CHANNEL MIXING
 ===============================================================================
 */
 
-void SND_PaintChannel (channel_t *ch, sfxcache_t *sc, int endtime);
+void SND_PaintChannel (channel_t *ch, sfxcache_t *sc, int starttime, int endtime);
 
 void S_PaintChannels(int endtime)
 {
@@ -91,7 +91,7 @@ void S_PaintChannels(int endtime)
 
 				if (count > 0)
 				{	
-						SND_PaintChannel(ch, sc, count);
+					SND_PaintChannel(ch, sc, ltime - paintedtime, count);
 
 					ltime += count;
 				}
@@ -136,7 +136,7 @@ void S_PaintChannels(int endtime)
 
 				if (count > 0)
 				{	
-						SND_PaintChannel(ch, sc, count);
+					SND_PaintChannel(ch, sc, ltime - paintedtime, count);
 
 					ltime += count;
 				}
@@ -170,7 +170,7 @@ void SND_InitScaletable (void)
 }
 
 
-void SND_PaintChannel (channel_t *ch, sfxcache_t *sc, int count)
+void SND_PaintChannel (channel_t *ch, sfxcache_t *sc, int start, int count)
 {
 	float data;
 	float left, right;
@@ -182,7 +182,7 @@ void SND_PaintChannel (channel_t *ch, sfxcache_t *sc, int count)
 	rightvol = (float)ch->rightvol / 256;
 	sfx = (float *)sc->data + ch->pos;
 
-	auto p = 0;
+	auto p = start;
 	for (i=0 ; i<count ; i++)
 	{
 		data = sfx[i];
