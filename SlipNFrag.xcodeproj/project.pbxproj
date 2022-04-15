@@ -77,9 +77,6 @@
 		282AF2FA250E773500E171DA /* r_vars.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BF1229E16D400D68A47 /* r_vars.cpp */; };
 		282AF2FB250E773500E171DA /* sbar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BC6229E0A6400D68A47 /* sbar.cpp */; };
 		282AF2FC250E773500E171DA /* screen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BB4229DF8F600D68A47 /* screen.cpp */; };
-		282AF2FD250E773A00E171DA /* snd_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9922C0803E00264AD0 /* snd_dma.cpp */; };
-		282AF2FE250E773D00E171DA /* snd_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9A22C0803E00264AD0 /* snd_mem.cpp */; };
-		282AF2FF250E774000E171DA /* snd_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9822C0803E00264AD0 /* snd_mix.cpp */; };
 		282AF300250E774A00E171DA /* sv_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BCE229E0CD400D68A47 /* sv_main.cpp */; };
 		282AF301250E774A00E171DA /* sv_move.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BEF229E168300D68A47 /* sv_move.cpp */; };
 		282AF302250E774A00E171DA /* sv_phys.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B85229DD85500D68A47 /* sv_phys.cpp */; };
@@ -169,6 +166,11 @@
 		2880A4C722C5757F00AF513D /* net_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4C522C5757F00AF513D /* net_macos.cpp */; };
 		2880A4CA22C576E000AF513D /* net_dgrm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4C822C576E000AF513D /* net_dgrm.cpp */; };
 		2880A4CD22C5774300AF513D /* net_udp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4CC22C5774300AF513D /* net_udp.cpp */; };
+		2883A95C280A1FC2009E4681 /* stb_vorbis.c in Sources */ = {isa = PBXBuildFile; fileRef = 2883A669280A1FC1009E4681 /* stb_vorbis.c */; };
+		2883A95D280A1FC2009E4681 /* stb_vorbis.c in Sources */ = {isa = PBXBuildFile; fileRef = 2883A669280A1FC1009E4681 /* stb_vorbis.c */; };
+		2886A080280A21A100505651 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
+		2886A081280A21A100505651 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
+		2886A082280A21A100505651 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
 		28A5375F23106A85005007EE /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28A5375E23106A85005007EE /* GameController.framework */; };
 		28AA1D9722C07E2D00264AD0 /* snd_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */; };
 		28AA1DA122C089E600264AD0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28AA1DA022C089E600264AD0 /* AudioToolbox.framework */; };
@@ -414,11 +416,9 @@
 		2880A4C922C576E000AF513D /* net_dgrm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = net_dgrm.h; sourceTree = "<group>"; };
 		2880A4CB22C5774300AF513D /* net_udp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = net_udp.h; sourceTree = "<group>"; };
 		2880A4CC22C5774300AF513D /* net_udp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = net_udp.cpp; sourceTree = "<group>"; };
+		2883A669280A1FC1009E4681 /* stb_vorbis.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = stb_vorbis.c; sourceTree = "<group>"; };
 		28A5375E23106A85005007EE /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = snd_macos.cpp; sourceTree = "<group>"; };
-		28AA1D9822C0803E00264AD0 /* snd_mix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_mix.cpp; sourceTree = "<group>"; };
-		28AA1D9922C0803E00264AD0 /* snd_dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_dma.cpp; sourceTree = "<group>"; };
-		28AA1D9A22C0803E00264AD0 /* snd_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_mem.cpp; sourceTree = "<group>"; };
 		28AA1D9E22C0881200264AD0 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		28AA1DA022C089E600264AD0 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		28BA2A6E229F31C2001830E9 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
@@ -532,6 +532,7 @@
 			children = (
 				287A3217229DBAAC00AE6BFA /* id1 */,
 				28D060572808E722009E0953 /* snd_float */,
+				2883A4E8280A1FC0009E4681 /* stb */,
 				287A320F229DBAA100AE6BFA /* SlipNFrag */,
 				2822EE51229ED2B900B5332D /* SlipNFrag-MacOS */,
 				282AF2AB250E5B8100E171DA /* SlipNFrag-iOS */,
@@ -659,9 +660,6 @@
 				283D4BB4229DF8F600D68A47 /* screen.cpp */,
 				287A3236229DBDE900AE6BFA /* screen.h */,
 				287A3242229DBF6B00AE6BFA /* server.h */,
-				28AA1D9922C0803E00264AD0 /* snd_dma.cpp */,
-				28AA1D9A22C0803E00264AD0 /* snd_mem.cpp */,
-				28AA1D9822C0803E00264AD0 /* snd_mix.cpp */,
 				287A323B229DBE7100AE6BFA /* sound.h */,
 				287A3245229DBFBA00AE6BFA /* spritegn.h */,
 				283D4BCE229E0CD400D68A47 /* sv_main.cpp */,
@@ -679,6 +677,14 @@
 			);
 			path = id1;
 			sourceTree = "<group>";
+		};
+		2883A4E8280A1FC0009E4681 /* stb */ = {
+			isa = PBXGroup;
+			children = (
+				2883A669280A1FC1009E4681 /* stb_vorbis.c */,
+			);
+			path = stb;
+			sourceTree = SOURCE_ROOT;
 		};
 		28BA2A6D229F31C1001830E9 /* Frameworks */ = {
 			isa = PBXGroup;
@@ -907,6 +913,7 @@
 				28BA2A79229F403C001830E9 /* cl_tent.cpp in Sources */,
 				28BA2A89229F403C001830E9 /* draw.cpp in Sources */,
 				28BA2A8E229F403C001830E9 /* menu.cpp in Sources */,
+				2883A95C280A1FC2009E4681 /* stb_vorbis.c in Sources */,
 				28BA2A75229F403C001830E9 /* cl_demo.cpp in Sources */,
 				28BA2A99229F403C001830E9 /* r_bsp.cpp in Sources */,
 				284E087E22C568B3001DF320 /* in_macos.cpp in Sources */,
@@ -928,9 +935,9 @@
 				282AF2F1250E773500E171DA /* r_edge.cpp in Sources */,
 				282AF31A250E80A000E171DA /* Shaders.metal in Sources */,
 				282AF2D6250E770A00E171DA /* d_polyse.cpp in Sources */,
-				282AF2FF250E774000E171DA /* snd_mix.cpp in Sources */,
 				282AF2CC250E770A00E171DA /* cmd.cpp in Sources */,
 				282AF2D8250E770A00E171DA /* d_sky.cpp in Sources */,
+				2883A95D280A1FC2009E4681 /* stb_vorbis.c in Sources */,
 				282AF2C6250E770A00E171DA /* chase.cpp in Sources */,
 				282AF310250E781400E171DA /* in_ios.cpp in Sources */,
 				282AF301250E774A00E171DA /* sv_move.cpp in Sources */,
@@ -942,6 +949,7 @@
 				282AF305250E774A00E171DA /* wad.cpp in Sources */,
 				282AF2C9250E770A00E171DA /* cl_main.cpp in Sources */,
 				282AF2B4250E5B8100E171DA /* ViewController.mm in Sources */,
+				2886A080280A21A100505651 /* snd_float_mix.cpp in Sources */,
 				282AF2DB250E770A00E171DA /* d_vars.cpp in Sources */,
 				282AF30F250E781400E171DA /* sys_ios.cpp in Sources */,
 				282AF2EF250E773500E171DA /* r_bsp.cpp in Sources */,
@@ -954,6 +962,7 @@
 				282AF2E1250E770A00E171DA /* menu.cpp in Sources */,
 				282AF2D1250E770A00E171DA /* d_edge.cpp in Sources */,
 				282AF2F3250E773500E171DA /* r_light.cpp in Sources */,
+				2886A082280A21A100505651 /* snd_float_mem.cpp in Sources */,
 				282AF2C8250E770A00E171DA /* cl_input.cpp in Sources */,
 				282AF2EB250E773500E171DA /* pr_edict.cpp in Sources */,
 				282AF2E8250E773500E171DA /* net_vcr.cpp in Sources */,
@@ -971,10 +980,10 @@
 				282AF300250E774A00E171DA /* sv_main.cpp in Sources */,
 				282AF304250E774A00E171DA /* view.cpp in Sources */,
 				282AF2F8250E773500E171DA /* r_sprite.cpp in Sources */,
-				282AF2FD250E773A00E171DA /* snd_dma.cpp in Sources */,
 				28E95FAA260C50A0000DDF6C /* cd_ios.cpp in Sources */,
 				282AF2D9250E770A00E171DA /* d_sprite.cpp in Sources */,
 				282AF2D2250E770A00E171DA /* d_init.cpp in Sources */,
+				2886A081280A21A100505651 /* snd_float_dma.cpp in Sources */,
 				282AF2EC250E773500E171DA /* pr_exec.cpp in Sources */,
 				282AF2F4250E773500E171DA /* r_main.cpp in Sources */,
 				282AF2D5250E770A00E171DA /* d_part.cpp in Sources */,
@@ -983,7 +992,6 @@
 				282AF2BF250E5B8200E171DA /* main.m in Sources */,
 				282AF2CB250E770A00E171DA /* cl_tent.cpp in Sources */,
 				282AF2DF250E770A00E171DA /* keys.cpp in Sources */,
-				282AF2FE250E773D00E171DA /* snd_mem.cpp in Sources */,
 				282AF2CF250E770A00E171DA /* crc.cpp in Sources */,
 				282AF311250E781400E171DA /* snd_ios.cpp in Sources */,
 				282AF2E9250E773500E171DA /* nonintel.cpp in Sources */,
