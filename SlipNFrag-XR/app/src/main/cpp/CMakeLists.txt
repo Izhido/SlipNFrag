@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 set(ROOT_DIR "${PROJECT_SOURCE_DIR}/../../../../..")
 set(ID1_DIR "${ROOT_DIR}/id1")
+set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.22")
 set(OVR_OPENXR_DIR "${ROOT_DIR}/ovr_openxr_mobile_sdk_38.0")
@@ -15,6 +16,7 @@ option(BUILD_WITH_ADRENO "Build with Adreno validation / performance layer" OFF)
 
 file(GLOB LOCAL_SOURCE "*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
+file(GLOB SND_FLOAT_SOURCE "${SND_FLOAT_DIR}/*.cpp")
 
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_win")
 list(FILTER ID1_SOURCE EXCLUDE REGEX "snd_")
@@ -29,6 +31,7 @@ add_definitions(
 add_library(slipnfrag_native MODULE
         ${LOCAL_SOURCE}
         ${ID1_SOURCE}
+        ${SND_FLOAT_SOURCE}
         ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
 )
 

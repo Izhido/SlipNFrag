@@ -28,7 +28,7 @@ void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef bu
         S_ClearBuffer();
         snd_forceclear = false;
     }
-    memcpy(buffer->mAudioData, shm->buffer.data() + (shm->samplepos << 1), shm->samples >> 2);
+    memcpy(buffer->mAudioData, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
     AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
 	shm->samplepos += (shm->samples >> 3);
     if(shm->samplepos >= shm->samples)
@@ -44,7 +44,7 @@ qboolean SNDDMA_Init(void)
     pthread_mutex_lock(&snd_lock);
     shm = new dma_t;
     shm->splitbuffer = 0;
-    shm->samplebits = 16;
+    shm->samplebits = 32;
     shm->speed = 44100;
     shm->channels = 2;
     shm->samples = 65536;
@@ -56,7 +56,7 @@ qboolean SNDDMA_Init(void)
     AudioStreamBasicDescription format { };
     format.mSampleRate = shm->speed;
     format.mFormatID = kAudioFormatLinearPCM;
-    format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked;
+    format.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
     format.mBitsPerChannel = shm->samplebits;
     format.mChannelsPerFrame = shm->channels;
     format.mBytesPerFrame = shm->channels * shm->samplebits/8;
@@ -69,13 +69,13 @@ qboolean SNDDMA_Init(void)
         return false;
     }
     AudioQueueBufferRef firstBuffer;
-    status = AudioQueueAllocateBuffer(snd_audioqueue, shm->samples >> 2, &firstBuffer);
+    status = AudioQueueAllocateBuffer(snd_audioqueue, shm->samples >> 1, &firstBuffer);
     if (status != 0)
     {
         AudioQueueDispose(snd_audioqueue, false);
         return false;
     }
-    firstBuffer->mAudioDataByteSize = shm->samples >> 2;
+    firstBuffer->mAudioDataByteSize = shm->samples >> 1;
     memset(firstBuffer->mAudioData, 0, firstBuffer->mAudioDataByteSize);
     status = AudioQueueEnqueueBuffer(snd_audioqueue, firstBuffer, 0, NULL);
     if (status != 0)
@@ -85,14 +85,14 @@ qboolean SNDDMA_Init(void)
         return false;
     }
     AudioQueueBufferRef secondBuffer;
-    status = AudioQueueAllocateBuffer(snd_audioqueue, shm->samples >> 2, &secondBuffer);
+    status = AudioQueueAllocateBuffer(snd_audioqueue, shm->samples >> 1, &secondBuffer);
     if (status != 0)
     {
         AudioQueueFreeBuffer(snd_audioqueue, firstBuffer);
         AudioQueueDispose(snd_audioqueue, false);
         return false;
     }
-    secondBuffer->mAudioDataByteSize = shm->samples >> 2;
+    secondBuffer->mAudioDataByteSize = shm->samples >> 1;
     memset(secondBuffer->mAudioData, 0, secondBuffer->mAudioDataByteSize);
     status = AudioQueueEnqueueBuffer(snd_audioqueue, secondBuffer, 0, NULL);
     if (status != 0)

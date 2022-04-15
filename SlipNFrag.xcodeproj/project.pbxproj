@@ -171,9 +171,6 @@
 		2880A4CD22C5774300AF513D /* net_udp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4CC22C5774300AF513D /* net_udp.cpp */; };
 		28A5375F23106A85005007EE /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28A5375E23106A85005007EE /* GameController.framework */; };
 		28AA1D9722C07E2D00264AD0 /* snd_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */; };
-		28AA1D9B22C0803E00264AD0 /* snd_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9822C0803E00264AD0 /* snd_mix.cpp */; };
-		28AA1D9C22C0803E00264AD0 /* snd_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9922C0803E00264AD0 /* snd_dma.cpp */; };
-		28AA1D9D22C0803E00264AD0 /* snd_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9A22C0803E00264AD0 /* snd_mem.cpp */; };
 		28AA1DA122C089E600264AD0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28AA1DA022C089E600264AD0 /* AudioToolbox.framework */; };
 		28BA2A73229F3271001830E9 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2A72229F3271001830E9 /* Shaders.metal */; };
 		28BA2A74229F403C001830E9 /* chase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B81229DD46300D68A47 /* chase.cpp */; };
@@ -236,6 +233,9 @@
 		28BA2AAD229F403C001830E9 /* world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B9E229DE9BB00D68A47 /* world.cpp */; };
 		28BA2AB5229F40BD001830E9 /* sys_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2AB4229F40BD001830E9 /* sys_macos.cpp */; };
 		28BA2AB9229F4901001830E9 /* vid_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2AB7229F4901001830E9 /* vid_macos.cpp */; };
+		28D060612808E77F009E0953 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
+		28D060622808E77F009E0953 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
+		28D060632808E77F009E0953 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
 		28E95FAA260C50A0000DDF6C /* cd_ios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28E95FA9260C50A0000DDF6C /* cd_ios.cpp */; };
 /* End PBXBuildFile section */
 
@@ -428,6 +428,9 @@
 		28BA2AB6229F4154001830E9 /* sys_macos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sys_macos.h; sourceTree = "<group>"; };
 		28BA2AB7229F4901001830E9 /* vid_macos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vid_macos.cpp; sourceTree = "<group>"; };
 		28BA2ABA229F51F8001830E9 /* vid_macos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vid_macos.h; sourceTree = "<group>"; };
+		28D0605E2808E77F009E0953 /* snd_float_dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_dma.cpp; sourceTree = "<group>"; };
+		28D0605F2808E77F009E0953 /* snd_float_mix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mix.cpp; sourceTree = "<group>"; };
+		28D060602808E77F009E0953 /* snd_float_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mem.cpp; sourceTree = "<group>"; };
 		28E95FA9260C50A0000DDF6C /* cd_ios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cd_ios.cpp; sourceTree = "<group>"; };
 		28EDD8EE22C5D0D300BA8D90 /* libnetwork.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libnetwork.tbd; path = usr/lib/libnetwork.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -528,6 +531,7 @@
 			isa = PBXGroup;
 			children = (
 				287A3217229DBAAC00AE6BFA /* id1 */,
+				28D060572808E722009E0953 /* snd_float */,
 				287A320F229DBAA100AE6BFA /* SlipNFrag */,
 				2822EE51229ED2B900B5332D /* SlipNFrag-MacOS */,
 				282AF2AB250E5B8100E171DA /* SlipNFrag-iOS */,
@@ -695,6 +699,16 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		28D060572808E722009E0953 /* snd_float */ = {
+			isa = PBXGroup;
+			children = (
+				28D0605E2808E77F009E0953 /* snd_float_dma.cpp */,
+				28D060602808E77F009E0953 /* snd_float_mem.cpp */,
+				28D0605F2808E77F009E0953 /* snd_float_mix.cpp */,
+			);
+			path = snd_float;
+			sourceTree = SOURCE_ROOT;
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -822,7 +836,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				28BA2A90229F403C001830E9 /* net_loop.cpp in Sources */,
-				28AA1D9D22C0803E00264AD0 /* snd_mem.cpp in Sources */,
 				28BA2A83229F403C001830E9 /* d_polyse.cpp in Sources */,
 				28BA2A9E229F403C001830E9 /* r_main.cpp in Sources */,
 				28BA2A82229F403C001830E9 /* d_part.cpp in Sources */,
@@ -840,6 +853,7 @@
 				28BA2A7A229F403C001830E9 /* cmd.cpp in Sources */,
 				28BA2A92229F403C001830E9 /* net_vcr.cpp in Sources */,
 				28BA2A95229F403C001830E9 /* pr_edict.cpp in Sources */,
+				28D060632808E77F009E0953 /* snd_float_mem.cpp in Sources */,
 				28BA2AA4229F403C001830E9 /* r_vars.cpp in Sources */,
 				28BA2A73229F3271001830E9 /* Shaders.metal in Sources */,
 				28BA2AA8229F403C001830E9 /* sv_move.cpp in Sources */,
@@ -853,6 +867,7 @@
 				28BA2A7F229F403C001830E9 /* d_edge.cpp in Sources */,
 				28BA2A9B229F403C001830E9 /* r_edge.cpp in Sources */,
 				28BA2A78229F403C001830E9 /* cl_parse.cpp in Sources */,
+				28D060612808E77F009E0953 /* snd_float_dma.cpp in Sources */,
 				28BA2A7B229F403C001830E9 /* common.cpp in Sources */,
 				28BA2A8F229F403C001830E9 /* model.cpp in Sources */,
 				2880A4C722C5757F00AF513D /* net_macos.cpp in Sources */,
@@ -864,7 +879,6 @@
 				28BA2A9C229F403C001830E9 /* r_efrag.cpp in Sources */,
 				28BA2A7C229F403C001830E9 /* console.cpp in Sources */,
 				28BA2AA9229F403C001830E9 /* sv_phys.cpp in Sources */,
-				28AA1D9C22C0803E00264AD0 /* snd_dma.cpp in Sources */,
 				286DF6C92324813B00B7537E /* net_sock.cpp in Sources */,
 				28BA2AA2229F403C001830E9 /* r_sprite.cpp in Sources */,
 				28BA2A7E229F403C001830E9 /* cvar.cpp in Sources */,
@@ -878,7 +892,6 @@
 				28BA2AAD229F403C001830E9 /* world.cpp in Sources */,
 				28BA2AA6229F403C001830E9 /* screen.cpp in Sources */,
 				2822EE5F229ED2BA00B5332D /* main.mm in Sources */,
-				28AA1D9B22C0803E00264AD0 /* snd_mix.cpp in Sources */,
 				282A603B24AC37BD001BAFDA /* d_lists.cpp in Sources */,
 				28BA2AAA229F403C001830E9 /* sv_user.cpp in Sources */,
 				28BA2A81229F403C001830E9 /* d_modech.cpp in Sources */,
@@ -888,6 +901,7 @@
 				28BA2AB9229F4901001830E9 /* vid_macos.cpp in Sources */,
 				2822EE54229ED2B900B5332D /* AppDelegate.m in Sources */,
 				28BA2A9F229F403C001830E9 /* r_misc.cpp in Sources */,
+				28D060622808E77F009E0953 /* snd_float_mix.cpp in Sources */,
 				28BA2A85229F403C001830E9 /* d_sky.cpp in Sources */,
 				28BA2AA7229F403C001830E9 /* sv_main.cpp in Sources */,
 				28BA2A79229F403C001830E9 /* cl_tent.cpp in Sources */,
