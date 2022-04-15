@@ -124,12 +124,16 @@ void runEngine(AppState* appState, struct android_app* app)
 			{
 				VID_ReallocSurfCache();
 			}
+			//auto updatestart = GetTime();
 			auto updated = Host_FrameUpdate(frame_lapse);
+			//auto updateend = GetTime();
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
 				ANativeActivity_finish(app->activity);
 				break;
 			}
+			//double renderstart = 0;
+			//double renderend = 0;
 			if (updated)
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -150,10 +154,16 @@ void runEngine(AppState* appState, struct android_app* app)
 				d_awayfromviewmodel = !appState->NearViewmodel;
 				auto nodrift = cl.nodrift;
 				cl.nodrift = true;
+				//renderstart = GetTime();
 				Host_FrameRender();
+				//renderend = GetTime();
 				cl.nodrift = nodrift;
 			}
+			//auto finishstart = GetTime();
 			Host_FrameFinish(updated);
+			//auto finishend = GetTime();
+			//auto elapsed = (updateend-updatestart) + (renderend-renderstart) + (finishend-finishstart);
+			//__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "runEngine() elapsed: %.3f", elapsed);
 		}
 		std::this_thread::yield();
 	}
