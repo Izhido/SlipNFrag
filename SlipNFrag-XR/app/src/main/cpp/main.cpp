@@ -1816,9 +1816,16 @@ void android_main(struct android_app* app)
 
 						appState.Scene.Initialize();
 
+						//auto getsizestart = GetTime();
 						auto stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
+						//auto getsizeend = GetTime();
+						//double loadstart = 0;
+						//double loadend = 0;
+						//double fillstart = 0;
+						//double fillend = 0;
 						if (stagingBufferSize > 0)
 						{
+							//loadstart = GetTime();
 							if (stagingBufferSize < Constants::memoryBlockSize)
 							{
 								stagingBufferSize = Constants::memoryBlockSize;
@@ -1829,8 +1836,11 @@ void android_main(struct android_app* app)
 								CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
 							}
 							PerImage::LoadStagingBuffer(appState, perFrame, stagingBuffer);
+							//loadend = fillstart = GetTime();
 							perImage.FillFromStagingBuffer(appState, perFrame, stagingBuffer);
+							//fillend = GetTime();
 						}
+						//__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "getsize elapsed: %.3f, load elapsed: %.3f, fill elapsed: %.3f, staging elapsed: %.3f", (getsizeend-getsizestart), (loadend-loadstart), (fillend-fillstart), (getsizeend-getsizestart) + (loadend-loadstart) + (fillend-fillstart));
 					}
 
 					VkClearValue clearValues[2] { };
