@@ -103,59 +103,32 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 		offset += loadedAliasIndexBuffer->size;
 		loadedAliasIndexBuffer = loadedAliasIndexBuffer->next;
 	}
-	if (appState.UInt8VertexBufferEnabled)
+	auto loadedBuffer = appState.Scene.buffers.firstAliasVertices;
+	while (loadedBuffer != nullptr)
 	{
-		auto loadedBuffer = appState.Scene.buffers.firstAliasVertices;
-		while (loadedBuffer != nullptr)
+		auto target = (byte*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto source = (trivertx_t*)loadedBuffer->source;
+		for (auto i = 0; i < loadedBuffer->size; i += 2 * 4 * sizeof(byte))
 		{
-			auto target = (byte*)(((unsigned char*)stagingBuffer->mapped) + offset);
-			auto source = (trivertx_t*)loadedBuffer->source;
-			for (auto i = 0; i < loadedBuffer->size; i += 2 * 4 * sizeof(byte))
-			{
-				auto x = source->v[0];
-				auto y = source->v[1];
-				auto z = source->v[2];
-				*target++ = x;
-				*target++ = y;
-				*target++ = z;
-				*target++ = 1;
-				*target++ = x;
-				*target++ = y;
-				*target++ = z;
-				*target++ = 1;
-				source++;
-			}
-			offset += loadedBuffer->size;
-			loadedBuffer = loadedBuffer->next;
+			auto x = source->v[0];
+			auto y = source->v[1];
+			auto z = source->v[2];
+			*target++ = x;
+			*target++ = y;
+			*target++ = z;
+			*target++ = 1;
+			*target++ = x;
+			*target++ = y;
+			*target++ = z;
+			*target++ = 1;
+			source++;
 		}
-		while (offset % 4 != 0)
-		{
-			offset++;
-		}
+		offset += loadedBuffer->size;
+		loadedBuffer = loadedBuffer->next;
 	}
-	else
+	while (offset % 4 != 0)
 	{
-		auto loadedBuffer = appState.Scene.buffers.firstAliasVertices;
-		while (loadedBuffer != nullptr)
-		{
-			auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-			auto source = (trivertx_t*)loadedBuffer->source;
-			for (auto i = 0; i < loadedBuffer->size; i += 2 * 3 * sizeof(float))
-			{
-				auto x = source->v[0];
-				auto y = source->v[1];
-				auto z = source->v[2];
-				*target++ = x;
-				*target++ = y;
-				*target++ = z;
-				*target++ = x;
-				*target++ = y;
-				*target++ = z;
-				source++;
-			}
-			offset += loadedBuffer->size;
-			loadedBuffer = loadedBuffer->next;
-		}
+		offset++;
 	}
 	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)

@@ -24,7 +24,6 @@ struct AppState
 	double PausedTime;
 	VkDevice Device;
 	bool IndexTypeUInt8Enabled;
-	bool UInt8VertexBufferEnabled;
 	XrSession Session;
 	VkCommandPool CommandPool;
 	VkQueue Queue;

@@ -603,14 +603,6 @@ void android_main(struct android_app* app)
 				appState.IndexTypeUInt8Enabled = true;
 			}
 
-			VkFormatProperties formatProperties;
-			vkGetPhysicalDeviceFormatProperties(vulkanPhysicalDevice, VK_FORMAT_R8G8B8A8_UINT, &formatProperties);
-			if (formatProperties.bufferFeatures & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT != 0)
-			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "VK_FORMAT_R8G8B8A8_UINT is available for vertex input");
-				appState.UInt8VertexBufferEnabled = true;
-			}
-
 			VkPhysicalDeviceFeatures features { };
 			features.samplerAnisotropy = VK_TRUE;
 

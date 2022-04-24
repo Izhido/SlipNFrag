@@ -20,7 +20,7 @@ layout(push_constant) uniform Transforms
 	layout(offset = 76) float offset;
 };
 
-layout(location = 0) in vec4 vertexPosition;
+layout(location = 0) in uvec4 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
 layout(location = 2) in float vertexLight;
 layout(location = 0) out mediump vec4 fragmentData;

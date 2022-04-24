@@ -583,16 +583,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	PipelineAttributes aliasAttributes { };
 	aliasAttributes.vertexAttributes.resize(3);
 	aliasAttributes.vertexBindings.resize(3);
-	if (appState.UInt8VertexBufferEnabled)
-	{
-		aliasAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8A8_UINT;
-		aliasAttributes.vertexBindings[0].stride = 4 * sizeof(byte);
-	}
-	else
-	{
-		aliasAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		aliasAttributes.vertexBindings[0].stride = 3 * sizeof(float);
-	}
+	aliasAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8A8_UINT;
+	aliasAttributes.vertexBindings[0].stride = 4 * sizeof(byte);
 	aliasAttributes.vertexAttributes[1].location = 1;
 	aliasAttributes.vertexAttributes[1].binding = 1;
 	aliasAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
@@ -1172,7 +1164,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		auto entry = aliasVertexCache.find(alias.apverts);
 		if (entry == aliasVertexCache.end())
 		{
-			auto vertexSize = (appState.UInt8VertexBufferEnabled ? 4 * sizeof(byte) : 3 * sizeof(float));
+			auto vertexSize = 4 * sizeof(byte);
 			loaded.vertices.size = alias.vertex_count * 2 * vertexSize;
 			loaded.vertices.buffer = new SharedMemoryBuffer { };
 			loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
