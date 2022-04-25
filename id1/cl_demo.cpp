@@ -318,15 +318,27 @@ void CL_PlayDemo_f (void)
 
     char onechar;
     auto len = Sys_FileRead (cls.demofile, &onechar, 1);
+	while (len == 1 && onechar == ' ')
+	{
+		len = Sys_FileRead (cls.demofile, &onechar, 1);
+	}
+	if (len == 1 && onechar == '-')
+	{
+		neg = true;
+		len = Sys_FileRead (cls.demofile, &onechar, 1);
+	}
 	while (len == 1 && onechar != '\n')
     {
-		if (onechar == '-')
-			neg = true;
-		else
-			cls.forcetrack = cls.forcetrack * 10 + (onechar - '0');
+		if (onechar < '0' || onechar > '9')
+			break;
+		cls.forcetrack = cls.forcetrack * 10 + (onechar - '0');
         len = Sys_FileRead (cls.demofile, &onechar, 1);
     }
-    
+	while (len == 1 && onechar != '\n')
+	{
+		len = Sys_FileRead (cls.demofile, &onechar, 1);
+	}
+
 	if (neg)
 		cls.forcetrack = -cls.forcetrack;
 }
