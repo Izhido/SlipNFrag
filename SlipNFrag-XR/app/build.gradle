@@ -55,6 +55,7 @@ android {
             path file('src/main/cpp/CMakeLists.txt')
         }
     }
+    namespace 'com.heribertodelgado.slipnfrag_xr'
 }
 
 dependencies {
