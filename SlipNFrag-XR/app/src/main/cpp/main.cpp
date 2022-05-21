@@ -523,6 +523,9 @@ void android_main(struct android_app* app)
 			CHECK_XRCMD(xrCreateVulkanInstanceKHR(instance, &vulkanCreateInfo, &vulkanInstance, &errCreateVulkanInstance));
 			CHECK_VKCMD(errCreateVulkanInstance);
 
+			appState.vkGetBufferMemoryRequirements2 = (PFN_vkGetBufferMemoryRequirements2)vkGetInstanceProcAddr(vulkanInstance, "vkGetBufferMemoryRequirements2");
+			appState.vkGetImageMemoryRequirements2 = (PFN_vkGetImageMemoryRequirements2)vkGetInstanceProcAddr(vulkanInstance, "vkGetImageMemoryRequirements2");
+
 			vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugReportCallbackEXT");
 			vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugReportCallbackEXT");
 			VkDebugReportCallbackCreateInfoEXT debugInfo { VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT };
@@ -1866,16 +1869,40 @@ void android_main(struct android_app* app)
 
 						perImage.resolveImage = swapchainImages[swapchainImageIndex].image;
 
-						VkMemoryRequirements memRequirements { };
+						VkImageMemoryRequirementsInfo2 memoryRequirementsInfo { VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2 };
+
+						VkMemoryDedicatedRequirements dedicatedRequirements { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
+
+						VkMemoryDedicatedAllocateInfo dedicatedInfo { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO };
+
+						VkMemoryRequirements2 memoryRequirements { VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2 };
+						memoryRequirements.pNext = &dedicatedRequirements;
+
 						VkMemoryAllocateInfo memoryAllocateInfo { };
 
-						vkGetImageMemoryRequirements(appState.Device, perImage.colorImage, &memRequirements);
-						createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo);
+						memoryRequirementsInfo.image = perImage.colorImage;
+						appState.vkGetImageMemoryRequirements2(appState.Device, &memoryRequirementsInfo, &memoryRequirements);
+						if (dedicatedRequirements.prefersDedicatedAllocation)
+						{
+							dedicatedInfo.image = memoryRequirementsInfo.image;
+							memoryAllocateInfo.pNext = &dedicatedInfo;
+						}
+						createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo);
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perImage.colorMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perImage.colorImage, perImage.colorMemory, 0));
-						
-						vkGetImageMemoryRequirements(appState.Device, perImage.depthImage, &memRequirements);
-						createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo);
+
+						memoryRequirementsInfo.image = perImage.depthImage;
+						appState.vkGetImageMemoryRequirements2(appState.Device, &memoryRequirementsInfo, &memoryRequirements);
+						if (dedicatedRequirements.prefersDedicatedAllocation)
+						{
+							dedicatedInfo.image = memoryRequirementsInfo.image;
+							memoryAllocateInfo.pNext = &dedicatedInfo;
+						}
+						else
+						{
+							memoryAllocateInfo.pNext = nullptr;
+						}
+						createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo);
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perImage.depthMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perImage.depthImage, perImage.depthMemory, 0));
 
@@ -2352,7 +2379,14 @@ void android_main(struct android_app* app)
 
 								std::vector<VkBuffer> buffers(6);
 
-								VkMemoryRequirements memoryRequirements;
+								VkBufferMemoryRequirementsInfo2 memoryRequirementsInfo { VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2 };
+
+								VkMemoryDedicatedRequirements dedicatedRequirements { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
+
+								VkMemoryRequirements2 memoryRequirements { VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2 };
+								memoryRequirements.pNext = &dedicatedRequirements;
+
+								VkMemoryDedicatedAllocateInfo dedicatedInfo { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO };
 
 								VkMemoryAllocateInfo memoryAllocateInfo { };
 
@@ -2384,12 +2418,22 @@ void android_main(struct android_app* app)
 								for (auto i = 0; i < 6; i++)
 								{
 									CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffers[i]));
-									vkGetBufferMemoryRequirements(appState.Device, buffers[i], &memoryRequirements);
+
+									memoryRequirementsInfo.buffer = buffers[i];
+									appState.vkGetBufferMemoryRequirements2(appState.Device, &memoryRequirementsInfo, &memoryRequirements);
+
+									if (dedicatedRequirements.prefersDedicatedAllocation)
+									{
+										dedicatedInfo.buffer = memoryRequirementsInfo.buffer;
+										memoryAllocateInfo.pNext = &dedicatedInfo;
+									}
 									createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo);
+
 									CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memoryBlocks[i]));
 									CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffers[i], memoryBlocks[i], 0));
+
 									void* mapped;
-									CHECK_VKCMD(vkMapMemory(appState.Device, memoryBlocks[i], 0, memoryRequirements.size, 0, &mapped));
+									CHECK_VKCMD(vkMapMemory(appState.Device, memoryBlocks[i], 0, memoryRequirements.memoryRequirements.size, 0, &mapped));
 									std::string name;
 									switch (i)
 									{

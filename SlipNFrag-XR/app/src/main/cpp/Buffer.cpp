@@ -13,10 +13,24 @@ void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags us
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffer));
 
-	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
+	VkBufferMemoryRequirementsInfo2 memoryRequirementsInfo { VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2 };
+	memoryRequirementsInfo.buffer = buffer;
+
+	VkMemoryDedicatedRequirements dedicatedRequirements { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
+
+	VkMemoryRequirements2 memoryRequirements { VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2 };
+	memoryRequirements.pNext = &dedicatedRequirements;
+
+	appState.vkGetBufferMemoryRequirements2(appState.Device, &memoryRequirementsInfo, &memoryRequirements);
 
 	VkMemoryAllocateInfo memoryAllocateInfo { };
+
+	if (dedicatedRequirements.prefersDedicatedAllocation)
+	{
+		VkMemoryDedicatedAllocateInfo dedicatedInfo { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO };
+		dedicatedInfo.buffer = buffer;
+		memoryAllocateInfo.pNext = &dedicatedInfo;
+	}
 	createMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo);
 
 	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memory));

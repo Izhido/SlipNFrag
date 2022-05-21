@@ -715,7 +715,7 @@ void CL_SendCmd (void)
 		CL_SendMove (&cmd);
 	}
     
-    if (cl_protocol_version_upgrade_requested)
+    if (cl_protocol_version_upgrade_requested && cl_protocol_version_from_server != EXPANDED_PROTOCOL_VERSION)
     {
         cl_protocol_version_from_server = EXPANDED_PROTOCOL_VERSION;
         CL_SendAckExpandedProtocol (&cmd);

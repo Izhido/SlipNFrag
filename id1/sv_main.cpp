@@ -763,9 +763,6 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 //	if (ent->v.weapon)
 		bits |= SU_WEAPON;
 
-    if (sv_request_protocol_version_upgrade)
-        bits |= SU_REQEXPPROTO;
-
 // send the data
     if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
     {
@@ -821,7 +818,10 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
         return;
     }
 
-    MSG_WriteByte (msg, svc_clientdata);
+	if (sv_request_protocol_version_upgrade)
+		bits |= SU_REQEXPPROTO;
+
+	MSG_WriteByte (msg, svc_clientdata);
 	MSG_WriteShort (msg, bits);
 
 	if (bits & SU_VIEWHEIGHT)
