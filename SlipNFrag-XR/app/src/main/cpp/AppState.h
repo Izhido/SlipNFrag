@@ -110,8 +110,6 @@ struct AppState
 	pid_t EngineThreadId;
 	pid_t RenderThreadId;
 	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
-	PFN_vkGetBufferMemoryRequirements2 vkGetBufferMemoryRequirements2;
-	PFN_vkGetImageMemoryRequirements2 vkGetImageMemoryRequirements2;
 
 	void RenderScreen(uint32_t swapchainImageIndex);
 	void RenderKeyboard(uint32_t swapchainImageIndex);

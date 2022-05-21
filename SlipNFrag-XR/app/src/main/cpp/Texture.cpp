@@ -22,24 +22,10 @@ void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkForm
 	imageCreateInfo.usage = usage;
 	CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &image));
 
-	VkImageMemoryRequirementsInfo2 memoryRequirementsInfo { VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2 };
-
-	VkMemoryDedicatedRequirements dedicatedRequirements { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS };
-
-	VkMemoryDedicatedAllocateInfo dedicatedInfo { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO };
-
-	VkMemoryRequirements2 memoryRequirements { VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2 };
-	memoryRequirements.pNext = &dedicatedRequirements;
+	VkMemoryRequirements memoryRequirements;
+	vkGetImageMemoryRequirements(appState.Device, image, &memoryRequirements);
 
 	VkMemoryAllocateInfo memoryAllocateInfo { };
-
-	memoryRequirementsInfo.image = image;
-	appState.vkGetImageMemoryRequirements2(appState.Device, &memoryRequirementsInfo, &memoryRequirements);
-	if (dedicatedRequirements.prefersDedicatedAllocation)
-	{
-		dedicatedInfo.image = memoryRequirementsInfo.image;
-		memoryAllocateInfo.pNext = &dedicatedInfo;
-	}
 	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
 
 	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memory));
