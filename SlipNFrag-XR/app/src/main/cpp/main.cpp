@@ -1014,7 +1014,7 @@ void android_main(struct android_app* app)
 
 		XrSpace keyboardSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-		referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit * 5 / 6;
+		referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
 		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &keyboardSpace));
 
 		XrSpace consoleKeyboardSpace = XR_NULL_HANDLE;
@@ -2254,7 +2254,7 @@ void android_main(struct android_app* app)
 						{
 							keyboardLayer.layerFlags = 0;
 							keyboardLayer.pose = { };
-							keyboardLayer.pose.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit * 5 / 6;
+							keyboardLayer.pose.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
 							keyboardLayer.pose.orientation.w = 1;
 
 							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardLayer));

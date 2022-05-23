@@ -2,12 +2,9 @@
 #include "AppState.h"
 
 const float CylinderProjection::radius = 1.0f;
-const float CylinderProjection::horizontalAngle = 76.75 * M_PI / 180;
+const float CylinderProjection::horizontalAngle = 60 * M_PI / 180;
 const float CylinderProjection::verticalAngle = horizontalAngle / 1.6;
-const float CylinderProjection::screenLowerLimit = 
-		(CylinderProjection::radius * CylinderProjection::radius + 
-		CylinderProjection::radius * CylinderProjection::radius - 
-		2 * CylinderProjection::radius * CylinderProjection::radius * cos(CylinderProjection::horizontalAngle)) / (1.6 * 2);
+const float CylinderProjection::screenLowerLimit = CylinderProjection::radius * tan(CylinderProjection::verticalAngle / 2);
 const float CylinderProjection::keyboardLowerLimit = CylinderProjection::screenLowerLimit / 2;
 const float CylinderProjection::epsilon = 1e-5;
 
