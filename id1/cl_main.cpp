@@ -184,7 +184,9 @@ void CL_Disconnect (void)
 	}
 
 	cls.demoplayback = cls.timedemo = false;
-	cls.signon = 0;
+	cls.signon = cl.intermission = 0;
+
+	V_ResetEffects ();
 }
 
 void CL_Disconnect_f (void)

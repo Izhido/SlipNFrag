@@ -1061,6 +1061,22 @@ void V_RenderView (void)
 		
 }
 
+/*
+============
+V_ResetEffects
+============
+*/
+void V_ResetEffects (void)
+{
+	cshift_empty.percent = 0;
+#ifdef	GLQUAKE
+	memset (v_blend, 0, sizeof (v_blend));
+#endif	// GLQUAKE
+	v_dmg_time = 0;
+	v_dmg_roll = 0;
+	v_dmg_pitch = 0;
+}
+
 //============================================================================
 
 /*
