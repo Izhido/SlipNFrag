@@ -264,6 +264,7 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 					previousFace = face;
 				}
 				attributes.m[14] = surface.lightmap.lightmap->allocatedIndex;
+				attributes.m[15] = surface.texture.index;
 				for (auto j = 0; j < face->numedges; j++)
 				{
 					*target++ = attributes;
@@ -304,7 +305,7 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 					*target++ = face->texinfo->texture->width;
 					*target++ = face->texinfo->texture->height;
 					*target++ = surface.lightmap.lightmap->allocatedIndex;
-					*target++ = 0;
+					*target++ = surface.texture.index;
 					*target++ = surface.originX;
 					*target++ = surface.originY;
 					*target++ = surface.originZ;
@@ -343,11 +344,13 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std
 				*target++ = face->texinfo->vecs[1][3];
 				*target++ = face->texinfo->texture->width;
 				*target++ = face->texinfo->texture->height;
+				*target++ = turbulent.texture.index;
+				*target++ = 0;
 			}
 			attributeCount += face->numedges;
 		}
 	}
-	offset += (attributeCount * 10 * sizeof(float));
+	offset += (attributeCount * 12 * sizeof(float));
 }
 
 void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)

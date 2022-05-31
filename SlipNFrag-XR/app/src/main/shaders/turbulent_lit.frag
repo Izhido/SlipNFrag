@@ -13,7 +13,7 @@ layout(set = 0, binding = 1) uniform Palette
 
 layout(set = 0, binding = 2) uniform usampler2D fragmentColormap;
 layout(set = 1, binding = 0) uniform sampler2DArray fragmentLightmap;
-layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
+layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
 
 layout(push_constant) uniform Time
 {
@@ -21,16 +21,16 @@ layout(push_constant) uniform Time
 };
 
 layout(location = 0) in vec4 fragmentData;
-layout(location = 1) in flat highp int fragmentLightmapIndex;
+layout(location = 1) in flat highp ivec2 fragmentTextureIndices;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
 	ivec2 lightmapCoords = ivec2(floor(fragmentData.xy));
-	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords, fragmentLightmapIndex), 0);
-	vec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y, fragmentLightmapIndex), 0);
-	vec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y + 1, fragmentLightmapIndex), 0);
-	vec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x, lightmapCoords.y + 1, fragmentLightmapIndex), 0);
+	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords, fragmentTextureIndices.x), 0);
+	vec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y, fragmentTextureIndices.x), 0);
+	vec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y + 1, fragmentTextureIndices.x), 0);
+	vec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x, lightmapCoords.y + 1, fragmentTextureIndices.x), 0);
 	vec2 lightmapCoordsDelta = floor(((fragmentData.xy - lightmapCoords) + 0.03125) * 16) / 16;
 	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
 	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
@@ -44,8 +44,9 @@ void main()
 	vec2 texCoords = vec2(fragmentData.z + distortion.y, fragmentData.w + distortion.x);
 	vec2 texLevel = textureQueryLod(fragmentTexture, texCoords);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
-	uvec4 lowTexEntry = textureLod(fragmentTexture, texCoords, texMip.x);
-	uvec4 highTexEntry = textureLod(fragmentTexture, texCoords, texMip.y);
+	vec3 fragmentTextureCoords = vec3(texCoords, fragmentTextureIndices.y);
+	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
+	uvec4 highTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
 	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, lightBaseInt), 0);
 	uvec4 lowNextColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, lightNextInt), 0);
 	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highTexEntry.x, lightBaseInt), 0);

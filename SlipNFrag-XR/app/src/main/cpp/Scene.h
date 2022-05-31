@@ -11,6 +11,7 @@
 #include "LoadedAlias.h"
 #include "CachedLightmaps.h"
 #include "CachedSharedMemoryTextures.h"
+#include "SurfaceTexture.h"
 #include "Skybox.h"
 #include <common/xr_linear.h>
 #include "SortedSurfaceLightmap.h"
@@ -73,10 +74,11 @@ struct Scene
 	int firstSkyVertex;
 	std::unordered_map<VkDeviceSize, std::list<LightmapTexture>> lightmapTextures;
 	CachedLightmaps lightmaps;
+	std::unordered_map<std::string, CachedSharedMemoryTextures> surfaceTextures;
 	CachedSharedMemoryTextures textures;
-	std::unordered_map<void*, SharedMemoryTexture*> textureCache;
+	std::unordered_map<void*, SurfaceTexture> surfaceTextureCache;
 	std::unordered_map<void*, SharedMemoryTexture*> spriteCache;
-	std::unordered_map<void*, SharedMemoryTexture*> aliasTexturesCache;
+	std::unordered_map<void*, SharedMemoryTexture*> aliasTextureCache;
 	Texture floorTexture;
 	Texture controllerTexture;
 	std::vector<VkSampler> samplers;
@@ -141,6 +143,7 @@ struct Scene
 	SharedMemoryBuffer* previousVertexBuffer;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	SharedMemoryTexture* previousSharedMemoryTexture;
+	int previousSharedMemoryTextureIndex;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	SortedSurfaces sorted;
 

@@ -5,6 +5,7 @@
 struct LoadedSharedMemoryTexture
 {
 	SharedMemoryTexture* texture;
+	int index;
 	VkDeviceSize size;
 	unsigned char* source;
 	int mips;

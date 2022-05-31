@@ -550,10 +550,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulentAttributes.vertexAttributes[2].offset = 4 * sizeof(float);
 	turbulentAttributes.vertexAttributes[3].location = 3;
 	turbulentAttributes.vertexAttributes[3].binding = 1;
-	turbulentAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32_SFLOAT;
+	turbulentAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	turbulentAttributes.vertexAttributes[3].offset = 8 * sizeof(float);
 	turbulentAttributes.vertexBindings[1].binding = 1;
-	turbulentAttributes.vertexBindings[1].stride = 10 * sizeof(float);
+	turbulentAttributes.vertexBindings[1].stride = 12 * sizeof(float);
 	turbulentAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	turbulentAttributes.vertexInputState.vertexBindingDescriptionCount = turbulentAttributes.vertexBindings.size();
 	turbulentAttributes.vertexInputState.pVertexBindingDescriptions = turbulentAttributes.vertexBindings.data();
@@ -1010,6 +1010,11 @@ void Scene::Initialize()
 	indexBuffers.Initialize();
 	lightmaps.first = nullptr;
 	lightmaps.current = nullptr;
+	for (auto& entry : surfaceTextures)
+	{
+		entry.second.first = nullptr;
+		entry.second.current = nullptr;
+	}
 	textures.first = nullptr;
 	textures.current = nullptr;
 }
@@ -1037,33 +1042,57 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 	loaded.model = turbulent.model;
 	if (previousTexture != turbulent.data)
 	{
-		auto entry = textureCache.find(turbulent.data);
-		if (entry == textureCache.end())
+		auto entry = surfaceTextureCache.find(turbulent.data);
+		if (entry == surfaceTextureCache.end())
 		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
-			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-			textures.MoveToFront(texture);
+			auto key = std::to_string(turbulent.width) + "x" + std::to_string(turbulent.height);
+			auto& cached = surfaceTextures[key];
+			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			{
+				uint32_t layerCount;
+				if (cached.textures == nullptr)
+				{
+					layerCount = 4;
+				}
+				else
+				{
+					layerCount = 64;
+				}
+				auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
+				auto texture = new SharedMemoryTexture { };
+				texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				cached.MoveToFront(texture);
+				loaded.texture.texture = texture;
+				cached.currentIndex = 0;
+			}
+			else
+			{
+				loaded.texture.texture = cached.textures;
+			}
+			cached.Setup(loaded.texture);
+			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = turbulent.size;
 			size += loaded.texture.size;
-			loaded.texture.texture = texture;
 			loaded.texture.source = turbulent.data;
 			loaded.texture.mips = turbulent.mips;
-			textures.Setup(loaded.texture);
-			textureCache.insert({ turbulent.data, texture });
+			surfaceTextureCache.insert({ turbulent.data, { loaded.texture.texture, loaded.texture.index } });
+			cached.currentIndex++;
 		}
 		else
 		{
 			loaded.texture.size = 0;
-			loaded.texture.texture = entry->second;
+			loaded.texture.texture = entry->second.texture;
+			loaded.texture.index = entry->second.index;
 		}
 		previousTexture = turbulent.data;
 		previousSharedMemoryTexture = loaded.texture.texture;
+		previousSharedMemoryTextureIndex = loaded.texture.index;
 	}
 	else
 	{
 		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
+		loaded.texture.index = previousSharedMemoryTextureIndex;
 	}
 	loaded.count = turbulent.count;
 }
@@ -1131,7 +1160,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(sprite.width, sprite.height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			textures.MoveToFront(texture);
 			loaded.texture.size = sprite.size;
 			size += loaded.texture.size;
@@ -1144,6 +1173,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
 		{
 			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second;
+			loaded.texture.index = 0;
 		}
 		previousTexture = sprite.data;
 		previousSharedMemoryTexture = loaded.texture.texture;
@@ -1152,6 +1182,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
 	{
 		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
+		loaded.texture.index = 0;
 	}
 	loaded.count = sprite.count;
 	loaded.firstVertex = sprite.first_vertex;
@@ -1213,24 +1244,25 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 	}
 	if (previousTexture != alias.data)
 	{
-		auto entry = aliasTexturesCache.find(alias.data);
-		if (entry == aliasTexturesCache.end())
+		auto entry = aliasTextureCache.find(alias.data);
+		if (entry == aliasTextureCache.end())
 		{
 			auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
 			auto texture = new SharedMemoryTexture { };
-			texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			textures.MoveToFront(texture);
 			loaded.colormapped.texture.size = alias.size;
 			size += loaded.colormapped.texture.size;
 			loaded.colormapped.texture.texture = texture;
 			loaded.colormapped.texture.source = alias.data;
 			textures.Setup(loaded.colormapped.texture);
-			aliasTexturesCache.insert({ alias.data, texture });
+			aliasTextureCache.insert({ alias.data, texture });
 		}
 		else
 		{
 			loaded.colormapped.texture.size = 0;
 			loaded.colormapped.texture.texture = entry->second;
+			loaded.colormapped.texture.index = 0;
 		}
 		previousTexture = alias.data;
 		previousSharedMemoryTexture = loaded.colormapped.texture.texture;
@@ -1239,6 +1271,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 	{
 		loaded.colormapped.texture.size = 0;
 		loaded.colormapped.texture.texture = previousSharedMemoryTexture;
+		loaded.colormapped.texture.index = 0;
 	}
 	auto entry = aliasIndexCache.find(alias.aliashdr);
 	if (entry == aliasIndexCache.end())
@@ -1503,7 +1536,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		GetStagingBufferSize(appState, d_lists.turbulent[i], loaded, size);
 		sorted.Sort(appState, loaded, i, sorted.turbulent);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
-		sortedAttributesSize += (loaded.count * 10 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 12 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulent);
@@ -1704,10 +1737,14 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 void Scene::Reset()
 {
 	D_ResetLists();
-	aliasTexturesCache.clear();
+	aliasTextureCache.clear();
 	spriteCache.clear();
-	textureCache.clear();
+	surfaceTextureCache.clear();
 	textures.DisposeFront();
+	for (auto& entry : surfaceTextures)
+	{
+		entry.second.DisposeFront();
+	}
 	lightmaps.DisposeFront();
 	indexBuffers.DisposeFront();
 	buffers.DisposeFront();

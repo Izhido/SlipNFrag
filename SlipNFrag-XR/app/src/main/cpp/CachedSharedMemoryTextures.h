@@ -8,6 +8,7 @@ struct CachedSharedMemoryTextures
 	SharedMemoryTexture* oldTextures;
 	LoadedSharedMemoryTexture* first;
 	LoadedSharedMemoryTexture* current;
+	int currentIndex;
 
 	void Setup(LoadedSharedMemoryTexture& loaded);
 	void DisposeFront();

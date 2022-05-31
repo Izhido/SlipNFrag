@@ -410,6 +410,16 @@ void PerImage::LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer*
 		offset += loadedLightmap->size;
 		loadedLightmap = loadedLightmap->next;
 	}
+	for (auto& entry : appState.Scene.surfaceTextures)
+	{
+		auto loadedTexture = entry.second.first;
+		while (loadedTexture != nullptr)
+		{
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
+			offset += loadedTexture->size;
+			loadedTexture = loadedTexture->next;
+		}
+	}
 	auto loadedTexture = appState.Scene.textures.first;
 	while (loadedTexture != nullptr)
 	{
@@ -745,10 +755,20 @@ void PerImage::FillFromStagingBuffer(AppState& appState, PerFrame& perFrame, Buf
 		appState.Scene.stagingBuffer.offset += loadedLightmap->size;
 		loadedLightmap = loadedLightmap->next;
 	}
+	for (auto& entry : appState.Scene.surfaceTextures)
+	{
+		auto loadedTexture = entry.second.first;
+		while (loadedTexture != nullptr)
+		{
+			loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->mips, loadedTexture->index);
+			appState.Scene.stagingBuffer.offset += loadedTexture->size;
+			loadedTexture = loadedTexture->next;
+		}
+	}
 	auto loadedTexture = appState.Scene.textures.first;
 	while (loadedTexture != nullptr)
 	{
-		loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->mips);
+		loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->mips, loadedTexture->index);
 		appState.Scene.stagingBuffer.offset += loadedTexture->size;
 		loadedTexture = loadedTexture->next;
 	}

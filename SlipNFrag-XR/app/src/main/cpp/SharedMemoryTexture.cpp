@@ -4,14 +4,14 @@
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage)
+void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, uint32_t layerCount, VkImageUsageFlags usage)
 {
 	this->width = width;
 	this->height = height;
 	this->mipCount = mipCount;
-	this->layerCount = 1;
+	this->layerCount = layerCount;
 
-	VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+	VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 	imageCreateInfo.format = format;
 	imageCreateInfo.extent.width = width;
@@ -77,7 +77,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 
 	VkImageViewCreateInfo imageViewCreateInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 	imageViewCreateInfo.image = image;
-	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	imageViewCreateInfo.viewType = (layerCount > 1 ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D);
 	imageViewCreateInfo.format = imageCreateInfo.format;
 	imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	imageViewCreateInfo.subresourceRange.levelCount = mipCount;
@@ -143,16 +143,13 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	vkUpdateDescriptorSets(appState.Device, 1, &write, 0, nullptr);
 }
 
-void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer, int mips) const
+void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer, int mips, int layer) const
 {
 	VkImageMemoryBarrier barrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
-	barrier.srcAccessMask = 0;
-	barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = mipCount;
 	barrier.subresourceRange.layerCount = layerCount;
 	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
@@ -161,24 +158,18 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	VkImageBlit blit { };
 	auto mipWidth = width;
 	auto mipHeight = height;
+	std::vector<VkBufferImageCopy> regions(toCopy);
 	for (auto i = 0; i < toCopy; i++)
 	{
-		VkBufferImageCopy region { };
+		auto& region = regions[i];
 		region.bufferOffset = buffer.offset + offset;
-		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		region.imageSubresource.layerCount = layerCount;
+		region.imageSubresource.aspectMask = barrier.subresourceRange.aspectMask;
 		region.imageSubresource.mipLevel = i;
+		region.imageSubresource.baseArrayLayer = layer;
+		region.imageSubresource.layerCount = 1;
 		region.imageExtent.width = mipWidth;
 		region.imageExtent.height = mipHeight;
 		region.imageExtent.depth = 1;
-		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseMipLevel = i;
-		vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 		offset += mipWidth * mipHeight;
 		blit.srcOffsets[1].x = mipWidth;
 		blit.srcOffsets[1].y = mipHeight;
@@ -193,18 +184,27 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 			mipHeight = 1;
 		}
 	}
+	vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, toCopy, regions.data());
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	barrier.subresourceRange.levelCount = toCopy;
+	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	blit.srcOffsets[1].z = 1;
-	blit.dstOffsets[1].z = 1;
-	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	blit.dstSubresource.mipLevel = toCopy - 1;
-	blit.srcSubresource.layerCount = layerCount;
+	blit.srcSubresource.aspectMask = barrier.subresourceRange.aspectMask;
+	blit.srcSubresource.mipLevel = toCopy - 1;
+	blit.srcSubresource.baseArrayLayer = layer;
+	blit.srcSubresource.layerCount = 1;
+	blit.dstOffsets[1].z = blit.srcOffsets[1].z;
+	blit.dstSubresource.aspectMask = blit.srcSubresource.aspectMask;
+	blit.dstSubresource.baseArrayLayer = blit.srcSubresource.baseArrayLayer;
+	blit.dstSubresource.layerCount = blit.srcSubresource.layerCount;
 	for (auto i = toCopy; i < mipCount; i++)
 	{
 		blit.dstOffsets[1].x = mipWidth;
 		blit.dstOffsets[1].y = mipHeight;
-		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		blit.dstSubresource.mipLevel = i;
-		blit.dstSubresource.layerCount = layerCount;
 		vkCmdBlitImage(buffer.commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 		mipWidth /= 2;
 		if (mipWidth < 1)
