@@ -1035,6 +1035,26 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
+VkDeviceSize Scene::GetAllocatedFor(int width, int height)
+{
+	VkDeviceSize allocated = 0;
+	while (width > 1 || height > 1)
+	{
+		allocated += (width * height);
+		width /= 2;
+		if (width < 1)
+		{
+			width = 1;
+		}
+		height /= 2;
+		if (height < 1)
+		{
+			height = 1;
+		}
+	}
+	return allocated;
+}
+
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
 	loaded.vertexes = ((model_t*)turbulent.model)->vertexes;
@@ -1060,7 +1080,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 				}
 				auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 				auto texture = new SharedMemoryTexture { };
-				texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 				cached.MoveToFront(texture);
 				loaded.texture.texture = texture;
 				cached.currentIndex = 0;
@@ -1072,7 +1092,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			cached.Setup(loaded.texture);
 			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = turbulent.size;
-			size += loaded.texture.size;
+			loaded.texture.allocated = GetAllocatedFor(turbulent.width, turbulent.height);
+			size += loaded.texture.allocated;
 			loaded.texture.source = turbulent.data;
 			loaded.texture.mips = turbulent.mips;
 			surfaceTextureCache.insert({ turbulent.data, { loaded.texture.texture, loaded.texture.index } });
@@ -1166,6 +1187,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
 			size += loaded.texture.size;
 			loaded.texture.texture = texture;
 			loaded.texture.source = sprite.data;
+			loaded.texture.mips = 1;
 			textures.Setup(loaded.texture);
 			spriteCache.insert({ sprite.data, texture });
 		}
@@ -1255,6 +1277,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			size += loaded.colormapped.texture.size;
 			loaded.colormapped.texture.texture = texture;
 			loaded.colormapped.texture.source = alias.data;
+			loaded.colormapped.texture.mips = 1;
 			textures.Setup(loaded.colormapped.texture);
 			aliasTextureCache.insert({ alias.data, texture });
 		}

@@ -21,6 +21,8 @@ struct PerImage
 	VkSubmitInfo submitInfo;
 
 	static float GammaCorrect(float component);
+	static byte AveragePixels(std::vector<byte>& pixdata);
+	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture);
 	static void LoadStagingBuffer(AppState& appState, PerFrame& perFrame, Buffer* stagingBuffer);
 	static void FillColormapTextures(AppState& appState, PerFrame& perFrame, LoadedAlias& loaded);
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;

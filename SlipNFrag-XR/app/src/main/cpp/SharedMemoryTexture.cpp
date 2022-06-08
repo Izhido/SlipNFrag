@@ -143,7 +143,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	vkUpdateDescriptorSets(appState.Device, 1, &write, 0, nullptr);
 }
 
-void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer, int mips, int layer) const
+void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer, int mips, int layer)
 {
 	VkImageMemoryBarrier barrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 	barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -242,6 +242,83 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 		}
 		buffer.imageBarriers[buffer.lastBarrier] = barrier;
 	}
+	filled = true;
+}
+
+void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer, int layer)
+{
+	std::vector<VkBufferImageCopy> regions(mipCount);
+	auto offset = 0;
+	auto mipWidth = width;
+	auto mipHeight = height;
+	for (int i = 0; i < regions.size(); i++)
+	{
+		auto& region = regions[i];
+		region.bufferOffset = buffer.offset + offset;
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.baseArrayLayer = layer;
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.mipLevel = i;
+		region.imageExtent.width = mipWidth;
+		region.imageExtent.height = mipHeight;
+		region.imageExtent.depth = 1;
+		offset += mipWidth * mipHeight;
+		mipWidth /= 2;
+		if (mipWidth < 1)
+		{
+			mipWidth = 1;
+		}
+		mipHeight /= 2;
+		if (mipHeight < 1)
+		{
+			mipHeight = 1;
+		}
+	}
+
+	if (buffer.descriptorSetsInUse.find(descriptorSet) == buffer.descriptorSetsInUse.end())
+	{
+		buffer.lastBarrier++;
+		if (buffer.imageBarriers.size() <= buffer.lastBarrier)
+		{
+			buffer.imageBarriers.emplace_back();
+		}
+
+		auto& barrier = buffer.imageBarriers[buffer.lastBarrier];
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		if (filled)
+		{
+			barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
+		else
+		{
+			barrier.srcAccessMask = 0;
+			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		}
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		barrier.image = image;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = mipCount;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = layerCount;
+		vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
+
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		buffer.descriptorSetsInUse.insert(descriptorSet);
+	}
+	else
+	{
+		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
+	}
+
+	filled = true;
 }
 
 void SharedMemoryTexture::Delete(AppState& appState) const

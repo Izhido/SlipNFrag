@@ -1217,7 +1217,7 @@ void android_main(struct android_app* app)
 						__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "XrEventDataInstanceLossPending by %lld", instanceLossPending.lossTime);
 						exitRenderLoop = true;
 						requestRestart = true;
-						return;
+						break;
 					}
 					case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
 					{
@@ -1230,7 +1230,7 @@ void android_main(struct android_app* app)
 						if ((sessionStateChangedEvent.session != XR_NULL_HANDLE) && (sessionStateChangedEvent.session != appState.Session))
 						{
 							__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "XrEventDataSessionStateChanged for unknown session");
-							return;
+							continue;
 						}
 
 						switch (sessionState)
@@ -1372,6 +1372,11 @@ void android_main(struct android_app* app)
 					default:
 						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Ignoring event type %d", event->type);
 						break;
+				}
+
+				if (exitRenderLoop || requestRestart)
+				{
+					break;
 				}
 			}
 
@@ -2702,7 +2707,7 @@ void android_main(struct android_app* app)
 	}
 	catch (const std::exception& ex)
 	{
-		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "%s", ex.what());
+		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Caught exception: %s", ex.what());
 	}
 	catch (...)
 	{
@@ -2710,6 +2715,7 @@ void android_main(struct android_app* app)
 	}
 
 	app->activity->vm->DetachCurrentThread();
-	
+
+	__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "exit(-1) called");
 	exit(-1); // Not redundant - app won't truly exit Android unless forcefully terminated
 }
