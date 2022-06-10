@@ -67,7 +67,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 		vkGetImageMemoryRequirements(appState.Device, texture->image, &memoryRequirements);
 
 		VkMemoryAllocateInfo memoryAllocateInfo { };
-		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo);
+		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
 
 		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &texture->memory));
 

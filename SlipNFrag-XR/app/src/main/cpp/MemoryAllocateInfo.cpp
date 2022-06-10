@@ -3,7 +3,7 @@
 #include <android/log.h>
 #include "Utils.h"
 
-void createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties, VkMemoryAllocateInfo& memoryAllocateInfo)
+bool createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties, VkMemoryAllocateInfo& memoryAllocateInfo, bool throwOnNotFound)
 {
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocateInfo.allocationSize = memoryRequirements.size;
@@ -23,8 +23,10 @@ void createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRe
 		}
 	}
 
-	if (!found)
+	if (!found && throwOnNotFound)
 	{
 		THROW(Fmt("createMemoryAllocateInfo(): Memory type %d with properties %d not found.", memoryRequirements.memoryTypeBits, properties));
 	}
+
+	return found;
 }

@@ -17,7 +17,7 @@ void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags us
 	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
 
 	VkMemoryAllocateInfo memoryAllocateInfo { };
-	createMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo);
+	createMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
 
 	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memory));
 

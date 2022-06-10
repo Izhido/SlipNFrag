@@ -185,34 +185,6 @@ static VkBool32 DebugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectType
 	return VK_FALSE;
 }
 
-void LogExtensions(const char* layerName, int indent = 0)
-{
-	uint32_t instanceExtensionCount;
-	CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layerName, 0, &instanceExtensionCount, nullptr));
-
-	std::vector<XrExtensionProperties> extensions(instanceExtensionCount);
-	for (XrExtensionProperties& extension : extensions)
-	{
-		extension.type = XR_TYPE_EXTENSION_PROPERTIES;
-	}
-
-	CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layerName, (uint32_t) extensions.size(), &instanceExtensionCount, extensions.data()));
-
-	const std::string indentStr(indent, ' ');
-	if (layerName == nullptr)
-	{
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable OpenXR extensions: (%d)", indentStr.c_str(), instanceExtensionCount);
-	}
-	else
-	{
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable OpenXR extensions for layer %s: (%d)", indentStr.c_str(), layerName, instanceExtensionCount);
-	}
-	for (const XrExtensionProperties& extension : extensions)
-	{
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), extension.extensionName, extension.extensionVersion);
-	}
-}
-
 static void AppHandleCommand(struct android_app* app, int32_t cmd)
 {
 	auto appState = (AppState*)app->userData;
@@ -313,40 +285,96 @@ void android_main(struct android_app* app)
 		loaderInitInfoAndroid.applicationContext = app->activity->clazz;
 		CHECK_XRCMD(xrInitializeLoaderKHR((const XrLoaderInitInfoBaseHeaderKHR*)&loaderInitInfoAndroid));
 
-		LogExtensions(nullptr);
-
-		{
-			uint32_t layerCount;
-			CHECK_XRCMD(xrEnumerateApiLayerProperties(0, &layerCount, nullptr));
-
-			std::vector<XrApiLayerProperties> layers(layerCount);
-			for (XrApiLayerProperties& layer : layers)
-			{
-				layer.type = XR_TYPE_API_LAYER_PROPERTIES;
-			}
-
-			CHECK_XRCMD(xrEnumerateApiLayerProperties((uint32_t) layers.size(), &layerCount, layers.data()));
-
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available Layers: (%d)", layerCount);
-			for (const XrApiLayerProperties& layer : layers)
-			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%s LayerVersion=%d Description=%s", layer.layerName, GetXrVersionString(layer.specVersion).c_str(), layer.layerVersion, layer.description);
-				LogExtensions(layer.layerName, 4);
-			}
-		}
-
-		std::vector<const char*> xrInstanceExtensions;
 		std::vector<std::string> xrInstanceExtensionSources
 		{
 			XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME,
 			XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
-			XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME,
 			XR_KHR_ANDROID_THREAD_SETTINGS_EXTENSION_NAME,
 			XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME,
 			XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME,
 			XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME,
 			XR_FB_COLOR_SPACE_EXTENSION_NAME
 		};
+
+		auto performanceSettingsEnabled = false;
+
+		uint32_t instanceExtensionCount;
+		CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(nullptr, 0, &instanceExtensionCount, nullptr));
+
+		std::vector<XrExtensionProperties> extensions(instanceExtensionCount);
+		for (XrExtensionProperties& extension : extensions)
+		{
+			extension.type = XR_TYPE_EXTENSION_PROPERTIES;
+		}
+
+		CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(nullptr, (uint32_t)extensions.size(), &instanceExtensionCount, extensions.data()));
+
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Available OpenXR extensions: (%d)", instanceExtensionCount);
+
+		for (const XrExtensionProperties& extension : extensions)
+		{
+			if (extension.extensionName == XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME)
+			{
+				performanceSettingsEnabled = true;
+				xrInstanceExtensionSources.push_back(extension.extensionName);
+			}
+
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%d", extension.extensionName, extension.extensionVersion);
+		}
+
+		for (auto& extensionName : xrInstanceExtensionSources)
+		{
+			auto found = false;
+			for (const XrExtensionProperties& extension : extensions)
+			{
+				if (extensionName == extension.extensionName)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				THROW(Fmt("Device does not support %s extension", extensionName.c_str()));
+			}
+		}
+
+		uint32_t xrLayerCount;
+		CHECK_XRCMD(xrEnumerateApiLayerProperties(0, &xrLayerCount, nullptr));
+
+		std::vector<XrApiLayerProperties> xrLayers(xrLayerCount);
+		for (XrApiLayerProperties& layer : xrLayers)
+		{
+			layer.type = XR_TYPE_API_LAYER_PROPERTIES;
+		}
+
+		CHECK_XRCMD(xrEnumerateApiLayerProperties((uint32_t) xrLayers.size(), &xrLayerCount, xrLayers.data()));
+
+		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available Layers: (%d)", xrLayerCount);
+		for (const XrApiLayerProperties& layer : xrLayers)
+		{
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%s LayerVersion=%d Description=%s", layer.layerName, GetXrVersionString(layer.specVersion).c_str(), layer.layerVersion, layer.description);
+
+			CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layer.layerName, 0, &instanceExtensionCount, nullptr));
+
+			std::vector<XrExtensionProperties> extensions(instanceExtensionCount);
+			for (XrExtensionProperties& extension : extensions)
+			{
+				extension.type = XR_TYPE_EXTENSION_PROPERTIES;
+			}
+
+			CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layer.layerName, (uint32_t)extensions.size(), &instanceExtensionCount, extensions.data()));
+
+			const std::string indentStr(4, ' ');
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable OpenXR extensions for layer %s: (%d)", indentStr.c_str(), layer.layerName, instanceExtensionCount);
+
+			for (const XrExtensionProperties& extension : extensions)
+			{
+				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), extension.extensionName, extension.extensionVersion);
+			}
+		}
+
+		std::vector<const char*> xrInstanceExtensions;
 		std::transform(xrInstanceExtensionSources.begin(), xrInstanceExtensionSources.end(), std::back_inserter(xrInstanceExtensions), [](const std::string& extension)
 		{ 
 			return extension.c_str(); 
@@ -362,11 +390,11 @@ void android_main(struct android_app* app)
 			return layer.c_str();
 		});
 
+		XrInstance instance = XR_NULL_HANDLE;
+
 		XrInstanceCreateInfoAndroidKHR instanceCreateInfoAndroid { XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR };
 		instanceCreateInfoAndroid.applicationVM = app->activity->vm;
 		instanceCreateInfoAndroid.applicationActivity = app->activity->clazz;
-
-		XrInstance instance = XR_NULL_HANDLE;
 
 		XrInstanceCreateInfo createInfo { XR_TYPE_INSTANCE_CREATE_INFO };
 		createInfo.next = (XrBaseInStructure*)&instanceCreateInfoAndroid;
@@ -1253,52 +1281,55 @@ void android_main(struct android_app* app)
 								CHECK_XRCMD(xrBeginSession(appState.Session, &sessionBeginInfo));
 								sessionRunning = true;
 
-								// Set session state once we have entered VR mode and have a valid session object.
-								XrPerfSettingsLevelEXT cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
-								switch (appState.CpuLevel) 
+								if (performanceSettingsEnabled)
 								{
-									case 0:
-										cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_POWER_SAVINGS_EXT;
-										break;
-									case 1:
-										cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT;
-										break;
-									case 2:
-										cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
-										break;
-									case 3:
-										cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_BOOST_EXT;
-										break;
-									default:
-										__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Invalid CPU level %d", appState.CpuLevel);
-										break;
+									// Set session state once we have entered VR mode and have a valid session object.
+									XrPerfSettingsLevelEXT cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
+									switch (appState.CpuLevel) 
+									{
+										case 0:
+											cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_POWER_SAVINGS_EXT;
+											break;
+										case 1:
+											cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT;
+											break;
+										case 2:
+											cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
+											break;
+										case 3:
+											cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_BOOST_EXT;
+											break;
+										default:
+											__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Invalid CPU level %d", appState.CpuLevel);
+											break;
+									}
+
+									XrPerfSettingsLevelEXT gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
+									switch (appState.GpuLevel) 
+									{
+										case 0:
+											gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_POWER_SAVINGS_EXT;
+											break;
+										case 1:
+											gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT;
+											break;
+										case 2:
+											gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
+											break;
+										case 3:
+											gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_BOOST_EXT;
+											break;
+										default:
+											__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Invalid GPU level %d", appState.GpuLevel);
+											break;
+									}
+
+									PFN_xrPerfSettingsSetPerformanceLevelEXT xrPerfSettingsSetPerformanceLevelEXT = nullptr;
+									CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrPerfSettingsSetPerformanceLevelEXT", (PFN_xrVoidFunction*)(&xrPerfSettingsSetPerformanceLevelEXT)));
+
+									CHECK_XRCMD(xrPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_CPU_EXT, cpuPerfLevel));
+									CHECK_XRCMD(xrPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_GPU_EXT, gpuPerfLevel));
 								}
-
-								XrPerfSettingsLevelEXT gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
-								switch (appState.GpuLevel) 
-								{
-									case 0:
-										gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_POWER_SAVINGS_EXT;
-										break;
-									case 1:
-										gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT;
-										break;
-									case 2:
-										gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
-										break;
-									case 3:
-										gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_BOOST_EXT;
-										break;
-									default:
-										__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Invalid GPU level %d", appState.GpuLevel);
-										break;
-								}
-
-								PFN_xrPerfSettingsSetPerformanceLevelEXT pfnPerfSettingsSetPerformanceLevelEXT = nullptr;
-								CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrPerfSettingsSetPerformanceLevelEXT", (PFN_xrVoidFunction*)(&pfnPerfSettingsSetPerformanceLevelEXT)));
-
-								CHECK_XRCMD(pfnPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_CPU_EXT, cpuPerfLevel));
-								CHECK_XRCMD(pfnPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_GPU_EXT, gpuPerfLevel));
 
 								CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetAndroidApplicationThreadKHR", (PFN_xrVoidFunction*)(&appState.xrSetAndroidApplicationThreadKHR)));
 
@@ -1879,12 +1910,18 @@ void android_main(struct android_app* app)
 						VkMemoryAllocateInfo memoryAllocateInfo { };
 
 						vkGetImageMemoryRequirements(appState.Device, perImage.colorImage, &memRequirements);
-						createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo);
+						if (!createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo, false))
+						{
+							createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
+						}
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perImage.colorMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perImage.colorImage, perImage.colorMemory, 0));
 						
 						vkGetImageMemoryRequirements(appState.Device, perImage.depthImage, &memRequirements);
-						createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo);
+						if (!createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo, false))
+						{
+							createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
+						}
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perImage.depthMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perImage.depthImage, perImage.depthMemory, 0));
 
@@ -2398,7 +2435,7 @@ void android_main(struct android_app* app)
 								{
 									CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffers[i]));
 									vkGetBufferMemoryRequirements(appState.Device, buffers[i], &memoryRequirements);
-									createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo);
+									createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo, true);
 									CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memoryBlocks[i]));
 									CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffers[i], memoryBlocks[i], 0));
 									void* mapped;
