@@ -604,45 +604,6 @@ void PerImage::FillColormapTextures(AppState& appState, PerFrame& perFrame, Load
 	}
 }
 
-void PerImage::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
-{
-	auto loaded = first;
-	auto delayed = false;
-	while (loaded != nullptr)
-	{
-		if (delayed)
-		{
-			if (previousBuffer == loaded->indices.buffer && bufferCopy.dstOffset + bufferCopy.size == loaded->indices.offset)
-			{
-				bufferCopy.size += loaded->size;
-			}
-			else
-			{
-				vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, previousBuffer->buffer, 1, &bufferCopy);
-				bufferCopy.srcOffset += bufferCopy.size;
-				delayed = false;
-			}
-		}
-		else
-		{
-			bufferCopy.dstOffset = loaded->indices.offset;
-			bufferCopy.size = loaded->size;
-			delayed = true;
-		}
-		if (previousBuffer != loaded->indices.buffer)
-		{
-			appState.Scene.AddToBufferBarrier(loaded->indices.buffer->buffer);
-			previousBuffer = loaded->indices.buffer;
-		}
-		loaded = loaded->next;
-	}
-	if (delayed)
-	{
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, previousBuffer->buffer, 1, &bufferCopy);
-		bufferCopy.srcOffset += bufferCopy.size;
-	}
-}
-
 void PerImage::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;

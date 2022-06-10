@@ -60,9 +60,24 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	appState.ConsoleHeight = 200;
 	appState.ScreenWidth = appState.ConsoleWidth * Constants::screenToConsoleMultiplier;
 	appState.ScreenHeight = appState.ConsoleHeight * Constants::screenToConsoleMultiplier;
-	
+
+	appState.copyBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	appState.copyBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	appState.copyBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	appState.copyBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	appState.copyBarrier.subresourceRange.levelCount = 1;
+	appState.copyBarrier.subresourceRange.layerCount = 1;
+
+	appState.submitBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	appState.submitBarrier.srcAccessMask = appState.copyBarrier.dstAccessMask;
+	appState.submitBarrier.oldLayout = appState.copyBarrier.newLayout;
+	appState.submitBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	appState.submitBarrier.subresourceRange.aspectMask = appState.copyBarrier.subresourceRange.aspectMask;
+	appState.submitBarrier.subresourceRange.levelCount = appState.copyBarrier.subresourceRange.levelCount;
+	appState.submitBarrier.subresourceRange.layerCount = appState.copyBarrier.subresourceRange.layerCount;
+
 	XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
-	swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
+	swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
 	swapchainCreateInfo.format = Constants::colorFormat;
 	swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
 	swapchainCreateInfo.faceCount = 1;
@@ -246,13 +261,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	VkBuffer buffer;
+
 	VkDeviceMemory memoryBlock;
-	VkImageMemoryBarrier imageMemoryBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
-	imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageMemoryBarrier.subresourceRange.levelCount = 1;
-	imageMemoryBarrier.subresourceRange.layerCount = 1;
+
 	VkBufferImageCopy region { };
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	region.imageSubresource.layerCount = 1;
@@ -270,8 +281,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 
-	imageMemoryBarrier.image = images[swapchainImageIndex].image;
-
 	CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffer));
 	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
 	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo);
@@ -285,10 +294,15 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	memcpy(mapped, leftArrows.image, leftArrows.width * leftArrows.height * leftArrows.components);
 	
 	vkUnmapMemory(appState.Device, memoryBlock);
-	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
-	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+	appState.copyBarrier.image = images[swapchainImageIndex].image;
+	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
+
 	region.imageSubresource.baseArrayLayer = 0;
 	vkCmdCopyBufferToImage(setupCommandBuffer, buffer, images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	appState.submitBarrier.image = images[swapchainImageIndex].image;
+	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
 	CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
 	CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
@@ -320,8 +334,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 
-	imageMemoryBarrier.image = images[swapchainImageIndex].image;
-
 	CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffer));
 	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
 	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo);
@@ -335,10 +347,15 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	memcpy(mapped, rightArrows.image, rightArrows.width * rightArrows.height * rightArrows.components);
 
 	vkUnmapMemory(appState.Device, memoryBlock);
-	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
-	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+	appState.copyBarrier.image = images[swapchainImageIndex].image;
+	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
+
 	region.imageSubresource.baseArrayLayer = 0;
 	vkCmdCopyBufferToImage(setupCommandBuffer, buffer, images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	appState.submitBarrier.image = images[swapchainImageIndex].image;
+	vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
 	CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
 	CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
