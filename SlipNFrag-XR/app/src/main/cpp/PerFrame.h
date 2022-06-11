@@ -6,7 +6,17 @@
 
 struct PerFrame
 {
-	std::vector<int> inFlight;
+	VkImage colorImage;
+	VkImage depthImage;
+	VkImage resolveImage;
+	VkDeviceMemory colorMemory;
+	VkDeviceMemory depthMemory;
+	VkImageView colorView;
+	VkImageView depthView;
+	VkImageView resolveView;
+	VkFramebuffer framebuffer;
+	VkCommandBuffer commandBuffer;
+	VkSubmitInfo submitInfo;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
 	CachedBuffers cachedIndices8;
@@ -47,7 +57,15 @@ struct PerFrame
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
 
+	static float GammaCorrect(float component);
+	static byte AveragePixels(std::vector<byte>& pixdata);
+	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture);
+	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
+	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
+	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
+	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
+	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void Reset(AppState& appState);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
-	void Render(AppState& appState, VkCommandBuffer commandBuffer);
+	void Render(AppState& appState);
 };

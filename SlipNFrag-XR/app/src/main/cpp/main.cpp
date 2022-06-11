@@ -1134,19 +1134,16 @@ void android_main(struct android_app* app)
 		std::vector<XrSwapchainImageVulkan2KHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
-		appState.PerImage.resize(imageCount);
-		for (auto i = 0; i < imageCount; i++)
-		{
-			auto& perImage = appState.PerImage[i];
-
-			CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
-
-			perImage.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			perImage.submitInfo.commandBufferCount = 1;
-			perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
-		}
-
 		appState.PerFrame.resize(imageCount);
+
+		for (auto& perFrame : appState.PerFrame)
+		{
+			CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perFrame.commandBuffer));
+
+			perFrame.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			perFrame.submitInfo.commandBufferCount = 1;
+			perFrame.submitInfo.pCommandBuffers = &perFrame.commandBuffer;
+		}
 
 		VkSubpassDescription subpass { };
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -1790,22 +1787,10 @@ void android_main(struct android_app* app)
 					waitInfo.timeout = XR_INFINITE_DURATION;
 					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
 
-					auto& perImage = appState.PerImage[swapchainImageIndex];
+					auto& perFrame = appState.PerFrame[swapchainImageIndex];
 
-					for (auto& perFrame : appState.PerFrame)
-					{
-						for (size_t i = 0; i < perFrame.inFlight.size(); i++)
-						{
-							if (perFrame.inFlight[i] == swapchainImageIndex)
-							{
-								perFrame.inFlight.erase(perFrame.inFlight.begin() + i);
-								break;
-							}
-						}
-					}
-
-					CHECK_VKCMD(vkResetCommandBuffer(perImage.commandBuffer, 0));
-					CHECK_VKCMD(vkBeginCommandBuffer(perImage.commandBuffer, &commandBufferBeginInfo));
+					CHECK_VKCMD(vkResetCommandBuffer(perFrame.commandBuffer, 0));
+					CHECK_VKCMD(vkBeginCommandBuffer(perFrame.commandBuffer, &commandBufferBeginInfo));
 
 					double clearR = 0;
 					double clearG = 0;
@@ -1835,15 +1820,6 @@ void android_main(struct android_app* app)
 							clearA = (color >> 24) / 255.0f;
 						}
 
-						size_t i = 0;
-						while (appState.PerFrame[i].inFlight.size() > 0)
-						{
-							i++;
-						}
-						
-						appState.PerFrameIndex = i;
-						auto& perFrame = appState.PerFrame[appState.PerFrameIndex];
-
  						perFrame.Reset(appState);
 
 						appState.Scene.Initialize();
@@ -1867,9 +1843,9 @@ void android_main(struct android_app* app)
 							{
 								CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
 							}
-							PerImage::LoadStagingBuffer(appState, perFrame, stagingBuffer);
+							perFrame.LoadStagingBuffer(appState, stagingBuffer);
 							//loadend = fillstart = GetTime();
-							perImage.FillFromStagingBuffer(appState, perFrame, stagingBuffer);
+							perFrame.FillFromStagingBuffer(appState, stagingBuffer);
 							//fillend = GetTime();
 						}
 						//__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "getsize elapsed: %.3f, load elapsed: %.3f, fill elapsed: %.3f, staging elapsed: %.3f", (getsizeend-getsizestart), (loadend-loadstart), (fillend-fillstart), (getsizeend-getsizestart) + (loadend-loadstart) + (fillend-fillstart));
@@ -1882,7 +1858,7 @@ void android_main(struct android_app* app)
 					clearValues[0].color.float32[3] = clearA;
 					clearValues[1].depthStencil.depth = 1.0f;
 
-					if (perImage.framebuffer == VK_NULL_HANDLE)
+					if (perFrame.framebuffer == VK_NULL_HANDLE)
 					{
 						VkImageCreateInfo imageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 						imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -1898,32 +1874,32 @@ void android_main(struct android_app* app)
 
 						imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
 						imageInfo.format = Constants::colorFormat;
-						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perImage.colorImage));
+						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perFrame.colorImage));
 
 						imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
 						imageInfo.format = Constants::depthFormat;
-						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perImage.depthImage));
+						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perFrame.depthImage));
 
-						perImage.resolveImage = swapchainImages[swapchainImageIndex].image;
+						perFrame.resolveImage = swapchainImages[swapchainImageIndex].image;
 
 						VkMemoryRequirements memRequirements { };
 						VkMemoryAllocateInfo memoryAllocateInfo { };
 
-						vkGetImageMemoryRequirements(appState.Device, perImage.colorImage, &memRequirements);
+						vkGetImageMemoryRequirements(appState.Device, perFrame.colorImage, &memRequirements);
 						if (!createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo, false))
 						{
 							createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
 						}
-						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perImage.colorMemory));
-						CHECK_VKCMD(vkBindImageMemory(appState.Device, perImage.colorImage, perImage.colorMemory, 0));
+						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.colorMemory));
+						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.colorImage, perFrame.colorMemory, 0));
 						
-						vkGetImageMemoryRequirements(appState.Device, perImage.depthImage, &memRequirements);
+						vkGetImageMemoryRequirements(appState.Device, perFrame.depthImage, &memRequirements);
 						if (!createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo, false))
 						{
 							createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
 						}
-						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perImage.depthMemory));
-						CHECK_VKCMD(vkBindImageMemory(appState.Device, perImage.depthImage, perImage.depthMemory, 0));
+						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.depthMemory));
+						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.depthImage, perFrame.depthMemory, 0));
 
 						VkImageView attachments[3];
 
@@ -1936,23 +1912,23 @@ void android_main(struct android_app* app)
 						viewInfo.subresourceRange.levelCount = 1;
 						viewInfo.subresourceRange.layerCount = 2;
 
-						viewInfo.image = perImage.colorImage;
+						viewInfo.image = perFrame.colorImage;
 						viewInfo.format = Constants::colorFormat;
 						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perImage.colorView));
-						attachments[0] = perImage.colorView;
+						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perFrame.colorView));
+						attachments[0] = perFrame.colorView;
 
-						viewInfo.image = perImage.depthImage;
+						viewInfo.image = perFrame.depthImage;
 						viewInfo.format = Constants::depthFormat;
 						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perImage.depthView));
-						attachments[1] = perImage.depthView;
+						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perFrame.depthView));
+						attachments[1] = perFrame.depthView;
 
-						viewInfo.image = perImage.resolveImage;
+						viewInfo.image = perFrame.resolveImage;
 						viewInfo.format = Constants::colorFormat;
 						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perImage.resolveView));
-						attachments[2] = perImage.resolveView;
+						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perFrame.resolveView));
+						attachments[2] = perFrame.resolveView;
 
 						VkFramebufferCreateInfo framebufferInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
 						framebufferInfo.renderPass = appState.RenderPass;
@@ -1961,27 +1937,25 @@ void android_main(struct android_app* app)
 						framebufferInfo.width = appState.SwapchainWidth;
 						framebufferInfo.height = appState.SwapchainHeight;
 						framebufferInfo.layers = 1;
-						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &framebufferInfo, nullptr, &perImage.framebuffer));
+						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &framebufferInfo, nullptr, &perFrame.framebuffer));
 
 						VkImageMemoryBarrier colorBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 						colorBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 						colorBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-						colorBarrier.image = perImage.colorImage;
+						colorBarrier.image = perFrame.colorImage;
 						colorBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 2 };
-						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorBarrier);
+						vkCmdPipelineBarrier(perFrame.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorBarrier);
 
-						colorBarrier.image = perImage.resolveImage;
-						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorBarrier);
+						colorBarrier.image = perFrame.resolveImage;
+						vkCmdPipelineBarrier(perFrame.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorBarrier);
 
 						VkImageMemoryBarrier depthBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 						depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
 						depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-						depthBarrier.image = perImage.depthImage;
+						depthBarrier.image = perFrame.depthImage;
 						depthBarrier.subresourceRange = { VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 2 };
-						vkCmdPipelineBarrier(perImage.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
+						vkCmdPipelineBarrier(perFrame.commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
-
-					auto& perFrame = appState.PerFrame[appState.PerFrameIndex];
 
 					if (perFrame.matrices.mapped == nullptr)
 					{
@@ -2017,11 +1991,11 @@ void android_main(struct android_app* app)
 					renderPassBeginInfo.pClearValues = clearValues;
 					
 					renderPassBeginInfo.renderPass = appState.RenderPass;
-					renderPassBeginInfo.framebuffer = perImage.framebuffer;
+					renderPassBeginInfo.framebuffer = perFrame.framebuffer;
 					renderPassBeginInfo.renderArea.offset = {0, 0};
 					renderPassBeginInfo.renderArea.extent.width = appState.SwapchainWidth;
 					renderPassBeginInfo.renderArea.extent.height = appState.SwapchainHeight;
-					vkCmdBeginRenderPass(perImage.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+					vkCmdBeginRenderPass(perFrame.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 					VkRect2D screenRect { };
 					screenRect.extent.width = appState.SwapchainWidth;
@@ -2034,17 +2008,16 @@ void android_main(struct android_app* app)
 					viewport.height = (float)screenRect.extent.height;
 					viewport.minDepth = 0.0f;
 					viewport.maxDepth = 1.0f;
-					vkCmdSetViewport(perImage.commandBuffer, 0, 1, &viewport);
-					vkCmdSetScissor(perImage.commandBuffer, 0, 1, &screenRect);
+					vkCmdSetViewport(perFrame.commandBuffer, 0, 1, &viewport);
+					vkCmdSetScissor(perFrame.commandBuffer, 0, 1, &screenRect);
 
-					perFrame.Render(appState, perImage.commandBuffer);
-					perFrame.inFlight.push_back(swapchainImageIndex);
+					perFrame.Render(appState);
 
-					vkCmdEndRenderPass(perImage.commandBuffer);
+					vkCmdEndRenderPass(perFrame.commandBuffer);
 
-					CHECK_VKCMD(vkEndCommandBuffer(perImage.commandBuffer));
+					CHECK_VKCMD(vkEndCommandBuffer(perFrame.commandBuffer));
 
-					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &perImage.submitInfo, VK_NULL_HANDLE));
+					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &perFrame.submitInfo, VK_NULL_HANDLE));
 
 					XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 					CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
@@ -2552,39 +2525,39 @@ void android_main(struct android_app* app)
 			CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 		}	
 
-		for (auto& perImage : appState.PerImage)
+		for (auto& perFrame : appState.PerFrame)
 		{
-			if (perImage.framebuffer != VK_NULL_HANDLE)
+			if (perFrame.framebuffer != VK_NULL_HANDLE)
 			{
-				vkDestroyFramebuffer(appState.Device, perImage.framebuffer, nullptr);
+				vkDestroyFramebuffer(appState.Device, perFrame.framebuffer, nullptr);
 			}
-			if (perImage.resolveView != VK_NULL_HANDLE)
+			if (perFrame.resolveView != VK_NULL_HANDLE)
 			{
-				vkDestroyImageView(appState.Device, perImage.resolveView, nullptr);
+				vkDestroyImageView(appState.Device, perFrame.resolveView, nullptr);
 			}
-			if (perImage.depthView != VK_NULL_HANDLE)
+			if (perFrame.depthView != VK_NULL_HANDLE)
 			{
-				vkDestroyImageView(appState.Device, perImage.depthView, nullptr);
+				vkDestroyImageView(appState.Device, perFrame.depthView, nullptr);
 			}
-			if (perImage.colorView != VK_NULL_HANDLE)
+			if (perFrame.colorView != VK_NULL_HANDLE)
 			{
-				vkDestroyImageView(appState.Device, perImage.colorView, nullptr);
+				vkDestroyImageView(appState.Device, perFrame.colorView, nullptr);
 			}
-			if (perImage.depthImage != VK_NULL_HANDLE)
+			if (perFrame.depthImage != VK_NULL_HANDLE)
 			{
-				vkDestroyImage(appState.Device, perImage.depthImage, nullptr);
+				vkDestroyImage(appState.Device, perFrame.depthImage, nullptr);
 			}
-			if (perImage.depthMemory != VK_NULL_HANDLE)
+			if (perFrame.depthMemory != VK_NULL_HANDLE)
 			{
-				vkFreeMemory(appState.Device, perImage.depthMemory, nullptr);
+				vkFreeMemory(appState.Device, perFrame.depthMemory, nullptr);
 			}
-			if (perImage.colorImage != VK_NULL_HANDLE)
+			if (perFrame.colorImage != VK_NULL_HANDLE)
 			{
-				vkDestroyImage(appState.Device, perImage.colorImage, nullptr);
+				vkDestroyImage(appState.Device, perFrame.colorImage, nullptr);
 			}
-			if (perImage.colorMemory != VK_NULL_HANDLE)
+			if (perFrame.colorMemory != VK_NULL_HANDLE)
 			{
-				vkFreeMemory(appState.Device, perImage.colorMemory, nullptr);
+				vkFreeMemory(appState.Device, perFrame.colorMemory, nullptr);
 			}
 		}
 
@@ -2595,9 +2568,9 @@ void android_main(struct android_app* app)
 				texture.Delete(appState);
 			}
 			
-			for (auto& perImage : appState.Keyboard.Screen.PerImage)
+			for (auto& perFrame : appState.Keyboard.Screen.PerImage)
 			{
-				perImage.stagingBuffer.Delete(appState);
+				perFrame.stagingBuffer.Delete(appState);
 			}
 
 			for (auto& texture : appState.StatusBarTextures)
@@ -2610,9 +2583,9 @@ void android_main(struct android_app* app)
 				texture.Delete(appState);
 			}
 
-			for (auto& perImage : appState.Screen.PerImage)
+			for (auto& perFrame : appState.Screen.PerImage)
 			{
-				perImage.stagingBuffer.Delete(appState);
+				perFrame.stagingBuffer.Delete(appState);
 			}
 
 			for (auto& perFrame : appState.PerFrame)
