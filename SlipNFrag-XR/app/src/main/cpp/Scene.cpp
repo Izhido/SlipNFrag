@@ -980,11 +980,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, surfaceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 
-	for (auto& perFrame : appState.PerFrame)
-	{
-		perFrame.matrices.CreateUpdatableUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
-	}
-
 	VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
 	samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

@@ -43,7 +43,7 @@ struct AppState
 	XrSwapchain RightArrowsSwapchain;
 	Scene Scene;
 	FromEngine FromEngine;
-	std::vector<PerFrame> PerFrame;
+	std::unordered_map<std::string, PerFrame> PerFrame;
 	int EyeTextureWidth;
 	int EyeTextureHeight;
 	int EyeTextureMaxDimension;
