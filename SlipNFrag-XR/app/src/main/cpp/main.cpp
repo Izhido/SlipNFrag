@@ -520,6 +520,7 @@ void android_main(struct android_app* app)
 		}
 #endif
 
+		uint32_t vulkanSwapchainSampleCount;
 		{
 			std::vector<const char*> vulkanExtensions;
 			vulkanExtensions.push_back("VK_EXT_debug_report");
@@ -674,6 +675,18 @@ void android_main(struct android_app* app)
 			graphicsBinding.device = appState.Device;
 			graphicsBinding.queueFamilyIndex = queueInfo.queueFamilyIndex;
 			graphicsBinding.queueIndex = 0;
+
+			VkPhysicalDeviceProperties properties;
+			vkGetPhysicalDeviceProperties(vulkanPhysicalDevice, &properties);
+
+			for (auto i = 0; i < 32; i++)
+			{
+				auto flag = 1 << i;
+				if ((properties.limits.framebufferColorSampleCounts & flag) == flag && (properties.limits.framebufferDepthSampleCounts & flag) == flag)
+				{
+					vulkanSwapchainSampleCount = flag;
+				}
+			}
 		}
 
 		CHECK(instance != XR_NULL_HANDLE);
@@ -1112,14 +1125,14 @@ void android_main(struct android_app* app)
 
 		appState.SwapchainWidth = configViews[0].recommendedImageRectWidth;
 		appState.SwapchainHeight = configViews[0].recommendedImageRectHeight;
-		appState.SwapchainSampleCount = configViews[0].recommendedSwapchainSampleCount;
+		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;//configViews[0].recommendedSwapchainSampleCount;
 		
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d SampleCount=%d", appState.SwapchainWidth, appState.SwapchainHeight, appState.SwapchainSampleCount);
+		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainWidth, appState.SwapchainHeight);
 
 		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 		swapchainCreateInfo.format = Constants::colorFormat;
-		swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
+		swapchainCreateInfo.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 		swapchainCreateInfo.width = appState.SwapchainWidth;
 		swapchainCreateInfo.height = appState.SwapchainHeight;
 		swapchainCreateInfo.faceCount = 1;
@@ -1159,7 +1172,7 @@ void android_main(struct android_app* app)
 		rpInfo.pNext = &multiviewCreateInfo;
 
 		attachments[0].format = Constants::colorFormat;
-		attachments[0].samples = VK_SAMPLE_COUNT_4_BIT;
+		attachments[0].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -1171,7 +1184,7 @@ void android_main(struct android_app* app)
 		subpass.pColorAttachments = &colorRef;
 
 		attachments[1].format = Constants::depthFormat;
-		attachments[1].samples = VK_SAMPLE_COUNT_4_BIT;
+		attachments[1].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -1182,7 +1195,7 @@ void android_main(struct android_app* app)
 		subpass.pDepthStencilAttachment = &depthRef;
 
 		attachments[2].format = Constants::colorFormat;
-		attachments[2].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
+		attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -1868,7 +1881,7 @@ void android_main(struct android_app* app)
 						imageInfo.arrayLayers = 2;
 						imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 						imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-						imageInfo.samples = VK_SAMPLE_COUNT_4_BIT;
+						imageInfo.samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 						imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 						imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
@@ -2362,7 +2375,7 @@ void android_main(struct android_app* app)
 								swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
 								swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
 								swapchainCreateInfo.format = Constants::colorFormat;
-								swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
+								swapchainCreateInfo.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 								swapchainCreateInfo.width = width;
 								swapchainCreateInfo.height = height;
 								swapchainCreateInfo.faceCount = 6;

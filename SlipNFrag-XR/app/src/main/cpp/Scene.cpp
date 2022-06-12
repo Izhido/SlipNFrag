@@ -79,7 +79,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 	swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
 	swapchainCreateInfo.format = Constants::colorFormat;
-	swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
+	swapchainCreateInfo.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 	swapchainCreateInfo.faceCount = 1;
 	swapchainCreateInfo.arraySize = 1;
 	swapchainCreateInfo.mipCount = 1;
@@ -246,7 +246,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	AddBorder(appState, appState.NoGameDataData);
 
 	swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
-	swapchainCreateInfo.sampleCount = appState.SwapchainSampleCount;
 	swapchainCreateInfo.width = 450;
 	swapchainCreateInfo.height = 150;
 	CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.LeftArrowsSwapchain));
@@ -446,7 +445,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	rasterizationStateCreateInfo.lineWidth = 1;
 
 	VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO };
-	multisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_4_BIT;
+	multisampleStateCreateInfo.rasterizationSamples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 	multisampleStateCreateInfo.minSampleShading = 1;
 
 	VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
