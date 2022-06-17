@@ -574,10 +574,21 @@ void Mod_LoadTextures (lump_t *l)
         if (remaining < pixels)
         {
             Con_Printf("Mod_LoadTextures: %s extends past the end of the lump\n", mt->name);
-            if (remaining > 0)
+			if (remaining >= mt->width*mt->height)
+			{
+				memcpy ( tx+1, mt+1, mt->width*mt->height);
+				Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
+			}
+            else if (remaining > 0)
             {
                 memcpy ( tx+1, mt+1, remaining);
+				memset ( tx+1+remaining, 0, mt->width*mt->height-remaining);
+				Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
             }
+			else
+			{
+				memset ( tx+1, 0, pixels);
+			}
         }
         else if (tx->name[0] == '{')
         {
