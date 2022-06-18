@@ -70,6 +70,7 @@ void runEngine(AppState* appState, struct android_app* app)
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
 				ANativeActivity_finish(app->activity);
+				appState->CallExitFunction = true;
 				break;
 			}
 			if (updated)
@@ -130,6 +131,7 @@ void runEngine(AppState* appState, struct android_app* app)
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
 				ANativeActivity_finish(app->activity);
+				appState->CallExitFunction = true;
 				break;
 			}
 			//double renderstart = 0;

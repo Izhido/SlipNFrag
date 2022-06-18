@@ -16,11 +16,13 @@
 
 struct AppState
 {
+	double PausedTime;
+	double PreviousTime;
+	double CurrentTime;
 	AppMode Mode;
 	AppMode PreviousMode;
 	bool StartupButtonsPressed;
 	bool Resumed;
-	double PausedTime;
 	VkDevice Device;
 	bool IndexTypeUInt8Enabled;
 	XrSession Session;
@@ -63,16 +65,15 @@ struct AppState
 	int ConsoleWidth;
 	int ConsoleHeight;
 	std::vector<uint32_t> NoGameDataData;
-	double PreviousTime;
-	double CurrentTime;
 	Controller LeftController;
 	Controller RightController;
 	XrVector2f PreviousThumbstick;
 	bool NearViewmodel;
 	double TimeInWorldMode;
 	bool ControlsMessageDisplayed;
-	bool ControlsMessageClosed;
 	std::thread EngineThread;
+	bool EngineThreadCreated;
+	bool EngineThreadStarted;
 	bool EngineThreadStopped;
 	XrActionSet ActionSet;
 	XrAction Play1Action;
@@ -102,13 +103,12 @@ struct AppState
 	XrSpaceLocation CameraLocation;
 	bool CameraLocationIsValid;
 	bool Focused;
-	int CpuLevel;
-	int GpuLevel;
 	pid_t EngineThreadId;
 	pid_t RenderThreadId;
 	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
 	VkImageMemoryBarrier copyBarrier;
 	VkImageMemoryBarrier submitBarrier;
+	bool CallExitFunction;
 
 	void RenderScreen(uint32_t swapchainImageIndex);
 	void RenderKeyboard(uint32_t swapchainImageIndex);

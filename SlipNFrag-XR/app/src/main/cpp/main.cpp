@@ -244,6 +244,8 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 	}
 }
 
+AppState appState { -1, -1, -1 };
+
 void android_main(struct android_app* app)
 {
 	JNIEnv* Env;
@@ -253,13 +255,6 @@ void android_main(struct android_app* app)
 
 	try
 	{
-		AppState appState { };
-
-		appState.PausedTime = -1;
-		appState.PreviousTime = -1;
-		appState.CurrentTime = -1;
-		appState.CpuLevel = Constants::cpuLevel;
-		appState.GpuLevel = Constants::gpuLevel;
 		appState.RenderThreadId = gettid();
 
 		app->userData = &appState;
@@ -1277,51 +1272,11 @@ void android_main(struct android_app* app)
 								if (performanceSettingsEnabled)
 								{
 									// Set session state once we have entered VR mode and have a valid session object.
-									XrPerfSettingsLevelEXT cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
-									switch (appState.CpuLevel) 
-									{
-										case 0:
-											cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_POWER_SAVINGS_EXT;
-											break;
-										case 1:
-											cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT;
-											break;
-										case 2:
-											cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
-											break;
-										case 3:
-											cpuPerfLevel = XR_PERF_SETTINGS_LEVEL_BOOST_EXT;
-											break;
-										default:
-											__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Invalid CPU level %d", appState.CpuLevel);
-											break;
-									}
-
-									XrPerfSettingsLevelEXT gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
-									switch (appState.GpuLevel) 
-									{
-										case 0:
-											gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_POWER_SAVINGS_EXT;
-											break;
-										case 1:
-											gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_LOW_EXT;
-											break;
-										case 2:
-											gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT;
-											break;
-										case 3:
-											gpuPerfLevel = XR_PERF_SETTINGS_LEVEL_BOOST_EXT;
-											break;
-										default:
-											__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Invalid GPU level %d", appState.GpuLevel);
-											break;
-									}
-
 									PFN_xrPerfSettingsSetPerformanceLevelEXT xrPerfSettingsSetPerformanceLevelEXT = nullptr;
 									CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrPerfSettingsSetPerformanceLevelEXT", (PFN_xrVoidFunction*)(&xrPerfSettingsSetPerformanceLevelEXT)));
 
-									CHECK_XRCMD(xrPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_CPU_EXT, cpuPerfLevel));
-									CHECK_XRCMD(xrPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_GPU_EXT, gpuPerfLevel));
+									CHECK_XRCMD(xrPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_CPU_EXT, XR_PERF_SETTINGS_LEVEL_SUSTAINED_HIGH_EXT));
+									CHECK_XRCMD(xrPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_GPU_EXT, XR_PERF_SETTINGS_LEVEL_BOOST_EXT));
 								}
 
 								CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetAndroidApplicationThreadKHR", (PFN_xrVoidFunction*)(&appState.xrSetAndroidApplicationThreadKHR)));
@@ -1436,6 +1391,12 @@ void android_main(struct android_app* app)
 				appState.Scene.Create(appState, commandBufferAllocateInfo, setupCommandBuffer, commandBufferBeginInfo, setupSubmitInfo, app);
 			}
 
+			if (appState.EngineThreadCreated && !appState.EngineThreadStarted) // That is, if a previous call to android_main() already created an instance of EngineThread, but had to be closed:
+			{
+				appState.EngineThread = std::thread(runEngine, &appState, app);
+				appState.EngineThreadStarted = true;
+			}
+
 			{
 				std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
 				if (appState.Mode != AppStartupMode && appState.Mode != AppNoGameDataMode)
@@ -1515,6 +1476,8 @@ void android_main(struct android_app* app)
 						r_skybox_as_rgba = true;
 						d_skipfade = true;
 						appState.EngineThread = std::thread(runEngine, &appState, app);
+						appState.EngineThreadStarted = true;
+						appState.EngineThreadCreated = true;
 					}
 					if (appState.Mode == AppScreenMode)
 					{
@@ -2526,6 +2489,8 @@ void android_main(struct android_app* app)
 		{
 			appState.EngineThreadStopped = true;
 			appState.EngineThread.join();
+			appState.EngineThreadStopped = false; // By doing this, EngineThread is allowed to be recreated and resumed the next time android_main() is called.
+			appState.EngineThreadStarted = false;
 		}
 
 		if (appState.Queue != VK_NULL_HANDLE)
@@ -2575,26 +2540,31 @@ void android_main(struct android_app* app)
 			{
 				texture.Delete(appState);
 			}
+			appState.KeyboardTextures.clear();
 			
 			for (auto& perFrame : appState.Keyboard.Screen.PerImage)
 			{
 				perFrame.stagingBuffer.Delete(appState);
 			}
+			appState.Keyboard.Screen.PerImage.clear();
 
 			for (auto& texture : appState.StatusBarTextures)
 			{
 				texture.Delete(appState);
 			}
+			appState.StatusBarTextures.clear();
 
 			for (auto& texture : appState.ConsoleTextures)
 			{
 				texture.Delete(appState);
 			}
+			appState.ConsoleTextures.clear();
 
 			for (auto& perFrame : appState.Screen.PerImage)
 			{
 				perFrame.stagingBuffer.Delete(appState);
 			}
+			appState.Screen.PerImage.clear();
 
 			for (auto& perFrame : appState.PerFrame)
 			{
@@ -2627,10 +2597,12 @@ void android_main(struct android_app* app)
 				perFrame.second.cachedVertices.Delete(appState);
 				perFrame.second.matrices.Delete(appState);
 			}
+			appState.PerFrame.clear();
 	
 			if (appState.RenderPass != VK_NULL_HANDLE)
 			{
 				vkDestroyRenderPass(appState.Device, appState.RenderPass, nullptr);
+				appState.RenderPass = VK_NULL_HANDLE;
 			}
 	
 			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
@@ -2638,13 +2610,21 @@ void android_main(struct android_app* app)
 			{
 				vkDestroySampler(appState.Device, appState.Scene.samplers[i], nullptr);
 			}
+			appState.Scene.samplers.clear();
+
 			appState.Scene.controllerTexture.Delete(appState);
 			appState.Scene.floorTexture.Delete(appState);
+
 			appState.Scene.textures.Delete(appState);
+			appState.Scene.textures.textures = nullptr;
+			appState.Scene.textures.oldTextures = nullptr;
+
 			for (auto& entry : appState.Scene.surfaceTextures)
 			{
 				entry.second.Delete(appState);
 			}
+			appState.Scene.surfaceTextures.clear();
+
 			for (auto& entry : appState.Scene.lightmapTextures)
 			{
 				for (auto& texture : entry.second)
@@ -2655,6 +2635,8 @@ void android_main(struct android_app* app)
 					vkFreeMemory(appState.Device, texture.memory, nullptr);
 				}
 			}
+			appState.Scene.lightmapTextures.clear();
+
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
 			appState.Scene.floor.Delete(appState);
@@ -2671,18 +2653,31 @@ void android_main(struct android_app* app)
 			appState.Scene.surfacesRotated.Delete(appState);
 			appState.Scene.surfaces.Delete(appState);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
+			appState.Scene.singleImageLayout = VK_NULL_HANDLE;
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.twoBuffersAndImageLayout, nullptr);
+			appState.Scene.twoBuffersAndImageLayout = VK_NULL_HANDLE;
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.doubleBufferLayout, nullptr);
+			appState.Scene.doubleBufferLayout = VK_NULL_HANDLE;
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
+			appState.Scene.singleBufferLayout = VK_NULL_HANDLE;
 
 			vkDestroyCommandPool(appState.Device, appState.CommandPool, nullptr);
+			appState.CommandPool = VK_NULL_HANDLE;
+
+			vkDestroyDevice(appState.Device, nullptr);
+			appState.Device = VK_NULL_HANDLE;
 		}
+
+		appState.Scene.created = false;
 
 		if (appState.ActionSet != XR_NULL_HANDLE)
 		{
 			xrDestroySpace(appState.HandSpaces[0]);
 			xrDestroySpace(appState.HandSpaces[1]);
+			appState.HandSpaces.clear();
+
 			xrDestroyActionSet(appState.ActionSet);
+			appState.ActionSet = XR_NULL_HANDLE;
 		}
 
 		Skybox::DeleteAll(appState);
@@ -2690,21 +2685,25 @@ void android_main(struct android_app* app)
 		if (appState.RightArrowsSwapchain != XR_NULL_HANDLE)
 		{
 			xrDestroySwapchain(appState.RightArrowsSwapchain);
+			appState.RightArrowsSwapchain = XR_NULL_HANDLE;
 		}
 
 		if (appState.LeftArrowsSwapchain != XR_NULL_HANDLE)
 		{
 			xrDestroySwapchain(appState.LeftArrowsSwapchain);
+			appState.LeftArrowsSwapchain = XR_NULL_HANDLE;
 		}
 
 		if (appState.Keyboard.Screen.Swapchain != XR_NULL_HANDLE)
 		{
 			xrDestroySwapchain(appState.Keyboard.Screen.Swapchain);
+			appState.Keyboard.Screen.Swapchain = XR_NULL_HANDLE;
 		}
 
 		if (appState.Screen.Swapchain != XR_NULL_HANDLE)
 		{
 			xrDestroySwapchain(appState.Screen.Swapchain);
+			appState.Screen.Swapchain = XR_NULL_HANDLE;
 		}
 
 		if (swapchain != XR_NULL_HANDLE)
@@ -2725,6 +2724,7 @@ void android_main(struct android_app* app)
 		if (appState.Session != XR_NULL_HANDLE)
 		{
 			xrDestroySession(appState.Session);
+			appState.Session = XR_NULL_HANDLE;
 		}
 
 		if (instance != XR_NULL_HANDLE)
@@ -2735,14 +2735,19 @@ void android_main(struct android_app* app)
 	catch (const std::exception& ex)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Caught exception: %s", ex.what());
+		appState.CallExitFunction = true;
 	}
 	catch (...)
 	{
-		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Unknown Error");
+		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Caught unknown exception");
+		appState.CallExitFunction = true;
 	}
 
 	app->activity->vm->DetachCurrentThread();
 
-	__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "exit(-1) called");
-	exit(-1); // Not redundant - app won't truly exit Android unless forcefully terminated
+	if (appState.CallExitFunction)
+	{
+		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "exit(-1) called");
+		exit(-1); // Not redundant - app won't truly exit Android unless forcefully terminated
+	}
 }

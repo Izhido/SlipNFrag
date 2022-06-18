@@ -308,10 +308,9 @@ void Input::Handle(AppState& appState, bool keyPressHandled)
 					{
 						if (booleanActionState.currentState)
 						{
-							if (!appState.ControlsMessageClosed && appState.ControlsMessageDisplayed && (appState.NearViewmodel || (appState.Scene.lastViewmodel < 0)))
+							if (appState.ControlsMessageDisplayed && !scr_interrupted && (appState.NearViewmodel || (appState.Scene.lastViewmodel < 0)))
 							{
 								SCR_Interrupt();
-								appState.ControlsMessageClosed = true;
 							}
 							else if (appState.NearViewmodel || (appState.Scene.lastViewmodel < 0))
 							{
