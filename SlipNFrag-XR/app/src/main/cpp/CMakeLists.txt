@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 
 set(ROOT_DIR "${PROJECT_SOURCE_DIR}/../../../../..")
 set(ID1_DIR "${ROOT_DIR}/id1")

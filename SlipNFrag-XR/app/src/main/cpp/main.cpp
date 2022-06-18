@@ -313,10 +313,10 @@ void android_main(struct android_app* app)
 
 		for (const XrExtensionProperties& extension : extensions)
 		{
-			if (extension.extensionName == XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME)
+			if (strncmp(extension.extensionName, XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
 				performanceSettingsEnabled = true;
-				xrInstanceExtensionSources.push_back(extension.extensionName);
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 
 			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%d", extension.extensionName, extension.extensionVersion);
@@ -356,12 +356,6 @@ void android_main(struct android_app* app)
 			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%s LayerVersion=%d Description=%s", layer.layerName, GetXrVersionString(layer.specVersion).c_str(), layer.layerVersion, layer.description);
 
 			CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layer.layerName, 0, &instanceExtensionCount, nullptr));
-
-			std::vector<XrExtensionProperties> extensions(instanceExtensionCount);
-			for (XrExtensionProperties& extension : extensions)
-			{
-				extension.type = XR_TYPE_EXTENSION_PROPERTIES;
-			}
 
 			CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layer.layerName, (uint32_t)extensions.size(), &instanceExtensionCount, extensions.data()));
 
@@ -1565,8 +1559,8 @@ void android_main(struct android_app* app)
 						Input::AddKeyInput(K_LEFTARROW, false);
 						Input::AddKeyInput(K_RIGHTARROW, false);
 
-						vid_width = appState.EyeTextureMaxDimension;
-						vid_height = appState.EyeTextureMaxDimension;
+						vid_width = (int)appState.EyeTextureMaxDimension;
+						vid_height = (int)appState.EyeTextureMaxDimension;
 						con_width = appState.ConsoleWidth;
 						con_height = appState.ConsoleHeight;
 						Cvar_SetValue("fov", appState.FOV);

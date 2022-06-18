@@ -44,9 +44,9 @@ struct AppState
 	Scene Scene;
 	FromEngine FromEngine;
 	std::unordered_map<std::string, PerFrame> PerFrame;
-	int EyeTextureWidth;
-	int EyeTextureHeight;
-	int EyeTextureMaxDimension;
+	uint32_t EyeTextureWidth;
+	uint32_t EyeTextureHeight;
+	uint32_t EyeTextureMaxDimension;
 	VkDeviceSize NoOffset;
 	VkPipelineCache PipelineCache;
 	VkRenderPass RenderPass;
