@@ -1498,9 +1498,6 @@ void android_main(struct android_app* app)
 						con_height = appState.ConsoleHeight;
 						Cvar_SetValue("fov", appState.DefaultFOV);
 						VID_Resize(320.0 / 240.0);
-						r_modelorg_delta[0] = 0;
-						r_modelorg_delta[1] = 0;
-						r_modelorg_delta[2] = 0;
 					}
 					else if (appState.Mode == AppWorldMode)
 					{

@@ -81,6 +81,9 @@ void runEngine(AppState* appState, struct android_app* app)
 					appState->Scene.Reset();
 					appState->Scene.hostClearCount = host_clearcount;
 				}
+				r_modelorg_delta[0] = 0;
+				r_modelorg_delta[1] = 0;
+				r_modelorg_delta[2] = 0;
 				Host_FrameRender();
 			}
 			Host_FrameFinish(updated);
