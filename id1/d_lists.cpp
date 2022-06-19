@@ -446,9 +446,9 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 		t2matrix[i][1] = -right[i];
 		t2matrix[i][2] = up[i];
 	}
-	t2matrix[0][3] = currententity->origin[0];
-	t2matrix[1][3] = currententity->origin[1];
-	t2matrix[2][3] = currententity->origin[2];
+	t2matrix[0][3] = currententity->origin[0] + r_modelorg_delta[0];
+	t2matrix[1][3] = currententity->origin[1] + r_modelorg_delta[1];
+	t2matrix[2][3] = currententity->origin[2] + r_modelorg_delta[2];
 	if (d_awayfromviewmodel)
 	{
 		t2matrix[0][3] -= forward[0] * 8;

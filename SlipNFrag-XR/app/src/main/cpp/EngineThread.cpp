@@ -120,7 +120,8 @@ void runEngine(AppState* appState, struct android_app* app)
 				appState->TimeInWorldMode += frame_lapse;
 				if (!appState->ControlsMessageDisplayed && appState->TimeInWorldMode > 4)
 				{
-					SCR_InterruptableCenterPrint("Controls:\n\nLeft or Right Joysticks:\nWalk Forward / Backpedal, \n   Step Left / Step Right \n\n[B] / [Y]: Jump     \n[A] / [X]: Swim down\nTriggers: Attack  \nGrip Triggers: Run          \nClick Joysticks: Change Weapon  \n\nApproach and fire weapon to close");
+					//SCR_InterruptableCenterPrint("Controls:\n\nLeft or Right Joysticks:\nWalk Forward / Backpedal, \n   Step Left / Step Right \n\n[B] / [Y]: Jump     \n[A] / [X]: Swim down\nTriggers: Attack  \nGrip Triggers: Run          \nClick Joysticks: Change Weapon  \n\nApproach and fire weapon to close");
+					SCR_InterruptableCenterPrint("Controls:\n\nLeft or Right Joysticks:\nWalk Forward / Backpedal, \n   Step Left / Step Right \n\n[B] / [Y]: Jump     \n[A] / [X]: Swim down\nTriggers: Attack  \nGrip Triggers: Run          \nClick Joysticks: Change Weapon  \n\nFire weapon to close");
 					appState->ControlsMessageDisplayed = true;
 				}
 			}
@@ -154,8 +155,8 @@ void runEngine(AppState* appState, struct android_app* app)
 				r_modelorg_delta[0] = positionX / scale;
 				r_modelorg_delta[1] = -positionZ / scale;
 				r_modelorg_delta[2] = positionY / scale;
-				auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
-				appState->NearViewmodel = (distanceSquared < 12 * 12);
+				//auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
+				appState->NearViewmodel = true;//(distanceSquared < 12 * 12);
 				d_awayfromviewmodel = !appState->NearViewmodel;
 				auto nodrift = cl.nodrift;
 				cl.nodrift = true;
