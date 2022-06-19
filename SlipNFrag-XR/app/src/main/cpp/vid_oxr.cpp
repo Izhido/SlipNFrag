@@ -3,8 +3,6 @@
 #include "DirectRect.h"
 #include "Locks.h"
 
-extern viddef_t vid;
-
 std::vector<unsigned char> vid_buffer;
 int vid_width;
 int vid_height;
@@ -54,7 +52,7 @@ void VID_ShiftPalette(unsigned char *palette)
     VID_SetPalette(palette);
 }
 
-void VID_Init(unsigned char *palette)
+void VID_Init(unsigned char* /*palette*/)
 {
     vid_buffer.resize(vid_width * vid_height);
     con_buffer.resize(con_width * con_height);
@@ -64,7 +62,7 @@ void VID_Init(unsigned char *palette)
     vid.maxwarpheight = WARP_HEIGHT;
     vid.height = vid_height;
     vid.conheight = con_height;
-    vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+    vid.aspect = ((float)vid.height / (float)vid.width) * (320.0f / 240.0f);
     vid.numpages = 1;
     vid.colormap = host_colormap.data();
     vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
@@ -121,7 +119,7 @@ void VID_Shutdown(void)
 {
 }
 
-void VID_Update(vrect_t *rects)
+void VID_Update(vrect_t* /*rects*/)
 {
 }
 

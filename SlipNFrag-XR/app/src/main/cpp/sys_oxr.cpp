@@ -1,6 +1,6 @@
 #include "quakedef.h"
 #include "sys_oxr.h"
-#include "errno.h"
+#include <cerrno>
 #include <sys/stat.h>
 #include <android/log.h>
 #include "Locks.h"
@@ -119,14 +119,14 @@ void Sys_mkdir (char* path)
     mkdir(path, 0644);
 }
 
-void Sys_MakeCodeWriteable(unsigned long startaddr, unsigned long length)
+void Sys_MakeCodeWriteable(unsigned long /*startaddr*/, unsigned long /*length*/)
 {
 }
 
 void Sys_Error(const char* error, ...)
 {
     va_list argptr;
-    std::vector<char> string(1024);
+    static std::vector<char> string(1024);
     
     while (true)
     {

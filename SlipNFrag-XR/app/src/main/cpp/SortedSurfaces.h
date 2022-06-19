@@ -21,7 +21,7 @@ struct SortedSurfaces
 
 	void Initialize(std::list<SortedSurfaceLightmap>& sorted);
 	void Initialize(std::list<SortedSurfaceTexture>& sorted);
-	void CacheVertices(AppState& appState, LoadedTurbulent& loaded);
+	static void CacheVertices(AppState& appState, LoadedTurbulent& loaded);
 	void Sort(AppState& appState, LoadedSurface& loaded, int index, std::list<SortedSurfaceLightmap>& sorted);
 	void Sort(AppState& appState, LoadedTurbulent& loaded, int index, std::list<SortedSurfaceTexture>& sorted);
 	static void Cleanup(std::list<SortedSurfaceLightmap>& sorted);

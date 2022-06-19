@@ -550,7 +550,6 @@ bool Keyboard::Draw(AppState& appState)
 		}
 		if (layout != RegularKeys)
 		{
-			auto& cell = source[i];
 			auto text = cell.text;
 			if (((layout == CapsKeys || layout == CapsShiftKeys) && (strcmp(text, "Caps") == 0 || strcmp(text, "CAPS") == 0)) || ((layout == ShiftKeys || layout == CapsShiftKeys) && (strcmp(text, "Shift") == 0 || strcmp(text, "SHIFT") == 0)))
 			{

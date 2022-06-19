@@ -15,7 +15,7 @@ extern int sound_started;
 
 void SNDDMA_DisposeBuffers();
 
-void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
+void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf /*bufferQueue*/, void* /*context*/)
 {
 	if (audioPlayer == nullptr)
 	{

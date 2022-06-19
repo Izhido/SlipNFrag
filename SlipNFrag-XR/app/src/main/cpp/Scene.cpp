@@ -1346,8 +1346,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.indices.indices.offset = usedInLatestIndexBuffer8;
 			usedInLatestIndexBuffer8 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = alias.aliashdr;
-			loaded.indices.secondSource = nullptr;
+			loaded.indices.source = alias.aliashdr;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
 			indexBuffers.SetupAliasIndices8(loaded.indices);
@@ -1370,8 +1369,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.indices.indices.offset = usedInLatestIndexBuffer16;
 			usedInLatestIndexBuffer16 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = alias.aliashdr;
-			loaded.indices.secondSource = nullptr;
+			loaded.indices.source = alias.aliashdr;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
 			indexBuffers.SetupAliasIndices16(loaded.indices);
@@ -1394,8 +1392,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			loaded.indices.indices.offset = usedInLatestIndexBuffer32;
 			usedInLatestIndexBuffer32 += loaded.indices.size;
 			size += loaded.indices.size;
-			loaded.indices.firstSource = alias.aliashdr;
-			loaded.indices.secondSource = nullptr;
+			loaded.indices.source = alias.aliashdr;
 			loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
 			loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
 			indexBuffers.SetupAliasIndices32(loaded.indices);

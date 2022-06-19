@@ -148,7 +148,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	while (loadedAliasIndexBuffer != nullptr)
 	{
 		auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
-		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->firstSource;
+		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->source;
 		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
 		auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
@@ -176,7 +176,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	while (loadedAliasIndexBuffer != nullptr)
 	{
 		auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->firstSource;
+		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->source;
 		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
 		auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
@@ -204,7 +204,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	while (loadedAliasIndexBuffer != nullptr)
 	{
 		auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->firstSource;
+		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->source;
 		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
 		auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);

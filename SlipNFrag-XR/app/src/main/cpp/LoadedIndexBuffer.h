@@ -6,7 +6,6 @@ struct LoadedIndexBuffer
 {
 	IndexBuffer indices;
 	VkDeviceSize size;
-	void* firstSource;
-	void* secondSource;
+	void* source;
 	LoadedIndexBuffer* next;
 };
