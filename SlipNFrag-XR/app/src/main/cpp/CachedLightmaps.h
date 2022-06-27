@@ -12,5 +12,6 @@ struct CachedLightmaps
 
 	void Setup(LoadedLightmap& lightmap);
 	void DisposeFront();
+	void Delete(AppState& appState);
 	void DeleteOld(AppState& appState);
 };

@@ -109,6 +109,7 @@ struct AppState
 	VkImageMemoryBarrier copyBarrier;
 	VkImageMemoryBarrier submitBarrier;
 	bool CallExitFunction;
+	bool NoGameDataLoaded;
 
 	void RenderScreen(uint32_t swapchainImageIndex);
 	void RenderKeyboard(uint32_t swapchainImageIndex);

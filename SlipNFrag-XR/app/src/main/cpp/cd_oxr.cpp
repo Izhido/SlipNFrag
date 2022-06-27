@@ -20,13 +20,13 @@ SLAndroidSimpleBufferQueueItf cdaudio_bufferQueue;
 int cdaudio_lastCopied;
 
 static qboolean cdaudio_cdValid = false;
-static qboolean	cdaudio_playing = false;
+qboolean	cdaudio_playing = false;
 static qboolean	cdaudio_wasPlaying = false;
 static qboolean	cdaudio_initialized = false;
 static qboolean	cdaudio_enabled = false;
 static qboolean cdaudio_playLooping = false;
 static float	cdaudio_cdvolume;
-static byte		cdaudio_playTrack;
+byte		cdaudio_playTrack;
 
 void CDAudio_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 {
@@ -140,6 +140,138 @@ void CDAudio_DisposeBuffers()
 	}
 }
 
+qboolean CDAudio_Start (byte track)
+{
+	COM_LoadFile(cdaudio_tracks[track].c_str(), cdaudio_trackContents);
+	if (cdaudio_trackContents.size() == 0)
+	{
+		Con_DPrintf("CDAudio: Empty file for track %u.\n", track);
+		return false;
+	}
+
+	int error = VORBIS__no_error;
+	cdaudio_stream = stb_vorbis_open_memory(cdaudio_trackContents.data(), cdaudio_trackContents.size() - 1, &error, nullptr);
+	if (error != VORBIS__no_error)
+	{
+		Con_DPrintf("CDAudio: Error %i opening track %u.\n", error, track);
+		cdaudio_stream = nullptr;
+		return false;
+	}
+	cdaudio_info = stb_vorbis_get_info(cdaudio_stream);
+
+	auto result = slCreateEngine(&cdaudio_engineObject, 0, nullptr, 0, nullptr, nullptr);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_engineObject)->Realize(cdaudio_engineObject, SL_BOOLEAN_FALSE);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_engineObject)->GetInterface(cdaudio_engineObject, SL_IID_ENGINE, &cdaudio_engine);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_engine)->CreateOutputMix(cdaudio_engine, &cdaudio_outputMixObject, 0, nullptr, nullptr);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_outputMixObject)->Realize(cdaudio_outputMixObject, SL_BOOLEAN_FALSE);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	SLDataLocator_AndroidSimpleBufferQueue bufferQueueLocator;
+	bufferQueueLocator.locatorType = SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE;
+	bufferQueueLocator.numBuffers = 2;
+	SLDataFormat_PCM format;
+	format.formatType = SL_DATAFORMAT_PCM;
+	format.numChannels = cdaudio_info.channels;
+	format.samplesPerSec = cdaudio_info.sample_rate * 1000;
+	format.bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
+	format.containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+	format.channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
+	format.endianness = SL_BYTEORDER_LITTLEENDIAN;
+	SLDataSource dataSource;
+	dataSource.pLocator = &bufferQueueLocator;
+	dataSource.pFormat = &format;
+	SLDataLocator_OutputMix outputMixLocator;
+	outputMixLocator.locatorType = SL_DATALOCATOR_OUTPUTMIX;
+	outputMixLocator.outputMix = cdaudio_outputMixObject;
+	SLDataSink sink { };
+	sink.pLocator = &outputMixLocator;
+	SLInterfaceID interfaceId = SL_IID_BUFFERQUEUE;
+	SLboolean required = SL_BOOLEAN_TRUE;
+	result = (*cdaudio_engine)->CreateAudioPlayer(cdaudio_engine, &cdaudio_playerObject, &dataSource, &sink, 1, &interfaceId, &required);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_playerObject)->Realize(cdaudio_playerObject, SL_BOOLEAN_FALSE);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_playerObject)->GetInterface(cdaudio_playerObject, SL_IID_PLAY, &cdaudio_player);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_playerObject)->GetInterface(cdaudio_playerObject, SL_IID_BUFFERQUEUE, &cdaudio_bufferQueue);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_bufferQueue)->RegisterCallback(cdaudio_bufferQueue, CDAudio_Callback, nullptr);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_player)->SetPlayState(cdaudio_player, SL_PLAYSTATE_PLAYING);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	for (auto samples = 1; samples < 1024 * 1024 * 1024; samples <<= 1)
+	{
+		if (samples >= cdaudio_info.sample_rate)
+		{
+			cdaudio_stagingBuffer.resize(samples >> 3);
+			break;
+		}
+	}
+	cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
+	if (cdaudio_lastCopied == 0)
+	{
+		Con_DPrintf("CDAudio: Empty track %u.\n", track);
+		(*cdaudio_player)->SetPlayState(cdaudio_player, SL_PLAYSTATE_STOPPED);
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	result = (*cdaudio_bufferQueue)->Enqueue(cdaudio_bufferQueue, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 2);
+	if (result != SL_RESULT_SUCCESS)
+	{
+		(*cdaudio_player)->SetPlayState(cdaudio_player, SL_PLAYSTATE_STOPPED);
+		CDAudio_DisposeBuffers();
+		return false;
+	}
+	return true;
+}
+
 void CDAudio_Play(byte track, qboolean looping)
 {
 	if (!cdaudio_enabled)
@@ -167,129 +299,8 @@ void CDAudio_Play(byte track, qboolean looping)
 		return;
 	}
 
-	COM_LoadFile(cdaudio_tracks[track].c_str(), cdaudio_trackContents);
-	if (cdaudio_trackContents.size() == 0)
+	if (!CDAudio_Start(track))
 	{
-		Con_DPrintf("CDAudio: Empty file for track %u.\n", track);
-		return;
-	}
-
-	int error = VORBIS__no_error;
-	cdaudio_stream = stb_vorbis_open_memory(cdaudio_trackContents.data(), cdaudio_trackContents.size() - 1, &error, nullptr);
-	if (error != VORBIS__no_error)
-	{
-		Con_DPrintf("CDAudio: Error %i opening track %u.\n", error, track);
-		cdaudio_stream = nullptr;
-		return;
-	}
-	cdaudio_info = stb_vorbis_get_info(cdaudio_stream);
-	auto result = slCreateEngine(&cdaudio_engineObject, 0, nullptr, 0, nullptr, nullptr);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		return;
-	}
-	result = (*cdaudio_engineObject)->Realize(cdaudio_engineObject, SL_BOOLEAN_FALSE);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_engineObject)->GetInterface(cdaudio_engineObject, SL_IID_ENGINE, &cdaudio_engine);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_engine)->CreateOutputMix(cdaudio_engine, &cdaudio_outputMixObject, 0, nullptr, nullptr);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_outputMixObject)->Realize(cdaudio_outputMixObject, SL_BOOLEAN_FALSE);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	SLDataLocator_AndroidSimpleBufferQueue bufferQueueLocator;
-	bufferQueueLocator.locatorType = SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE;
-	bufferQueueLocator.numBuffers = 2;
-	SLDataFormat_PCM format;
-	format.formatType = SL_DATAFORMAT_PCM;
-	format.numChannels = cdaudio_info.channels;
-	format.samplesPerSec = cdaudio_info.sample_rate * 1000;
-	format.bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
-	format.containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
-	format.channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
-	format.endianness = SL_BYTEORDER_LITTLEENDIAN;
-	SLDataSource dataSource;
-	dataSource.pLocator = &bufferQueueLocator;
-	dataSource.pFormat = &format;
-	SLDataLocator_OutputMix outputMixLocator;
-	outputMixLocator.locatorType = SL_DATALOCATOR_OUTPUTMIX;
-	outputMixLocator.outputMix = cdaudio_outputMixObject;
-	SLDataSink sink { };
-	sink.pLocator = &outputMixLocator;
-	SLInterfaceID interfaceId = SL_IID_BUFFERQUEUE;
-	SLboolean required = SL_BOOLEAN_TRUE;
-	result = (*cdaudio_engine)->CreateAudioPlayer(cdaudio_engine, &cdaudio_playerObject, &dataSource, &sink, 1, &interfaceId, &required);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_playerObject)->Realize(cdaudio_playerObject, SL_BOOLEAN_FALSE);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_playerObject)->GetInterface(cdaudio_playerObject, SL_IID_PLAY, &cdaudio_player);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_playerObject)->GetInterface(cdaudio_playerObject, SL_IID_BUFFERQUEUE, &cdaudio_bufferQueue);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_bufferQueue)->RegisterCallback(cdaudio_bufferQueue, CDAudio_Callback, nullptr);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_player)->SetPlayState(cdaudio_player, SL_PLAYSTATE_PLAYING);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	for (auto samples = 1; samples < 1024 * 1024 * 1024; samples <<= 1)
-	{
-		if (samples >= cdaudio_info.sample_rate)
-		{
-			cdaudio_stagingBuffer.resize(samples >> 3);
-			break;
-		}
-	}
-	cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
-	if (cdaudio_lastCopied == 0)
-	{
-		Con_DPrintf("CDAudio: Empty track %u.\n", track);
-		(*cdaudio_player)->SetPlayState(cdaudio_player, SL_PLAYSTATE_STOPPED);
-		CDAudio_DisposeBuffers();
-		return;
-	}
-	result = (*cdaudio_bufferQueue)->Enqueue(cdaudio_bufferQueue, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 2);
-	if (result != SL_RESULT_SUCCESS)
-	{
-		(*cdaudio_player)->SetPlayState(cdaudio_player, SL_PLAYSTATE_STOPPED);
-		CDAudio_DisposeBuffers();
 		return;
 	}
 

@@ -25,6 +25,15 @@
 #include <android_native_app_glue.h>
 #include "Locks.h"
 
+extern int sound_started;
+
+extern byte cdaudio_playTrack;
+extern qboolean cdaudio_playing;
+
+void CDAudio_DisposeBuffers();
+
+qboolean CDAudio_Start(byte track);
+
 std::string GetXrVersionString(XrVersion ver)
 {
 	return Fmt("%d.%d.%d", XR_VERSION_MAJOR(ver), XR_VERSION_MINOR(ver), XR_VERSION_PATCH(ver));
@@ -215,6 +224,7 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 		case APP_CMD_PAUSE:
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onPause()");
 			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_PAUSE");
+			appState->PausedTime = GetTime();
 			appState->Resumed = false;
 			break;
 
@@ -1393,6 +1403,19 @@ void android_main(struct android_app* app)
 
 			if (appState.EngineThreadCreated && !appState.EngineThreadStarted) // That is, if a previous call to android_main() already created an instance of EngineThread, but had to be closed:
 			{
+				if (snd_initialized) // If the sound system was already initialized in a previous call to android_main():
+				{
+					S_Startup ();
+				}
+
+				if (cdaudio_playing)
+				{
+					if (!CDAudio_Start (cdaudio_playTrack))
+					{
+						cdaudio_playing = false;
+					}
+				}
+
 				appState.EngineThread = std::thread(runEngine, &appState, app);
 				appState.EngineThreadStarted = true;
 			}
@@ -1533,6 +1556,7 @@ void android_main(struct android_app* app)
 						d_uselists = false;
 						r_skip_fov_check = false;
 						sb_onconsole = false;
+						appState.CallExitFunction = true;
 					}
 					appState.PreviousMode = appState.Mode;
 				}
@@ -2493,7 +2517,7 @@ void android_main(struct android_app* app)
 		if (appState.Queue != VK_NULL_HANDLE)
 		{
 			CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
-		}	
+		}
 
 		for (auto& perFrame : appState.PerFrame)
 		{
@@ -2531,39 +2555,41 @@ void android_main(struct android_app* app)
 			}
 		}
 
+		appState.Scene.Reset();
+
 		if (appState.Device != VK_NULL_HANDLE)
 		{
-			for (auto& texture : appState.KeyboardTextures)
+			for (auto& texture: appState.KeyboardTextures)
 			{
 				texture.Delete(appState);
 			}
 			appState.KeyboardTextures.clear();
-			
-			for (auto& perFrame : appState.Keyboard.Screen.PerImage)
+
+			for (auto& perFrame: appState.Keyboard.Screen.PerImage)
 			{
 				perFrame.stagingBuffer.Delete(appState);
 			}
 			appState.Keyboard.Screen.PerImage.clear();
 
-			for (auto& texture : appState.StatusBarTextures)
+			for (auto& texture: appState.StatusBarTextures)
 			{
 				texture.Delete(appState);
 			}
 			appState.StatusBarTextures.clear();
 
-			for (auto& texture : appState.ConsoleTextures)
+			for (auto& texture: appState.ConsoleTextures)
 			{
 				texture.Delete(appState);
 			}
 			appState.ConsoleTextures.clear();
 
-			for (auto& perFrame : appState.Screen.PerImage)
+			for (auto& perFrame: appState.Screen.PerImage)
 			{
 				perFrame.stagingBuffer.Delete(appState);
 			}
 			appState.Screen.PerImage.clear();
 
-			for (auto& perFrame : appState.PerFrame)
+			for (auto& perFrame: appState.PerFrame)
 			{
 				perFrame.second.controllerResources.Delete(appState);
 				perFrame.second.floorResources.Delete(appState);
@@ -2595,13 +2621,13 @@ void android_main(struct android_app* app)
 				perFrame.second.matrices.Delete(appState);
 			}
 			appState.PerFrame.clear();
-	
+
 			if (appState.RenderPass != VK_NULL_HANDLE)
 			{
 				vkDestroyRenderPass(appState.Device, appState.RenderPass, nullptr);
 				appState.RenderPass = VK_NULL_HANDLE;
 			}
-	
+
 			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
 			for (auto i = 0; i < appState.Scene.samplers.size(); i++)
 			{
@@ -2612,19 +2638,20 @@ void android_main(struct android_app* app)
 			appState.Scene.controllerTexture.Delete(appState);
 			appState.Scene.floorTexture.Delete(appState);
 
+			appState.Scene.buffers.Delete(appState);
+			appState.Scene.indexBuffers.Delete(appState);
+			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.textures.Delete(appState);
-			appState.Scene.textures.textures = nullptr;
-			appState.Scene.textures.oldTextures = nullptr;
 
-			for (auto& entry : appState.Scene.surfaceTextures)
+			for (auto& entry: appState.Scene.surfaceTextures)
 			{
 				entry.second.Delete(appState);
 			}
 			appState.Scene.surfaceTextures.clear();
 
-			for (auto& entry : appState.Scene.lightmapTextures)
+			for (auto& entry: appState.Scene.lightmapTextures)
 			{
-				for (auto& texture : entry.second)
+				for (auto& texture: entry.second)
 				{
 					vkDestroyDescriptorPool(appState.Device, texture.descriptorPool, nullptr);
 					vkDestroyImageView(appState.Device, texture.view, nullptr);
@@ -2660,9 +2687,6 @@ void android_main(struct android_app* app)
 
 			vkDestroyCommandPool(appState.Device, appState.CommandPool, nullptr);
 			appState.CommandPool = VK_NULL_HANDLE;
-
-			vkDestroyDevice(appState.Device, nullptr);
-			appState.Device = VK_NULL_HANDLE;
 		}
 
 		appState.Scene.created = false;
@@ -2728,6 +2752,17 @@ void android_main(struct android_app* app)
 		{
 			xrDestroyInstance(instance);
 		}
+
+		if (appState.Device != VK_NULL_HANDLE)
+		{
+			vkDestroyDevice(appState.Device, nullptr);
+			appState.Device = VK_NULL_HANDLE;
+		}
+
+		if (vulkanInstance != VK_NULL_HANDLE)
+		{
+			vkDestroyInstance(vulkanInstance, nullptr);
+		}
 	}
 	catch (const std::exception& ex)
 	{
@@ -2746,5 +2781,15 @@ void android_main(struct android_app* app)
 	{
 		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "exit(-1) called");
 		exit(-1); // Not redundant - app won't truly exit Android unless forcefully terminated
+	}
+	else
+	{
+		// Shut down temporarily the sound system from the core engine:
+		CDAudio_DisposeBuffers ();
+
+		if (sound_started)
+		{
+			SNDDMA_Shutdown();
+		}
 	}
 }

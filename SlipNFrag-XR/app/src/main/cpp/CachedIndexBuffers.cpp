@@ -71,7 +71,7 @@ void CachedIndexBuffers::MoveToFront(SharedMemoryBuffer* buffer)
 	buffers = buffer;
 }
 
-void CachedIndexBuffers::Delete(AppState& appState) const
+void CachedIndexBuffers::Delete(AppState& appState)
 {
 	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
 	{
@@ -79,12 +79,14 @@ void CachedIndexBuffers::Delete(AppState& appState) const
 		b->Delete(appState);
 		delete b;
 	}
+	buffers = nullptr;
 	for (SharedMemoryBuffer* b = oldBuffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);
 		delete b;
 	}
+	oldBuffers = nullptr;
 }
 
 void CachedIndexBuffers::DeleteOld(AppState& appState)

@@ -107,7 +107,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
 	}
 
-	appState.ScreenData.resize(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
+	appState.ScreenData.assign(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
 	ImageAsset play;
 	play.Open("play.png", app);
 	CopyImage(appState, play.image, appState.ScreenData.data() + ((appState.ScreenHeight - play.height) * appState.ScreenWidth + appState.ScreenWidth - play.width) / 2, play.width, play.height);

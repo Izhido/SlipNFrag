@@ -1,6 +1,7 @@
 #include "quakedef.h"
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
+#include "Locks.h"
 
 SLObjectItf audioEngineObject;
 SLEngineItf audioEngine;
@@ -17,6 +18,8 @@ void SNDDMA_DisposeBuffers();
 
 void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf /*bufferQueue*/, void* /*context*/)
 {
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
 	if (audioPlayer == nullptr)
 	{
 		return;
@@ -179,6 +182,8 @@ void SNDDMA_Submit(void)
 
 void SNDDMA_Shutdown(void)
 {
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
 	if (audioPlayerObject != nullptr)
 	{
 		(*audioPlayer)->SetPlayState(audioPlayer, SL_PLAYSTATE_STOPPED);

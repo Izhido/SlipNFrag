@@ -316,11 +316,10 @@ void AppState::RenderScreen(uint32_t swapchainImageIndex)
 	}
 	else if (Mode == AppNoGameDataMode)
 	{
-		static auto noGameDataLoaded = false;
-		if (!noGameDataLoaded)
+		if (!NoGameDataLoaded)
 		{
 			memcpy(ScreenData.data(), NoGameDataData.data(), NoGameDataData.size() * sizeof(uint32_t));
-			noGameDataLoaded = true;
+			NoGameDataLoaded = true;
 		}
 		memcpy(Screen.PerImage[swapchainImageIndex].stagingBuffer.mapped, ScreenData.data(), Screen.PerImage[swapchainImageIndex].stagingBuffer.size);
 	}

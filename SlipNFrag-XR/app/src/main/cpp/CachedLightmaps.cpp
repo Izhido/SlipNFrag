@@ -30,6 +30,27 @@ void CachedLightmaps::DisposeFront()
 	lightmaps.clear();
 }
 
+void CachedLightmaps::Delete(AppState& appState)
+{
+	for (auto& entry : lightmaps)
+	{
+		for (Lightmap* l = entry.second, *next; l != nullptr; l = next)
+		{
+			next = l->next;
+			l->Delete(appState);
+			delete l;
+		}
+	}
+	lightmaps.clear();
+	for (Lightmap* l = oldLightmaps, *next; l != nullptr; l = next)
+	{
+		next = l->next;
+		l->Delete(appState);
+		delete l;
+	}
+	oldLightmaps = nullptr;
+}
+
 void CachedLightmaps::DeleteOld(AppState& appState)
 {
 	if (oldLightmaps != nullptr)

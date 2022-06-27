@@ -33,7 +33,7 @@ void CachedSharedMemoryTextures::MoveToFront(SharedMemoryTexture* texture)
 	textures = texture;
 }
 
-void CachedSharedMemoryTextures::Delete(AppState& appState) const
+void CachedSharedMemoryTextures::Delete(AppState& appState)
 {
 	for (SharedMemoryTexture* t = textures, *next; t != nullptr; t = next)
 	{
@@ -41,12 +41,14 @@ void CachedSharedMemoryTextures::Delete(AppState& appState) const
 		t->Delete(appState);
 		delete t;
 	}
+	textures = nullptr;
 	for (SharedMemoryTexture* t = oldTextures, *next; t != nullptr; t = next)
 	{
 		next = t->next;
 		t->Delete(appState);
 		delete t;
 	}
+	oldTextures = nullptr;
 }
 
 void CachedSharedMemoryTextures::DeleteOld(AppState& appState)
