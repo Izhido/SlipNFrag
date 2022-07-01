@@ -9,6 +9,11 @@ precision mediump int;
 layout(set = 1, binding = 0) uniform sampler2DArray fragmentLightmap;
 layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
 
+layout(push_constant) uniform Tint
+{
+	layout(offset = 0) vec4 tint;
+};
+
 layout(location = 0) in vec4 fragmentCoords;
 layout(location = 1) in flat highp ivec2 fragmentTextureIndices;
 layout(location = 0) out lowp vec4 outColor;
@@ -31,5 +36,5 @@ void main()
 	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentTextureIndices.y);
 	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
 	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
-	outColor = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(gammaCorrected, gammaCorrected, gammaCorrected, 1);
+	outColor = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(gammaCorrected, gammaCorrected, gammaCorrected, 1) + tint;
 }

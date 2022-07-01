@@ -1155,6 +1155,11 @@ void PerFrame::Render(AppState& appState)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedSurfaceRGBANoGlowIndicesBase, VK_INDEX_TYPE_UINT32);
 			}
+			pushConstants[0] = GammaCorrect(v_blend[0] * v_blend[3]);
+			pushConstants[1] = GammaCorrect(v_blend[1] * v_blend[3]);
+			pushConstants[2] = GammaCorrect(v_blend[2] * v_blend[3]);
+			pushConstants[3] = 0;
+			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
 			for (auto& entry : appState.Scene.sorted.surfacesRGBANoGlow)
 			{
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlow.pipelineLayout, 1, 1, &entry.lightmap, 0, nullptr);

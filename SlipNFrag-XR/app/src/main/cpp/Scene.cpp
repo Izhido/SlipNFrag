@@ -732,6 +732,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRGBANoGlow.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfacesRGBANoGlow.stages[1].module = surfaceRGBANoGlowFragment;
 	surfacesRGBANoGlow.stages[1].pName = "main";
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = 4 * sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRGBANoGlow.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfacesRGBANoGlow.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfacesRGBANoGlow.stages.data();
@@ -747,6 +751,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfacesRotated.stages[1].module = surfaceFragment;
 	surfacesRotated.stages[1].pName = "main";
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfacesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfacesRotated.stages.data();

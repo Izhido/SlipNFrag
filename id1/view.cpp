@@ -262,8 +262,8 @@ byte		gammatable[256];	// palette is sent through this
 
 #ifdef	GLQUAKE
 byte		ramps[3][256];
-float		v_blend[4];		// rgba 0.0 - 1.0
 #endif	// GLQUAKE
+float		v_blend[4];		// rgba 0.0 - 1.0
 
 void BuildGammaTable (float g)
 {
@@ -478,7 +478,6 @@ void V_CalcPowerupCshift (void)
 V_CalcBlend
 =============
 */
-#ifdef	GLQUAKE
 void V_CalcBlend (void)
 {
 	float	r, g, b, a, a2;
@@ -516,7 +515,6 @@ void V_CalcBlend (void)
 	if (v_blend[3] < 0)
 		v_blend[3] = 0;
 }
-#endif
 
 /*
 =============
@@ -652,7 +650,9 @@ void V_UpdatePalette (void)
 	force = V_CheckGamma ();
 	if (!is_new && !force)
 		return;
-			
+
+	V_CalcBlend ();
+
 	basepal = host_basepal.data();
 	newpal = pal;
 	
