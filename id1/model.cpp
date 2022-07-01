@@ -59,6 +59,14 @@ struct mpool_t
 
     void Clear()
     {
+		for (auto& list : texturelists)
+		{
+			for (auto& texture : list)
+			{
+				delete[] texture->external_glow;
+				delete[] texture->external_color;
+			}
+		}
         sprites.clear();
         submodels.clear();
         entities.clear();
@@ -532,6 +540,11 @@ void Mod_LoadTextures (lump_t *l)
 	texture_t	*anims[10];
 	texture_t	*altanims[10];
 	dmiptexlump_t *m;
+	std::vector<char> modelname;
+	std::string external_filename;
+	int external_size;
+	int external_width;
+	int external_height;
 
 	if (!l->filelen)
 	{
@@ -545,6 +558,9 @@ void Mod_LoadTextures (lump_t *l)
 	loadmodel->numtextures = m->nummiptex;
     mod_pool.texturelists.emplace_back(m->nummiptex);
 	loadmodel->textures = mod_pool.texturelists.back().data();
+
+	modelname.resize(strlen(pr_strings + loadmodel->name + 5) + 1); // +5 to skip "maps/" during copy...
+	COM_StripExtension(pr_strings + loadmodel->name + 5, modelname.data());
 
 	for (i=0 ; i<m->nummiptex ; i++)
 	{
@@ -601,6 +617,51 @@ void Mod_LoadTextures (lump_t *l)
         }
 		if (!Q_strncmp(mt->name,"sky",3))
 			R_InitSky (tx);
+
+		// load external textures, if present
+		if (Q_strncmp(mt->name,"sky",3) != 0 && tx->name[0] != '*')
+		{
+			external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + ".tga";
+			external_size = 0;
+			auto found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+			if (!found)
+			{
+				external_filename = std::string("textures/") + tx->name + ".tga";
+				found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+			}
+			if (found)
+			{
+				tx->external_color->width = external_width;
+				tx->external_color->height = external_height;
+				tx->external_color->offsets[0] = sizeof(miptex_t);
+				Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
+				external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + "_glow.tga";
+				external_size = 0;
+				found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_width, &external_height);
+				if (!found)
+				{
+					external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + "_luma.tga";
+					found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_width, &external_height);
+					if (!found)
+					{
+						external_filename = std::string("textures/") + tx->name + "_glow.tga";
+						found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_width, &external_height);
+						if (!found)
+						{
+							external_filename = std::string("textures/") + tx->name + "_luma.tga";
+							found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_width, &external_height);
+						}
+					}
+				}
+				if (found)
+				{
+					tx->external_glow->width = external_width;
+					tx->external_glow->height = external_height;
+					tx->external_glow->offsets[0] = sizeof(miptex_t);
+					Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
+				}
+			}
+		}
 	}
 
 //

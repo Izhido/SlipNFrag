@@ -48,7 +48,7 @@ byte		*r_warpbuffer;
 qboolean	r_skip_fov_check;
 qboolean	r_fov_greater_than_90;
 vec3_t 		r_modelorg_delta;
-qboolean	r_skybox_as_rgba;
+qboolean	r_load_as_rgba;
 
 //
 // view origin

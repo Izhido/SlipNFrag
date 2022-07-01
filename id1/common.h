@@ -168,11 +168,12 @@ extern std::string com_gamedir;
 int COM_FindAllFiles (const char *directory, const char *prefix, const char *extension, void (find_in_path)(const char *path, const char *directory, const char *prefix, const char *extension, std::vector<std::string>& result), std::vector<std::string>& result);
 
 void COM_WriteFile (char *filename, void *data, int len);
-int COM_OpenFile (const char *filename, int *hndl);
+int COM_OpenFile (const char *filename, qboolean log_failure, int *hndl);
 int COM_FOpenFile (const char *filename, int* file);
 void COM_CloseFile (int h);
 
 byte *COM_LoadFile (const char *path, std::vector<byte>& contents);
+byte *COM_LoadFile (const char *path, qboolean log_failure, std::vector<byte>& contents);
 
 extern	struct cvar_s	registered;
 

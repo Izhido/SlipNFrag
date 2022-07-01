@@ -13,6 +13,7 @@ struct SortedSurfaces
 	std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceLightmap>::iterator> addedLightmaps;
 	std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceTexture>::iterator> addedTextures;
 	std::list<SortedSurfaceLightmap> surfaces;
+	std::list<SortedSurfaceLightmap> surfacesRGBANoGlow;
 	std::list<SortedSurfaceLightmap> surfacesRotated;
 	std::list<SortedSurfaceLightmap> fences;
 	std::list<SortedSurfaceLightmap> fencesRotated;

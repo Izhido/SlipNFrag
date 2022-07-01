@@ -269,7 +269,7 @@ void R_BuildLightMap (void);
 extern qboolean r_skip_fov_check;
 extern qboolean	r_fov_greater_than_90;
 extern vec3_t 	r_modelorg_delta;
-extern qboolean	r_skybox_as_rgba;
+extern qboolean	r_load_as_rgba;
 
 extern qboolean	d_uselists;
 
@@ -286,6 +286,8 @@ void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1);
 void R_ClipEdge (const mvertex_t *pv0, const mvertex_t *pv1, clipplane_t *clip);
 void R_SplitEntityOnNode2 (mnode_t *node);
 void R_MarkLights (dlight_t *light, int index, mnode_t *node);
+
+qboolean R_LoadTGA (const char *name, int start, qboolean extra, qboolean log_failure, byte **pic, int *piclen, int *width, int *height);
 
 extern qboolean r_skyinitialized;
 extern qboolean r_skyboxinitialized;

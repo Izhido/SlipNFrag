@@ -1496,7 +1496,7 @@ void android_main(struct android_app* app)
 							}
 						}
 						appState.DefaultFOV = (int)Cvar_VariableValue("fov");
-						r_skybox_as_rgba = true;
+						r_load_as_rgba = true;
 						d_skipfade = true;
 						appState.EngineThread = std::thread(runEngine, &appState, app);
 						appState.EngineThreadStarted = true;
@@ -1565,6 +1565,10 @@ void android_main(struct android_app* app)
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				appState.Scene.textures.DeleteOld(appState);
+				for (auto& entry : appState.Scene.surfaceRGBATextures)
+				{
+					entry.second.DeleteOld(appState);
+				}
 				for (auto& entry : appState.Scene.surfaceTextures)
 				{
 					entry.second.DeleteOld(appState);
@@ -2643,6 +2647,12 @@ void android_main(struct android_app* app)
 			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.textures.Delete(appState);
 
+			for (auto& entry: appState.Scene.surfaceRGBATextures)
+			{
+				entry.second.Delete(appState);
+			}
+			appState.Scene.surfaceRGBATextures.clear();
+
 			for (auto& entry: appState.Scene.surfaceTextures)
 			{
 				entry.second.Delete(appState);
@@ -2675,6 +2685,7 @@ void android_main(struct android_app* app)
 			appState.Scene.fencesRotated.Delete(appState);
 			appState.Scene.fences.Delete(appState);
 			appState.Scene.surfacesRotated.Delete(appState);
+			appState.Scene.surfacesRGBANoGlow.Delete(appState);
 			appState.Scene.surfaces.Delete(appState);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
 			appState.Scene.singleImageLayout = VK_NULL_HANDLE;
@@ -2753,10 +2764,21 @@ void android_main(struct android_app* app)
 			xrDestroyInstance(instance);
 		}
 
+		if (appState.PipelineCache != VK_NULL_HANDLE)
+		{
+			vkDestroyPipelineCache(appState.Device, appState.PipelineCache, nullptr);
+			appState.PipelineCache = VK_NULL_HANDLE;
+		}
+
 		if (appState.Device != VK_NULL_HANDLE)
 		{
 			vkDestroyDevice(appState.Device, nullptr);
 			appState.Device = VK_NULL_HANDLE;
+		}
+
+		if (vulkanDebugReporter != VK_NULL_HANDLE)
+		{
+			vkDestroyDebugReportCallbackEXT(vulkanInstance, vulkanDebugReporter, nullptr);
 		}
 
 		if (vulkanInstance != VK_NULL_HANDLE)

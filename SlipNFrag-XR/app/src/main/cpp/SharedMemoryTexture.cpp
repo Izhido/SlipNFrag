@@ -8,6 +8,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 {
 	this->width = width;
 	this->height = height;
+	this->format = format;
 	this->mipCount = mipCount;
 	this->layerCount = layerCount;
 
@@ -153,12 +154,13 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	barrier.subresourceRange.levelCount = mipCount;
 	barrier.subresourceRange.layerCount = layerCount;
 	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-	auto toCopy = std::max(mips, 1);
+	auto toCopy = mips;
 	auto offset = 0;
 	VkImageBlit blit { };
 	auto mipWidth = width;
 	auto mipHeight = height;
 	std::vector<VkBufferImageCopy> regions(toCopy);
+	auto componentCount = (format == VK_FORMAT_R8_UINT ? 1 : 4);
 	for (auto i = 0; i < toCopy; i++)
 	{
 		auto& region = regions[i];
@@ -170,7 +172,7 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 		region.imageExtent.width = mipWidth;
 		region.imageExtent.height = mipHeight;
 		region.imageExtent.depth = 1;
-		offset += mipWidth * mipHeight;
+		offset += (mipWidth * mipHeight * componentCount);
 		blit.srcOffsets[1].x = mipWidth;
 		blit.srcOffsets[1].y = mipHeight;
 		mipWidth /= 2;
@@ -223,24 +225,14 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = toCopy;
-	buffer.lastBarrier++;
-	if (buffer.imageBarriers.size() <= buffer.lastBarrier)
-	{
-		buffer.imageBarriers.emplace_back();
-	}
-	buffer.imageBarriers[buffer.lastBarrier] = barrier;
+	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	if (mipCount > 1)
 	{
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		barrier.subresourceRange.baseMipLevel = toCopy;
 		barrier.subresourceRange.levelCount = mipCount - toCopy;
-		buffer.lastBarrier++;
-		if (buffer.imageBarriers.size() <= buffer.lastBarrier)
-		{
-			buffer.imageBarriers.emplace_back();
-		}
-		buffer.imageBarriers[buffer.lastBarrier] = barrier;
+		vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	}
 	filled = true;
 }
@@ -251,6 +243,7 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	auto offset = 0;
 	auto mipWidth = width;
 	auto mipHeight = height;
+	auto componentCount = (format == VK_FORMAT_R8_UINT ? 1 : 4);
 	for (int i = 0; i < regions.size(); i++)
 	{
 		auto& region = regions[i];
@@ -262,7 +255,7 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 		region.imageExtent.width = mipWidth;
 		region.imageExtent.height = mipHeight;
 		region.imageExtent.depth = 1;
-		offset += mipWidth * mipHeight;
+		offset += (mipWidth * mipHeight * componentCount);
 		mipWidth /= 2;
 		if (mipWidth < 1)
 		{

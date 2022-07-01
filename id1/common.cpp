@@ -1112,7 +1112,7 @@ void COM_CheckRegistered (void)
 	unsigned short  check[128];
 	int                     i;
 
-	COM_OpenFile("gfx/pop.lmp", &h);
+	COM_OpenFile("gfx/pop.lmp", true, &h);
 	static_registered = 0;
 
 	if (h == -1)
@@ -1511,7 +1511,7 @@ Finds the file in the search path.
 Sets com_filesize and one of handle or file
 ===========
 */
-int COM_FindFile (const char *filename, int *handle, int* file)
+int COM_FindFile (const char *filename, qboolean log_failure, int *handle, int* file)
 {
 	searchpath_t    *search;
     std::string netpath;
@@ -1610,8 +1610,11 @@ int COM_FindFile (const char *filename, int *handle, int* file)
 		}
 		
 	}
-	
-	Sys_Printf ("FindFile: can't find %s\n", filename);
+
+	if (log_failure)
+	{
+		Sys_Printf ("FindFile: can't find %s\n", filename);
+	}
 	
 	if (handle)
 		*handle = -1;
@@ -1631,9 +1634,9 @@ returns a handle and a length
 it may actually be inside a pak file
 ===========
 */
-int COM_OpenFile (const char *filename, int *handle)
+int COM_OpenFile (const char *filename, qboolean log_failure, int *handle)
 {
-	return COM_FindFile (filename, handle, NULL);
+	return COM_FindFile (filename, log_failure, handle, NULL);
 }
 
 /*
@@ -1646,7 +1649,7 @@ into the file.
 */
 int COM_FOpenFile (const char *filename, int *file)
 {
-	return COM_FindFile (filename, NULL, file);
+	return COM_FindFile (filename, true, NULL, file);
 }
 
 /*
@@ -1678,6 +1681,11 @@ Allways appends a 0 byte.
 */
 byte *COM_LoadFile (const char *path, std::vector<byte>& contents)
 {
+	return COM_LoadFile (path, true, contents);
+}
+
+byte *COM_LoadFile (const char *path, qboolean log_failure, std::vector<byte>& contents)
+{
 	int             h;
 	byte    *buf;
 	int             len;
@@ -1685,7 +1693,7 @@ byte *COM_LoadFile (const char *path, std::vector<byte>& contents)
 	buf = NULL;     // quiet compiler warning
 
 // look for it in the filesystem or pack files
-	len = COM_OpenFile (path, &h);
+	len = COM_OpenFile (path, log_failure, &h);
 	if (h == -1)
 		return NULL;
 

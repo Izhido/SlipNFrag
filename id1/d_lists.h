@@ -25,7 +25,30 @@ struct dsurface_t : dturbulent_t
 	int lightmap_texels;
 };
 
+struct dsurfacewithglow_t : dturbulent_t
+{
+	int glow_width;
+	int glow_height;
+	int glow_size;
+	unsigned char* glow_data;
+	int created;
+	int lightmap_width;
+	int lightmap_height;
+	int lightmap_size;
+	int lightmap_texels;
+};
+
 struct dsurfacerotated_t : dsurface_t
+{
+	float origin_x;
+	float origin_y;
+	float origin_z;
+	float yaw;
+	float pitch;
+	float roll;
+};
+
+struct dsurfacerotatedwithglow_t : dsurfacewithglow_t
 {
 	float origin_x;
 	float origin_y;
@@ -80,9 +103,17 @@ struct dskybox_t
 struct dlists_t
 {
 	int last_surface;
+	int last_surface_rgba;
+	int last_surface_rgba_no_glow;
 	int last_surface_rotated;
+	int last_surface_rotated_rgba;
+	int last_surface_rotated_rgba_no_glow;
 	int last_fence;
+	int last_fence_rgba;
+	int last_fence_rgba_no_glow;
 	int last_fence_rotated;
+	int last_fence_rotated_rgba;
+	int last_fence_rotated_rgba_no_glow;
 	int last_turbulent;
 	int last_turbulent_lit;
 	int last_sprite;
@@ -115,9 +146,17 @@ struct dlists_t
 	float vup1;
 	float vup2;
 	std::vector<dsurface_t> surfaces;
+	std::vector<dsurfacewithglow_t> surfaces_rgba;
+	std::vector<dsurface_t> surfaces_rgba_no_glow;
 	std::vector<dsurfacerotated_t> surfaces_rotated;
+	std::vector<dsurfacerotatedwithglow_t> surfaces_rotated_rgba;
+	std::vector<dsurfacerotated_t> surfaces_rotated_rgba_no_glow;
 	std::vector<dsurface_t> fences;
+	std::vector<dsurfacewithglow_t> fences_rgba;
+	std::vector<dsurface_t> fences_rgba_no_glow;
 	std::vector<dsurfacerotated_t> fences_rotated;
+	std::vector<dsurfacerotatedwithglow_t> fences_rotated_rgba;
+	std::vector<dsurfacerotated_t> fences_rotated_rgba_no_glow;
 	std::vector<dturbulent_t> turbulent;
 	std::vector<dsurface_t> turbulent_lit;
 	std::vector<dspritedata_t> sprites;
@@ -145,9 +184,17 @@ extern qboolean d_awayfromviewmodel;
 
 void D_ResetLists ();
 void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddFenceRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddFenceRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddFenceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
 void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);

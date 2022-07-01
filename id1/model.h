@@ -68,6 +68,8 @@ struct texture_t
 {
 	char		name[16];
 	unsigned	width, height;
+	miptex_t*	external_color;
+	miptex_t*	external_glow;
 	int			anim_total;				// total tenths in sequence ( 0 = no)
 	int			anim_min, anim_max;		// time for this frame min <=time< max
 	texture_t*	anim_next;		// in the animation sequence

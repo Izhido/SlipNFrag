@@ -11,6 +11,7 @@ struct SharedMemoryTexture
 	int unusedCount;
 	int width;
 	int height;
+	VkFormat format;
 	int mipCount;
 	int layerCount;
 	VkImage image;

@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 qboolean d_awayfromviewmodel = false;
@@ -18,9 +18,17 @@ extern vec3_t r_plightvec;
 void D_ResetLists ()
 {
 	d_lists.last_surface = -1;
+	d_lists.last_surface_rgba = -1;
+	d_lists.last_surface_rgba_no_glow = -1;
 	d_lists.last_surface_rotated = -1;
+	d_lists.last_surface_rotated_rgba = -1;
+	d_lists.last_surface_rotated_rgba_no_glow = -1;
 	d_lists.last_fence = -1;
+	d_lists.last_fence_rgba = -1;
+	d_lists.last_fence_rgba_no_glow = -1;
 	d_lists.last_fence_rotated = -1;
+	d_lists.last_fence_rotated_rgba = -1;
+	d_lists.last_fence_rotated_rgba_no_glow = -1;
 	d_lists.last_turbulent = -1;
 	d_lists.last_turbulent_lit = -1;
 	d_lists.last_sprite = -1;
@@ -71,9 +79,86 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 	surface.count = face->numedges;
 }
 
+void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	surface.face = face;
+	surface.entity = entity;
+	surface.model = entity->model;
+	surface.created = cache->created;
+	auto texture = ((texture_t*)(cache->texture))->external_color;
+	surface.width = texture->width;
+	surface.height = texture->height;
+	surface.size = surface.width * surface.height * sizeof(unsigned);
+	surface.mips = 1;
+	surface.data = (unsigned char*)texture + texture->offsets[0];
+	texture = ((texture_t*)(cache->texture))->external_glow;
+	surface.glow_width = texture->width;
+	surface.glow_height = texture->height;
+	surface.glow_size = surface.glow_width * surface.glow_height * sizeof(unsigned);
+	surface.glow_data = (unsigned char*)texture + texture->offsets[0];
+	surface.lightmap_width = cache->width / sizeof(unsigned);
+	surface.lightmap_height = cache->height;
+	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
+	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
+	{
+		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
+	}
+	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
+	d_lists.last_lightmap_texel += surface.lightmap_size;
+	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+	surface.count = face->numedges;
+}
+
+void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	surface.face = face;
+	surface.entity = entity;
+	surface.model = entity->model;
+	surface.created = cache->created;
+	auto texture = ((texture_t*)(cache->texture))->external_color;
+	surface.width = texture->width;
+	surface.height = texture->height;
+	surface.size = surface.width * surface.height * sizeof(unsigned);
+	surface.mips = 1;
+	surface.data = (unsigned char*)texture + texture->offsets[0];
+	surface.lightmap_width = cache->width / sizeof(unsigned);
+	surface.lightmap_height = cache->height;
+	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
+	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
+	{
+		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
+	}
+	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
+	d_lists.last_lightmap_texel += surface.lightmap_size;
+	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+	surface.count = face->numedges;
+}
+
 void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
 	D_FillSurfaceData(surface, face, cache, entity, mips);
+	surface.origin_x = entity->origin[0];
+	surface.origin_y = entity->origin[1];
+	surface.origin_z = entity->origin[2];
+	surface.yaw = entity->angles[YAW];
+	surface.pitch = entity->angles[PITCH];
+	surface.roll = entity->angles[ROLL];
+}
+
+void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	D_FillSurfaceRGBAData(surface, face, cache, entity);
+	surface.origin_x = entity->origin[0];
+	surface.origin_y = entity->origin[1];
+	surface.origin_z = entity->origin[2];
+	surface.yaw = entity->angles[YAW];
+	surface.pitch = entity->angles[PITCH];
+	surface.roll = entity->angles[ROLL];
+}
+
+void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -97,6 +182,36 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity
 	D_FillSurfaceData(surface, face, cache, entity, MIPLEVELS);
 }
 
+void D_AddSurfaceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_surface_rgba++;
+	if (d_lists.last_surface_rgba >= d_lists.surfaces_rgba.size())
+	{
+		d_lists.surfaces_rgba.emplace_back();
+	}
+	auto& surface = d_lists.surfaces_rgba[d_lists.last_surface_rgba];
+	D_FillSurfaceRGBAData(surface, face, cache, entity);
+}
+
+void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_surface_rgba_no_glow++;
+	if (d_lists.last_surface_rgba_no_glow >= d_lists.surfaces_rgba_no_glow.size())
+	{
+		d_lists.surfaces_rgba_no_glow.emplace_back();
+	}
+	auto& surface = d_lists.surfaces_rgba_no_glow[d_lists.last_surface_rgba_no_glow];
+	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity);
+}
+
 void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
@@ -110,6 +225,36 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t*
 	}
 	auto& surface = d_lists.surfaces_rotated[d_lists.last_surface_rotated];
 	D_FillSurfaceRotatedData(surface, face, cache, entity, MIPLEVELS);
+}
+
+void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_surface_rotated_rgba++;
+	if (d_lists.last_surface_rotated_rgba >= d_lists.surfaces_rotated_rgba.size())
+	{
+		d_lists.surfaces_rotated_rgba.emplace_back();
+	}
+	auto& surface = d_lists.surfaces_rotated_rgba[d_lists.last_surface_rotated_rgba];
+	D_FillSurfaceRotatedRGBAData(surface, face, cache, entity);
+}
+
+void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_surface_rotated_rgba_no_glow++;
+	if (d_lists.last_surface_rotated_rgba_no_glow >= d_lists.surfaces_rotated_rgba_no_glow.size())
+	{
+		d_lists.surfaces_rotated_rgba_no_glow.emplace_back();
+	}
+	auto& surface = d_lists.surfaces_rotated_rgba_no_glow[d_lists.last_surface_rotated_rgba_no_glow];
+	D_FillSurfaceRotatedRGBANoGlowData(surface, face, cache, entity);
 }
 
 void D_AddFenceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -127,6 +272,36 @@ void D_AddFenceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 	D_FillSurfaceData(fence, face, cache, entity, MIPLEVELS);
 }
 
+void D_AddFenceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_fence_rgba++;
+	if (d_lists.last_fence_rgba >= d_lists.fences_rgba.size())
+	{
+		d_lists.fences_rgba.emplace_back();
+	}
+	auto& fence = d_lists.fences_rgba[d_lists.last_fence_rgba];
+	D_FillSurfaceRGBAData(fence, face, cache, entity);
+}
+
+void D_AddFenceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_fence_rgba_no_glow++;
+	if (d_lists.last_fence_rgba_no_glow >= d_lists.fences_rgba_no_glow.size())
+	{
+		d_lists.fences_rgba_no_glow.emplace_back();
+	}
+	auto& fence = d_lists.fences_rgba_no_glow[d_lists.last_fence_rgba_no_glow];
+	D_FillSurfaceRGBANoGlowData(fence, face, cache, entity);
+}
+
 void D_AddFenceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
@@ -140,6 +315,36 @@ void D_AddFenceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* e
 	}
 	auto& fence = d_lists.fences_rotated[d_lists.last_fence_rotated];
 	D_FillSurfaceRotatedData(fence, face, cache, entity, MIPLEVELS);
+}
+
+void D_AddFenceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_fence_rotated_rgba++;
+	if (d_lists.last_fence_rotated_rgba >= d_lists.fences_rotated_rgba.size())
+	{
+		d_lists.fences_rotated_rgba.emplace_back();
+	}
+	auto& fence = d_lists.fences_rotated_rgba[d_lists.last_fence_rotated_rgba];
+	D_FillSurfaceRotatedRGBAData(fence, face, cache, entity);
+}
+
+void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_fence_rotated_rgba_no_glow++;
+	if (d_lists.last_fence_rotated_rgba_no_glow >= d_lists.fences_rotated_rgba_no_glow.size())
+	{
+		d_lists.fences_rotated_rgba_no_glow.emplace_back();
+	}
+	auto& fence = d_lists.fences_rotated_rgba_no_glow[d_lists.last_fence_rotated_rgba_no_glow];
+	D_FillSurfaceRotatedRGBANoGlowData(fence, face, cache, entity);
 }
 
 void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity, int mips)

@@ -645,6 +645,8 @@ void D_DrawSurfacesToLists (void)
 
 				if (pcurrentcache != nullptr)
 				{
+					auto texture = (texture_t*)(pcurrentcache->texture);
+
 					if (currententity->origin[0] == 0 &&
 						currententity->origin[1] == 0 &&
 						currententity->origin[2] == 0 &&
@@ -654,20 +656,40 @@ void D_DrawSurfacesToLists (void)
 					{
 						if (s->isfence)
 						{
-							D_AddFenceToLists (pface, pcurrentcache, currententity);
+							/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+								D_AddFenceRGBAToLists (pface, pcurrentcache, currententity);
+							else if (texture->external_color != nullptr)
+								D_AddFenceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+							else*/
+								D_AddFenceToLists (pface, pcurrentcache, currententity);
 						}
 						else
 						{
-							D_AddSurfaceToLists (pface, pcurrentcache, currententity);
+							/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+								D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
+							else*/ if (texture->external_color != nullptr && texture->external_glow == nullptr)
+								D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+							else
+								D_AddSurfaceToLists (pface, pcurrentcache, currententity);
 						}
 					}
 					else if (s->isfence)
 					{
-						D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
+						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+							D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
+						else if (texture->external_color != nullptr)
+							D_AddFenceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
+						else*/
+							D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 					else
 					{
-						D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
+						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+							D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
+						else if (texture->external_color != nullptr)
+							D_AddSurfaceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
+						else*/
+							D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 				}
 
@@ -846,6 +868,8 @@ void D_DrawSurfacesToListsIfNeeded (void)
 
 				if (pcurrentcache != nullptr)
 				{
+					auto texture = (texture_t*)(pcurrentcache->texture);
+
 					if (currententity->origin[0] == 0 &&
 						currententity->origin[1] == 0 &&
 						currententity->origin[2] == 0 &&
@@ -855,20 +879,40 @@ void D_DrawSurfacesToListsIfNeeded (void)
 					{
 						if (s->isfence)
 						{
-							D_AddFenceToLists (pface, pcurrentcache, currententity);
+							/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+								D_AddFenceRGBAToLists (pface, pcurrentcache, currententity);
+							else if (texture->external_color != nullptr)
+								D_AddFenceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+							else*/
+								D_AddFenceToLists (pface, pcurrentcache, currententity);
 						}
 						else
 						{
-							D_AddSurfaceToLists (pface, pcurrentcache, currententity);
+							/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+								D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
+							else*/ if (texture->external_color != nullptr && texture->external_glow == nullptr)
+								D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+							else
+								D_AddSurfaceToLists (pface, pcurrentcache, currententity);
 						}
 					}
 					else if (s->isfence)
 					{
-						D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
+						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+							D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
+						else if (texture->external_color != nullptr)
+							D_AddFenceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
+						else*/
+							D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 					else
 					{
-						D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
+						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+							D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
+						else if (texture->external_color != nullptr)
+							D_AddSurfaceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
+						else*/
+							D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 				}
 
@@ -970,6 +1014,8 @@ void D_DrawOneSurface (msurface_t* surf)
 
 			if (pcurrentcache != nullptr)
 			{
+				auto texture = surf->texinfo->texture;
+
 				if (currententity->origin[0] == 0 &&
 					currententity->origin[1] == 0 &&
 					currententity->origin[2] == 0 &&
@@ -977,22 +1023,42 @@ void D_DrawOneSurface (msurface_t* surf)
 					currententity->angles[PITCH] == 0 &&
 					currententity->angles[ROLL] == 0)
 				{
-					if (surf->texinfo->texture->name[0] == '{')
+					if (texture->name[0] == '{')
 					{
-						D_AddFenceToLists (surf, pcurrentcache, currententity);
+						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+							D_AddFenceRGBAToLists (surf, pcurrentcache, currententity);
+						else if (texture->external_color != nullptr)
+							D_AddFenceRGBANoGlowToLists (surf, pcurrentcache, currententity);
+						else*/
+							D_AddFenceToLists (surf, pcurrentcache, currententity);
 					}
 					else
 					{
-						D_AddSurfaceToLists (surf, pcurrentcache, currententity);
+						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+							D_AddSurfaceRGBAToLists (surf, pcurrentcache, currententity);
+						else*/ if (texture->external_color != nullptr && texture->external_glow == nullptr)
+							D_AddSurfaceRGBANoGlowToLists (surf, pcurrentcache, currententity);
+						else
+							D_AddSurfaceToLists (surf, pcurrentcache, currententity);
 					}
 				}
-				else if (surf->texinfo->texture->name[0] == '{')
+				else if (texture->name[0] == '{')
 				{
-					D_AddFenceRotatedToLists (surf, pcurrentcache, currententity);
+					/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						D_AddFenceRotatedRGBAToLists (surf, pcurrentcache, currententity);
+					else if (texture->external_color != nullptr)
+						D_AddFenceRotatedRGBANoGlowToLists (surf, pcurrentcache, currententity);
+					else*/
+						D_AddFenceRotatedToLists (surf, pcurrentcache, currententity);
 				}
 				else
 				{
-					D_AddSurfaceRotatedToLists (surf, pcurrentcache, currententity);
+					/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						D_AddSurfaceRotatedRGBAToLists (surf, pcurrentcache, currententity);
+					else if (texture->external_color != nullptr)
+						D_AddSurfaceRotatedRGBANoGlowToLists (surf, pcurrentcache, currententity);
+					else*/
+						D_AddSurfaceRotatedToLists (surf, pcurrentcache, currententity);
 				}
 			}
 		}
