@@ -1014,7 +1014,7 @@ void D_DrawOneSurface (msurface_t* surf)
 
 			if (pcurrentcache != nullptr)
 			{
-				auto texture = surf->texinfo->texture;
+				auto texture = (texture_t*)(pcurrentcache->texture);
 
 				if (currententity->origin[0] == 0 &&
 					currententity->origin[1] == 0 &&

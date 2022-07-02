@@ -63,8 +63,11 @@ struct mpool_t
 		{
 			for (auto& texture : list)
 			{
-				delete[] (byte*)(texture->external_glow);
-				delete[] (byte*)(texture->external_color);
+				if (texture != nullptr)
+				{
+					delete[] (byte*)(texture->external_glow);
+					delete[] (byte*)(texture->external_color);
+				}
 			}
 		}
         sprites.clear();
@@ -659,9 +662,9 @@ void Mod_LoadTextures (lump_t *l)
 				}
 				if (found)
 				{
-					memcpy (tx->external_color->name, mt->name, sizeof(tx->external_color->name));
-					tx->external_glow->width = external_width;
-					tx->external_glow->height = external_height;
+					memcpy (tx->external_glow->name, mt->name, sizeof(tx->external_glow->name));
+					tx->external_glow->width = external_glow_width;
+					tx->external_glow->height = external_glow_height;
 					tx->external_glow->offsets[0] = sizeof(miptex_t);
 					if (tx->external_color->width != tx->external_glow->width || tx->external_color->height != tx->external_glow->height)
 					{
