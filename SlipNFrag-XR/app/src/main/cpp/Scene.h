@@ -6,6 +6,7 @@
 #include "CachedIndexBuffers.h"
 #include <unordered_map>
 #include "AliasVertices.h"
+#include "LoadedSurface2Textures.h"
 #include "LoadedSurfaceRotated.h"
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
@@ -29,6 +30,7 @@ struct Scene
 	VkDescriptorSetLayout twoBuffersAndImageLayout;
 	VkDescriptorSetLayout singleImageLayout;
 	Pipeline surfaces;
+	Pipeline surfacesRGBA;
 	Pipeline surfacesRGBANoGlow;
 	Pipeline surfacesRotated;
 	Pipeline fences;
@@ -49,6 +51,7 @@ struct Scene
 	std::unordered_map<void*, AliasVertices> aliasVertexCache;
 	std::unordered_map<void*, IndexBuffer> aliasIndexCache;
 	int lastSurface;
+	int lastSurfaceRGBA;
 	int lastSurfaceRGBANoGlow;
 	int lastSurfaceRotated;
 	int lastFence;
@@ -64,6 +67,7 @@ struct Scene
 	int lastColoredIndex32;
 	int lastSky;
 	std::vector<LoadedSurface> loadedSurfaces;
+	std::vector<LoadedSurface2Textures> loadedSurfacesRGBA;
 	std::vector<LoadedSurface> loadedSurfacesRGBANoGlow;
 	std::vector<LoadedSurfaceRotated> loadedSurfacesRotated;
 	std::vector<LoadedSurface> loadedFences;
@@ -123,6 +127,9 @@ struct Scene
 	VkDeviceSize sortedIndicesCount;
 	VkDeviceSize sortedIndices16Size;
 	VkDeviceSize sortedIndices32Size;
+	VkDeviceSize sortedSurfaceRGBAVerticesBase;
+	VkDeviceSize sortedSurfaceRGBAAttributesBase;
+	VkDeviceSize sortedSurfaceRGBAIndicesBase;
 	VkDeviceSize sortedSurfaceRGBANoGlowVerticesBase;
 	VkDeviceSize sortedSurfaceRGBANoGlowAttributesBase;
 	VkDeviceSize sortedSurfaceRGBANoGlowIndicesBase;
@@ -146,11 +153,14 @@ struct Scene
 	VkDeviceSize skySize;
 	StagingBuffer stagingBuffer;
 	void* previousTexture;
+	void* previousGlowTexture;
 	void* previousApverts;
 	SharedMemoryBuffer* previousVertexBuffer;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	SharedMemoryTexture* previousSharedMemoryTexture;
 	int previousSharedMemoryTextureIndex;
+	SharedMemoryTexture* previousGlowSharedMemoryTexture;
+	int previousGlowSharedMemoryTextureIndex;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	SortedSurfaces sorted;
 
@@ -163,6 +173,7 @@ struct Scene
 	static VkDeviceSize GetAllocatedFor(int width, int height);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2Textures& loaded, VkDeviceSize& size);
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);

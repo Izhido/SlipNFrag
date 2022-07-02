@@ -665,9 +665,9 @@ void D_DrawSurfacesToLists (void)
 						}
 						else
 						{
-							/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+							if (texture->external_color != nullptr && texture->external_glow != nullptr)
 								D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
-							else*/ if (texture->external_color != nullptr && texture->external_glow == nullptr)
+							else if (texture->external_color != nullptr)
 								D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
 							else
 								D_AddSurfaceToLists (pface, pcurrentcache, currententity);
@@ -888,9 +888,9 @@ void D_DrawSurfacesToListsIfNeeded (void)
 						}
 						else
 						{
-							/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+							if (texture->external_color != nullptr && texture->external_glow != nullptr)
 								D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
-							else*/ if (texture->external_color != nullptr && texture->external_glow == nullptr)
+							else if (texture->external_color != nullptr)
 								D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
 							else
 								D_AddSurfaceToLists (pface, pcurrentcache, currententity);
@@ -1034,9 +1034,9 @@ void D_DrawOneSurface (msurface_t* surf)
 					}
 					else
 					{
-						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						if (texture->external_color != nullptr && texture->external_glow != nullptr)
 							D_AddSurfaceRGBAToLists (surf, pcurrentcache, currententity);
-						else*/ if (texture->external_color != nullptr && texture->external_glow == nullptr)
+						else if (texture->external_color != nullptr)
 							D_AddSurfaceRGBANoGlowToLists (surf, pcurrentcache, currententity);
 						else
 							D_AddSurfaceToLists (surf, pcurrentcache, currententity);

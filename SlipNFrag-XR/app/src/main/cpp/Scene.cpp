@@ -371,6 +371,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/surface.vert.spv", &surfaceVertex);
 	VkShaderModule surfaceFragment;
 	CreateShader(appState, app, "shaders/surface.frag.spv", &surfaceFragment);
+	VkShaderModule surfaceRGBAVertex;
+	CreateShader(appState, app, "shaders/surface_rgba.vert.spv", &surfaceRGBAVertex);
+	VkShaderModule surfaceRGBAFragment;
+	CreateShader(appState, app, "shaders/surface_rgba.frag.spv", &surfaceRGBAFragment);
 	VkShaderModule surfaceRGBANoGlowFragment;
 	CreateShader(appState, app, "shaders/surface_rgba_no_glow.frag.spv", &surfaceRGBANoGlowFragment);
 	VkShaderModule surfaceRotatedVertex;
@@ -515,6 +519,40 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaceAttributes.vertexInputState.pVertexAttributeDescriptions = surfaceAttributes.vertexAttributes.data();
 	surfaceAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	surfaceAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+	PipelineAttributes surfaceWithGlowAttributes { };
+	surfaceWithGlowAttributes.vertexAttributes.resize(6);
+	surfaceWithGlowAttributes.vertexBindings.resize(2);
+	surfaceWithGlowAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	surfaceWithGlowAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+	surfaceWithGlowAttributes.vertexAttributes[1].location = 1;
+	surfaceWithGlowAttributes.vertexAttributes[1].binding = 1;
+	surfaceWithGlowAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	surfaceWithGlowAttributes.vertexAttributes[2].location = 2;
+	surfaceWithGlowAttributes.vertexAttributes[2].binding = 1;
+	surfaceWithGlowAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	surfaceWithGlowAttributes.vertexAttributes[2].offset = 4 * sizeof(float);
+	surfaceWithGlowAttributes.vertexAttributes[3].location = 3;
+	surfaceWithGlowAttributes.vertexAttributes[3].binding = 1;
+	surfaceWithGlowAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	surfaceWithGlowAttributes.vertexAttributes[3].offset = 8 * sizeof(float);
+	surfaceWithGlowAttributes.vertexAttributes[4].location = 4;
+	surfaceWithGlowAttributes.vertexAttributes[4].binding = 1;
+	surfaceWithGlowAttributes.vertexAttributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	surfaceWithGlowAttributes.vertexAttributes[4].offset = 12 * sizeof(float);
+	surfaceWithGlowAttributes.vertexAttributes[5].location = 5;
+	surfaceWithGlowAttributes.vertexAttributes[5].binding = 1;
+	surfaceWithGlowAttributes.vertexAttributes[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	surfaceWithGlowAttributes.vertexAttributes[5].offset = 16 * sizeof(float);
+	surfaceWithGlowAttributes.vertexBindings[1].binding = 1;
+	surfaceWithGlowAttributes.vertexBindings[1].stride = 20 * sizeof(float);
+	surfaceWithGlowAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	surfaceWithGlowAttributes.vertexInputState.vertexBindingDescriptionCount = surfaceWithGlowAttributes.vertexBindings.size();
+	surfaceWithGlowAttributes.vertexInputState.pVertexBindingDescriptions = surfaceWithGlowAttributes.vertexBindings.data();
+	surfaceWithGlowAttributes.vertexInputState.vertexAttributeDescriptionCount = surfaceWithGlowAttributes.vertexAttributes.size();
+	surfaceWithGlowAttributes.vertexInputState.pVertexAttributeDescriptions = surfaceWithGlowAttributes.vertexAttributes.data();
+	surfaceWithGlowAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	surfaceWithGlowAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	PipelineAttributes surfaceRotatedAttributes { };
 	surfaceRotatedAttributes.vertexAttributes.resize(7);
@@ -695,7 +733,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	floorAttributes.inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	floorAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-	VkDescriptorSetLayout descriptorSetLayouts[3] { };
+	VkDescriptorSetLayout descriptorSetLayouts[4] { };
 
 	VkPushConstantRange pushConstantInfo { };
 
@@ -723,6 +761,30 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfaces.pipeline));
 
+	surfacesRGBA.stages.resize(2);
+	surfacesRGBA.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	surfacesRGBA.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	surfacesRGBA.stages[0].module = surfaceRGBAVertex;
+	surfacesRGBA.stages[0].pName = "main";
+	surfacesRGBA.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	surfacesRGBA.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	surfacesRGBA.stages[1].module = surfaceRGBAFragment;
+	surfacesRGBA.stages[1].pName = "main";
+	descriptorSetLayouts[0] = singleBufferLayout;
+	descriptorSetLayouts[3] = singleImageLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = 4;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = 4 * sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRGBA.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = surfacesRGBA.stages.size();
+	graphicsPipelineCreateInfo.pStages = surfacesRGBA.stages.data();
+	graphicsPipelineCreateInfo.layout = surfacesRGBA.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceWithGlowAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceWithGlowAttributes.inputAssemblyState;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRGBA.pipeline));
+
 	surfacesRGBANoGlow.stages.resize(2);
 	surfacesRGBANoGlow.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	surfacesRGBANoGlow.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -732,14 +794,13 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRGBANoGlow.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfacesRGBANoGlow.stages[1].module = surfaceRGBANoGlowFragment;
 	surfacesRGBANoGlow.stages[1].pName = "main";
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 4 * sizeof(float);
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRGBANoGlow.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = surfacesRGBANoGlow.stages.size();
 	graphicsPipelineCreateInfo.pStages = surfacesRGBANoGlow.stages.data();
 	graphicsPipelineCreateInfo.layout = surfacesRGBANoGlow.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRGBANoGlow.pipeline));
 
 	surfacesRotated.stages.resize(2);
@@ -751,6 +812,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	surfacesRotated.stages[1].module = surfaceFragment;
 	surfacesRotated.stages[1].pName = "main";
+	descriptorSetLayouts[0] = twoBuffersAndImageLayout;
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotated.pipelineLayout));
@@ -1000,6 +1062,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, fenceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceRGBANoGlowFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, surfaceRGBAFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, surfaceRGBAVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 
@@ -1161,6 +1225,162 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
 	GetStagingBufferSize(appState, (const dturbulent_t&)surface, loaded, size);
+	auto lightmapEntry = lightmaps.lightmaps.find(surface.face);
+	if (lightmapEntry == lightmaps.lightmaps.end())
+	{
+		auto lightmap = new Lightmap { };
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->key = surface.face;
+		lightmap->createdFrameCount = surface.created;
+		loaded.lightmap.lightmap = lightmap;
+		loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+		size += loaded.lightmap.size;
+		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+		lightmaps.Setup(loaded.lightmap);
+		lightmaps.lightmaps.insert({ lightmap->key, lightmap });
+	}
+	else
+	{
+		auto lightmap = lightmapEntry->second;
+		if (lightmap->createdFrameCount != surface.created)
+		{
+			lightmap->next = lightmaps.oldLightmaps;
+			lightmaps.oldLightmaps = lightmap;
+			lightmap = new Lightmap { };
+			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			lightmap->key = surface.face;
+			lightmap->createdFrameCount = surface.created;
+			lightmapEntry->second = lightmap;
+			loaded.lightmap.lightmap = lightmap;
+			loaded.lightmap.size = surface.lightmap_size * sizeof(float);
+			size += loaded.lightmap.size;
+			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+			lightmaps.Setup(loaded.lightmap);
+		}
+		else
+		{
+			loaded.lightmap.lightmap = lightmap;
+			loaded.lightmap.size = 0;
+		}
+	}
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2Textures& loaded, VkDeviceSize& size)
+{
+	loaded.vertexes = ((model_t*)surface.model)->vertexes;
+	loaded.face = surface.face;
+	loaded.model = surface.model;
+	if (previousTexture != surface.data)
+	{
+		auto entry = surfaceTextureCache.find(surface.data);
+		if (entry == surfaceTextureCache.end())
+		{
+			auto key = std::to_string(surface.width) + "x" + std::to_string(surface.height);
+			auto& cached = surfaceRGBATextures[key];
+			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			{
+				uint32_t layerCount;
+				if (cached.textures == nullptr)
+				{
+					layerCount = 4;
+				}
+				else
+				{
+					layerCount = 64;
+				}
+				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
+				auto texture = new SharedMemoryTexture { };
+				texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				cached.MoveToFront(texture);
+				loaded.texture.texture = texture;
+				cached.currentIndex = 0;
+			}
+			else
+			{
+				loaded.texture.texture = cached.textures;
+			}
+			cached.Setup(loaded.texture);
+			loaded.texture.index = cached.currentIndex;
+			loaded.texture.size = surface.size;
+			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
+			size += loaded.texture.allocated;
+			loaded.texture.source = surface.data;
+			loaded.texture.mips = surface.mips;
+			surfaceTextureCache.insert({ surface.data, { loaded.texture.texture, loaded.texture.index } });
+			cached.currentIndex++;
+		}
+		else
+		{
+			loaded.texture.size = 0;
+			loaded.texture.texture = entry->second.texture;
+			loaded.texture.index = entry->second.index;
+		}
+		previousTexture = surface.data;
+		previousSharedMemoryTexture = loaded.texture.texture;
+		previousSharedMemoryTextureIndex = loaded.texture.index;
+	}
+	else
+	{
+		loaded.texture.size = 0;
+		loaded.texture.texture = previousSharedMemoryTexture;
+		loaded.texture.index = previousSharedMemoryTextureIndex;
+	}
+	if (previousGlowTexture != surface.glow_data)
+	{
+		auto entry = surfaceTextureCache.find(surface.glow_data);
+		if (entry == surfaceTextureCache.end())
+		{
+			auto key = std::to_string(surface.width) + "x" + std::to_string(surface.height);
+			auto& cached = surfaceRGBATextures[key];
+			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			{
+				uint32_t layerCount;
+				if (cached.textures == nullptr)
+				{
+					layerCount = 4;
+				}
+				else
+				{
+					layerCount = 64;
+				}
+				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
+				auto texture = new SharedMemoryTexture { };
+				texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				cached.MoveToFront(texture);
+				loaded.glowTexture.texture = texture;
+				cached.currentIndex = 0;
+			}
+			else
+			{
+				loaded.glowTexture.texture = cached.textures;
+			}
+			cached.Setup(loaded.glowTexture);
+			loaded.glowTexture.index = cached.currentIndex;
+			loaded.glowTexture.size = surface.size;
+			loaded.glowTexture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
+			size += loaded.glowTexture.allocated;
+			loaded.glowTexture.source = surface.glow_data;
+			loaded.glowTexture.mips = surface.mips;
+			surfaceTextureCache.insert({ surface.glow_data, { loaded.glowTexture.texture, loaded.glowTexture.index } });
+			cached.currentIndex++;
+		}
+		else
+		{
+			loaded.glowTexture.size = 0;
+			loaded.glowTexture.texture = entry->second.texture;
+			loaded.glowTexture.index = entry->second.index;
+		}
+		previousGlowTexture = surface.glow_data;
+		previousGlowSharedMemoryTexture = loaded.glowTexture.texture;
+		previousGlowSharedMemoryTextureIndex = loaded.glowTexture.index;
+	}
+	else
+	{
+		loaded.glowTexture.size = 0;
+		loaded.glowTexture.texture = previousGlowSharedMemoryTexture;
+		loaded.glowTexture.index = previousGlowSharedMemoryTextureIndex;
+	}
+	loaded.count = surface.count;
 	auto lightmapEntry = lightmaps.lightmaps.find(surface.face);
 	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
@@ -1549,6 +1769,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 {
 	lastSurface = d_lists.last_surface;
+	lastSurfaceRGBA = d_lists.last_surface_rgba;
 	lastSurfaceRGBANoGlow = d_lists.last_surface_rgba_no_glow;
 	lastSurfaceRotated = d_lists.last_surface_rotated;
 	lastFence = d_lists.last_fence;
@@ -1578,6 +1799,10 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	if (lastSurface >= loadedSurfaces.size())
 	{
 		loadedSurfaces.resize(lastSurface + 1);
+	}
+	if (lastSurfaceRGBA >= loadedSurfacesRGBA.size())
+	{
+		loadedSurfacesRGBA.resize(lastSurfaceRGBA + 1);
 	}
 	if (lastSurfaceRGBANoGlow >= loadedSurfacesRGBANoGlow.size())
 	{
@@ -1646,6 +1871,22 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfaces);
+	sortedSurfaceRGBAVerticesBase = sortedVerticesSize;
+	sortedSurfaceRGBAAttributesBase = sortedAttributesSize;
+	sortedSurfaceRGBAIndicesBase = sortedIndicesCount;
+	previousTexture = nullptr;
+	previousGlowTexture = nullptr;
+	sorted.Initialize(sorted.surfacesRGBA);
+	for (auto i = 0; i <= d_lists.last_surface_rgba; i++)
+	{
+		auto& loaded = loadedSurfacesRGBA[i];
+		GetStagingBufferSize(appState, d_lists.surfaces_rgba[i], loaded, size);
+		sorted.Sort(appState, loaded, i, sorted.surfacesRGBA);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 20 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(sorted.surfacesRGBA);
 	sortedSurfaceRGBANoGlowVerticesBase = sortedVerticesSize;
 	sortedSurfaceRGBANoGlowAttributesBase = sortedAttributesSize;
 	sortedSurfaceRGBANoGlowIndicesBase = sortedIndicesCount;
@@ -1851,6 +2092,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		sortedIndices16Size = sortedIndicesCount * sizeof(uint16_t);
 		sortedIndices32Size = 0;
+		sortedSurfaceRGBAIndicesBase *= sizeof(uint16_t);
 		sortedSurfaceRGBANoGlowIndicesBase *= sizeof(uint16_t);
 		sortedSurfaceRotatedIndicesBase *= sizeof(uint16_t);
 		sortedFenceIndicesBase *= sizeof(uint16_t);
@@ -1862,6 +2104,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		sortedIndices16Size = 0;
 		sortedIndices32Size = sortedIndicesCount * sizeof(uint32_t);
+		sortedSurfaceRGBAIndicesBase *= sizeof(uint32_t);
 		sortedSurfaceRGBANoGlowIndicesBase *= sizeof(uint32_t);
 		sortedSurfaceRotatedIndicesBase *= sizeof(uint32_t);
 		sortedFenceIndicesBase *= sizeof(uint32_t);

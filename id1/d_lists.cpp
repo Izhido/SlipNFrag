@@ -92,9 +92,6 @@ void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfc
 	surface.mips = 1;
 	surface.data = (unsigned char*)texture + texture->offsets[0];
 	texture = ((texture_t*)(cache->texture))->external_glow;
-	surface.glow_width = texture->width;
-	surface.glow_height = texture->height;
-	surface.glow_size = surface.glow_width * surface.glow_height * sizeof(unsigned);
 	surface.glow_data = (unsigned char*)texture + texture->offsets[0];
 	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;

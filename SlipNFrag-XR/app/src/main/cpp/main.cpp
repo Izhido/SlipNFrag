@@ -2686,6 +2686,7 @@ void android_main(struct android_app* app)
 			appState.Scene.fences.Delete(appState);
 			appState.Scene.surfacesRotated.Delete(appState);
 			appState.Scene.surfacesRGBANoGlow.Delete(appState);
+			appState.Scene.surfacesRGBA.Delete(appState);
 			appState.Scene.surfaces.Delete(appState);
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
 			appState.Scene.singleImageLayout = VK_NULL_HANDLE;

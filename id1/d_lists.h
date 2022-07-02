@@ -27,9 +27,6 @@ struct dsurface_t : dturbulent_t
 
 struct dsurfacewithglow_t : dturbulent_t
 {
-	int glow_width;
-	int glow_height;
-	int glow_size;
 	unsigned char* glow_data;
 	int created;
 	int lightmap_width;
