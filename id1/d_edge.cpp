@@ -684,11 +684,11 @@ void D_DrawSurfacesToLists (void)
 					}
 					else
 					{
-						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						if (texture->external_color != nullptr && texture->external_glow != nullptr)
 							D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
 						else if (texture->external_color != nullptr)
 							D_AddSurfaceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
-						else*/
+						else
 							D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 				}
@@ -907,11 +907,11 @@ void D_DrawSurfacesToListsIfNeeded (void)
 					}
 					else
 					{
-						/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						if (texture->external_color != nullptr && texture->external_glow != nullptr)
 							D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
 						else if (texture->external_color != nullptr)
 							D_AddSurfaceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
-						else*/
+						else
 							D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
 					}
 				}
@@ -1053,11 +1053,11 @@ void D_DrawOneSurface (msurface_t* surf)
 				}
 				else
 				{
-					/*if (texture->external_color != nullptr && texture->external_glow != nullptr)
+					if (texture->external_color != nullptr && texture->external_glow != nullptr)
 						D_AddSurfaceRotatedRGBAToLists (surf, pcurrentcache, currententity);
 					else if (texture->external_color != nullptr)
 						D_AddSurfaceRotatedRGBANoGlowToLists (surf, pcurrentcache, currententity);
-					else*/
+					else
 						D_AddSurfaceRotatedToLists (surf, pcurrentcache, currententity);
 				}
 			}

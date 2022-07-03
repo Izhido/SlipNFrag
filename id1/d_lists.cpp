@@ -7,7 +7,6 @@
 dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
-qboolean d_awayfromviewmodel = false;
 
 extern int r_ambientlight;
 extern float r_shadelight;
@@ -620,18 +619,9 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 		d_lists.colormapped_attributes.resize(new_size);
 	}
 	vec3_t angles;
-	if (d_awayfromviewmodel)
-	{
-		angles[ROLL] = 0;
-		angles[PITCH] = 0;
-		angles[YAW] = 0;
-	}
-	else
-	{
-		angles[ROLL] = currententity->angles[ROLL];
-		angles[PITCH] = -currententity->angles[PITCH];
-		angles[YAW] = currententity->angles[YAW];
-	}
+	angles[ROLL] = currententity->angles[ROLL];
+	angles[PITCH] = -currententity->angles[PITCH];
+	angles[YAW] = currententity->angles[YAW];
 	vec3_t forward, right, up;
 	AngleVectors (angles, forward, right, up);
 	float tmatrix[3][4] { };
@@ -651,12 +641,6 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 	t2matrix[0][3] = currententity->origin[0] + r_modelorg_delta[0];
 	t2matrix[1][3] = currententity->origin[1] + r_modelorg_delta[1];
 	t2matrix[2][3] = currententity->origin[2] + r_modelorg_delta[2];
-	if (d_awayfromviewmodel)
-	{
-		t2matrix[0][3] -= forward[0] * 8;
-		t2matrix[1][3] -= forward[1] * 8;
-		t2matrix[2][3] -= forward[2] * 8;
-	}
 	R_ConcatTransforms (t2matrix, tmatrix, viewmodel.transform);
 	auto vertex = apverts;
 	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
@@ -664,29 +648,21 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
 		// lighting
-		float light;
-		if (d_awayfromviewmodel)
+		float* plightnormal = r_avertexnormals[vertex->lightnormalindex];
+		auto lightcos = DotProduct (plightnormal, lightvec);
+		auto temp = r_ambientlight;
+
+		if (lightcos < 0)
 		{
-			light = 0;
+			temp += (int)(r_shadelight * lightcos);
+
+			// clamp; because we limited the minimum ambient and shading light, we
+			// don't have to clamp low light, just bright
+			if (temp < 0)
+				temp = 0;
 		}
-		else
-		{
-			float* plightnormal = r_avertexnormals[vertex->lightnormalindex];
-			auto lightcos = DotProduct (plightnormal, lightvec);
-			auto temp = r_ambientlight;
 
-			if (lightcos < 0)
-			{
-				temp += (int)(r_shadelight * lightcos);
-
-				// clamp; because we limited the minimum ambient and shading light, we
-				// don't have to clamp low light, just bright
-				if (temp < 0)
-					temp = 0;
-			}
-
-			light = temp / 256;
-		}
+		float light = temp / 256;
 		*attribute++ = light;
 		*attribute++ = light;
 		vertex++;

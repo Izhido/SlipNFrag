@@ -14,11 +14,6 @@ layout(set = 0, binding = 1) uniform Palette
 layout(set = 1, binding = 0) uniform usampler2D fragmentColormap;
 layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
 
-layout(push_constant) uniform Tint
-{
-	layout(offset = 80) vec4 tint;
-};
-
 layout(location = 0) in vec4 fragmentData;
 layout(location = 0) out lowp vec4 outColor;
 
@@ -33,5 +28,5 @@ void main()
 	vec4 lowColor = palette[lowColormapped.x];
 	vec4 highColor = palette[highColormapped.x];
 	vec4 color = mix(lowColor, highColor, level.y - mip.x);
-	outColor = color * tint * vec4(1, 1, 1, fragmentData.w);
+	outColor = color * vec4(1, 1, 1, fragmentData.w);
 }

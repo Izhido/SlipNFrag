@@ -308,11 +308,11 @@ void Input::Handle(AppState& appState, bool keyPressHandled)
 					{
 						if (booleanActionState.currentState)
 						{
-							if (appState.ControlsMessageDisplayed && !scr_interrupted && (appState.NearViewmodel || (appState.Scene.lastViewmodel < 0)))
+							if (appState.ControlsMessageDisplayed && !scr_interrupted)
 							{
 								SCR_Interrupt();
 							}
-							else if (appState.NearViewmodel || (appState.Scene.lastViewmodel < 0))
+							else
 							{
 								AddCommandInput("+attack");
 							}

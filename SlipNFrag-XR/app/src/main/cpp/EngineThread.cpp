@@ -155,9 +155,6 @@ void runEngine(AppState* appState, struct android_app* app)
 				r_modelorg_delta[0] = positionX / scale;
 				r_modelorg_delta[1] = -positionZ / scale;
 				r_modelorg_delta[2] = positionY / scale;
-				//auto distanceSquared = r_modelorg_delta[0] * r_modelorg_delta[0] + r_modelorg_delta[1] * r_modelorg_delta[1] + r_modelorg_delta[2] * r_modelorg_delta[2];
-				appState->NearViewmodel = true;//(distanceSquared < 12 * 12);
-				d_awayfromviewmodel = !appState->NearViewmodel;
 				auto nodrift = cl.nodrift;
 				cl.nodrift = true;
 				//renderstart = GetTime();
