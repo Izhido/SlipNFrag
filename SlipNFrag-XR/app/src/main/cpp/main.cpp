@@ -1158,7 +1158,6 @@ void android_main(struct android_app* app)
 		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		attachments[1].format = Constants::depthFormat;
@@ -1167,7 +1166,6 @@ void android_main(struct android_app* app)
 		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		attachments[2].format = Constants::colorFormat;
@@ -1176,7 +1174,6 @@ void android_main(struct android_app* app)
 		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[2].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		attachments[2].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass { };
@@ -1892,8 +1889,6 @@ void android_main(struct android_app* app)
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.depthMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.depthImage, perFrame.depthMemory, 0));
 
-						VkImageView attachments[3];
-
 						VkImageViewCreateInfo viewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 						viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 						viewInfo.components.r = VK_COMPONENT_SWIZZLE_R;
@@ -1907,18 +1902,20 @@ void android_main(struct android_app* app)
 						viewInfo.format = Constants::colorFormat;
 						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perFrame.colorView));
-						attachments[0] = perFrame.colorView;
 
 						viewInfo.image = perFrame.depthImage;
 						viewInfo.format = Constants::depthFormat;
 						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perFrame.depthView));
-						attachments[1] = perFrame.depthView;
 
 						viewInfo.image = perFrame.resolveImage;
 						viewInfo.format = Constants::colorFormat;
 						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perFrame.resolveView));
+
+						VkImageView attachments[3];
+						attachments[0] = perFrame.colorView;
+						attachments[1] = perFrame.depthView;
 						attachments[2] = perFrame.resolveView;
 
 						VkFramebufferCreateInfo framebufferInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
