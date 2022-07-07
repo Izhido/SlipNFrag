@@ -1146,29 +1146,11 @@ void android_main(struct android_app* app)
 		std::vector<XrSwapchainImageVulkan2KHR> swapchainImages(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)swapchainImages.data()));
 
-		VkSubpassDescription subpass { };
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-
-		VkAttachmentReference colorRef { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference depthRef { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference resolveRef { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference colorReference { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference depthReference { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference resolveReference { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
 		VkAttachmentDescription attachments[3] { };
-
-		VkRenderPassCreateInfo rpInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-		rpInfo.attachmentCount = 3;
-		rpInfo.pAttachments = attachments;
-		rpInfo.subpassCount = 1;
-		rpInfo.pSubpasses = &subpass;
-
-		const uint32_t viewMask = 3;
-
-		VkRenderPassMultiviewCreateInfo multiviewCreateInfo { VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO };
-		multiviewCreateInfo.subpassCount = 1;
-		multiviewCreateInfo.pViewMasks = &viewMask;
-		multiviewCreateInfo.correlationMaskCount = 1;
-		multiviewCreateInfo.pCorrelationMasks = &viewMask;
-		rpInfo.pNext = &multiviewCreateInfo;
 
 		attachments[0].format = Constants::colorFormat;
 		attachments[0].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
@@ -1179,9 +1161,6 @@ void android_main(struct android_app* app)
 		attachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorRef;
-
 		attachments[1].format = Constants::depthFormat;
 		attachments[1].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -1190,8 +1169,6 @@ void android_main(struct android_app* app)
 		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		subpass.pDepthStencilAttachment = &depthRef;
 
 		attachments[2].format = Constants::colorFormat;
 		attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -1202,9 +1179,29 @@ void android_main(struct android_app* app)
 		attachments[2].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		attachments[2].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		subpass.pResolveAttachments = &resolveRef;
+		VkSubpassDescription subpass { };
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorReference;
+		subpass.pDepthStencilAttachment = &depthReference;
+		subpass.pResolveAttachments = &resolveReference;
 
-		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &rpInfo, nullptr, &appState.RenderPass));
+		VkRenderPassCreateInfo renderPassInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+		renderPassInfo.attachmentCount = 3;
+		renderPassInfo.pAttachments = attachments;
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+
+		const uint32_t viewMask = 3;
+
+		VkRenderPassMultiviewCreateInfo multiviewCreateInfo { VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO };
+		multiviewCreateInfo.subpassCount = 1;
+		multiviewCreateInfo.pViewMasks = &viewMask;
+		multiviewCreateInfo.correlationMaskCount = 1;
+		multiviewCreateInfo.pCorrelationMasks = &viewMask;
+		renderPassInfo.pNext = &multiviewCreateInfo;
+
+		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
 
 		XrEventDataBuffer eventDataBuffer { };
 

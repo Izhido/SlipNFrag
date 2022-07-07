@@ -1577,7 +1577,7 @@ void PerFrame::Render(AppState& appState)
 				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 24 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 20 * sizeof(float), pushConstants);
 				if (loaded.isHostColormap)
 				{
 					if (previousColormapDescriptorSet != host_colormapResources.descriptorSet)
