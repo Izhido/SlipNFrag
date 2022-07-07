@@ -625,7 +625,7 @@ void Mod_LoadTextures (lump_t *l)
 			R_InitSky (tx);
 
 		// load external textures, if present
-		if (Q_strncmp(mt->name,"sky",3) != 0 && tx->name[0] != '*')
+		if (r_load_as_rgba && Q_strncmp(mt->name,"sky",3) != 0 && tx->name[0] != '*')
 		{
 			external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + ".tga";
 			external_size = 0;
