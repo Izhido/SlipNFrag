@@ -1204,11 +1204,6 @@ void Scene::Initialize()
 		entry.second.first = nullptr;
 		entry.second.current = nullptr;
 	}
-	for (auto& entry : surfaceRGBAGlowTextures)
-	{
-		entry.second.first = nullptr;
-		entry.second.current = nullptr;
-	}
 	textures.first = nullptr;
 	textures.current = nullptr;
 }
@@ -1421,7 +1416,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		if (entry == surfaceTextureCache.end())
 		{
 			auto key = std::to_string(surface.width) + "x" + std::to_string(surface.height);
-			auto& cached = surfaceRGBAGlowTextures[key];
+			auto& cached = surfaceRGBATextures[key];
 			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
 			{
 				uint32_t layerCount;
@@ -2324,10 +2319,6 @@ void Scene::Reset()
 	spriteCache.clear();
 	surfaceTextureCache.clear();
 	textures.DisposeFront();
-	for (auto& entry : surfaceRGBAGlowTextures)
-	{
-		entry.second.DisposeFront();
-	}
 	for (auto& entry : surfaceRGBATextures)
 	{
 		entry.second.DisposeFront();

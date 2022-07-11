@@ -609,16 +609,6 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			loadedTexture = loadedTexture->next;
 		}
 	}
-	for (auto& entry : appState.Scene.surfaceRGBAGlowTextures)
-	{
-		auto loadedTexture = entry.second.first;
-		while (loadedTexture != nullptr)
-		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
-			offset += loadedTexture->allocated;
-			loadedTexture = loadedTexture->next;
-		}
-	}
 }
 
 void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
@@ -918,17 +908,6 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 
 	for (auto& entry : appState.Scene.surfaceRGBATextures)
-	{
-		auto loadedTexture = entry.second.first;
-		while (loadedTexture != nullptr)
-		{
-			loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->mips, loadedTexture->index);
-			appState.Scene.stagingBuffer.offset += loadedTexture->allocated;
-			loadedTexture = loadedTexture->next;
-		}
-	}
-
-	for (auto& entry : appState.Scene.surfaceRGBAGlowTextures)
 	{
 		auto loadedTexture = entry.second.first;
 		while (loadedTexture != nullptr)
