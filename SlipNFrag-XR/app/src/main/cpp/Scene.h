@@ -89,6 +89,7 @@ struct Scene
 	CachedLightmaps lightmaps;
 	std::unordered_map<std::string, CachedSharedMemoryTextures> surfaceTextures;
 	std::unordered_map<std::string, CachedSharedMemoryTextures> surfaceRGBATextures;
+	std::unordered_map<std::string, CachedSharedMemoryTextures> surfaceRGBAGlowTextures;
 	CachedSharedMemoryTextures textures;
 	std::unordered_map<void*, SurfaceTexture> surfaceTextureCache;
 	std::unordered_map<void*, SharedMemoryTexture*> spriteCache;

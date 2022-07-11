@@ -1559,6 +1559,10 @@ void android_main(struct android_app* app)
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				appState.Scene.textures.DeleteOld(appState);
+				for (auto& entry : appState.Scene.surfaceRGBAGlowTextures)
+				{
+					entry.second.DeleteOld(appState);
+				}
 				for (auto& entry : appState.Scene.surfaceRGBATextures)
 				{
 					entry.second.DeleteOld(appState);
@@ -2640,6 +2644,12 @@ void android_main(struct android_app* app)
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.textures.Delete(appState);
+
+			for (auto& entry: appState.Scene.surfaceRGBAGlowTextures)
+			{
+				entry.second.Delete(appState);
+			}
+			appState.Scene.surfaceRGBAGlowTextures.clear();
 
 			for (auto& entry: appState.Scene.surfaceRGBATextures)
 			{
