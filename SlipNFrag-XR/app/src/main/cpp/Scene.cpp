@@ -595,7 +595,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaceRotatedAttributes.inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
 	PipelineAttributes surfaceRotatedWithGlowAttributes { };
-	surfaceRotatedWithGlowAttributes.vertexAttributes.resize(8);
+	surfaceRotatedWithGlowAttributes.vertexAttributes.resize(7);
 	surfaceRotatedWithGlowAttributes.vertexBindings.resize(2);
 	surfaceRotatedWithGlowAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 	surfaceRotatedWithGlowAttributes.vertexBindings[0].stride = 3 * sizeof(float);
@@ -622,12 +622,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfaceRotatedWithGlowAttributes.vertexAttributes[6].binding = 1;
 	surfaceRotatedWithGlowAttributes.vertexAttributes[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	surfaceRotatedWithGlowAttributes.vertexAttributes[6].offset = 20 * sizeof(float);
-	surfaceRotatedWithGlowAttributes.vertexAttributes[7].location = 7;
-	surfaceRotatedWithGlowAttributes.vertexAttributes[7].binding = 1;
-	surfaceRotatedWithGlowAttributes.vertexAttributes[7].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	surfaceRotatedWithGlowAttributes.vertexAttributes[7].offset = 24 * sizeof(float);
 	surfaceRotatedWithGlowAttributes.vertexBindings[1].binding = 1;
-	surfaceRotatedWithGlowAttributes.vertexBindings[1].stride = 28 * sizeof(float);
+	surfaceRotatedWithGlowAttributes.vertexBindings[1].stride = 24 * sizeof(float);
 	surfaceRotatedWithGlowAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	surfaceRotatedWithGlowAttributes.vertexInputState.vertexBindingDescriptionCount = surfaceRotatedWithGlowAttributes.vertexBindings.size();
 	surfaceRotatedWithGlowAttributes.vertexInputState.pVertexBindingDescriptions = surfaceRotatedWithGlowAttributes.vertexBindings.data();
@@ -2050,7 +2046,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		GetStagingBufferSize(appState, d_lists.surfaces_rotated_rgba[i], loaded, size);
 		sorted.Sort(appState, loaded, i, sorted.surfacesRotatedRGBA);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
-		sortedAttributesSize += (loaded.count * 28 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfacesRotatedRGBA);

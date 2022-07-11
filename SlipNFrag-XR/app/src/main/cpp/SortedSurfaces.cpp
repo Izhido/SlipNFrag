@@ -510,17 +510,13 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurface2TexturesLightmap>& s
 					*target++ = surface.yaw * M_PI / 180;
 					*target++ = surface.pitch * M_PI / 180;
 					*target++ = surface.roll * M_PI / 180;
-					*target++ = 0;
 					*target++ = surface.glowTexture.index;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
 				}
 				attributeCount += face->numedges;
 			}
 		}
 	}
-	offset += (attributeCount * 28 * sizeof(float));
+	offset += (attributeCount * 24 * sizeof(float));
 }
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
