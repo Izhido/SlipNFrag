@@ -1192,10 +1192,10 @@ void PerFrame::Render(AppState& appState)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedSurfaceRGBAIndicesBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = GammaCorrect(v_blend[0] * v_blend[3]);
-			pushConstants[1] = GammaCorrect(v_blend[1] * v_blend[3]);
-			pushConstants[2] = GammaCorrect(v_blend[2] * v_blend[3]);
-			pushConstants[3] = 0;
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
 			for (auto& entry : appState.Scene.sorted.surfacesRGBA)
 			{
@@ -1226,10 +1226,10 @@ void PerFrame::Render(AppState& appState)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedSurfaceRGBANoGlowIndicesBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = GammaCorrect(v_blend[0] * v_blend[3]);
-			pushConstants[1] = GammaCorrect(v_blend[1] * v_blend[3]);
-			pushConstants[2] = GammaCorrect(v_blend[2] * v_blend[3]);
-			pushConstants[3] = 0;
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
 			for (auto& entry : appState.Scene.sorted.surfacesRGBANoGlow)
 			{
@@ -1287,10 +1287,10 @@ void PerFrame::Render(AppState& appState)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedSurfaceRotatedRGBAIndicesBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = GammaCorrect(v_blend[0] * v_blend[3]);
-			pushConstants[1] = GammaCorrect(v_blend[1] * v_blend[3]);
-			pushConstants[2] = GammaCorrect(v_blend[2] * v_blend[3]);
-			pushConstants[3] = 0;
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
 			for (auto& entry : appState.Scene.sorted.surfacesRotatedRGBA)
 			{
@@ -1321,10 +1321,10 @@ void PerFrame::Render(AppState& appState)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedSurfaceRotatedRGBANoGlowIndicesBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = GammaCorrect(v_blend[0] * v_blend[3]);
-			pushConstants[1] = GammaCorrect(v_blend[1] * v_blend[3]);
-			pushConstants[2] = GammaCorrect(v_blend[2] * v_blend[3]);
-			pushConstants[3] = 0;
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
 			for (auto& entry : appState.Scene.sorted.surfacesRotatedRGBANoGlow)
 			{

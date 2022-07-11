@@ -41,5 +41,8 @@ void main()
 	vec4 lowGlow = textureLod(fragmentGlowTexture, fragmentGlowTextureCoords, texMip.x);
 	vec4 highGlow = textureLod(fragmentGlowTexture, fragmentGlowTextureCoords, texMip.y);
 	vec4 glow = mix(lowGlow, highGlow, texLevel.y - texMip.x) / 256;
-	outColor = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(gammaCorrected, gammaCorrected, gammaCorrected, 1) + tint + vec4(glow.r, glow.g, glow.b, 0);
+	vec4 color =
+		mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(gammaCorrected, gammaCorrected, gammaCorrected, 1)
+		+ vec4(glow.r, glow.g, glow.b, 0);
+	outColor = mix(color, tint, tint.a);
 }

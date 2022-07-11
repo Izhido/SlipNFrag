@@ -36,5 +36,6 @@ void main()
 	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentTextureIndices.y);
 	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
 	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
-	outColor = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(gammaCorrected, gammaCorrected, gammaCorrected, 1) + tint;
+	vec4 color = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(gammaCorrected, gammaCorrected, gammaCorrected, 1);
+	outColor = mix(color, tint, tint.a);
 }
