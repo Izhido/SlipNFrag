@@ -1362,7 +1362,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		{
 			auto key = std::to_string(surface.width) + "x" + std::to_string(surface.height);
 			auto& cached = surfaceRGBATextures[key];
-			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			// By doing this, we guarantee that the next texture allocations (color and glow) will be done
+			// in the same texture array, which will allow the sorted surfaces algorithm to work as expected:
+			auto extra = (surface.glow_data != nullptr ? 1 : 0);
+			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount - extra)
 			{
 				uint32_t layerCount;
 				if (cached.textures == nullptr)

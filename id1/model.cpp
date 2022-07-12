@@ -61,7 +61,7 @@ struct mpool_t
     {
 		for (auto& list : texturelists)
 		{
-			for (auto& texture : list)
+			for (auto texture : list)
 			{
 				if (texture != nullptr)
 				{
