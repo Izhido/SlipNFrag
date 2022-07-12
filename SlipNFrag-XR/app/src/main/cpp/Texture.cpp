@@ -169,32 +169,36 @@ void Texture::FillMipmapped(AppState& appState, StagingBuffer& buffer)
 	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	auto width = this->width;
 	auto height = this->height;
-	VkImageBlit blit { };
-	blit.srcOffsets[1].x = width;
-	blit.srcOffsets[1].y = height;
-	blit.srcOffsets[1].z = 1;
-	blit.dstOffsets[1].z = 1;
-	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	blit.srcSubresource.mipLevel = 0;
-	blit.srcSubresource.layerCount = layerCount;
-	for (auto i = 1; i < mipCount; i++)
+	if (mipCount > 0)
 	{
-		width /= 2;
-		if (width < 1)
+		std::vector<VkImageBlit> blit(mipCount - 1);
+		for (auto i = 1; i < mipCount; i++)
 		{
-			width = 1;
+			auto& region = blit[i - 1];
+			region.srcOffsets[1].x = width;
+			region.srcOffsets[1].y = height;
+			region.srcOffsets[1].z = 1;
+			region.dstOffsets[1].z = 1;
+			region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.srcSubresource.mipLevel = 0;
+			region.srcSubresource.layerCount = layerCount;
+			width /= 2;
+			if (width < 1)
+			{
+				width = 1;
+			}
+			height /= 2;
+			if (height < 1)
+			{
+				height = 1;
+			}
+			region.dstOffsets[1].x = width;
+			region.dstOffsets[1].y = height;
+			region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.dstSubresource.mipLevel = i;
+			region.dstSubresource.layerCount = layerCount;
 		}
-		height /= 2;
-		if (height < 1)
-		{
-			height = 1;
-		}
-		blit.dstOffsets[1].x = width;
-		blit.dstOffsets[1].y = height;
-		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blit.dstSubresource.mipLevel = i;
-		blit.dstSubresource.layerCount = layerCount;
-		vkCmdBlitImage(buffer.commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+		vkCmdBlitImage(buffer.commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, blit.size(), blit.data(), VK_FILTER_NEAREST);
 	}
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;

@@ -156,11 +156,12 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 	auto toCopy = mips;
 	auto offset = 0;
-	VkImageBlit blit { };
 	auto mipWidth = width;
 	auto mipHeight = height;
 	std::vector<VkBufferImageCopy> regions(toCopy);
 	auto componentCount = (format == VK_FORMAT_R8_UINT ? 1 : 4);
+	auto srcOffsetX = mipWidth;
+	auto srcOffsetY = mipHeight;
 	for (auto i = 0; i < toCopy; i++)
 	{
 		auto& region = regions[i];
@@ -173,8 +174,8 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 		region.imageExtent.height = mipHeight;
 		region.imageExtent.depth = 1;
 		offset += (mipWidth * mipHeight * componentCount);
-		blit.srcOffsets[1].x = mipWidth;
-		blit.srcOffsets[1].y = mipHeight;
+		srcOffsetX = mipWidth;
+		srcOffsetY = mipHeight;
 		mipWidth /= 2;
 		if (mipWidth < 1)
 		{
@@ -193,31 +194,39 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	barrier.subresourceRange.levelCount = toCopy;
 	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-	blit.srcOffsets[1].z = 1;
-	blit.srcSubresource.aspectMask = barrier.subresourceRange.aspectMask;
-	blit.srcSubresource.mipLevel = toCopy - 1;
-	blit.srcSubresource.baseArrayLayer = layer;
-	blit.srcSubresource.layerCount = 1;
-	blit.dstOffsets[1].z = blit.srcOffsets[1].z;
-	blit.dstSubresource.aspectMask = blit.srcSubresource.aspectMask;
-	blit.dstSubresource.baseArrayLayer = blit.srcSubresource.baseArrayLayer;
-	blit.dstSubresource.layerCount = blit.srcSubresource.layerCount;
-	for (auto i = toCopy; i < mipCount; i++)
+	auto remaining = mipCount - toCopy;
+	if (remaining > 0)
 	{
-		blit.dstOffsets[1].x = mipWidth;
-		blit.dstOffsets[1].y = mipHeight;
-		blit.dstSubresource.mipLevel = i;
-		vkCmdBlitImage(buffer.commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
-		mipWidth /= 2;
-		if (mipWidth < 1)
+		std::vector<VkImageBlit> blit(remaining);
+		for (auto i = 0; i < remaining; i++)
 		{
-			mipWidth = 1;
+			auto& region = blit[i];
+			region.srcOffsets[1].x = srcOffsetX;
+			region.srcOffsets[1].y = srcOffsetY;
+			region.srcOffsets[1].z = 1;
+			region.srcSubresource.aspectMask = barrier.subresourceRange.aspectMask;
+			region.srcSubresource.mipLevel = toCopy - 1;
+			region.srcSubresource.baseArrayLayer = layer;
+			region.srcSubresource.layerCount = 1;
+			region.dstOffsets[1].x = mipWidth;
+			region.dstOffsets[1].y = mipHeight;
+			region.dstOffsets[1].z = region.srcOffsets[1].z;
+			region.dstSubresource.mipLevel = toCopy + i;
+			region.dstSubresource.aspectMask = region.srcSubresource.aspectMask;
+			region.dstSubresource.baseArrayLayer = region.srcSubresource.baseArrayLayer;
+			region.dstSubresource.layerCount = region.srcSubresource.layerCount;
+			mipWidth /= 2;
+			if (mipWidth < 1)
+			{
+				mipWidth = 1;
+			}
+			mipHeight /= 2;
+			if (mipHeight < 1)
+			{
+				mipHeight = 1;
+			}
 		}
-		mipHeight /= 2;
-		if (mipHeight < 1)
-		{
-			mipHeight = 1;
-		}
+		vkCmdBlitImage(buffer.commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, blit.size(), blit.data(), VK_FILTER_NEAREST);
 	}
 	barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
