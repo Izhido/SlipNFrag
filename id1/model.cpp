@@ -514,15 +514,16 @@ void Mod_GenerateMipmaps (byte* data, int w, int h)
     for (auto miplevel = 1 ; miplevel<MIPLEVELS ; miplevel++)
     {
         auto mipstep = 1<<miplevel;
+		pixdata.resize(mipstep * mipstep);
         for (auto y=0 ; y<h ; y+=mipstep)
         {
             for (auto x = 0 ; x<w ; x+= mipstep)
             {
-                pixdata.clear();
+				size_t count = 0;
                 for (auto yy=0 ; yy<mipstep ; yy++)
                     for (auto xx=0 ; xx<mipstep ; xx++)
                     {
-                        pixdata.push_back(source[ (y+yy)*w + x + xx ]);
+                        pixdata[count++] = source[ (y+yy)*w + x + xx ];
                     }
                 *lump_p++ = Mod_AveragePixels (pixdata);
             }

@@ -46,7 +46,7 @@ qboolean R_LoadTGA (const char *name, int start, qboolean extra, qboolean log_fa
 	buffer = COM_LoadFile (name, log_failure, contents);
 	if (!buffer)
 	{
-		Con_DPrintf("Bad tga file %s\n", name);
+		Con_DPrintf("R_LoadTGA: Bad tga file %s\n", name);
 		return false;
 	}
 
@@ -78,11 +78,17 @@ qboolean R_LoadTGA (const char *name, int start, qboolean extra, qboolean log_fa
 
 	if (targa_header.image_type!=2
 		&& targa_header.image_type!=10)
-		Con_Printf ("R_LoadTGA: Only type 2 and 10 targa RGB images supported\n");
+	{
+		Con_Printf ("R_LoadTGA: %s - Only type 2 and 10 targa RGB images supported\n", name);
+		return false;
+	}
 
 	if (targa_header.colormap_type !=0
 		|| (targa_header.pixel_size!=32 && targa_header.pixel_size!=24))
-		Con_Printf ("R_LoadTGA: Only 32 or 24 bit images supported (no colormaps)\n");
+	{
+		Con_Printf ("R_LoadTGA: %s - Only 32 or 24 bit images supported (no colormaps)\n", name);
+		return false;
+	}
 
 	columns = targa_header.width;
 	rows = targa_header.height;
