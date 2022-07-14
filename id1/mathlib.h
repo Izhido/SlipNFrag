@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef float vec_t;
 typedef vec_t vec3_t[3];
-typedef vec_t vec4_t[4];
 typedef vec_t vec5_t[5];
 
 typedef	int	fixed4_t;
@@ -41,7 +40,6 @@ extern	int nanmask;
 #define	IS_NAN(x) (((*(int *)&x)&nanmask)==nanmask)
 
 #define DotProduct(x,y) (x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
-#define DotProduct4(x,y) (x[0]*y[0]+x[1]*y[1]+x[2]*y[2]+x[3]*y[3])
 #define VectorSubtract(a,b,c) {c[0]=a[0]-b[0];c[1]=a[1]-b[1];c[2]=a[2]-b[2];}
 #define VectorAdd(a,b,c) {c[0]=a[0]+b[0];c[1]=a[1]+b[1];c[2]=a[2]+b[2];}
 #define VectorCopy(a,b) {b[0]=a[0];b[1]=a[1];b[2]=a[2];}
@@ -80,11 +78,11 @@ float	anglemod(float a);
 #define BOX_ON_PLANE_SIDE(emins, emaxs, p)	\
 	(((p)->type < 3)?						\
 	(										\
-		((p)->normal_dist[3] <= (emins)[(p)->type])?	\
+		((p)->dist <= (emins)[(p)->type])?	\
 			1								\
 		:									\
 		(									\
-			((p)->normal_dist[3] >= (emaxs)[(p)->type])?\
+			((p)->dist >= (emaxs)[(p)->type])?\
 				2							\
 			:								\
 				3							\

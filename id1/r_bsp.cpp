@@ -52,8 +52,6 @@ static mvertex_t	*pfrontenter, *pfrontexit;
 
 static qboolean		makeclippededge;
 
-vec4_t				r_modelorg4;
-
 extern std::vector<int> r_visleaves;
 extern std::vector<int> r_visnodes;
 
@@ -183,11 +181,11 @@ void R_RecursiveClipBPoly (bedge_t *pedges, mnode_t *pnode, msurface_t *psurf)
 // transform the BSP plane into model space
 // FIXME: cache these?
 	splitplane = pnode->plane;
-	tplane.normal_dist[3] = splitplane->normal_dist[3] -
-			DotProduct(r_entorigin, splitplane->normal_dist);
-	tplane.normal_dist[0] = DotProduct (entity_rotation[0], splitplane->normal_dist);
-	tplane.normal_dist[1] = DotProduct (entity_rotation[1], splitplane->normal_dist);
-	tplane.normal_dist[2] = DotProduct (entity_rotation[2], splitplane->normal_dist);
+	tplane.dist = splitplane->dist -
+			DotProduct(r_entorigin, splitplane->normal);
+	tplane.normal[0] = DotProduct (entity_rotation[0], splitplane->normal);
+	tplane.normal[1] = DotProduct (entity_rotation[1], splitplane->normal);
+	tplane.normal[2] = DotProduct (entity_rotation[2], splitplane->normal);
 
 // clip edges to BSP plane
 	for ( ; pedges ; pedges = pnextedge)
@@ -197,8 +195,8 @@ void R_RecursiveClipBPoly (bedge_t *pedges, mnode_t *pnode, msurface_t *psurf)
 	// set the status for the last point as the previous point
 	// FIXME: cache this stuff somehow?
 		plastvert = pedges->v[0];
-		lastdist = DotProduct (plastvert->position, tplane.normal_dist) -
-				   tplane.normal_dist[3];
+		lastdist = DotProduct (plastvert->position, tplane.normal) -
+				   tplane.dist;
 
 		if (lastdist > 0)
 			lastside = 0;
@@ -207,7 +205,7 @@ void R_RecursiveClipBPoly (bedge_t *pedges, mnode_t *pnode, msurface_t *psurf)
 
 		pvert = pedges->v[1];
 
-		dist = DotProduct (pvert->position, tplane.normal_dist) - tplane.normal_dist[3];
+		dist = DotProduct (pvert->position, tplane.normal) - tplane.dist;
 
 		if (dist > 0)
 			side = 0;
@@ -359,13 +357,12 @@ void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel)
 	numsurfaces = pmodel->nummodelsurfaces;
 	pedges = pmodel->edges;
 
-	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1 };
 	for (i=0 ; i<numsurfaces ; i++, psurf++)
 	{
 	// find which side of the node we are on
 		pplane = psurf->plane;
 
-		dot = DotProduct4 (modelorg4, pplane->normal_dist);
+		dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
 
 	// draw the polygon
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
@@ -448,13 +445,12 @@ void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags)
 	psurf = &pmodel->surfaces[pmodel->firstmodelsurface];
 	numsurfaces = pmodel->nummodelsurfaces;
 
-	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1 };
 	for (i=0 ; i<numsurfaces ; i++, psurf++)
 	{
 	// find which side of the node we are on
 		pplane = psurf->plane;
 
-		dot = DotProduct4 (modelorg4, pplane->normal_dist);
+		dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
 
 	// draw the polygon
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
@@ -485,13 +481,12 @@ void R_DrawSubmodelPolygonsToLists (model_t *pmodel)
 	psurf = &pmodel->surfaces[pmodel->firstmodelsurface];
 	numsurfaces = pmodel->nummodelsurfaces;
 
-	vec4_t modelorg4 { modelorg[0], modelorg[1], modelorg[2], -1 };
 	for (i=0 ; i<numsurfaces ; i++, psurf++)
 	{
 	// find which side of the node we are on
 		pplane = psurf->plane;
 
-		dot = DotProduct4 (modelorg4, pplane->normal_dist);
+		dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
 
 	// draw the polygon
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
@@ -616,16 +611,16 @@ void R_RenderAllWorldNodes (model_t *world)
 		switch (plane->type)
 		{
 		case PLANE_X:
-			dot = modelorg[0] - plane->normal_dist[3];
+			dot = modelorg[0] - plane->dist;
 			break;
 		case PLANE_Y:
-			dot = modelorg[1] - plane->normal_dist[3];
+			dot = modelorg[1] - plane->dist;
 			break;
 		case PLANE_Z:
-			dot = modelorg[2] - plane->normal_dist[3];
+			dot = modelorg[2] - plane->dist;
 			break;
 		default:
-			dot = DotProduct4 (r_modelorg4, plane->normal_dist);
+			dot = DotProduct (modelorg, plane->normal) - plane->dist;
 			break;
 		}
 	
@@ -764,16 +759,16 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 		switch (plane->type)
 		{
 		case PLANE_X:
-			dot = modelorg[0] - plane->normal_dist[3];
+			dot = modelorg[0] - plane->dist;
 			break;
 		case PLANE_Y:
-			dot = modelorg[1] - plane->normal_dist[3];
+			dot = modelorg[1] - plane->dist;
 			break;
 		case PLANE_Z:
-			dot = modelorg[2] - plane->normal_dist[3];
+			dot = modelorg[2] - plane->dist;
 			break;
 		default:
-			dot = DotProduct4 (r_modelorg4, plane->normal_dist);
+			dot = DotProduct (modelorg, plane->normal) - plane->dist;
 			break;
 		}
 	
@@ -841,11 +836,6 @@ void R_RenderWorld (void)
 	VectorCopy (r_origin, modelorg);
 	clmodel = currententity->model;
 	r_pcurrentvertbase = clmodel->vertexes;
-
-	r_modelorg4[0] = modelorg[0];
-	r_modelorg4[1] = modelorg[1];
-	r_modelorg4[2] = modelorg[2];
-	r_modelorg4[3] = -1;
 
 	if (d_uselists && (r_visleaf_p - r_visleaves.data()) < 512)
 		R_RenderAllWorldNodes (clmodel);

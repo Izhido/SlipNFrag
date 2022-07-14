@@ -651,7 +651,8 @@ void PF_traceline (void)
 	pr_global_struct->trace_inwater = trace.inwater;
 	pr_global_struct->trace_inopen = trace.inopen;
 	VectorCopy (trace.endpos, pr_global_struct->trace_endpos);
-	VectorCopy4 (trace.plane, ((float*)&pr_global_struct->trace_plane_normal));
+	VectorCopy (trace.plane.normal, pr_global_struct->trace_plane_normal);
+	pr_global_struct->trace_plane_dist =  trace.plane.dist;
 	if (trace.ent)
 		pr_global_struct->trace_ent = EDICT_TO_PROG(trace.ent);
 	else

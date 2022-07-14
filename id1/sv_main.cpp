@@ -433,7 +433,7 @@ crosses a waterline.
 
 std::vector<byte> fatpvs;
 
-void SV_AddToFatPVS (const vec4_t org, mnode_t *node)
+void SV_AddToFatPVS (const vec3_t org, mnode_t *node)
 {
 	int		i;
 	byte	*pvs;
@@ -455,7 +455,7 @@ void SV_AddToFatPVS (const vec4_t org, mnode_t *node)
 		}
 	
 		plane = node->plane;
-		d = DotProduct4 (org, plane->normal_dist);
+		d = DotProduct (org, plane->normal) - plane->dist;
 		if (d > 8)
 			node = node->children[0];
 		else if (d < -8)
@@ -476,7 +476,7 @@ Calculates a PVS that is the inclusive or of all leafs within 8 pixels of the
 given point.
 =============
 */
-byte *SV_FatPVS (const vec4_t org)
+byte *SV_FatPVS (const vec3_t org)
 {
 	fatpvs.resize((sv.worldmodel->numleafs+31)>>3);
     std::fill(fatpvs.begin(), fatpvs.end(), 0);
@@ -498,13 +498,12 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 	int		e, i;
 	int		bits;
 	byte	*pvs;
-	vec4_t	org;
+	vec3_t	org;
 	float	miss;
 	edict_t	*ent;
 
 // find the client's PVS
 	VectorAdd (clent->v.origin, clent->v.view_ofs, org);
-	org[3] = -1;
 	pvs = SV_FatPVS (org);
 
 // send over all entities (excpet the client) that touch the pvs

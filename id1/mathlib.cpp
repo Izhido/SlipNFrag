@@ -208,36 +208,36 @@ int BoxOnPlaneSide (const vec3_t emins, const vec3_t emaxs, mplane_t *p)
 	switch (p->signbits)
 	{
 	case 0:
-dist1 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist[2]*emaxs[2];
-dist2 = p->normal_dist[0]*emins[0] + p->normal_dist[1]*emins[1] + p->normal_dist[2]*emins[2];
+dist1 = p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
+dist2 = p->normal[0]*emins[0] + p->normal[1]*emins[1] + p->normal[2]*emins[2];
 		break;
 	case 1:
-dist1 = p->normal_dist[0]*emins[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist[2]*emaxs[2];
-dist2 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emins[1] + p->normal_dist[2]*emins[2];
+dist1 = p->normal[0]*emins[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
+dist2 = p->normal[0]*emaxs[0] + p->normal[1]*emins[1] + p->normal[2]*emins[2];
 		break;
 	case 2:
-dist1 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emins[1] + p->normal_dist[2]*emaxs[2];
-dist2 = p->normal_dist[0]*emins[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist[2]*emins[2];
+dist1 = p->normal[0]*emaxs[0] + p->normal[1]*emins[1] + p->normal[2]*emaxs[2];
+dist2 = p->normal[0]*emins[0] + p->normal[1]*emaxs[1] + p->normal[2]*emins[2];
 		break;
 	case 3:
-dist1 = p->normal_dist[0]*emins[0] + p->normal_dist[1]*emins[1] + p->normal_dist[2]*emaxs[2];
-dist2 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist[2]*emins[2];
+dist1 = p->normal[0]*emins[0] + p->normal[1]*emins[1] + p->normal[2]*emaxs[2];
+dist2 = p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emins[2];
 		break;
 	case 4:
-dist1 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist[2]*emins[2];
-dist2 = p->normal_dist[0]*emins[0] + p->normal_dist[1]*emins[1] + p->normal_dist[2]*emaxs[2];
+dist1 = p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emins[2];
+dist2 = p->normal[0]*emins[0] + p->normal[1]*emins[1] + p->normal[2]*emaxs[2];
 		break;
 	case 5:
-dist1 = p->normal_dist[0]*emins[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist[2]*emins[2];
-dist2 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emins[1] + p->normal_dist[2]*emaxs[2];
+dist1 = p->normal[0]*emins[0] + p->normal[1]*emaxs[1] + p->normal[2]*emins[2];
+dist2 = p->normal[0]*emaxs[0] + p->normal[1]*emins[1] + p->normal[2]*emaxs[2];
 		break;
 	case 6:
-dist1 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emins[1] + p->normal_dist[2]*emins[2];
-dist2 = p->normal_dist[0]*emins[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist[2]*emaxs[2];
+dist1 = p->normal[0]*emaxs[0] + p->normal[1]*emins[1] + p->normal[2]*emins[2];
+dist2 = p->normal[0]*emins[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
 		break;
 	case 7:
-dist1 = p->normal_dist[0]*emins[0] + p->normal_dist[1]*emins[1] + p->normal_dist[2]*emins[2];
-dist2 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist[2]*emaxs[2];
+dist1 = p->normal[0]*emins[0] + p->normal[1]*emins[1] + p->normal[2]*emins[2];
+dist2 = p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
 		break;
 	default:
 		dist1 = dist2 = 0;		// shut up compiler
@@ -273,9 +273,9 @@ dist2 = p->normal_dist[0]*emaxs[0] + p->normal_dist[1]*emaxs[1] + p->normal_dist
 #endif
 
 	sides = 0;
-	if (dist1 >= p->normal_dist[3])
+	if (dist1 >= p->dist)
 		sides = 1;
-	if (dist2 < p->normal_dist[3])
+	if (dist2 < p->dist)
 		sides |= 2;
 
 #ifdef PARANOID

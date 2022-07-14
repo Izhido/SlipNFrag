@@ -277,7 +277,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 		if (!trace.ent)
 			Sys_Error ("SV_FlyMove: !trace.ent");
 
-		if (trace.plane[2] > 0.7)
+		if (trace.plane.normal[2] > 0.7)
 		{
 			blocked |= 1;		// floor
 			if (trace.ent->v.solid == SOLID_BSP)
@@ -286,7 +286,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 				ent->v.groundentity = EDICT_TO_PROG(trace.ent);
 			}
 		}
-		if (!trace.plane[2])
+		if (!trace.plane.normal[2])
 		{
 			blocked |= 2;		// step
 			if (steptrace)
@@ -310,7 +310,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 			return 3;
 		}
 
-		VectorCopy (trace.plane, planes[numplanes]);
+		VectorCopy (trace.plane.normal, planes[numplanes]);
 		numplanes++;
 
 //
@@ -714,15 +714,15 @@ void SV_WallFriction (edict_t *ent, trace_t *trace)
 	vec3_t		into, side;
 	
 	AngleVectors (ent->v.v_angle, forward, right, up);
-	d = DotProduct (trace->plane, forward);
+	d = DotProduct (trace->plane.normal, forward);
 	
 	d += 0.5;
 	if (d >= 0)
 		return;
 		
 // cut the tangential velocity
-	i = DotProduct (trace->plane, ent->v.velocity);
-	VectorScale (trace->plane, i, into);
+	i = DotProduct (trace->plane.normal, ent->v.velocity);
+	VectorScale (trace->plane.normal, i, into);
 	VectorSubtract (ent->v.velocity, into, side);
 	
 	ent->v.velocity[0] = side[0] * (1 + d);
@@ -873,7 +873,7 @@ void SV_WalkMove (edict_t *ent)
 // move down
 	downtrace = SV_PushEntity (ent, downmove);	// FIXME: don't link?
 
-	if (downtrace.plane[2] > 0.7)
+	if (downtrace.plane.normal[2] > 0.7)
 	{
 		if (ent->v.solid == SOLID_BSP)
 		{
@@ -1123,10 +1123,10 @@ void SV_Physics_Toss (edict_t *ent, int num)
 	else
 		backoff = 1;
 
-	ClipVelocity (ent->v.velocity, trace.plane, ent->v.velocity, backoff);
+	ClipVelocity (ent->v.velocity, trace.plane.normal, ent->v.velocity, backoff);
 
 // stop if on ground
-	if (trace.plane[2] > 0.7)
+	if (trace.plane.normal[2] > 0.7)
 	{		
 		if (ent->v.velocity[2] < 60 || ent->v.movetype != MOVETYPE_BOUNCE)
 		{

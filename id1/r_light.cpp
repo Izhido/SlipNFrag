@@ -77,7 +77,7 @@ void R_MarkLights (dlight_t *light, int index, mnode_t *node)
 		return;
 
 	splitplane = node->plane;
-	dist = DotProduct (light->origin, splitplane->normal_dist) - splitplane->normal_dist[3];
+	dist = DotProduct (light->origin, splitplane->normal) - splitplane->dist;
 	
 	if (dist > light->radius)
 	{
@@ -164,8 +164,8 @@ int RecursiveLightPoint (mnode_t *node, const vec3_t start, const vec3_t end)
 
 // FIXME: optimize for axial
 	plane = node->plane;
-	front = DotProduct (start, plane->normal_dist) - plane->normal_dist[3];
-	back = DotProduct (end, plane->normal_dist) - plane->normal_dist[3];
+	front = DotProduct (start, plane->normal) - plane->dist;
+	back = DotProduct (end, plane->normal) - plane->dist;
 	side = front < 0;
 	
 	if ( (back < 0) == side)
