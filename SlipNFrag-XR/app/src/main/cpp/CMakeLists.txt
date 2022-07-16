@@ -8,7 +8,7 @@ set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.24")
 set(OVR_OPENXR_DIR "${ROOT_DIR}/ovr_openxr_mobile_sdk_40.0")
 set(ADRENO_DIR "${ROOT_DIR}/VkAdrenoLayer_v1.2")
 set(ANDROID_BINARIES_DIR "${ROOT_DIR}/android-binaries-1.3.216.0")
-set(ASAN_DIR "${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/14.0.1/lib/linux")
+set(ASAN_DIR "${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/14.0.6/lib/linux")
 
 option(BUILD_WITH_ASAN "Build with Address Sanitizer" OFF)
 option(BUILD_WITH_VALIDATION "Build with Vulkan validation layer" OFF)

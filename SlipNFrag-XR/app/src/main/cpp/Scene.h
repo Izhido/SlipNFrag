@@ -38,7 +38,9 @@ struct Scene
 	Pipeline fences;
 	Pipeline fencesRotated;
 	Pipeline turbulent;
+	Pipeline turbulentRGBA;
 	Pipeline turbulentLit;
+	Pipeline turbulentLitRGBA;
 	Pipeline sprites;
 	Pipeline alias;
 	Pipeline viewmodel;
@@ -61,7 +63,9 @@ struct Scene
 	int lastFence;
 	int lastFenceRotated;
 	int lastTurbulent;
+	int lastTurbulentRGBA;
 	int lastTurbulentLit;
+	int lastTurbulentLitRGBA;
 	int lastSprite;
 	int lastAlias;
 	int lastViewmodel;
@@ -79,7 +83,9 @@ struct Scene
 	std::vector<LoadedSurface> loadedFences;
 	std::vector<LoadedSurfaceRotated> loadedFencesRotated;
 	std::vector<LoadedTurbulent> loadedTurbulent;
+	std::vector<LoadedTurbulent> loadedTurbulentRGBA;
 	std::vector<LoadedSurface> loadedTurbulentLit;
+	std::vector<LoadedSurface> loadedTurbulentLitRGBA;
 	std::vector<LoadedSprite> loadedSprites;
 	std::vector<LoadedAlias> loadedAlias;
 	std::vector<LoadedAlias> loadedViewmodels;
@@ -157,9 +163,15 @@ struct Scene
 	VkDeviceSize sortedTurbulentVerticesBase;
 	VkDeviceSize sortedTurbulentAttributesBase;
 	VkDeviceSize sortedTurbulentIndicesBase;
+	VkDeviceSize sortedTurbulentRGBAVerticesBase;
+	VkDeviceSize sortedTurbulentRGBAAttributesBase;
+	VkDeviceSize sortedTurbulentRGBAIndicesBase;
 	VkDeviceSize sortedTurbulentLitVerticesBase;
 	VkDeviceSize sortedTurbulentLitAttributesBase;
 	VkDeviceSize sortedTurbulentLitIndicesBase;
+	VkDeviceSize sortedTurbulentLitRGBAVerticesBase;
+	VkDeviceSize sortedTurbulentLitRGBAAttributesBase;
+	VkDeviceSize sortedTurbulentLitRGBAIndicesBase;
 	VkDeviceSize paletteSize;
 	VkDeviceSize host_colormapSize;
 	VkDeviceSize skySize;
@@ -182,8 +194,9 @@ struct Scene
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
 	void AddToBufferBarrier(VkBuffer buffer);
-	static VkDeviceSize GetAllocatedFor(int width, int height);
+	static VkDeviceSize GetAllocatedFor(int width, int height, int mips);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
+	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2Textures& loaded, VkDeviceSize& size);
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);

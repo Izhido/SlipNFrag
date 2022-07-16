@@ -467,7 +467,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulentRGBA, appState.Scene.loadedTurbulentRGBA, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulentLitRGBA, appState.Scene.loadedTurbulentLitRGBA, stagingBuffer, offset);
 	}
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
@@ -480,7 +482,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.turbulentRGBA, appState.Scene.loadedTurbulentRGBA, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.turbulentLitRGBA, appState.Scene.loadedTurbulentLitRGBA, stagingBuffer, offset);
 	}
 	if (appState.Scene.sortedIndicesCount > 0)
 	{
@@ -495,7 +499,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulentRGBA, appState.Scene.loadedTurbulentRGBA, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulentLitRGBA, appState.Scene.loadedTurbulentLitRGBA, stagingBuffer, offset);
 			while (offset % 4 != 0)
 			{
 				offset++;
@@ -512,7 +518,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.turbulentRGBA, appState.Scene.loadedTurbulentRGBA, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.turbulentLitRGBA, appState.Scene.loadedTurbulentLitRGBA, stagingBuffer, offset);
 		}
 	}
 
@@ -554,7 +562,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
 			GenerateMipmaps(stagingBuffer, offset, loadedTexture);
-			offset += loadedTexture->allocated;
+			offset += loadedTexture->size;
 			loadedTexture = loadedTexture->next;
 		}
 	}
@@ -605,7 +613,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		while (loadedTexture != nullptr)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
-			offset += loadedTexture->allocated;
+			offset += loadedTexture->size;
 			loadedTexture = loadedTexture->next;
 		}
 	}
@@ -875,7 +883,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		while (loadedTexture != nullptr)
 		{
 			loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->index);
-			appState.Scene.stagingBuffer.offset += loadedTexture->allocated;
+			appState.Scene.stagingBuffer.offset += loadedTexture->size;
 			loadedTexture = loadedTexture->next;
 		}
 	}
@@ -913,7 +921,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		while (loadedTexture != nullptr)
 		{
 			loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->mips, loadedTexture->index);
-			appState.Scene.stagingBuffer.offset += loadedTexture->allocated;
+			appState.Scene.stagingBuffer.offset += loadedTexture->size;
 			loadedTexture = loadedTexture->next;
 		}
 	}
@@ -970,7 +978,9 @@ void PerFrame::Render(AppState& appState)
 		appState.Scene.lastFence < 0 &&
 		appState.Scene.lastFenceRotated < 0 &&
 		appState.Scene.lastTurbulent < 0 &&
+		appState.Scene.lastTurbulentRGBA < 0 &&
 		appState.Scene.lastTurbulentLit < 0 &&
+		appState.Scene.lastTurbulentLitRGBA < 0 &&
 		appState.Scene.lastAlias < 0 &&
 		appState.Scene.lastViewmodel < 0 &&
 		appState.Scene.lastSky < 0 &&
@@ -1398,6 +1408,36 @@ void PerFrame::Render(AppState& appState)
 				indexBase += entry.indexCount;
 			}
 		}
+		if (appState.Scene.lastTurbulentRGBA >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBA.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto verticesBase = appState.Scene.verticesSize + appState.Scene.sortedTurbulentRGBAVerticesBase;
+			auto attributesBase = appState.Scene.attributesSize + appState.Scene.sortedTurbulentRGBAAttributesBase;
+			VkDeviceSize indexBase = 0;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &verticesBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributesBase);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.sortedTurbulentRGBAIndicesBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedTurbulentRGBAIndicesBase, VK_INDEX_TYPE_UINT32);
+			}
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
+			pushConstants[4] = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), pushConstants);
+			for (auto& entry : appState.Scene.sorted.turbulentRGBA)
+			{
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBA.pipelineLayout, 1, 1, &entry.texture, 0, nullptr);
+				vkCmdDrawIndexed(commandBuffer, entry.indexCount, 1, indexBase, 0, 0);
+				indexBase += entry.indexCount;
+			}
+		}
 		if (appState.Scene.lastTurbulentLit >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipeline);
@@ -1423,6 +1463,40 @@ void PerFrame::Render(AppState& appState)
 				for (auto& subEntry : entry.textures)
 				{
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
+					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
+					indexBase += subEntry.indexCount;
+				}
+			}
+		}
+		if (appState.Scene.lastTurbulentLitRGBA >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLitRGBA.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLitRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto verticesBase = appState.Scene.verticesSize + appState.Scene.sortedTurbulentLitRGBAVerticesBase;
+			auto attributesBase = appState.Scene.attributesSize + appState.Scene.sortedTurbulentLitRGBAAttributesBase;
+			VkDeviceSize indexBase = 0;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &verticesBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributesBase);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.sortedTurbulentLitRGBAIndicesBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedTurbulentLitRGBAIndicesBase, VK_INDEX_TYPE_UINT32);
+			}
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
+			pushConstants[4] = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentLitRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), pushConstants);
+			for (auto& entry : appState.Scene.sorted.turbulentLitRGBA)
+			{
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLitRGBA.pipelineLayout, 1, 1, &entry.lightmap, 0, nullptr);
+				for (auto& subEntry : entry.textures)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLitRGBA.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
 					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
 					indexBase += subEntry.indexCount;
 				}

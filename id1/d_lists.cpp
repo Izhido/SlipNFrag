@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 
@@ -29,7 +29,9 @@ void D_ResetLists ()
 	d_lists.last_fence_rotated_rgba = -1;
 	d_lists.last_fence_rotated_rgba_no_glow = -1;
 	d_lists.last_turbulent = -1;
+	d_lists.last_turbulent_rgba = -1;
 	d_lists.last_turbulent_lit = -1;
+	d_lists.last_turbulent_lit_rgba = -1;
 	d_lists.last_sprite = -1;
 	d_lists.last_alias = -1;
 	d_lists.last_viewmodel = -1;
@@ -49,6 +51,20 @@ void D_ResetLists ()
 	d_lists.clear_color = -1;
 }
 
+void D_FillLightmap (dsurface_t& surface, surfcache_s* cache)
+{
+	surface.lightmap_width = cache->width / sizeof(unsigned);
+	surface.lightmap_height = cache->height;
+	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
+	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
+	{
+		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
+	}
+	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
+	d_lists.last_lightmap_texel += surface.lightmap_size;
+	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+}
+
 void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
 	surface.face = face;
@@ -65,16 +81,7 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 		surface.size = surface.size * 85 / 64; // Valid if MIPLEVELS == 4
 	}
 	surface.data = (unsigned char*)texture + texture->offsets[0];
-	surface.lightmap_width = cache->width / sizeof(unsigned);
-	surface.lightmap_height = cache->height;
-	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
-	{
-		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
-	}
-	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
-	d_lists.last_lightmap_texel += surface.lightmap_size;
-	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+	D_FillLightmap(surface, cache);
 	surface.count = face->numedges;
 }
 
@@ -117,16 +124,7 @@ void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcac
 	surface.size = surface.width * surface.height * sizeof(unsigned);
 	surface.mips = 1;
 	surface.data = (unsigned char*)texture + texture->offsets[0];
-	surface.lightmap_width = cache->width / sizeof(unsigned);
-	surface.lightmap_height = cache->height;
-	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
-	{
-		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
-	}
-	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
-	d_lists.last_lightmap_texel += surface.lightmap_size;
-	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+	D_FillLightmap(surface, cache);
 	surface.count = face->numedges;
 }
 
@@ -345,11 +343,10 @@ void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, e
 
 void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity, int mips)
 {
-	auto texinfo = face->texinfo;
-	auto texture = texinfo->texture;
 	turbulent.face = face;
 	turbulent.entity = entity;
 	turbulent.model = entity->model;
+	auto texture = face->texinfo->texture;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
 	turbulent.size = turbulent.width * turbulent.height;
@@ -358,6 +355,20 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	{
 		turbulent.size = turbulent.size * 85 / 64; // Valid if MIPLEVELS == 4
 	}
+	turbulent.data = (unsigned char*)texture + texture->offsets[0];
+	turbulent.count = face->numedges;
+}
+
+void D_FillTurbulentRGBAData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity)
+{
+	turbulent.face = face;
+	turbulent.entity = entity;
+	turbulent.model = entity->model;
+	auto texture = face->texinfo->texture->external_color;
+	turbulent.width = texture->width;
+	turbulent.height = texture->height;
+	turbulent.size = turbulent.width * turbulent.height * sizeof(unsigned);
+	turbulent.mips = 1;
 	turbulent.data = (unsigned char*)texture + texture->offsets[0];
 	turbulent.count = face->numedges;
 }
@@ -377,6 +388,21 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
 }
 
+void D_AddTurbulentRGBAToLists (msurface_t* face, entity_t* entity)
+{
+	if (face->numedges < 3)
+	{
+		return;
+	}
+	d_lists.last_turbulent_rgba++;
+	if (d_lists.last_turbulent_rgba >= d_lists.turbulent_rgba.size())
+	{
+		d_lists.turbulent_rgba.emplace_back();
+	}
+	auto& turbulent = d_lists.turbulent_rgba[d_lists.last_turbulent_rgba];
+	D_FillTurbulentRGBAData(turbulent, face, entity);
+}
+
 void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3)
@@ -391,16 +417,24 @@ void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* e
 	auto& turbulent = d_lists.turbulent_lit[d_lists.last_turbulent_lit];
 	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
 	turbulent.created = cache->created;
-	turbulent.lightmap_width = cache->width / sizeof(unsigned);
-	turbulent.lightmap_height = cache->height;
-	turbulent.lightmap_size = turbulent.lightmap_width * turbulent.lightmap_height;
-	if (d_lists.last_lightmap_texel + turbulent.lightmap_size >= d_lists.lightmap_texels.size())
+	D_FillLightmap(turbulent, cache);
+}
+
+void D_AddTurbulentLitRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3)
 	{
-		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
+		return;
 	}
-	turbulent.lightmap_texels = d_lists.last_lightmap_texel + 1;
-	d_lists.last_lightmap_texel += turbulent.lightmap_size;
-	memcpy(d_lists.lightmap_texels.data() + turbulent.lightmap_texels, &cache->data[0], turbulent.lightmap_size * sizeof(unsigned));
+	d_lists.last_turbulent_lit_rgba++;
+	if (d_lists.last_turbulent_lit_rgba >= d_lists.turbulent_lit_rgba.size())
+	{
+		d_lists.turbulent_lit_rgba.emplace_back();
+	}
+	auto& turbulent = d_lists.turbulent_lit_rgba[d_lists.last_turbulent_lit_rgba];
+	D_FillTurbulentRGBAData(turbulent, face, entity);
+	turbulent.created = cache->created;
+	D_FillLightmap(turbulent, cache);
 }
 
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)

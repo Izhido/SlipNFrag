@@ -112,7 +112,9 @@ struct dlists_t
 	int last_fence_rotated_rgba;
 	int last_fence_rotated_rgba_no_glow;
 	int last_turbulent;
+	int last_turbulent_rgba;
 	int last_turbulent_lit;
+	int last_turbulent_lit_rgba;
 	int last_sprite;
 	int last_alias;
 	int last_viewmodel;
@@ -155,7 +157,9 @@ struct dlists_t
 	std::vector<dsurfacerotatedwithglow_t> fences_rotated_rgba;
 	std::vector<dsurfacerotated_t> fences_rotated_rgba_no_glow;
 	std::vector<dturbulent_t> turbulent;
+	std::vector<dturbulent_t> turbulent_rgba;
 	std::vector<dsurface_t> turbulent_lit;
+	std::vector<dsurface_t> turbulent_lit_rgba;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dalias_t> alias;
 	std::vector<dalias_t> viewmodels;
@@ -192,7 +196,9 @@ void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, enti
 void D_AddFenceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
+void D_AddTurbulentRGBAToLists (msurface_t* face, entity_t* entity);
 void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
+void D_AddTurbulentLitRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);

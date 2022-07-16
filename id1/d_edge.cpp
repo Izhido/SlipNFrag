@@ -574,7 +574,8 @@ void D_DrawSurfacesToLists (void)
 				cacheblock = (pixel_t *)
 						((byte *)pface->texinfo->texture +
 						pface->texinfo->texture->offsets[0]);
-				cachewidth = pface->texinfo->texture->width;
+				auto texture = pface->texinfo->texture;
+				cachewidth = texture->width;
 
 				if (s->insubmodel)
 				{
@@ -595,16 +596,25 @@ void D_DrawSurfacesToLists (void)
 					pcurrentcache = D_CacheLightmap (pface);
 					if (pcurrentcache == nullptr)
 					{
-						D_AddTurbulentToLists (pface, currententity);
+						if (texture->external_color != nullptr)
+							D_AddTurbulentRGBAToLists (pface, currententity);
+						else
+							D_AddTurbulentToLists (pface, currententity);
 					}
 					else
 					{
-						D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
+						if (texture->external_color != nullptr)
+							D_AddTurbulentLitRGBAToLists (pface, pcurrentcache, currententity);
+						else
+							D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
 					}
 				}
 				else
 				{
-					D_AddTurbulentToLists (pface, currententity);
+					if (texture->external_color != nullptr)
+						D_AddTurbulentRGBAToLists (pface, currententity);
+					else
+						D_AddTurbulentToLists (pface, currententity);
 				}
 
 				if (s->insubmodel)
@@ -797,7 +807,8 @@ void D_DrawSurfacesToListsIfNeeded (void)
 				cacheblock = (pixel_t *)
 						((byte *)pface->texinfo->texture +
 						pface->texinfo->texture->offsets[0]);
-				cachewidth = pface->texinfo->texture->width;
+				auto texture = pface->texinfo->texture;
+				cachewidth = texture->width;
 
 				if (s->insubmodel)
 				{
@@ -818,16 +829,25 @@ void D_DrawSurfacesToListsIfNeeded (void)
 					pcurrentcache = D_CacheLightmap (pface);
 					if (pcurrentcache == nullptr)
 					{
-						D_AddTurbulentToLists (pface, currententity);
+						if (texture->external_color != nullptr)
+							D_AddTurbulentRGBAToLists (pface, currententity);
+						else
+							D_AddTurbulentToLists (pface, currententity);
 					}
 					else
 					{
-						D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
+						if (texture->external_color != nullptr)
+							D_AddTurbulentLitRGBAToLists (pface, pcurrentcache, currententity);
+						else
+							D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
 					}
 				}
 				else
 				{
-					D_AddTurbulentToLists (pface, currententity);
+					if (texture->external_color != nullptr)
+						D_AddTurbulentRGBAToLists (pface, currententity);
+					else
+						D_AddTurbulentToLists (pface, currententity);
 				}
 
 				if (s->insubmodel)
@@ -989,23 +1009,33 @@ void D_DrawOneSurface (msurface_t* surf)
 			cacheblock = (pixel_t *)
 					((byte *)surf->texinfo->texture +
 					 surf->texinfo->texture->offsets[0]);
-			cachewidth = surf->texinfo->texture->width;
+			auto texture = surf->texinfo->texture;
+			cachewidth = texture->width;
 
 			if (surf->samples != nullptr)
 			{
 				auto pcurrentcache = D_CacheLightmap (surf);
 				if (pcurrentcache == nullptr)
 				{
-					D_AddTurbulentToLists (surf, currententity);
+					if (texture->external_color != nullptr)
+						D_AddTurbulentRGBAToLists (surf, currententity);
+					else
+						D_AddTurbulentToLists (surf, currententity);
 				}
 				else
 				{
-					D_AddTurbulentLitToLists (surf, pcurrentcache, currententity);
+					if (texture->external_color != nullptr)
+						D_AddTurbulentLitRGBAToLists (surf, pcurrentcache, currententity);
+					else
+						D_AddTurbulentLitToLists (surf, pcurrentcache, currententity);
 				}
 			}
 			else
 			{
-				D_AddTurbulentToLists (surf, currententity);
+				if (texture->external_color != nullptr)
+					D_AddTurbulentRGBAToLists (surf, currententity);
+				else
+					D_AddTurbulentToLists (surf, currententity);
 			}
 		}
 		else

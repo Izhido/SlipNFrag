@@ -387,8 +387,12 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/turbulent.vert.spv", &turbulentVertex);
 	VkShaderModule turbulentFragment;
 	CreateShader(appState, app, "shaders/turbulent.frag.spv", &turbulentFragment);
+	VkShaderModule turbulentRGBAFragment;
+	CreateShader(appState, app, "shaders/turbulent_rgba.frag.spv", &turbulentRGBAFragment);
 	VkShaderModule turbulentLitFragment;
 	CreateShader(appState, app, "shaders/turbulent_lit.frag.spv", &turbulentLitFragment);
+	VkShaderModule turbulentLitRGBAFragment;
+	CreateShader(appState, app, "shaders/turbulent_lit_rgba.frag.spv", &turbulentLitRGBAFragment);
 	VkShaderModule spriteVertex;
 	CreateShader(appState, app, "shaders/sprite.vert.spv", &spriteVertex);
 	VkShaderModule spriteFragment;
@@ -964,6 +968,23 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &turbulentAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulent.pipeline));
 
+	turbulentRGBA.stages.resize(2);
+	turbulentRGBA.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	turbulentRGBA.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	turbulentRGBA.stages[0].module = turbulentVertex;
+	turbulentRGBA.stages[0].pName = "main";
+	turbulentRGBA.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	turbulentRGBA.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	turbulentRGBA.stages[1].module = turbulentRGBAFragment;
+	turbulentRGBA.stages[1].pName = "main";
+	descriptorSetLayouts[0] = singleBufferLayout;
+	pushConstantInfo.size = 5 * sizeof(float);
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentRGBA.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = turbulentRGBA.stages.size();
+	graphicsPipelineCreateInfo.pStages = turbulentRGBA.stages.data();
+	graphicsPipelineCreateInfo.layout = turbulentRGBA.pipelineLayout;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentRGBA.pipeline));
+
 	turbulentLit.stages.resize(2);
 	turbulentLit.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	turbulentLit.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -975,7 +996,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulentLit.stages[1].pName = "main";
 	descriptorSetLayouts[0] = twoBuffersAndImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentLit.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = turbulentLit.stages.size();
@@ -984,6 +1004,23 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentLit.pipeline));
+
+	turbulentLitRGBA.stages.resize(2);
+	turbulentLitRGBA.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	turbulentLitRGBA.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	turbulentLitRGBA.stages[0].module = surfaceVertex;
+	turbulentLitRGBA.stages[0].pName = "main";
+	turbulentLitRGBA.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	turbulentLitRGBA.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	turbulentLitRGBA.stages[1].module = turbulentLitRGBAFragment;
+	turbulentLitRGBA.stages[1].pName = "main";
+	descriptorSetLayouts[0] = singleBufferLayout;
+	pushConstantInfo.size = 5 * sizeof(float);
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentLitRGBA.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = turbulentLitRGBA.stages.size();
+	graphicsPipelineCreateInfo.pStages = turbulentLitRGBA.stages.data();
+	graphicsPipelineCreateInfo.layout = turbulentLitRGBA.pipelineLayout;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentLitRGBA.pipeline));
 
 	sprites.stages.resize(2);
 	sprites.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -1140,7 +1177,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, aliasVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, spriteFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, spriteVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, turbulentLitRGBAFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentLitFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, turbulentRGBAFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, fenceFragment, nullptr);
@@ -1224,7 +1263,7 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
-VkDeviceSize Scene::GetAllocatedFor(int width, int height)
+VkDeviceSize Scene::GetAllocatedFor(int width, int height, int mips)
 {
 	VkDeviceSize allocated = 0;
 	while (width > 1 || height > 1)
@@ -1239,6 +1278,11 @@ VkDeviceSize Scene::GetAllocatedFor(int width, int height)
 		if (height < 1)
 		{
 			height = 1;
+		}
+		mips--;
+		if (mips == 0)
+		{
+			break;
 		}
 	}
 	return allocated;
@@ -1281,8 +1325,69 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			cached.Setup(loaded.texture);
 			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = turbulent.size;
-			loaded.texture.allocated = GetAllocatedFor(turbulent.width, turbulent.height);
-			size += loaded.texture.allocated;
+			size += loaded.texture.size;
+			loaded.texture.source = turbulent.data;
+			loaded.texture.mips = turbulent.mips;
+			surfaceTextureCache.insert({ turbulent.data, { loaded.texture.texture, loaded.texture.index } });
+			cached.currentIndex++;
+		}
+		else
+		{
+			loaded.texture.size = 0;
+			loaded.texture.texture = entry->second.texture;
+			loaded.texture.index = entry->second.index;
+		}
+		previousTexture = turbulent.data;
+		previousSharedMemoryTexture = loaded.texture.texture;
+		previousSharedMemoryTextureIndex = loaded.texture.index;
+	}
+	else
+	{
+		loaded.texture.size = 0;
+		loaded.texture.texture = previousSharedMemoryTexture;
+		loaded.texture.index = previousSharedMemoryTextureIndex;
+	}
+	loaded.count = turbulent.count;
+}
+
+void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
+{
+	loaded.vertexes = ((model_t*)turbulent.model)->vertexes;
+	loaded.face = turbulent.face;
+	loaded.model = turbulent.model;
+	if (previousTexture != turbulent.data)
+	{
+		auto entry = surfaceTextureCache.find(turbulent.data);
+		if (entry == surfaceTextureCache.end())
+		{
+			auto key = std::to_string(turbulent.width) + "x" + std::to_string(turbulent.height);
+			auto& cached = surfaceRGBATextures[key];
+			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			{
+				uint32_t layerCount;
+				if (cached.textures == nullptr)
+				{
+					layerCount = 4;
+				}
+				else
+				{
+					layerCount = 64;
+				}
+				auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
+				auto texture = new SharedMemoryTexture { };
+				texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+				cached.MoveToFront(texture);
+				loaded.texture.texture = texture;
+				cached.currentIndex = 0;
+			}
+			else
+			{
+				loaded.texture.texture = cached.textures;
+			}
+			cached.Setup(loaded.texture);
+			loaded.texture.index = cached.currentIndex;
+			loaded.texture.size = turbulent.size;
+			size += loaded.texture.size;
 			loaded.texture.source = turbulent.data;
 			loaded.texture.mips = turbulent.mips;
 			surfaceTextureCache.insert({ turbulent.data, { loaded.texture.texture, loaded.texture.index } });
@@ -1390,8 +1495,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			cached.Setup(loaded.texture);
 			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = surface.size;
-			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
-			size += loaded.texture.allocated;
+			size += loaded.texture.size;
 			loaded.texture.source = surface.data;
 			loaded.texture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.data, { loaded.texture.texture, loaded.texture.index } });
@@ -1445,8 +1549,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			cached.Setup(loaded.glowTexture);
 			loaded.glowTexture.index = cached.currentIndex;
 			loaded.glowTexture.size = surface.size;
-			loaded.glowTexture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
-			size += loaded.glowTexture.allocated;
+			size += loaded.glowTexture.size;
 			loaded.glowTexture.source = surface.glow_data;
 			loaded.glowTexture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.glow_data, { loaded.glowTexture.texture, loaded.glowTexture.index } });
@@ -1546,8 +1649,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 			cached.Setup(loaded.texture);
 			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = surface.size;
-			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
-			size += loaded.texture.allocated;
+			size += loaded.texture.size;
 			loaded.texture.source = surface.data;
 			loaded.texture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.data, { loaded.texture.texture, loaded.texture.index } });
@@ -1887,7 +1989,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	lastFence = d_lists.last_fence;
 	lastFenceRotated = d_lists.last_fence_rotated;
 	lastTurbulent = d_lists.last_turbulent;
+	lastTurbulentRGBA = d_lists.last_turbulent_rgba;
 	lastTurbulentLit = d_lists.last_turbulent_lit;
+	lastTurbulentLitRGBA = d_lists.last_turbulent_lit_rgba;
 	lastSprite = d_lists.last_sprite;
 	lastAlias = d_lists.last_alias;
 	lastViewmodel = d_lists.last_viewmodel;
@@ -1944,9 +2048,17 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		loadedTurbulent.resize(lastTurbulent + 1);
 	}
+	if (lastTurbulentRGBA >= loadedTurbulentRGBA.size())
+	{
+		loadedTurbulentRGBA.resize(lastTurbulentRGBA + 1);
+	}
 	if (lastTurbulentLit >= loadedTurbulentLit.size())
 	{
 		loadedTurbulentLit.resize(lastTurbulentLit + 1);
+	}
+	if (lastTurbulentLitRGBA >= loadedTurbulentLitRGBA.size())
+	{
+		loadedTurbulentLitRGBA.resize(lastTurbulentLitRGBA + 1);
 	}
 	if (lastSprite >= loadedSprites.size())
 	{
@@ -2113,6 +2225,21 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulent);
+	sortedTurbulentRGBAVerticesBase = sortedVerticesSize;
+	sortedTurbulentRGBAAttributesBase = sortedAttributesSize;
+	sortedTurbulentRGBAIndicesBase = sortedIndicesCount;
+	previousTexture = nullptr;
+	sorted.Initialize(sorted.turbulentRGBA);
+	for (auto i = 0; i <= lastTurbulentRGBA; i++)
+	{
+		auto& loaded = loadedTurbulentRGBA[i];
+		GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_rgba[i], loaded, size);
+		sorted.Sort(appState, loaded, i, sorted.turbulentRGBA);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 12 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(sorted.turbulentRGBA);
 	sortedTurbulentLitVerticesBase = sortedVerticesSize;
 	sortedTurbulentLitAttributesBase = sortedAttributesSize;
 	sortedTurbulentLitIndicesBase = sortedIndicesCount;
@@ -2128,6 +2255,21 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulentLit);
+	sortedTurbulentLitRGBAVerticesBase = sortedVerticesSize;
+	sortedTurbulentLitRGBAAttributesBase = sortedAttributesSize;
+	sortedTurbulentLitRGBAIndicesBase = sortedIndicesCount;
+	previousTexture = nullptr;
+	sorted.Initialize(sorted.turbulentLitRGBA);
+	for (auto i = 0; i <= lastTurbulentLitRGBA; i++)
+	{
+		auto& loaded = loadedTurbulentLitRGBA[i];
+		GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_lit_rgba[i], loaded, size);
+		sorted.Sort(appState, loaded, i, sorted.turbulentLitRGBA);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(sorted.turbulentLitRGBA);
 	previousTexture = nullptr;
 	for (auto i = 0; i <= lastSprite; i++)
 	{
@@ -2251,7 +2393,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedFenceIndicesBase *= sizeof(uint16_t);
 		sortedFenceRotatedIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentIndicesBase *= sizeof(uint16_t);
+		sortedTurbulentRGBAIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentLitIndicesBase *= sizeof(uint16_t);
+		sortedTurbulentLitRGBAIndicesBase *= sizeof(uint16_t);
 	}
 	else
 	{
@@ -2265,7 +2409,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedFenceIndicesBase *= sizeof(uint32_t);
 		sortedFenceRotatedIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentIndicesBase *= sizeof(uint32_t);
+		sortedTurbulentRGBAIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentLitIndicesBase *= sizeof(uint32_t);
+		sortedTurbulentLitRGBAIndicesBase *= sizeof(uint32_t);
 	}
 
 	if (appState.IndexTypeUInt8Enabled)
