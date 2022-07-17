@@ -1263,7 +1263,7 @@ void Scene::AddToBufferBarrier(VkBuffer buffer)
 	barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 }
 
-VkDeviceSize Scene::GetAllocatedFor(int width, int height, int mips)
+VkDeviceSize Scene::GetAllocatedFor(int width, int height)
 {
 	VkDeviceSize allocated = 0;
 	while (width > 1 || height > 1)
@@ -1278,11 +1278,6 @@ VkDeviceSize Scene::GetAllocatedFor(int width, int height, int mips)
 		if (height < 1)
 		{
 			height = 1;
-		}
-		mips--;
-		if (mips == 0)
-		{
-			break;
 		}
 	}
 	return allocated;
@@ -1325,7 +1320,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			cached.Setup(loaded.texture);
 			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = turbulent.size;
-			size += loaded.texture.size;
+			loaded.texture.allocated = GetAllocatedFor(turbulent.width, turbulent.height);
+			size += loaded.texture.allocated;
 			loaded.texture.source = turbulent.data;
 			loaded.texture.mips = turbulent.mips;
 			surfaceTextureCache.insert({ turbulent.data, { loaded.texture.texture, loaded.texture.index } });
@@ -1387,7 +1383,8 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
 			cached.Setup(loaded.texture);
 			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = turbulent.size;
-			size += loaded.texture.size;
+			loaded.texture.allocated = GetAllocatedFor(turbulent.width, turbulent.height) * sizeof(unsigned);
+			size += loaded.texture.allocated;
 			loaded.texture.source = turbulent.data;
 			loaded.texture.mips = turbulent.mips;
 			surfaceTextureCache.insert({ turbulent.data, { loaded.texture.texture, loaded.texture.index } });
@@ -1495,7 +1492,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			cached.Setup(loaded.texture);
 			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = surface.size;
-			size += loaded.texture.size;
+			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
+			size += loaded.texture.allocated;
 			loaded.texture.source = surface.data;
 			loaded.texture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.data, { loaded.texture.texture, loaded.texture.index } });
@@ -1549,7 +1547,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			cached.Setup(loaded.glowTexture);
 			loaded.glowTexture.index = cached.currentIndex;
 			loaded.glowTexture.size = surface.size;
-			size += loaded.glowTexture.size;
+			loaded.glowTexture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
+			size += loaded.glowTexture.allocated;
 			loaded.glowTexture.source = surface.glow_data;
 			loaded.glowTexture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.glow_data, { loaded.glowTexture.texture, loaded.glowTexture.index } });
@@ -1649,7 +1648,8 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 			cached.Setup(loaded.texture);
 			loaded.texture.index = cached.currentIndex;
 			loaded.texture.size = surface.size;
-			size += loaded.texture.size;
+			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
+			size += loaded.texture.allocated;
 			loaded.texture.source = surface.data;
 			loaded.texture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.data, { loaded.texture.texture, loaded.texture.index } });

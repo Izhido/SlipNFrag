@@ -562,7 +562,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
 			GenerateMipmaps(stagingBuffer, offset, loadedTexture);
-			offset += loadedTexture->size;
+			offset += loadedTexture->allocated;
 			loadedTexture = loadedTexture->next;
 		}
 	}
@@ -613,7 +613,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		while (loadedTexture != nullptr)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
-			offset += loadedTexture->size;
+			offset += loadedTexture->allocated;
 			loadedTexture = loadedTexture->next;
 		}
 	}
@@ -883,7 +883,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		while (loadedTexture != nullptr)
 		{
 			loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->index);
-			appState.Scene.stagingBuffer.offset += loadedTexture->size;
+			appState.Scene.stagingBuffer.offset += loadedTexture->allocated;
 			loadedTexture = loadedTexture->next;
 		}
 	}
@@ -921,7 +921,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		while (loadedTexture != nullptr)
 		{
 			loadedTexture->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, loadedTexture->mips, loadedTexture->index);
-			appState.Scene.stagingBuffer.offset += loadedTexture->size;
+			appState.Scene.stagingBuffer.offset += loadedTexture->allocated;
 			loadedTexture = loadedTexture->next;
 		}
 	}
