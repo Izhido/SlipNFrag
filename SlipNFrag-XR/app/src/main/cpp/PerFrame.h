@@ -37,12 +37,14 @@ struct PerFrame
 	Buffer* indices32;
 	Buffer* colors;
 	Texture* sky;
+	Texture* skyRGBA;
+	PipelineDescriptorResources skyResources;
+	PipelineDescriptorResources skyRGBAResources;
 	PipelineDescriptorResources host_colormapResources;
 	PipelineDescriptorResources sceneMatricesResources;
 	PipelineDescriptorResources sceneMatricesAndPaletteResources;
 	PipelineDescriptorResources sceneMatricesAndColormapResources;
 	UpdatablePipelineDescriptorResources colormapResources;
-	PipelineDescriptorResources skyResources;
 	PipelineDescriptorResources floorResources;
 	PipelineDescriptorResources controllerResources;
 	VkDeviceSize controllerVertexBase;

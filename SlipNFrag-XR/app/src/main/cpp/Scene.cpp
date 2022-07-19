@@ -411,6 +411,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/sky.vert.spv", &skyVertex);
 	VkShaderModule skyFragment;
 	CreateShader(appState, app, "shaders/sky.frag.spv", &skyFragment);
+	VkShaderModule skyRGBAFragment;
+	CreateShader(appState, app, "shaders/sky_rgba.frag.spv", &skyRGBAFragment);
 	VkShaderModule coloredVertex;
 	CreateShader(appState, app, "shaders/colored.vert.spv", &coloredVertex);
 	VkShaderModule coloredFragment;
@@ -1144,6 +1146,22 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &skyAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &sky.pipeline));
 
+	skyRGBA.stages.resize(2);
+	skyRGBA.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	skyRGBA.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	skyRGBA.stages[0].module = skyVertex;
+	skyRGBA.stages[0].pName = "main";
+	skyRGBA.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	skyRGBA.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	skyRGBA.stages[1].module = skyRGBAFragment;
+	skyRGBA.stages[1].pName = "main";
+	descriptorSetLayouts[0] = singleBufferLayout;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &skyRGBA.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = skyRGBA.stages.size();
+	graphicsPipelineCreateInfo.pStages = skyRGBA.stages.data();
+	graphicsPipelineCreateInfo.layout = skyRGBA.pipelineLayout;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &skyRGBA.pipeline));
+
 	floor.stages.resize(2);
 	floor.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	floor.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -1227,7 +1245,6 @@ void Scene::Initialize()
 	sortedIndicesCount = 0;
 	paletteSize = 0;
 	host_colormapSize = 0;
-	skySize = 0;
 	controllerVerticesSize = 0;
 	buffers.Initialize();
 	indexBuffers.Initialize();
@@ -2000,6 +2017,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	lastColoredIndex16 = d_lists.last_colored_index16;
 	lastColoredIndex32 = d_lists.last_colored_index32;
 	lastSky = d_lists.last_sky;
+	lastSkyRGBA = d_lists.last_sky_rgba;
 	appState.FromEngine.vieworg0 = d_lists.vieworg0;
 	appState.FromEngine.vieworg1 = d_lists.vieworg1;
 	appState.FromEngine.vieworg2 = d_lists.vieworg2;
@@ -2289,16 +2307,33 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
 	if (lastSky >= 0)
 	{
+		loadedSky.width = d_lists.sky[0].width;
+		loadedSky.height = d_lists.sky[0].height;
+		loadedSky.size = d_lists.sky[0].size;
+		loadedSky.data = d_lists.sky[0].data;
+		loadedSky.firstVertex = d_lists.sky[0].first_vertex;
+		loadedSky.count = d_lists.sky[0].count;
 		if (perFrame.sky == nullptr)
 		{
-			auto mipCount = (int)(std::floor(std::log2(std::max(128, 128)))) + 1;
 			perFrame.sky = new Texture();
-			perFrame.sky->Create(appState, 128, 128, VK_FORMAT_R8_UINT, mipCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			perFrame.sky->Create(appState, loadedSky.width, loadedSky.height, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
-		skySize = 16384;
-		size += skySize;
-		skyCount = d_lists.sky[0].count;
-		firstSkyVertex = d_lists.sky[0].first_vertex;
+		size += loadedSky.size;
+	}
+	if (lastSkyRGBA >= 0)
+	{
+		loadedSkyRGBA.width = d_lists.sky_rgba[0].width;
+		loadedSkyRGBA.height = d_lists.sky_rgba[0].height;
+		loadedSkyRGBA.size = d_lists.sky_rgba[0].size;
+		loadedSkyRGBA.data = d_lists.sky_rgba[0].data;
+		loadedSkyRGBA.firstVertex = d_lists.sky_rgba[0].first_vertex;
+		loadedSkyRGBA.count = d_lists.sky_rgba[0].count;
+		if (perFrame.skyRGBA == nullptr)
+		{
+			perFrame.skyRGBA = new Texture();
+			perFrame.skyRGBA->Create(appState, loadedSkyRGBA.width, loadedSkyRGBA.height, VK_FORMAT_R8G8B8A8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		}
+		size += loadedSkyRGBA.size;
 	}
 	floorVerticesSize = 0;
 	if (appState.Mode != AppWorldMode)

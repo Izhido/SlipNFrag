@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 
@@ -36,6 +36,7 @@ void D_ResetLists ()
 	d_lists.last_alias = -1;
 	d_lists.last_viewmodel = -1;
 	d_lists.last_sky = -1;
+	d_lists.last_sky_rgba = -1;
     d_lists.last_skybox = -1;
 	d_lists.last_textured_vertex = -1;
 	d_lists.last_textured_attribute = -1;
@@ -747,18 +748,8 @@ void D_AddParticleToLists (particle_t* part)
 	d_lists.particle_colors[d_lists.last_particle_color] = part->color;
 }
 
-void D_AddSkyToLists (qboolean full_area)
+void D_FillSkyData (dsky_t& sky, qboolean full_area)
 {
-	if (d_lists.last_sky >= 0)
-	{
-		return;
-	}
-	d_lists.last_sky++;
-	if (d_lists.last_sky >= d_lists.sky.size())
-	{
-		d_lists.sky.emplace_back();
-	}
-	auto& sky = d_lists.sky[d_lists.last_sky];
 	if (full_area)
 	{
 		sky.left = -0.1;
@@ -844,6 +835,44 @@ void D_AddSkyToLists (qboolean full_area)
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
 	d_lists.last_textured_attribute++;
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
+}
+
+void D_AddSkyToLists (qboolean full_area)
+{
+	if (d_lists.last_sky >= 0)
+	{
+		return;
+	}
+	d_lists.last_sky++;
+	if (d_lists.last_sky >= d_lists.sky.size())
+	{
+		d_lists.sky.emplace_back();
+	}
+	auto& sky = d_lists.sky[d_lists.last_sky];
+	sky.width = 128;
+	sky.height = 128;
+	sky.size = sky.width * sky.height;
+	sky.data = r_skysource;
+	D_FillSkyData(sky, full_area);
+}
+
+void D_AddSkyRGBAToLists (qboolean full_area)
+{
+	if (d_lists.last_sky_rgba >= 0)
+	{
+		return;
+	}
+	d_lists.last_sky_rgba++;
+	if (d_lists.last_sky_rgba >= d_lists.sky_rgba.size())
+	{
+		d_lists.sky_rgba.emplace_back();
+	}
+	auto& sky = d_lists.sky_rgba[d_lists.last_sky_rgba];
+	sky.width = r_skyRGBAwidth;
+	sky.height = r_skyRGBAheight;
+	sky.size = sky.width * sky.height * sizeof(unsigned);
+	sky.data = (byte*)r_skysourceRGBA;
+	D_FillSkyData(sky, full_area);
 }
 
 void D_AddSkyboxToLists (mtexinfo_t* textures)

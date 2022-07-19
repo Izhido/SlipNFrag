@@ -593,19 +593,37 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 	if (appState.Scene.lastSky >= 0)
 	{
-		auto source = r_skysource;
+		auto source = appState.Scene.loadedSky.data;
 		auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
-		for (auto i = 0; i < 128; i++)
+		auto width = appState.Scene.loadedSky.width;
+		auto doubleWidth = width * 2;
+		auto height = appState.Scene.loadedSky.height;
+		for (auto i = 0; i < height; i++)
 		{
-			memcpy(target, source, 128);
-			source += 256;
-			target += 128;
+			memcpy(target, source, width);
+			source += doubleWidth;
+			target += width;
 		}
-		offset += 128 * 128;
+		offset += appState.Scene.loadedSky.size;
 	}
 	while (offset % 4 != 0)
 	{
 		offset++;
+	}
+	if (appState.Scene.lastSkyRGBA >= 0)
+	{
+		auto source = appState.Scene.loadedSkyRGBA.data;
+		auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+		auto width = appState.Scene.loadedSkyRGBA.width * sizeof(unsigned);
+		auto doubleWidth = width * 2;
+		auto height = appState.Scene.loadedSkyRGBA.height;
+		for (auto i = 0; i < height; i++)
+		{
+			memcpy(target, source, width);
+			source += doubleWidth;
+			target += width;
+		}
+		offset += appState.Scene.loadedSkyRGBA.size;
 	}
 	for (auto& entry : appState.Scene.surfaceRGBATextures)
 	{
@@ -906,13 +924,19 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 
 	if (appState.Scene.lastSky >= 0)
 	{
-		sky->FillMipmapped(appState, appState.Scene.stagingBuffer);
-		appState.Scene.stagingBuffer.offset += appState.Scene.skySize;
+		sky->Fill(appState, appState.Scene.stagingBuffer);
+		appState.Scene.stagingBuffer.offset += appState.Scene.loadedSky.size;
 	}
 
 	while (appState.Scene.stagingBuffer.offset % 4 != 0)
 	{
 		appState.Scene.stagingBuffer.offset++;
+	}
+
+	if (appState.Scene.lastSkyRGBA >= 0)
+	{
+		skyRGBA->Fill(appState, appState.Scene.stagingBuffer);
+		appState.Scene.stagingBuffer.offset += appState.Scene.loadedSkyRGBA.size;
 	}
 
 	for (auto& entry : appState.Scene.surfaceRGBATextures)
@@ -1097,9 +1121,6 @@ void PerFrame::Render(AppState& appState)
 		float pushConstants[20];
 		if (appState.Scene.lastSky >= 0)
 		{
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipeline);
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
-			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
 			poolSizes[0].descriptorCount = 1;
 			descriptorPoolCreateInfo.poolSizeCount = 1;
 			if (!skyResources.created)
@@ -1115,6 +1136,9 @@ void PerFrame::Render(AppState& appState)
 				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 				skyResources.created = true;
 			}
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipeline);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
 			VkDescriptorSet descriptorSets[2];
 			descriptorSets[0] = sceneMatricesAndPaletteResources.descriptorSet;
 			descriptorSets[1] = skyResources.descriptorSet;
@@ -1135,7 +1159,49 @@ void PerFrame::Render(AppState& appState)
 			pushConstants[11] = appState.EyeTextureMaxDimension;
 			pushConstants[12] = skytime*skyspeed;
 			vkCmdPushConstants(commandBuffer, appState.Scene.sky.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 13 * sizeof(float), &pushConstants);
-			vkCmdDraw(commandBuffer, appState.Scene.skyCount, 1, appState.Scene.firstSkyVertex, 0);
+			vkCmdDraw(commandBuffer, appState.Scene.loadedSky.count, 1, appState.Scene.loadedSky.firstVertex, 0);
+		}
+		if (appState.Scene.lastSkyRGBA >= 0)
+		{
+			poolSizes[0].descriptorCount = 1;
+			descriptorPoolCreateInfo.poolSizeCount = 1;
+			if (!skyRGBAResources.created)
+			{
+				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &skyRGBAResources.descriptorPool));
+				descriptorSetAllocateInfo.descriptorPool = skyRGBAResources.descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &skyRGBAResources.descriptorSet));
+				textureInfo.sampler = appState.Scene.samplers[skyRGBA->mipCount];
+				textureInfo.imageView = skyRGBA->view;
+				writes[0].dstSet = skyRGBAResources.descriptorSet;
+				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
+				skyRGBAResources.created = true;
+			}
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.skyRGBA.pipeline);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
+			VkDescriptorSet descriptorSets[2];
+			descriptorSets[0] = sceneMatricesResources.descriptorSet;
+			descriptorSets[1] = skyRGBAResources.descriptorSet;
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.skyRGBA.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+			XrMatrix4x4f orientation;
+			XrMatrix4x4f_CreateFromQuaternion(&orientation, &appState.CameraLocation.pose.orientation);
+			pushConstants[0] = -orientation.m[8];
+			pushConstants[1] = orientation.m[10];
+			pushConstants[2] = -orientation.m[9];
+			pushConstants[3] = orientation.m[0];
+			pushConstants[4] = -orientation.m[2];
+			pushConstants[5] = orientation.m[1];
+			pushConstants[6] = orientation.m[4];
+			pushConstants[7] = -orientation.m[6];
+			pushConstants[8] = orientation.m[5];
+			pushConstants[9] = appState.EyeTextureWidth;
+			pushConstants[10] = appState.EyeTextureHeight;
+			pushConstants[11] = appState.EyeTextureMaxDimension;
+			pushConstants[12] = skytime*skyspeed;
+			vkCmdPushConstants(commandBuffer, appState.Scene.skyRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 13 * sizeof(float), &pushConstants);
+			vkCmdDraw(commandBuffer, appState.Scene.loadedSkyRGBA.count, 1, appState.Scene.loadedSkyRGBA.firstVertex, 0);
 		}
 		if (appState.Scene.lastSurface >= 0)
 		{

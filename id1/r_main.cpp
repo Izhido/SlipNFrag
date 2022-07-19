@@ -314,6 +314,7 @@ void R_NewMap (void)
 				if (R_SetSkyBox (rotate, axis))
 				{
 					r_skyinitialized = false;
+					r_skyRGBAinitialized = false;
 					r_skyboxinitialized = true;
 				}
 			}

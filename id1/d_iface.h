@@ -160,6 +160,9 @@ void D_PolysetUpdateTables (void);
 // these are currently for internal use only, and should not be used by drivers
 extern int				r_skydirect;
 extern byte				*r_skysource;
+extern unsigned			*r_skysourceRGBA;
+extern int				r_skyRGBAwidth;
+extern int				r_skyRGBAheight;
 
 // transparency types for D_DrawRect ()
 #define DR_SOLID		0

@@ -290,6 +290,7 @@ void R_MarkLights (dlight_t *light, int index, mnode_t *node);
 qboolean R_LoadTGA (const char *name, int start, qboolean extra, qboolean log_failure, byte **pic, int *piclen, int *width, int *height);
 
 extern qboolean r_skyinitialized;
+extern qboolean r_skyRGBAinitialized;
 extern qboolean r_skyboxinitialized;
 extern std::string r_skyboxprefix;
 

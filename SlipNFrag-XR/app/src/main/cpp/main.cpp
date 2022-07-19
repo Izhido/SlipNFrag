@@ -2591,11 +2591,16 @@ void android_main(struct android_app* app)
 			{
 				perFrame.second.controllerResources.Delete(appState);
 				perFrame.second.floorResources.Delete(appState);
+				perFrame.second.skyRGBAResources.Delete(appState);
 				perFrame.second.skyResources.Delete(appState);
 				perFrame.second.sceneMatricesAndColormapResources.Delete(appState);
 				perFrame.second.sceneMatricesAndPaletteResources.Delete(appState);
 				perFrame.second.sceneMatricesResources.Delete(appState);
 				perFrame.second.host_colormapResources.Delete(appState);
+				if (perFrame.second.skyRGBA != nullptr)
+				{
+					perFrame.second.skyRGBA->Delete(appState);
+				}
 				if (perFrame.second.sky != nullptr)
 				{
 					perFrame.second.sky->Delete(appState);
@@ -2668,6 +2673,7 @@ void android_main(struct android_app* app)
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
 			appState.Scene.floor.Delete(appState);
+			appState.Scene.skyRGBA.Delete(appState);
 			appState.Scene.sky.Delete(appState);
 			appState.Scene.colored.Delete(appState);
 			appState.Scene.particle.Delete(appState);

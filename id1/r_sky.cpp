@@ -31,11 +31,17 @@ float	skyspeed, skyspeed2;
 float		skytime;
 
 byte		*r_skysource;
+unsigned	*r_skysourceRGBA;
+int			r_skyRGBAwidth;
+int			r_skyRGBAheight;
+int			r_skyRGBAmask;
 
 int r_skymade;
+int r_skyRGBAmade;
 int r_skydirect;		// not used?
 
 qboolean r_skyinitialized;
+qboolean r_skyRGBAinitialized;
 qboolean r_skyboxinitialized;
 std::string r_skyboxprefix;
 
@@ -47,6 +53,9 @@ byte	newsky[128*256];	// newsky and topsky both pack in here, 128 bytes
 							//  of newsky on the left of each scan, 128 bytes
 							//  of topsky on the right, because the low-level
 							//  drawers need 256-byte scan widths
+
+std::vector<unsigned> bottomskyRGBA;
+std::vector<unsigned> newskyRGBA;
 
 msurface_t		*r_skyfaces;
 mplane_t		r_skyplanes[6];
@@ -140,6 +149,45 @@ void R_InitSky (texture_t *mt)
 	}
 	
 	r_skysource = newsky;
+}
+
+
+void R_InitSkyRGBA (miptex_t *mt)
+{
+	int			i, j;
+	unsigned	*src;
+
+	r_skyRGBAinitialized = true;
+
+	auto width = mt->width;
+	auto height = mt->height;
+	auto halfWidth = width / 2;
+
+	newskyRGBA.resize(width * height);
+	bottomskyRGBA.resize(halfWidth * height);
+
+	src = (unsigned*)((byte *)mt + mt->offsets[0]);
+
+	for (i=0 ; i<height ; i++)
+	{
+		for (j=0 ; j<halfWidth ; j++)
+		{
+			newskyRGBA[(i*width) + j + halfWidth] = src[i*width + j + halfWidth];
+		}
+	}
+
+	for (i=0 ; i<height ; i++)
+	{
+		for (j=0 ; j<halfWidth ; j++)
+		{
+			bottomskyRGBA[(i*halfWidth) + j] = src[i*width + j];
+		}
+	}
+
+	r_skysourceRGBA = newskyRGBA.data();
+	r_skyRGBAwidth = halfWidth;
+	r_skyRGBAheight = height;
+	r_skyRGBAmask = halfWidth - 1; // Please notice this will only work with power of 2 textures...
 }
 
 
@@ -256,6 +304,60 @@ void R_MakeSky (void)
 	}
 
 	r_skymade = 1;
+}
+
+
+void R_MakeSkyRGBA (void)
+{
+	int			x, y;
+	int			ofs, baseofs;
+	int			xshift, yshift;
+	unsigned	*pnewsky;
+	static int	xlast = -1, ylast = -1;
+
+	xshift = skytime*skyspeed;
+	yshift = skytime*skyspeed;
+
+	if ((xshift == xlast) && (yshift == ylast))
+		return;
+
+	xlast = xshift;
+	ylast = yshift;
+
+	pnewsky = newskyRGBA.data();
+
+	for (y=0 ; y<r_skyRGBAheight ; y++)
+	{
+		baseofs = ((y+yshift) & r_skyRGBAmask) * r_skyRGBAwidth;
+
+		for (x=0 ; x<r_skyRGBAwidth ; x++)
+		{
+			ofs = baseofs + ((x+xshift) & r_skyRGBAmask);
+
+			auto source = bottomskyRGBA[ofs];
+			auto sourceR = source & 255;
+			auto sourceG = (source >> 8) & 255;
+			auto sourceB = (source >> 16) & 255;
+			auto sourceA = (source >> 24) & 255;
+			auto target = *(pnewsky + r_skyRGBAwidth);
+			auto targetR = target & 255;
+			auto targetG = (target >> 8) & 255;
+			auto targetB = (target >> 16) & 255;
+			auto targetA = (target >> 24) & 255;
+			auto a = (sourceA << 8) | sourceA;
+			auto oneMinusA = (255 - sourceA) << 8 | (255 - sourceA);
+			targetR = (sourceR * a + targetR * oneMinusA) >> 16;
+			targetG = (sourceG * a + targetG * oneMinusA) >> 16;
+			targetB = (sourceB * a + targetB * oneMinusA) >> 16;
+			targetA = (sourceA * a + targetA * oneMinusA) >> 16;
+
+			*pnewsky++ = (targetR & 255) | ((targetG & 255) << 8) | ((targetB & 255) << 16) | ((targetA & 255) << 24);
+		}
+
+		pnewsky += r_skyRGBAwidth;
+	}
+
+	r_skyRGBAmade = 1;
 }
 
 
@@ -381,6 +483,7 @@ void R_SetSkyFrame (void)
 	
 
 	r_skymade = 0;
+	r_skyRGBAmade = 0;
 }
 
 

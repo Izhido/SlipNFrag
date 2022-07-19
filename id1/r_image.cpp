@@ -148,9 +148,17 @@ qboolean R_LoadTGA (const char *name, int start, qboolean extra, qboolean log_fa
 				realrow = upside_down ? row : rows - 1 - row;
 				pixbuf = targa_rgba + offset + realrow*span;
 				//johnfitz
-				Q_memcpy(pixbuf, buf_p, span);
-				pixbuf += span;
-				buf_p += span;
+				for(column=0; column<columns; column++)
+				{
+					auto blue = *buf_p++;
+					auto green = *buf_p++;
+					auto red = *buf_p++;
+					auto alpha = *buf_p++;
+					*pixbuf++ = red;
+					*pixbuf++ = green;
+					*pixbuf++ = blue;
+					*pixbuf++ = alpha;
+				}
 			}
 		}
 	}

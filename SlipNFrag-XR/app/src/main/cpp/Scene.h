@@ -10,6 +10,7 @@
 #include "LoadedSurfaceRotated2Textures.h"
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
+#include "LoadedSky.h"
 #include "CachedLightmaps.h"
 #include "CachedSharedMemoryTextures.h"
 #include "SurfaceTexture.h"
@@ -47,6 +48,7 @@ struct Scene
 	Pipeline particle;
 	Pipeline colored;
 	Pipeline sky;
+	Pipeline skyRGBA;
 	Pipeline floor;
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
@@ -74,6 +76,7 @@ struct Scene
 	int lastColoredIndex16;
 	int lastColoredIndex32;
 	int lastSky;
+	int lastSkyRGBA;
 	std::vector<LoadedSurface> loadedSurfaces;
 	std::vector<LoadedSurface2Textures> loadedSurfacesRGBA;
 	std::vector<LoadedSurface> loadedSurfacesRGBANoGlow;
@@ -89,8 +92,8 @@ struct Scene
 	std::vector<LoadedSprite> loadedSprites;
 	std::vector<LoadedAlias> loadedAlias;
 	std::vector<LoadedAlias> loadedViewmodels;
-	int skyCount;
-	int firstSkyVertex;
+	LoadedSky loadedSky;
+	LoadedSky loadedSkyRGBA;
 	std::unordered_map<VkDeviceSize, std::list<LightmapTexture>> lightmapTextures;
 	CachedLightmaps lightmaps;
 	std::unordered_map<std::string, CachedSharedMemoryTextures> surfaceTextures;
@@ -174,7 +177,6 @@ struct Scene
 	VkDeviceSize sortedTurbulentLitRGBAIndicesBase;
 	VkDeviceSize paletteSize;
 	VkDeviceSize host_colormapSize;
-	VkDeviceSize skySize;
 	StagingBuffer stagingBuffer;
 	void* previousTexture;
 	void* previousGlowTexture;

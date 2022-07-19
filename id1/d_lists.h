@@ -84,6 +84,10 @@ struct dalias_t
 
 struct dsky_t
 {
+	int width;
+	int height;
+	int size;
+	unsigned char* data;
 	float top;
 	float left;
 	float right;
@@ -119,6 +123,7 @@ struct dlists_t
 	int last_alias;
 	int last_viewmodel;
 	int last_sky;
+	int last_sky_rgba;
     int last_skybox;
 	int last_textured_vertex;
 	int last_textured_attribute;
@@ -164,6 +169,7 @@ struct dlists_t
 	std::vector<dalias_t> alias;
 	std::vector<dalias_t> viewmodels;
 	std::vector<dsky_t> sky;
+	std::vector<dsky_t> sky_rgba;
     std::vector<dskybox_t> skyboxes;
 	std::vector<float> textured_vertices;
 	std::vector<float> textured_attributes;
@@ -204,5 +210,6 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddParticleToLists (particle_t* part);
 void D_AddSkyToLists (qboolean full_area);
+void D_AddSkyRGBAToLists (qboolean full_area);
 void D_AddSkyboxToLists (mtexinfo_t* textures);
 void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color);

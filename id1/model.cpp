@@ -625,81 +625,108 @@ void Mod_LoadTextures (lump_t *l)
 			R_InitSky (tx);
 
 		// load external textures, if present
-		if (r_load_as_rgba && Q_strncmp(mt->name,"sky",3) != 0)
+		if (r_load_as_rgba)
 		{
-			auto is_turbulent = (tx->name[0] == '*');
-			if (is_turbulent)
+			if (!Q_strncmp(mt->name,"sky",3))
 			{
-				external_filename = std::string("textures/") + modelname.data() + "/#" + (tx->name + 1) + ".tga";
+				external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + ".tga";
+				external_size = 0;
+				auto found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+				if (!found)
+				{
+					external_filename = std::string("textures/") + tx->name + ".tga";
+					found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+				}
+				if (found)
+				{
+					memcpy (tx->external_color->name, mt->name, sizeof(tx->external_color->name));
+					tx->external_color->width = external_width;
+					tx->external_color->height = external_height;
+					tx->external_color->offsets[0] = sizeof(miptex_t);
+					tx->external_color->offsets[1] = 0;
+					tx->external_color->offsets[2] = 0;
+					tx->external_color->offsets[3] = 0;
+					Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
+
+					R_InitSkyRGBA(tx->external_color);
+				}
 			}
 			else
 			{
-				external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + ".tga";
-			}
-			external_size = 0;
-			auto found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
-			if (!found)
-			{
+				auto is_turbulent = (tx->name[0] == '*');
 				if (is_turbulent)
 				{
-					external_filename = std::string("textures/#") + (tx->name + 1) + ".tga";
+					external_filename = std::string("textures/") + modelname.data() + "/#" + (tx->name + 1) + ".tga";
 				}
 				else
 				{
-					external_filename = std::string("textures/") + tx->name + ".tga";
+					external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + ".tga";
 				}
-				found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
-			}
-			if (found)
-			{
-				memcpy (tx->external_color->name, mt->name, sizeof(tx->external_color->name));
-				tx->external_color->width = external_width;
-				tx->external_color->height = external_height;
-				tx->external_color->offsets[0] = sizeof(miptex_t);
-				tx->external_color->offsets[1] = 0;
-				tx->external_color->offsets[2] = 0;
-				tx->external_color->offsets[3] = 0;
-				Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
-				if (!is_turbulent)
+				external_size = 0;
+				auto found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+				if (!found)
 				{
-					external_glow_filename = std::string("textures/") + modelname.data() + "/" + tx->name + "_glow.tga";
-					external_size = 0;
-					found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
-					if (!found)
+					if (is_turbulent)
 					{
-						external_glow_filename = std::string("textures/") + modelname.data() + "/" + tx->name + "_luma.tga";
+						external_filename = std::string("textures/#") + (tx->name + 1) + ".tga";
+					}
+					else
+					{
+						external_filename = std::string("textures/") + tx->name + ".tga";
+					}
+					found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+				}
+				if (found)
+				{
+					memcpy (tx->external_color->name, mt->name, sizeof(tx->external_color->name));
+					tx->external_color->width = external_width;
+					tx->external_color->height = external_height;
+					tx->external_color->offsets[0] = sizeof(miptex_t);
+					tx->external_color->offsets[1] = 0;
+					tx->external_color->offsets[2] = 0;
+					tx->external_color->offsets[3] = 0;
+					Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
+					if (!is_turbulent)
+					{
+						external_glow_filename = std::string("textures/") + modelname.data() + "/" + tx->name + "_glow.tga";
+						external_size = 0;
 						found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
 						if (!found)
 						{
-							external_glow_filename = std::string("textures/") + tx->name + "_glow.tga";
+							external_glow_filename = std::string("textures/") + modelname.data() + "/" + tx->name + "_luma.tga";
 							found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
 							if (!found)
 							{
-								external_glow_filename = std::string("textures/") + tx->name + "_luma.tga";
+								external_glow_filename = std::string("textures/") + tx->name + "_glow.tga";
 								found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
+								if (!found)
+								{
+									external_glow_filename = std::string("textures/") + tx->name + "_luma.tga";
+									found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
+								}
 							}
 						}
-					}
-					if (found)
-					{
-						memcpy (tx->external_glow->name, mt->name, sizeof(tx->external_glow->name));
-						tx->external_glow->width = external_glow_width;
-						tx->external_glow->height = external_glow_height;
-						tx->external_glow->offsets[0] = sizeof(miptex_t);
-						tx->external_glow->offsets[1] = 0;
-						tx->external_glow->offsets[2] = 0;
-						tx->external_glow->offsets[3] = 0;
-						if (tx->external_color->width != tx->external_glow->width || tx->external_color->height != tx->external_glow->height)
+						if (found)
 						{
-							delete[] (byte*)(tx->external_glow);
-							tx->external_glow = nullptr;
-							delete[] (byte*)(tx->external_color);
-							tx->external_color = nullptr;
-							Con_Printf("Mod_LoadTextures: the size of %s (%i x %i) does not match the size of %s (%i x %i)\n", external_filename.c_str(), external_width, external_height, external_glow_filename.c_str(), external_glow_width, external_glow_height);
-						}
-						else
-						{
-							Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
+							memcpy (tx->external_glow->name, mt->name, sizeof(tx->external_glow->name));
+							tx->external_glow->width = external_glow_width;
+							tx->external_glow->height = external_glow_height;
+							tx->external_glow->offsets[0] = sizeof(miptex_t);
+							tx->external_glow->offsets[1] = 0;
+							tx->external_glow->offsets[2] = 0;
+							tx->external_glow->offsets[3] = 0;
+							if (tx->external_color->width != tx->external_glow->width || tx->external_color->height != tx->external_glow->height)
+							{
+								delete[] (byte*)(tx->external_glow);
+								tx->external_glow = nullptr;
+								delete[] (byte*)(tx->external_color);
+								tx->external_color = nullptr;
+								Con_Printf("Mod_LoadTextures: the size of %s (%i x %i) does not match the size of %s (%i x %i)\n", external_filename.c_str(), external_width, external_height, external_glow_filename.c_str(), external_glow_width, external_glow_height);
+							}
+							else
+							{
+								Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
+							}
 						}
 					}
 				}

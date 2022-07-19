@@ -37,6 +37,7 @@ extern void			R_TransformFrustum (void);
 vec3_t		transformed_modelorg;
 
 extern qboolean r_skyinitialized;
+extern qboolean r_skyRGBAinitialized;
 extern qboolean r_skyboxinitialized;
 extern mtexinfo_t r_skytexinfo[6];
 
@@ -549,7 +550,16 @@ void D_DrawSurfacesToLists (void)
 
 			if (s->flags & SURF_DRAWSKY)
 			{
-				if (r_skyinitialized)
+				if (r_skyRGBAinitialized)
+				{
+					if (!r_skyRGBAmade)
+					{
+						R_MakeSkyRGBA ();
+					}
+
+					D_AddSkyRGBAToLists(false);
+				}
+				else if (r_skyinitialized)
 				{
 					if (!r_skymade)
 					{
@@ -782,7 +792,16 @@ void D_DrawSurfacesToListsIfNeeded (void)
 
 			if (s->flags & SURF_DRAWSKY)
 			{
-				if (r_skyinitialized)
+				if (r_skyRGBAinitialized)
+				{
+					if (!r_skyRGBAmade)
+					{
+						R_MakeSkyRGBA ();
+					}
+
+					D_AddSkyRGBAToLists(false);
+				}
+				else if (r_skyinitialized)
 				{
 					if (!r_skymade)
 					{
@@ -984,6 +1003,15 @@ void D_DrawOneSurface (msurface_t* surf)
 			if (r_skyboxinitialized)
 			{
 				D_AddSkyboxToLists(r_skytexinfo);
+			}
+			else if (r_skyRGBAinitialized)
+			{
+				if (!r_skyRGBAmade)
+				{
+					R_MakeSkyRGBA ();
+				}
+
+				D_AddSkyRGBAToLists(true);
 			}
 			else if (r_skyinitialized)
 			{

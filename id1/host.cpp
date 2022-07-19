@@ -516,6 +516,7 @@ void Host_ClearMemory (void)
 	D_FlushCaches ();
 	Mod_ClearAll ();
 	r_skyinitialized = false;
+	r_skyRGBAinitialized = false;
 	r_skyboxinitialized = false;
     r_skyboxprefix = "";
 
