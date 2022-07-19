@@ -879,7 +879,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	surfacesRotatedRGBA.stages[1].module = surfaceRGBAFragment;
 	surfacesRotatedRGBA.stages[1].pName = "main";
 	descriptorSetLayouts[0] = singleBufferLayout;
-	descriptorSetLayouts[3] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 4;
 	pushConstantInfo.size = 4 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
@@ -1156,6 +1155,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	skyRGBA.stages[1].module = skyRGBAFragment;
 	skyRGBA.stages[1].pName = "main";
 	descriptorSetLayouts[0] = singleBufferLayout;
+	pushConstantInfo.size = 15 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &skyRGBA.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = skyRGBA.stages.size();
 	graphicsPipelineCreateInfo.pStages = skyRGBA.stages.data();
@@ -1171,8 +1171,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	floor.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	floor.stages[1].module = floorFragment;
 	floor.stages[1].pName = "main";
-	descriptorSetLayouts[0] = singleBufferLayout;
-	descriptorSetLayouts[1] = singleImageLayout;
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &floor.pipelineLayout));
 	depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
 	graphicsPipelineCreateInfo.stageCount = floor.stages.size();
@@ -1186,6 +1186,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, floorVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, coloredFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, coloredVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, skyRGBAFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, skyFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, skyVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, particleVertex, nullptr);
@@ -2331,7 +2332,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		if (perFrame.skyRGBA == nullptr)
 		{
 			perFrame.skyRGBA = new Texture();
-			perFrame.skyRGBA->Create(appState, loadedSkyRGBA.width, loadedSkyRGBA.height, VK_FORMAT_R8G8B8A8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			perFrame.skyRGBA->Create(appState, loadedSkyRGBA.width * 2, loadedSkyRGBA.height, VK_FORMAT_R8G8B8A8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		}
 		size += loadedSkyRGBA.size;
 	}

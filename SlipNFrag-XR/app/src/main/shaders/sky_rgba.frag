@@ -23,6 +23,8 @@ layout(push_constant) uniform Rotation
 	layout(offset = 40) float height;
 	layout(offset = 44) float maxSize;
 	layout(offset = 48) float speed;
+	layout(offset = 52) float skyWidth;
+	layout(offset = 56) float skyHeight;
 };
 
 layout(location = 0) in vec2 fragmentTexCoords;
@@ -45,12 +47,17 @@ void main()
 	temp = speed;
 	float s = float((temp + 6*(128/2-1)*end[0]));
 	float t = float((temp + 6*(128/2-1)*end[1]));
-	vec2 texCoords = vec2(s / 128.0f, t / 128.0f);
-	vec2 level = textureQueryLod(fragmentTexture, texCoords);
-	vec2 mip = vec2(floor(level.y), ceil(level.y));
-	vec4 lowColor = textureLod(fragmentTexture, texCoords, 0);
-	vec4 highColor = textureLod(fragmentTexture, texCoords, 0);
-	vec4 color = mix(lowColor, highColor, level.y - mip.x) / 256;
+	vec2 texCoords = vec2(s / 256.0f, t / 128.0f);
+	vec2 texTopCoords = vec2(0.5 + mod(texCoords.x, 0.5), texCoords.y);
+	vec4 topColor = texture(fragmentTexture, texTopCoords);
+	vec4 normalizedTopColor = topColor / 256;
+	vec2 texBottomCoords = vec2(
+		mod(texCoords.x + speed * (skyWidth / 128) / skyWidth, 0.5),
+		texCoords.y + speed * (skyHeight / 128) / skyHeight
+	);
+	vec4 bottomColor = texture(fragmentTexture, texBottomCoords);
+	vec4 normalizedBottomColor = bottomColor / 256;
+	vec4 color = mix(normalizedTopColor, normalizedBottomColor, normalizedBottomColor.a);
 	vec4 gammaCorrectedColor = vec4(
 		((color.r < 0.04045) ? (color.r / 12.92) : (pow((color.r + 0.055) / 1.055, 2.4))),
 		((color.g < 0.04045) ? (color.g / 12.92) : (pow((color.g + 0.055) / 1.055, 2.4))),

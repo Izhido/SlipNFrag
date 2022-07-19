@@ -51,11 +51,6 @@ void main()
 	float s = float((temp + 6*(128/2-1)*end[0]));
 	float t = float((temp + 6*(128/2-1)*end[1]));
 	vec2 texCoords = vec2(s / 128.0f, t / 128.0f);
-	vec2 level = textureQueryLod(fragmentTexture, texCoords);
-	vec2 mip = vec2(floor(level.y), ceil(level.y));
-	uvec4 lowEntry = textureLod(fragmentTexture, texCoords, mip.x);
-	uvec4 highEntry = textureLod(fragmentTexture, texCoords, mip.y);
-	vec4 lowColor = palette[lowEntry.x];
-	vec4 highColor = palette[highEntry.x];
-	outColor = mix(lowColor, highColor, level.y - mip.x);
+	uvec4 entry = texture(fragmentTexture, texCoords);
+	outColor = palette[entry.x];
 }

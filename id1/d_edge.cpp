@@ -552,11 +552,6 @@ void D_DrawSurfacesToLists (void)
 			{
 				if (r_skyRGBAinitialized)
 				{
-					if (!r_skyRGBAmade)
-					{
-						R_MakeSkyRGBA ();
-					}
-
 					D_AddSkyRGBAToLists(false);
 				}
 				else if (r_skyinitialized)
@@ -794,11 +789,6 @@ void D_DrawSurfacesToListsIfNeeded (void)
 			{
 				if (r_skyRGBAinitialized)
 				{
-					if (!r_skyRGBAmade)
-					{
-						R_MakeSkyRGBA ();
-					}
-
 					D_AddSkyRGBAToLists(false);
 				}
 				else if (r_skyinitialized)
@@ -1006,11 +996,6 @@ void D_DrawOneSurface (msurface_t* surf)
 			}
 			else if (r_skyRGBAinitialized)
 			{
-				if (!r_skyRGBAmade)
-				{
-					R_MakeSkyRGBA ();
-				}
-
 				D_AddSkyRGBAToLists(true);
 			}
 			else if (r_skyinitialized)

@@ -870,7 +870,7 @@ void D_AddSkyRGBAToLists (qboolean full_area)
 	auto& sky = d_lists.sky_rgba[d_lists.last_sky_rgba];
 	sky.width = r_skyRGBAwidth;
 	sky.height = r_skyRGBAheight;
-	sky.size = sky.width * sky.height * sizeof(unsigned);
+	sky.size = sky.width * 2 * sky.height * sizeof(unsigned);
 	sky.data = (byte*)r_skysourceRGBA;
 	D_FillSkyData(sky, full_area);
 }

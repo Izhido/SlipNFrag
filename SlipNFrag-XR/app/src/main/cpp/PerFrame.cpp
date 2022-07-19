@@ -612,17 +612,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 	if (appState.Scene.lastSkyRGBA >= 0)
 	{
-		auto source = appState.Scene.loadedSkyRGBA.data;
-		auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
-		auto width = appState.Scene.loadedSkyRGBA.width * sizeof(unsigned);
-		auto doubleWidth = width * 2;
-		auto height = appState.Scene.loadedSkyRGBA.height;
-		for (auto i = 0; i < height; i++)
-		{
-			memcpy(target, source, width);
-			source += doubleWidth;
-			target += width;
-		}
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.Scene.loadedSkyRGBA.data, appState.Scene.loadedSkyRGBA.size);
 		offset += appState.Scene.loadedSkyRGBA.size;
 	}
 	for (auto& entry : appState.Scene.surfaceRGBATextures)
@@ -1200,7 +1190,9 @@ void PerFrame::Render(AppState& appState)
 			pushConstants[10] = appState.EyeTextureHeight;
 			pushConstants[11] = appState.EyeTextureMaxDimension;
 			pushConstants[12] = skytime*skyspeed;
-			vkCmdPushConstants(commandBuffer, appState.Scene.skyRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 13 * sizeof(float), &pushConstants);
+			pushConstants[13] = appState.Scene.loadedSkyRGBA.width;
+			pushConstants[14] = appState.Scene.loadedSkyRGBA.height;
+			vkCmdPushConstants(commandBuffer, appState.Scene.skyRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 15 * sizeof(float), &pushConstants);
 			vkCmdDraw(commandBuffer, appState.Scene.loadedSkyRGBA.count, 1, appState.Scene.loadedSkyRGBA.firstVertex, 0);
 		}
 		if (appState.Scene.lastSurface >= 0)

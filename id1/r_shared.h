@@ -123,9 +123,6 @@ extern void SetUpForLineScan(fixed8_t startvertu, fixed8_t startvertv,
 extern int	r_skymade;
 extern void R_MakeSky (void);
 
-extern int	r_skyRGBAmade;
-extern void R_MakeSkyRGBA (void);
-
 extern int	ubasestep, errorterm, erroradjustup, erroradjustdown;
 
 // flags in finalvert_t.flags
