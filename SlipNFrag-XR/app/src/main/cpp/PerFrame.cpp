@@ -465,7 +465,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.surfacesRotatedRGBA, appState.Scene.loadedSurfacesRotatedRGBA, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.surfacesRotatedRGBANoGlow, appState.Scene.loadedSurfacesRotatedRGBANoGlow, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.fencesRGBA, appState.Scene.loadedFencesRGBA, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.fencesRGBANoGlow, appState.Scene.loadedFencesRGBANoGlow, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.fencesRotatedRGBA, appState.Scene.loadedFencesRotatedRGBA, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sorted.fencesRotatedRGBANoGlow, appState.Scene.loadedFencesRotatedRGBANoGlow, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulentRGBA, appState.Scene.loadedTurbulentRGBA, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
@@ -480,7 +484,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.surfacesRotatedRGBA, appState.Scene.loadedSurfacesRotatedRGBA, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.surfacesRotatedRGBANoGlow, appState.Scene.loadedSurfacesRotatedRGBANoGlow, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fencesRGBA, appState.Scene.loadedFencesRGBA, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fencesRGBANoGlow, appState.Scene.loadedFencesRGBANoGlow, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fencesRotatedRGBA, appState.Scene.loadedFencesRotatedRGBA, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.sorted.fencesRotatedRGBANoGlow, appState.Scene.loadedFencesRotatedRGBANoGlow, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.turbulentRGBA, appState.Scene.loadedTurbulentRGBA, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
@@ -497,7 +505,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.surfacesRotatedRGBA, appState.Scene.loadedSurfacesRotatedRGBA, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.surfacesRotatedRGBANoGlow, appState.Scene.loadedSurfacesRotatedRGBANoGlow, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fencesRGBA, appState.Scene.loadedFencesRGBA, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fencesRGBANoGlow, appState.Scene.loadedFencesRGBANoGlow, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fencesRotatedRGBA, appState.Scene.loadedFencesRotatedRGBA, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.sorted.fencesRotatedRGBANoGlow, appState.Scene.loadedFencesRotatedRGBANoGlow, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulentRGBA, appState.Scene.loadedTurbulentRGBA, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
@@ -516,7 +528,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.surfacesRotatedRGBA, appState.Scene.loadedSurfacesRotatedRGBA, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.surfacesRotatedRGBANoGlow, appState.Scene.loadedSurfacesRotatedRGBANoGlow, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fences, appState.Scene.loadedFences, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fencesRGBA, appState.Scene.loadedFencesRGBA, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fencesRGBANoGlow, appState.Scene.loadedFencesRGBANoGlow, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fencesRotated, appState.Scene.loadedFencesRotated, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fencesRotatedRGBA, appState.Scene.loadedFencesRotatedRGBA, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.sorted.fencesRotatedRGBANoGlow, appState.Scene.loadedFencesRotatedRGBANoGlow, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.turbulent, appState.Scene.loadedTurbulent, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.turbulentRGBA, appState.Scene.loadedTurbulentRGBA, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.sorted.turbulentLit, appState.Scene.loadedTurbulentLit, stagingBuffer, offset);
@@ -1412,6 +1428,74 @@ void PerFrame::Render(AppState& appState)
 				}
 			}
 		}
+		if (appState.Scene.lastFenceRGBA >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBA.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto verticesBase = appState.Scene.verticesSize + appState.Scene.sortedFenceRGBAVerticesBase;
+			auto attributesBase = appState.Scene.attributesSize + appState.Scene.sortedFenceRGBAAttributesBase;
+			VkDeviceSize indexBase = 0;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &verticesBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributesBase);
+			vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributesBase);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.sortedFenceRGBAIndicesBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedFenceRGBAIndicesBase, VK_INDEX_TYPE_UINT32);
+			}
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
+			vkCmdPushConstants(commandBuffer, appState.Scene.fencesRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
+			for (auto& entry : appState.Scene.sorted.fencesRGBA)
+			{
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBA.pipelineLayout, 1, 1, &entry.lightmap, 0, nullptr);
+				for (auto& subEntry : entry.textures)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBA.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBA.pipelineLayout, 3, 1, &subEntry.glowTexture, 0, nullptr);
+					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
+					indexBase += subEntry.indexCount;
+				}
+			}
+		}
+		if (appState.Scene.lastFenceRGBANoGlow >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto verticesBase = appState.Scene.verticesSize + appState.Scene.sortedFenceRGBANoGlowVerticesBase;
+			auto attributesBase = appState.Scene.attributesSize + appState.Scene.sortedFenceRGBANoGlowAttributesBase;
+			VkDeviceSize indexBase = 0;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &verticesBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributesBase);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.sortedFenceRGBANoGlowIndicesBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedFenceRGBANoGlowIndicesBase, VK_INDEX_TYPE_UINT32);
+			}
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
+			vkCmdPushConstants(commandBuffer, appState.Scene.fencesRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
+			for (auto& entry : appState.Scene.sorted.fencesRGBANoGlow)
+			{
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipelineLayout, 1, 1, &entry.lightmap, 0, nullptr);
+				for (auto& subEntry : entry.textures)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
+					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
+					indexBase += subEntry.indexCount;
+				}
+			}
+		}
 		if (appState.Scene.lastFenceRotated >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipeline);
@@ -1435,6 +1519,73 @@ void PerFrame::Render(AppState& appState)
 				for (auto& subEntry : entry.textures)
 				{
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
+					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
+					indexBase += subEntry.indexCount;
+				}
+			}
+		}
+		if (appState.Scene.lastFenceRotatedRGBA >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBA.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto verticesBase = appState.Scene.verticesSize + appState.Scene.sortedFenceRotatedRGBAVerticesBase;
+			auto attributesBase = appState.Scene.attributesSize + appState.Scene.sortedFenceRotatedRGBAAttributesBase;
+			VkDeviceSize indexBase = 0;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &verticesBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributesBase);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.sortedFenceRotatedRGBAIndicesBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedFenceRotatedRGBAIndicesBase, VK_INDEX_TYPE_UINT32);
+			}
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
+			vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
+			for (auto& entry : appState.Scene.sorted.fencesRotatedRGBA)
+			{
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBA.pipelineLayout, 1, 1, &entry.lightmap, 0, nullptr);
+				for (auto& subEntry : entry.textures)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBA.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBA.pipelineLayout, 3, 1, &subEntry.glowTexture, 0, nullptr);
+					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
+					indexBase += subEntry.indexCount;
+				}
+			}
+		}
+		if (appState.Scene.lastFenceRotatedRGBANoGlow >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto verticesBase = appState.Scene.verticesSize + appState.Scene.sortedFenceRotatedRGBANoGlowVerticesBase;
+			auto attributesBase = appState.Scene.attributesSize + appState.Scene.sortedFenceRotatedRGBANoGlowAttributesBase;
+			VkDeviceSize indexBase = 0;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &verticesBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributesBase);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.sortedFenceRotatedRGBANoGlowIndicesBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.sortedFenceRotatedRGBANoGlowIndicesBase, VK_INDEX_TYPE_UINT32);
+			}
+			pushConstants[0] = GammaCorrect(v_blend[0]);
+			pushConstants[1] = GammaCorrect(v_blend[1]);
+			pushConstants[2] = GammaCorrect(v_blend[2]);
+			pushConstants[3] = GammaCorrect(v_blend[3]);
+			vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 4 * sizeof(float), &pushConstants);
+			for (auto& entry : appState.Scene.sorted.fencesRotatedRGBANoGlow)
+			{
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, 1, 1, &entry.lightmap, 0, nullptr);
+				for (auto& subEntry : entry.textures)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
 					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
 					indexBase += subEntry.indexCount;
 				}

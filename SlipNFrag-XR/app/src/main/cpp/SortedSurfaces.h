@@ -23,7 +23,11 @@ struct SortedSurfaces
 	std::list<SortedSurface2TexturesLightmap> surfacesRotatedRGBA;
 	std::list<SortedSurfaceLightmap> surfacesRotatedRGBANoGlow;
 	std::list<SortedSurfaceLightmap> fences;
+	std::list<SortedSurface2TexturesLightmap> fencesRGBA;
+	std::list<SortedSurfaceLightmap> fencesRGBANoGlow;
 	std::list<SortedSurfaceLightmap> fencesRotated;
+	std::list<SortedSurface2TexturesLightmap> fencesRotatedRGBA;
+	std::list<SortedSurfaceLightmap> fencesRotatedRGBANoGlow;
 	std::list<SortedSurfaceTexture> turbulent;
 	std::list<SortedSurfaceTexture> turbulentRGBA;
 	std::list<SortedSurfaceLightmap> turbulentLit;

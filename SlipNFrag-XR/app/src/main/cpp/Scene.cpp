@@ -383,6 +383,10 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CreateShader(appState, app, "shaders/surface_rotated_rgba.vert.spv", &surfaceRotatedRGBAVertex);
 	VkShaderModule fenceFragment;
 	CreateShader(appState, app, "shaders/fence.frag.spv", &fenceFragment);
+	VkShaderModule fenceRGBAFragment;
+	CreateShader(appState, app, "shaders/fence_rgba.frag.spv", &fenceRGBAFragment);
+	VkShaderModule fenceRGBANoGlowFragment;
+	CreateShader(appState, app, "shaders/fence_rgba_no_glow.frag.spv", &fenceRGBANoGlowFragment);
 	VkShaderModule turbulentVertex;
 	CreateShader(appState, app, "shaders/turbulent.vert.spv", &turbulentVertex);
 	VkShaderModule turbulentFragment;
@@ -929,6 +933,48 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fences.pipeline));
 
+	fencesRGBA.stages.resize(2);
+	fencesRGBA.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRGBA.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	fencesRGBA.stages[0].module = surfaceRGBAVertex;
+	fencesRGBA.stages[0].pName = "main";
+	fencesRGBA.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRGBA.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fencesRGBA.stages[1].module = fenceRGBAFragment;
+	fencesRGBA.stages[1].pName = "main";
+	descriptorSetLayouts[0] = singleBufferLayout;
+	descriptorSetLayouts[3] = singleImageLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = 4;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = 4 * sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRGBA.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = fencesRGBA.stages.size();
+	graphicsPipelineCreateInfo.pStages = fencesRGBA.stages.data();
+	graphicsPipelineCreateInfo.layout = fencesRGBA.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceWithGlowAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceWithGlowAttributes.inputAssemblyState;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRGBA.pipeline));
+
+	fencesRGBANoGlow.stages.resize(2);
+	fencesRGBANoGlow.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRGBANoGlow.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	fencesRGBANoGlow.stages[0].module = surfaceVertex;
+	fencesRGBANoGlow.stages[0].pName = "main";
+	fencesRGBANoGlow.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRGBANoGlow.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fencesRGBANoGlow.stages[1].module = fenceRGBANoGlowFragment;
+	fencesRGBANoGlow.stages[1].pName = "main";
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRGBANoGlow.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = fencesRGBANoGlow.stages.size();
+	graphicsPipelineCreateInfo.pStages = fencesRGBANoGlow.stages.data();
+	graphicsPipelineCreateInfo.layout = fencesRGBANoGlow.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceAttributes.inputAssemblyState;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRGBANoGlow.pipeline));
+
 	fencesRotated.stages.resize(2);
 	fencesRotated.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fencesRotated.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -938,6 +984,9 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	fencesRotated.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fencesRotated.stages[1].module = fenceFragment;
 	fencesRotated.stages[1].pName = "main";
+	descriptorSetLayouts[0] = twoBuffersAndImageLayout;
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotated.pipelineLayout));
 	graphicsPipelineCreateInfo.stageCount = fencesRotated.stages.size();
 	graphicsPipelineCreateInfo.pStages = fencesRotated.stages.data();
@@ -945,6 +994,46 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	graphicsPipelineCreateInfo.pVertexInputState = &surfaceRotatedAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceRotatedAttributes.inputAssemblyState;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotated.pipeline));
+
+	fencesRotatedRGBA.stages.resize(2);
+	fencesRotatedRGBA.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRotatedRGBA.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	fencesRotatedRGBA.stages[0].module = surfaceRotatedRGBAVertex;
+	fencesRotatedRGBA.stages[0].pName = "main";
+	fencesRotatedRGBA.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRotatedRGBA.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fencesRotatedRGBA.stages[1].module = fenceRGBAFragment;
+	fencesRotatedRGBA.stages[1].pName = "main";
+	descriptorSetLayouts[0] = singleBufferLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = 4;
+	pushConstantInfo.size = 4 * sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotatedRGBA.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = fencesRotatedRGBA.stages.size();
+	graphicsPipelineCreateInfo.pStages = fencesRotatedRGBA.stages.data();
+	graphicsPipelineCreateInfo.layout = fencesRotatedRGBA.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceRotatedWithGlowAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceRotatedWithGlowAttributes.inputAssemblyState;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotatedRGBA.pipeline));
+
+	fencesRotatedRGBANoGlow.stages.resize(2);
+	fencesRotatedRGBANoGlow.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRotatedRGBANoGlow.stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	fencesRotatedRGBANoGlow.stages[0].module = surfaceRotatedVertex;
+	fencesRotatedRGBANoGlow.stages[0].pName = "main";
+	fencesRotatedRGBANoGlow.stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fencesRotatedRGBANoGlow.stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fencesRotatedRGBANoGlow.stages[1].module = fenceRGBANoGlowFragment;
+	fencesRotatedRGBANoGlow.stages[1].pName = "main";
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotatedRGBANoGlow.pipelineLayout));
+	graphicsPipelineCreateInfo.stageCount = fencesRotatedRGBANoGlow.stages.size();
+	graphicsPipelineCreateInfo.pStages = fencesRotatedRGBANoGlow.stages.data();
+	graphicsPipelineCreateInfo.layout = fencesRotatedRGBANoGlow.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &surfaceRotatedAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &surfaceRotatedAttributes.inputAssemblyState;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotatedRGBANoGlow.pipeline));
 
 	turbulent.stages.resize(2);
 	turbulent.stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -1201,6 +1290,8 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	vkDestroyShaderModule(appState.Device, turbulentRGBAFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, fenceRGBANoGlowFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, fenceRGBAFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, fenceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceRotatedRGBAVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceRotatedVertex, nullptr);
@@ -2005,7 +2096,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	lastSurfaceRotatedRGBA = d_lists.last_surface_rotated_rgba;
 	lastSurfaceRotatedRGBANoGlow = d_lists.last_surface_rotated_rgba_no_glow;
 	lastFence = d_lists.last_fence;
+	lastFenceRGBA = d_lists.last_fence_rgba;
+	lastFenceRGBANoGlow = d_lists.last_fence_rgba_no_glow;
 	lastFenceRotated = d_lists.last_fence_rotated;
+	lastFenceRotatedRGBA = d_lists.last_fence_rotated_rgba;
+	lastFenceRotatedRGBANoGlow = d_lists.last_fence_rotated_rgba_no_glow;
 	lastTurbulent = d_lists.last_turbulent;
 	lastTurbulentRGBA = d_lists.last_turbulent_rgba;
 	lastTurbulentLit = d_lists.last_turbulent_lit;
@@ -2059,9 +2154,25 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		loadedFences.resize(lastFence + 1);
 	}
+	if (lastFenceRGBA >= loadedFencesRGBA.size())
+	{
+		loadedFencesRGBA.resize(lastFenceRGBA + 1);
+	}
+	if (lastFenceRGBANoGlow >= loadedFencesRGBANoGlow.size())
+	{
+		loadedFencesRGBANoGlow.resize(lastFenceRGBANoGlow + 1);
+	}
 	if (lastFenceRotated >= loadedFencesRotated.size())
 	{
 		loadedFencesRotated.resize(lastFenceRotated + 1);
+	}
+	if (lastFenceRotatedRGBA >= loadedFencesRotatedRGBA.size())
+	{
+		loadedFencesRotatedRGBA.resize(lastFenceRotatedRGBA + 1);
+	}
+	if (lastFenceRotatedRGBANoGlow >= loadedFencesRotatedRGBANoGlow.size())
+	{
+		loadedFencesRotatedRGBANoGlow.resize(lastFenceRotatedRGBANoGlow + 1);
 	}
 	if (lastTurbulent >= loadedTurbulent.size())
 	{
@@ -2214,6 +2325,37 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fences);
+	sortedFenceRGBAVerticesBase = sortedVerticesSize;
+	sortedFenceRGBAAttributesBase = sortedAttributesSize;
+	sortedFenceRGBAIndicesBase = sortedIndicesCount;
+	previousTexture = nullptr;
+	previousGlowTexture = nullptr;
+	sorted.Initialize(sorted.fencesRGBA);
+	for (auto i = 0; i <= d_lists.last_fence_rgba; i++)
+	{
+		auto& loaded = loadedFencesRGBA[i];
+		GetStagingBufferSize(appState, d_lists.fences_rgba[i], loaded, size);
+		sorted.Sort(appState, loaded, i, sorted.fencesRGBA);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 20 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(sorted.fencesRGBA);
+	sortedFenceRGBANoGlowVerticesBase = sortedVerticesSize;
+	sortedFenceRGBANoGlowAttributesBase = sortedAttributesSize;
+	sortedFenceRGBANoGlowIndicesBase = sortedIndicesCount;
+	previousTexture = nullptr;
+	sorted.Initialize(sorted.fencesRGBANoGlow);
+	for (auto i = 0; i <= d_lists.last_fence_rgba_no_glow; i++)
+	{
+		auto& loaded = loadedFencesRGBANoGlow[i];
+		GetStagingBufferSizeRGBANoGlow(appState, d_lists.fences_rgba_no_glow[i], loaded, size);
+		sorted.Sort(appState, loaded, i, sorted.fencesRGBANoGlow);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(sorted.fencesRGBANoGlow);
 	sortedFenceRotatedVerticesBase = sortedVerticesSize;
 	sortedFenceRotatedAttributesBase = sortedAttributesSize;
 	sortedFenceRotatedIndicesBase = sortedIndicesCount;
@@ -2229,6 +2371,37 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fencesRotated);
+	sortedFenceRotatedRGBAVerticesBase = sortedVerticesSize;
+	sortedFenceRotatedRGBAAttributesBase = sortedAttributesSize;
+	sortedFenceRotatedRGBAIndicesBase = sortedIndicesCount;
+	previousTexture = nullptr;
+	previousGlowTexture = nullptr;
+	sorted.Initialize(sorted.fencesRotatedRGBA);
+	for (auto i = 0; i <= lastFenceRotatedRGBA; i++)
+	{
+		auto& loaded = loadedFencesRotatedRGBA[i];
+		GetStagingBufferSize(appState, d_lists.fences_rotated_rgba[i], loaded, size);
+		sorted.Sort(appState, loaded, i, sorted.fencesRotatedRGBA);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(sorted.fencesRotatedRGBA);
+	sortedFenceRotatedRGBANoGlowVerticesBase = sortedVerticesSize;
+	sortedFenceRotatedRGBANoGlowAttributesBase = sortedAttributesSize;
+	sortedFenceRotatedRGBANoGlowIndicesBase = sortedIndicesCount;
+	previousTexture = nullptr;
+	sorted.Initialize(sorted.fencesRotatedRGBANoGlow);
+	for (auto i = 0; i <= lastFenceRotatedRGBANoGlow; i++)
+	{
+		auto& loaded = loadedFencesRotatedRGBANoGlow[i];
+		GetStagingBufferSizeRGBANoGlow(appState, d_lists.fences_rotated_rgba_no_glow[i], loaded, size);
+		sorted.Sort(appState, loaded, i, sorted.fencesRotatedRGBANoGlow);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(sorted.fencesRotatedRGBANoGlow);
 	sortedTurbulentVerticesBase = sortedVerticesSize;
 	sortedTurbulentAttributesBase = sortedAttributesSize;
 	sortedTurbulentIndicesBase = sortedIndicesCount;
@@ -2427,7 +2600,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedSurfaceRotatedRGBAIndicesBase *= sizeof(uint16_t);
 		sortedSurfaceRotatedRGBANoGlowIndicesBase *= sizeof(uint16_t);
 		sortedFenceIndicesBase *= sizeof(uint16_t);
+		sortedFenceRGBAIndicesBase *= sizeof(uint16_t);
+		sortedFenceRGBANoGlowIndicesBase *= sizeof(uint16_t);
 		sortedFenceRotatedIndicesBase *= sizeof(uint16_t);
+		sortedFenceRotatedRGBAIndicesBase *= sizeof(uint16_t);
+		sortedFenceRotatedRGBANoGlowIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentRGBAIndicesBase *= sizeof(uint16_t);
 		sortedTurbulentLitIndicesBase *= sizeof(uint16_t);
@@ -2443,7 +2620,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedSurfaceRotatedRGBAIndicesBase *= sizeof(uint32_t);
 		sortedSurfaceRotatedRGBANoGlowIndicesBase *= sizeof(uint32_t);
 		sortedFenceIndicesBase *= sizeof(uint32_t);
+		sortedFenceRGBAIndicesBase *= sizeof(uint32_t);
+		sortedFenceRGBANoGlowIndicesBase *= sizeof(uint32_t);
 		sortedFenceRotatedIndicesBase *= sizeof(uint32_t);
+		sortedFenceRotatedRGBAIndicesBase *= sizeof(uint32_t);
+		sortedFenceRotatedRGBANoGlowIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentRGBAIndicesBase *= sizeof(uint32_t);
 		sortedTurbulentLitIndicesBase *= sizeof(uint32_t);
