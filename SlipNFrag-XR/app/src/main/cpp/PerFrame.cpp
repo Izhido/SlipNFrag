@@ -361,10 +361,8 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 				auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
 				*target++ = 0;
 				*target++ = 1;
-				*target++ = 2;
-				*target++ = 2;
 				*target++ = 3;
-				*target++ = 0;
+				*target++ = 2;
 				offset += appState.Scene.floorIndicesSize;
 			}
 			controllerIndexBase = appState.Scene.floorIndicesSize;
@@ -413,10 +411,8 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
 			*target++ = 0;
 			*target++ = 1;
-			*target++ = 2;
-			*target++ = 2;
 			*target++ = 3;
-			*target++ = 0;
+			*target++ = 2;
 			offset += appState.Scene.floorIndicesSize;
 		}
 		controllerIndexBase = appState.Scene.floorIndicesSize;
@@ -1962,7 +1958,7 @@ void PerFrame::Render(AppState& appState)
 	}
 	else
 	{
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipeline);
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floorStrip.pipeline);
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
 		vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &appState.NoOffset);
 		if (!floorResources.created)
@@ -1986,7 +1982,7 @@ void PerFrame::Render(AppState& appState)
 		VkDescriptorSet descriptorSets[2];
 		descriptorSets[0] = sceneMatricesResources.descriptorSet;
 		descriptorSets[1] = floorResources.descriptorSet;
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floorStrip.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 		if (appState.IndexTypeUInt8Enabled)
 		{
 			vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, 0, VK_INDEX_TYPE_UINT8_EXT);
@@ -1995,7 +1991,7 @@ void PerFrame::Render(AppState& appState)
 		{
 			vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, 0, VK_INDEX_TYPE_UINT16);
 		}
-		vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, 4, 1, 0, 0, 0);
 	}
 	if (appState.Scene.controllerVerticesSize > 0)
 	{

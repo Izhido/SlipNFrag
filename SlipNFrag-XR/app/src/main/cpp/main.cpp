@@ -2672,6 +2672,7 @@ void android_main(struct android_app* app)
 
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
+			appState.Scene.floorStrip.Delete(appState);
 			appState.Scene.floor.Delete(appState);
 			appState.Scene.skyRGBA.Delete(appState);
 			appState.Scene.sky.Delete(appState);

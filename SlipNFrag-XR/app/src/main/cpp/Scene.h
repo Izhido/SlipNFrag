@@ -54,6 +54,7 @@ struct Scene
 	Pipeline sky;
 	Pipeline skyRGBA;
 	Pipeline floor;
+	Pipeline floorStrip;
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	CachedIndexBuffers indexBuffers;
