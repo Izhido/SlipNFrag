@@ -1,12 +1,13 @@
-cmake_minimum_required(VERSION 3.18)
+project(SlipNFrag-XR)
+cmake_minimum_required(VERSION 3.22)
 
 set(ROOT_DIR "${PROJECT_SOURCE_DIR}/../../../../..")
 set(ID1_DIR "${ROOT_DIR}/id1")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.24")
-set(OVR_OPENXR_DIR "${ROOT_DIR}/ovr_openxr_mobile_sdk_40.0")
-set(ADRENO_DIR "${ROOT_DIR}/VkAdrenoLayer_v1.2")
+set(OVR_OPENXR_DIR "${ROOT_DIR}/ovr_openxr_mobile_sdk_42.0")
+set(ADRENO_DIR "${ROOT_DIR}/VkAdrenoLayer_v1.3")
 set(ANDROID_BINARIES_DIR "${ROOT_DIR}/android-binaries-1.3.216.0")
 set(ASAN_DIR "${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/14.0.6/lib/linux")
 
