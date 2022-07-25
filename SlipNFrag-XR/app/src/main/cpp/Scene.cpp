@@ -518,10 +518,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	VkPipelineInputAssemblyStateCreateInfo triangleStrip { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
 	triangleStrip.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
-	VkPipelineInputAssemblyStateCreateInfo restartableTriangleStrip { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
-	restartableTriangleStrip.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	restartableTriangleStrip.primitiveRestartEnable = VK_TRUE;
-
 	PipelineAttributes surfaceAttributes { };
 	surfaceAttributes.vertexAttributes.resize(5);
 	surfaceAttributes.vertexBindings.resize(2);
@@ -795,7 +791,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfaces.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = surfaces.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &surfaceAttributes.vertexInputState;
-	graphicsPipelineCreateInfo.pInputAssemblyState = &restartableTriangleStrip;
+	graphicsPipelineCreateInfo.pInputAssemblyState = &triangles;
 	stages[0].module = surfaceVertex;
 	stages[1].module = surfaceFragment;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfaces.pipeline));
@@ -1926,7 +1922,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.surfaces);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfaces);
 	sortedSurfaceRGBAVerticesBase = sortedVerticesSize;
@@ -1942,7 +1938,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.surfacesRGBA);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 20 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfacesRGBA);
 	sortedSurfaceRGBANoGlowVerticesBase = sortedVerticesSize;
@@ -1957,7 +1953,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.surfacesRGBANoGlow);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfacesRGBANoGlow);
 	sortedSurfaceRotatedVerticesBase = sortedVerticesSize;
@@ -1972,7 +1968,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.surfacesRotated);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfacesRotated);
 	sortedSurfaceRotatedRGBAVerticesBase = sortedVerticesSize;
@@ -1988,7 +1984,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.surfacesRotatedRGBA);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfacesRotatedRGBA);
 	sortedSurfaceRotatedRGBANoGlowVerticesBase = sortedVerticesSize;
@@ -2003,7 +1999,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.surfacesRotatedRGBANoGlow);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.surfacesRotatedRGBANoGlow);
 	sortedFenceVerticesBase = sortedVerticesSize;
@@ -2018,7 +2014,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.fences);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fences);
 	sortedFenceRGBAVerticesBase = sortedVerticesSize;
@@ -2034,7 +2030,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.fencesRGBA);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 20 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fencesRGBA);
 	sortedFenceRGBANoGlowVerticesBase = sortedVerticesSize;
@@ -2049,7 +2045,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.fencesRGBANoGlow);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fencesRGBANoGlow);
 	sortedFenceRotatedVerticesBase = sortedVerticesSize;
@@ -2064,7 +2060,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.fencesRotated);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fencesRotated);
 	sortedFenceRotatedRGBAVerticesBase = sortedVerticesSize;
@@ -2080,7 +2076,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.fencesRotatedRGBA);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fencesRotatedRGBA);
 	sortedFenceRotatedRGBANoGlowVerticesBase = sortedVerticesSize;
@@ -2095,7 +2091,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.fencesRotatedRGBANoGlow);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.fencesRotatedRGBANoGlow);
 	sortedTurbulentVerticesBase = sortedVerticesSize;
@@ -2110,7 +2106,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.turbulent);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 12 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulent);
 	sortedTurbulentRGBAVerticesBase = sortedVerticesSize;
@@ -2125,7 +2121,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.turbulentRGBA);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 12 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulentRGBA);
 	sortedTurbulentLitVerticesBase = sortedVerticesSize;
@@ -2140,7 +2136,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.turbulentLit);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulentLit);
 	sortedTurbulentLitRGBAVerticesBase = sortedVerticesSize;
@@ -2155,7 +2151,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sorted.Sort(appState, loaded, i, sorted.turbulentLitRGBA);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
-		sortedIndicesCount += (loaded.count + 1);
+		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(sorted.turbulentLitRGBA);
 	previousTexture = nullptr;
