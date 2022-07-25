@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include "Pipeline.h"
+#include "PipelineWithLoaded.h"
 #include "CachedSharedMemoryBuffers.h"
 #include "CachedIndexBuffers.h"
 #include <unordered_map>
@@ -30,25 +30,25 @@ struct Scene
 	VkDescriptorSetLayout doubleBufferLayout;
 	VkDescriptorSetLayout twoBuffersAndImageLayout;
 	VkDescriptorSetLayout singleImageLayout;
-	Pipeline surfaces;
-	Pipeline surfacesRGBA;
-	Pipeline surfacesRGBANoGlow;
-	Pipeline surfacesRotated;
-	Pipeline surfacesRotatedRGBA;
-	Pipeline surfacesRotatedRGBANoGlow;
-	Pipeline fences;
-	Pipeline fencesRGBA;
-	Pipeline fencesRGBANoGlow;
-	Pipeline fencesRotated;
-	Pipeline fencesRotatedRGBA;
-	Pipeline fencesRotatedRGBANoGlow;
-	Pipeline turbulent;
-	Pipeline turbulentRGBA;
-	Pipeline turbulentLit;
-	Pipeline turbulentLitRGBA;
-	Pipeline sprites;
-	Pipeline alias;
-	Pipeline viewmodel;
+	PipelineWithLoaded<LoadedSurface> surfaces;
+	PipelineWithLoaded<LoadedSurface2Textures> surfacesRGBA;
+	PipelineWithLoaded<LoadedSurface> surfacesRGBANoGlow;
+	PipelineWithLoaded<LoadedSurfaceRotated> surfacesRotated;
+	PipelineWithLoaded<LoadedSurfaceRotated2Textures> surfacesRotatedRGBA;
+	PipelineWithLoaded<LoadedSurfaceRotated> surfacesRotatedRGBANoGlow;
+	PipelineWithLoaded<LoadedSurface> fences;
+	PipelineWithLoaded<LoadedSurface2Textures> fencesRGBA;
+	PipelineWithLoaded<LoadedSurface> fencesRGBANoGlow;
+	PipelineWithLoaded<LoadedSurfaceRotated> fencesRotated;
+	PipelineWithLoaded<LoadedSurfaceRotated2Textures> fencesRotatedRGBA;
+	PipelineWithLoaded<LoadedSurfaceRotated> fencesRotatedRGBANoGlow;
+	PipelineWithLoaded<LoadedTurbulent> turbulent;
+	PipelineWithLoaded<LoadedTurbulent> turbulentRGBA;
+	PipelineWithLoaded<LoadedSurface> turbulentLit;
+	PipelineWithLoaded<LoadedSurface> turbulentLitRGBA;
+	PipelineWithLoaded<LoadedSprite> sprites;
+	PipelineWithLoaded<LoadedAlias> alias;
+	PipelineWithLoaded<LoadedAlias> viewmodel;
 	Pipeline particle;
 	Pipeline colored;
 	Pipeline sky;
@@ -61,50 +61,12 @@ struct Scene
 	std::unordered_map<void*, std::vector<float>> surfaceVertexCache;
 	std::unordered_map<void*, AliasVertices> aliasVertexCache;
 	std::unordered_map<void*, IndexBuffer> aliasIndexCache;
-	int lastSurface;
-	int lastSurfaceRGBA;
-	int lastSurfaceRGBANoGlow;
-	int lastSurfaceRotated;
-	int lastSurfaceRotatedRGBA;
-	int lastSurfaceRotatedRGBANoGlow;
-	int lastFence;
-	int lastFenceRGBA;
-	int lastFenceRGBANoGlow;
-	int lastFenceRotated;
-	int lastFenceRotatedRGBA;
-	int lastFenceRotatedRGBANoGlow;
-	int lastTurbulent;
-	int lastTurbulentRGBA;
-	int lastTurbulentLit;
-	int lastTurbulentLitRGBA;
-	int lastSprite;
-	int lastAlias;
-	int lastViewmodel;
 	int lastParticle;
 	int lastColoredIndex8;
 	int lastColoredIndex16;
 	int lastColoredIndex32;
 	int lastSky;
 	int lastSkyRGBA;
-	std::vector<LoadedSurface> loadedSurfaces;
-	std::vector<LoadedSurface2Textures> loadedSurfacesRGBA;
-	std::vector<LoadedSurface> loadedSurfacesRGBANoGlow;
-	std::vector<LoadedSurfaceRotated> loadedSurfacesRotated;
-	std::vector<LoadedSurfaceRotated2Textures> loadedSurfacesRotatedRGBA;
-	std::vector<LoadedSurfaceRotated> loadedSurfacesRotatedRGBANoGlow;
-	std::vector<LoadedSurface> loadedFences;
-	std::vector<LoadedSurface2Textures> loadedFencesRGBA;
-	std::vector<LoadedSurface> loadedFencesRGBANoGlow;
-	std::vector<LoadedSurfaceRotated> loadedFencesRotated;
-	std::vector<LoadedSurfaceRotated2Textures> loadedFencesRotatedRGBA;
-	std::vector<LoadedSurfaceRotated> loadedFencesRotatedRGBANoGlow;
-	std::vector<LoadedTurbulent> loadedTurbulent;
-	std::vector<LoadedTurbulent> loadedTurbulentRGBA;
-	std::vector<LoadedSurface> loadedTurbulentLit;
-	std::vector<LoadedSurface> loadedTurbulentLitRGBA;
-	std::vector<LoadedSprite> loadedSprites;
-	std::vector<LoadedAlias> loadedAlias;
-	std::vector<LoadedAlias> loadedViewmodels;
 	LoadedSky loadedSky;
 	LoadedSky loadedSkyRGBA;
 	std::unordered_map<VkDeviceSize, std::list<LightmapTexture>> lightmapTextures;
