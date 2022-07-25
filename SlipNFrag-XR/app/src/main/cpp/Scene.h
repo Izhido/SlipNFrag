@@ -71,8 +71,8 @@ struct Scene
 	LoadedSky loadedSkyRGBA;
 	std::unordered_map<VkDeviceSize, std::list<LightmapTexture>> lightmapTextures;
 	CachedLightmaps lightmaps;
-	std::unordered_map<std::string, CachedSharedMemoryTextures> surfaceTextures;
-	std::unordered_map<std::string, CachedSharedMemoryTextures> surfaceRGBATextures;
+	std::vector<CachedSharedMemoryTextures> surfaceTextures;
+	std::vector<CachedSharedMemoryTextures> surfaceRGBATextures;
 	CachedSharedMemoryTextures textures;
 	std::unordered_map<void*, SurfaceTexture> surfaceTextureCache;
 	std::unordered_map<void*, SharedMemoryTexture*> spriteCache;

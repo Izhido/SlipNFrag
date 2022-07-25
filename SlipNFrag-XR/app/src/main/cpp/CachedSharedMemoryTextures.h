@@ -4,6 +4,8 @@
 
 struct CachedSharedMemoryTextures
 {
+	int width;
+	int height;
 	SharedMemoryTexture* textures;
 	SharedMemoryTexture* oldTextures;
 	LoadedSharedMemoryTexture* first;

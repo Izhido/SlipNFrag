@@ -1110,15 +1110,15 @@ void Scene::Initialize()
 	indexBuffers.Initialize();
 	lightmaps.first = nullptr;
 	lightmaps.current = nullptr;
-	for (auto& entry : surfaceTextures)
+	for (auto& cached : surfaceTextures)
 	{
-		entry.second.first = nullptr;
-		entry.second.current = nullptr;
+		cached.first = nullptr;
+		cached.current = nullptr;
 	}
-	for (auto& entry : surfaceRGBATextures)
+	for (auto& cached : surfaceRGBATextures)
 	{
-		entry.second.first = nullptr;
-		entry.second.current = nullptr;
+		cached.first = nullptr;
+		cached.current = nullptr;
 	}
 	textures.first = nullptr;
 	textures.current = nullptr;
@@ -1170,12 +1170,24 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		auto entry = surfaceTextureCache.find(turbulent.data);
 		if (entry == surfaceTextureCache.end())
 		{
-			auto key = std::to_string(turbulent.width) + "x" + std::to_string(turbulent.height);
-			auto& cached = surfaceTextures[key];
-			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			CachedSharedMemoryTextures* cached = nullptr;
+			for (auto& entry : surfaceTextures)
+			{
+				if (entry.width == turbulent.width && entry.height == turbulent.height)
+				{
+					cached = &entry;
+					break;
+				}
+			}
+			if (cached == nullptr)
+			{
+				surfaceTextures.push_back({ turbulent.width, turbulent.height });
+				cached = &surfaceTextures.back();
+			}
+			if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
 			{
 				uint32_t layerCount;
-				if (cached.textures == nullptr)
+				if (cached->textures == nullptr)
 				{
 					layerCount = 4;
 				}
@@ -1186,23 +1198,23 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 				auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 				auto texture = new SharedMemoryTexture { };
 				texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				cached.MoveToFront(texture);
+				cached->MoveToFront(texture);
 				loaded.texture.texture = texture;
-				cached.currentIndex = 0;
+				cached->currentIndex = 0;
 			}
 			else
 			{
-				loaded.texture.texture = cached.textures;
+				loaded.texture.texture = cached->textures;
 			}
-			cached.Setup(loaded.texture);
-			loaded.texture.index = cached.currentIndex;
+			cached->Setup(loaded.texture);
+			loaded.texture.index = cached->currentIndex;
 			loaded.texture.size = turbulent.size;
 			loaded.texture.allocated = GetAllocatedFor(turbulent.width, turbulent.height);
 			size += loaded.texture.allocated;
 			loaded.texture.source = turbulent.data;
 			loaded.texture.mips = turbulent.mips;
 			surfaceTextureCache.insert({ turbulent.data, { loaded.texture.texture, loaded.texture.index } });
-			cached.currentIndex++;
+			cached->currentIndex++;
 		}
 		else
 		{
@@ -1233,12 +1245,24 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
 		auto entry = surfaceTextureCache.find(turbulent.data);
 		if (entry == surfaceTextureCache.end())
 		{
-			auto key = std::to_string(turbulent.width) + "x" + std::to_string(turbulent.height);
-			auto& cached = surfaceRGBATextures[key];
-			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			CachedSharedMemoryTextures* cached = nullptr;
+			for (auto& entry : surfaceRGBATextures)
+			{
+				if (entry.width == turbulent.width && entry.height == turbulent.height)
+				{
+					cached = &entry;
+					break;
+				}
+			}
+			if (cached == nullptr)
+			{
+				surfaceRGBATextures.push_back({ turbulent.width, turbulent.height });
+				cached = &surfaceRGBATextures.back();
+			}
+			if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
 			{
 				uint32_t layerCount;
-				if (cached.textures == nullptr)
+				if (cached->textures == nullptr)
 				{
 					layerCount = 4;
 				}
@@ -1249,23 +1273,23 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
 				auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
 				auto texture = new SharedMemoryTexture { };
 				texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				cached.MoveToFront(texture);
+				cached->MoveToFront(texture);
 				loaded.texture.texture = texture;
-				cached.currentIndex = 0;
+				cached->currentIndex = 0;
 			}
 			else
 			{
-				loaded.texture.texture = cached.textures;
+				loaded.texture.texture = cached->textures;
 			}
-			cached.Setup(loaded.texture);
-			loaded.texture.index = cached.currentIndex;
+			cached->Setup(loaded.texture);
+			loaded.texture.index = cached->currentIndex;
 			loaded.texture.size = turbulent.size;
 			loaded.texture.allocated = GetAllocatedFor(turbulent.width, turbulent.height) * sizeof(unsigned);
 			size += loaded.texture.allocated;
 			loaded.texture.source = turbulent.data;
 			loaded.texture.mips = turbulent.mips;
 			surfaceTextureCache.insert({ turbulent.data, { loaded.texture.texture, loaded.texture.index } });
-			cached.currentIndex++;
+			cached->currentIndex++;
 		}
 		else
 		{
@@ -1339,15 +1363,27 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		auto entry = surfaceTextureCache.find(surface.data);
 		if (entry == surfaceTextureCache.end())
 		{
-			auto key = std::to_string(surface.width) + "x" + std::to_string(surface.height);
-			auto& cached = surfaceRGBATextures[key];
+			CachedSharedMemoryTextures* cached = nullptr;
+			for (auto& entry : surfaceRGBATextures)
+			{
+				if (entry.width == surface.width && entry.height == surface.height)
+				{
+					cached = &entry;
+					break;
+				}
+			}
+			if (cached == nullptr)
+			{
+				surfaceRGBATextures.push_back({ surface.width, surface.height });
+				cached = &surfaceRGBATextures.back();
+			}
 			// By doing this, we guarantee that the next texture allocations (color and glow) will be done
 			// in the same texture array, which will allow the sorted surfaces algorithm to work as expected:
 			auto extra = (surface.glow_data != nullptr ? 1 : 0);
-			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount - extra)
+			if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount - extra)
 			{
 				uint32_t layerCount;
-				if (cached.textures == nullptr)
+				if (cached->textures == nullptr)
 				{
 					layerCount = 4;
 				}
@@ -1358,23 +1394,23 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
 				auto texture = new SharedMemoryTexture { };
 				texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				cached.MoveToFront(texture);
+				cached->MoveToFront(texture);
 				loaded.texture.texture = texture;
-				cached.currentIndex = 0;
+				cached->currentIndex = 0;
 			}
 			else
 			{
-				loaded.texture.texture = cached.textures;
+				loaded.texture.texture = cached->textures;
 			}
-			cached.Setup(loaded.texture);
-			loaded.texture.index = cached.currentIndex;
+			cached->Setup(loaded.texture);
+			loaded.texture.index = cached->currentIndex;
 			loaded.texture.size = surface.size;
 			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
 			size += loaded.texture.allocated;
 			loaded.texture.source = surface.data;
 			loaded.texture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.data, { loaded.texture.texture, loaded.texture.index } });
-			cached.currentIndex++;
+			cached->currentIndex++;
 		}
 		else
 		{
@@ -1397,12 +1433,24 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		auto entry = surfaceTextureCache.find(surface.glow_data);
 		if (entry == surfaceTextureCache.end())
 		{
-			auto key = std::to_string(surface.width) + "x" + std::to_string(surface.height);
-			auto& cached = surfaceRGBATextures[key];
-			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			CachedSharedMemoryTextures* cached = nullptr;
+			for (auto& entry : surfaceRGBATextures)
+			{
+				if (entry.width == surface.width && entry.height == surface.height)
+				{
+					cached = &entry;
+					break;
+				}
+			}
+			if (cached == nullptr)
+			{
+				surfaceRGBATextures.push_back({ surface.width, surface.height });
+				cached = &surfaceRGBATextures.back();
+			}
+			if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
 			{
 				uint32_t layerCount;
-				if (cached.textures == nullptr)
+				if (cached->textures == nullptr)
 				{
 					layerCount = 4;
 				}
@@ -1413,23 +1461,23 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
 				auto texture = new SharedMemoryTexture { };
 				texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				cached.MoveToFront(texture);
+				cached->MoveToFront(texture);
 				loaded.glowTexture.texture = texture;
-				cached.currentIndex = 0;
+				cached->currentIndex = 0;
 			}
 			else
 			{
-				loaded.glowTexture.texture = cached.textures;
+				loaded.glowTexture.texture = cached->textures;
 			}
-			cached.Setup(loaded.glowTexture);
-			loaded.glowTexture.index = cached.currentIndex;
+			cached->Setup(loaded.glowTexture);
+			loaded.glowTexture.index = cached->currentIndex;
 			loaded.glowTexture.size = surface.size;
 			loaded.glowTexture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
 			size += loaded.glowTexture.allocated;
 			loaded.glowTexture.source = surface.glow_data;
 			loaded.glowTexture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.glow_data, { loaded.glowTexture.texture, loaded.glowTexture.index } });
-			cached.currentIndex++;
+			cached->currentIndex++;
 		}
 		else
 		{
@@ -1498,12 +1546,24 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 		auto entry = surfaceTextureCache.find(surface.data);
 		if (entry == surfaceTextureCache.end())
 		{
-			auto key = std::to_string(surface.width) + "x" + std::to_string(surface.height);
-			auto& cached = surfaceRGBATextures[key];
-			if (cached.textures == nullptr || cached.currentIndex >= cached.textures->layerCount)
+			CachedSharedMemoryTextures* cached = nullptr;
+			for (auto& entry : surfaceRGBATextures)
+			{
+				if (entry.width == surface.width && entry.height == surface.height)
+				{
+					cached = &entry;
+					break;
+				}
+			}
+			if (cached == nullptr)
+			{
+				surfaceRGBATextures.push_back({ surface.width, surface.height });
+				cached = &surfaceRGBATextures.back();
+			}
+			if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
 			{
 				uint32_t layerCount;
-				if (cached.textures == nullptr)
+				if (cached->textures == nullptr)
 				{
 					layerCount = 4;
 				}
@@ -1514,23 +1574,23 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 				auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
 				auto texture = new SharedMemoryTexture { };
 				texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-				cached.MoveToFront(texture);
+				cached->MoveToFront(texture);
 				loaded.texture.texture = texture;
-				cached.currentIndex = 0;
+				cached->currentIndex = 0;
 			}
 			else
 			{
-				loaded.texture.texture = cached.textures;
+				loaded.texture.texture = cached->textures;
 			}
-			cached.Setup(loaded.texture);
-			loaded.texture.index = cached.currentIndex;
+			cached->Setup(loaded.texture);
+			loaded.texture.index = cached->currentIndex;
 			loaded.texture.size = surface.size;
 			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
 			size += loaded.texture.allocated;
 			loaded.texture.source = surface.data;
 			loaded.texture.mips = surface.mips;
 			surfaceTextureCache.insert({ surface.data, { loaded.texture.texture, loaded.texture.index } });
-			cached.currentIndex++;
+			cached->currentIndex++;
 		}
 		else
 		{
@@ -2377,14 +2437,16 @@ void Scene::Reset()
 	spriteCache.clear();
 	surfaceTextureCache.clear();
 	textures.DisposeFront();
-	for (auto& entry : surfaceRGBATextures)
+	for (auto& cached : surfaceRGBATextures)
 	{
-		entry.second.DisposeFront();
+		cached.DisposeFront();
 	}
-	for (auto& entry : surfaceTextures)
+	surfaceRGBATextures.clear();
+	for (auto& cached : surfaceTextures)
 	{
-		entry.second.DisposeFront();
+		cached.DisposeFront();
 	}
+	surfaceTextures.clear();
 	lightmaps.DisposeFront();
 	indexBuffers.DisposeFront();
 	buffers.DisposeFront();

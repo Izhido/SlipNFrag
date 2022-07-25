@@ -1561,11 +1561,11 @@ void android_main(struct android_app* app)
 				appState.Scene.textures.DeleteOld(appState);
 				for (auto& entry : appState.Scene.surfaceRGBATextures)
 				{
-					entry.second.DeleteOld(appState);
+					entry.DeleteOld(appState);
 				}
 				for (auto& entry : appState.Scene.surfaceTextures)
 				{
-					entry.second.DeleteOld(appState);
+					entry.DeleteOld(appState);
 				}
 				appState.Scene.lightmaps.DeleteOld(appState);
 				appState.Scene.indexBuffers.DeleteOld(appState);
@@ -2648,13 +2648,13 @@ void android_main(struct android_app* app)
 
 			for (auto& entry: appState.Scene.surfaceRGBATextures)
 			{
-				entry.second.Delete(appState);
+				entry.Delete(appState);
 			}
 			appState.Scene.surfaceRGBATextures.clear();
 
 			for (auto& entry: appState.Scene.surfaceTextures)
 			{
-				entry.second.Delete(appState);
+				entry.Delete(appState);
 			}
 			appState.Scene.surfaceTextures.clear();
 
