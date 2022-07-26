@@ -34,5 +34,6 @@ void main()
 		((color.b < 0.04045) ? (color.b / 12.92) : (pow((color.b + 0.055) / 1.055, 2.4))),
 		1
 	);
-	outColor = mix(gammaCorrectedColor, tint, tint.a);
+	vec4 finalColor = mix(gammaCorrectedColor, tint, tint.a);
+	outColor = vec4(finalColor.r, finalColor.g, finalColor.b, 1);
 }
