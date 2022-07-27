@@ -127,52 +127,6 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 	}
 }
 
-void Lightmap::Fill(AppState& appState, uint32_t regions, StagingBuffer& buffer)
-{
-	if (buffer.descriptorSetsInUse.find(texture->descriptorSet) == buffer.descriptorSetsInUse.end())
-	{
-		buffer.lastBarrier++;
-		if (buffer.imageBarriers.size() <= buffer.lastBarrier)
-		{
-			buffer.imageBarriers.emplace_back();
-		}
-
-		auto& barrier = buffer.imageBarriers[buffer.lastBarrier];
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		if (filled)
-		{
-			barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		}
-		else
-		{
-			barrier.srcAccessMask = 0;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		}
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.image = texture->image;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = texture->allocated.size();
-		vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions, texture->regions.data());
-
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		buffer.descriptorSetsInUse.insert(texture->descriptorSet);
-	}
-	else
-	{
-		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions, texture->regions.data());
-	}
-}
-
 void Lightmap::Delete(AppState& appState) const
 {
 	texture->allocated[allocatedIndex] = false;
