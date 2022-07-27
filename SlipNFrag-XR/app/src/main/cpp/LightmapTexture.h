@@ -15,4 +15,5 @@ struct LightmapTexture
 	int firstFreeCandidate = 0;
 	VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+	std::vector<VkBufferImageCopy> regions;
 };

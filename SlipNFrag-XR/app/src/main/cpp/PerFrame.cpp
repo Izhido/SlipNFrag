@@ -890,12 +890,38 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		host_colormap->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += appState.Scene.host_colormapSize;
 	}
+	LoadedLightmap* previousLoadedLightmap = nullptr;
+	uint32_t regions = 0;
 	auto loadedLightmap = appState.Scene.lightmaps.first;
 	while (loadedLightmap != nullptr)
 	{
-		loadedLightmap->lightmap->Fill(appState, appState.Scene.stagingBuffer);
+		if (previousLoadedLightmap != nullptr)
+		{
+			if (previousLoadedLightmap->lightmap->texture != loadedLightmap->lightmap->texture)
+			{
+				previousLoadedLightmap->lightmap->Fill(appState, regions, appState.Scene.stagingBuffer);
+				previousLoadedLightmap->lightmap->filled = true;
+				regions = 0;
+			}
+			else
+			{
+				previousLoadedLightmap->lightmap->filled = true;
+			}
+		}
+		auto& region = loadedLightmap->lightmap->texture->regions[regions];
+		region.bufferOffset = appState.Scene.stagingBuffer.offset;
+		region.imageSubresource.baseArrayLayer = loadedLightmap->lightmap->allocatedIndex;
+		region.imageExtent.width = loadedLightmap->lightmap->width;
+		region.imageExtent.height = loadedLightmap->lightmap->height;
+		regions++;
 		appState.Scene.stagingBuffer.offset += loadedLightmap->size;
+		previousLoadedLightmap = loadedLightmap;
 		loadedLightmap = loadedLightmap->next;
+	}
+	if (previousLoadedLightmap != nullptr)
+	{
+		previousLoadedLightmap->lightmap->Fill(appState, regions, appState.Scene.stagingBuffer);
+		previousLoadedLightmap->lightmap->filled = true;
 	}
 	for (auto& entry : appState.Scene.surfaceTextures)
 	{

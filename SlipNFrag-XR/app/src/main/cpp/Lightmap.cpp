@@ -116,20 +116,19 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 		write.pImageInfo = &textureInfo;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		vkUpdateDescriptorSets(appState.Device, 1, &write, 0, nullptr);
+
+		texture->regions.resize(count);
+		for (auto& region : texture->regions)
+		{
+			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.imageSubresource.layerCount = 1;
+			region.imageExtent.depth = 1;
+		}
 	}
 }
 
-void Lightmap::Fill(AppState& appState, StagingBuffer& buffer)
+void Lightmap::Fill(AppState& appState, uint32_t regions, StagingBuffer& buffer)
 {
-	VkBufferImageCopy region { };
-	region.bufferOffset = buffer.offset;
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.baseArrayLayer = allocatedIndex;
-	region.imageSubresource.layerCount = 1;
-	region.imageExtent.width = width;
-	region.imageExtent.height = height;
-	region.imageExtent.depth = 1;
-
 	if (buffer.descriptorSetsInUse.find(texture->descriptorSet) == buffer.descriptorSetsInUse.end())
 	{
 		buffer.lastBarrier++;
@@ -160,7 +159,7 @@ void Lightmap::Fill(AppState& appState, StagingBuffer& buffer)
 		barrier.subresourceRange.layerCount = texture->allocated.size();
 		vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions, texture->regions.data());
 
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -170,10 +169,8 @@ void Lightmap::Fill(AppState& appState, StagingBuffer& buffer)
 	}
 	else
 	{
-		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions, texture->regions.data());
 	}
-
-	filled = true;
 }
 
 void Lightmap::Delete(AppState& appState) const
