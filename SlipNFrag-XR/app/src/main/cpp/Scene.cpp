@@ -1126,13 +1126,13 @@ void Scene::Initialize()
 
 void Scene::AddToBufferBarrier(VkBuffer buffer)
 {
-	stagingBuffer.lastBarrier++;
-	if (stagingBuffer.bufferBarriers.size() <= stagingBuffer.lastBarrier)
+	stagingBuffer.lastEndBarrier++;
+	if (stagingBuffer.bufferBarriers.size() <= stagingBuffer.lastEndBarrier)
 	{
 		stagingBuffer.bufferBarriers.emplace_back();
 	}
 
-	auto& barrier = stagingBuffer.bufferBarriers[stagingBuffer.lastBarrier];
+	auto& barrier = stagingBuffer.bufferBarriers[stagingBuffer.lastEndBarrier];
 	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
 	barrier.buffer = buffer;
 	barrier.size = VK_WHOLE_SIZE;

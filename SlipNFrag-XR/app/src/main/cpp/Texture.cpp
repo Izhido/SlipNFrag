@@ -88,13 +88,13 @@ void Texture::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCo
 
 void Texture::Fill(AppState& appState, StagingBuffer& buffer)
 {
-	buffer.lastBarrier++;
-	if (buffer.imageBarriers.size() <= buffer.lastBarrier)
+	buffer.lastEndBarrier++;
+	if (buffer.imageEndBarriers.size() <= buffer.lastEndBarrier)
 	{
-		buffer.imageBarriers.emplace_back();
+		buffer.imageEndBarriers.emplace_back();
 	}
 
-	auto& barrier = buffer.imageBarriers[buffer.lastBarrier];
+	auto& barrier = buffer.imageEndBarriers[buffer.lastEndBarrier];
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	if (filled)
 	{

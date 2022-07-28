@@ -9,7 +9,9 @@ struct StagingBuffer
 	VkDeviceSize offset;
 	VkCommandBuffer commandBuffer;
 	std::vector<VkBufferMemoryBarrier> bufferBarriers;
-	std::vector<VkImageMemoryBarrier> imageBarriers;
+	std::vector<VkImageMemoryBarrier> imageStartBarriers;
+	std::vector<VkImageMemoryBarrier> imageEndBarriers;
 	std::unordered_set<VkDescriptorSet> descriptorSetsInUse;
-	int lastBarrier;
+	int lastStartBarrier;
+	int lastEndBarrier;
 };
