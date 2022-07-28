@@ -164,7 +164,7 @@ struct Scene
 	VkDeviceSize sortedTurbulentLitRGBAAttributesBase;
 	VkDeviceSize sortedTurbulentLitRGBAIndicesBase;
 	VkDeviceSize paletteSize;
-	VkDeviceSize host_colormapSize;
+	VkDeviceSize colormapSize;
 	StagingBuffer stagingBuffer;
 	void* previousTexture;
 	void* previousGlowTexture;

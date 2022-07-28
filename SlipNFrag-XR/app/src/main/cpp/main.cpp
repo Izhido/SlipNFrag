@@ -2605,9 +2605,9 @@ void android_main(struct android_app* app)
 				{
 					perFrame.second.sky->Delete(appState);
 				}
-				if (perFrame.second.host_colormap != nullptr)
+				if (perFrame.second.colormap != nullptr)
 				{
-					perFrame.second.host_colormap->Delete(appState);
+					perFrame.second.colormap->Delete(appState);
 				}
 				if (perFrame.second.palette != nullptr)
 				{

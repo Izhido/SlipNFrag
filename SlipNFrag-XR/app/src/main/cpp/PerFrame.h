@@ -28,7 +28,7 @@ struct PerFrame
 	int colormapCount;
 	int paletteChanged;
 	Buffer* palette;
-	Texture* host_colormap;
+	Texture* colormap;
 	Buffer matrices;
 	Buffer* vertices;
 	Buffer* attributes;
