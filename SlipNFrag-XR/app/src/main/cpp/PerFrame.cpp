@@ -40,7 +40,7 @@ byte PerFrame::AveragePixels(std::vector<byte>& pixdata)
 		{
 			continue;
 		}
-		else if (pix >= 240)
+		else if (pix >= 224)
 		{
 			return pix;
 		}
@@ -64,7 +64,7 @@ byte PerFrame::AveragePixels(std::vector<byte>& pixdata)
 	bestdistortion = r*r + g*g + b*b;
 	bestcolor = 0;
 	i = 0;
-	e = 240;
+	e = 224;
 
 	for ( ; i< e ; i++)
 	{
