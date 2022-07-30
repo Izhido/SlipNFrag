@@ -800,7 +800,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetLayouts[3] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 4;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 4 * sizeof(float);
+	pushConstantInfo.size = 5 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRGBA.pipelineLayout));
@@ -830,7 +830,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	descriptorSetLayouts[0] = singleBufferLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 4;
-	pushConstantInfo.size = 4 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotatedRGBA.pipelineLayout));
@@ -861,8 +860,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	descriptorSetLayouts[0] = singleBufferLayout;
 	descriptorSetLayouts[3] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 4;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 4 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRGBA.pipelineLayout));
@@ -892,7 +889,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	descriptorSetLayouts[0] = singleBufferLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 4;
-	pushConstantInfo.size = 4 * sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotatedRGBA.pipelineLayout));
@@ -912,7 +908,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	descriptorSetLayouts[0] = doubleBufferLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(float);
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
 	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
@@ -924,7 +919,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulent.pipeline));
 
 	descriptorSetLayouts[0] = singleBufferLayout;
-	pushConstantInfo.size = 5 * sizeof(float);
+	pushConstantInfo.size = 6 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentRGBA.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = turbulentRGBA.pipelineLayout;
 	stages[0].module = turbulentVertex;
@@ -942,7 +937,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentLit.pipeline));
 
 	descriptorSetLayouts[0] = singleBufferLayout;
-	pushConstantInfo.size = 5 * sizeof(float);
+	pushConstantInfo.size = 6 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentLitRGBA.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = turbulentLitRGBA.pipelineLayout;
 	stages[0].module = surfaceVertex;

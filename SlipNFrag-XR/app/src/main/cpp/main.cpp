@@ -2557,37 +2557,37 @@ void android_main(struct android_app* app)
 
 		if (appState.Device != VK_NULL_HANDLE)
 		{
-			for (auto& texture: appState.KeyboardTextures)
+			for (auto& texture : appState.KeyboardTextures)
 			{
 				texture.Delete(appState);
 			}
 			appState.KeyboardTextures.clear();
 
-			for (auto& perFrame: appState.Keyboard.Screen.PerImage)
+			for (auto& perFrame : appState.Keyboard.Screen.PerImage)
 			{
 				perFrame.stagingBuffer.Delete(appState);
 			}
 			appState.Keyboard.Screen.PerImage.clear();
 
-			for (auto& texture: appState.StatusBarTextures)
+			for (auto& texture : appState.StatusBarTextures)
 			{
 				texture.Delete(appState);
 			}
 			appState.StatusBarTextures.clear();
 
-			for (auto& texture: appState.ConsoleTextures)
+			for (auto& texture : appState.ConsoleTextures)
 			{
 				texture.Delete(appState);
 			}
 			appState.ConsoleTextures.clear();
 
-			for (auto& perFrame: appState.Screen.PerImage)
+			for (auto& perFrame:  appState.Screen.PerImage)
 			{
 				perFrame.stagingBuffer.Delete(appState);
 			}
 			appState.Screen.PerImage.clear();
 
-			for (auto& perFrame: appState.PerFrame)
+			for (auto& perFrame : appState.PerFrame)
 			{
 				perFrame.second.controllerResources.Delete(appState);
 				perFrame.second.floorResources.Delete(appState);
@@ -2646,21 +2646,21 @@ void android_main(struct android_app* app)
 			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.textures.Delete(appState);
 
-			for (auto& entry: appState.Scene.surfaceRGBATextures)
+			for (auto& entry : appState.Scene.surfaceRGBATextures)
 			{
 				entry.Delete(appState);
 			}
 			appState.Scene.surfaceRGBATextures.clear();
 
-			for (auto& entry: appState.Scene.surfaceTextures)
+			for (auto& entry : appState.Scene.surfaceTextures)
 			{
 				entry.Delete(appState);
 			}
 			appState.Scene.surfaceTextures.clear();
 
-			for (auto& entry: appState.Scene.lightmapTextures)
+			for (auto& entry : appState.Scene.lightmapTextures)
 			{
-				for (auto& texture: entry.second)
+				for (auto& texture : entry.second)
 				{
 					vkDestroyDescriptorPool(appState.Device, texture.descriptorPool, nullptr);
 					vkDestroyImageView(appState.Device, texture.view, nullptr);

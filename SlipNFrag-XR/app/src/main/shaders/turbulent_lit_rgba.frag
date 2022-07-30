@@ -12,7 +12,8 @@ layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
 layout(push_constant) uniform Turbulent
 {
 	layout(offset = 0) vec4 tint;
-	layout(offset = 16) float time;
+	layout(offset = 16) float gamma;
+	layout(offset = 20) float time;
 };
 
 layout(location = 0) in vec4 fragmentData;
@@ -30,8 +31,7 @@ void main()
 	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
 	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
 	float lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);
-	float light = 1 - clamp(lightmapEntry / (64 * 256), 0, 1);
-	float gammaCorrected = ((light < 0.04045) ? (light / 12.92) : (pow((light + 0.055) / 1.055, 2.4))) / 256;
+	float light = 2 - lightmapEntry / (32 * 256);
 	vec2 distortion = sin(mod(time + fragmentData.zw * 5, 3.14159*2)) / 10;
 	vec2 texCoords = vec2(fragmentData.z + distortion.y, fragmentData.w + distortion.x);
 	vec2 texLevel = textureQueryLod(fragmentTexture, texCoords);
@@ -39,6 +39,18 @@ void main()
 	vec3 fragmentTextureCoords = vec3(texCoords, fragmentTextureIndices.y);
 	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
 	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
-	vec4 color = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(gammaCorrected, gammaCorrected, gammaCorrected, 1);
-	outColor = mix(color, tint, tint.a);
+	vec4 color = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(light, light, light, 1);
+	vec4 tinted = mix(color, tint, tint.a);
+	vec4 gammaCorrected = vec4(
+		clamp((gamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , gamma ) + 0.5), 0, 255),
+		clamp((gamma == 1) ? tinted.g : (255 * pow ( (tinted.g+0.5)/255.5 , gamma ) + 0.5), 0, 255),
+		clamp((gamma == 1) ? tinted.b : (255 * pow ( (tinted.b+0.5)/255.5 , gamma ) + 0.5), 0, 255),
+		255
+	) / 255;
+	outColor = vec4(
+		((gammaCorrected.r < 0.04045) ? (gammaCorrected.r / 12.92) : (pow((gammaCorrected.r + 0.055) / 1.055, 2.4))),
+		((gammaCorrected.g < 0.04045) ? (gammaCorrected.g / 12.92) : (pow((gammaCorrected.g + 0.055) / 1.055, 2.4))),
+		((gammaCorrected.b < 0.04045) ? (gammaCorrected.b / 12.92) : (pow((gammaCorrected.b + 0.055) / 1.055, 2.4))),
+		gammaCorrected.a
+	);
 }
