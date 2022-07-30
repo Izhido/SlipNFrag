@@ -25,7 +25,7 @@ typedef struct _TargaHeader {
 LoadTGA
 =============
 */
-qboolean R_LoadTGA (const char *name, int start, qboolean extra, qboolean log_failure, byte **pic, int *piclen, int *width, int *height)
+qboolean R_LoadTGA (const char *name, int start, qboolean extra, int mips, qboolean log_failure, byte **pic, int *piclen, int *width, int *height)
 {
 	int		columns, rows, numPixels;
 	byte	*pixbuf;
@@ -105,7 +105,15 @@ qboolean R_LoadTGA (const char *name, int start, qboolean extra, qboolean log_fa
 	{
 		offset += numPixels;
 	}
-	targa_len = offset + numPixels*4;
+	auto mipArea = numPixels*4;
+	targa_len = offset + mipArea;
+	mips--;
+	while (mips > 0)
+	{
+		mipArea /= 4;
+		targa_len += mipArea;
+		mips--;
+	}
 	if ((*piclen) < targa_len)
 	{
 		delete[] (*pic);

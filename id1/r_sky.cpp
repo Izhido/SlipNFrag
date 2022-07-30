@@ -426,11 +426,11 @@ qboolean R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*
 	{
 		pic = nullptr;
 		piclen = 0;
-		R_LoadTGA(path.c_str(), sizeof(texture_t), true, true, &pic, &piclen, &width, &height);
+		R_LoadTGA(path.c_str(), sizeof(texture_t), true, 0, true, &pic, &piclen, &width, &height);
 	}
 	else
 	{
-		R_LoadTGA(path.c_str(), 0, false, true, &pic, &piclen, &width, &height);
+		R_LoadTGA(path.c_str(), 0, false, 0, true, &pic, &piclen, &width, &height);
 	}
 	if (pic != nullptr)
 	{

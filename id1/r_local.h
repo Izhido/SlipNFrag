@@ -287,7 +287,7 @@ void R_ClipEdge (const mvertex_t *pv0, const mvertex_t *pv1, clipplane_t *clip);
 void R_SplitEntityOnNode2 (mnode_t *node);
 void R_MarkLights (dlight_t *light, int index, mnode_t *node);
 
-qboolean R_LoadTGA (const char *name, int start, qboolean extra, qboolean log_failure, byte **pic, int *piclen, int *width, int *height);
+qboolean R_LoadTGA (const char *name, int start, qboolean extra, int mips, qboolean log_failure, byte **pic, int *piclen, int *width, int *height);
 
 extern qboolean r_skyinitialized;
 extern qboolean r_skyRGBAinitialized;

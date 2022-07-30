@@ -532,6 +532,46 @@ void Mod_GenerateMipmaps (byte* data, int w, int h)
 
 /*
 =================
+Mod_GenerateRGBAMipmaps
+=================
+*/
+void Mod_GenerateRGBAMipmaps (byte* data, int w, int h)
+{
+	auto source = data;
+	auto lump_p = data + w * h * 4;
+	for (auto miplevel = 1 ; miplevel<MIPLEVELS ; miplevel++)
+	{
+		auto mipstep = 1<<miplevel;
+		for (auto y=0 ; y<h ; y+=mipstep)
+		{
+			for (auto x = 0 ; x<w ; x+= mipstep)
+			{
+				size_t count = 0;
+				unsigned r = 0;
+				unsigned g = 0;
+				unsigned b = 0;
+				unsigned a = 0;
+				unsigned total = mipstep*mipstep;
+				for (auto yy=0 ; yy<mipstep ; yy++)
+					for (auto xx=0 ; xx<mipstep ; xx++)
+					{
+						auto pos = 4 * ((y+yy)*w + x + xx);
+						r += source[pos++];
+						g += source[pos++];
+						b += source[pos++];
+						a += source[pos];
+					}
+				*lump_p++ = r / total;
+				*lump_p++ = g / total;
+				*lump_p++ = b / total;
+				*lump_p++ = a / total;
+			}
+		}
+	}
+}
+
+/*
+=================
 Mod_LoadTextures
 =================
 */
@@ -631,11 +671,11 @@ void Mod_LoadTextures (lump_t *l)
 			{
 				external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + ".tga";
 				external_size = 0;
-				auto found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+				auto found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, MIPLEVELS, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
 				if (!found)
 				{
 					external_filename = std::string("textures/") + tx->name + ".tga";
-					found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+					found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, MIPLEVELS, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
 				}
 				if (found)
 				{
@@ -643,9 +683,10 @@ void Mod_LoadTextures (lump_t *l)
 					tx->external_color->width = external_width;
 					tx->external_color->height = external_height;
 					tx->external_color->offsets[0] = sizeof(miptex_t);
-					tx->external_color->offsets[1] = 0;
-					tx->external_color->offsets[2] = 0;
-					tx->external_color->offsets[3] = 0;
+					tx->external_color->offsets[1] = tx->external_color->offsets[0] + external_width*external_height*4;
+					tx->external_color->offsets[2] = tx->external_color->offsets[1] + external_width*external_height;
+					tx->external_color->offsets[3] = tx->external_color->offsets[2] + external_width*external_height/4;
+					Mod_GenerateRGBAMipmaps((byte*)tx->external_color + tx->external_color->offsets[0], external_width, external_height);
 					Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
 
 					R_InitSkyRGBA(tx->external_color);
@@ -663,7 +704,7 @@ void Mod_LoadTextures (lump_t *l)
 					external_filename = std::string("textures/") + modelname.data() + "/" + tx->name + ".tga";
 				}
 				external_size = 0;
-				auto found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+				auto found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, MIPLEVELS, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
 				if (!found)
 				{
 					if (is_turbulent)
@@ -674,7 +715,7 @@ void Mod_LoadTextures (lump_t *l)
 					{
 						external_filename = std::string("textures/") + tx->name + ".tga";
 					}
-					found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
+					found = R_LoadTGA(external_filename.c_str(), sizeof(miptex_t), false, MIPLEVELS, false, (byte**)(&tx->external_color), &external_size, &external_width, &external_height);
 				}
 				if (found)
 				{
@@ -682,27 +723,28 @@ void Mod_LoadTextures (lump_t *l)
 					tx->external_color->width = external_width;
 					tx->external_color->height = external_height;
 					tx->external_color->offsets[0] = sizeof(miptex_t);
-					tx->external_color->offsets[1] = 0;
-					tx->external_color->offsets[2] = 0;
-					tx->external_color->offsets[3] = 0;
+					tx->external_color->offsets[1] = tx->external_color->offsets[0] + external_width*external_height*4;
+					tx->external_color->offsets[2] = tx->external_color->offsets[1] + external_width*external_height;
+					tx->external_color->offsets[3] = tx->external_color->offsets[2] + external_width*external_height/4;
+					Mod_GenerateRGBAMipmaps((byte*)tx->external_color + tx->external_color->offsets[0], external_width, external_height);
 					Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
 					if (!is_turbulent)
 					{
 						external_glow_filename = std::string("textures/") + modelname.data() + "/" + tx->name + "_glow.tga";
 						external_size = 0;
-						found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
+						found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, MIPLEVELS, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
 						if (!found)
 						{
 							external_glow_filename = std::string("textures/") + modelname.data() + "/" + tx->name + "_luma.tga";
-							found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
+							found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, MIPLEVELS, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
 							if (!found)
 							{
 								external_glow_filename = std::string("textures/") + tx->name + "_glow.tga";
-								found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
+								found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, MIPLEVELS, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
 								if (!found)
 								{
 									external_glow_filename = std::string("textures/") + tx->name + "_luma.tga";
-									found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
+									found = R_LoadTGA(external_glow_filename.c_str(), sizeof(miptex_t), false, MIPLEVELS, false, (byte**)(&tx->external_glow), &external_size, &external_glow_width, &external_glow_height);
 								}
 							}
 						}
@@ -712,9 +754,10 @@ void Mod_LoadTextures (lump_t *l)
 							tx->external_glow->width = external_glow_width;
 							tx->external_glow->height = external_glow_height;
 							tx->external_glow->offsets[0] = sizeof(miptex_t);
-							tx->external_glow->offsets[1] = 0;
-							tx->external_glow->offsets[2] = 0;
-							tx->external_glow->offsets[3] = 0;
+							tx->external_glow->offsets[1] = tx->external_glow->offsets[0] + external_glow_width*external_glow_height*4;
+							tx->external_glow->offsets[2] = tx->external_glow->offsets[1] + external_glow_width*external_glow_height;
+							tx->external_glow->offsets[3] = tx->external_glow->offsets[2] + external_glow_width*external_glow_height/4;
+							Mod_GenerateRGBAMipmaps((byte*)tx->external_glow + tx->external_glow->offsets[0], external_glow_width, external_glow_height);
 							if (tx->external_color->width != tx->external_glow->width || tx->external_color->height != tx->external_glow->height)
 							{
 								delete[] (byte*)(tx->external_glow);

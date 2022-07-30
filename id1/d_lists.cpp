@@ -66,6 +66,24 @@ void D_FillLightmap (dsurface_t& surface, surfcache_s* cache)
 	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
 }
 
+void D_FillSurfaceSize(dturbulent_t& turbulent, int component_size, int mips)
+{
+	auto size = turbulent.width * turbulent.height * component_size;
+	turbulent.size = size;
+	turbulent.mips = mips;
+	mips--;
+	while (mips > 0)
+	{
+		size /= 4;
+		if (size < 1)
+		{
+			size = 1;
+		}
+		turbulent.size += size;
+		mips--;
+	}
+}
+
 void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
 	surface.face = face;
@@ -75,18 +93,13 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 	auto texture = (texture_t*)(cache->texture);
 	surface.width = texture->width;
 	surface.height = texture->height;
-	surface.size = surface.width * surface.height;
-	surface.mips = mips;
-	if (surface.mips > 0)
-	{
-		surface.size = surface.size * 85 / 64; // Valid if MIPLEVELS == 4
-	}
+	D_FillSurfaceSize(surface, 1, mips);
 	surface.data = (unsigned char*)texture + texture->offsets[0];
 	D_FillLightmap(surface, cache);
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
+void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
 	surface.face = face;
 	surface.entity = entity;
@@ -95,8 +108,7 @@ void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfc
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
 	surface.height = texture->height;
-	surface.size = surface.width * surface.height * sizeof(unsigned);
-	surface.mips = 1;
+	D_FillSurfaceSize(surface, sizeof(unsigned), mips);
 	surface.data = (unsigned char*)texture + texture->offsets[0];
 	texture = ((texture_t*)(cache->texture))->external_glow;
 	surface.glow_data = (unsigned char*)texture + texture->offsets[0];
@@ -113,7 +125,7 @@ void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfc
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
+void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
 	surface.face = face;
 	surface.entity = entity;
@@ -122,8 +134,7 @@ void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcac
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
 	surface.height = texture->height;
-	surface.size = surface.width * surface.height * sizeof(unsigned);
-	surface.mips = 1;
+	D_FillSurfaceSize(surface, sizeof(unsigned), mips);
 	surface.data = (unsigned char*)texture + texture->offsets[0];
 	D_FillLightmap(surface, cache);
 	surface.count = face->numedges;
@@ -140,9 +151,9 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	surface.roll = entity->angles[ROLL];
 }
 
-void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
+void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
-	D_FillSurfaceRGBAData(surface, face, cache, entity);
+	D_FillSurfaceRGBAData(surface, face, cache, entity, mips);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -151,9 +162,9 @@ void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_
 	surface.roll = entity->angles[ROLL];
 }
 
-void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity)
+void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
-	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity);
+	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity, mips);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -189,7 +200,7 @@ void D_AddSurfaceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* en
 		d_lists.surfaces_rgba.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rgba[d_lists.last_surface_rgba];
-	D_FillSurfaceRGBAData(surface, face, cache, entity);
+	D_FillSurfaceRGBAData(surface, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -204,7 +215,7 @@ void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity
 		d_lists.surfaces_rgba_no_glow.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rgba_no_glow[d_lists.last_surface_rgba_no_glow];
-	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity);
+	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -234,7 +245,7 @@ void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entit
 		d_lists.surfaces_rotated_rgba.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rotated_rgba[d_lists.last_surface_rotated_rgba];
-	D_FillSurfaceRotatedRGBAData(surface, face, cache, entity);
+	D_FillSurfaceRotatedRGBAData(surface, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -249,7 +260,7 @@ void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache,
 		d_lists.surfaces_rotated_rgba_no_glow.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rotated_rgba_no_glow[d_lists.last_surface_rotated_rgba_no_glow];
-	D_FillSurfaceRotatedRGBANoGlowData(surface, face, cache, entity);
+	D_FillSurfaceRotatedRGBANoGlowData(surface, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddFenceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -279,7 +290,7 @@ void D_AddFenceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* enti
 		d_lists.fences_rgba.emplace_back();
 	}
 	auto& fence = d_lists.fences_rgba[d_lists.last_fence_rgba];
-	D_FillSurfaceRGBAData(fence, face, cache, entity);
+	D_FillSurfaceRGBAData(fence, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddFenceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -294,7 +305,7 @@ void D_AddFenceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t
 		d_lists.fences_rgba_no_glow.emplace_back();
 	}
 	auto& fence = d_lists.fences_rgba_no_glow[d_lists.last_fence_rgba_no_glow];
-	D_FillSurfaceRGBANoGlowData(fence, face, cache, entity);
+	D_FillSurfaceRGBANoGlowData(fence, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddFenceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -324,7 +335,7 @@ void D_AddFenceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_
 		d_lists.fences_rotated_rgba.emplace_back();
 	}
 	auto& fence = d_lists.fences_rotated_rgba[d_lists.last_fence_rotated_rgba];
-	D_FillSurfaceRotatedRGBAData(fence, face, cache, entity);
+	D_FillSurfaceRotatedRGBAData(fence, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -339,7 +350,7 @@ void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, e
 		d_lists.fences_rotated_rgba_no_glow.emplace_back();
 	}
 	auto& fence = d_lists.fences_rotated_rgba_no_glow[d_lists.last_fence_rotated_rgba_no_glow];
-	D_FillSurfaceRotatedRGBANoGlowData(fence, face, cache, entity);
+	D_FillSurfaceRotatedRGBANoGlowData(fence, face, cache, entity, MIPLEVELS);
 }
 
 void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity, int mips)
@@ -350,17 +361,12 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	auto texture = face->texinfo->texture;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
-	turbulent.size = turbulent.width * turbulent.height;
-	turbulent.mips = mips;
-	if (turbulent.mips > 0)
-	{
-		turbulent.size = turbulent.size * 85 / 64; // Valid if MIPLEVELS == 4
-	}
+	D_FillSurfaceSize(turbulent, 1, mips);
 	turbulent.data = (unsigned char*)texture + texture->offsets[0];
 	turbulent.count = face->numedges;
 }
 
-void D_FillTurbulentRGBAData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity)
+void D_FillTurbulentRGBAData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity, int mips)
 {
 	turbulent.face = face;
 	turbulent.entity = entity;
@@ -368,8 +374,7 @@ void D_FillTurbulentRGBAData (dturbulent_t& turbulent, msurface_t* face, entity_
 	auto texture = face->texinfo->texture->external_color;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
-	turbulent.size = turbulent.width * turbulent.height * sizeof(unsigned);
-	turbulent.mips = 1;
+	D_FillSurfaceSize(turbulent, sizeof(unsigned), mips);
 	turbulent.data = (unsigned char*)texture + texture->offsets[0];
 	turbulent.count = face->numedges;
 }
@@ -401,7 +406,7 @@ void D_AddTurbulentRGBAToLists (msurface_t* face, entity_t* entity)
 		d_lists.turbulent_rgba.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rgba[d_lists.last_turbulent_rgba];
-	D_FillTurbulentRGBAData(turbulent, face, entity);
+	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
 }
 
 void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -433,7 +438,7 @@ void D_AddTurbulentLitRGBAToLists (msurface_t* face, surfcache_s* cache, entity_
 		d_lists.turbulent_lit_rgba.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_lit_rgba[d_lists.last_turbulent_lit_rgba];
-	D_FillTurbulentRGBAData(turbulent, face, entity);
+	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillLightmap(turbulent, cache);
 }
