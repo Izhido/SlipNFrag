@@ -558,12 +558,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	auto loadedLightmap = appState.Scene.lightmaps.first;
 	while (loadedLightmap != nullptr)
 	{
-		auto source = loadedLightmap->source;
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		for (auto i = 0; i < loadedLightmap->size; i++)
-		{
-			*target++ = (float)(*source++);
-		}
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmap->source, loadedLightmap->size);
 		offset += loadedLightmap->size;
 		loadedLightmap = loadedLightmap->next;
 	}

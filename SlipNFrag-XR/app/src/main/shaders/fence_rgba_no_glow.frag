@@ -4,9 +4,9 @@
 #extension GL_ARB_enhanced_layouts : enable
 
 precision highp float;
-precision mediump int;
+precision highp int;
 
-layout(set = 1, binding = 0) uniform sampler2DArray fragmentLightmap;
+layout(set = 1, binding = 0) uniform usampler2DArray fragmentLightmap;
 layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
 
 layout(push_constant) uniform Tint

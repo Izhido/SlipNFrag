@@ -4,7 +4,7 @@
 #extension GL_ARB_enhanced_layouts : enable
 
 precision highp float;
-precision mediump int;
+precision highp int;
 
 layout(set = 0, binding = 1) uniform Palette
 {
@@ -12,7 +12,7 @@ layout(set = 0, binding = 1) uniform Palette
 };
 
 layout(set = 0, binding = 2) uniform usampler2D fragmentColormap;
-layout(set = 1, binding = 0) uniform sampler2DArray fragmentLightmap;
+layout(set = 1, binding = 0) uniform usampler2DArray fragmentLightmap;
 layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
 
 layout(location = 0) in vec4 fragmentCoords;
@@ -22,13 +22,13 @@ layout(location = 0) out lowp vec4 outColor;
 void main()
 {
 	ivec2 lightmapCoords = ivec2(floor(fragmentCoords.xy));
-	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords, fragmentTextureIndices.x), 0);
-	vec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y, fragmentTextureIndices.x), 0);
-	vec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y + 1, fragmentTextureIndices.x), 0);
-	vec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x, lightmapCoords.y + 1, fragmentTextureIndices.x), 0);
+	uvec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords, fragmentTextureIndices.x), 0);
+	uvec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y, fragmentTextureIndices.x), 0);
+	uvec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x + 1, lightmapCoords.y + 1, fragmentTextureIndices.x), 0);
+	uvec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, ivec3(lightmapCoords.x, lightmapCoords.y + 1, fragmentTextureIndices.x), 0);
 	vec2 lightmapCoordsDelta = floor(((fragmentCoords.xy - lightmapCoords) + 0.03125) * 16) / 16;
-	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
-	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
+	float lightmapTopEntry = mix(float(lightmapTopLeftEntry.x), float(lightmapTopRightEntry.x), lightmapCoordsDelta.x);
+	float lightmapBottomEntry = mix(float(lightmapBottomLeftEntry.x), float(lightmapBottomRightEntry.x), lightmapCoordsDelta.x);
 	float lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);
 	float light = lightmapEntry / 256;
 	float lightBase = floor(light);
