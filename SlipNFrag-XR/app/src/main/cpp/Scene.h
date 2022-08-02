@@ -4,7 +4,6 @@
 #include "PipelineWithLoaded.h"
 #include "CachedSharedMemoryBuffers.h"
 #include "CachedIndexBuffers.h"
-#include <unordered_map>
 #include "AliasVertices.h"
 #include "LoadedSurface2Textures.h"
 #include "LoadedSurfaceRotated2Textures.h"
