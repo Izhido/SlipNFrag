@@ -1092,26 +1092,14 @@ void android_main(struct android_app* app)
 		CHECK(swapchainFormatCount == swapchainFormats.size());
 
 		auto found = false;
-		for (auto format : swapchainFormats)
-		{
-			if (format == (int64_t)Constants::colorFormat)
-			{
-				found = true;
-				break;
-			}
-		}
-		if (!found)
-		{
-			THROW(Fmt("No runtime swapchain format supported for color swapchain %i", Constants::colorFormat));
-		}
-
 		std::string swapchainFormatsString;
 		for (int64_t format : swapchainFormats)
 		{
-			const bool selected = (format == Constants::colorFormat);
+			const bool selected = (format == (int64_t)Constants::colorFormat);
 			swapchainFormatsString += " ";
 			if (selected)
 			{
+				found = true;
 				swapchainFormatsString += "[";
 			}
 			swapchainFormatsString += std::to_string(format);
@@ -1121,6 +1109,10 @@ void android_main(struct android_app* app)
 			}
 		}
 		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Swapchain Formats: %s", swapchainFormatsString.c_str());
+		if (!found)
+		{
+			THROW(Fmt("No runtime swapchain format supported for color swapchain %i", Constants::colorFormat));
+		}
 
 		appState.SwapchainWidth = configViews[0].recommendedImageRectWidth;
 		appState.SwapchainHeight = configViews[0].recommendedImageRectHeight;
@@ -1855,10 +1847,7 @@ void android_main(struct android_app* app)
 						imageInfo.extent.depth = 1;
 						imageInfo.mipLevels = 1;
 						imageInfo.arrayLayers = 2;
-						imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-						imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 						imageInfo.samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
-						imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 						imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
 						imageInfo.format = Constants::colorFormat;
