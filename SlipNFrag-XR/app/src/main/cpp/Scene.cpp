@@ -1210,7 +1210,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 		}
 		else
 		{
-			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second.texture;
 			loaded.texture.index = entry->second.index;
 		}
@@ -1220,7 +1219,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 	}
 	else
 	{
-		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 		loaded.texture.index = previousSharedMemoryTextureIndex;
 	}
@@ -1285,7 +1283,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
 		}
 		else
 		{
-			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second.texture;
 			loaded.texture.index = entry->second.index;
 		}
@@ -1295,7 +1292,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
 	}
 	else
 	{
-		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 		loaded.texture.index = previousSharedMemoryTextureIndex;
 	}
@@ -1340,7 +1336,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		else
 		{
 			loaded.lightmap.lightmap = lightmap;
-			loaded.lightmap.size = 0;
 		}
 	}
 }
@@ -1406,7 +1401,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		}
 		else
 		{
-			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second.texture;
 			loaded.texture.index = entry->second.index;
 		}
@@ -1416,7 +1410,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 	}
 	else
 	{
-		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 		loaded.texture.index = previousSharedMemoryTextureIndex;
 	}
@@ -1473,7 +1466,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		}
 		else
 		{
-			loaded.glowTexture.size = 0;
 			loaded.glowTexture.texture = entry->second.texture;
 			loaded.glowTexture.index = entry->second.index;
 		}
@@ -1483,7 +1475,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 	}
 	else
 	{
-		loaded.glowTexture.size = 0;
 		loaded.glowTexture.texture = previousGlowSharedMemoryTexture;
 		loaded.glowTexture.index = previousGlowSharedMemoryTextureIndex;
 	}
@@ -1523,7 +1514,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		else
 		{
 			loaded.lightmap.lightmap = lightmap;
-			loaded.lightmap.size = 0;
 		}
 	}
 }
@@ -1586,7 +1576,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 		}
 		else
 		{
-			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second.texture;
 			loaded.texture.index = entry->second.index;
 		}
@@ -1596,7 +1585,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 	}
 	else
 	{
-		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 		loaded.texture.index = previousSharedMemoryTextureIndex;
 	}
@@ -1636,7 +1624,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 		else
 		{
 			loaded.lightmap.lightmap = lightmap;
-			loaded.lightmap.size = 0;
 		}
 	}
 }
@@ -1695,7 +1682,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
 		}
 		else
 		{
-			loaded.texture.size = 0;
 			loaded.texture.texture = entry->second;
 			loaded.texture.index = 0;
 		}
@@ -1704,7 +1690,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
 	}
 	else
 	{
-		loaded.texture.size = 0;
 		loaded.texture.texture = previousSharedMemoryTexture;
 		loaded.texture.index = 0;
 	}
@@ -1740,9 +1725,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		}
 		else
 		{
-			loaded.vertices.size = 0;
 			loaded.vertices.buffer = entry->second.vertices;
-			loaded.texCoords.size = 0;
 			loaded.texCoords.buffer = entry->second.texCoords;
 		}
 		previousApverts = alias.apverts;
@@ -1751,9 +1734,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 	}
 	else
 	{
-		loaded.vertices.size = 0;
 		loaded.vertices.buffer = previousVertexBuffer;
-		loaded.texCoords.size = 0;
 		loaded.texCoords.buffer = previousTexCoordsBuffer;
 	}
 	if (alias.is_host_colormap)
@@ -1785,7 +1766,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		}
 		else
 		{
-			loaded.colormapped.texture.size = 0;
 			loaded.colormapped.texture.texture = entry->second;
 			loaded.colormapped.texture.index = 0;
 		}
@@ -1794,7 +1774,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 	}
 	else
 	{
-		loaded.colormapped.texture.size = 0;
 		loaded.colormapped.texture.texture = previousSharedMemoryTexture;
 		loaded.colormapped.texture.index = 0;
 	}
@@ -1892,7 +1871,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 	}
 	else
 	{
-		loaded.indices.size = 0;
 		loaded.indices.indices = entry->second;
 	}
 	loaded.firstAttribute = alias.first_attribute;
