@@ -116,7 +116,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	for (auto& perImage : appState.Screen.PerImage)
 	{
-		perImage.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
+		perImage.stagingBuffer.CreateStorageBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
 		CHECK_VKCMD(vkMapMemory(appState.Device, perImage.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &perImage.stagingBuffer.mapped));
 	}
 
@@ -187,7 +187,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		perImage.submitInfo.commandBufferCount = 1;
 		perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
 
-		perImage.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
+		perImage.stagingBuffer.CreateStorageBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 
 		CHECK_VKCMD(vkMapMemory(appState.Device, perImage.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &perImage.stagingBuffer.mapped));
 	
@@ -221,7 +221,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	controllerTexture.Create(appState, controller.width, controller.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controller.width * controller.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
 	Buffer stagingBuffer;
-	stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);
+	stagingBuffer.CreateStorageBuffer(appState, stagingBufferSize);
 	CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer.mapped));
 	memcpy(stagingBuffer.mapped, floorImage.image, floorImage.width * floorImage.height * sizeof(uint32_t));
 	floorImage.Close();
