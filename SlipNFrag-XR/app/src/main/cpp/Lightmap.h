@@ -12,7 +12,7 @@ struct Lightmap
 	int unusedCount;
 	int width;
 	int height;
-	std::list<LightmapTexture>* textureList;
+	std::list<LightmapTexture>* textures;
 	std::list<LightmapTexture>::iterator texture;
 	int allocatedIndex;
 	bool filled;

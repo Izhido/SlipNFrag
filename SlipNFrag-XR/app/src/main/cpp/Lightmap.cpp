@@ -10,9 +10,9 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 	this->height = height;
 
 	VkDeviceSize dimension = std::pow(2, std::ceil(std::log2(std::max(width, height))));
-	auto& list = appState.Scene.lightmapTextures[dimension];
+	auto& textures = appState.Scene.lightmapTextures[dimension];
 	bool found = false;
-	for (auto texture = list.begin(); texture != list.end(); texture++)
+	for (auto texture = textures.begin(); texture != textures.end(); texture++)
 	{
 		if (texture->allocatedCount < texture->allocated.size())
 		{
@@ -21,7 +21,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 				if (!texture->allocated[i])
 				{
 					texture->allocated[i] = true;
-					this->textureList = &list;
+					this->textures = &textures;
 					this->texture = texture;
 					allocatedIndex = i;
 					texture->allocatedCount++;
@@ -36,8 +36,8 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 
 	if (!found)
 	{
-		list.emplace_back();
-		texture = list.end();
+		textures.emplace_back();
+		texture = textures.end();
 		texture--;
 		size_t count;
 		texture->width = dimension;
@@ -93,7 +93,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 
 		CHECK_VKCMD(vkBindImageMemory(appState.Device, texture->image, texture->memory, 0));
 
-		this->textureList = &list;
+		this->textures = &textures;
 		texture->allocatedCount++;
 
 		VkImageViewCreateInfo imageViewCreateInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
@@ -141,6 +141,6 @@ void Lightmap::Delete(AppState& appState) const
 		vkDestroyImageView(appState.Device, texture->view, nullptr);
 		vkDestroyImage(appState.Device, texture->image, nullptr);
 		vkFreeMemory(appState.Device, texture->memory, nullptr);
-		textureList->erase(texture);
+		textures->erase(texture);
 	}
 }
