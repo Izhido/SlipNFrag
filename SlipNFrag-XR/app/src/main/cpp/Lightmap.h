@@ -2,13 +2,12 @@
 
 #include <list>
 #include "LightmapTexture.h"
-#include "Buffer.h"
-#include "StagingBuffer.h"
+
+struct AppState;
 
 struct Lightmap
 {
 	Lightmap* next;
-	void* key;
 	int createdFrameCount;
 	int unusedCount;
 	int width;
