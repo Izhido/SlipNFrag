@@ -2405,12 +2405,10 @@ void Scene::Reset()
 	{
 		cached.DisposeFront();
 	}
-	surfaceRGBATextures.clear();
 	for (auto& cached : surfaceTextures)
 	{
 		cached.DisposeFront();
 	}
-	surfaceTextures.clear();
 	lightmaps.DisposeFront();
 	indexBuffers.DisposeFront();
 	buffers.DisposeFront();

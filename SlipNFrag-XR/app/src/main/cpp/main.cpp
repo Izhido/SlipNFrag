@@ -2506,46 +2506,46 @@ void android_main(struct android_app* app)
 			CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 		}
 
-		for (auto& perFrame : appState.PerFrame)
-		{
-			if (perFrame.second.framebuffer != VK_NULL_HANDLE)
-			{
-				vkDestroyFramebuffer(appState.Device, perFrame.second.framebuffer, nullptr);
-			}
-			if (perFrame.second.resolveView != VK_NULL_HANDLE)
-			{
-				vkDestroyImageView(appState.Device, perFrame.second.resolveView, nullptr);
-			}
-			if (perFrame.second.depthView != VK_NULL_HANDLE)
-			{
-				vkDestroyImageView(appState.Device, perFrame.second.depthView, nullptr);
-			}
-			if (perFrame.second.colorView != VK_NULL_HANDLE)
-			{
-				vkDestroyImageView(appState.Device, perFrame.second.colorView, nullptr);
-			}
-			if (perFrame.second.depthImage != VK_NULL_HANDLE)
-			{
-				vkDestroyImage(appState.Device, perFrame.second.depthImage, nullptr);
-			}
-			if (perFrame.second.depthMemory != VK_NULL_HANDLE)
-			{
-				vkFreeMemory(appState.Device, perFrame.second.depthMemory, nullptr);
-			}
-			if (perFrame.second.colorImage != VK_NULL_HANDLE)
-			{
-				vkDestroyImage(appState.Device, perFrame.second.colorImage, nullptr);
-			}
-			if (perFrame.second.colorMemory != VK_NULL_HANDLE)
-			{
-				vkFreeMemory(appState.Device, perFrame.second.colorMemory, nullptr);
-			}
-		}
-
-		appState.Scene.Reset();
-
 		if (appState.Device != VK_NULL_HANDLE)
 		{
+			for (auto& perFrame : appState.PerFrame)
+			{
+				if (perFrame.second.framebuffer != VK_NULL_HANDLE)
+				{
+					vkDestroyFramebuffer(appState.Device, perFrame.second.framebuffer, nullptr);
+				}
+				if (perFrame.second.resolveView != VK_NULL_HANDLE)
+				{
+					vkDestroyImageView(appState.Device, perFrame.second.resolveView, nullptr);
+				}
+				if (perFrame.second.depthView != VK_NULL_HANDLE)
+				{
+					vkDestroyImageView(appState.Device, perFrame.second.depthView, nullptr);
+				}
+				if (perFrame.second.colorView != VK_NULL_HANDLE)
+				{
+					vkDestroyImageView(appState.Device, perFrame.second.colorView, nullptr);
+				}
+				if (perFrame.second.depthImage != VK_NULL_HANDLE)
+				{
+					vkDestroyImage(appState.Device, perFrame.second.depthImage, nullptr);
+				}
+				if (perFrame.second.depthMemory != VK_NULL_HANDLE)
+				{
+					vkFreeMemory(appState.Device, perFrame.second.depthMemory, nullptr);
+				}
+				if (perFrame.second.colorImage != VK_NULL_HANDLE)
+				{
+					vkDestroyImage(appState.Device, perFrame.second.colorImage, nullptr);
+				}
+				if (perFrame.second.colorMemory != VK_NULL_HANDLE)
+				{
+					vkFreeMemory(appState.Device, perFrame.second.colorMemory, nullptr);
+				}
+			}
+
+			appState.Scene.Reset();
+
 			for (auto& texture : appState.KeyboardTextures)
 			{
 				texture.Delete(appState);
@@ -2580,6 +2580,7 @@ void android_main(struct android_app* app)
 			{
 				perFrame.second.controllerResources.Delete(appState);
 				perFrame.second.floorResources.Delete(appState);
+				perFrame.second.colormapResources.Delete(appState);
 				perFrame.second.skyRGBAResources.Delete(appState);
 				perFrame.second.skyResources.Delete(appState);
 				perFrame.second.sceneMatricesAndColormapResources.Delete(appState);
@@ -2612,6 +2613,7 @@ void android_main(struct android_app* app)
 				perFrame.second.cachedVertices.Delete(appState);
 				perFrame.second.matrices.Delete(appState);
 			}
+
 			appState.PerFrame.clear();
 
 			if (appState.RenderPass != VK_NULL_HANDLE)
@@ -2632,7 +2634,6 @@ void android_main(struct android_app* app)
 
 			appState.Scene.buffers.Delete(appState);
 			appState.Scene.indexBuffers.Delete(appState);
-			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.textures.Delete(appState);
 
 			for (auto& entry : appState.Scene.surfaceRGBATextures)
@@ -2647,16 +2648,7 @@ void android_main(struct android_app* app)
 			}
 			appState.Scene.surfaceTextures.clear();
 
-			for (auto& entry : appState.Scene.lightmapTextures)
-			{
-				for (auto& texture : entry.second)
-				{
-					vkDestroyDescriptorPool(appState.Device, texture.descriptorPool, nullptr);
-					vkDestroyImageView(appState.Device, texture.view, nullptr);
-					vkDestroyImage(appState.Device, texture.image, nullptr);
-					vkFreeMemory(appState.Device, texture.memory, nullptr);
-				}
-			}
+			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.lightmapTextures.clear();
 
 			appState.Scene.indexBuffers.Delete(appState);
@@ -2677,8 +2669,8 @@ void android_main(struct android_app* app)
 			appState.Scene.fencesRotatedRGBANoGlow.Delete(appState);
 			appState.Scene.fencesRotatedRGBA.Delete(appState);
 			appState.Scene.fencesRotated.Delete(appState);
-			appState.Scene.fencesRotated.Delete(appState);
 			appState.Scene.fencesRGBANoGlow.Delete(appState);
+			appState.Scene.fencesRGBA.Delete(appState);
 			appState.Scene.fences.Delete(appState);
 			appState.Scene.surfacesRotatedRGBANoGlow.Delete(appState);
 			appState.Scene.surfacesRotatedRGBA.Delete(appState);
