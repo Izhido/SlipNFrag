@@ -238,6 +238,9 @@
 		28D060612808E77F009E0953 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
 		28D060622808E77F009E0953 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
 		28D060632808E77F009E0953 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
+		28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
+		28DFACDD28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
+		28DFACDE28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28E95FAA260C50A0000DDF6C /* cd_ios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28E95FA9260C50A0000DDF6C /* cd_ios.cpp */; };
 /* End PBXBuildFile section */
 
@@ -431,6 +434,7 @@
 		28D0605E2808E77F009E0953 /* snd_float_dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_dma.cpp; sourceTree = "<group>"; };
 		28D0605F2808E77F009E0953 /* snd_float_mix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mix.cpp; sourceTree = "<group>"; };
 		28D060602808E77F009E0953 /* snd_float_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mem.cpp; sourceTree = "<group>"; };
+		28DFACDB28A4B2DB00646DE0 /* r_image.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_image.cpp; sourceTree = "<group>"; };
 		28E95FA9260C50A0000DDF6C /* cd_ios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cd_ios.cpp; sourceTree = "<group>"; };
 		28EDD8EE22C5D0D300BA8D90 /* libnetwork.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libnetwork.tbd; path = usr/lib/libnetwork.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -644,6 +648,7 @@
 				283D4BC2229E01A100D68A47 /* r_draw.cpp */,
 				283D4BB2229DF89B00D68A47 /* r_edge.cpp */,
 				283D4BCC229E0C3500D68A47 /* r_efrag.cpp */,
+				28DFACDB28A4B2DB00646DE0 /* r_image.cpp */,
 				283D4BC0229E010D00D68A47 /* r_light.cpp */,
 				283D4B7D229DD13200D68A47 /* r_local.h */,
 				283D4BB0229DF78200D68A47 /* r_main.cpp */,
@@ -885,6 +890,7 @@
 				28BA2A9C229F403C001830E9 /* r_efrag.cpp in Sources */,
 				28BA2A7C229F403C001830E9 /* console.cpp in Sources */,
 				28BA2AA9229F403C001830E9 /* sv_phys.cpp in Sources */,
+				28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */,
 				286DF6C92324813B00B7537E /* net_sock.cpp in Sources */,
 				28BA2AA2229F403C001830E9 /* r_sprite.cpp in Sources */,
 				28BA2A7E229F403C001830E9 /* cvar.cpp in Sources */,
@@ -957,6 +963,7 @@
 				282AF2CE250E770A00E171DA /* console.cpp in Sources */,
 				282AF31D250EC17800E171DA /* GameView.mm in Sources */,
 				282AF2AE250E5B8100E171DA /* AppDelegate.m in Sources */,
+				28DFACDE28A4B31700646DE0 /* r_image.cpp in Sources */,
 				282AF2F2250E773500E171DA /* r_efrag.cpp in Sources */,
 				282AF2E6250E772400E171DA /* net_sock.cpp in Sources */,
 				282AF2E1250E770A00E171DA /* menu.cpp in Sources */,
@@ -1061,6 +1068,7 @@
 				283D4B9F229DE9BB00D68A47 /* world.cpp in Sources */,
 				283D4BE7229E128B00D68A47 /* d_vars.cpp in Sources */,
 				283D4BA5229DF1C600D68A47 /* pr_edict.cpp in Sources */,
+				28DFACDD28A4B31700646DE0 /* r_image.cpp in Sources */,
 				283D4BC1229E010D00D68A47 /* r_light.cpp in Sources */,
 				283D4B7C229DD10F00D68A47 /* host.cpp in Sources */,
 				287A322B229DBC4D00AE6BFA /* cd_null.cpp in Sources */,
