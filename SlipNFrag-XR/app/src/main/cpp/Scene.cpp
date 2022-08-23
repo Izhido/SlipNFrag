@@ -2409,6 +2409,12 @@ void Scene::Reset()
 	{
 		cached.DisposeFront();
 	}
+	while (deletedLightmapTextures != nullptr)
+	{
+		auto lightmapTexture = deletedLightmapTextures;
+		deletedLightmapTextures = deletedLightmapTextures->next;
+		delete lightmapTexture;
+	}
 	lightmaps.DisposeFront();
 	indexBuffers.DisposeFront();
 	buffers.DisposeFront();
