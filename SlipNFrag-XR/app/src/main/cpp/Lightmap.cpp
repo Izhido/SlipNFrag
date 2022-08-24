@@ -54,7 +54,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 			}
 			else
 			{
-				lightmapTexture = new LightmapTexture();
+				lightmapTexture = new LightmapTexture { };
 			}
 			appState.Scene.lightmapTextures[slot] = lightmapTexture;
 		}
@@ -68,7 +68,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 			}
 			else
 			{
-				lightmapTexture->next = new LightmapTexture();
+				lightmapTexture->next = new LightmapTexture { };
 			}
 			lightmapTexture->next->previous = lightmapTexture;
 			lightmapTexture = lightmapTexture->next;

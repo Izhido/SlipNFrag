@@ -5,20 +5,20 @@
 
 struct LightmapTexture
 {
-	int width = 0;
-	int height = 0;
-	VkImage image = VK_NULL_HANDLE;
-	VkDeviceMemory memory = VK_NULL_HANDLE;
-	VkImageView view = VK_NULL_HANDLE;
+	int width;
+	int height;
+	VkImage image;
+	VkDeviceMemory memory;
+	VkImageView view;
 	std::vector<bool> allocated;
-	int allocatedCount = 0;
-	int firstFreeCandidate = 0;
-	VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
-	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+	int allocatedCount;
+	int firstFreeCandidate;
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSet descriptorSet;
 	std::vector<VkBufferImageCopy> regions;
-	uint32_t regionCount = 0;
-	LightmapTexture* previous = nullptr;
-	LightmapTexture* next = nullptr;
+	uint32_t regionCount;
+	LightmapTexture* previous;
+	LightmapTexture* next;
 
 	void Initialize();
 };

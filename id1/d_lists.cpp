@@ -57,13 +57,18 @@ void D_FillLightmap (dsurface_t& surface, surfcache_s* cache)
 	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
+	if (d_lists.lightmap_texels.size() <= d_lists.last_lightmap_texel + surface.lightmap_size)
 	{
 		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}
 	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
-	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+	auto source = (unsigned*)&cache->data[0];
+	auto target = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+	for (auto i = 0; i < surface.lightmap_size; i++)
+	{
+		*target++ = *source++;
+	}
 }
 
 void D_FillSurfaceSize(dturbulent_t& turbulent, int component_size, int mips)
@@ -115,13 +120,18 @@ void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfc
 	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (d_lists.last_lightmap_texel + surface.lightmap_size >= d_lists.lightmap_texels.size())
+	if (d_lists.lightmap_texels.size() <= d_lists.last_lightmap_texel + surface.lightmap_size)
 	{
 		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}
 	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
-	memcpy(d_lists.lightmap_texels.data() + surface.lightmap_texels, &cache->data[0], surface.lightmap_size * sizeof(unsigned));
+	auto source = (unsigned*)&cache->data[0];
+	auto target = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+	for (auto i = 0; i < surface.lightmap_size; i++)
+	{
+		*target++ = *source++;
+	}
 	surface.count = face->numedges;
 }
 

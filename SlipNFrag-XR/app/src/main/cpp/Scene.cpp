@@ -1305,10 +1305,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap { };
-		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		lightmap->createdFrameCount = surface.created;
 		loaded.lightmap.lightmap = lightmap;
-		loaded.lightmap.size = surface.lightmap_size * sizeof(unsigned);
+		loaded.lightmap.size = surface.lightmap_size * sizeof(uint16_t);
 		size += loaded.lightmap.size;
 		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
 		lightmaps.Setup(loaded.lightmap);
@@ -1322,11 +1322,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			lightmap->next = lightmaps.oldLightmaps;
 			lightmaps.oldLightmaps = lightmap;
 			lightmap = new Lightmap { };
-			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			lightmap->createdFrameCount = surface.created;
 			lightmapEntry->second = lightmap;
 			loaded.lightmap.lightmap = lightmap;
-			loaded.lightmap.size = surface.lightmap_size * sizeof(unsigned);
+			loaded.lightmap.size = surface.lightmap_size * sizeof(uint16_t);
 			size += loaded.lightmap.size;
 			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
 			lightmaps.Setup(loaded.lightmap);
@@ -1481,10 +1481,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap { };
-		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		lightmap->createdFrameCount = surface.created;
 		loaded.lightmap.lightmap = lightmap;
-		loaded.lightmap.size = surface.lightmap_size * sizeof(unsigned);
+		loaded.lightmap.size = surface.lightmap_size * sizeof(uint16_t);
 		size += loaded.lightmap.size;
 		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
 		lightmaps.Setup(loaded.lightmap);
@@ -1498,11 +1498,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			lightmap->next = lightmaps.oldLightmaps;
 			lightmaps.oldLightmaps = lightmap;
 			lightmap = new Lightmap { };
-			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			lightmap->createdFrameCount = surface.created;
 			lightmapEntry->second = lightmap;
 			loaded.lightmap.lightmap = lightmap;
-			loaded.lightmap.size = surface.lightmap_size * sizeof(unsigned);
+			loaded.lightmap.size = surface.lightmap_size * sizeof(uint16_t);
 			size += loaded.lightmap.size;
 			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
 			lightmaps.Setup(loaded.lightmap);
@@ -1589,10 +1589,10 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 	if (lightmapEntry == lightmaps.lightmaps.end())
 	{
 		auto lightmap = new Lightmap { };
-		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 		lightmap->createdFrameCount = surface.created;
 		loaded.lightmap.lightmap = lightmap;
-		loaded.lightmap.size = surface.lightmap_size * sizeof(unsigned);
+		loaded.lightmap.size = surface.lightmap_size * sizeof(uint16_t);
 		size += loaded.lightmap.size;
 		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
 		lightmaps.Setup(loaded.lightmap);
@@ -1606,11 +1606,11 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 			lightmap->next = lightmaps.oldLightmaps;
 			lightmaps.oldLightmaps = lightmap;
 			lightmap = new Lightmap { };
-			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			lightmap->createdFrameCount = surface.created;
 			lightmapEntry->second = lightmap;
 			loaded.lightmap.lightmap = lightmap;
-			loaded.lightmap.size = surface.lightmap_size * sizeof(unsigned);
+			loaded.lightmap.size = surface.lightmap_size * sizeof(uint16_t);
 			size += loaded.lightmap.size;
 			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
 			lightmaps.Setup(loaded.lightmap);
