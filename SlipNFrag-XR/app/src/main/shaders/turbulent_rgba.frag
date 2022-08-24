@@ -22,7 +22,7 @@ layout(location = 0) out lowp vec4 outColor;
 void main()
 {
 	vec2 distortion = sin(mod(time + fragmentTexCoords * 5, 3.14159*2)) / 10;
-	vec2 texCoords = vec2(fragmentTexCoords.x + distortion.y, fragmentTexCoords.y + distortion.x);
+	vec2 texCoords = fragmentTexCoords.xy + distortion.yx;
 	vec2 level = textureQueryLod(fragmentTexture, texCoords);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
 	vec3 fragmentTextureCoords = vec3(texCoords, fragmentTextureIndex);
