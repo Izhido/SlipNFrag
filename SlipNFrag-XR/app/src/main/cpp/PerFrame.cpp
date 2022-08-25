@@ -863,17 +863,24 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 	}
 
+	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)
+	{
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastEndBarrier + 1, appState.Scene.stagingBuffer.bufferBarriers.data(), 0, nullptr);
+	}
+
 	if (appState.Scene.paletteSize > 0)
 	{
 		bufferCopy.size = appState.Scene.paletteSize;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, palette->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(palette->buffer);
-	}
 
-	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)
-	{
-		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastEndBarrier + 1, appState.Scene.stagingBuffer.bufferBarriers.data(), 0, nullptr);
+		VkBufferMemoryBarrier barrier;
+		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+		barrier.buffer = palette->buffer;
+		barrier.size = VK_WHOLE_SIZE;
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
 	}
 
 	appState.Scene.stagingBuffer.buffer = stagingBuffer;
