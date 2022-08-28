@@ -487,7 +487,7 @@ void android_main(struct android_app* app)
 
 		CHECK_XRCMD(xrGetVulkanGraphicsRequirements2KHR(instance, systemId, &graphicsRequirements));
 
-		std::vector<const char*> layers;
+		std::vector<const char*> instanceLayerNames;
 		
 #if !defined(NDEBUG)
 		uint32_t layerCount;
@@ -508,7 +508,7 @@ void android_main(struct android_app* app)
 			{
 				if (0 == strcmp(validationLayerName, layerProperties.layerName))
 				{
-					layers.push_back(validationLayerName);
+					instanceLayerNames.push_back(validationLayerName);
 					validationLayerFound = true;
 				}
 			}
@@ -533,8 +533,8 @@ void android_main(struct android_app* app)
 
 			VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 			instInfo.pApplicationInfo = &appInfo;
-			instInfo.enabledLayerCount = (uint32_t)layers.size();
-			instInfo.ppEnabledLayerNames = (layers.empty() ? nullptr : layers.data());
+			instInfo.enabledLayerCount = (uint32_t)instanceLayerNames.size();
+			instInfo.ppEnabledLayerNames = (instanceLayerNames.empty() ? nullptr : instanceLayerNames.data());
 			instInfo.enabledExtensionCount = (uint32_t)vulkanExtensions.size();
 			instInfo.ppEnabledExtensionNames = (vulkanExtensions.empty() ? nullptr : vulkanExtensions.data());
 
@@ -1192,6 +1192,29 @@ void android_main(struct android_app* app)
 
 		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
 
+		std::vector<XrCompositionLayerBaseHeader*> layers;
+
+		XrCompositionLayerProjection worldLayer { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
+		XrCompositionLayerCylinderKHR screenLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		XrCompositionLayerCylinderKHR leftArrowsLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		XrCompositionLayerCylinderKHR rightArrowsLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		XrCompositionLayerCylinderKHR keyboardLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+
+		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
+
+		XrCompositionLayerCubeKHR skyboxLayer { XR_TYPE_COMPOSITION_LAYER_CUBE_KHR };
+
+		XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
+		waitInfo.timeout = XR_INFINITE_DURATION;
+
+		XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
+
+		std::vector<VkSubmitInfo> submitInfo;
+
+		int worldSubmitInfoIndex;
+		int screenSubmitInfoIndex;
+		int keyboardSubmitInfoIndex;
+
 		XrEventDataBuffer eventDataBuffer { };
 
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
@@ -1573,21 +1596,12 @@ void android_main(struct android_app* app)
 			XrFrameBeginInfo frameBeginInfo { XR_TYPE_FRAME_BEGIN_INFO };
 			CHECK_XRCMD(xrBeginFrame(appState.Session, &frameBeginInfo));
 
-			std::vector<XrCompositionLayerBaseHeader*> layers;
+			int lastSubmitInfoIndex = -1;
+			worldSubmitInfoIndex = -1;
+			screenSubmitInfoIndex = -1;
+			keyboardSubmitInfoIndex = -1;
 
-			XrCompositionLayerProjection worldLayer { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
-
-			std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
-
-			XrCompositionLayerCylinderKHR screenLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-
-			XrCompositionLayerCylinderKHR leftArrowsLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-
-			XrCompositionLayerCylinderKHR rightArrowsLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-
-			XrCompositionLayerCylinderKHR keyboardLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-
-			XrCompositionLayerCubeKHR skyboxLayer { XR_TYPE_COMPOSITION_LAYER_CUBE_KHR };
+			layers.clear();
 
 			if (frameState.shouldRender)
 			{
@@ -1810,10 +1824,6 @@ void android_main(struct android_app* app)
 					if (perFrame.commandBuffer == VK_NULL_HANDLE)
 					{
 						CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perFrame.commandBuffer));
-
-						perFrame.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-						perFrame.submitInfo.commandBufferCount = 1;
-						perFrame.submitInfo.pCommandBuffers = &perFrame.commandBuffer;
 					}
 
 					CHECK_VKCMD(vkResetCommandBuffer(perFrame.commandBuffer, 0));
@@ -1989,14 +1999,15 @@ void android_main(struct android_app* app)
 
 					CHECK_VKCMD(vkEndCommandBuffer(perFrame.commandBuffer));
 
-					XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
-					waitInfo.timeout = XR_INFINITE_DURATION;
-					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
-
-					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &perFrame.submitInfo, VK_NULL_HANDLE));
-
-					XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
-					CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
+					lastSubmitInfoIndex++;
+					if (submitInfo.size() <= lastSubmitInfoIndex)
+					{
+						submitInfo.resize(lastSubmitInfoIndex + 1);
+						submitInfo[lastSubmitInfoIndex].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+						submitInfo[lastSubmitInfoIndex].commandBufferCount = 1;
+					}
+					worldSubmitInfoIndex = lastSubmitInfoIndex;
+					submitInfo[worldSubmitInfoIndex].pCommandBuffers = &perFrame.commandBuffer;
 
 					worldLayer.space = appSpace;
 					worldLayer.viewCount = (uint32_t) projectionLayerViews.size();
@@ -2122,11 +2133,15 @@ void android_main(struct android_app* app)
 
 					CHECK_VKCMD(vkEndCommandBuffer(screenPerImage.commandBuffer));
 
-					CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.Swapchain, &waitInfo));
-
-					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &screenPerImage.submitInfo, VK_NULL_HANDLE));
-
-					CHECK_XRCMD(xrReleaseSwapchainImage(appState.Screen.Swapchain, &releaseInfo));
+					lastSubmitInfoIndex++;
+					if (submitInfo.size() <= lastSubmitInfoIndex)
+					{
+						submitInfo.resize(lastSubmitInfoIndex + 1);
+						submitInfo[lastSubmitInfoIndex].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+						submitInfo[lastSubmitInfoIndex].commandBufferCount = 1;
+					}
+					screenSubmitInfoIndex = lastSubmitInfoIndex;
+					submitInfo[screenSubmitInfoIndex].pCommandBuffers = &screenPerImage.commandBuffer;
 
 					screenLayer.radius = CylinderProjection::radius;
 					screenLayer.aspectRatio = (float)appState.ScreenWidth / appState.ScreenHeight;
@@ -2220,11 +2235,15 @@ void android_main(struct android_app* app)
 
 						CHECK_VKCMD(vkEndCommandBuffer(keyboardPerImage.commandBuffer));
 
-						CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.Swapchain, &waitInfo));
-
-						CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &keyboardPerImage.submitInfo, VK_NULL_HANDLE));
-
-						CHECK_XRCMD(xrReleaseSwapchainImage(appState.Keyboard.Screen.Swapchain, &releaseInfo));
+						lastSubmitInfoIndex++;
+						if (submitInfo.size() <= lastSubmitInfoIndex)
+						{
+							submitInfo.resize(lastSubmitInfoIndex + 1);
+							submitInfo[lastSubmitInfoIndex].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+							submitInfo[lastSubmitInfoIndex].commandBufferCount = 1;
+						}
+						keyboardSubmitInfoIndex = lastSubmitInfoIndex;
+						submitInfo[keyboardSubmitInfoIndex].pCommandBuffers = &keyboardPerImage.commandBuffer;
 
 						keyboardLayer.radius = CylinderProjection::radius;
 						keyboardLayer.aspectRatio = (float)appState.ScreenWidth / (float)(appState.ScreenHeight / 2);
@@ -2479,6 +2498,34 @@ void android_main(struct android_app* app)
 						}
 					}
 				}
+			}
+
+			if (worldSubmitInfoIndex >= 0)
+			{
+				CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
+			}
+			if (screenSubmitInfoIndex >= 0)
+			{
+				CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.Swapchain, &waitInfo));
+			}
+			if (keyboardSubmitInfoIndex >= 0)
+			{
+				CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.Swapchain, &waitInfo));
+			}
+
+			CHECK_VKCMD(vkQueueSubmit(appState.Queue, lastSubmitInfoIndex + 1, submitInfo.data(), VK_NULL_HANDLE));
+
+			if (worldSubmitInfoIndex >= 0)
+			{
+				CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
+			}
+			if (screenSubmitInfoIndex >= 0)
+			{
+				CHECK_XRCMD(xrReleaseSwapchainImage(appState.Screen.Swapchain, &releaseInfo));
+			}
+			if (keyboardSubmitInfoIndex >= 0)
+			{
+				CHECK_XRCMD(xrReleaseSwapchainImage(appState.Keyboard.Screen.Swapchain, &releaseInfo));
 			}
 
 			XrFrameEndInfo frameEndInfo { XR_TYPE_FRAME_END_INFO };

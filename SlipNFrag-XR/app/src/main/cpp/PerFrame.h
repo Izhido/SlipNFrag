@@ -16,7 +16,6 @@ struct PerFrame
 	VkImageView resolveView;
 	VkFramebuffer framebuffer;
 	VkCommandBuffer commandBuffer;
-	VkSubmitInfo submitInfo;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
 	CachedBuffers cachedIndices8;

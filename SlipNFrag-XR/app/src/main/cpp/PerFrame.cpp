@@ -874,12 +874,12 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, palette->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
 
-		VkBufferMemoryBarrier barrier;
+		VkBufferMemoryBarrier barrier { };
 		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
 		barrier.buffer = palette->buffer;
 		barrier.size = VK_WHOLE_SIZE;
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
 	}
 

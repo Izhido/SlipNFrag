@@ -101,10 +101,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		perImage.image = images[i].image;
 
 		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
-
-		perImage.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		perImage.submitInfo.commandBufferCount = 1;
-		perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
 	}
 
 	appState.ScreenData.assign(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
@@ -182,10 +178,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		perImage.image = images[i].image;
 
 		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
-
-		perImage.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		perImage.submitInfo.commandBufferCount = 1;
-		perImage.submitInfo.pCommandBuffers = &perImage.commandBuffer;
 
 		perImage.stagingBuffer.CreateStorageBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 
