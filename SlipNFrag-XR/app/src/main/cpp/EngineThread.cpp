@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include "Utils.h"
 #include <android_native_app_glue.h>
-//#include <android/log.h>
 #include "Locks.h"
 
 void runEngine(AppState* appState, struct android_app* app)
@@ -120,7 +119,6 @@ void runEngine(AppState* appState, struct android_app* app)
 				appState->TimeInWorldMode += frame_lapse;
 				if (!appState->ControlsMessageDisplayed && appState->TimeInWorldMode > 4)
 				{
-					//SCR_InterruptableCenterPrint("Controls:\n\nLeft or Right Joysticks:\nWalk Forward / Backpedal, \n   Step Left / Step Right \n\n[B] / [Y]: Jump     \n[A] / [X]: Swim down\nTriggers: Attack  \nGrip Triggers: Run          \nClick Joysticks: Change Weapon  \n\nApproach and fire weapon to close");
 					SCR_InterruptableCenterPrint("Controls:\n\nLeft or Right Joysticks:\nWalk Forward / Backpedal, \n   Step Left / Step Right \n\n[B] / [Y]: Jump     \n[A] / [X]: Swim down\nTriggers: Attack  \nGrip Triggers: Run          \nClick Joysticks: Change Weapon  \n\nFire weapon to close");
 					appState->ControlsMessageDisplayed = true;
 				}
@@ -129,17 +127,13 @@ void runEngine(AppState* appState, struct android_app* app)
 			{
 				VID_ReallocSurfCache();
 			}
-			//auto updatestart = GetTime();
 			auto updated = Host_FrameUpdate(frame_lapse);
-			//auto updateend = GetTime();
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
 				ANativeActivity_finish(app->activity);
 				appState->CallExitFunction = true;
 				break;
 			}
-			//double renderstart = 0;
-			//double renderend = 0;
 			if (updated)
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -157,16 +151,10 @@ void runEngine(AppState* appState, struct android_app* app)
 				r_modelorg_delta[2] = positionY / scale;
 				auto nodrift = cl.nodrift;
 				cl.nodrift = true;
-				//renderstart = GetTime();
 				Host_FrameRender();
-				//renderend = GetTime();
 				cl.nodrift = nodrift;
 			}
-			//auto finishstart = GetTime();
 			Host_FrameFinish(updated);
-			//auto finishend = GetTime();
-			//auto elapsed = (updateend-updatestart) + (renderend-renderstart) + (finishend-finishstart);
-			//__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "runEngine() elapsed: %.3f", elapsed);
 		}
 		std::this_thread::yield();
 	}

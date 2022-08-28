@@ -1760,18 +1760,6 @@ void android_main(struct android_app* app)
 					std::string perFrameKey = std::to_string(swapchainImageIndex);
 					auto& perFrame = appState.PerFrame[perFrameKey];
 
-					if (perFrame.commandBuffer == VK_NULL_HANDLE)
-					{
-						CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perFrame.commandBuffer));
-
-						perFrame.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-						perFrame.submitInfo.commandBufferCount = 1;
-						perFrame.submitInfo.pCommandBuffers = &perFrame.commandBuffer;
-					}
-
-					CHECK_VKCMD(vkResetCommandBuffer(perFrame.commandBuffer, 0));
-					CHECK_VKCMD(vkBeginCommandBuffer(perFrame.commandBuffer, &commandBufferBeginInfo));
-
 					double clearR = 0;
 					double clearG = 0;
 					double clearB = 0;
@@ -1787,7 +1775,13 @@ void android_main(struct android_app* app)
 					{
 						readClearColor = true;
 					}
-					
+
+					perFrame.Reset(appState);
+
+					appState.Scene.Initialize();
+
+					VkDeviceSize stagingBufferSize;
+					Buffer* stagingBuffer;
 					{
 						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 
@@ -1800,35 +1794,38 @@ void android_main(struct android_app* app)
 							clearA = (color >> 24) / 255.0f;
 						}
 
- 						perFrame.Reset(appState);
+						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
 
-						appState.Scene.Initialize();
-
-						//auto getsizestart = GetTime();
-						auto stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
-						//auto getsizeend = GetTime();
-						//double loadstart = 0;
-						//double loadend = 0;
-						//double fillstart = 0;
-						//double fillend = 0;
 						if (stagingBufferSize > 0)
 						{
-							//loadstart = GetTime();
 							if (stagingBufferSize < Constants::memoryBlockSize)
 							{
 								stagingBufferSize = Constants::memoryBlockSize;
 							}
-							auto stagingBuffer = perFrame.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
+							stagingBuffer = perFrame.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
 							if (stagingBuffer->mapped == nullptr)
 							{
 								CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
 							}
 							perFrame.LoadStagingBuffer(appState, stagingBuffer);
-							//loadend = fillstart = GetTime();
-							perFrame.FillFromStagingBuffer(appState, stagingBuffer);
-							//fillend = GetTime();
 						}
-						//__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "getsize elapsed: %.3f, load elapsed: %.3f, fill elapsed: %.3f, staging elapsed: %.3f", (getsizeend-getsizestart), (loadend-loadstart), (fillend-fillstart), (getsizeend-getsizestart) + (loadend-loadstart) + (fillend-fillstart));
+					}
+
+					if (perFrame.commandBuffer == VK_NULL_HANDLE)
+					{
+						CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perFrame.commandBuffer));
+
+						perFrame.submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+						perFrame.submitInfo.commandBufferCount = 1;
+						perFrame.submitInfo.pCommandBuffers = &perFrame.commandBuffer;
+					}
+
+					CHECK_VKCMD(vkResetCommandBuffer(perFrame.commandBuffer, 0));
+					CHECK_VKCMD(vkBeginCommandBuffer(perFrame.commandBuffer, &commandBufferBeginInfo));
+
+					if (stagingBufferSize > 0)
+					{
+						perFrame.FillFromStagingBuffer(appState, stagingBuffer);
 					}
 
 					VkClearValue clearValues[2] { };
