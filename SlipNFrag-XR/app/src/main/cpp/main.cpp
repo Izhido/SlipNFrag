@@ -1753,10 +1753,6 @@ void android_main(struct android_app* app)
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
 					}
 
-					XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
-					waitInfo.timeout = XR_INFINITE_DURATION;
-					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
-
 					std::string perFrameKey = std::to_string(swapchainImageIndex);
 					auto& perFrame = appState.PerFrame[perFrameKey];
 
@@ -1993,6 +1989,10 @@ void android_main(struct android_app* app)
 
 					CHECK_VKCMD(vkEndCommandBuffer(perFrame.commandBuffer));
 
+					XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
+					waitInfo.timeout = XR_INFINITE_DURATION;
+					CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
+
 					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &perFrame.submitInfo, VK_NULL_HANDLE));
 
 					XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
@@ -2017,8 +2017,6 @@ void android_main(struct android_app* app)
 					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.Swapchain, nullptr, &swapchainImageIndex));
 
 					appState.RenderScreen(swapchainImageIndex);
-
-					CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.Swapchain, &waitInfo));
 
 					auto& screenPerImage = appState.Screen.PerImage[swapchainImageIndex];
 					
@@ -2124,6 +2122,8 @@ void android_main(struct android_app* app)
 
 					CHECK_VKCMD(vkEndCommandBuffer(screenPerImage.commandBuffer));
 
+					CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.Swapchain, &waitInfo));
+
 					CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &screenPerImage.submitInfo, VK_NULL_HANDLE));
 
 					CHECK_XRCMD(xrReleaseSwapchainImage(appState.Screen.Swapchain, &releaseInfo));
@@ -2160,8 +2160,6 @@ void android_main(struct android_app* app)
 						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.Swapchain, nullptr, &swapchainImageIndex));
 
 						appState.RenderKeyboard(swapchainImageIndex);
-
-						CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.Swapchain, &waitInfo));
 
 						auto& keyboardPerImage = appState.Keyboard.Screen.PerImage[swapchainImageIndex];
 
@@ -2221,6 +2219,8 @@ void android_main(struct android_app* app)
 						vkCmdPipelineBarrier(keyboardPerImage.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
 						CHECK_VKCMD(vkEndCommandBuffer(keyboardPerImage.commandBuffer));
+
+						CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.Swapchain, &waitInfo));
 
 						CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &keyboardPerImage.submitInfo, VK_NULL_HANDLE));
 
