@@ -2614,7 +2614,7 @@ void android_main(struct android_app* app)
 			}
 			appState.ConsoleTextures.clear();
 
-			for (auto& perFrame:  appState.Screen.PerImage)
+			for (auto& perFrame :  appState.Screen.PerImage)
 			{
 				perFrame.stagingBuffer.Delete(appState);
 			}
@@ -2667,9 +2667,9 @@ void android_main(struct android_app* app)
 			}
 
 			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
-			for (auto i = 0; i < appState.Scene.samplers.size(); i++)
+			for (auto sampler : appState.Scene.samplers)
 			{
-				vkDestroySampler(appState.Device, appState.Scene.samplers[i], nullptr);
+				vkDestroySampler(appState.Device, sampler, nullptr);
 			}
 			appState.Scene.samplers.clear();
 

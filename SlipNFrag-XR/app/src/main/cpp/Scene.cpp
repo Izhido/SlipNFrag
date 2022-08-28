@@ -663,21 +663,21 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	turbulentAttributes.vertexInputState.vertexAttributeDescriptionCount = turbulentAttributes.vertexAttributes.size();
 	turbulentAttributes.vertexInputState.pVertexAttributeDescriptions = turbulentAttributes.vertexAttributes.data();
 
-	PipelineAttributes spriteAttributes { };
-	spriteAttributes.vertexAttributes.resize(2);
-	spriteAttributes.vertexBindings.resize(2);
-	spriteAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-	spriteAttributes.vertexBindings[0].stride = 3 * sizeof(float);
-	spriteAttributes.vertexAttributes[1].location = 1;
-	spriteAttributes.vertexAttributes[1].binding = 1;
-	spriteAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-	spriteAttributes.vertexBindings[1].binding = 1;
-	spriteAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	spriteAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	spriteAttributes.vertexInputState.vertexBindingDescriptionCount = spriteAttributes.vertexBindings.size();
-	spriteAttributes.vertexInputState.pVertexBindingDescriptions = spriteAttributes.vertexBindings.data();
-	spriteAttributes.vertexInputState.vertexAttributeDescriptionCount = spriteAttributes.vertexAttributes.size();
-	spriteAttributes.vertexInputState.pVertexAttributeDescriptions = spriteAttributes.vertexAttributes.data();
+	PipelineAttributes texturedAttributes { };
+	texturedAttributes.vertexAttributes.resize(2);
+	texturedAttributes.vertexBindings.resize(2);
+	texturedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	texturedAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+	texturedAttributes.vertexAttributes[1].location = 1;
+	texturedAttributes.vertexAttributes[1].binding = 1;
+	texturedAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+	texturedAttributes.vertexBindings[1].binding = 1;
+	texturedAttributes.vertexBindings[1].stride = 2 * sizeof(float);
+	texturedAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	texturedAttributes.vertexInputState.vertexBindingDescriptionCount = texturedAttributes.vertexBindings.size();
+	texturedAttributes.vertexInputState.pVertexBindingDescriptions = texturedAttributes.vertexBindings.data();
+	texturedAttributes.vertexInputState.vertexAttributeDescriptionCount = texturedAttributes.vertexAttributes.size();
+	texturedAttributes.vertexInputState.pVertexAttributeDescriptions = texturedAttributes.vertexAttributes.data();
 
 	PipelineAttributes aliasAttributes { };
 	aliasAttributes.vertexAttributes.resize(3);
@@ -749,22 +749,6 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	coloredAttributes.vertexInputState.pVertexBindingDescriptions = coloredAttributes.vertexBindings.data();
 	coloredAttributes.vertexInputState.vertexAttributeDescriptionCount = coloredAttributes.vertexAttributes.size();
 	coloredAttributes.vertexInputState.pVertexAttributeDescriptions = coloredAttributes.vertexAttributes.data();
-
-	PipelineAttributes floorAttributes { };
-	floorAttributes.vertexAttributes.resize(2);
-	floorAttributes.vertexBindings.resize(2);
-	floorAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-	floorAttributes.vertexBindings[0].stride = 3 * sizeof(float);
-	floorAttributes.vertexAttributes[1].location = 1;
-	floorAttributes.vertexAttributes[1].binding = 1;
-	floorAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-	floorAttributes.vertexBindings[1].binding = 1;
-	floorAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	floorAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	floorAttributes.vertexInputState.vertexBindingDescriptionCount = floorAttributes.vertexBindings.size();
-	floorAttributes.vertexInputState.pVertexBindingDescriptions = floorAttributes.vertexBindings.data();
-	floorAttributes.vertexInputState.vertexAttributeDescriptionCount = floorAttributes.vertexAttributes.size();
-	floorAttributes.vertexInputState.pVertexAttributeDescriptions = floorAttributes.vertexAttributes.data();
 
 	VkDescriptorSetLayout descriptorSetLayouts[4] { };
 
@@ -939,7 +923,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sprites.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = sprites.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &spriteAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pVertexInputState = &texturedAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &triangleStrip;
 	stages[0].module = spriteVertex;
 	stages[1].module = spriteFragment;
@@ -1012,7 +996,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &floor.pipelineLayout));
 	depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
 	graphicsPipelineCreateInfo.layout = floor.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &floorAttributes.vertexInputState;
+	graphicsPipelineCreateInfo.pVertexInputState = &texturedAttributes.vertexInputState;
 	graphicsPipelineCreateInfo.pInputAssemblyState = &triangles;
 	stages[0].module = floorVertex;
 	stages[1].module = floorFragment;
