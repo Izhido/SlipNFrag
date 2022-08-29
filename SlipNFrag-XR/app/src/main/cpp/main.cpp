@@ -1116,7 +1116,7 @@ void android_main(struct android_app* app)
 
 		appState.SwapchainWidth = configViews[0].recommendedImageRectWidth;
 		appState.SwapchainHeight = configViews[0].recommendedImageRectHeight;
-		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;//configViews[0].recommendedSwapchainSampleCount;
+		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;
 		
 		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainWidth, appState.SwapchainHeight);
 
@@ -2614,7 +2614,7 @@ void android_main(struct android_app* app)
 			}
 			appState.ConsoleTextures.clear();
 
-			for (auto& perFrame :  appState.Screen.PerImage)
+			for (auto& perFrame : appState.Screen.PerImage)
 			{
 				perFrame.stagingBuffer.Delete(appState);
 			}
@@ -2697,6 +2697,7 @@ void android_main(struct android_app* app)
 
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
+
 			appState.Scene.floorStrip.Delete(appState);
 			appState.Scene.floor.Delete(appState);
 			appState.Scene.skyRGBA.Delete(appState);
@@ -2722,6 +2723,7 @@ void android_main(struct android_app* app)
 			appState.Scene.surfacesRGBANoGlow.Delete(appState);
 			appState.Scene.surfacesRGBA.Delete(appState);
 			appState.Scene.surfaces.Delete(appState);
+
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
 			appState.Scene.singleImageLayout = VK_NULL_HANDLE;
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.twoBuffersAndImageLayout, nullptr);

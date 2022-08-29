@@ -132,8 +132,9 @@ void Texture::Fill(AppState& appState, StagingBuffer& buffer)
 	filled = true;
 }
 
-void Texture::Delete(AppState& appState) const
+void Texture::Delete(AppState& appState)
 {
+	filled = false;
 	if (view != VK_NULL_HANDLE)
 	{
 		vkDestroyImageView(appState.Device, view, nullptr);
