@@ -2676,8 +2676,6 @@ void android_main(struct android_app* app)
 			appState.Scene.controllerTexture.Delete(appState);
 			appState.Scene.floorTexture.Delete(appState);
 
-			appState.Scene.buffers.Delete(appState);
-			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.textures.Delete(appState);
 
 			for (auto& entry : appState.Scene.surfaceRGBATextures)
