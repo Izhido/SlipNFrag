@@ -1571,23 +1571,20 @@ void android_main(struct android_app* app)
 				}
 			}
 
+			appState.Scene.textures.DeleteOld(appState);
+			for (auto& entry : appState.Scene.surfaceRGBATextures)
 			{
-				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-				appState.Scene.textures.DeleteOld(appState);
-				for (auto& entry : appState.Scene.surfaceRGBATextures)
-				{
-					entry.DeleteOld(appState);
-				}
-				for (auto& entry : appState.Scene.surfaceTextures)
-				{
-					entry.DeleteOld(appState);
-				}
-				appState.Scene.lightmaps.DeleteOld(appState);
-				appState.Scene.indexBuffers.DeleteOld(appState);
-				appState.Scene.buffers.DeleteOld(appState);
-	
-				Skybox::DeleteOld(appState);
+				entry.DeleteOld(appState);
 			}
+			for (auto& entry : appState.Scene.surfaceTextures)
+			{
+				entry.DeleteOld(appState);
+			}
+			appState.Scene.lightmaps.DeleteOld(appState);
+			appState.Scene.indexBuffers.DeleteOld(appState);
+			appState.Scene.buffers.DeleteOld(appState);
+
+			Skybox::DeleteOld(appState);
 
 			XrFrameWaitInfo frameWaitInfo { XR_TYPE_FRAME_WAIT_INFO };
 			XrFrameState frameState { XR_TYPE_FRAME_STATE };
