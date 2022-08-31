@@ -55,6 +55,9 @@ struct Scene
 	Pipeline floor;
 	Pipeline floorStrip;
 	int hostClearCount;
+	SharedMemoryBuffer* palette;
+	SharedMemoryBuffer* oldPalettes;
+	int paletteChangedFrame;
 	CachedSharedMemoryBuffers buffers;
 	CachedIndexBuffers indexBuffers;
 	std::unordered_map<void*, std::vector<float>> surfaceVertexCache;

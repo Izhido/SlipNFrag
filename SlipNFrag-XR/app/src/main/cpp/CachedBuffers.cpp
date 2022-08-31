@@ -10,7 +10,7 @@ Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
 		if ((*b)->size >= size && (*b)->size < size * 2)
 		{
 			auto buffer = *b;
-			*b = (*b)->next;
+			(*b) = (*b)->next;
 			return buffer;
 		}
 	}
@@ -73,7 +73,7 @@ void CachedBuffers::DeleteOld(AppState& appState)
 			auto next = (*b)->next;
 			(*b)->Delete(appState);
 			delete *b;
-			*b = next;
+			(*b) = next;
 		}
 		else
 		{

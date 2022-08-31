@@ -1584,6 +1584,25 @@ void android_main(struct android_app* app)
 			appState.Scene.indexBuffers.DeleteOld(appState);
 			appState.Scene.buffers.DeleteOld(appState);
 
+			if (appState.Scene.oldPalettes != nullptr)
+			{
+				for (auto p = &appState.Scene.oldPalettes; *p != nullptr; )
+				{
+					(*p)->unusedCount++;
+					if ((*p)->unusedCount >= Constants::maxUnusedCount)
+					{
+						auto next = (*p)->next;
+						(*p)->Delete(appState);
+						delete *p;
+						(*p) = next;
+					}
+					else
+					{
+						p = &(*p)->next;
+					}
+				}
+			}
+
 			Skybox::DeleteOld(appState);
 
 			XrFrameWaitInfo frameWaitInfo { XR_TYPE_FRAME_WAIT_INFO };
@@ -2640,10 +2659,6 @@ void android_main(struct android_app* app)
 				{
 					perFrame.second.colormap->Delete(appState);
 				}
-				if (perFrame.second.palette != nullptr)
-				{
-					perFrame.second.palette->Delete(appState);
-				}
 				perFrame.second.colormaps.Delete(appState);
 				perFrame.second.stagingBuffers.Delete(appState);
 				perFrame.second.cachedColors.Delete(appState);
@@ -2692,6 +2707,21 @@ void android_main(struct android_app* app)
 
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
+
+			for (SharedMemoryBuffer* p = appState.Scene.palette, *next; p != nullptr; p = next)
+			{
+				next = p->next;
+				p->Delete(appState);
+				delete p;
+			}
+			appState.Scene.palette = nullptr;
+			for (SharedMemoryBuffer* p = appState.Scene.oldPalettes, *next; p != nullptr; p = next)
+			{
+				next = p->next;
+				p->Delete(appState);
+				delete p;
+			}
+			appState.Scene.oldPalettes = nullptr;
 
 			appState.Scene.floorStrip.Delete(appState);
 			appState.Scene.floor.Delete(appState);

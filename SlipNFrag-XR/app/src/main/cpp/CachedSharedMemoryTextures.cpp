@@ -63,7 +63,7 @@ void CachedSharedMemoryTextures::DeleteOld(AppState& appState)
 				auto next = (*t)->next;
 				(*t)->Delete(appState);
 				delete *t;
-				*t = next;
+				(*t) = next;
 			}
 			else
 			{

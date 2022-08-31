@@ -871,12 +871,12 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	if (appState.Scene.paletteSize > 0)
 	{
 		bufferCopy.size = appState.Scene.paletteSize;
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, palette->buffer, 1, &bufferCopy);
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.palette->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
 
 		VkBufferMemoryBarrier barrier { };
 		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.buffer = palette->buffer;
+		barrier.buffer = appState.Scene.palette->buffer;
 		barrier.size = VK_WHOLE_SIZE;
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -1138,8 +1138,8 @@ void PerFrame::Render(AppState& appState)
 		{
 			poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			poolSizes[1].descriptorCount = 1;
-			bufferInfo[1].buffer = palette->buffer;
-			bufferInfo[1].range = palette->size;
+			bufferInfo[1].buffer = appState.Scene.palette->buffer;
+			bufferInfo[1].range = appState.Scene.palette->size;
 			writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			writes[1].pBufferInfo = bufferInfo + 1;
 			if (!sceneMatricesAndPaletteResources.created)
@@ -1173,7 +1173,21 @@ void PerFrame::Render(AppState& appState)
 				vkUpdateDescriptorSets(appState.Device, 3, writes, 0, nullptr);
 				sceneMatricesAndColormapResources.created = true;
 			}
+			palette = appState.Scene.palette;
 		}
+	}
+	if (palette != appState.Scene.palette)
+	{
+		VkDescriptorBufferInfo bufferInfo { };
+		bufferInfo.buffer = appState.Scene.palette->buffer;
+		bufferInfo.range = appState.Scene.palette->size;
+		writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writes[1].pBufferInfo = &bufferInfo;
+		writes[1].dstSet = sceneMatricesAndPaletteResources.descriptorSet;
+		vkUpdateDescriptorSets(appState.Device, 1, &writes[1], 0, nullptr);
+		writes[1].dstSet = sceneMatricesAndColormapResources.descriptorSet;
+		vkUpdateDescriptorSets(appState.Device, 1, &writes[1], 0, nullptr);
+		palette = appState.Scene.palette;
 	}
 	if (appState.Mode == AppWorldMode)
 	{

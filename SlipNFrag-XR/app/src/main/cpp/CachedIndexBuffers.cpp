@@ -101,7 +101,7 @@ void CachedIndexBuffers::DeleteOld(AppState& appState)
 				auto next = (*b)->next;
 				(*b)->Delete(appState);
 				delete *b;
-				*b = next;
+				(*b) = next;
 			}
 			else
 			{

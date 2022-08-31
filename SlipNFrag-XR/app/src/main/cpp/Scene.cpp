@@ -1895,16 +1895,44 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	appState.FromEngine.vup1 = d_lists.vup1;
 	appState.FromEngine.vup2 = d_lists.vup2;
 	VkDeviceSize size = 0;
-	if (perFrame.palette == nullptr || perFrame.paletteChanged != pal_changed)
+	if (palette == nullptr || paletteChangedFrame != pal_changed)
 	{
-		if (perFrame.palette == nullptr)
+		SharedMemoryBuffer* newPalette = nullptr;
+		bool skip = true;
+		for (auto p = &palette; *p != nullptr; )
 		{
-			perFrame.palette = new Buffer();
-			perFrame.palette->CreateUniformBuffer(appState, 256 * 4 * sizeof(float));
+			if (skip)
+			{
+				p = &(*p)->next;
+				skip = false;
+			}
+			else
+			{
+				(*p)->unusedCount++;
+				if ((*p)->unusedCount >= Constants::maxUnusedCount)
+				{
+					auto next = (*p)->next;
+					newPalette = (*p);
+					newPalette->unusedCount = 0;
+					(*p) = next;
+					break;
+				}
+				else
+				{
+					p = &(*p)->next;
+				}
+			}
 		}
-		paletteSize = perFrame.palette->size;
+		if (newPalette == nullptr)
+		{
+			newPalette = new SharedMemoryBuffer { };
+			newPalette->CreateUniformBuffer(appState, 256 * 4 * sizeof(float));
+		}
+		newPalette->next = palette;
+		palette = newPalette;
+		paletteSize = palette->size;
 		size += paletteSize;
-		perFrame.paletteChanged = pal_changed;
+		paletteChangedFrame = pal_changed;
 	}
 	if (!host_colormap.empty() && perFrame.colormap == nullptr)
 	{
@@ -2394,6 +2422,13 @@ void Scene::Reset()
 	lightmaps.DisposeFront();
 	indexBuffers.DisposeFront();
 	buffers.DisposeFront();
+	for (SharedMemoryBuffer* p = palette, *next; p != nullptr; p = next)
+	{
+		next = p->next;
+		p->next = oldPalettes;
+		oldPalettes = p;
+	}
+	palette = nullptr;
 	latestTextureDescriptorSets = nullptr;
 	latestIndexBuffer32 = nullptr;
 	usedInLatestIndexBuffer32 = 0;

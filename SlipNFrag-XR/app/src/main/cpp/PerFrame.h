@@ -25,8 +25,7 @@ struct PerFrame
 	CachedBuffers stagingBuffers;
 	CachedTextures colormaps;
 	int colormapCount;
-	int paletteChanged;
-	Buffer* palette;
+	SharedMemoryBuffer* palette;
 	Texture* colormap;
 	Buffer matrices;
 	Buffer* vertices;
