@@ -183,7 +183,7 @@ struct Scene
 
 	static void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	static void AddBorder(AppState& appState, std::vector<uint32_t>& target);
-	void Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app);
+	void Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app);
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
 	void AddToBufferBarrier(VkBuffer buffer);

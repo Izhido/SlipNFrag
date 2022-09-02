@@ -15,7 +15,6 @@ struct PerFrame
 	VkImageView depthView;
 	VkImageView resolveView;
 	VkFramebuffer framebuffer;
-	VkCommandBuffer commandBuffer;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
 	CachedBuffers cachedIndices8;
@@ -62,10 +61,10 @@ struct PerFrame
 	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
-	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
-	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
-	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer);
+	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
+	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const;
+	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer);
 	void Reset(AppState& appState);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
-	void Render(AppState& appState);
+	void Render(AppState& appState, VkCommandBuffer commandBuffer);
 };

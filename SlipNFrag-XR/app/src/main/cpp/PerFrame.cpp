@@ -657,7 +657,7 @@ void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 	}
 }
 
-void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
+void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;
 	auto delayed = false;
@@ -696,7 +696,7 @@ void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuf
 	}
 }
 
-void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const
+void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const
 {
 	auto loaded = first;
 	while (loaded != nullptr)
@@ -709,7 +709,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 }
 
-void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
+void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer)
 {
 	appState.Scene.stagingBuffer.lastStartBarrier = -1;
 	appState.Scene.stagingBuffer.lastEndBarrier = -1;
@@ -718,25 +718,25 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	VkBufferCopy bufferCopy { };
 
 	SharedMemoryBuffer* previousBuffer = nullptr;
-	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
+	FillAliasFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
 
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
 
-	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices16, bufferCopy, previousBuffer);
+	FillAliasFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.indexBuffers.firstAliasIndices16, bufferCopy, previousBuffer);
 
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
 
-	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices32, bufferCopy, previousBuffer);
+	FillAliasFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.indexBuffers.firstAliasIndices32, bufferCopy, previousBuffer);
 
 	bufferCopy.dstOffset = 0;
 
-	FillFromStagingBuffer(appState, stagingBuffer, appState.Scene.buffers.firstAliasVertices, bufferCopy);
+	FillFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.buffers.firstAliasVertices, bufferCopy);
 
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
@@ -1049,7 +1049,7 @@ void PerFrame::SetPushConstants(const LoadedAlias& loaded, float pushConstants[]
 	pushConstants[14] = loaded.transform[2][3];
 }
 
-void PerFrame::Render(AppState& appState)
+void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 {
 	if (appState.Scene.surfaces.last < 0 &&
 		appState.Scene.surfacesRGBA.last < 0 &&

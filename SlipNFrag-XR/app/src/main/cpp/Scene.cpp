@@ -54,7 +54,7 @@ void Scene::AddBorder(AppState& appState, std::vector<uint32_t>& target)
 	}
 }
 
-void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBufferAllocateInfo, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app)
+void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app)
 {
 	appState.ConsoleWidth = 320;
 	appState.ConsoleHeight = 200;
@@ -93,14 +93,17 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 
 	std::vector<XrSwapchainImageVulkan2KHR> images(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Screen.Swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)images.data()));
-	
+
+	if (imageCount > appState.CommandBuffers.size())
+	{
+		appState.CommandBuffers.resize(imageCount);
+	}
+
 	appState.Screen.PerImage.resize(imageCount);
 	for (auto i = 0; i < imageCount; i++)
 	{
 		auto& perImage = appState.Screen.PerImage[i];
 		perImage.image = images[i].image;
-
-		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
 	}
 
 	appState.ScreenData.assign(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
@@ -170,14 +173,22 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 	images.resize(imageCount,  { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 	CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.Swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)images.data()));
 
+	if (imageCount > appState.CommandBuffers.size())
+	{
+		appState.CommandBuffers.resize(imageCount);
+	}
+
+	VkCommandBufferAllocateInfo commandBufferAllocateInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+	commandBufferAllocateInfo.commandPool = appState.CommandPool;
+	commandBufferAllocateInfo.commandBufferCount = appState.CommandBuffers.size();
+	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, appState.CommandBuffers.data()));
+
 	appState.Keyboard.Screen.PerImage.resize(imageCount);
 	appState.KeyboardTextures.resize(imageCount);
 	for (auto i = 0; i < imageCount; i++)
 	{
 		auto& perImage = appState.Keyboard.Screen.PerImage[i];
 		perImage.image = images[i].image;
-
-		CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perImage.commandBuffer));
 
 		perImage.stagingBuffer.CreateStorageBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 
@@ -202,6 +213,7 @@ void Scene::Create(AppState& appState, VkCommandBufferAllocateInfo& commandBuffe
 		CHECK_VKCMD(vkBindImageMemory(appState.Device, keyboardTexture.image, keyboardTexture.memory, 0));
 	}
 
+	commandBufferAllocateInfo.commandBufferCount = 1;
 	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 

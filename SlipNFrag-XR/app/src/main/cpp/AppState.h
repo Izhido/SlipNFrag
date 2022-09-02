@@ -27,6 +27,8 @@ struct AppState
 	bool IndexTypeUInt8Enabled;
 	XrSession Session;
 	VkCommandPool CommandPool;
+	std::vector<VkCommandBuffer> CommandBuffers;
+	VkDeviceSize NextCommandBuffer;
 	VkQueue Queue;
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
 	int DefaultFOV;
