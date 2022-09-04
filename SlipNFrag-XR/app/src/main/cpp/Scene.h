@@ -186,6 +186,7 @@ struct Scene
 	void Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app);
 	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
+	void AddSampler(AppState& appState, uint32_t mipCount);
 	void AddToBufferBarrier(VkBuffer buffer);
 	static VkDeviceSize GetAllocatedFor(int width, int height);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);

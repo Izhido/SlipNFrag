@@ -5,7 +5,6 @@
 #include "KeyboardCell.h"
 #include <vector>
 #include "Texture.h"
-#include "PipelineDescriptorResources.h"
 
 struct AppState;
 

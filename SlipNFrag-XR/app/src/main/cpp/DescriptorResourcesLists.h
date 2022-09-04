@@ -5,7 +5,7 @@
 
 struct AppState;
 
-struct UpdatablePipelineDescriptorResources
+struct DescriptorResourcesLists
 {
 	bool created;
 	VkDescriptorPool descriptorPool;

@@ -4,7 +4,7 @@
 
 struct AppState;
 
-struct PipelineDescriptorResources
+struct DescriptorResources
 {
 	bool created;
 	VkDescriptorPool descriptorPool;

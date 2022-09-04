@@ -1104,6 +1104,20 @@ void Scene::Initialize()
 	textures.current = nullptr;
 }
 
+void Scene::AddSampler(AppState& appState, uint32_t mipCount)
+{
+	if (samplers.size() <= mipCount)
+	{
+		samplers.resize(mipCount + 1);
+	}
+	if (samplers[mipCount] == VK_NULL_HANDLE)
+	{
+		VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+		samplerCreateInfo.maxLod = mipCount - 1;
+		CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &samplers[mipCount]));
+	}
+}
+
 void Scene::AddToBufferBarrier(VkBuffer buffer)
 {
 	stagingBuffer.lastEndBarrier++;

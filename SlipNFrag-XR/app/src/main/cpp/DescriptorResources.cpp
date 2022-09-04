@@ -1,7 +1,7 @@
-#include "PipelineDescriptorResources.h"
+#include "DescriptorResources.h"
 #include "AppState.h"
 
-void PipelineDescriptorResources::Delete(AppState& appState) const
+void DescriptorResources::Delete(AppState& appState) const
 {
 	if (created)
 	{

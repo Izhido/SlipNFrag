@@ -1,7 +1,7 @@
-#include "UpdatablePipelineDescriptorResources.h"
+#include "DescriptorResourcesLists.h"
 #include "AppState.h"
 
-void UpdatablePipelineDescriptorResources::Delete(AppState& appState)
+void DescriptorResourcesLists::Delete(AppState& appState)
 {
 	if (!created)
 	{

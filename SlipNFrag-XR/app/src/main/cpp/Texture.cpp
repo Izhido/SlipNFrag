@@ -40,16 +40,7 @@ void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkForm
 	imageViewCreateInfo.subresourceRange.layerCount = layerCount;
 	CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &view));
 
-	if (appState.Scene.samplers.size() <= mipCount)
-	{
-		appState.Scene.samplers.resize(mipCount + 1);
-	}
-	if (appState.Scene.samplers[mipCount] == VK_NULL_HANDLE)
-	{
-		VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-		samplerCreateInfo.maxLod = mipCount - 1;
-		CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &appState.Scene.samplers[mipCount]));
-	}
+	appState.Scene.AddSampler(appState, mipCount);
 }
 
 void Texture::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)

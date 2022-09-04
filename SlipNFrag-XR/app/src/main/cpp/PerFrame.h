@@ -2,7 +2,8 @@
 
 #include "CachedBuffers.h"
 #include "CachedTextures.h"
-#include "UpdatablePipelineDescriptorResources.h"
+#include "DescriptorResources.h"
+#include "DescriptorResourcesLists.h"
 
 struct PerFrame
 {
@@ -35,15 +36,15 @@ struct PerFrame
 	Buffer* colors;
 	Texture* sky;
 	Texture* skyRGBA;
-	PipelineDescriptorResources skyResources;
-	PipelineDescriptorResources skyRGBAResources;
-	PipelineDescriptorResources host_colormapResources;
-	PipelineDescriptorResources sceneMatricesResources;
-	PipelineDescriptorResources sceneMatricesAndPaletteResources;
-	PipelineDescriptorResources sceneMatricesAndColormapResources;
-	UpdatablePipelineDescriptorResources colormapResources;
-	PipelineDescriptorResources floorResources;
-	PipelineDescriptorResources controllerResources;
+	DescriptorResources skyResources;
+	DescriptorResources skyRGBAResources;
+	DescriptorResources host_colormapResources;
+	DescriptorResources sceneMatricesResources;
+	DescriptorResources sceneMatricesAndPaletteResources;
+	DescriptorResources sceneMatricesAndColormapResources;
+	DescriptorResourcesLists colormapResources;
+	DescriptorResources floorResources;
+	DescriptorResources controllerResources;
 	VkDeviceSize controllerVertexBase;
 	VkDeviceSize texturedVertexBase;
 	VkDeviceSize particlePositionBase;
