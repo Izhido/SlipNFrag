@@ -36,18 +36,19 @@ struct AppState
 	uint32_t SwapchainWidth;
 	uint32_t SwapchainHeight;
 	uint32_t SwapchainSampleCount;
+	std::vector<XrSwapchainImageVulkan2KHR> SwapchainImages;
 	Screen Screen;
 	std::vector<uint32_t> ScreenData;
 	std::vector<Texture> ConsoleTextures;
 	std::vector<Texture> StatusBarTextures;
 	Keyboard Keyboard;
-	std::vector<Texture> KeyboardTextures;
+	std::unordered_map<uint32_t, Texture> KeyboardTextures;
 	float KeyboardHitOffsetY;
 	XrSwapchain LeftArrowsSwapchain;
 	XrSwapchain RightArrowsSwapchain;
 	Scene Scene;
 	FromEngine FromEngine;
-	std::unordered_map<std::string, PerFrame> PerFrame;
+	std::unordered_map<uint32_t, PerFrame> PerFrame;
 	uint32_t EyeTextureWidth;
 	uint32_t EyeTextureHeight;
 	uint32_t EyeTextureMaxDimension;
@@ -112,6 +113,6 @@ struct AppState
 	bool CallExitFunction;
 	bool NoGameDataLoaded;
 
-	void RenderScreen(uint32_t swapchainImageIndex);
-	void RenderKeyboard(uint32_t swapchainImageIndex);
+	void RenderScreen(ScreenPerFrame& perFrame);
+	void RenderKeyboard(ScreenPerFrame& perFrame);
 };

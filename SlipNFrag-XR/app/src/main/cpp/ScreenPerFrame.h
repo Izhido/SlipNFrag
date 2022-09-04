@@ -1,6 +1,6 @@
 #pragma once
 
-struct ScreenPerImage
+struct ScreenPerFrame
 {
 	VkImage image;
 	Buffer stagingBuffer;

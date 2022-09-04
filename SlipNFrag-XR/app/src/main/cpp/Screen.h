@@ -4,13 +4,14 @@
 #include <common/xr_dependencies.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
-#include <vector>
+#include <unordered_map>
 #include "Buffer.h"
 #include "Texture.h"
-#include "ScreenPerImage.h"
+#include "ScreenPerFrame.h"
 
 struct Screen
 {
-	XrSwapchain Swapchain;
-	std::vector<ScreenPerImage> PerImage;
+	XrSwapchain swapchain;
+	std::vector<XrSwapchainImageVulkan2KHR> swapchainImages;
+	std::unordered_map<uint32_t, ScreenPerFrame> perFrame;
 };
