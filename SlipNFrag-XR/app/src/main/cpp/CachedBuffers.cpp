@@ -51,13 +51,13 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 	return buffer;
 }
 
-Buffer* CachedBuffers::GetStorageBuffer(AppState& appState, VkDeviceSize size)
+Buffer* CachedBuffers::GetStorageBufferNoMinimum(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(appState, size);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateStorageBuffer(appState, MinimumAllocationFor(size));
+		buffer->CreateStorageBuffer(appState, size);
 	}
 	MoveToFront(buffer);
 	return buffer;

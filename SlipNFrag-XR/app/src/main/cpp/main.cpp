@@ -1820,11 +1820,8 @@ void android_main(struct android_app* app)
 
 						if (stagingBufferSize > 0)
 						{
-							if (stagingBufferSize < Constants::memoryBlockSize)
-							{
-								stagingBufferSize = Constants::memoryBlockSize;
-							}
-							stagingBuffer = perFrame.stagingBuffers.GetStorageBuffer(appState, stagingBufferSize);
+							stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
+							stagingBuffer = perFrame.stagingBuffers.GetStorageBufferNoMinimum(appState, stagingBufferSize);
 							if (stagingBuffer->mapped == nullptr)
 							{
 								CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
