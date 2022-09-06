@@ -11,10 +11,9 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 		{
 			if (key_dest == key_game)
 			{
-				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-				auto console = con_buffer.data();
+				auto console = Scene.consoleData.data();
 				auto previousConsole = console;
-				auto screen = vid_buffer.data();
+				auto screen = Scene.screenData.data();
 				auto target = (uint32_t*)(perFrame.stagingBuffer.mapped);
 				auto y = 0;
 				while (y < vid_height)
@@ -27,13 +26,13 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 						{
 							do
 							{
-								*target++ = d_8to24table[*screen++];
+								*target++ = Scene.paletteData[*screen++];
 								x++;
 							} while ((x % Constants::screenToConsoleMultiplier) != 0);
 						}
 						else
 						{
-							auto converted = d_8to24table[entry];
+							auto converted = Scene.paletteData[entry];
 							do
 							{
 								*target++ = converted;
@@ -55,12 +54,11 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 			}
 			else
 			{
-				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-				auto console = con_buffer.data();
+				auto console = Scene.consoleData.data();
 				auto previousConsole = console;
-				auto screen = vid_buffer.data();
+				auto screen = Scene.screenData.data();
 				auto target = (uint32_t*)(perFrame.stagingBuffer.mapped);
-				auto black = d_8to24table[0];
+				auto black = Scene.paletteData[0];
 				auto y = 0;
 				while (y < vid_height)
 				{
@@ -75,7 +73,7 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 							{
 								if ((x & 3) == t)
 								{
-									*target++ = d_8to24table[*screen++];
+									*target++ = Scene.paletteData[*screen++];
 								}
 								else
 								{
@@ -87,7 +85,7 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 						}
 						else
 						{
-							auto converted = d_8to24table[entry];
+							auto converted = Scene.paletteData[entry];
 							do
 							{
 								*target++ = converted;
@@ -121,7 +119,7 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 						auto x = 0;
 						while (x < width)
 						{
-							auto entry = d_8to24table[*source++];
+							auto entry = Scene.paletteData[*source++];
 							do
 							{
 								*target++ = entry;
@@ -143,14 +141,13 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 		}
 		else if (key_dest == key_game)
 		{
-			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-			auto source = con_buffer.data();
+			auto source = Scene.consoleData.data();
 			auto target = (uint32_t*)(perFrame.stagingBuffer.mapped);
 			auto count = ConsoleWidth * ConsoleHeight;
 			while (count > 0)
 			{
 				auto entry = *source++;
-				*target++ = d_8to24table[entry];
+				*target++ = Scene.paletteData[entry];
 				count--;
 			}
 			{
@@ -163,7 +160,7 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 					{
 						for (auto x = 0; x < directRect.width; x++)
 						{
-							*target++ = d_8to24table[*source++];
+							*target++ = Scene.paletteData[*source++];
 						}
 						target += ConsoleWidth - directRect.width;
 					}
@@ -172,11 +169,10 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 		}
 		else
 		{
-			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-			auto source = con_buffer.data();
+			auto source = Scene.consoleData.data();
 			auto previousSource = source;
 			auto target = (uint32_t*)(perFrame.stagingBuffer.mapped);
-			auto black = d_8to24table[0];
+			auto black = Scene.paletteData[0];
 			auto y = 0;
 			auto limit = ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
 			while (y < limit)
@@ -203,7 +199,7 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 					}
 					else
 					{
-						auto converted = d_8to24table[entry];
+						auto converted = Scene.paletteData[entry];
 						do
 						{
 							*target++ = converted;
@@ -261,7 +257,7 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 					}
 					else
 					{
-						*target++ = d_8to24table[entry];
+						*target++ = Scene.paletteData[entry];
 					}
 					x++;
 				}
@@ -293,7 +289,7 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 						auto x = 0;
 						while (x < width)
 						{
-							auto entry = d_8to24table[*source++];
+							auto entry = Scene.paletteData[*source++];
 							do
 							{
 								*target++ = entry;
@@ -337,7 +333,7 @@ void AppState::RenderKeyboard(ScreenPerFrame& perFrame)
 	while (count > 0)
 	{
 		auto entry = *source++;
-		*target++ = d_8to24table[entry];
+		*target++ = Scene.paletteData[entry];
 		count--;
 	}
 }

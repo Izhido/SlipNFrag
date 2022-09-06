@@ -1827,6 +1827,26 @@ void android_main(struct android_app* app)
 							}
 							perFrame.LoadStagingBuffer(appState, stagingBuffer);
 						}
+
+						if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
+						{
+							memcpy(appState.Scene.paletteData, d_8to24table, 256 * sizeof(unsigned int));
+							if (appState.Mode == AppScreenMode)
+							{
+								size_t screenSize = vid_width * vid_height;
+								if (appState.Scene.screenData.size() < screenSize)
+								{
+									appState.Scene.screenData.resize(screenSize);
+								}
+								memcpy(appState.Scene.screenData.data(), vid_buffer.data(), screenSize);
+							}
+							size_t consoleSize = con_width * con_height;
+							if (appState.Scene.consoleData.size() < consoleSize)
+							{
+								appState.Scene.consoleData.resize(consoleSize);
+							}
+							memcpy(appState.Scene.consoleData.data(), con_buffer.data(), consoleSize);
+						}
 					}
 
 					commandBuffer = appState.CommandBuffers[appState.NextCommandBuffer];

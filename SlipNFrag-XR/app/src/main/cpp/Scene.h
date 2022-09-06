@@ -180,6 +180,9 @@ struct Scene
 	int previousGlowSharedMemoryTextureIndex;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	SortedSurfaces sorted;
+	unsigned int paletteData[256];
+	std::vector<unsigned char> screenData;
+	std::vector<unsigned char> consoleData;
 
 	static void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	static void AddBorder(AppState& appState, std::vector<uint32_t>& target);
