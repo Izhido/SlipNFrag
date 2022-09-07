@@ -39,5 +39,5 @@ void main(void)
 	vec2 lightmapSizeMinusOne = floor(texturePosition[2].zw / 16);
 	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * lightmapSizeMinusOne / texturePosition[2].zw;
 	fragmentCoords = vec4(lightmapCoords, texCoords / texturePosition[3].xy);
-	fragmentTextureIndices = ivec2(texturePosition[3].z, texturePosition[3].w);
+	fragmentTextureIndices = ivec2(texturePosition[3].zw);
 }
