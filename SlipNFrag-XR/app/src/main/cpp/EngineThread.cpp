@@ -93,11 +93,14 @@ void runEngine(AppState* appState, struct android_app* app)
 			float positionY;
 			float positionZ;
 			float scale;
+			float yaw;
+			float pitch;
+			float roll;
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
-				cl.viewangles[YAW] = appState->Yaw * 180 / M_PI + 90;
-				cl.viewangles[PITCH] = -appState->Pitch * 180 / M_PI;
-				cl.viewangles[ROLL] = -appState->Roll * 180 / M_PI;
+				yaw = appState->Yaw * 180 / M_PI + 90;
+				pitch = -appState->Pitch * 180 / M_PI;
+				roll = -appState->Roll * 180 / M_PI;
 				positionX = appState->CameraLocation.pose.position.x;
 				positionY = appState->CameraLocation.pose.position.y;
 				positionZ = appState->CameraLocation.pose.position.z;
@@ -127,7 +130,14 @@ void runEngine(AppState* appState, struct android_app* app)
 			{
 				VID_ReallocSurfCache();
 			}
+			cl.viewangles[YAW] = yaw;
+			cl.viewangles[PITCH] = pitch;
+			cl.viewangles[ROLL] = roll;
 			auto updated = Host_FrameUpdate(frame_lapse);
+			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:
+			auto previousYaw = cl.viewangles[YAW];
+			auto previousPitch = cl.viewangles[PITCH];
+			auto previousRoll = cl.viewangles[ROLL];
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
 				ANativeActivity_finish(app->activity);
@@ -149,10 +159,19 @@ void runEngine(AppState* appState, struct android_app* app)
 				r_modelorg_delta[0] = positionX / scale;
 				r_modelorg_delta[1] = -positionZ / scale;
 				r_modelorg_delta[2] = positionY / scale;
+				// Setting again view angles just in case the server changed them:
+				cl.viewangles[YAW] = yaw;
+				cl.viewangles[PITCH] = pitch;
+				cl.viewangles[ROLL] = roll;
 				auto nodrift = cl.nodrift;
 				cl.nodrift = true;
 				Host_FrameRender();
 				cl.nodrift = nodrift;
+				// Restoring potential changes performed by server in view angles,
+				// to allow code outside Host_***() calls to act upon them:
+				cl.viewangles[YAW] = previousYaw;
+				cl.viewangles[PITCH] = previousPitch;
+				cl.viewangles[ROLL] = previousRoll;
 			}
 			Host_FrameFinish(updated);
 		}
