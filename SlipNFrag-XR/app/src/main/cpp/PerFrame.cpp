@@ -1194,7 +1194,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		writes[0].pImageInfo = &textureInfo;
-		float pushConstants[20];
+		float pushConstants[16];
 		if (appState.Scene.lastSky >= 0)
 		{
 			poolSizes[0].descriptorCount = 1;
@@ -1923,10 +1923,6 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			pushConstants[16] = appState.ViewmodelForwardX;
-			pushConstants[17] = appState.ViewmodelForwardY;
-			pushConstants[18] = appState.ViewmodelForwardZ;
-			pushConstants[19] = 0;
 			SharedMemoryBuffer* previousVertices = nullptr;
 			SharedMemoryBuffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
@@ -1950,7 +1946,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
-				vkCmdPushConstants(commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 20 * sizeof(float), pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.viewmodel.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16 * sizeof(float), pushConstants);
 				if (loaded.isHostColormap)
 				{
 					if (previousColormapDescriptorSet != host_colormapResources.descriptorSet)

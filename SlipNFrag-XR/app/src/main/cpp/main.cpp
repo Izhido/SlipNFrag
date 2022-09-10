@@ -1749,10 +1749,6 @@ void android_main(struct android_app* app)
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
 
-						appState.ViewmodelForwardX = appState.FromEngine.vpn0 / appState.Scale;
-						appState.ViewmodelForwardY = appState.FromEngine.vpn2 / appState.Scale;
-						appState.ViewmodelForwardZ = -appState.FromEngine.vpn1 / appState.Scale;
-
 						auto minHorizontal = FLT_MAX;
 						auto maxHorizontal = FLT_MIN;
 						for (size_t i = 0; i < viewCountOutput; i++)

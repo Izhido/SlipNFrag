@@ -57,7 +57,7 @@ void D_FillLightmap (dsurface_t& surface, surfcache_s* cache)
 	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (d_lists.lightmap_texels.size() <= d_lists.last_lightmap_texel + surface.lightmap_size)
+	while (d_lists.lightmap_texels.size() <= d_lists.last_lightmap_texel + surface.lightmap_size)
 	{
 		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}
@@ -120,7 +120,7 @@ void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfc
 	surface.lightmap_width = cache->width / sizeof(unsigned);
 	surface.lightmap_height = cache->height;
 	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height;
-	if (d_lists.lightmap_texels.size() <= d_lists.last_lightmap_texel + surface.lightmap_size)
+	while (d_lists.lightmap_texels.size() <= d_lists.last_lightmap_texel + surface.lightmap_size)
 	{
 		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}

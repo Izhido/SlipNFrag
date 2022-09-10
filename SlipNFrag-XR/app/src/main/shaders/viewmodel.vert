@@ -14,10 +14,6 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 layout(push_constant) uniform Transforms
 {
 	layout(offset = 0) mat4 aliasTransform;
-	layout(offset = 64) float forwardX;
-	layout(offset = 68) float forwardY;
-	layout(offset = 72) float forwardZ;
-	layout(offset = 76) float offset;
 };
 
 layout(location = 0) in uvec4 vertexPosition;
@@ -32,8 +28,7 @@ out gl_PerVertex
 
 void main(void)
 {
-	vec4 position = vertexTransform * aliasTransform * vertexPosition;
-	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * position;
-	float projection = offset + position.x * forwardX + position.y * forwardY + position.z * forwardZ;
-	fragmentData = vec4(vertexTexCoords, vertexLight, clamp(projection / 8, 0, 1));
+	vec4 position = viewMatrix[gl_ViewIndex] * vertexTransform * aliasTransform * vertexPosition;
+	gl_Position = projectionMatrix[gl_ViewIndex] * position;
+	fragmentData = vec4(vertexTexCoords, vertexLight, clamp(-position.z * 4, 0, 1));
 }

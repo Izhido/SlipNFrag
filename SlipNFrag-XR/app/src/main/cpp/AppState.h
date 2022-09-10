@@ -60,9 +60,6 @@ struct AppState
 	float Roll;
 	float DistanceToFloor;
 	float Scale;
-	float ViewmodelForwardX;
-	float ViewmodelForwardY;
-	float ViewmodelForwardZ;
 	int ScreenWidth;
 	int ScreenHeight;
 	int ConsoleWidth;
