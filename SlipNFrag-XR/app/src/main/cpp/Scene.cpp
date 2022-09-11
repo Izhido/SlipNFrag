@@ -1868,9 +1868,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	appState.FromEngine.vieworg0 = d_lists.vieworg0;
 	appState.FromEngine.vieworg1 = d_lists.vieworg1;
 	appState.FromEngine.vieworg2 = d_lists.vieworg2;
-	appState.FromEngine.vpn0 = d_lists.vpn0;
-	appState.FromEngine.vpn1 = d_lists.vpn1;
-	appState.FromEngine.vpn2 = d_lists.vpn2;
 	appState.FromEngine.vright0 = d_lists.vright0;
 	appState.FromEngine.vright1 = d_lists.vright1;
 	appState.FromEngine.vright2 = d_lists.vright2;

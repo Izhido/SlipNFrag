@@ -163,9 +163,6 @@ void D_SetupFrame (void)
 		d_lists.vieworg0 = r_refdef.vieworg[0];
 		d_lists.vieworg1 = r_refdef.vieworg[1];
 		d_lists.vieworg2 = r_refdef.vieworg[2];
-		d_lists.vpn0 = vpn[0];
-		d_lists.vpn1 = vpn[1];
-		d_lists.vpn2 = vpn[2];
 		d_lists.vright0 = vright[0];
 		d_lists.vright1 = vright[1];
 		d_lists.vright2 = vright[2];

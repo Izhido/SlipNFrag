@@ -30,5 +30,5 @@ void main(void)
 {
 	vec4 position = viewMatrix[gl_ViewIndex] * vertexTransform * aliasTransform * vertexPosition;
 	gl_Position = projectionMatrix[gl_ViewIndex] * position;
-	fragmentData = vec4(vertexTexCoords, vertexLight, clamp(-position.z * 4, 0, 1));
+	fragmentData = vec4(vertexTexCoords, vertexLight, clamp(-position.z * 9 - 2, 0, 1));
 }
