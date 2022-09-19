@@ -3,7 +3,7 @@
     <text font-family="Arial" font-size="24" x="136" y="192" fill="gray">Place your game data files in the following location in your device:</text>
     <text font-family="Courier New" font-size="24" x="48" y="260" fill="gray">/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files</text>
     <text font-family="Arial" font-size="20" x="220" y="364" fill="gray">To customize your game launch options, create a text file:</text>
-    <text font-family="Courier New" font-size="20" x="332" y="410" fill="gray">slipnfrag.commandline</text>
-    <text font-family="Arial" font-size="20" x="220" y="456" fill="gray">and place it in the same location as your game data files.</text>
+    <text font-family="Courier New" font-size="20" x="372" y="410" fill="gray">commandline.txt</text>
+    <text font-family="Arial" font-size="20" x="224" y="456" fill="gray">and place it in the same location as your game data files.</text>
     <text font-family="Arial" font-size="24" x="250" y="540" fill="gray">Exit and restart the application to continue.</text>
  </svg>

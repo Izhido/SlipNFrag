@@ -1448,7 +1448,7 @@ void android_main(struct android_app* app)
 						arguments.emplace_back("-basedir");
 						arguments.emplace_back(basedir);
 						std::vector<unsigned char> commandline;
-						auto file = fopen((std::string(basedir) + "/slipnfrag.commandline").c_str(), "rb");
+						auto file = fopen((std::string(basedir) + "/commandline.txt").c_str(), "rb");
 						if (file != nullptr)
 						{
 							fseek(file, 0, SEEK_END);
@@ -1462,13 +1462,19 @@ void android_main(struct android_app* app)
 							fclose(file);
 						}
 						arguments.emplace_back();
+						auto word_count = 0;
 						for (auto c : commandline)
 						{
 							if (c <= ' ')
 							{
-								if (!arguments[arguments.size() - 1].empty())
+								if (word_count == 0 && Q_strcasecmp(arguments[arguments.size() - 1].c_str(), "quake") == 0)
+								{
+									arguments[arguments.size() - 1].clear();
+								}
+								else if (!arguments[arguments.size() - 1].empty())
 								{
 									arguments.emplace_back();
+									word_count++;
 								}
 							}
 							else
