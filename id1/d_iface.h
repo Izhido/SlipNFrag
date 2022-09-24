@@ -193,6 +193,7 @@ typedef struct
 extern drawsurf_t	r_drawsurf;
 
 void R_DrawSurface (void);
+void R_DrawSurfaceColored (void);
 void R_GenTile (msurface_t *psurf, void *pdest);
 
 

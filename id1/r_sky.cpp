@@ -450,96 +450,68 @@ qboolean R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*
 		texture->height = height;
 		texture->offsets[0] = sizeof(texture_t);
 		auto start = Sys_FloatTime ();
-        static std::vector<float> halfSquaredDistances;
-        if (halfSquaredDistances.empty())
-        {
-            auto first = host_basepal.data();
-            for (auto i = 0; i < 256; i++)
-            {
-                auto r1 = *first++;
-                auto g1 = *first++;
-                auto b1 = *first++;
-                auto second = host_basepal.data();
-                auto nearestDistanceSquared = INT_MAX;
-                for (auto j = 0; j < 256; j++)
-                {
-                    auto r2 = *second++;
-                    auto g2 = *second++;
-                    auto b2 = *second++;
-                    auto dr = r2 - r1;
-                    auto dg = g2 - g1;
-                    auto db = b2 - b1;
-                    if (dr == 0 && dg == 0 && db == 0)
-                    {
-                        continue;
-                    }
-                    auto distanceSquared = dr * dr + dg * dg + db * db;
-                    if (nearestDistanceSquared > distanceSquared)
-                    {
-                        nearestDistanceSquared = distanceSquared;
-                    }
-                }
-                auto halfDistance = sqrt((float)nearestDistanceSquared) / 2;
-                halfSquaredDistances.push_back(halfDistance * halfDistance);
-            }
-        }
+		R_Load24To8Coverage();
+		auto palette = host_basepal.data();
 		auto source = pic;
 		if (r_load_as_rgba)
 		{
 			source += sizeof(texture_t) + pixels;
 		}
 		auto target = (byte*)texture + sizeof(texture_t);
-        auto rprev = -1;
-        auto gprev = -1;
-        auto bprev = -1;
-        auto iprev = -1;
+		auto lastCoverageEntry = -1;
+		auto lastCoverageR = -1;
+		auto lastCoverageG = -1;
+		auto lastCoverageB = -1;
+		auto lastCoverage = -1;
 		for (auto count = width * height; count > 0; count--)
 		{
-			auto r1 = *source++;
-			auto g1 = *source++;
-			auto b1 = *source++;
+			auto r = *source++;
+			auto g = *source++;
+			auto b = *source++;
 			source++;
-            if (rprev == r1 && gprev == g1 && bprev == b1)
+			qboolean search = true;
+            if (lastCoverageR == r && lastCoverageG == g && lastCoverageB == b)
             {
-                *target++ = iprev;
-                continue;
+                *target++ = lastCoverageEntry;
+				search = false;
             }
-            if (iprev >= 0)
+            if (lastCoverageEntry > 0)
             {
-                auto previous = host_basepal.data() + iprev * 3;
-                auto drprev = *previous++ - r1;
-                auto dgprev = *previous++ - g1;
-                auto dbprev = *previous - b1;
-                auto squaredDistanceToPrevious = drprev * drprev + dgprev * dgprev + dbprev * dbprev;
-                if (squaredDistanceToPrevious < halfSquaredDistances[iprev])
+                auto deltaR = r - lastCoverageR;
+				auto deltaG = g - lastCoverageG;
+				auto deltaB = b - lastCoverageB;
+				auto distance = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+				if (distance <= lastCoverage)
                 {
-                    *target++ = iprev;
-                    continue;
+                    *target++ = lastCoverageEntry;
+					search = false;
                 }
             }
-            auto nearestDistanceSquared = INT_MAX;
-            auto nearestIndex = 0;
-            auto entry = host_basepal.data();
-            for (auto i = 0; i < 256; i++)
-            {
-                auto r2 = *entry++;
-                auto g2 = *entry++;
-                auto b2 = *entry++;
-                auto dr = r2 - r1;
-                auto dg = g2 - g1;
-                auto db = b2 - b1;
-                auto distanceSquared = dr * dr + dg * dg + db * db;
-                if (nearestDistanceSquared > distanceSquared)
-                {
-                    nearestDistanceSquared = distanceSquared;
-                    nearestIndex = i;
-                }
-            }
-            *target++ = nearestIndex;
-            rprev = r1;
-            gprev = g1;
-            bprev = b1;
-            iprev = nearestIndex;
+			if (search)
+			{
+				auto entry = 0;
+				auto sourcePalette = palette;
+				auto closest = UINT_MAX;
+				for (auto i = 0; i < 224; i++)
+				{
+					auto deltaR = r - *sourcePalette++;
+					auto deltaG = g - *sourcePalette++;
+					auto deltaB = b - *sourcePalette++;
+					auto distance = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+					if (closest > distance)
+					{
+						closest = distance;
+						entry = i;
+					}
+				}
+				*target++ = entry;
+				lastCoverageEntry = entry;
+				entry *= 4;
+				lastCoverageR = host_basepalcoverage[entry++];
+				lastCoverageG = host_basepalcoverage[entry++];
+				lastCoverageB = host_basepalcoverage[entry++];
+				lastCoverage = host_basepalcoverage[entry++];
+			}
 		}
 		auto stop = Sys_FloatTime();
 		Sys_Printf("%s: %.3f seconds\n", path.c_str(), stop - start);

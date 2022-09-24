@@ -123,6 +123,7 @@ void R_DrawSprite (void);
 void R_RenderFace (msurface_t *fa, int clipflags);
 void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf);
 void R_TransformFrustum (void);
+void R_Load24To8Coverage (void);
 void R_SetSkyFrame (void);
 void R_DrawSurfaceBlock16 (void);
 texture_t *R_TextureAnimation (texture_t *base);
@@ -133,6 +134,11 @@ void R_DrawSurfaceBlock8_mip0 (void);
 void R_DrawSurfaceBlock8_mip1 (void);
 void R_DrawSurfaceBlock8_mip2 (void);
 void R_DrawSurfaceBlock8_mip3 (void);
+
+void R_DrawSurfaceBlock8_coloredmip0 (void);
+void R_DrawSurfaceBlock8_coloredmip1 (void);
+void R_DrawSurfaceBlock8_coloredmip2 (void);
+void R_DrawSurfaceBlock8_coloredmip3 (void);
 
 #endif
 
@@ -265,6 +271,7 @@ extern int 						r_blocklights_tmax;
 extern int 						r_blocklights_size;
 
 void R_BuildLightMap (void);
+void R_BuildLightMapColored (void);
 
 extern qboolean r_skip_fov_check;
 extern qboolean	r_fov_greater_than_90;
@@ -296,5 +303,8 @@ extern std::string r_skyboxprefix;
 
 qboolean R_SetSkyBox (float rotate, const vec3_t axis);
 void R_EmitSkyBox (void);
+
+extern std::vector<byte> r_24to8table;
+extern byte* r_24to8tableptr;
 
 #endif

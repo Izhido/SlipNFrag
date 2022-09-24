@@ -276,6 +276,7 @@ extern	qboolean	host_initialized;		// true if into command execution
 extern	double		host_frametime;
 extern	std::vector<byte>	host_basepal;
 extern	std::vector<byte>	host_colormap;
+extern	std::vector<unsigned>	host_basepalcoverage;
 extern	int 		host_clearcount;
 extern	int			host_framecount;	// incremented every frame, never reset
 extern	double		realtime;			// not bounded in any way, changed at

@@ -45,6 +45,7 @@ struct mpool_t
     std::vector<std::vector<texture_t*>> texturelists;
     std::vector<std::vector<byte>> textures;
     std::vector<std::vector<byte>> lightdata;
+	std::vector<std::vector<byte>> lightRGBdata;
     std::vector<std::vector<mplane_t>> planes;
     std::vector<std::vector<mtexinfo_t>> texinfo;
     std::vector<std::vector<msurface_t>> surfaces;
@@ -81,6 +82,7 @@ struct mpool_t
         surfaces.clear();
         texinfo.clear();
         planes.clear();
+		lightRGBdata.clear();
         lightdata.clear();
         textures.clear();
         texturelists.clear();
@@ -546,7 +548,6 @@ void Mod_GenerateRGBAMipmaps (byte* data, int w, int h)
 		{
 			for (auto x = 0 ; x<w ; x+= mipstep)
 			{
-				size_t count = 0;
 				unsigned r = 0;
 				unsigned g = 0;
 				unsigned b = 0;
@@ -873,11 +874,88 @@ void Mod_LoadTextures (lump_t *l)
 
 /*
 =================
+Mod_Load24To8Table
+=================
+*/
+void Mod_Load24To8Table (void)
+{
+	if (r_24to8table.size() == 0)
+	{
+		Draw_BeginDisc ();
+		Con_Printf("Creating color table\n");
+		auto start = Sys_FloatTime ();
+		R_Load24To8Coverage ();
+		auto palette = host_basepal.data();
+		r_24to8table.resize(256 * 256 * 256);
+		r_24to8tableptr = r_24to8table.data();
+		auto target = r_24to8tableptr;
+		auto lastCoverageEntry = -1;
+		auto lastCoverageR = -1;
+		auto lastCoverageG = -1;
+		auto lastCoverageB = -1;
+		auto lastCoverage = -1;
+		for (auto r = 0; r < 256; r++)
+		{
+			for (auto g = 0; g < 256; g++)
+			{
+				for (auto b = 0; b < 256; b++)
+				{
+					qboolean search = true;
+					if (lastCoverage > 0)
+					{
+						auto deltaR = r - lastCoverageR;
+						auto deltaG = g - lastCoverageG;
+						auto deltaB = b - lastCoverageB;
+						auto distance = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+						if (distance <= lastCoverage)
+						{
+							*target++ = lastCoverageEntry;
+							search = false;
+						}
+					}
+					if (search)
+					{
+						auto entry = 0;
+						auto sourcePalette = palette;
+						auto closest = UINT_MAX;
+						for (auto i = 0; i < 224; i++)
+						{
+							auto deltaR = r - *sourcePalette++;
+							auto deltaG = g - *sourcePalette++;
+							auto deltaB = b - *sourcePalette++;
+							auto distance = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+							if (closest > distance)
+							{
+								closest = distance;
+								entry = i;
+							}
+						}
+						*target++ = entry;
+						lastCoverageEntry = entry;
+						entry *= 4;
+						lastCoverageR = host_basepalcoverage[entry++];
+						lastCoverageG = host_basepalcoverage[entry++];
+						lastCoverageB = host_basepalcoverage[entry++];
+						lastCoverage = host_basepalcoverage[entry++];
+					}
+				}
+			}
+		}
+		auto stop = Sys_FloatTime();
+		Sys_Printf("R_Load24To8Table: %.3f seconds\n", stop - start);
+		Draw_EndDisc ();
+	}
+}
+
+/*
+=================
 Mod_LoadLighting
 =================
 */
 void Mod_LoadLighting (lump_t *l)
 {
+	loadmodel->lightRGBdata = NULL;
+
 	if (!l->filelen)
 	{
 		loadmodel->lightdata = NULL;
@@ -886,6 +964,44 @@ void Mod_LoadLighting (lump_t *l)
     mod_pool.lightdata.emplace_back(l->filelen);
     loadmodel->lightdata = mod_pool.lightdata.back().data();
 	memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
+
+	std::vector<char> litfilename(strlen(pr_strings + loadmodel->name) + 5); // Extra space for the new extension just in case...
+	COM_StripExtension(pr_strings + loadmodel->name, litfilename.data());
+	strcat(litfilename.data(), ".lit");
+
+	std::vector<byte> contents;
+	if (COM_LoadFile (litfilename.data(), false, contents) != nullptr)
+	{
+		auto size = 8+l->filelen*3;
+		if (size == contents.size() - 1)
+		{
+			if (contents[0] == 'Q' && contents[1] == 'L' && contents[2] == 'I' && contents[3] == 'T')
+			{
+				auto version = LittleLong(*((int*)(contents.data() + 4)));
+				if (version == 1)
+				{
+					Mod_Load24To8Table();
+					mod_pool.lightRGBdata.emplace_back(l->filelen*3);
+					loadmodel->lightRGBdata = mod_pool.lightRGBdata.back().data();
+					memcpy (loadmodel->lightRGBdata, contents.data() + 8, size-8);
+					return;
+				}
+				else
+				{
+					Con_Printf("Mod_LoadLighting: Invalid .lit file version (expected 1, found %i)\n", version);
+				}
+			}
+			else
+			{
+				contents[4] = 0;
+				Con_Printf("Mod_LoadLighting: Invalid .lit file signature (expected 'QLIT', found %s)\n", contents.data());
+			}
+		}
+		else
+		{
+			Con_Printf("Mod_LoadLighting: Invalid .lit file size (expected %i, found %i)\n", size, contents.size() - 1);
+		}
+	}
 }
 
 
@@ -1212,10 +1328,19 @@ void Mod_LoadFaces (lump_t *l)
 			out->styles[i] = in->styles[i];
 		i = LittleLong(in->lightofs);
 		if (i == -1)
+		{
 			out->samples = NULL;
+			out->samplesRGB = NULL;
+		}
 		else
+		{
 			out->samples = loadmodel->lightdata + i;
-		
+			if (loadmodel->lightRGBdata != NULL)
+			{
+				out->samplesRGB = loadmodel->lightRGBdata + i * 3;
+			}
+		}
+
 	// set the drawing flags flag
 		
 		if (!Q_strncmp(out->texinfo->texture->name,"sky",3))	// sky
@@ -1277,11 +1402,20 @@ void Mod_LoadBSP2Faces (lump_t *l)
         for (i=0 ; i<MAXLIGHTMAPS ; i++)
             out->styles[i] = in->styles[i];
         i = LittleLong(in->lightofs);
-        if (i == -1)
-            out->samples = NULL;
-        else
-            out->samples = loadmodel->lightdata + i;
-        
+		if (i == -1)
+		{
+			out->samples = NULL;
+			out->samplesRGB = NULL;
+		}
+		else
+		{
+			out->samples = loadmodel->lightdata + i;
+			if (loadmodel->lightRGBdata != NULL)
+			{
+				out->samplesRGB = loadmodel->lightRGBdata + i * 3;
+			}
+		}
+
     // set the drawing flags flag
         
         if (!Q_strncmp(out->texinfo->texture->name,"sky",3))    // sky

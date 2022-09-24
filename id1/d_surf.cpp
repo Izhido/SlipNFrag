@@ -360,6 +360,10 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 	r_blocklights_smax = (surface->extents[0]>>4)+1;
 	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax;
+	if (surface->samplesRGB != NULL)
+	{
+		r_blocklights_size *= 3;
+	}
 	if (r_blocklights_base.size() < r_blocklights_size + 2*2)
 	{
 		r_blocklights_base.resize(r_blocklights_size + 2*2);
@@ -367,7 +371,10 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 	blocklights = r_blocklights_base.data();
 
 	c_surf++;
-	R_DrawSurface ();
+	if (surface->samplesRGB != NULL)
+		R_DrawSurfaceColored ();
+	else
+		R_DrawSurface ();
 
 	return surface->cachespots[miplevel];
 }

@@ -49,6 +49,7 @@ client_t	*host_client;			// current client
 
 std::vector<byte>	host_basepal;
 std::vector<byte>	host_colormap;
+std::vector<unsigned>	host_basepalcoverage;
 
 cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
 cvar_t	host_speeds = {"host_speeds","0"};			// set for running times

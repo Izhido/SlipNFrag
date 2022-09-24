@@ -295,6 +295,53 @@ void R_TransformFrustum (void)
 }
 
 
+/*
+===================
+R_Load24To8Coverage
+===================
+*/
+void R_Load24To8Coverage (void)
+{
+	if (host_basepalcoverage.empty())
+	{
+		auto palette = host_basepal.data();
+		auto first = palette;
+		for (auto j = 0; j < 224; j++)
+		{
+			int firstR = *first++;
+			int firstG = *first++;
+			int firstB = *first++;
+			auto closest = UINT_MAX;
+			int closestEntry;
+			auto second = palette;
+			for (auto i = 0; i < 224; i++)
+			{
+				int secondR = *second++;
+				int secondG = *second++;
+				int secondB = *second++;
+				if (firstR != secondR || firstG != secondG || firstB != secondB)
+				{
+					auto deltaR = secondR - firstR;
+					auto deltaG = secondG - firstG;
+					auto deltaB = secondB - firstB;
+					auto distance = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
+					if (closest > distance)
+					{
+						closest = distance;
+						closestEntry = i;
+					}
+				}
+			}
+			host_basepalcoverage.push_back(firstR);
+			host_basepalcoverage.push_back(firstG);
+			host_basepalcoverage.push_back(firstB);
+			auto halfClosest = sqrt((float)closest) / 2;
+			host_basepalcoverage.push_back((unsigned)floor(halfClosest*halfClosest));
+		}
+	}
+}
+
+
 #if	!id386
 
 /*
