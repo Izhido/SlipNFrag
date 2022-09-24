@@ -916,9 +916,9 @@ void R_DrawSurfaceBlock8_coloredmip0 (void)
 				if (pix < 224)
 				{
 					auto pal = pbasepal + pix*3;
-					auto rcomp = (((light_r * (*pal++)) >> 16) & 255) << 1;
-					auto gcomp = (((light_g * (*pal++)) >> 16) & 255) << 1;
-					auto bcomp = (((light_b * (*pal)) >> 16) & 255) << 1;
+					auto rcomp = ((light_r * (*pal++)) >> 15) & 511;
+					auto gcomp = ((light_g * (*pal++)) >> 15) & 511;
+					auto bcomp = ((light_b * (*pal)) >> 15) & 511;
 					if (rcomp > 255) rcomp = 255;
 					if (gcomp > 255) gcomp = 255;
 					if (bcomp > 255) bcomp = 255;
@@ -1001,9 +1001,9 @@ void R_DrawSurfaceBlock8_coloredmip1 (void)
 				if (pix < 224)
 				{
 					auto pal = pbasepal + pix*3;
-					auto rcomp = (((light_r * (*pal++)) >> 16) & 255) << 1;
-					auto gcomp = (((light_g * (*pal++)) >> 16) & 255) << 1;
-					auto bcomp = (((light_b * (*pal)) >> 16) & 255) << 1;
+					auto rcomp = ((light_r * (*pal++)) >> 15) & 511;
+					auto gcomp = ((light_g * (*pal++)) >> 15) & 511;
+					auto bcomp = ((light_b * (*pal)) >> 15) & 511;
 					if (rcomp > 255) rcomp = 255;
 					if (gcomp > 255) gcomp = 255;
 					if (bcomp > 255) bcomp = 255;
@@ -1086,9 +1086,9 @@ void R_DrawSurfaceBlock8_coloredmip2 (void)
 				if (pix < 224)
 				{
 					auto pal = pbasepal + pix*3;
-					auto rcomp = (((light_r * (*pal++)) >> 16) & 255) << 1;
-					auto gcomp = (((light_g * (*pal++)) >> 16) & 255) << 1;
-					auto bcomp = (((light_b * (*pal)) >> 16) & 255) << 1;
+					auto rcomp = ((light_r * (*pal++)) >> 15) & 511;
+					auto gcomp = ((light_g * (*pal++)) >> 15) & 511;
+					auto bcomp = ((light_b * (*pal)) >> 15) & 511;
 					if (rcomp > 255) rcomp = 255;
 					if (gcomp > 255) gcomp = 255;
 					if (bcomp > 255) bcomp = 255;
@@ -1171,9 +1171,9 @@ void R_DrawSurfaceBlock8_coloredmip3 (void)
 				if (pix < 224)
 				{
 					auto pal = pbasepal + pix*3;
-					auto rcomp = (((light_r * (*pal++)) >> 16) & 255) << 1;
-					auto gcomp = (((light_g * (*pal++)) >> 16) & 255) << 1;
-					auto bcomp = (((light_b * (*pal)) >> 16) & 255) << 1;
+					auto rcomp = ((light_r * (*pal++)) >> 15) & 511;
+					auto gcomp = ((light_g * (*pal++)) >> 15) & 511;
+					auto bcomp = ((light_b * (*pal)) >> 15) & 511;
 					if (rcomp > 255) rcomp = 255;
 					if (gcomp > 255) gcomp = 255;
 					if (bcomp > 255) bcomp = 255;
