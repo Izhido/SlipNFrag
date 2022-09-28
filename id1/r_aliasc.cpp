@@ -1,23 +1,4 @@
-/*
-Copyright (C) 1996-1997 Id Software, Inc.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
-// r_alias.c: routines for setting up to draw alias models
+// r_aliasc.c: routines for setting up to draw alias models with colored lighting
 
 #include "quakedef.h"
 #include "d_lists.h"
@@ -28,21 +9,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define LIGHT_MIN	5		// lowest light value we'll allow, to avoid the
 							//  need for inner-loop light clamping
 
-mtriangle_t		*ptriangles;
-affinetridesc_t	r_affinetridesc;
+byte*				abasepal;
 
-void *			acolormap;	// FIXME: should go away
-
-trivertx_t		*r_apverts;
+extern trivertx_t	*r_apverts;
 
 // TODO: these probably will go away with optimized rasterization
-mdl_t				*pmdl;
-vec3_t				r_plightvec;
-int					r_ambientlight;
-float				r_shadelight;
-aliashdr_t			*paliashdr;
-finalvert_t			*pfinalverts;
-auxvert_t			*pauxverts;
+extern vec3_t		r_plightvec;
+argbcolor_t			r_ambientcoloredlight;
+argbcolorf_t		r_shadecoloredlight;
+finalcoloredvert_t	*pfinalcoloredverts;
 static float		ziscale;
 static model_t		*pmodel;
 
@@ -50,11 +25,10 @@ static vec3_t		alias_forward, alias_right, alias_up;
 
 static maliasskindesc_t	*pskindesc;
 
-int				r_amodels_drawn;
-int				a_skinwidth;
-int				r_anumverts;
+extern int			r_anumverts;
 
-float	aliastransform[3][4];
+extern float	aliastransform[3][4];
+extern void R_AliasTransformVector (const vec3_t in, vec3_t out);
 
 typedef struct {
 	int	index0;
@@ -69,30 +43,27 @@ static aedge_t	aedges[12] = {
 
 #define NUMVERTEXNORMALS	162
 
-float	r_avertexnormals[NUMVERTEXNORMALS][3] = {
-#include "anorms.h"
-};
+extern float	r_avertexnormals[NUMVERTEXNORMALS][3];
 
-void R_AliasTransformAndProjectFinalVerts (finalvert_t *fv,
+void R_AliasColoredTransformAndProjectFinalVerts (finalcoloredvert_t *fv,
 	stvert_t *pstverts);
-void R_AliasSetUpTransform (int trivial_accept);
-void R_AliasTransformVector (const vec3_t in, vec3_t out);
-void R_AliasTransformFinalVert (finalvert_t *fv, auxvert_t *av,
+void R_AliasColoredSetUpTransform (int trivial_accept);
+void R_AliasColoredTransformFinalVert (finalcoloredvert_t *fv, auxvert_t *av,
 	trivertx_t *pverts, stvert_t *pstverts);
-void R_AliasProjectFinalVert (finalvert_t *fv, auxvert_t *av);
+void R_AliasColoredProjectFinalVert (finalcoloredvert_t *fv, auxvert_t *av);
 
 
 /*
 ================
-R_AliasCheckBBox
+R_AliasColoredCheckBBox
 ================
 */
-qboolean R_AliasCheckBBox (void)
+qboolean R_AliasColoredCheckBBox (void)
 {
 	int					i, flags, frame, numv;
 	aliashdr_t			*pahdr;
 	float				zi, basepts[8][3], v0, v1, frac;
-	finalvert_t			*pv0, *pv1, viewpts[16];
+	finalcoloredvert_t	*pv0, *pv1, viewpts[16];
 	auxvert_t			*pa0, *pa1, viewaux[16];
 	maliasframedesc_t	*pframedesc;
 	qboolean			zclipped, zfullyclipped;
@@ -106,7 +77,7 @@ qboolean R_AliasCheckBBox (void)
 	pahdr = (aliashdr_t*)Mod_Extradata (pmodel);
 	pmdl = (mdl_t *)((byte *)pahdr + pahdr->model);
 
-	R_AliasSetUpTransform (0);
+	R_AliasColoredSetUpTransform (0);
 
 // construct the base bounding box for this frame
 	frame = currententity->frame;
@@ -248,46 +219,33 @@ qboolean R_AliasCheckBBox (void)
 
 /*
 ================
-R_AliasTransformVector
-================
-*/
-void R_AliasTransformVector (const vec3_t in, vec3_t out)
-{
-	out[0] = DotProduct(in, aliastransform[0]) + aliastransform[0][3];
-	out[1] = DotProduct(in, aliastransform[1]) + aliastransform[1][3];
-	out[2] = DotProduct(in, aliastransform[2]) + aliastransform[2][3];
-}
-
-
-/*
-================
-R_AliasPreparePoints
+R_AliasColoredPreparePoints
 
 General clipped case
 ================
 */
-void R_AliasPreparePoints (void)
+void R_AliasColoredPreparePoints (void)
 {
 	int			i;
 	stvert_t	*pstverts;
-	finalvert_t	*fv;
+	finalcoloredvert_t	*fv;
 	auxvert_t	*av;
 	mtriangle_t	*ptri;
-	finalvert_t	*pfv[3];
+	finalcoloredvert_t	*pfv[3];
 
 	pstverts = (stvert_t *)((byte *)paliashdr + paliashdr->stverts);
 	r_anumverts = pmdl->numverts;
- 	fv = pfinalverts;
+ 	fv = pfinalcoloredverts;
 	av = pauxverts;
 
 	for (i=0 ; i<r_anumverts ; i++, fv++, av++, r_apverts++, pstverts++)
 	{
-		R_AliasTransformFinalVert (fv, av, r_apverts, pstverts);
+		R_AliasColoredTransformFinalVert (fv, av, r_apverts, pstverts);
 		if (av->fv[2] < ALIAS_Z_CLIP_PLANE)
 			fv->flags |= ALIAS_Z_CLIP;
 		else
 		{
-			 R_AliasProjectFinalVert (fv, av);
+			 R_AliasColoredProjectFinalVert (fv, av);
 
 			if (fv->v[0] < r_refdef.aliasvrect.x)
 				fv->flags |= ALIAS_LEFT_CLIP;
@@ -308,9 +266,9 @@ void R_AliasPreparePoints (void)
 	ptri = (mtriangle_t *)((byte *)paliashdr + paliashdr->triangles);
 	for (i=0 ; i<pmdl->numtris ; i++, ptri++)
 	{
-		pfv[0] = &pfinalverts[ptri->vertindex[0]];
-		pfv[1] = &pfinalverts[ptri->vertindex[1]];
-		pfv[2] = &pfinalverts[ptri->vertindex[2]];
+		pfv[0] = &pfinalcoloredverts[ptri->vertindex[0]];
+		pfv[1] = &pfinalcoloredverts[ptri->vertindex[1]];
+		pfv[2] = &pfinalcoloredverts[ptri->vertindex[2]];
 
 		if ( pfv[0]->flags & pfv[1]->flags & pfv[2]->flags & (ALIAS_XY_CLIP_MASK | ALIAS_Z_CLIP) )
 			continue;		// completely clipped
@@ -318,14 +276,14 @@ void R_AliasPreparePoints (void)
 		if ( ! ( (pfv[0]->flags | pfv[1]->flags | pfv[2]->flags) &
 			(ALIAS_XY_CLIP_MASK | ALIAS_Z_CLIP) ) )
 		{	// totally unclipped
-			r_affinetridesc.pfinalverts = pfinalverts;
-			r_affinetridesc.pfinalcoloredverts = NULL;
+			r_affinetridesc.pfinalverts = NULL;
+			r_affinetridesc.pfinalcoloredverts = pfinalcoloredverts;
 			r_affinetridesc.ptriangles = ptri;
 			D_PolysetDraw ();
 		}
 		else		
 		{	// partially clipped
-			R_AliasClipTriangle (ptri);
+			R_AliasColoredClipTriangle (ptri);
 		}
 	}
 }
@@ -333,10 +291,10 @@ void R_AliasPreparePoints (void)
 
 /*
 ================
-R_AliasSetUpTransform
+R_AliasColoredSetUpTransform
 ================
 */
-void R_AliasSetUpTransform (int trivial_accept)
+void R_AliasColoredSetUpTransform (int trivial_accept)
 {
 	int				i;
 	float			rotationmatrix[3][4], t2matrix[3][4];
@@ -411,13 +369,13 @@ void R_AliasSetUpTransform (int trivial_accept)
 
 /*
 ================
-R_AliasTransformFinalVert
+R_AliasColoredTransformFinalVert
 ================
 */
-void R_AliasTransformFinalVert (finalvert_t *fv, auxvert_t *av,
+void R_AliasColoredTransformFinalVert (finalcoloredvert_t *fv, auxvert_t *av,
 	trivertx_t *pverts, stvert_t *pstverts)
 {
-	int		temp;
+	argbcolor_t	temp;
 	float	lightcos, *plightnormal;
 
 	av->fv[0] = DotProduct(pverts->v, aliastransform[0]) +
@@ -435,19 +393,27 @@ void R_AliasTransformFinalVert (finalvert_t *fv, auxvert_t *av,
 // lighting
 	plightnormal = r_avertexnormals[pverts->lightnormalindex];
 	lightcos = DotProduct (plightnormal, r_plightvec);
-	temp = r_ambientlight;
+	temp = r_ambientcoloredlight;
 
 	if (lightcos < 0)
 	{
-		temp += (int)(r_shadelight * lightcos);
+		temp.color[0] += (int)(r_shadecoloredlight.color[0] * lightcos);
+		temp.color[1] += (int)(r_shadecoloredlight.color[1] * lightcos);
+		temp.color[2] += (int)(r_shadecoloredlight.color[2] * lightcos);
 
 	// clamp; because we limited the minimum ambient and shading light, we
 	// don't have to clamp low light, just bright
-		if (temp < 0)
-			temp = 0;
+		if (temp.color[0] < 0)
+			temp.color[0] = 0;
+		if (temp.color[1] < 0)
+			temp.color[1] = 0;
+		if (temp.color[2] < 0)
+			temp.color[2] = 0;
 	}
 
-	fv->v[4] = temp;
+	fv->v[4] = temp.color[0];
+	fv->v[5] = temp.color[1];
+	fv->v[6] = temp.color[2];
 }
 
 
@@ -455,12 +421,13 @@ void R_AliasTransformFinalVert (finalvert_t *fv, auxvert_t *av,
 
 /*
 ================
-R_AliasTransformAndProjectFinalVerts
+R_AliasColoredTransformAndProjectFinalVerts
 ================
 */
-void R_AliasTransformAndProjectFinalVerts (finalvert_t *fv, stvert_t *pstverts)
+void R_AliasColoredTransformAndProjectFinalVerts (finalcoloredvert_t *fv, stvert_t *pstverts)
 {
-	int			i, temp;
+	int			i;
+	argbcolor_t temp;
 	float		lightcos, *plightnormal, zi;
 	trivertx_t	*pverts;
 
@@ -475,7 +442,7 @@ void R_AliasTransformAndProjectFinalVerts (finalvert_t *fv, stvert_t *pstverts)
 	// x, y, and z are scaled down by 1/2**31 in the transform, so 1/z is
 	// scaled up by 1/2**31, and the scaling cancels out for x and y in the
 	// projection
-		fv->v[5] = zi;
+		fv->v[7] = zi;
 
 		fv->v[0] = ((DotProduct(pverts->v, aliastransform[0]) +
 				aliastransform[0][3]) * zi) + aliasxcenter;
@@ -489,19 +456,27 @@ void R_AliasTransformAndProjectFinalVerts (finalvert_t *fv, stvert_t *pstverts)
 	// lighting
 		plightnormal = r_avertexnormals[pverts->lightnormalindex];
 		lightcos = DotProduct (plightnormal, r_plightvec);
-		temp = r_ambientlight;
+		temp = r_ambientcoloredlight;
 
 		if (lightcos < 0)
 		{
-			temp += (int)(r_shadelight * lightcos);
+			temp.color[0] += (int)(r_shadecoloredlight.color[0] * lightcos);
+			temp.color[1] += (int)(r_shadecoloredlight.color[1] * lightcos);
+			temp.color[2] += (int)(r_shadecoloredlight.color[2] * lightcos);
 
 		// clamp; because we limited the minimum ambient and shading light, we
 		// don't have to clamp low light, just bright
-			if (temp < 0)
-				temp = 0;
+			if (temp.color[0] < 0)
+				temp.color[0] = 0;
+			if (temp.color[1] < 0)
+				temp.color[1] = 0;
+			if (temp.color[2] < 0)
+				temp.color[2] = 0;
 		}
 
-		fv->v[4] = temp;
+		fv->v[4] = temp.color[0];
+		fv->v[5] = temp.color[1];
+		fv->v[6] = temp.color[2];
 	}
 }
 
@@ -510,17 +485,17 @@ void R_AliasTransformAndProjectFinalVerts (finalvert_t *fv, stvert_t *pstverts)
 
 /*
 ================
-R_AliasProjectFinalVert
+ R_AliasColoredProjectFinalVert
 ================
 */
-void R_AliasProjectFinalVert (finalvert_t *fv, auxvert_t *av)
+void R_AliasColoredProjectFinalVert (finalcoloredvert_t *fv, auxvert_t *av)
 {
 	float	zi;
 
 // project points
 	zi = 1.0 / av->fv[2];
 
-	fv->v[5] = zi * ziscale;
+	fv->v[7] = zi * ziscale;
 
 	fv->v[0] = (av->fv[0] * aliasxscale * zi) + aliasxcenter;
 	fv->v[1] = (av->fv[1] * aliasyscale * zi) + aliasycenter;
@@ -529,26 +504,26 @@ void R_AliasProjectFinalVert (finalvert_t *fv, auxvert_t *av)
 
 /*
 ================
-R_AliasPrepareUnclippedPoints
+R_AliasColoredPrepareUnclippedPoints
 ================
 */
-void R_AliasPrepareUnclippedPoints (void)
+void R_AliasColoredPrepareUnclippedPoints (void)
 {
 	stvert_t	*pstverts;
-	finalvert_t	*fv;
+	finalcoloredvert_t	*fv;
 
 	pstverts = (stvert_t *)((byte *)paliashdr + paliashdr->stverts);
 	r_anumverts = pmdl->numverts;
 // FIXME: just use pfinalverts directly?
-	fv = pfinalverts;
+	fv = pfinalcoloredverts;
 
-	R_AliasTransformAndProjectFinalVerts (fv, pstverts);
+	R_AliasColoredTransformAndProjectFinalVerts (fv, pstverts);
 
 	if (r_affinetridesc.drawtype)
-		D_PolysetDrawFinalVerts (fv, r_anumverts);
+		D_PolysetDrawFinalColoredVerts (fv, r_anumverts);
 
-	r_affinetridesc.pfinalverts = pfinalverts;
-	r_affinetridesc.pfinalcoloredverts = NULL;
+	r_affinetridesc.pfinalverts = NULL;
+	r_affinetridesc.pfinalcoloredverts = pfinalcoloredverts;
 	r_affinetridesc.ptriangles = (mtriangle_t *)
 			((byte *)paliashdr + paliashdr->triangles);
 	r_affinetridesc.numtriangles = pmdl->numtris;
@@ -558,10 +533,10 @@ void R_AliasPrepareUnclippedPoints (void)
 
 /*
 ===============
-R_AliasSetupSkin
+R_AliasColoredSetupSkin
 ===============
 */
-void R_AliasSetupSkin (void)
+void R_AliasColoredSetupSkin (void)
 {
 	int					skinnum;
 	int					i, numskins;
@@ -572,7 +547,7 @@ void R_AliasSetupSkin (void)
 	skinnum = currententity->skinnum;
 	if ((skinnum >= pmdl->numskins) || (skinnum < 0))
 	{
-		Con_DPrintf ("R_AliasSetupSkin: no such skin # %d\n", skinnum);
+		Con_DPrintf ("R_AliasColoredSetupSkin: no such skin # %d\n", skinnum);
 		skinnum = 0;
 	}
 
@@ -614,30 +589,39 @@ void R_AliasSetupSkin (void)
 
 /*
 ================
-R_AliasSetupLighting
+R_AliasColoredSetupLighting
 ================
 */
-void R_AliasSetupLighting (alight_t *plighting)
+void R_AliasColoredSetupLighting (acoloredlight_t *plighting)
 {
 
 // guarantee that no vertex will ever be lit below LIGHT_MIN, so we don't have
 // to clamp off the bottom
-	r_ambientlight = plighting->ambientlight;
+	r_ambientcoloredlight.color[0] = plighting->ambientlight.color[0] << 8;
+	r_ambientcoloredlight.color[1] = plighting->ambientlight.color[1] << 8;
+	r_ambientcoloredlight.color[2] = plighting->ambientlight.color[2] << 8;
 
-	if (r_ambientlight < LIGHT_MIN)
-		r_ambientlight = LIGHT_MIN;
+	if (r_ambientcoloredlight.color[0] < LIGHT_MIN)
+		r_ambientcoloredlight.color[0] = LIGHT_MIN;
+	if (r_ambientcoloredlight.color[1] < LIGHT_MIN)
+		r_ambientcoloredlight.color[1] = LIGHT_MIN;
+	if (r_ambientcoloredlight.color[2] < LIGHT_MIN)
+		r_ambientcoloredlight.color[2] = LIGHT_MIN;
 
-	r_ambientlight = (255 - r_ambientlight) << VID_CBITS;
+	r_shadecoloredlight.color[0] = plighting->shadelight.color[0];
+	r_shadecoloredlight.color[1] = plighting->shadelight.color[1];
+	r_shadecoloredlight.color[2] = plighting->shadelight.color[2];
 
-	if (r_ambientlight < LIGHT_MIN)
-		r_ambientlight = LIGHT_MIN;
+	if (r_shadecoloredlight.color[0] < 0)
+		r_shadecoloredlight.color[0] = 0;
+	if (r_shadecoloredlight.color[1] < 0)
+		r_shadecoloredlight.color[1] = 0;
+	if (r_shadecoloredlight.color[2] < 0)
+		r_shadecoloredlight.color[2] = 0;
 
-	r_shadelight = plighting->shadelight;
-
-	if (r_shadelight < 0)
-		r_shadelight = 0;
-
-	r_shadelight *= VID_GRADES;
+	r_shadecoloredlight.color[0] *= VID_GRADES;
+	r_shadecoloredlight.color[1] *= VID_GRADES;
+	r_shadecoloredlight.color[2] *= VID_GRADES;
 
 // rotate the lighting vector into the model's frame of reference
 	r_plightvec[0] = DotProduct (plighting->plightvec, alias_forward);
@@ -647,12 +631,12 @@ void R_AliasSetupLighting (alight_t *plighting)
 
 /*
 =================
-R_AliasSetupFrame
+R_AliasColoredSetupFrame
 
 set r_apverts
 =================
 */
-void R_AliasSetupFrame (void)
+void R_AliasColoredSetupFrame (void)
 {
 	int				frame;
 	int				i, numframes;
@@ -662,7 +646,7 @@ void R_AliasSetupFrame (void)
 	frame = currententity->frame;
 	if ((frame >= pmdl->numframes) || (frame < 0))
 	{
-		Con_DPrintf ("R_AliasSetupFrame: no such frame %d\n", frame);
+		Con_DPrintf ("R_AliasColoredSetupFrame: no such frame %d\n", frame);
 		frame = 0;
 	}
 
@@ -700,13 +684,13 @@ void R_AliasSetupFrame (void)
 
 /*
 ================
-R_AliasDrawModel
+R_AliasColoredDrawModel
 ================
 */
-std::vector<finalvert_t> r_aliasfinalverts;
-std::vector<auxvert_t> r_aliasauxverts;
+std::vector<finalcoloredvert_t> r_aliasfinalcoloredverts;
+std::vector<auxvert_t> r_aliascoloredauxverts;
 
-void R_AliasDrawModel (alight_t *plighting)
+void R_AliasColoredDrawModel (acoloredlight_t *plighting)
 {
 	r_amodels_drawn++;
 
@@ -714,25 +698,25 @@ void R_AliasDrawModel (alight_t *plighting)
     paliashdr = (aliashdr_t *)Mod_Extradata (currententity->model);
     pmdl = (mdl_t *)((byte *)paliashdr + paliashdr->model);
 
-    if (pmdl->numverts + ((CACHE_SIZE - 1) / sizeof(finalvert_t)) + 1 > r_aliasfinalverts.size())
+    if (pmdl->numverts + ((CACHE_SIZE - 1) / sizeof(finalcoloredvert_t)) + 1 > r_aliasfinalcoloredverts.size())
     {
-        r_aliasfinalverts.resize(pmdl->numverts + ((CACHE_SIZE - 1) / sizeof(finalvert_t)) + 1);
+        r_aliasfinalcoloredverts.resize(pmdl->numverts + ((CACHE_SIZE - 1) / sizeof(finalcoloredvert_t)) + 1);
     }
-    if (pmdl->numverts > r_aliasauxverts.size())
+    if (pmdl->numverts > r_aliascoloredauxverts.size())
     {
-        r_aliasauxverts.resize(pmdl->numverts);
+        r_aliascoloredauxverts.resize(pmdl->numverts);
     }
-	pfinalverts = (finalvert_t *)
-			(((size_t)&r_aliasfinalverts[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
-	pauxverts = &r_aliasauxverts[0];
+	pfinalcoloredverts = (finalcoloredvert_t *)
+			(((size_t)&r_aliasfinalcoloredverts[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
+	pauxverts = &r_aliascoloredauxverts[0];
 
-	R_AliasSetupSkin ();
-	R_AliasSetUpTransform (currententity->trivial_accept);
-	R_AliasSetupLighting (plighting);
-	R_AliasSetupFrame ();
+	R_AliasColoredSetupSkin ();
+	R_AliasColoredSetUpTransform (currententity->trivial_accept);
+	R_AliasColoredSetupLighting (plighting);
+	R_AliasColoredSetupFrame ();
 
 	if (!currententity->colormap)
-		Sys_Error ("R_AliasDrawModel: !currententity->colormap");
+		Sys_Error ("R_AliasColoredDrawModel: !currententity->colormap");
 
 	if (d_uselists)
 	{
@@ -760,7 +744,7 @@ void R_AliasDrawModel (alight_t *plighting)
 #endif
 		}
 
-		acolormap = currententity->colormap;
+		abasepal = host_basepal.data();
 
 		if (currententity != &cl.viewent)
 			ziscale = (float)0x8000 * (float)0x10000;
@@ -768,9 +752,9 @@ void R_AliasDrawModel (alight_t *plighting)
 			ziscale = (float)0x8000 * (float)0x10000 * 3.0;
 
 		if (currententity->trivial_accept)
-			R_AliasPrepareUnclippedPoints ();
+			R_AliasColoredPrepareUnclippedPoints ();
 		else
-			R_AliasPreparePoints ();
+			R_AliasColoredPreparePoints ();
 	}
 }
 

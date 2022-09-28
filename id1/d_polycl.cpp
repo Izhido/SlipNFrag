@@ -1,23 +1,4 @@
-/*
-Copyright (C) 1996-1997 Id Software, Inc.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
-// d_polyset.c: routines for drawing sets of polygons sharing the same
+// d_polycl.c: routines for drawing sets of polygons with colored lighting sharing the same
 // texture (used for Alias models)
 
 #include "quakedef.h"
@@ -30,9 +11,9 @@ typedef struct {
 	short			*pz;
 	int				count;
 	byte			*ptex;
-    int				sfrac, tfrac, light;
+    int				sfrac, tfrac, lightr, lightg, lightb;
     long long       zi;
-} spanpackage_t;
+} coloredspanpackage_t;
 
 typedef struct {
 	int		isflattop;
@@ -44,51 +25,56 @@ typedef struct {
 	int		*prightedgevert0;
 	int		*prightedgevert1;
 	int		*prightedgevert2;
-} edgetable;
+} colorededgetable;
 
-int	r_p0[6], r_p1[6], r_p2[6];
+int	r_p0colored[8], r_p1colored[8], r_p2colored[8];
 
-byte		*d_pcolormap;
+extern int	d_xdenom;
 
-int			d_aflatcolor;
-int			d_xdenom;
+colorededgetable	*pcolorededgetable;
 
-edgetable	*pedgetable;
-
-edgetable	edgetables[12] = {
-	{0, 1, r_p0, r_p2, NULL, 2, r_p0, r_p1, r_p2 },
-	{0, 2, r_p1, r_p0, r_p2,   1, r_p1, r_p2, NULL},
-	{1, 1, r_p0, r_p2, NULL, 1, r_p1, r_p2, NULL},
-	{0, 1, r_p1, r_p0, NULL, 2, r_p1, r_p2, r_p0 },
-	{0, 2, r_p0, r_p2, r_p1,   1, r_p0, r_p1, NULL},
-	{0, 1, r_p2, r_p1, NULL, 1, r_p2, r_p0, NULL},
-	{0, 1, r_p2, r_p1, NULL, 2, r_p2, r_p0, r_p1 },
-	{0, 2, r_p2, r_p1, r_p0,   1, r_p2, r_p0, NULL},
-	{0, 1, r_p1, r_p0, NULL, 1, r_p1, r_p2, NULL},
-	{1, 1, r_p2, r_p1, NULL, 1, r_p0, r_p1, NULL},
-	{1, 1, r_p1, r_p0, NULL, 1, r_p2, r_p0, NULL},
-	{0, 1, r_p0, r_p2, NULL, 1, r_p0, r_p1, NULL},
+colorededgetable	colorededgetables[12] = {
+	{0, 1, r_p0colored, r_p2colored, NULL, 2, r_p0colored, r_p1colored, r_p2colored },
+	{0, 2, r_p1colored, r_p0colored, r_p2colored,   1, r_p1colored, r_p2colored, NULL},
+	{1, 1, r_p0colored, r_p2colored, NULL, 1, r_p1colored, r_p2colored, NULL},
+	{0, 1, r_p1colored, r_p0colored, NULL, 2, r_p1colored, r_p2colored, r_p0colored },
+	{0, 2, r_p0colored, r_p2colored, r_p1colored,   1, r_p0colored, r_p1colored, NULL},
+	{0, 1, r_p2colored, r_p1colored, NULL, 1, r_p2colored, r_p0colored, NULL},
+	{0, 1, r_p2colored, r_p1colored, NULL, 2, r_p2colored, r_p0colored, r_p1colored },
+	{0, 2, r_p2colored, r_p1colored, r_p0colored,   1, r_p2colored, r_p0colored, NULL},
+	{0, 1, r_p1colored, r_p0colored, NULL, 1, r_p1colored, r_p2colored, NULL},
+	{1, 1, r_p2colored, r_p1colored, NULL, 1, r_p0colored, r_p1colored, NULL},
+	{1, 1, r_p1colored, r_p0colored, NULL, 1, r_p2colored, r_p0colored, NULL},
+	{0, 1, r_p0colored, r_p2colored, NULL, 1, r_p0colored, r_p1colored, NULL},
 };
 
 // FIXME: some of these can become statics
-int				a_sstepxfrac, a_tstepxfrac, r_lstepx, a_ststepxwhole;
-int				r_sstepx, r_tstepx, r_lstepy, r_sstepy, r_tstepy;
-int				r_zistepx, r_zistepy;
-int				d_aspancount, d_countextrastep;
+extern int		a_sstepxfrac, a_tstepxfrac;
+int 			r_lrstepx, r_lgstepx, r_lbstepx;
+extern int		a_ststepxwhole;
+extern int		r_sstepx, r_tstepx;
+int				r_lrstepy, r_lgstepy, r_lbstepy;
+extern int		r_sstepy, r_tstepy;
+extern int		r_zistepx, r_zistepy;
+extern int		d_aspancount, d_countextrastep;
 
-spanpackage_t			*a_spans;
-spanpackage_t			*d_pedgespanpackage;
+coloredspanpackage_t	*a_coloredspans;
+coloredspanpackage_t	*d_pedgecoloredspanpackage;
 static int				ystart;
-byte					*d_pdest, *d_ptex;
-short					*d_pz;
-int						d_sfrac, d_tfrac, d_light;
-long long               d_zi;
-int						d_ptexextrastep, d_sfracextrastep;
-int						d_tfracextrastep, d_lightextrastep, d_pdestextrastep;
-int						d_lightbasestep, d_pdestbasestep, d_ptexbasestep;
-int						d_sfracbasestep, d_tfracbasestep;
-int						d_ziextrastep, d_zibasestep;
-int						d_pzextrastep, d_pzbasestep;
+extern byte				*d_pdest, *d_ptex;
+extern short			*d_pz;
+extern int				d_sfrac, d_tfrac;
+int						d_lightr, d_lightg, d_lightb;
+extern long long 		d_zi;
+extern int				d_ptexextrastep, d_sfracextrastep;
+extern int				d_tfracextrastep;
+int						d_lightrextrastep, d_lightgextrastep, d_lightbextrastep;
+extern int				d_pdestextrastep;
+int						d_lightrbasestep, d_lightgbasestep, d_lightbbasestep;
+extern int				d_pdestbasestep, d_ptexbasestep;
+extern int				d_sfracbasestep, d_tfracbasestep;
+extern int				d_ziextrastep, d_zibasestep;
+extern int				d_pzextrastep, d_pzbasestep;
 
 typedef struct {
 	int		quotient;
@@ -99,59 +85,51 @@ static adivtab_t	adivtab[32*32] = {
 #include "adivtab.h"
 };
 
-std::vector<byte*> skintable_backingstore;
-byte	**skintable;
-int		skinwidth;
-byte	*skinstart;
+extern byte	**skintable;
+extern int		skinwidth;
 
-void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage);
-void D_PolysetCalcGradients (int skinwidth);
-void D_DrawSubdiv (void);
-void D_DrawNonSubdiv (void);
-void D_PolysetRecursiveTriangle (int *p1, int *p2, int *p3);
-void D_PolysetSetEdgeTable (void);
-void D_RasterizeAliasPolySmooth (void);
-void D_PolysetScanLeftEdge (int height);
+void D_PolysetDrawColoredSpans8 (coloredspanpackage_t *pspanpackage);
+void D_PolysetColoredCalcGradients (int skinwidth);
+void D_DrawColoredSubdiv (void);
+void D_DrawColoredNonSubdiv (void);
+void D_PolysetRecursiveColoredTriangle (int *p1, int *p2, int *p3);
+void D_PolysetColoredSetEdgeTable (void);
+void D_RasterizeAliasColoredPolySmooth (void);
+void D_PolysetColoredScanLeftEdge (int height);
 
 #if	!id386
 
-std::vector<spanpackage_t> d_polyset_spans;
+std::vector<coloredspanpackage_t> d_polyset_colored_spans;
 /*
 ================
-D_PolysetDraw
+D_PolysetDrawColored
 ================
 */
-void D_PolysetDraw (void)
+void D_PolysetDrawColored (void)
 {
-	if (r_affinetridesc.pfinalcoloredverts != NULL)
-	{
-		D_PolysetDrawColored ();
-		return;
-	}
-
-	d_polyset_spans.resize(vid.height + 2 + ((CACHE_SIZE - 1) / sizeof(spanpackage_t)) + 1);
+    d_polyset_colored_spans.resize(vid.height + 2 + ((CACHE_SIZE - 1) / sizeof(coloredspanpackage_t)) + 1);
 						// one extra because of cache line pretouching
 
-	a_spans = (spanpackage_t *)
-			(((size_t)&d_polyset_spans[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
+	a_coloredspans = (coloredspanpackage_t *)
+			(((size_t)&d_polyset_colored_spans[0] + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
 
 	if (r_affinetridesc.drawtype)
 	{
-		D_DrawSubdiv ();
+		D_DrawColoredSubdiv ();
 	}
 	else
 	{
-		D_DrawNonSubdiv ();
+		D_DrawColoredNonSubdiv ();
 	}
 }
 
 
 /*
 ================
-D_PolysetDrawFinalVerts
+D_PolysetDrawFinalColoredVerts
 ================
 */
-void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts)
+void D_PolysetDrawFinalColoredVerts (finalcoloredvert_t *fv, int numverts)
 {
 	int		i, z;
 	short	*zbuf;
@@ -163,7 +141,7 @@ void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts)
 		if ((fv->v[0] < r_refdef.vrectright) &&
 			(fv->v[1] < r_refdef.vrectbottom))
 		{
-			z = fv->v[5]>>16;
+			z = fv->v[7]>>16;
 			zbuf = zspantable[fv->v[1]] + fv->v[0];
 			if (z >= *zbuf)
 			{
@@ -171,7 +149,17 @@ void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts)
 				
 				*zbuf = z;
 				pix = skintable[fv->v[3]>>16][fv->v[2]>>16];
-				pix = ((byte *)acolormap)[pix + (fv->v[4] & 0xFF00) ];
+				if (pix < 224)
+				{
+					auto pal = abasepal + pix*3;
+					auto rcomp = ((fv->v[4] * (*pal++)) >> 15) & 511;
+					auto gcomp = ((fv->v[5] * (*pal++)) >> 15) & 511;
+					auto bcomp = ((fv->v[6] * (*pal)) >> 15) & 511;
+					if (rcomp > 255) rcomp = 255;
+					if (gcomp > 255) gcomp = 255;
+					if (bcomp > 255) bcomp = 255;
+					pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+				}
 				d_viewbuffer[d_scantable[fv->v[1]] + fv->v[0]] = pix;
 			}
 		}
@@ -181,17 +169,17 @@ void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts)
 
 /*
 ================
-D_DrawSubdiv
+D_DrawColoredSubdiv
 ================
 */
-void D_DrawSubdiv (void)
+void D_DrawColoredSubdiv (void)
 {
 	mtriangle_t		*ptri;
-	finalvert_t		*pfv, *index0, *index1, *index2;
+	finalcoloredvert_t	*pfv, *index0, *index1, *index2;
 	int				i;
 	int				lnumtriangles;
 
-	pfv = r_affinetridesc.pfinalverts;
+	pfv = r_affinetridesc.pfinalcoloredverts;
 	ptri = r_affinetridesc.ptriangles;
 	lnumtriangles = r_affinetridesc.numtriangles;
 
@@ -209,11 +197,9 @@ void D_DrawSubdiv (void)
 			continue;
 		}
 
-		d_pcolormap = &((byte *)acolormap)[index0->v[4] & 0xFF00];
-
 		if (ptri[i].facesfront)
 		{
-			D_PolysetRecursiveTriangle(index0->v, index1->v, index2->v);
+			D_PolysetRecursiveColoredTriangle(index0->v, index1->v, index2->v);
 		}
 		else
 		{
@@ -230,7 +216,7 @@ void D_DrawSubdiv (void)
 			if (index2->flags & ALIAS_ONSEAM)
 				index2->v[2] += r_affinetridesc.seamfixupX16;
 
-			D_PolysetRecursiveTriangle(index0->v, index1->v, index2->v);
+			D_PolysetRecursiveColoredTriangle(index0->v, index1->v, index2->v);
 
 			index0->v[2] = s0;
 			index1->v[2] = s1;
@@ -242,17 +228,17 @@ void D_DrawSubdiv (void)
 
 /*
 ================
-D_DrawNonSubdiv
+D_DrawColoredNonSubdiv
 ================
 */
-void D_DrawNonSubdiv (void)
+void D_DrawColoredNonSubdiv (void)
 {
 	mtriangle_t		*ptri;
-	finalvert_t		*pfv, *index0, *index1, *index2;
+	finalcoloredvert_t	*pfv, *index0, *index1, *index2;
 	int				i;
 	int				lnumtriangles;
 
-	pfv = r_affinetridesc.pfinalverts;
+	pfv = r_affinetridesc.pfinalcoloredverts;
 	ptri = r_affinetridesc.ptriangles;
 	lnumtriangles = r_affinetridesc.numtriangles;
 
@@ -271,53 +257,59 @@ void D_DrawNonSubdiv (void)
 			continue;
 		}
 
-		r_p0[0] = index0->v[0];		// u
-		r_p0[1] = index0->v[1];		// v
-		r_p0[2] = index0->v[2];		// s
-		r_p0[3] = index0->v[3];		// t
-		r_p0[4] = index0->v[4];		// light
-		r_p0[5] = index0->v[5];		// iz
+		r_p0colored[0] = index0->v[0];		// u
+		r_p0colored[1] = index0->v[1];		// v
+		r_p0colored[2] = index0->v[2];		// s
+		r_p0colored[3] = index0->v[3];		// t
+		r_p0colored[4] = index0->v[4];		// light r
+		r_p0colored[5] = index0->v[5];		// light g
+		r_p0colored[6] = index0->v[6];		// light b
+		r_p0colored[7] = index0->v[7];		// iz
 
-		r_p1[0] = index1->v[0];
-		r_p1[1] = index1->v[1];
-		r_p1[2] = index1->v[2];
-		r_p1[3] = index1->v[3];
-		r_p1[4] = index1->v[4];
-		r_p1[5] = index1->v[5];
+		r_p1colored[0] = index1->v[0];
+		r_p1colored[1] = index1->v[1];
+		r_p1colored[2] = index1->v[2];
+		r_p1colored[3] = index1->v[3];
+		r_p1colored[4] = index1->v[4];
+		r_p1colored[5] = index1->v[5];
+		r_p1colored[6] = index1->v[6];
+		r_p1colored[7] = index1->v[7];
 
-		r_p2[0] = index2->v[0];
-		r_p2[1] = index2->v[1];
-		r_p2[2] = index2->v[2];
-		r_p2[3] = index2->v[3];
-		r_p2[4] = index2->v[4];
-		r_p2[5] = index2->v[5];
+		r_p2colored[0] = index2->v[0];
+		r_p2colored[1] = index2->v[1];
+		r_p2colored[2] = index2->v[2];
+		r_p2colored[3] = index2->v[3];
+		r_p2colored[4] = index2->v[4];
+		r_p2colored[5] = index2->v[5];
+		r_p2colored[6] = index2->v[6];
+		r_p2colored[7] = index2->v[7];
 
 		if (!ptri->facesfront)
 		{
 			if (index0->flags & ALIAS_ONSEAM)
-				r_p0[2] += r_affinetridesc.seamfixupX16;
+				r_p0colored[2] += r_affinetridesc.seamfixupX16;
 			if (index1->flags & ALIAS_ONSEAM)
-				r_p1[2] += r_affinetridesc.seamfixupX16;
+				r_p1colored[2] += r_affinetridesc.seamfixupX16;
 			if (index2->flags & ALIAS_ONSEAM)
-				r_p2[2] += r_affinetridesc.seamfixupX16;
+				r_p2colored[2] += r_affinetridesc.seamfixupX16;
 		}
 
-		D_PolysetSetEdgeTable ();
-		D_RasterizeAliasPolySmooth ();
+		D_PolysetColoredSetEdgeTable ();
+		D_RasterizeAliasColoredPolySmooth ();
 	}
 }
 
 
 /*
 ================
-D_PolysetRecursiveTriangle
+D_PolysetRecursiveColoredTriangle
 ================
 */
-void D_PolysetRecursiveTriangle (int *lp1, int *lp2, int *lp3)
+void D_PolysetRecursiveColoredTriangle (int *lp1, int *lp2, int *lp3)
 {
 	int		*temp;
 	int		d;
-	int		new_points[6];
+	int		new_points[8];
 	int		z;
 	short	*zbuf;
 
@@ -364,7 +356,10 @@ split:
 	new_points[1] = (lp1[1] + lp2[1]) >> 1;
 	new_points[2] = (lp1[2] + lp2[2]) >> 1;
 	new_points[3] = (lp1[3] + lp2[3]) >> 1;
+	new_points[4] = (lp1[4] + lp2[4]) >> 1;
 	new_points[5] = (lp1[5] + lp2[5]) >> 1;
+	new_points[6] = (lp1[6] + lp2[6]) >> 1;
+	new_points[7] = (lp1[7] + lp2[7]) >> 1;
 
 // draw the point if splitting a leading edge
 	if (lp2[1] > lp1[1])
@@ -373,79 +368,64 @@ split:
 		goto nodraw;
 
 
-	z = new_points[5]>>16;
+	z = new_points[7]>>16;
 	zbuf = zspantable[new_points[1]] + new_points[0];
 	if (z >= *zbuf)
 	{
 		int		pix;
 		
 		*zbuf = z;
-		pix = d_pcolormap[skintable[new_points[3]>>16][new_points[2]>>16]];
+		pix = skintable[new_points[3]>>16][new_points[2]>>16];
+		if (pix < 224)
+		{
+			auto pal = abasepal + pix*3;
+			auto rcomp = ((new_points[4] * (*pal++)) >> 15) & 511;
+			auto gcomp = ((new_points[5] * (*pal++)) >> 15) & 511;
+			auto bcomp = ((new_points[6] * (*pal)) >> 15) & 511;
+			if (rcomp > 255) rcomp = 255;
+			if (gcomp > 255) gcomp = 255;
+			if (bcomp > 255) bcomp = 255;
+			pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+		}
 		d_viewbuffer[d_scantable[new_points[1]] + new_points[0]] = pix;
 	}
 
 nodraw:
 // recursively continue
-	D_PolysetRecursiveTriangle (lp3, lp1, new_points);
-	D_PolysetRecursiveTriangle (lp3, new_points, lp2);
+	D_PolysetRecursiveColoredTriangle (lp3, lp1, new_points);
+	D_PolysetRecursiveColoredTriangle (lp3, new_points, lp2);
 }
 
 #endif	// !id386
-
-
-/*
-================
-D_PolysetUpdateTables
-================
-*/
-void D_PolysetUpdateTables (void)
-{
-	int		i;
-	byte	*s;
-	
-	if (r_affinetridesc.skinwidth != skinwidth ||
-		r_affinetridesc.pskin != skinstart)
-	{
-		skinwidth = r_affinetridesc.skinwidth;
-        auto skinheight = r_affinetridesc.skinheight;
-        if (skinheight > skintable_backingstore.size())
-        {
-            skintable_backingstore.resize(skinheight);
-            skintable = skintable_backingstore.data();
-        }
-		skinstart = (byte*)r_affinetridesc.pskin;
-		s = skinstart;
-		for (i=0 ; i<skinheight ; i++, s+=skinwidth)
-			skintable[i] = s;
-	}
-}
 
 
 #if	!id386
 
 /*
 ===================
-D_PolysetScanLeftEdge
+ D_PolysetColoredScanLeftEdge
 ====================
 */
-void D_PolysetScanLeftEdge (int height)
+void D_PolysetColoredScanLeftEdge (int height)
 {
 
 	do
 	{
-		d_pedgespanpackage->pdest = d_pdest;
-		d_pedgespanpackage->pz = d_pz;
-		d_pedgespanpackage->count = d_aspancount;
-		d_pedgespanpackage->ptex = d_ptex;
+		d_pedgecoloredspanpackage->pdest = d_pdest;
+		d_pedgecoloredspanpackage->pz = d_pz;
+		d_pedgecoloredspanpackage->count = d_aspancount;
+		d_pedgecoloredspanpackage->ptex = d_ptex;
 
-		d_pedgespanpackage->sfrac = d_sfrac;
-		d_pedgespanpackage->tfrac = d_tfrac;
+		d_pedgecoloredspanpackage->sfrac = d_sfrac;
+		d_pedgecoloredspanpackage->tfrac = d_tfrac;
 
 	// FIXME: need to clamp l, s, t, at both ends?
-		d_pedgespanpackage->light = d_light;
-		d_pedgespanpackage->zi = d_zi;
+		d_pedgecoloredspanpackage->lightr = d_lightr;
+		d_pedgecoloredspanpackage->lightg = d_lightg;
+		d_pedgecoloredspanpackage->lightb = d_lightb;
+		d_pedgecoloredspanpackage->zi = d_zi;
 
-		d_pedgespanpackage++;
+		d_pedgecoloredspanpackage++;
 
 		errorterm += erroradjustup;
 		if (errorterm >= 0)
@@ -464,7 +444,9 @@ void D_PolysetScanLeftEdge (int height)
 				d_ptex += r_affinetridesc.skinwidth;
 				d_tfrac &= 0xFFFF;
 			}
-			d_light += d_lightextrastep;
+			d_lightr += d_lightrextrastep;
+			d_lightg += d_lightgextrastep;
+			d_lightb += d_lightbextrastep;
 			d_zi += d_ziextrastep;
 			errorterm -= erroradjustdown;
 		}
@@ -483,7 +465,9 @@ void D_PolysetScanLeftEdge (int height)
 				d_ptex += r_affinetridesc.skinwidth;
 				d_tfrac &= 0xFFFF;
 			}
-			d_light += d_lightbasestep;
+			d_lightr += d_lightrbasestep;
+			d_lightg += d_lightgbasestep;
+			d_lightb += d_lightbbasestep;
 			d_zi += d_zibasestep;
 		}
 	} while (--height);
@@ -494,10 +478,10 @@ void D_PolysetScanLeftEdge (int height)
 
 /*
 ===================
-D_PolysetSetUpForLineScan
+D_PolysetColoredSetUpForLineScan
 ====================
 */
-void D_PolysetSetUpForLineScan(fixed8_t startvertu, fixed8_t startvertv,
+void D_PolysetColoredSetUpForLineScan(fixed8_t startvertu, fixed8_t startvertv,
 		fixed8_t endvertu, fixed8_t endvertv)
 {
 	double		dm, dn;
@@ -535,18 +519,18 @@ void D_PolysetSetUpForLineScan(fixed8_t startvertu, fixed8_t startvertv,
 
 /*
 ================
-D_PolysetCalcGradients
+ D_PolysetColoredCalcGradients
 ================
 */
-void D_PolysetCalcGradients (int skinwidth)
+void D_PolysetColoredCalcGradients (int skinwidth)
 {
 	float	xstepdenominv, ystepdenominv, t0, t1;
 	float	p01_minus_p21, p11_minus_p21, p00_minus_p20, p10_minus_p20;
 
-	p00_minus_p20 = r_p0[0] - r_p2[0];
-	p01_minus_p21 = r_p0[1] - r_p2[1];
-	p10_minus_p20 = r_p1[0] - r_p2[0];
-	p11_minus_p21 = r_p1[1] - r_p2[1];
+	p00_minus_p20 = r_p0colored[0] - r_p2colored[0];
+	p01_minus_p21 = r_p0colored[1] - r_p2colored[1];
+	p10_minus_p20 = r_p1colored[0] - r_p2colored[0];
+	p11_minus_p21 = r_p1colored[1] - r_p2colored[1];
 
 	xstepdenominv = 1.0 / (float)d_xdenom;
 
@@ -555,29 +539,43 @@ void D_PolysetCalcGradients (int skinwidth)
 // ceil () for light so positive steps are exaggerated, negative steps
 // diminished,  pushing us away from underflow toward overflow. Underflow is
 // very visible, overflow is very unlikely, because of ambient lighting
-	t0 = r_p0[4] - r_p2[4];
-	t1 = r_p1[4] - r_p2[4];
-	r_lstepx = (int)
+	t0 = r_p0colored[4] - r_p2colored[4];
+	t1 = r_p1colored[4] - r_p2colored[4];
+	r_lrstepx = (int)
 			ceil((t1 * p01_minus_p21 - t0 * p11_minus_p21) * xstepdenominv);
-	r_lstepy = (int)
+	r_lrstepy = (int)
 			ceil((t1 * p00_minus_p20 - t0 * p10_minus_p20) * ystepdenominv);
 
-	t0 = r_p0[2] - r_p2[2];
-	t1 = r_p1[2] - r_p2[2];
+	t0 = r_p0colored[5] - r_p2colored[5];
+	t1 = r_p1colored[5] - r_p2colored[5];
+	r_lgstepx = (int)
+			ceil((t1 * p01_minus_p21 - t0 * p11_minus_p21) * xstepdenominv);
+	r_lgstepy = (int)
+			ceil((t1 * p00_minus_p20 - t0 * p10_minus_p20) * ystepdenominv);
+
+	t0 = r_p0colored[6] - r_p2colored[6];
+	t1 = r_p1colored[6] - r_p2colored[6];
+	r_lbstepx = (int)
+			ceil((t1 * p01_minus_p21 - t0 * p11_minus_p21) * xstepdenominv);
+	r_lbstepy = (int)
+			ceil((t1 * p00_minus_p20 - t0 * p10_minus_p20) * ystepdenominv);
+
+	t0 = r_p0colored[2] - r_p2colored[2];
+	t1 = r_p1colored[2] - r_p2colored[2];
 	r_sstepx = (int)((t1 * p01_minus_p21 - t0 * p11_minus_p21) *
 			xstepdenominv);
 	r_sstepy = (int)((t1 * p00_minus_p20 - t0* p10_minus_p20) *
 			ystepdenominv);
 
-	t0 = r_p0[3] - r_p2[3];
-	t1 = r_p1[3] - r_p2[3];
+	t0 = r_p0colored[3] - r_p2colored[3];
+	t1 = r_p1colored[3] - r_p2colored[3];
 	r_tstepx = (int)((t1 * p01_minus_p21 - t0 * p11_minus_p21) *
 			xstepdenominv);
 	r_tstepy = (int)((t1 * p00_minus_p20 - t0 * p10_minus_p20) *
 			ystepdenominv);
 
-	t0 = r_p0[5] - r_p2[5];
-	t1 = r_p1[5] - r_p2[5];
+	t0 = r_p0colored[7] - r_p2colored[7];
+	t1 = r_p1colored[7] - r_p2colored[7];
 	r_zistepx = (int)((t1 * p01_minus_p21 - t0 * p11_minus_p21) *
 			xstepdenominv);
 	r_zistepy = (int)((t1 * p00_minus_p20 - t0 * p10_minus_p20) *
@@ -597,37 +595,20 @@ void D_PolysetCalcGradients (int skinwidth)
 #endif	// !id386
 
 
-#if 0
-byte gelmap[256];
-void InitGel (byte *palette)
-{
-	int		i;
-	int		r;
-
-	for (i=0 ; i<256 ; i++)
-	{
-//		r = (palette[i*3]>>4);
-		r = (palette[i*3] + palette[i*3+1] + palette[i*3+2])/(16*3);
-		gelmap[i] = /* 64 */ 0 + r;
-	}
-}
-#endif
-
-
 #if	!id386
 
 /*
 ================
-D_PolysetDrawSpans8
+D_PolysetDrawColoredSpans8
 ================
 */
-void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
+void D_PolysetDrawColoredSpans8 (coloredspanpackage_t *pspanpackage)
 {
 	int		lcount;
 	byte	*lpdest;
 	byte	*lptex;
 	int		lsfrac, ltfrac;
-	int		llight;
+	int		llightr, llightg, llightb;
 	long long lzi;
 	short	*lpz;
 
@@ -653,21 +634,37 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 			lpz = pspanpackage->pz;
 			lsfrac = pspanpackage->sfrac;
 			ltfrac = pspanpackage->tfrac;
-			llight = pspanpackage->light;
+			llightr = pspanpackage->lightr;
+			llightg = pspanpackage->lightg;
+			llightb = pspanpackage->lightb;
 			lzi = pspanpackage->zi;
 
 			do
 			{
 				if ((lzi >> 16) >= *lpz)
 				{
-					*lpdest = ((byte *)acolormap)[*lptex + (llight & 0xFF00)];
+					auto pix = *lptex;
+					if (pix < 224)
+					{
+						auto pal = abasepal + pix*3;
+						auto rcomp = ((llightr * (*pal++)) >> 15) & 511;
+						auto gcomp = ((llightg * (*pal++)) >> 15) & 511;
+						auto bcomp = ((llightb * (*pal)) >> 15) & 511;
+						if (rcomp > 255) rcomp = 255;
+						if (gcomp > 255) gcomp = 255;
+						if (bcomp > 255) bcomp = 255;
+						pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+					}
+					*lpdest = pix;
 // gel mapping					*lpdest = gelmap[*lpdest];
 					*lpz = lzi >> 16;
 				}
 				lpdest++;
 				lzi += r_zistepx;
 				lpz++;
-				llight += r_lstepx;
+				llightr += r_lrstepx;
+				llightg += r_lgstepx;
+				llightb += r_lbstepx;
 				lptex += a_ststepxwhole;
 				lsfrac += a_sstepxfrac;
 				lptex += lsfrac >> 16;
@@ -686,60 +683,22 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 }
 #endif	// !id386
 
-
 /*
 ================
-D_PolysetFillSpans8
+ D_RasterizeAliasColoredPolySmooth
 ================
 */
-void D_PolysetFillSpans8 (spanpackage_t *pspanpackage)
-{
-	int				color;
-
-// FIXME: do z buffering
-
-	color = d_aflatcolor++;
-
-	while (1)
-	{
-		int		lcount;
-		byte	*lpdest;
-
-		lcount = pspanpackage->count;
-
-		if (lcount == -1)
-			return;
-
-		if (lcount)
-		{
-			lpdest = (byte*)pspanpackage->pdest;
-
-			do
-			{
-				*lpdest++ = color;
-			} while (--lcount);
-		}
-
-		pspanpackage++;
-	}
-}
-
-/*
-================
-D_RasterizeAliasPolySmooth
-================
-*/
-void D_RasterizeAliasPolySmooth (void)
+void D_RasterizeAliasColoredPolySmooth (void)
 {
 	int				initialleftheight, initialrightheight;
 	int				*plefttop, *prighttop, *pleftbottom, *prightbottom;
-	int				working_lstepx, originalcount;
+	int				working_lrstepx, working_lgstepx, working_lbstepx, originalcount;
 
-	plefttop = pedgetable->pleftedgevert0;
-	prighttop = pedgetable->prightedgevert0;
+	plefttop = pcolorededgetable->pleftedgevert0;
+	prighttop = pcolorededgetable->prightedgevert0;
 
-	pleftbottom = pedgetable->pleftedgevert1;
-	prightbottom = pedgetable->prightedgevert1;
+	pleftbottom = pcolorededgetable->pleftedgevert1;
+	prightbottom = pcolorededgetable->prightedgevert1;
 
 	initialleftheight = pleftbottom[1] - plefttop[1];
 	initialrightheight = prightbottom[1] - prighttop[1];
@@ -748,7 +707,7 @@ void D_RasterizeAliasPolySmooth (void)
 // set the s, t, and light gradients, which are consistent across the triangle
 // because being a triangle, things are affine
 //
-	D_PolysetCalcGradients (r_affinetridesc.skinwidth);
+	D_PolysetColoredCalcGradients (r_affinetridesc.skinwidth);
 
 //
 // rasterize the polygon
@@ -757,7 +716,7 @@ void D_RasterizeAliasPolySmooth (void)
 //
 // scan out the top (and possibly only) part of the left edge
 //
-	d_pedgespanpackage = a_spans;
+	d_pedgecoloredspanpackage = a_coloredspans;
 
 	ystart = plefttop[1];
 	d_aspancount = plefttop[0] - prighttop[0];
@@ -771,8 +730,10 @@ void D_RasterizeAliasPolySmooth (void)
 	d_sfrac = plefttop[2] & 0xFFFF;
 	d_tfrac = plefttop[3] & 0xFFFF;
 #endif
-	d_light = plefttop[4];
-	d_zi = plefttop[5];
+	d_lightr = plefttop[4];
+	d_lightg = plefttop[5];
+	d_lightb = plefttop[6];
+	d_zi = plefttop[7];
 
 	d_pdest = (byte *)d_viewbuffer +
 			ystart * screenwidth + plefttop[0];
@@ -780,23 +741,25 @@ void D_RasterizeAliasPolySmooth (void)
 
 	if (initialleftheight == 1)
 	{
-		d_pedgespanpackage->pdest = d_pdest;
-		d_pedgespanpackage->pz = d_pz;
-		d_pedgespanpackage->count = d_aspancount;
-		d_pedgespanpackage->ptex = d_ptex;
+		d_pedgecoloredspanpackage->pdest = d_pdest;
+		d_pedgecoloredspanpackage->pz = d_pz;
+		d_pedgecoloredspanpackage->count = d_aspancount;
+		d_pedgecoloredspanpackage->ptex = d_ptex;
 
-		d_pedgespanpackage->sfrac = d_sfrac;
-		d_pedgespanpackage->tfrac = d_tfrac;
+		d_pedgecoloredspanpackage->sfrac = d_sfrac;
+		d_pedgecoloredspanpackage->tfrac = d_tfrac;
 
-	// FIXME: need to clamp l, s, t, at both ends?
-		d_pedgespanpackage->light = d_light;
-		d_pedgespanpackage->zi = d_zi;
+	// FIXME: need to clamp lr, lg, lb, s, t, at both ends?
+		d_pedgecoloredspanpackage->lightr = d_lightr;
+		d_pedgecoloredspanpackage->lightg = d_lightg;
+		d_pedgecoloredspanpackage->lightb = d_lightb;
+		d_pedgecoloredspanpackage->zi = d_zi;
 
-		d_pedgespanpackage++;
+		d_pedgecoloredspanpackage++;
 	}
 	else
 	{
-		D_PolysetSetUpForLineScan(plefttop[0], plefttop[1],
+		D_PolysetColoredSetUpForLineScan(plefttop[0], plefttop[1],
 							  pleftbottom[0], pleftbottom[1]);
 
 	#if	id386
@@ -816,9 +779,17 @@ void D_RasterizeAliasPolySmooth (void)
 	// underflow (sort of turning the floor () we did in the gradient calcs into
 	// ceil (), but plus a little bit)
 		if (ubasestep < 0)
-			working_lstepx = r_lstepx - 1;
+		{
+			working_lrstepx = r_lrstepx - 1;
+			working_lgstepx = r_lgstepx - 1;
+			working_lbstepx = r_lbstepx - 1;
+		}
 		else
-			working_lstepx = r_lstepx;
+		{
+			working_lrstepx = r_lrstepx;
+			working_lgstepx = r_lgstepx;
+			working_lbstepx = r_lbstepx;
+		}
 
 		d_countextrastep = ubasestep + 1;
 		d_ptexbasestep = ((r_sstepy + r_sstepx * ubasestep) >> 16) +
@@ -831,7 +802,9 @@ void D_RasterizeAliasPolySmooth (void)
 		d_sfracbasestep = (r_sstepy + r_sstepx * ubasestep) & 0xFFFF;
 		d_tfracbasestep = (r_tstepy + r_tstepx * ubasestep) & 0xFFFF;
 	#endif
-		d_lightbasestep = r_lstepy + working_lstepx * ubasestep;
+		d_lightrbasestep = r_lrstepy + working_lrstepx * ubasestep;
+		d_lightgbasestep = r_lgstepy + working_lgstepx * ubasestep;
+		d_lightbbasestep = r_lbstepy + working_lbstepx * ubasestep;
 		d_zibasestep = r_zistepy + r_zistepx * ubasestep;
 
 		d_ptexextrastep = ((r_sstepy + r_sstepx * d_countextrastep) >> 16) +
@@ -844,21 +817,23 @@ void D_RasterizeAliasPolySmooth (void)
 		d_sfracextrastep = (r_sstepy + r_sstepx*d_countextrastep) & 0xFFFF;
 		d_tfracextrastep = (r_tstepy + r_tstepx*d_countextrastep) & 0xFFFF;
 	#endif
-		d_lightextrastep = d_lightbasestep + working_lstepx;
+		d_lightrextrastep = d_lightrbasestep + working_lrstepx;
+		d_lightgextrastep = d_lightgbasestep + working_lgstepx;
+		d_lightbextrastep = d_lightbbasestep + working_lbstepx;
 		d_ziextrastep = d_zibasestep + r_zistepx;
 
-		D_PolysetScanLeftEdge (initialleftheight);
+		D_PolysetColoredScanLeftEdge (initialleftheight);
 	}
 
 //
 // scan out the bottom part of the left edge, if it exists
 //
-	if (pedgetable->numleftedges == 2)
+	if (pcolorededgetable->numleftedges == 2)
 	{
 		int		height;
 
 		plefttop = pleftbottom;
-		pleftbottom = pedgetable->pleftedgevert2;
+		pleftbottom = pcolorededgetable->pleftedgevert2;
 
 		height = pleftbottom[1] - plefttop[1];
 
@@ -870,31 +845,35 @@ void D_RasterizeAliasPolySmooth (void)
 				(plefttop[3] >> 16) * r_affinetridesc.skinwidth;
 		d_sfrac = 0;
 		d_tfrac = 0;
-		d_light = plefttop[4];
-		d_zi = plefttop[5];
+		d_lightr = plefttop[4];
+		d_lightg = plefttop[5];
+		d_lightb = plefttop[6];
+		d_zi = plefttop[7];
 
 		d_pdest = (byte *)d_viewbuffer + ystart * screenwidth + plefttop[0];
 		d_pz = d_pzbuffer + ystart * d_zwidth + plefttop[0];
 
 		if (height == 1)
 		{
-			d_pedgespanpackage->pdest = d_pdest;
-			d_pedgespanpackage->pz = d_pz;
-			d_pedgespanpackage->count = d_aspancount;
-			d_pedgespanpackage->ptex = d_ptex;
+			d_pedgecoloredspanpackage->pdest = d_pdest;
+			d_pedgecoloredspanpackage->pz = d_pz;
+			d_pedgecoloredspanpackage->count = d_aspancount;
+			d_pedgecoloredspanpackage->ptex = d_ptex;
 
-			d_pedgespanpackage->sfrac = d_sfrac;
-			d_pedgespanpackage->tfrac = d_tfrac;
+			d_pedgecoloredspanpackage->sfrac = d_sfrac;
+			d_pedgecoloredspanpackage->tfrac = d_tfrac;
 
 		// FIXME: need to clamp l, s, t, at both ends?
-			d_pedgespanpackage->light = d_light;
-			d_pedgespanpackage->zi = d_zi;
+			d_pedgecoloredspanpackage->lightr = d_lightr;
+			d_pedgecoloredspanpackage->lightg = d_lightg;
+			d_pedgecoloredspanpackage->lightb = d_lightb;
+			d_pedgecoloredspanpackage->zi = d_zi;
 
-			d_pedgespanpackage++;
+			d_pedgecoloredspanpackage++;
 		}
 		else
 		{
-			D_PolysetSetUpForLineScan(plefttop[0], plefttop[1],
+			D_PolysetColoredSetUpForLineScan(plefttop[0], plefttop[1],
 								  pleftbottom[0], pleftbottom[1]);
 
 			d_pdestbasestep = screenwidth + ubasestep;
@@ -909,9 +888,17 @@ void D_RasterizeAliasPolySmooth (void)
 	#endif
 
 			if (ubasestep < 0)
-				working_lstepx = r_lstepx - 1;
+			{
+				working_lrstepx = r_lrstepx - 1;
+				working_lgstepx = r_lgstepx - 1;
+				working_lbstepx = r_lbstepx - 1;
+			}
 			else
-				working_lstepx = r_lstepx;
+			{
+				working_lrstepx = r_lrstepx;
+				working_lgstepx = r_lgstepx;
+				working_lbstepx = r_lbstepx;
+			}
 
 			d_countextrastep = ubasestep + 1;
 			d_ptexbasestep = ((r_sstepy + r_sstepx * ubasestep) >> 16) +
@@ -924,7 +911,9 @@ void D_RasterizeAliasPolySmooth (void)
 			d_sfracbasestep = (r_sstepy + r_sstepx * ubasestep) & 0xFFFF;
 			d_tfracbasestep = (r_tstepy + r_tstepx * ubasestep) & 0xFFFF;
 	#endif
-			d_lightbasestep = r_lstepy + working_lstepx * ubasestep;
+			d_lightrbasestep = r_lrstepy + working_lrstepx * ubasestep;
+			d_lightgbasestep = r_lgstepy + working_lgstepx * ubasestep;
+			d_lightbbasestep = r_lbstepy + working_lbstepx * ubasestep;
 			d_zibasestep = r_zistepy + r_zistepx * ubasestep;
 
 			d_ptexextrastep = ((r_sstepy + r_sstepx * d_countextrastep) >> 16) +
@@ -937,58 +926,60 @@ void D_RasterizeAliasPolySmooth (void)
 			d_sfracextrastep = (r_sstepy+r_sstepx*d_countextrastep) & 0xFFFF;
 			d_tfracextrastep = (r_tstepy+r_tstepx*d_countextrastep) & 0xFFFF;
 	#endif
-			d_lightextrastep = d_lightbasestep + working_lstepx;
+			d_lightrextrastep = d_lightrbasestep + working_lrstepx;
+			d_lightgextrastep = d_lightgbasestep + working_lgstepx;
+			d_lightbextrastep = d_lightbbasestep + working_lbstepx;
 			d_ziextrastep = d_zibasestep + r_zistepx;
 
-			D_PolysetScanLeftEdge (height);
+			D_PolysetColoredScanLeftEdge (height);
 		}
 	}
 
 // scan out the top (and possibly only) part of the right edge, updating the
 // count field
-	d_pedgespanpackage = a_spans;
+	d_pedgecoloredspanpackage = a_coloredspans;
 
-	D_PolysetSetUpForLineScan(prighttop[0], prighttop[1],
+	D_PolysetColoredSetUpForLineScan(prighttop[0], prighttop[1],
 						  prightbottom[0], prightbottom[1]);
 	d_aspancount = 0;
 	d_countextrastep = ubasestep + 1;
-	originalcount = a_spans[initialrightheight].count;
-	a_spans[initialrightheight].count = -999999; // mark end of the spanpackages
-	D_PolysetDrawSpans8 (a_spans);
+	originalcount = a_coloredspans[initialrightheight].count;
+	a_coloredspans[initialrightheight].count = -999999; // mark end of the spanpackages
+	D_PolysetDrawColoredSpans8 (a_coloredspans);
 
 // scan out the bottom part of the right edge, if it exists
-	if (pedgetable->numrightedges == 2)
+	if (pcolorededgetable->numrightedges == 2)
 	{
 		int				height;
-		spanpackage_t	*pstart;
+		coloredspanpackage_t	*pstart;
 
-		pstart = a_spans + initialrightheight;
+		pstart = a_coloredspans + initialrightheight;
 		pstart->count = originalcount;
 
 		d_aspancount = prightbottom[0] - prighttop[0];
 
 		prighttop = prightbottom;
-		prightbottom = pedgetable->prightedgevert2;
+		prightbottom = pcolorededgetable->prightedgevert2;
 
 		height = prightbottom[1] - prighttop[1];
 
-		D_PolysetSetUpForLineScan(prighttop[0], prighttop[1],
+		D_PolysetColoredSetUpForLineScan(prighttop[0], prighttop[1],
 							  prightbottom[0], prightbottom[1]);
 
 		d_countextrastep = ubasestep + 1;
-		a_spans[initialrightheight + height].count = -999999;
+		a_coloredspans[initialrightheight + height].count = -999999;
 											// mark end of the spanpackages
-		D_PolysetDrawSpans8 (pstart);
+		D_PolysetDrawColoredSpans8 (pstart);
 	}
 }
 
 
 /*
 ================
-D_PolysetSetEdgeTable
+ D_PolysetColoredSetEdgeTable
 ================
 */
-void D_PolysetSetEdgeTable (void)
+void D_PolysetColoredSetEdgeTable (void)
 {
 	int			edgetableindex;
 
@@ -999,14 +990,14 @@ void D_PolysetSetEdgeTable (void)
 // determine which edges are right & left, and the order in which
 // to rasterize them
 //
-	if (r_p0[1] >= r_p1[1])
+	if (r_p0colored[1] >= r_p1colored[1])
 	{
-		if (r_p0[1] == r_p1[1])
+		if (r_p0colored[1] == r_p1colored[1])
 		{
-			if (r_p0[1] < r_p2[1])
-				pedgetable = &edgetables[2];
+			if (r_p0colored[1] < r_p2colored[1])
+				pcolorededgetable = &colorededgetables[2];
 			else
-				pedgetable = &edgetables[5];
+				pcolorededgetable = &colorededgetables[5];
 
 			return;
 		}
@@ -1016,106 +1007,31 @@ void D_PolysetSetEdgeTable (void)
 		}
 	}
 
-	if (r_p0[1] == r_p2[1])
+	if (r_p0colored[1] == r_p2colored[1])
 	{
 		if (edgetableindex)
-			pedgetable = &edgetables[8];
+			pcolorededgetable = &colorededgetables[8];
 		else
-			pedgetable = &edgetables[9];
+			pcolorededgetable = &colorededgetables[9];
 
 		return;
 	}
-	else if (r_p1[1] == r_p2[1])
+	else if (r_p1colored[1] == r_p2colored[1])
 	{
 		if (edgetableindex)
-			pedgetable = &edgetables[10];
+			pcolorededgetable = &colorededgetables[10];
 		else
-			pedgetable = &edgetables[11];
+			pcolorededgetable = &colorededgetables[11];
 
 		return;
 	}
 
-	if (r_p0[1] > r_p2[1])
+	if (r_p0colored[1] > r_p2colored[1])
 		edgetableindex += 2;
 
-	if (r_p1[1] > r_p2[1])
+	if (r_p1colored[1] > r_p2colored[1])
 		edgetableindex += 4;
 
-	pedgetable = &edgetables[edgetableindex];
+	pcolorededgetable = &colorededgetables[edgetableindex];
 }
-
-
-#if 0
-
-void D_PolysetRecursiveDrawLine (int *lp1, int *lp2)
-{
-	int		d;
-	int		new[6];
-	int 	ofs;
-	
-	d = lp2[0] - lp1[0];
-	if (d < -1 || d > 1)
-		goto split;
-	d = lp2[1] - lp1[1];
-	if (d < -1 || d > 1)
-		goto split;
-
-	return;	// line is completed
-
-split:
-// split this edge
-	new[0] = (lp1[0] + lp2[0]) >> 1;
-	new[1] = (lp1[1] + lp2[1]) >> 1;
-	new[5] = (lp1[5] + lp2[5]) >> 1;
-	new[2] = (lp1[2] + lp2[2]) >> 1;
-	new[3] = (lp1[3] + lp2[3]) >> 1;
-	new[4] = (lp1[4] + lp2[4]) >> 1;
-
-// draw the point
-	ofs = d_scantable[new[1]] + new[0];
-	if (new[5] > d_pzbuffer[ofs])
-	{
-		int		pix;
-		
-		d_pzbuffer[ofs] = new[5];
-		pix = skintable[new[3]>>16][new[2]>>16];
-//		pix = ((byte *)acolormap)[pix + (new[4] & 0xFF00)];
-		d_viewbuffer[ofs] = pix;
-	}
-
-// recursively continue
-	D_PolysetRecursiveDrawLine (lp1, new);
-	D_PolysetRecursiveDrawLine (new, lp2);
-}
-
-void D_PolysetRecursiveTriangle2 (int *lp1, int *lp2, int *lp3)
-{
-	int		d;
-	int		new[4];
-	
-	d = lp2[0] - lp1[0];
-	if (d < -1 || d > 1)
-		goto split;
-	d = lp2[1] - lp1[1];
-	if (d < -1 || d > 1)
-		goto split;
-	return;
-
-split:
-// split this edge
-	new[0] = (lp1[0] + lp2[0]) >> 1;
-	new[1] = (lp1[1] + lp2[1]) >> 1;
-	new[5] = (lp1[5] + lp2[5]) >> 1;
-	new[2] = (lp1[2] + lp2[2]) >> 1;
-	new[3] = (lp1[3] + lp2[3]) >> 1;
-	new[4] = (lp1[4] + lp2[4]) >> 1;
-
-	D_PolysetRecursiveDrawLine (new, lp3);
-
-// recursively continue
-	D_PolysetRecursiveTriangle (lp1, new, lp3);
-	D_PolysetRecursiveTriangle (new, lp2, lp3);
-}
-
-#endif
 

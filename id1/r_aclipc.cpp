@@ -1,50 +1,31 @@
-/*
-Copyright (C) 1996-1997 Id Software, Inc.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
-// r_aclip.c: clip routines for drawing Alias models directly to the screen
+// r_aclipc.c: clip routines for drawing Alias models with colored lighting directly to the screen
 
 #include "quakedef.h"
 #include "r_local.h"
 #include "d_local.h"
 
-static finalvert_t		fv[2][8];
+static finalcoloredvert_t	fv[2][8];
 static auxvert_t		av[8];
 
-void R_AliasProjectFinalVert (finalvert_t *fv, auxvert_t *av);
-void R_Alias_clip_top (finalvert_t *pfv0, finalvert_t *pfv1,
-	finalvert_t *out);
-void R_Alias_clip_bottom (finalvert_t *pfv0, finalvert_t *pfv1,
-	finalvert_t *out);
-void R_Alias_clip_left (finalvert_t *pfv0, finalvert_t *pfv1,
-	finalvert_t *out);
-void R_Alias_clip_right (finalvert_t *pfv0, finalvert_t *pfv1,
-	finalvert_t *out);
+void R_AliasColoredProjectFinalVert (finalcoloredvert_t *fv, auxvert_t *av);
+void R_AliasColored_clip_top (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1,
+	finalcoloredvert_t *out);
+void R_AliasColored_clip_bottom (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1,
+	finalcoloredvert_t *out);
+void R_AliasColored_clip_left (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1,
+	finalcoloredvert_t *out);
+void R_AliasColored_clip_right (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1,
+	finalcoloredvert_t *out);
 
 
 /*
 ================
-R_Alias_clip_z
+R_AliasColored_clip_z
 
 pfv0 is the unclipped vertex, pfv1 is the z-clipped vertex
 ================
 */
-void R_Alias_clip_z (finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out)
+void R_AliasColored_clip_z (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1, finalcoloredvert_t *out)
 {
 	float		scale;
 	auxvert_t	*pav0, *pav1, avout;
@@ -64,6 +45,8 @@ void R_Alias_clip_z (finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out)
 		out->v[2] =	pfv0->v[2] + (pfv1->v[2] - pfv0->v[2]) * scale;
 		out->v[3] =	pfv0->v[3] + (pfv1->v[3] - pfv0->v[3]) * scale;
 		out->v[4] =	pfv0->v[4] + (pfv1->v[4] - pfv0->v[4]) * scale;
+		out->v[5] =	pfv0->v[5] + (pfv1->v[5] - pfv0->v[5]) * scale;
+		out->v[6] =	pfv0->v[6] + (pfv1->v[6] - pfv0->v[6]) * scale;
 	}
 	else
 	{
@@ -77,9 +60,11 @@ void R_Alias_clip_z (finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out)
 		out->v[2] =	pfv1->v[2] + (pfv0->v[2] - pfv1->v[2]) * scale;
 		out->v[3] =	pfv1->v[3] + (pfv0->v[3] - pfv1->v[3]) * scale;
 		out->v[4] =	pfv1->v[4] + (pfv0->v[4] - pfv1->v[4]) * scale;
+		out->v[5] =	pfv1->v[5] + (pfv0->v[5] - pfv1->v[5]) * scale;
+		out->v[6] =	pfv1->v[6] + (pfv0->v[6] - pfv1->v[6]) * scale;
 	}
 
-	R_AliasProjectFinalVert (out, &avout);
+	R_AliasColoredProjectFinalVert (out, &avout);
 
 	if (out->v[0] < r_refdef.aliasvrect.x)
 		out->flags |= ALIAS_LEFT_CLIP;
@@ -94,7 +79,7 @@ void R_Alias_clip_z (finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out)
 
 #if	!id386
 
-void R_Alias_clip_left (finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out)
+void R_AliasColored_clip_left (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1, finalcoloredvert_t *out)
 {
 	float		scale;
 	int			i;
@@ -103,21 +88,21 @@ void R_Alias_clip_left (finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out)
 	{
 		scale = (float)(r_refdef.aliasvrect.x - pfv0->v[0]) /
 				(pfv1->v[0] - pfv0->v[0]);
-		for (i=0 ; i<6 ; i++)
+		for (i=0 ; i<8 ; i++)
 			out->v[i] = pfv0->v[i] + (pfv1->v[i] - pfv0->v[i])*scale + 0.5;
 	}
 	else
 	{
 		scale = (float)(r_refdef.aliasvrect.x - pfv1->v[0]) /
 				(pfv0->v[0] - pfv1->v[0]);
-		for (i=0 ; i<6 ; i++)
+		for (i=0 ; i<8 ; i++)
 			out->v[i] = pfv1->v[i] + (pfv0->v[i] - pfv1->v[i])*scale + 0.5;
 	}
 }
 
 
-void R_Alias_clip_right (finalvert_t *pfv0, finalvert_t *pfv1,
-	finalvert_t *out)
+void R_AliasColored_clip_right (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1,
+	finalcoloredvert_t *out)
 {
 	float		scale;
 	int			i;
@@ -126,20 +111,20 @@ void R_Alias_clip_right (finalvert_t *pfv0, finalvert_t *pfv1,
 	{
 		scale = (float)(r_refdef.aliasvrectright - pfv0->v[0]) /
 				(pfv1->v[0] - pfv0->v[0]);
-		for (i=0 ; i<6 ; i++)
+		for (i=0 ; i<8 ; i++)
 			out->v[i] = pfv0->v[i] + (pfv1->v[i] - pfv0->v[i])*scale + 0.5;
 	}
 	else
 	{
 		scale = (float)(r_refdef.aliasvrectright - pfv1->v[0]) /
 				(pfv0->v[0] - pfv1->v[0]);
-		for (i=0 ; i<6 ; i++)
+		for (i=0 ; i<8 ; i++)
 			out->v[i] = pfv1->v[i] + (pfv0->v[i] - pfv1->v[i])*scale + 0.5;
 	}
 }
 
 
-void R_Alias_clip_top (finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out)
+void R_AliasColored_clip_top (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1, finalcoloredvert_t *out)
 {
 	float		scale;
 	int			i;
@@ -148,21 +133,21 @@ void R_Alias_clip_top (finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out)
 	{
 		scale = (float)(r_refdef.aliasvrect.y - pfv0->v[1]) /
 				(pfv1->v[1] - pfv0->v[1]);
-		for (i=0 ; i<6 ; i++)
+		for (i=0 ; i<8 ; i++)
 			out->v[i] = pfv0->v[i] + (pfv1->v[i] - pfv0->v[i])*scale + 0.5;
 	}
 	else
 	{
 		scale = (float)(r_refdef.aliasvrect.y - pfv1->v[1]) /
 				(pfv0->v[1] - pfv1->v[1]);
-		for (i=0 ; i<6 ; i++)
+		for (i=0 ; i<8 ; i++)
 			out->v[i] = pfv1->v[i] + (pfv0->v[i] - pfv1->v[i])*scale + 0.5;
 	}
 }
 
 
-void R_Alias_clip_bottom (finalvert_t *pfv0, finalvert_t *pfv1,
-	finalvert_t *out)
+void R_AliasColored_clip_bottom (finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1,
+	finalcoloredvert_t *out)
 {
 	float		scale;
 	int			i;
@@ -172,7 +157,7 @@ void R_Alias_clip_bottom (finalvert_t *pfv0, finalvert_t *pfv1,
 		scale = (float)(r_refdef.aliasvrectbottom - pfv0->v[1]) /
 				(pfv1->v[1] - pfv0->v[1]);
 
-		for (i=0 ; i<6 ; i++)
+		for (i=0 ; i<8 ; i++)
 			out->v[i] = pfv0->v[i] + (pfv1->v[i] - pfv0->v[i])*scale + 0.5;
 	}
 	else
@@ -180,7 +165,7 @@ void R_Alias_clip_bottom (finalvert_t *pfv0, finalvert_t *pfv1,
 		scale = (float)(r_refdef.aliasvrectbottom - pfv1->v[1]) /
 				(pfv0->v[1] - pfv1->v[1]);
 
-		for (i=0 ; i<6 ; i++)
+		for (i=0 ; i<8 ; i++)
 			out->v[i] = pfv1->v[i] + (pfv0->v[i] - pfv1->v[i])*scale + 0.5;
 	}
 }
@@ -188,8 +173,8 @@ void R_Alias_clip_bottom (finalvert_t *pfv0, finalvert_t *pfv1,
 #endif
 
 
-int R_AliasClip (finalvert_t *in, finalvert_t *out, int flag, int count,
-	void(*clip)(finalvert_t *pfv0, finalvert_t *pfv1, finalvert_t *out) )
+int R_AliasColoredClip (finalcoloredvert_t *in, finalcoloredvert_t *out, int flag, int count,
+	void(*clip)(finalcoloredvert_t *pfv0, finalcoloredvert_t *pfv1, finalcoloredvert_t *out) )
 {
 	int			i,j,k;
 	int			flags, oldflags;
@@ -230,10 +215,10 @@ int R_AliasClip (finalvert_t *in, finalvert_t *out, int flag, int count,
 
 /*
 ================
-R_AliasClipTriangle
+R_AliasColoredClipTriangle
 ================
 */
-void R_AliasClipTriangle (mtriangle_t *ptri)
+void R_AliasColoredClipTriangle (mtriangle_t *ptri)
 {
 	int				i, k, pingpong;
 	mtriangle_t		mtri;
@@ -242,15 +227,15 @@ void R_AliasClipTriangle (mtriangle_t *ptri)
 // copy vertexes and fix seam texture coordinates
 	if (ptri->facesfront)
 	{
-		fv[0][0] = pfinalverts[ptri->vertindex[0]];
-		fv[0][1] = pfinalverts[ptri->vertindex[1]];
-		fv[0][2] = pfinalverts[ptri->vertindex[2]];
+		fv[0][0] = pfinalcoloredverts[ptri->vertindex[0]];
+		fv[0][1] = pfinalcoloredverts[ptri->vertindex[1]];
+		fv[0][2] = pfinalcoloredverts[ptri->vertindex[2]];
 	}
 	else
 	{
 		for (i=0 ; i<3 ; i++)
 		{
-			fv[0][i] = pfinalverts[ptri->vertindex[i]];
+			fv[0][i] = pfinalcoloredverts[ptri->vertindex[i]];
 	
 			if (!ptri->facesfront && (fv[0][i].flags & ALIAS_ONSEAM) )
 				fv[0][i].v[2] += r_affinetridesc.seamfixupX16;
@@ -265,7 +250,7 @@ void R_AliasClipTriangle (mtriangle_t *ptri)
 		for (i=0 ; i<3 ; i++)
 			av[i] = pauxverts[ptri->vertindex[i]];
 
-		k = R_AliasClip (fv[0], fv[1], ALIAS_Z_CLIP, 3, R_Alias_clip_z);
+		k = R_AliasColoredClip (fv[0], fv[1], ALIAS_Z_CLIP, 3, R_AliasColored_clip_z);
 		if (k == 0)
 			return;
 
@@ -280,8 +265,8 @@ void R_AliasClipTriangle (mtriangle_t *ptri)
 
 	if (clipflags & ALIAS_LEFT_CLIP)
 	{
-		k = R_AliasClip (fv[pingpong], fv[pingpong ^ 1],
-							ALIAS_LEFT_CLIP, k, R_Alias_clip_left);
+		k = R_AliasColoredClip (fv[pingpong], fv[pingpong ^ 1],
+							ALIAS_LEFT_CLIP, k, R_AliasColored_clip_left);
 		if (k == 0)
 			return;
 
@@ -290,8 +275,8 @@ void R_AliasClipTriangle (mtriangle_t *ptri)
 
 	if (clipflags & ALIAS_RIGHT_CLIP)
 	{
-		k = R_AliasClip (fv[pingpong], fv[pingpong ^ 1],
-							ALIAS_RIGHT_CLIP, k, R_Alias_clip_right);
+		k = R_AliasColoredClip (fv[pingpong], fv[pingpong ^ 1],
+							ALIAS_RIGHT_CLIP, k, R_AliasColored_clip_right);
 		if (k == 0)
 			return;
 
@@ -300,8 +285,8 @@ void R_AliasClipTriangle (mtriangle_t *ptri)
 
 	if (clipflags & ALIAS_BOTTOM_CLIP)
 	{
-		k = R_AliasClip (fv[pingpong], fv[pingpong ^ 1],
-							ALIAS_BOTTOM_CLIP, k, R_Alias_clip_bottom);
+		k = R_AliasColoredClip (fv[pingpong], fv[pingpong ^ 1],
+							ALIAS_BOTTOM_CLIP, k, R_AliasColored_clip_bottom);
 		if (k == 0)
 			return;
 
@@ -310,8 +295,8 @@ void R_AliasClipTriangle (mtriangle_t *ptri)
 
 	if (clipflags & ALIAS_TOP_CLIP)
 	{
-		k = R_AliasClip (fv[pingpong], fv[pingpong ^ 1],
-							ALIAS_TOP_CLIP, k, R_Alias_clip_top);
+		k = R_AliasColoredClip (fv[pingpong], fv[pingpong ^ 1],
+							ALIAS_TOP_CLIP, k, R_AliasColored_clip_top);
 		if (k == 0)
 			return;
 
@@ -336,8 +321,8 @@ void R_AliasClipTriangle (mtriangle_t *ptri)
 // draw triangles
 	mtri.facesfront = ptri->facesfront;
 	r_affinetridesc.ptriangles = &mtri;
-	r_affinetridesc.pfinalverts = fv[pingpong];
-	r_affinetridesc.pfinalcoloredverts = NULL;
+	r_affinetridesc.pfinalverts = NULL;
+	r_affinetridesc.pfinalcoloredverts = fv[pingpong];
 
 // FIXME: do all at once as trifan?
 	mtri.vertindex[0] = 0;

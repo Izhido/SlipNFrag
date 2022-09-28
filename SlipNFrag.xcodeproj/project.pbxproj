@@ -168,9 +168,18 @@
 		2880A4CD22C5774300AF513D /* net_udp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4CC22C5774300AF513D /* net_udp.cpp */; };
 		2883A95C280A1FC2009E4681 /* stb_vorbis.c in Sources */ = {isa = PBXBuildFile; fileRef = 2883A669280A1FC1009E4681 /* stb_vorbis.c */; };
 		2883A95D280A1FC2009E4681 /* stb_vorbis.c in Sources */ = {isa = PBXBuildFile; fileRef = 2883A669280A1FC1009E4681 /* stb_vorbis.c */; };
+		2884737E28E33D9E00B8A885 /* d_polycl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2884737D28E33D9E00B8A885 /* d_polycl.cpp */; };
+		2884737F28E33D9E00B8A885 /* d_polycl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2884737D28E33D9E00B8A885 /* d_polycl.cpp */; };
+		2884738028E33D9E00B8A885 /* d_polycl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2884737D28E33D9E00B8A885 /* d_polycl.cpp */; };
 		2886A080280A21A100505651 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
 		2886A081280A21A100505651 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
 		2886A082280A21A100505651 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
+		28A4529228E2A77F009EFBCE /* r_aclipc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529128E29DFD009EFBCE /* r_aclipc.cpp */; };
+		28A4529328E2A77F009EFBCE /* r_aliasc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529028E29DFD009EFBCE /* r_aliasc.cpp */; };
+		28A4529428E2A780009EFBCE /* r_aclipc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529128E29DFD009EFBCE /* r_aclipc.cpp */; };
+		28A4529528E2A780009EFBCE /* r_aliasc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529028E29DFD009EFBCE /* r_aliasc.cpp */; };
+		28A4529628E2A780009EFBCE /* r_aclipc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529128E29DFD009EFBCE /* r_aclipc.cpp */; };
+		28A4529728E2A780009EFBCE /* r_aliasc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529028E29DFD009EFBCE /* r_aliasc.cpp */; };
 		28A5375F23106A85005007EE /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28A5375E23106A85005007EE /* GameController.framework */; };
 		28AA1D9722C07E2D00264AD0 /* snd_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */; };
 		28AA1DA122C089E600264AD0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28AA1DA022C089E600264AD0 /* AudioToolbox.framework */; };
@@ -420,6 +429,9 @@
 		2880A4CB22C5774300AF513D /* net_udp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = net_udp.h; sourceTree = "<group>"; };
 		2880A4CC22C5774300AF513D /* net_udp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = net_udp.cpp; sourceTree = "<group>"; };
 		2883A669280A1FC1009E4681 /* stb_vorbis.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = stb_vorbis.c; sourceTree = "<group>"; };
+		2884737D28E33D9E00B8A885 /* d_polycl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_polycl.cpp; sourceTree = "<group>"; };
+		28A4529028E29DFD009EFBCE /* r_aliasc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_aliasc.cpp; sourceTree = "<group>"; };
+		28A4529128E29DFD009EFBCE /* r_aclipc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_aclipc.cpp; sourceTree = "<group>"; };
 		28A5375E23106A85005007EE /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = snd_macos.cpp; sourceTree = "<group>"; };
 		28AA1D9E22C0881200264AD0 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
@@ -600,6 +612,7 @@
 				287A324E229DC0DF00AE6BFA /* d_local.h */,
 				283D4BC8229E0AFD00D68A47 /* d_modech.cpp */,
 				283D4BD2229E0DE200D68A47 /* d_part.cpp */,
+				2884737D28E33D9E00B8A885 /* d_polycl.cpp */,
 				283D4BDD229E102700D68A47 /* d_polyse.cpp */,
 				283D4BBA229DFA1400D68A47 /* d_scan.cpp */,
 				283D4BD8229E0F5100D68A47 /* d_sky.cpp */,
@@ -643,7 +656,9 @@
 				287A323E229DBF1100AE6BFA /* progs.h */,
 				287A3238229DBE2400AE6BFA /* protocol.h */,
 				283D4BE0229E11A300D68A47 /* r_aclip.cpp */,
+				28A4529128E29DFD009EFBCE /* r_aclipc.cpp */,
 				283D4BDA229E0F9700D68A47 /* r_alias.cpp */,
+				28A4529028E29DFD009EFBCE /* r_aliasc.cpp */,
 				283D4BCA229E0BE200D68A47 /* r_bsp.cpp */,
 				283D4BC2229E01A100D68A47 /* r_draw.cpp */,
 				283D4BB2229DF89B00D68A47 /* r_edge.cpp */,
@@ -850,12 +865,14 @@
 				28BA2A83229F403C001830E9 /* d_polyse.cpp in Sources */,
 				28BA2A9E229F403C001830E9 /* r_main.cpp in Sources */,
 				28BA2A82229F403C001830E9 /* d_part.cpp in Sources */,
+				28A4529428E2A780009EFBCE /* r_aclipc.cpp in Sources */,
 				2880A4CA22C576E000AF513D /* net_dgrm.cpp in Sources */,
 				28BA2AA1229F403C001830E9 /* r_sky.cpp in Sources */,
 				28BA2A8C229F403C001830E9 /* keys.cpp in Sources */,
 				2880A4CD22C5774300AF513D /* net_udp.cpp in Sources */,
 				28BA2A8A229F403C001830E9 /* host.cpp in Sources */,
 				2849D47B260C41C900B4D4F0 /* cd_macos.cpp in Sources */,
+				28A4529528E2A780009EFBCE /* r_aliasc.cpp in Sources */,
 				28BA2A96229F403C001830E9 /* pr_exec.cpp in Sources */,
 				28BA2AAB229F403C001830E9 /* view.cpp in Sources */,
 				28BA2AA3229F403C001830E9 /* r_surf.cpp in Sources */,
@@ -890,6 +907,7 @@
 				28BA2A9C229F403C001830E9 /* r_efrag.cpp in Sources */,
 				28BA2A7C229F403C001830E9 /* console.cpp in Sources */,
 				28BA2AA9229F403C001830E9 /* sv_phys.cpp in Sources */,
+				2884737F28E33D9E00B8A885 /* d_polycl.cpp in Sources */,
 				28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */,
 				286DF6C92324813B00B7537E /* net_sock.cpp in Sources */,
 				28BA2AA2229F403C001830E9 /* r_sprite.cpp in Sources */,
@@ -988,16 +1006,19 @@
 				282AF304250E774A00E171DA /* view.cpp in Sources */,
 				282AF2F8250E773500E171DA /* r_sprite.cpp in Sources */,
 				28E95FAA260C50A0000DDF6C /* cd_ios.cpp in Sources */,
+				2884738028E33D9E00B8A885 /* d_polycl.cpp in Sources */,
 				282AF2D9250E770A00E171DA /* d_sprite.cpp in Sources */,
 				282AF2D2250E770A00E171DA /* d_init.cpp in Sources */,
 				2886A081280A21A100505651 /* snd_float_dma.cpp in Sources */,
 				282AF2EC250E773500E171DA /* pr_exec.cpp in Sources */,
 				282AF2F4250E773500E171DA /* r_main.cpp in Sources */,
 				282AF2D5250E770A00E171DA /* d_part.cpp in Sources */,
+				28A4529728E2A780009EFBCE /* r_aliasc.cpp in Sources */,
 				282AF2E5250E772100E171DA /* net_main.cpp in Sources */,
 				282AF306250E774A00E171DA /* world.cpp in Sources */,
 				282AF2BF250E5B8200E171DA /* main.m in Sources */,
 				282AF2CB250E770A00E171DA /* cl_tent.cpp in Sources */,
+				28A4529628E2A780009EFBCE /* r_aclipc.cpp in Sources */,
 				282AF2DF250E770A00E171DA /* keys.cpp in Sources */,
 				282AF2CF250E770A00E171DA /* crc.cpp in Sources */,
 				282AF311250E781400E171DA /* snd_ios.cpp in Sources */,
@@ -1021,6 +1042,7 @@
 				283D4BC3229E01A100D68A47 /* r_draw.cpp in Sources */,
 				283D4BD5229E0E1000D68A47 /* keys.cpp in Sources */,
 				283D4BEE229E146700D68A47 /* pr_cmds.cpp in Sources */,
+				28A4529228E2A77F009EFBCE /* r_aclipc.cpp in Sources */,
 				283D4BC7229E0A6400D68A47 /* sbar.cpp in Sources */,
 				283D4BF2229E16D400D68A47 /* r_vars.cpp in Sources */,
 				283D4BAB229DF50B00D68A47 /* r_sky.cpp in Sources */,
@@ -1048,6 +1070,7 @@
 				283D4BCF229E0CD400D68A47 /* sv_main.cpp in Sources */,
 				283D4BBB229DFA1400D68A47 /* d_scan.cpp in Sources */,
 				287A3229229DBC4D00AE6BFA /* sys_null.cpp in Sources */,
+				2884737E28E33D9E00B8A885 /* d_polycl.cpp in Sources */,
 				287A3251229DC1DC00AE6BFA /* common.cpp in Sources */,
 				283D4BA3229DEE8000D68A47 /* host_cmd.cpp in Sources */,
 				283D4B8E229DDA0000D68A47 /* net_main.cpp in Sources */,
@@ -1060,6 +1083,7 @@
 				283D4BCD229E0C3600D68A47 /* r_efrag.cpp in Sources */,
 				283D4B93229DDBB700D68A47 /* cl_tent.cpp in Sources */,
 				283D4BD7229E0F1E00D68A47 /* nonintel.cpp in Sources */,
+				28A4529328E2A77F009EFBCE /* r_aliasc.cpp in Sources */,
 				283D4BCB229E0BE200D68A47 /* r_bsp.cpp in Sources */,
 				283D4BE5229E125600D68A47 /* net_vcr.cpp in Sources */,
 				287A3227229DBC4D00AE6BFA /* snd_null.cpp in Sources */,

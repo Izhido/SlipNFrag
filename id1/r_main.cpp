@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void		*colormap;
 vec3_t		viewlightvec;
 alight_t	r_viewlighting = {128, 192, viewlightvec};
+acoloredlight_t	r_viewcoloredlighting = { { 128, 128, 128 }, { 192, 192, 192 }, viewlightvec};
 float		r_time1;
 int			r_pixbytes = 1;
 float		r_aliasuvscale = 1.0;
@@ -704,6 +705,99 @@ void R_DrawEntitiesOnList (void)
 	}
 }
 
+
+/*
+=============
+R_DrawColoredEntitiesOnList
+=============
+*/
+void R_DrawColoredEntitiesOnList (void)
+{
+	int			i;
+	argbcolor_t	j;
+	int			lnum;
+	acoloredlight_t	lighting;
+// FIXME: remove and do real lighting
+	float		lightvec[3] = {-1, 0, 0};
+	vec3_t		dist;
+	float		add;
+
+	if (!r_drawentities.value)
+		return;
+
+	for (i=0 ; i<cl_visedicts.size() ; i++)
+	{
+		currententity = cl_visedicts[i];
+
+		if (currententity == &cl_entities[cl.viewentity])
+			continue;	// don't draw the player
+
+		switch (currententity->model->type)
+		{
+		case mod_sprite:
+			VectorCopy (currententity->origin, r_entorigin);
+			VectorSubtract (r_origin, r_entorigin, modelorg);
+			R_DrawSprite ();
+			break;
+
+		case mod_alias:
+			VectorCopy (currententity->origin, r_entorigin);
+			VectorSubtract (r_origin, r_entorigin, modelorg);
+
+		// see if the bounding box lets us trivially reject, also sets
+		// trivial accept status
+			if (R_AliasColoredCheckBBox ())
+			{
+				j = R_ColoredLightPoint (currententity->origin);
+	
+				lighting.ambientlight = j;
+				lighting.shadelight = j;
+
+				lighting.plightvec = lightvec;
+
+				for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
+				{
+					if (cl_dlights[lnum].die >= cl.time)
+					{
+						VectorSubtract (currententity->origin,
+										cl_dlights[lnum].origin,
+										dist);
+						add = cl_dlights[lnum].radius - Length(dist);
+	
+						if (add > 0)
+						{
+							lighting.ambientlight.color[0] += add;
+							lighting.ambientlight.color[1] += add;
+							lighting.ambientlight.color[2] += add;
+						}
+					}
+				}
+	
+			// clamp lighting so it doesn't overbright as much
+				if (lighting.ambientlight.color[0] > 128)
+					lighting.ambientlight.color[0] = 128;
+				if (lighting.ambientlight.color[1] > 128)
+					lighting.ambientlight.color[1] = 128;
+				if (lighting.ambientlight.color[2] > 128)
+					lighting.ambientlight.color[2] = 128;
+				if (lighting.ambientlight.color[0] + lighting.shadelight.color[0] > 192)
+					lighting.shadelight.color[0] = 192 - lighting.ambientlight.color[0];
+				if (lighting.ambientlight.color[1] + lighting.shadelight.color[1] > 192)
+					lighting.shadelight.color[1] = 192 - lighting.ambientlight.color[1];
+				if (lighting.ambientlight.color[2] + lighting.shadelight.color[2] > 192)
+					lighting.shadelight.color[2] = 192 - lighting.ambientlight.color[2];
+
+				R_AliasColoredDrawModel (&lighting);
+			}
+
+			break;
+
+		default:
+			break;
+		}
+	}
+}
+
 /*
 =============
 R_DrawViewModel
@@ -772,6 +866,93 @@ void R_DrawViewModel (void)
 
 
 	R_AliasDrawModel (&r_viewlighting);
+}
+
+
+/*
+=============
+R_DrawColoredViewModel
+=============
+*/
+void R_DrawColoredViewModel (void)
+{
+// FIXME: remove and do real lighting
+	float		lightvec[3] = {-1, 0, 0};
+	argbcolor_t	j;
+	int			lnum;
+	vec3_t		dist;
+	float		add;
+	dlight_t	*dl;
+	
+	if (!r_drawviewmodel.value || (r_fov_greater_than_90 && !r_skip_fov_check))
+		return;
+
+	if (cl.items & IT_INVISIBILITY)
+		return;
+
+	if (cl.stats[STAT_HEALTH] <= 0)
+		return;
+
+	currententity = &cl.viewent;
+	if (!currententity->model)
+		return;
+
+	VectorCopy (currententity->origin, r_entorigin);
+	VectorSubtract (r_origin, r_entorigin, modelorg);
+
+	VectorCopy (vup, viewlightvec);
+	VectorInverse (viewlightvec);
+
+	j = R_ColoredLightPoint (currententity->origin);
+
+	if (j.color[0] < 24)
+		j.color[0] = 24;		// allways give some light on gun
+	if (j.color[1] < 24)
+		j.color[1] = 24;
+	if (j.color[2] < 24)
+		j.color[2] = 24;
+	r_viewcoloredlighting.ambientlight = j;
+	r_viewcoloredlighting.shadelight = j;
+
+// add dynamic lights
+	for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
+	{
+		dl = &cl_dlights[lnum];
+		if (!dl->radius)
+			continue;
+		if (!dl->radius)
+			continue;
+		if (dl->die < cl.time)
+			continue;
+
+		VectorSubtract (currententity->origin, dl->origin, dist);
+		add = dl->radius - Length(dist);
+		if (add > 0)
+		{
+			r_viewcoloredlighting.ambientlight.color[0] += add;
+			r_viewcoloredlighting.ambientlight.color[1] += add;
+			r_viewcoloredlighting.ambientlight.color[2] += add;
+		}
+	}
+
+// clamp lighting so it doesn't overbright as much
+	if (r_viewcoloredlighting.ambientlight.color[0] > 128)
+		r_viewcoloredlighting.ambientlight.color[0] = 128;
+	if (r_viewcoloredlighting.ambientlight.color[1] > 128)
+		r_viewcoloredlighting.ambientlight.color[1] = 128;
+	if (r_viewcoloredlighting.ambientlight.color[2] > 128)
+		r_viewcoloredlighting.ambientlight.color[2] = 128;
+	if (r_viewcoloredlighting.ambientlight.color[0] + r_viewcoloredlighting.shadelight.color[0] > 192)
+		r_viewcoloredlighting.shadelight.color[0] = 192 - r_viewcoloredlighting.ambientlight.color[0];
+	if (r_viewcoloredlighting.ambientlight.color[1] + r_viewcoloredlighting.shadelight.color[1] > 192)
+		r_viewcoloredlighting.shadelight.color[1] = 192 - r_viewcoloredlighting.ambientlight.color[1];
+	if (r_viewcoloredlighting.ambientlight.color[2] + r_viewcoloredlighting.shadelight.color[2] > 192)
+		r_viewcoloredlighting.shadelight.color[2] = 192 - r_viewcoloredlighting.ambientlight.color[2];
+
+	r_viewcoloredlighting.plightvec = lightvec;
+
+
+	R_AliasColoredDrawModel (&r_viewcoloredlighting);
 }
 
 
@@ -1112,7 +1293,10 @@ SetVisibilityByPassages ();
 		de_time1 = se_time2;
 	}
 
-	R_DrawEntitiesOnList ();
+	if (!d_uselists && cl.worldmodel->lightRGBdata != NULL)
+		R_DrawColoredEntitiesOnList ();
+	else
+		R_DrawEntitiesOnList ();
 
 	if (r_dspeeds.value)
 	{
@@ -1120,7 +1304,10 @@ SetVisibilityByPassages ();
 		dv_time1 = de_time2;
 	}
 
-	R_DrawViewModel ();
+	if (!d_uselists && cl.worldmodel->lightRGBdata != NULL)
+		R_DrawColoredViewModel ();
+	else
+		R_DrawViewModel ();
 
 	if (r_dspeeds.value)
 	{

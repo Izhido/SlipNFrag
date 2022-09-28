@@ -67,6 +67,12 @@ typedef struct finalvert_s {
 	float	reserved;
 } finalvert_t;
 
+typedef struct finalcoloredvert_s {
+	int		v[8];		// u, v, s, t, light r, light g, light b, 1/z
+	int		flags;
+	float	reserved;
+} finalcoloredvert_t;
+
 // !!! if this is changed, it must be changed in d_ifacea.h too !!!
 typedef struct
 {
@@ -76,6 +82,7 @@ typedef struct
 	int					skinheight;
 	mtriangle_t			*ptriangles;
 	finalvert_t			*pfinalverts;
+	finalcoloredvert_t	*pfinalcoloredverts;
 	int					numtriangles;
 	int					drawtype;
 	int					seamfixupX16;
@@ -131,7 +138,9 @@ void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height);
 void D_DisableBackBufferAccess (void);
 void D_EndDirectRect (int x, int y, int width, int height);
 void D_PolysetDraw (void);
+void D_PolysetDrawColored (void);
 void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts);
+void D_PolysetDrawFinalColoredVerts (finalcoloredvert_t *fv, int numverts);
 void D_DrawParticle (particle_t *pparticle);
 void D_DrawPoly (void);
 void D_DrawSprite (void);
@@ -172,6 +181,7 @@ extern int				r_skyRGBAheight;
 #define TRANSPARENT_COLOR	0xFF
 
 extern void *acolormap;	// FIXME: should go away
+extern byte* abasepal;
 
 //=======================================================================//
 

@@ -38,6 +38,20 @@ typedef struct {
 	float		*plightvec;
 } alight_t;
 
+typedef struct {
+	int 		color[3];
+} argbcolor_t;
+
+typedef struct {
+	argbcolor_t	ambientlight;
+	argbcolor_t	shadelight;
+	float		*plightvec;
+} acoloredlight_t;
+
+typedef struct {
+	float 		color[3];
+} argbcolorf_t;
+
 //===========================================================================
 // clipped bmodel edges
 
@@ -151,6 +165,7 @@ void R_DrawSubmodelPolygonsToLists (model_t* pmodel);
 void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel);
 
 void R_AliasDrawModel (alight_t *plighting);
+void R_AliasColoredDrawModel (acoloredlight_t *plighting);
 void R_BeginEdgeFrame (void);
 void R_ScanEdges (void);
 void D_DrawSurfaces (void);
@@ -200,9 +215,11 @@ extern int				a_skinwidth;
 extern aliashdr_t		*paliashdr;
 extern mdl_t			*pmdl;
 extern finalvert_t		*pfinalverts;
+extern finalcoloredvert_t	*pfinalcoloredverts;
 extern auxvert_t		*pauxverts;
 
 qboolean R_AliasCheckBBox (void);
+qboolean R_AliasColoredCheckBBox (void);
 
 //=========================================================
 // turbulence stuff
@@ -247,6 +264,7 @@ extern qboolean r_increaseledges;
 extern mvertex_t	*r_pcurrentvertbase;
 
 void R_AliasClipTriangle (mtriangle_t *ptri);
+void R_AliasColoredClipTriangle (mtriangle_t *ptri);
 
 extern float	r_time1;
 extern float	dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
@@ -288,6 +306,7 @@ void R_PrintTimes (void);
 void R_PrintDSpeeds (void);
 void R_AnimateLight (void);
 int R_LightPoint (const vec3_t p);
+argbcolor_t R_ColoredLightPoint (const vec3_t p);
 void R_SetupFrame (void);
 void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1);
 void R_ClipEdge (const mvertex_t *pv0, const mvertex_t *pv1, clipplane_t *clip);
