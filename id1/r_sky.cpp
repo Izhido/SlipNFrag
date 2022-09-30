@@ -475,7 +475,7 @@ qboolean R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*
                 *target++ = lastCoverageEntry;
 				search = false;
             }
-            if (lastCoverageEntry > 0)
+            else if (lastCoverageEntry > 0)
             {
                 auto deltaR = r - lastCoverageR;
 				auto deltaG = g - lastCoverageG;
