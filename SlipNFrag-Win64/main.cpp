@@ -47,10 +47,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             auto width = LOWORD(lParam);
             auto height = HIWORD(lParam);
-            auto left = width / 2 - 75;
-            auto top = height / 2 - 75;
-            SetWindowPos(appState.playButton, NULL, left, top, 150, 150, 0);
-            InvalidateRect(appState.playButton, NULL, TRUE);
+            if (width > 0 && height > 0)
+            {
+                auto left = width / 2 - 75;
+                auto top = height / 2 - 75;
+                SetWindowPos(appState.playButton, NULL, left, top, 150, 150, 0);
+                UpdateWindow(appState.playButton);
+            }
         }
         break;
     }
