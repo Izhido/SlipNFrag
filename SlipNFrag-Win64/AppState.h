@@ -14,7 +14,7 @@ struct AppState
     BOOL usesDarkMode;
     int nonClientWidth;
     int nonClientHeight;
-    HWND startButton;
+    HWND playButton;
     bool started;
     bool painting;
     LARGE_INTEGER previousTime;

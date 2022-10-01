@@ -13,7 +13,7 @@
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
 
-#define IDC_START_BUTTON 100
+#define IDC_PLAY_BUTTON 100
 
 AppState appState { };
 
@@ -29,9 +29,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         GetClientRect(hWnd, &clientRect);
         appState.nonClientWidth = (windowRect.right - windowRect.left) - (clientRect.right - clientRect.left);
         appState.nonClientHeight = (windowRect.bottom - windowRect.top) - (clientRect.bottom - clientRect.top);
-        auto left = (clientRect.left + clientRect.right) / 2 - 50;
-        auto top = (clientRect.top + clientRect.bottom) / 2 - 50;
-        appState.startButton = CreateWindow(L"BUTTON", L"Start", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, left, top, 100, 100, hWnd, (HMENU)IDC_START_BUTTON, appState.instance, NULL);
+        auto left = (clientRect.left + clientRect.right) / 2 - 75;
+        auto top = (clientRect.top + clientRect.bottom) / 2 - 75;
+        appState.playButton = CreateWindow(L"BUTTON", L"Play", WS_VISIBLE | WS_CHILD | BS_OWNERDRAW, left, top, 150, 150, hWnd, (HMENU)IDC_PLAY_BUTTON, appState.instance, NULL);
         break;
     }
     case WM_GETMINMAXINFO:
@@ -43,20 +43,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case WM_SIZE:
     {
-        if (appState.startButton != NULL)
+        if (appState.playButton != NULL)
         {
             auto width = LOWORD(lParam);
             auto height = HIWORD(lParam);
-            auto left = width / 2 - 50;
-            auto top = height / 2 - 50;
-            SetWindowPos(appState.startButton, NULL, left, top, 100, 100, 0);
+            auto left = width / 2 - 75;
+            auto top = height / 2 - 75;
+            SetWindowPos(appState.playButton, NULL, left, top, 150, 150, 0);
+            InvalidateRect(appState.playButton, NULL, TRUE);
         }
         break;
     }
     case WM_COMMAND:
-        if (wParam == IDC_START_BUTTON)
+        if (wParam == IDC_PLAY_BUTTON)
         {
-            DestroyWindow(appState.startButton);
+            DestroyWindow(appState.playButton);
             std::vector<std::string> arguments;
             arguments.emplace_back();
             auto word_count = 0;
@@ -286,6 +287,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     }
+    case WM_DRAWITEM:
+    {
+        auto dis = (DRAWITEMSTRUCT*)lParam;
+        if (dis->CtlID == IDC_PLAY_BUTTON)
+        {
+            SelectObject(dis->hDC, GetStockObject(BLACK_BRUSH));
+            Rectangle(dis->hDC, dis->rcItem.left, dis->rcItem.top, dis->rcItem.right, dis->rcItem.bottom);
+            auto pen = CreatePen(PS_SOLID, 2, RGB(128, 128, 128));
+            SelectObject(dis->hDC, pen);
+            SelectObject(dis->hDC, GetStockObject(HOLLOW_BRUSH));
+            std::string s = std::to_string(dis->itemState) + "\n";
+            OutputDebugStringA(s.c_str());
+            if (dis->itemState & ODS_SELECTED == ODS_SELECTED)
+            {
+                Ellipse(dis->hDC, 3, 3, 145, 145);
+                POINT points[3]{ { 56, 46 }, { 104, 75 }, { 56, 104 } };
+                Polygon(dis->hDC, points, 3);
+            }
+            else
+            {
+                Ellipse(dis->hDC, 2, 2, 146, 146);
+                POINT points[3]{ { 55, 45 }, { 105, 75 }, { 55, 105 } };
+                Polygon(dis->hDC, points, 3);
+            }
+            DeleteObject(pen);
+        }
+        break;
+    }
     case WM_KEYDOWN:
         Key_Event(virtualkeymap[wParam], true);
         break;
@@ -310,6 +339,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_MBUTTONUP:
         Key_Event(K_MOUSE3, false);
         break;
+    case WM_SETCURSOR:
+        if (appState.started && key_dest == key_game && GetForegroundWindow() == appState.hWnd)
+        {
+            SetCursor(NULL);
+            return TRUE;
+        }
+        return DefWindowProc(hWnd, message, wParam, lParam);
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

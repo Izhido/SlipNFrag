@@ -192,7 +192,7 @@ void IN_Commands (void)
 
 void IN_MouseMove (usercmd_t *cmd)
 {
-	if (!mouseinitialized || key_dest != key_game)
+	if (!mouseinitialized || key_dest != key_game || GetForegroundWindow() != appState.hWnd)
 	{
         appState.cursorRelocated = false;
         return;
@@ -200,7 +200,7 @@ void IN_MouseMove (usercmd_t *cmd)
     CURSORINFO ci { };
     ci.cbSize = sizeof(CURSORINFO);
     GetCursorInfo(&ci);
-    if (ci.flags != CURSOR_SHOWING)
+    if (ci.flags == CURSOR_SUPPRESSED)
     {
         appState.cursorRelocated = false;
         return;
