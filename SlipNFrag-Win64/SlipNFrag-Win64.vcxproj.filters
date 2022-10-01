@@ -1,0 +1,398 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\id1">
+      <UniqueIdentifier>{92611a4c-9aca-4696-acdb-be770175c9c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\id1">
+      <UniqueIdentifier>{438b0696-ea3a-4dbb-9ad0-f0d505c77748}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SlipNFrag">
+      <UniqueIdentifier>{12a42e21-cbe9-4e9c-9766-a3e5dd7f4a33}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\chase.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\cl_demo.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\cl_input.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\cl_main.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\cl_parse.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\cl_tent.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\cmd.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\common.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\console.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\crc.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\cvar.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_edge.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_init.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_lists.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_modech.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_part.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_polycl.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_polyse.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_scan.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_sky.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_sprite.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_surf.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\d_vars.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\draw.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\host.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\host_cmd.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\keys.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\mathlib.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\menu.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\model.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\net_dgrm.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\net_loop.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\net_main.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\net_vcr.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\nonintel.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\pr_cmds.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\pr_edict.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\pr_exec.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_aclip.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_aclipc.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_alias.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_aliasc.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_bsp.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_draw.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_edge.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_efrag.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_image.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_light.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_main.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_misc.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_part.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_sky.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_sprite.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_surf.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\r_vars.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\sbar.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\screen.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\sv_main.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\sv_move.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\sv_phys.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\sv_user.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\view.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\wad.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\world.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SlipNFrag\cd_null.cpp">
+      <Filter>Source Files\SlipNFrag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SlipNFrag\net_none.cpp">
+      <Filter>Source Files\SlipNFrag</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SlipNFrag\snd_null.cpp">
+      <Filter>Source Files\SlipNFrag</Filter>
+    </ClCompile>
+    <ClCompile Include="sys_win64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vid_win64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="in_win64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AppState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\adivtab.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\anorms.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\bspfile.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\cdaudio.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\client.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\cmd.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\common.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\console.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\crc.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\cvar.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\d_iface.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\d_lists.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\d_local.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\draw.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\input.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\keys.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\mathlib.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\menu.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\model.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\modelgen.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\net.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\net_dgrm.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\net_loop.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\net_sock.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\net_udp.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\net_vcr.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\net_wins.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\pr_comp.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\progdefs.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\progs.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\protocol.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\quakedef.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\r_local.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\r_shared.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\render.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\sbar.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\screen.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\server.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\sound.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\spritegn.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\sys.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\vid.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\view.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\wad.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\id1\world.h">
+      <Filter>Header Files\id1</Filter>
+    </ClInclude>
+    <ClInclude Include="sys_win64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vid_win64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="virtualkeymap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="in_win64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\id1\progdefs.q1">
+      <Filter>Header Files\id1</Filter>
+    </None>
+  </ItemGroup>
+</Project>
