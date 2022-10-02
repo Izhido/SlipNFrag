@@ -1044,7 +1044,7 @@ void PF_precache_model (void)
         auto index = (int)sv.model_precache.size();
         sv.model_precache.push_back(name);
         sv.model_index.insert({ name, index });
-        sv.models.push_back(Mod_ForName (s, true));
+        sv.models.push_back(Mod_ForName (name.c_str(), true));
     }
 }
 
