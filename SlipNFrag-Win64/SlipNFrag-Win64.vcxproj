@@ -255,12 +255,19 @@
     <ClInclude Include="..\id1\world.h" />
     <ClInclude Include="AppState.h" />
     <ClInclude Include="in_win64.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="sys_win64.h" />
     <ClInclude Include="vid_win64.h" />
     <ClInclude Include="virtualkeymap.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\id1\progdefs.q1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SlipNFrag-Win64.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="appicon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
