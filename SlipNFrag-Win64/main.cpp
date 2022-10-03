@@ -320,28 +320,100 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_KEYDOWN:
-        Key_Event(virtualkeymap[wParam], true);
+    {
+        if (appState.started)
+        {
+            auto mapped = 0;
+            if (wParam >= 0 && wParam < sizeof(virtualkeymap) / sizeof(int))
+            {
+                mapped = virtualkeymap[wParam];
+            }
+            if (mapped == 0)
+            {
+                auto final = MapVirtualKeyA(wParam, 2); // == MAPVK_VK_TO_CHAR
+                if (final > 255) final = 255;
+                Key_Event(final, true);
+            }
+            else
+            {
+                Key_Event(mapped, true);
+            }
+        }
         break;
+    }
     case WM_KEYUP:
-        Key_Event(virtualkeymap[wParam], false);
+    {
+        if (appState.started)
+        {
+            auto mapped = 0;
+            if (wParam >= 0 && wParam < sizeof(virtualkeymap) / sizeof(int))
+            {
+                mapped = virtualkeymap[wParam];
+            }
+            if (mapped == 0)
+            {
+                auto final = MapVirtualKeyA(wParam, 2); // == MAPVK_VK_TO_CHAR
+                if (final > 255) final = 255;
+                Key_Event(final, false);
+            }
+            else
+            {
+                Key_Event(mapped, false);
+            }
+        }
         break;
+    }
     case WM_LBUTTONDOWN:
-        Key_Event(K_MOUSE1, true);
+        if (appState.started)
+        {
+            Key_Event(K_MOUSE1, true);
+        }
         break;
     case WM_LBUTTONUP:
-        Key_Event(K_MOUSE1, false);
+        if (appState.started)
+        {
+            Key_Event(K_MOUSE1, false);
+        }
         break;
     case WM_RBUTTONDOWN:
-        Key_Event(K_MOUSE2, true);
+        if (appState.started)
+        {
+            Key_Event(K_MOUSE2, true);
+        }
         break;
     case WM_RBUTTONUP:
-        Key_Event(K_MOUSE2, false);
+        if (appState.started)
+        {
+            Key_Event(K_MOUSE2, false);
+        }
         break;
     case WM_MBUTTONDOWN:
-        Key_Event(K_MOUSE3, true);
+        if (appState.started)
+        {
+            Key_Event(K_MOUSE3, true);
+        }
         break;
     case WM_MBUTTONUP:
-        Key_Event(K_MOUSE3, false);
+        if (appState.started)
+        {
+            Key_Event(K_MOUSE3, false);
+        }
+        break;
+    case WM_MOUSEWHEEL:
+        if (appState.started)
+        {
+            auto clicks = HIWORD(wParam);
+            if (clicks > 0)
+            {
+                Key_Event(K_MWHEELUP, true);
+                Key_Event(K_MWHEELUP, false);
+            }
+            else if (clicks < 0)
+            {
+                Key_Event(K_MWHEELDOWN, true);
+                Key_Event(K_MWHEELDOWN, false);
+            }
+        }
         break;
     case WM_SETCURSOR:
         if (appState.started && key_dest == key_game && GetForegroundWindow() == appState.hWnd)
