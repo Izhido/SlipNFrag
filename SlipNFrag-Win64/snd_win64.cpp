@@ -23,6 +23,7 @@ void SNDDMA_ReleaseAll(void)
         waveOutReset(snd_waveout);
         if (snd_waveheader2 != NULL)
         {
+            waveOutUnprepareHeader(snd_waveout, snd_waveheaderptr2, sizeof(WAVEHDR));
             GlobalUnlock(snd_waveheader2);
             GlobalFree(snd_waveheader2);
             snd_waveheader2 = NULL;
@@ -37,6 +38,7 @@ void SNDDMA_ReleaseAll(void)
         }
         if (snd_waveheader1 != NULL)
         {
+            waveOutUnprepareHeader(snd_waveout, snd_waveheaderptr1, sizeof(WAVEHDR));
             GlobalUnlock(snd_waveheader1);
             GlobalFree(snd_waveheader1);
             snd_waveheader1 = NULL;
@@ -71,7 +73,6 @@ void SNDDMA_Callback(void* waveHeader)
     {
         shm->samplepos = 0;
     }
-    ((LPWAVEHDR)waveHeader)->dwFlags &= ~(DWORD)(WHDR_DONE);
     auto result = waveOutWrite(snd_waveout, ((LPWAVEHDR)waveHeader), sizeof(WAVEHDR));
     if (result != MMSYSERR_NOERROR)
     {
