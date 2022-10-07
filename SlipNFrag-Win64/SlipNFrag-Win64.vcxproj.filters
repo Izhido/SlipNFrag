@@ -22,6 +22,9 @@
     <Filter Include="Source Files\SlipNFrag">
       <UniqueIdentifier>{12a42e21-cbe9-4e9c-9766-a3e5dd7f4a33}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\snd_float">
+      <UniqueIdentifier>{ce11ea1d-d511-41d5-8823-3186e7536490}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -225,9 +228,6 @@
     <ClCompile Include="..\SlipNFrag\net_none.cpp">
       <Filter>Source Files\SlipNFrag</Filter>
     </ClCompile>
-    <ClCompile Include="..\SlipNFrag\snd_null.cpp">
-      <Filter>Source Files\SlipNFrag</Filter>
-    </ClCompile>
     <ClCompile Include="sys_win64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -236,6 +236,18 @@
     </ClCompile>
     <ClCompile Include="in_win64.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_win64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\snd_float\snd_float_dma.cpp">
+      <Filter>Source Files\snd_float</Filter>
+    </ClCompile>
+    <ClCompile Include="..\snd_float\snd_float_mem.cpp">
+      <Filter>Source Files\snd_float</Filter>
+    </ClCompile>
+    <ClCompile Include="..\snd_float\snd_float_mix.cpp">
+      <Filter>Source Files\snd_float</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -390,6 +402,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snd_win64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

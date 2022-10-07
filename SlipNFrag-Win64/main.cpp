@@ -9,6 +9,8 @@
 #include "virtualkeymap.h"
 #include "in_win64.h"
 #include "resource.h"
+#include "snd_win64.h"
+#include <mmsystem.h>
 
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
@@ -302,7 +304,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             SelectObject(dis->hDC, pen);
             SelectObject(dis->hDC, GetStockObject(HOLLOW_BRUSH));
             std::string s = std::to_string(dis->itemState) + "\n";
-            OutputDebugStringA(s.c_str());
             if (dis->itemState & ODS_SELECTED == ODS_SELECTED)
             {
                 Ellipse(dis->hDC, 3, 3, 145, 145);
@@ -422,6 +423,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             return TRUE;
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
+    case MM_WOM_DONE:
+        SNDDMA_Callback((void*)lParam);
+        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

@@ -81,7 +81,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dwmapi.lib;msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dwmapi.lib;gdi32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -99,7 +99,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dwmapi.lib;msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dwmapi.lib;gdi32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -113,7 +113,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dwmapi.lib;gdi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dwmapi.lib;gdi32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,7 +131,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dwmapi.lib;msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dwmapi.lib;gdi32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -201,9 +201,12 @@
     <ClCompile Include="..\id1\world.cpp" />
     <ClCompile Include="..\SlipNFrag\cd_null.cpp" />
     <ClCompile Include="..\SlipNFrag\net_none.cpp" />
-    <ClCompile Include="..\SlipNFrag\snd_null.cpp" />
+    <ClCompile Include="..\snd_float\snd_float_dma.cpp" />
+    <ClCompile Include="..\snd_float\snd_float_mem.cpp" />
+    <ClCompile Include="..\snd_float\snd_float_mix.cpp" />
     <ClCompile Include="in_win64.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="snd_win64.cpp" />
     <ClCompile Include="sys_win64.cpp" />
     <ClCompile Include="vid_win64.cpp" />
   </ItemGroup>
@@ -256,6 +259,7 @@
     <ClInclude Include="AppState.h" />
     <ClInclude Include="in_win64.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="snd_win64.h" />
     <ClInclude Include="sys_win64.h" />
     <ClInclude Include="vid_win64.h" />
     <ClInclude Include="virtualkeymap.h" />
