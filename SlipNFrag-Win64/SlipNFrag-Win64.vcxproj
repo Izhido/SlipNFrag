@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\id1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\id1;$(ProjectDir)\..\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -92,7 +92,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\id1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\id1;$(ProjectDir)\..\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -108,7 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\id1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\id1;$(ProjectDir)\..\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -124,7 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\id1;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\id1;$(ProjectDir)\..\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -199,11 +199,14 @@
     <ClCompile Include="..\id1\view.cpp" />
     <ClCompile Include="..\id1\wad.cpp" />
     <ClCompile Include="..\id1\world.cpp" />
-    <ClCompile Include="..\SlipNFrag\cd_null.cpp" />
     <ClCompile Include="..\SlipNFrag\net_none.cpp" />
     <ClCompile Include="..\snd_float\snd_float_dma.cpp" />
     <ClCompile Include="..\snd_float\snd_float_mem.cpp" />
     <ClCompile Include="..\snd_float\snd_float_mix.cpp" />
+    <ClCompile Include="..\stb\stb_vorbis.c">
+      <FileType>CppHeader</FileType>
+    </ClCompile>
+    <ClCompile Include="cd_win64.cpp" />
     <ClCompile Include="in_win64.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="snd_win64.cpp" />
@@ -257,6 +260,7 @@
     <ClInclude Include="..\id1\wad.h" />
     <ClInclude Include="..\id1\world.h" />
     <ClInclude Include="AppState.h" />
+    <ClInclude Include="cd_win64.h" />
     <ClInclude Include="in_win64.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="snd_win64.h" />

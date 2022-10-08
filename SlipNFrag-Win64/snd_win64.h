@@ -1,3 +1,3 @@
 #pragma once
 
-void SNDDMA_Callback(void* waveHeader);
+void SNDDMA_Callback(void* waveOut, void* waveHeader);

@@ -56,9 +56,9 @@ void SNDDMA_ReleaseAll(void)
     }
 }
 
-void SNDDMA_Callback(void* waveHeader)
+void SNDDMA_Callback(void* waveOut, void* waveHeader)
 {
-    if (snd_waveout == NULL)
+    if (snd_waveout == NULL || snd_waveout != waveOut)
     {
         return;
     }

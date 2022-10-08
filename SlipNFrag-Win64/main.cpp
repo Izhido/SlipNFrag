@@ -10,6 +10,7 @@
 #include "in_win64.h"
 #include "resource.h"
 #include "snd_win64.h"
+#include "cd_win64.h"
 #include <mmsystem.h>
 
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
@@ -424,7 +425,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         return DefWindowProc(hWnd, message, wParam, lParam);
     case MM_WOM_DONE:
-        SNDDMA_Callback((void*)lParam);
+        SNDDMA_Callback((void*)wParam, (void*)lParam);
+        CDAudio_Callback((void*)wParam, (void*)lParam);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
