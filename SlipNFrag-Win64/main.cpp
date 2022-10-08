@@ -222,62 +222,149 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     uint64_t posY = 0;
                     uint32_t posYDiv20 = 0;
                     auto previousPosYDiv20 = -1;
-                    auto vidTrailing = vid_rowbytes - vid_width;
                     bool hasCon;
+                    auto copyCount = 0;
                     for (auto y = 0; y < vid_height; y++)
                     {
                         if (previousPosYDiv20 != posYDiv20)
                         {
+                            if (copyCount > 0)
+                            {
+                                memcpy(target, vidSource, copyCount);
+                                vidSource += copyCount;
+                                target += copyCount;
+                                copyCount = 0;
+                            }
                             hasCon = false;
                             uint64_t posX = 0;
-                            for (auto x = 0; x < vid_width; x++)
+                            for (auto x = 0; x < vid_rowbytes; x += 4)
                             {
-                                auto con = conRow[posX >> 20];
+                                uint32_t out;
+                                uint32_t con = conRow[posX >> 20];
                                 if (con > 0 && con < 255)
                                 {
-                                    *target++ = con;
+                                    out = con;
                                     hasCon = true;
                                 }
                                 else
                                 {
-                                    *target++ = *vidSource;
+                                    out = *vidSource;
                                 }
                                 posX += stepX;
                                 vidSource++;
-                            }
-                            previousPosYDiv20 = posYDiv20;
-                            vidSource += vidTrailing;
-                            target += vidTrailing;
-                        }
-                        else if (hasCon)
-                        {
-                            uint64_t posX = 0;
-                            for (auto x = 0; x < vid_width; x++)
-                            {
-                                auto con = conRow[posX >> 20];
+                                con = conRow[posX >> 20];
                                 if (con > 0 && con < 255)
                                 {
-                                    *target++ = con;
+                                    out = (out & 0xFFFF00FF) | (con << 8);
+                                    hasCon = true;
                                 }
                                 else
                                 {
-                                    *target++ = *vidSource;
+                                    out = (out & 0xFFFF00FF) | (((uint32_t)(*vidSource)) << 8);
                                 }
                                 posX += stepX;
                                 vidSource++;
+                                con = conRow[posX >> 20];
+                                if (con > 0 && con < 255)
+                                {
+                                    out = (out & 0xFF00FFFF) | (con << 16);
+                                    hasCon = true;
+                                }
+                                else
+                                {
+                                    out = (out & 0xFF00FFFF) | (((uint32_t)(*vidSource)) << 16);
+                                }
+                                posX += stepX;
+                                vidSource++;
+                                con = conRow[posX >> 20];
+                                if (con > 0 && con < 255)
+                                {
+                                    out = (out & 0xFFFFFF) | (con << 24);
+                                    hasCon = true;
+                                }
+                                else
+                                {
+                                    out = (out & 0xFFFFFF) | (((uint32_t)(*vidSource)) << 24);
+                                }
+                                posX += stepX;
+                                vidSource++;
+                                *((uint32_t*)target) = out;
+                                target += 4;
                             }
-                            vidSource += vidTrailing;
-                            target += vidTrailing;
+                            previousPosYDiv20 = posYDiv20;
+                        }
+                        else if (hasCon)
+                        {
+                            if (copyCount > 0)
+                            {
+                                memcpy(target, vidSource, copyCount);
+                                vidSource += copyCount;
+                                target += copyCount;
+                                copyCount = 0;
+                            }
+                            uint64_t posX = 0;
+                            for (auto x = 0; x < vid_rowbytes; x += 4)
+                            {
+                                uint32_t out;
+                                uint32_t con = conRow[posX >> 20];
+                                if (con > 0 && con < 255)
+                                {
+                                    out = con;
+                                }
+                                else
+                                {
+                                    out = *vidSource;
+                                }
+                                posX += stepX;
+                                vidSource++;
+                                con = conRow[posX >> 20];
+                                if (con > 0 && con < 255)
+                                {
+                                    out = (out & 0xFFFF00FF) | (con << 8);
+                                }
+                                else
+                                {
+                                    out = (out & 0xFFFF00FF) | (((uint32_t)(*vidSource)) << 8);
+                                }
+                                posX += stepX;
+                                vidSource++;
+                                con = conRow[posX >> 20];
+                                if (con > 0 && con < 255)
+                                {
+                                    out = (out & 0xFF00FFFF) | (con << 16);
+                                }
+                                else
+                                {
+                                    out = (out & 0xFF00FFFF) | (((uint32_t)(*vidSource)) << 16);
+                                }
+                                posX += stepX;
+                                vidSource++;
+                                con = conRow[posX >> 20];
+                                if (con > 0 && con < 255)
+                                {
+                                    out = (out & 0xFFFFFF) | (con << 24);
+                                }
+                                else
+                                {
+                                    out = (out & 0xFFFFFF) | (((uint32_t)(*vidSource)) << 24);
+                                }
+                                posX += stepX;
+                                vidSource++;
+                                *((uint32_t*)target) = out;
+                                target += 4;
+                            }
                         }
                         else
                         {
-                            memcpy(target, vidSource, vid_rowbytes);
-                            vidSource += vid_rowbytes;
-                            target += vid_rowbytes;
+                            copyCount += vid_rowbytes;
                         }
                         posY += stepY;
                         posYDiv20 = posY >> 20;
                         conRow = conSource + posYDiv20 * con_rowbytes;
+                    }
+                    if (copyCount > 0)
+                    {
+                        memcpy(target, vidSource, copyCount);
                     }
                     auto previous = SelectObject(memdc, bitmap);
                     SetDIBColorTable(memdc, 0, 256, (RGBQUAD*)d_8to24table);
