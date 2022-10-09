@@ -473,7 +473,7 @@ Con_SafePrintf
 Okay to call even when the screen can't be updated
 ==================
 */
-void Con_SafePrintf (char *fmt, ...)
+void Con_SafePrintf (const char *fmt, ...)
 {
 	va_list		argptr;
     std::vector<char> msg(1024);

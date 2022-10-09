@@ -19,9 +19,6 @@
     <Filter Include="Header Files\id1">
       <UniqueIdentifier>{438b0696-ea3a-4dbb-9ad0-f0d505c77748}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\SlipNFrag">
-      <UniqueIdentifier>{12a42e21-cbe9-4e9c-9766-a3e5dd7f4a33}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\snd_float">
       <UniqueIdentifier>{ce11ea1d-d511-41d5-8823-3186e7536490}</UniqueIdentifier>
     </Filter>
@@ -225,9 +222,6 @@
     <ClCompile Include="..\id1\world.cpp">
       <Filter>Source Files\id1</Filter>
     </ClCompile>
-    <ClCompile Include="..\SlipNFrag\net_none.cpp">
-      <Filter>Source Files\SlipNFrag</Filter>
-    </ClCompile>
     <ClCompile Include="sys_win64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -254,6 +248,15 @@
     </ClCompile>
     <ClCompile Include="..\stb\stb_vorbis.c">
       <Filter>Header Files\stb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\net_win.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\net_wins.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\id1\net_sock.cpp">
+      <Filter>Source Files\id1</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

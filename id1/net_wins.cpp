@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // net_wins.c
 
 #include "quakedef.h"
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
 
@@ -250,6 +251,7 @@ int WINS_OpenSocket (int port)
 	qsockaddr addr;
 	u_long _true = 1;
 	int off = 0;
+	sockaddr_in6* address = nullptr;
 
 	if ((newsocket = socket (PF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		return -1;
@@ -261,7 +263,7 @@ int WINS_OpenSocket (int port)
 		goto ErrorReturn;
 
 	addr.data.resize(sizeof(sockaddr_in6));
-	auto address = (sockaddr_in6*)addr.data.data();
+	address = (sockaddr_in6*)addr.data.data();
 	address->sin6_family = AF_INET6;
 	address->sin6_addr = in6addr_any;
 	address->sin6_port = htons((unsigned short)port);
@@ -281,6 +283,7 @@ int WINS_OpenIPV4Socket(int port)
 	int newsocket;
 	qsockaddr addr;
 	u_long _true = 1;
+	sockaddr_in* address = nullptr;
 
 	if ((newsocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		return -1;
@@ -289,7 +292,7 @@ int WINS_OpenIPV4Socket(int port)
 		goto ErrorReturn;
 
 	addr.data.resize(sizeof(sockaddr_in));
-	auto address = (sockaddr_in*)addr.data.data();
+	address = (sockaddr_in*)addr.data.data();
 	address->sin_family = AF_INET;
 	address->sin_addr.s_addr = INADDR_ANY;
 	address->sin_port = htons((unsigned short)port);

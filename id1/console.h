@@ -36,7 +36,7 @@ void Con_DrawConsole (int lines, qboolean drawinput);
 void Con_Print (const std::vector<char>& txt);
 void Con_Printf (const char *fmt, ...);
 void Con_DPrintf (const char *fmt, ...);
-void Con_SafePrintf (char *fmt, ...);
+void Con_SafePrintf (const char *fmt, ...);
 void Con_Clear_f (void);
 void Con_DrawNotify (void);
 void Con_ClearNotify (void);

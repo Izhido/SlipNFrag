@@ -12,6 +12,12 @@
 #include "snd_win64.h"
 #include "cd_win64.h"
 #include <mmsystem.h>
+#include <objidl.h>
+#include <gdiplus.h>
+
+using namespace Gdiplus;
+
+#pragma comment (lib,"Gdiplus.lib")
 
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
@@ -239,56 +245,37 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             uint64_t posX = 0;
                             for (auto x = 0; x < vid_rowbytes; x += 4)
                             {
-                                uint32_t out;
+                                auto out = *(uint32_t*)vidSource;
                                 uint32_t con = conRow[posX >> 20];
-                                if (con > 0 && con < 255)
+                                if (con < 255)
                                 {
-                                    out = con;
+                                    out = (out & 0xFFFFFF00) | con;
                                     hasCon = true;
                                 }
-                                else
-                                {
-                                    out = *vidSource;
-                                }
                                 posX += stepX;
-                                vidSource++;
                                 con = conRow[posX >> 20];
-                                if (con > 0 && con < 255)
+                                if (con < 255)
                                 {
                                     out = (out & 0xFFFF00FF) | (con << 8);
                                     hasCon = true;
                                 }
-                                else
-                                {
-                                    out = (out & 0xFFFF00FF) | (((uint32_t)(*vidSource)) << 8);
-                                }
                                 posX += stepX;
-                                vidSource++;
                                 con = conRow[posX >> 20];
-                                if (con > 0 && con < 255)
+                                if (con < 255)
                                 {
                                     out = (out & 0xFF00FFFF) | (con << 16);
                                     hasCon = true;
                                 }
-                                else
-                                {
-                                    out = (out & 0xFF00FFFF) | (((uint32_t)(*vidSource)) << 16);
-                                }
                                 posX += stepX;
-                                vidSource++;
                                 con = conRow[posX >> 20];
-                                if (con > 0 && con < 255)
+                                if (con < 255)
                                 {
                                     out = (out & 0xFFFFFF) | (con << 24);
                                     hasCon = true;
                                 }
-                                else
-                                {
-                                    out = (out & 0xFFFFFF) | (((uint32_t)(*vidSource)) << 24);
-                                }
                                 posX += stepX;
-                                vidSource++;
                                 *((uint32_t*)target) = out;
+                                vidSource += 4;
                                 target += 4;
                             }
                             previousPosYDiv20 = posYDiv20;
@@ -305,52 +292,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             uint64_t posX = 0;
                             for (auto x = 0; x < vid_rowbytes; x += 4)
                             {
-                                uint32_t out;
+                                auto out = *(uint32_t*)vidSource;
                                 uint32_t con = conRow[posX >> 20];
-                                if (con > 0 && con < 255)
+                                if (con < 255)
                                 {
-                                    out = con;
-                                }
-                                else
-                                {
-                                    out = *vidSource;
+                                    out = (out & 0xFFFFFF00) | con;
                                 }
                                 posX += stepX;
-                                vidSource++;
                                 con = conRow[posX >> 20];
-                                if (con > 0 && con < 255)
+                                if (con < 255)
                                 {
                                     out = (out & 0xFFFF00FF) | (con << 8);
                                 }
-                                else
-                                {
-                                    out = (out & 0xFFFF00FF) | (((uint32_t)(*vidSource)) << 8);
-                                }
                                 posX += stepX;
-                                vidSource++;
                                 con = conRow[posX >> 20];
-                                if (con > 0 && con < 255)
+                                if (con < 255)
                                 {
                                     out = (out & 0xFF00FFFF) | (con << 16);
                                 }
-                                else
-                                {
-                                    out = (out & 0xFF00FFFF) | (((uint32_t)(*vidSource)) << 16);
-                                }
                                 posX += stepX;
-                                vidSource++;
                                 con = conRow[posX >> 20];
-                                if (con > 0 && con < 255)
+                                if (con < 255)
                                 {
                                     out = (out & 0xFFFFFF) | (con << 24);
                                 }
-                                else
-                                {
-                                    out = (out & 0xFFFFFF) | (((uint32_t)(*vidSource)) << 24);
-                                }
                                 posX += stepX;
-                                vidSource++;
                                 *((uint32_t*)target) = out;
+                                vidSource += 4;
                                 target += 4;
                             }
                         }
@@ -386,25 +354,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         auto dis = (DRAWITEMSTRUCT*)lParam;
         if (dis->CtlID == IDC_PLAY_BUTTON)
         {
-            SelectObject(dis->hDC, GetStockObject(BLACK_BRUSH));
-            Rectangle(dis->hDC, dis->rcItem.left, dis->rcItem.top, dis->rcItem.right, dis->rcItem.bottom);
-            auto pen = CreatePen(PS_SOLID, 2, RGB(128, 128, 128));
-            SelectObject(dis->hDC, pen);
-            SelectObject(dis->hDC, GetStockObject(HOLLOW_BRUSH));
-            std::string s = std::to_string(dis->itemState) + "\n";
-            if (dis->itemState & ODS_SELECTED == ODS_SELECTED)
+            Graphics graphics(dis->hDC);
+            graphics.SetSmoothingMode(SmoothingModeAntiAlias);
+            SolidBrush brush(Color(0, 0, 0));
+            graphics.FillRectangle(&brush, 
+                (INT)(dis->rcItem.left - 1),
+                (INT)(dis->rcItem.top - 1),
+                (INT)(dis->rcItem.right - dis->rcItem.left + 1),
+                (INT)(dis->rcItem.bottom - dis->rcItem.top + 1));
+            Pen pen(Color(128, 128, 128), 3);
+            BYTE types[]{ PathPointTypeLine, PathPointTypeLine, PathPointTypeLine, PathPointTypeLine | PathPointTypeCloseSubpath };
+            if ((dis->itemState & ODS_SELECTED) == ODS_SELECTED)
             {
-                Ellipse(dis->hDC, 3, 3, 145, 145);
-                POINT points[3]{ { 56, 46 }, { 104, 75 }, { 56, 104 } };
-                Polygon(dis->hDC, points, 3);
+                graphics.DrawEllipse(&pen, 3, 3, 145, 145);
+                Point points[] { Point(56, 46), Point(104, 75), Point(56, 104), Point(56, 46) };
+                GraphicsPath path(points, types, 4);
+                graphics.DrawPath(&pen, &path);
             }
             else
             {
-                Ellipse(dis->hDC, 2, 2, 146, 146);
-                POINT points[3]{ { 55, 45 }, { 105, 75 }, { 55, 105 } };
-                Polygon(dis->hDC, points, 3);
+                graphics.DrawEllipse(&pen, 2, 2, 147, 147);
+                Point points[] { Point(55, 45), Point(105, 75), Point(55, 105), Point(55, 45) };
+                GraphicsPath path(points, types, 4);
+                graphics.DrawPath(&pen, &path);
             }
-            DeleteObject(pen);
         }
         break;
     }
@@ -536,6 +509,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     appState.usesDarkMode = TRUE;
 
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
     WNDCLASSEXW wcex { };
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -567,6 +544,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
+    GdiplusShutdown(gdiplusToken);
 
     return (int)msg.wParam;
 }
