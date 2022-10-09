@@ -144,11 +144,29 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 			auto source = Scene.consoleData.data();
 			auto target = (uint32_t*)(perFrame.stagingBuffer.mapped);
 			auto count = ConsoleWidth * ConsoleHeight;
+			auto found = false;
 			while (count > 0)
 			{
 				auto entry = *source++;
-				*target++ = Scene.paletteData[entry];
 				count--;
+				if (entry != 255)
+				{
+					found = true;
+					auto leading = ConsoleWidth * ConsoleHeight - count + 1;
+					memset(target, 0, leading * sizeof(uint32_t));
+					target += leading;
+					*target++ = Scene.paletteData[entry];
+					while (count > 0)
+					{
+						entry = *source++;
+						*target++ = Scene.paletteData[entry];
+						count--;
+					}
+				}
+			}
+			if (!found)
+			{
+				memset(target, 0, ConsoleWidth * ConsoleHeight * sizeof(uint32_t));
 			}
 			{
 				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
