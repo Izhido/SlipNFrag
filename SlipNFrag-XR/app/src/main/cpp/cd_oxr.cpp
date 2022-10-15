@@ -9,7 +9,7 @@ stb_vorbis_info cdaudio_info;
 
 std::unordered_map<int, std::string> cdaudio_tracks;
 std::vector<byte> cdaudio_trackContents;
-std::vector<short> cdaudio_stagingBuffer;
+std::vector<float> cdaudio_stagingBuffer;
 
 SLObjectItf cdaudio_engineObject;
 SLEngineItf cdaudio_engine;
@@ -42,17 +42,17 @@ void CDAudio_Callback(SLAndroidSimpleBufferQueueItf bufferQueue, void* context)
 	if (cdaudio_player == nullptr)
 		return;
 
-	cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
+	cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	if (cdaudio_lastCopied == 0 && cdaudio_playLooping)
 	{
 		stb_vorbis_seek_start(cdaudio_stream);
-		cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
+		cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	}
 
 	if (cdaudio_lastCopied == 0)
 		return;
 
-	(*cdaudio_bufferQueue)->Enqueue(cdaudio_bufferQueue,cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 2);
+	(*cdaudio_bufferQueue)->Enqueue(cdaudio_bufferQueue,cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 3);
 }
 
 void CDAudio_FindInPath (const char *path, const char *directory, const char *prefix, const char *extension, std::vector<std::string>& result)
@@ -192,14 +192,15 @@ qboolean CDAudio_Start (byte track)
 	SLDataLocator_AndroidSimpleBufferQueue bufferQueueLocator;
 	bufferQueueLocator.locatorType = SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE;
 	bufferQueueLocator.numBuffers = 2;
-	SLDataFormat_PCM format;
-	format.formatType = SL_DATAFORMAT_PCM;
+	SLAndroidDataFormat_PCM_EX format;
+	format.formatType = SL_ANDROID_DATAFORMAT_PCM_EX;
 	format.numChannels = cdaudio_info.channels;
-	format.samplesPerSec = cdaudio_info.sample_rate * 1000;
-	format.bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
-	format.containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+	format.sampleRate = cdaudio_info.sample_rate * 1000;
+	format.bitsPerSample = 32;
+	format.containerSize = 32;
 	format.channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
 	format.endianness = SL_BYTEORDER_LITTLEENDIAN;
+	format.representation = SL_ANDROID_PCM_REPRESENTATION_FLOAT;
 	SLDataSource dataSource;
 	dataSource.pLocator = &bufferQueueLocator;
 	dataSource.pFormat = &format;
@@ -254,7 +255,7 @@ qboolean CDAudio_Start (byte track)
 			break;
 		}
 	}
-	cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
+	cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	if (cdaudio_lastCopied == 0)
 	{
 		Con_DPrintf("CDAudio: Empty track %u.\n", track);
@@ -262,7 +263,7 @@ qboolean CDAudio_Start (byte track)
 		CDAudio_DisposeBuffers();
 		return false;
 	}
-	result = (*cdaudio_bufferQueue)->Enqueue(cdaudio_bufferQueue, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 2);
+	result = (*cdaudio_bufferQueue)->Enqueue(cdaudio_bufferQueue, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 3);
 	if (result != SL_RESULT_SUCCESS)
 	{
 		(*cdaudio_player)->SetPlayState(cdaudio_player, SL_PLAYSTATE_STOPPED);
