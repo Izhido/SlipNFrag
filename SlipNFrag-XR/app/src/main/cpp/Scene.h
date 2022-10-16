@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include "PipelineWithSorted.h"
 #include "PipelineWithLoaded.h"
 #include "CachedSharedMemoryBuffers.h"
 #include "CachedIndexBuffers.h"
@@ -29,22 +30,22 @@ struct Scene
 	VkDescriptorSetLayout doubleBufferLayout;
 	VkDescriptorSetLayout twoBuffersAndImageLayout;
 	VkDescriptorSetLayout singleImageLayout;
-	PipelineWithLoaded<LoadedSurface> surfaces;
-	PipelineWithLoaded<LoadedSurface2Textures> surfacesRGBA;
-	PipelineWithLoaded<LoadedSurface> surfacesRGBANoGlow;
-	PipelineWithLoaded<LoadedSurfaceRotated> surfacesRotated;
-	PipelineWithLoaded<LoadedSurfaceRotated2Textures> surfacesRotatedRGBA;
-	PipelineWithLoaded<LoadedSurfaceRotated> surfacesRotatedRGBANoGlow;
-	PipelineWithLoaded<LoadedSurface> fences;
-	PipelineWithLoaded<LoadedSurface2Textures> fencesRGBA;
-	PipelineWithLoaded<LoadedSurface> fencesRGBANoGlow;
-	PipelineWithLoaded<LoadedSurfaceRotated> fencesRotated;
-	PipelineWithLoaded<LoadedSurfaceRotated2Textures> fencesRotatedRGBA;
-	PipelineWithLoaded<LoadedSurfaceRotated> fencesRotatedRGBANoGlow;
-	PipelineWithLoaded<LoadedTurbulent> turbulent;
-	PipelineWithLoaded<LoadedTurbulent> turbulentRGBA;
-	PipelineWithLoaded<LoadedSurface> turbulentLit;
-	PipelineWithLoaded<LoadedSurface> turbulentLitRGBA;
+	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> surfaces;
+	PipelineWithSorted<LoadedSurface2Textures, SortedSurface2TexturesLightmap> surfacesRGBA;
+	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> surfacesRGBANoGlow;
+	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceLightmap> surfacesRotated;
+	PipelineWithSorted<LoadedSurfaceRotated2Textures, SortedSurface2TexturesLightmap> surfacesRotatedRGBA;
+	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceLightmap> surfacesRotatedRGBANoGlow;
+	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> fences;
+	PipelineWithSorted<LoadedSurface2Textures, SortedSurface2TexturesLightmap> fencesRGBA;
+	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> fencesRGBANoGlow;
+	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceLightmap> fencesRotated;
+	PipelineWithSorted<LoadedSurfaceRotated2Textures, SortedSurface2TexturesLightmap> fencesRotatedRGBA;
+	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceLightmap> fencesRotatedRGBANoGlow;
+	PipelineWithSorted<LoadedTurbulent, SortedSurfaceTexture> turbulent;
+	PipelineWithSorted<LoadedTurbulent, SortedSurfaceTexture> turbulentRGBA;
+	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> turbulentLit;
+	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> turbulentLitRGBA;
 	PipelineWithLoaded<LoadedSprite> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;
 	PipelineWithLoaded<LoadedAlias> viewmodel;
@@ -121,51 +122,6 @@ struct Scene
 	VkDeviceSize sortedIndicesCount;
 	VkDeviceSize sortedIndices16Size;
 	VkDeviceSize sortedIndices32Size;
-	VkDeviceSize sortedSurfaceRGBAVerticesBase;
-	VkDeviceSize sortedSurfaceRGBAAttributesBase;
-	VkDeviceSize sortedSurfaceRGBAIndicesBase;
-	VkDeviceSize sortedSurfaceRGBANoGlowVerticesBase;
-	VkDeviceSize sortedSurfaceRGBANoGlowAttributesBase;
-	VkDeviceSize sortedSurfaceRGBANoGlowIndicesBase;
-	VkDeviceSize sortedSurfaceRotatedVerticesBase;
-	VkDeviceSize sortedSurfaceRotatedAttributesBase;
-	VkDeviceSize sortedSurfaceRotatedIndicesBase;
-	VkDeviceSize sortedSurfaceRotatedRGBAVerticesBase;
-	VkDeviceSize sortedSurfaceRotatedRGBAAttributesBase;
-	VkDeviceSize sortedSurfaceRotatedRGBAIndicesBase;
-	VkDeviceSize sortedSurfaceRotatedRGBANoGlowVerticesBase;
-	VkDeviceSize sortedSurfaceRotatedRGBANoGlowAttributesBase;
-	VkDeviceSize sortedSurfaceRotatedRGBANoGlowIndicesBase;
-	VkDeviceSize sortedFenceVerticesBase;
-	VkDeviceSize sortedFenceAttributesBase;
-	VkDeviceSize sortedFenceIndicesBase;
-	VkDeviceSize sortedFenceRGBAVerticesBase;
-	VkDeviceSize sortedFenceRGBAAttributesBase;
-	VkDeviceSize sortedFenceRGBAIndicesBase;
-	VkDeviceSize sortedFenceRGBANoGlowVerticesBase;
-	VkDeviceSize sortedFenceRGBANoGlowAttributesBase;
-	VkDeviceSize sortedFenceRGBANoGlowIndicesBase;
-	VkDeviceSize sortedFenceRotatedVerticesBase;
-	VkDeviceSize sortedFenceRotatedAttributesBase;
-	VkDeviceSize sortedFenceRotatedIndicesBase;
-	VkDeviceSize sortedFenceRotatedRGBAVerticesBase;
-	VkDeviceSize sortedFenceRotatedRGBAAttributesBase;
-	VkDeviceSize sortedFenceRotatedRGBAIndicesBase;
-	VkDeviceSize sortedFenceRotatedRGBANoGlowVerticesBase;
-	VkDeviceSize sortedFenceRotatedRGBANoGlowAttributesBase;
-	VkDeviceSize sortedFenceRotatedRGBANoGlowIndicesBase;
-	VkDeviceSize sortedTurbulentVerticesBase;
-	VkDeviceSize sortedTurbulentAttributesBase;
-	VkDeviceSize sortedTurbulentIndicesBase;
-	VkDeviceSize sortedTurbulentRGBAVerticesBase;
-	VkDeviceSize sortedTurbulentRGBAAttributesBase;
-	VkDeviceSize sortedTurbulentRGBAIndicesBase;
-	VkDeviceSize sortedTurbulentLitVerticesBase;
-	VkDeviceSize sortedTurbulentLitAttributesBase;
-	VkDeviceSize sortedTurbulentLitIndicesBase;
-	VkDeviceSize sortedTurbulentLitRGBAVerticesBase;
-	VkDeviceSize sortedTurbulentLitRGBAAttributesBase;
-	VkDeviceSize sortedTurbulentLitRGBAIndicesBase;
 	VkDeviceSize paletteSize;
 	VkDeviceSize colormapSize;
 	StagingBuffer stagingBuffer;

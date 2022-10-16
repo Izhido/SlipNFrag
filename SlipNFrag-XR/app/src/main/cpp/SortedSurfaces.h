@@ -16,22 +16,6 @@ struct SortedSurfaces
 	std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceLightmap>::iterator> addedLightmaps;
 	std::unordered_map<VkDescriptorSet, std::list<SortedSurface2TexturesLightmap>::iterator> added2TexturesLightmaps;
 	std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceTexture>::iterator> addedTextures;
-	std::list<SortedSurfaceLightmap> surfaces;
-	std::list<SortedSurface2TexturesLightmap> surfacesRGBA;
-	std::list<SortedSurfaceLightmap> surfacesRGBANoGlow;
-	std::list<SortedSurfaceLightmap> surfacesRotated;
-	std::list<SortedSurface2TexturesLightmap> surfacesRotatedRGBA;
-	std::list<SortedSurfaceLightmap> surfacesRotatedRGBANoGlow;
-	std::list<SortedSurfaceLightmap> fences;
-	std::list<SortedSurface2TexturesLightmap> fencesRGBA;
-	std::list<SortedSurfaceLightmap> fencesRGBANoGlow;
-	std::list<SortedSurfaceLightmap> fencesRotated;
-	std::list<SortedSurface2TexturesLightmap> fencesRotatedRGBA;
-	std::list<SortedSurfaceLightmap> fencesRotatedRGBANoGlow;
-	std::list<SortedSurfaceTexture> turbulent;
-	std::list<SortedSurfaceTexture> turbulentRGBA;
-	std::list<SortedSurfaceLightmap> turbulentLit;
-	std::list<SortedSurfaceLightmap> turbulentLitRGBA;
 
 	void Initialize(std::list<SortedSurfaceLightmap>& sorted);
 	void Initialize(std::list<SortedSurface2TexturesLightmap>& sorted);

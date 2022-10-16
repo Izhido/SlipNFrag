@@ -1922,246 +1922,216 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		size += colormapSize;
 	}
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.surfaces);
+	sorted.Initialize(surfaces.sorted);
 	for (auto i = 0; i <= surfaces.last; i++)
 	{
 		auto& loaded = surfaces.loaded[i];
 		GetStagingBufferSize(appState, d_lists.surfaces[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.surfaces);
+		sorted.Sort(appState, loaded, i, surfaces.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.surfaces);
-	sortedSurfaceRGBAVerticesBase = sortedVerticesSize;
-	sortedSurfaceRGBAAttributesBase = sortedAttributesSize;
-	sortedSurfaceRGBAIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(surfaces.sorted);
+	surfacesRGBA.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
 	previousGlowTexture = nullptr;
-	sorted.Initialize(sorted.surfacesRGBA);
+	sorted.Initialize(surfacesRGBA.sorted);
 	for (auto i = 0; i <= surfacesRGBA.last; i++)
 	{
 		auto& loaded = surfacesRGBA.loaded[i];
 		GetStagingBufferSize(appState, d_lists.surfaces_rgba[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.surfacesRGBA);
+		sorted.Sort(appState, loaded, i, surfacesRGBA.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 20 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.surfacesRGBA);
-	sortedSurfaceRGBANoGlowVerticesBase = sortedVerticesSize;
-	sortedSurfaceRGBANoGlowAttributesBase = sortedAttributesSize;
-	sortedSurfaceRGBANoGlowIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(surfacesRGBA.sorted);
+	surfacesRGBANoGlow.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.surfacesRGBANoGlow);
+	sorted.Initialize(surfacesRGBANoGlow.sorted);
 	for (auto i = 0; i <= surfacesRGBANoGlow.last; i++)
 	{
 		auto& loaded = surfacesRGBANoGlow.loaded[i];
 		GetStagingBufferSizeRGBANoGlow(appState, d_lists.surfaces_rgba_no_glow[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.surfacesRGBANoGlow);
+		sorted.Sort(appState, loaded, i, surfacesRGBANoGlow.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.surfacesRGBANoGlow);
-	sortedSurfaceRotatedVerticesBase = sortedVerticesSize;
-	sortedSurfaceRotatedAttributesBase = sortedAttributesSize;
-	sortedSurfaceRotatedIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(surfacesRGBANoGlow.sorted);
+	surfacesRotated.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.surfacesRotated);
+	sorted.Initialize(surfacesRotated.sorted);
 	for (auto i = 0; i <= surfacesRotated.last; i++)
 	{
 		auto& loaded = surfacesRotated.loaded[i];
 		GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.surfacesRotated);
+		sorted.Sort(appState, loaded, i, surfacesRotated.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.surfacesRotated);
-	sortedSurfaceRotatedRGBAVerticesBase = sortedVerticesSize;
-	sortedSurfaceRotatedRGBAAttributesBase = sortedAttributesSize;
-	sortedSurfaceRotatedRGBAIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(surfacesRotated.sorted);
+	surfacesRotatedRGBA.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
 	previousGlowTexture = nullptr;
-	sorted.Initialize(sorted.surfacesRotatedRGBA);
+	sorted.Initialize(surfacesRotatedRGBA.sorted);
 	for (auto i = 0; i <= surfacesRotatedRGBA.last; i++)
 	{
 		auto& loaded = surfacesRotatedRGBA.loaded[i];
 		GetStagingBufferSize(appState, d_lists.surfaces_rotated_rgba[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.surfacesRotatedRGBA);
+		sorted.Sort(appState, loaded, i, surfacesRotatedRGBA.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.surfacesRotatedRGBA);
-	sortedSurfaceRotatedRGBANoGlowVerticesBase = sortedVerticesSize;
-	sortedSurfaceRotatedRGBANoGlowAttributesBase = sortedAttributesSize;
-	sortedSurfaceRotatedRGBANoGlowIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(surfacesRotatedRGBA.sorted);
+	surfacesRotatedRGBANoGlow.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.surfacesRotatedRGBANoGlow);
+	sorted.Initialize(surfacesRotatedRGBANoGlow.sorted);
 	for (auto i = 0; i <= surfacesRotatedRGBANoGlow.last; i++)
 	{
 		auto& loaded = surfacesRotatedRGBANoGlow.loaded[i];
 		GetStagingBufferSizeRGBANoGlow(appState, d_lists.surfaces_rotated_rgba_no_glow[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.surfacesRotatedRGBANoGlow);
+		sorted.Sort(appState, loaded, i, surfacesRotatedRGBANoGlow.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.surfacesRotatedRGBANoGlow);
-	sortedFenceVerticesBase = sortedVerticesSize;
-	sortedFenceAttributesBase = sortedAttributesSize;
-	sortedFenceIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(surfacesRotatedRGBANoGlow.sorted);
+	fences.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.fences);
+	sorted.Initialize(fences.sorted);
 	for (auto i = 0; i <= fences.last; i++)
 	{
 		auto& loaded = fences.loaded[i];
 		GetStagingBufferSize(appState, d_lists.fences[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.fences);
+		sorted.Sort(appState, loaded, i, fences.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.fences);
-	sortedFenceRGBAVerticesBase = sortedVerticesSize;
-	sortedFenceRGBAAttributesBase = sortedAttributesSize;
-	sortedFenceRGBAIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(fences.sorted);
+	fencesRGBA.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
 	previousGlowTexture = nullptr;
-	sorted.Initialize(sorted.fencesRGBA);
+	sorted.Initialize(fencesRGBA.sorted);
 	for (auto i = 0; i <= fencesRGBA.last; i++)
 	{
 		auto& loaded = fencesRGBA.loaded[i];
 		GetStagingBufferSize(appState, d_lists.fences_rgba[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.fencesRGBA);
+		sorted.Sort(appState, loaded, i, fencesRGBA.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 20 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.fencesRGBA);
-	sortedFenceRGBANoGlowVerticesBase = sortedVerticesSize;
-	sortedFenceRGBANoGlowAttributesBase = sortedAttributesSize;
-	sortedFenceRGBANoGlowIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(fencesRGBA.sorted);
+	fencesRGBANoGlow.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.fencesRGBANoGlow);
+	sorted.Initialize(fencesRGBANoGlow.sorted);
 	for (auto i = 0; i <= fencesRGBANoGlow.last; i++)
 	{
 		auto& loaded = fencesRGBANoGlow.loaded[i];
 		GetStagingBufferSizeRGBANoGlow(appState, d_lists.fences_rgba_no_glow[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.fencesRGBANoGlow);
+		sorted.Sort(appState, loaded, i, fencesRGBANoGlow.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.fencesRGBANoGlow);
-	sortedFenceRotatedVerticesBase = sortedVerticesSize;
-	sortedFenceRotatedAttributesBase = sortedAttributesSize;
-	sortedFenceRotatedIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(fencesRGBANoGlow.sorted);
+	fencesRotated.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.fencesRotated);
+	sorted.Initialize(fencesRotated.sorted);
 	for (auto i = 0; i <= fencesRotated.last; i++)
 	{
 		auto& loaded = fencesRotated.loaded[i];
 		GetStagingBufferSize(appState, d_lists.fences_rotated[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.fencesRotated);
+		sorted.Sort(appState, loaded, i, fencesRotated.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.fencesRotated);
-	sortedFenceRotatedRGBAVerticesBase = sortedVerticesSize;
-	sortedFenceRotatedRGBAAttributesBase = sortedAttributesSize;
-	sortedFenceRotatedRGBAIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(fencesRotated.sorted);
+	fencesRotatedRGBA.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
 	previousGlowTexture = nullptr;
-	sorted.Initialize(sorted.fencesRotatedRGBA);
+	sorted.Initialize(fencesRotatedRGBA.sorted);
 	for (auto i = 0; i <= fencesRotatedRGBA.last; i++)
 	{
 		auto& loaded = fencesRotatedRGBA.loaded[i];
 		GetStagingBufferSize(appState, d_lists.fences_rotated_rgba[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.fencesRotatedRGBA);
+		sorted.Sort(appState, loaded, i, fencesRotatedRGBA.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.fencesRotatedRGBA);
-	sortedFenceRotatedRGBANoGlowVerticesBase = sortedVerticesSize;
-	sortedFenceRotatedRGBANoGlowAttributesBase = sortedAttributesSize;
-	sortedFenceRotatedRGBANoGlowIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(fencesRotatedRGBA.sorted);
+	fencesRotatedRGBANoGlow.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.fencesRotatedRGBANoGlow);
+	sorted.Initialize(fencesRotatedRGBANoGlow.sorted);
 	for (auto i = 0; i <= fencesRotatedRGBANoGlow.last; i++)
 	{
 		auto& loaded = fencesRotatedRGBANoGlow.loaded[i];
 		GetStagingBufferSizeRGBANoGlow(appState, d_lists.fences_rotated_rgba_no_glow[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.fencesRotatedRGBANoGlow);
+		sorted.Sort(appState, loaded, i, fencesRotatedRGBANoGlow.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.fencesRotatedRGBANoGlow);
-	sortedTurbulentVerticesBase = sortedVerticesSize;
-	sortedTurbulentAttributesBase = sortedAttributesSize;
-	sortedTurbulentIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(fencesRotatedRGBANoGlow.sorted);
+	turbulent.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.turbulent);
+	sorted.Initialize(turbulent.sorted);
 	for (auto i = 0; i <= turbulent.last; i++)
 	{
 		auto& loaded = turbulent.loaded[i];
 		GetStagingBufferSize(appState, d_lists.turbulent[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.turbulent);
+		sorted.Sort(appState, loaded, i, turbulent.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 12 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.turbulent);
-	sortedTurbulentRGBAVerticesBase = sortedVerticesSize;
-	sortedTurbulentRGBAAttributesBase = sortedAttributesSize;
-	sortedTurbulentRGBAIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(turbulent.sorted);
+	turbulentRGBA.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.turbulentRGBA);
+	sorted.Initialize(turbulentRGBA.sorted);
 	for (auto i = 0; i <= turbulentRGBA.last; i++)
 	{
 		auto& loaded = turbulentRGBA.loaded[i];
 		GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_rgba[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.turbulentRGBA);
+		sorted.Sort(appState, loaded, i, turbulentRGBA.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 12 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.turbulentRGBA);
-	sortedTurbulentLitVerticesBase = sortedVerticesSize;
-	sortedTurbulentLitAttributesBase = sortedAttributesSize;
-	sortedTurbulentLitIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(turbulentRGBA.sorted);
+	turbulentLit.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.turbulentLit);
+	sorted.Initialize(turbulentLit.sorted);
 	for (auto i = 0; i <= turbulentLit.last; i++)
 	{
 		auto& loaded = turbulentLit.loaded[i];
 		GetStagingBufferSize(appState, d_lists.turbulent_lit[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.turbulentLit);
+		sorted.Sort(appState, loaded, i, turbulentLit.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.turbulentLit);
-	sortedTurbulentLitRGBAVerticesBase = sortedVerticesSize;
-	sortedTurbulentLitRGBAAttributesBase = sortedAttributesSize;
-	sortedTurbulentLitRGBAIndicesBase = sortedIndicesCount;
+	SortedSurfaces::Cleanup(turbulentLit.sorted);
+	turbulentLitRGBA.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
-	sorted.Initialize(sorted.turbulentLitRGBA);
+	sorted.Initialize(turbulentLitRGBA.sorted);
 	for (auto i = 0; i <= turbulentLitRGBA.last; i++)
 	{
 		auto& loaded = turbulentLitRGBA.loaded[i];
 		GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_lit_rgba[i], loaded, size);
-		sorted.Sort(appState, loaded, i, sorted.turbulentLitRGBA);
+		sorted.Sort(appState, loaded, i, turbulentLitRGBA.sorted);
 		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
 		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
-	SortedSurfaces::Cleanup(sorted.turbulentLitRGBA);
+	SortedSurfaces::Cleanup(turbulentLitRGBA.sorted);
 	previousTexture = nullptr;
 	for (auto i = 0; i <= sprites.last; i++)
 	{
@@ -2294,41 +2264,41 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		sortedIndices16Size = sortedIndicesCount * sizeof(uint16_t);
 		sortedIndices32Size = 0;
-		sortedSurfaceRGBAIndicesBase *= sizeof(uint16_t);
-		sortedSurfaceRGBANoGlowIndicesBase *= sizeof(uint16_t);
-		sortedSurfaceRotatedIndicesBase *= sizeof(uint16_t);
-		sortedSurfaceRotatedRGBAIndicesBase *= sizeof(uint16_t);
-		sortedSurfaceRotatedRGBANoGlowIndicesBase *= sizeof(uint16_t);
-		sortedFenceIndicesBase *= sizeof(uint16_t);
-		sortedFenceRGBAIndicesBase *= sizeof(uint16_t);
-		sortedFenceRGBANoGlowIndicesBase *= sizeof(uint16_t);
-		sortedFenceRotatedIndicesBase *= sizeof(uint16_t);
-		sortedFenceRotatedRGBAIndicesBase *= sizeof(uint16_t);
-		sortedFenceRotatedRGBANoGlowIndicesBase *= sizeof(uint16_t);
-		sortedTurbulentIndicesBase *= sizeof(uint16_t);
-		sortedTurbulentRGBAIndicesBase *= sizeof(uint16_t);
-		sortedTurbulentLitIndicesBase *= sizeof(uint16_t);
-		sortedTurbulentLitRGBAIndicesBase *= sizeof(uint16_t);
+		surfacesRGBA.ScaleIndexBase(sizeof(uint16_t));
+		surfacesRGBANoGlow.ScaleIndexBase(sizeof(uint16_t));
+		surfacesRotated.ScaleIndexBase(sizeof(uint16_t));
+		surfacesRotatedRGBA.ScaleIndexBase(sizeof(uint16_t));
+		surfacesRotatedRGBANoGlow.ScaleIndexBase(sizeof(uint16_t));
+		fences.ScaleIndexBase(sizeof(uint16_t));
+		fencesRGBA.ScaleIndexBase(sizeof(uint16_t));
+		fencesRGBANoGlow.ScaleIndexBase(sizeof(uint16_t));
+		fencesRotated.ScaleIndexBase(sizeof(uint16_t));
+		fencesRotatedRGBA.ScaleIndexBase(sizeof(uint16_t));
+		fencesRotatedRGBANoGlow.ScaleIndexBase(sizeof(uint16_t));
+		turbulent.ScaleIndexBase(sizeof(uint16_t));
+		turbulentRGBA.ScaleIndexBase(sizeof(uint16_t));
+		turbulentLit.ScaleIndexBase(sizeof(uint16_t));
+		turbulentLitRGBA.ScaleIndexBase(sizeof(uint16_t));
 	}
 	else
 	{
 		sortedIndices16Size = 0;
 		sortedIndices32Size = sortedIndicesCount * sizeof(uint32_t);
-		sortedSurfaceRGBAIndicesBase *= sizeof(uint32_t);
-		sortedSurfaceRGBANoGlowIndicesBase *= sizeof(uint32_t);
-		sortedSurfaceRotatedIndicesBase *= sizeof(uint32_t);
-		sortedSurfaceRotatedRGBAIndicesBase *= sizeof(uint32_t);
-		sortedSurfaceRotatedRGBANoGlowIndicesBase *= sizeof(uint32_t);
-		sortedFenceIndicesBase *= sizeof(uint32_t);
-		sortedFenceRGBAIndicesBase *= sizeof(uint32_t);
-		sortedFenceRGBANoGlowIndicesBase *= sizeof(uint32_t);
-		sortedFenceRotatedIndicesBase *= sizeof(uint32_t);
-		sortedFenceRotatedRGBAIndicesBase *= sizeof(uint32_t);
-		sortedFenceRotatedRGBANoGlowIndicesBase *= sizeof(uint32_t);
-		sortedTurbulentIndicesBase *= sizeof(uint32_t);
-		sortedTurbulentRGBAIndicesBase *= sizeof(uint32_t);
-		sortedTurbulentLitIndicesBase *= sizeof(uint32_t);
-		sortedTurbulentLitRGBAIndicesBase *= sizeof(uint32_t);
+		surfacesRGBA.ScaleIndexBase(sizeof(uint32_t));
+		surfacesRGBANoGlow.ScaleIndexBase(sizeof(uint32_t));
+		surfacesRotated.ScaleIndexBase(sizeof(uint32_t));
+		surfacesRotatedRGBA.ScaleIndexBase(sizeof(uint32_t));
+		surfacesRotatedRGBANoGlow.ScaleIndexBase(sizeof(uint32_t));
+		fences.ScaleIndexBase(sizeof(uint32_t));
+		fencesRGBA.ScaleIndexBase(sizeof(uint32_t));
+		fencesRGBANoGlow.ScaleIndexBase(sizeof(uint32_t));
+		fencesRotated.ScaleIndexBase(sizeof(uint32_t));
+		fencesRotatedRGBA.ScaleIndexBase(sizeof(uint32_t));
+		fencesRotatedRGBANoGlow.ScaleIndexBase(sizeof(uint32_t));
+		turbulent.ScaleIndexBase(sizeof(uint32_t));
+		turbulentRGBA.ScaleIndexBase(sizeof(uint32_t));
+		turbulentLit.ScaleIndexBase(sizeof(uint32_t));
+		turbulentLitRGBA.ScaleIndexBase(sizeof(uint32_t));
 	}
 
 	if (appState.IndexTypeUInt8Enabled)
