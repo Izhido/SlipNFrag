@@ -11,7 +11,7 @@ stb_vorbis_info cdaudio_info;
 
 std::unordered_map<int, std::string> cdaudio_tracks;
 std::vector<byte> cdaudio_trackContents;
-std::vector<short> cdaudio_stagingBuffer;
+std::vector<float> cdaudio_stagingBuffer;
 
 WAVEFORMATEX cdaudio_waveformat { };
 HWAVEOUT cdaudio_waveout = NULL;
@@ -95,17 +95,17 @@ void CDAudio_Callback(void* waveOut, void* waveHeader)
 	if (cdaudio_waveout == NULL || cdaudio_waveout != waveOut)
 		return;
 
-	cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size());
+	cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	if (cdaudio_lastCopied == 0 && cdaudio_playLooping)
 	{
 		stb_vorbis_seek_start(cdaudio_stream);
-		cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size());
+		cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	}
 
 	if (cdaudio_lastCopied == 0)
 		return;
 
-	memcpy(((LPWAVEHDR)waveHeader)->lpData, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 2);
+	memcpy(((LPWAVEHDR)waveHeader)->lpData, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 3);
 	auto result = waveOutWrite(cdaudio_waveout, ((LPWAVEHDR)waveHeader), sizeof(WAVEHDR));
 	if (result != MMSYSERR_NOERROR)
 	{
@@ -221,12 +221,12 @@ void CDAudio_Play(byte track, qboolean looping)
 		}
 	}
 
-	cdaudio_waveformat.wFormatTag = WAVE_FORMAT_PCM;
+	cdaudio_waveformat.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
 	cdaudio_waveformat.nChannels = cdaudio_info.channels;
 	cdaudio_waveformat.nSamplesPerSec = cdaudio_info.sample_rate;
-	cdaudio_waveformat.nAvgBytesPerSec = cdaudio_info.sample_rate * cdaudio_info.channels * 2;
-	cdaudio_waveformat.nBlockAlign = cdaudio_info.channels * 2;
-	cdaudio_waveformat.wBitsPerSample = 16;
+	cdaudio_waveformat.nAvgBytesPerSec = cdaudio_info.sample_rate * cdaudio_info.channels * 4;
+	cdaudio_waveformat.nBlockAlign = cdaudio_info.channels * 4;
+	cdaudio_waveformat.wBitsPerSample = 32;
 
 	auto result = waveOutOpen(&cdaudio_waveout, WAVE_MAPPER, &cdaudio_waveformat, (DWORD_PTR)appState.hWnd, 0, CALLBACK_WINDOW);
 	if (result != MMSYSERR_NOERROR)
