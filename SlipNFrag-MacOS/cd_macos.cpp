@@ -17,7 +17,7 @@ stb_vorbis_info cdaudio_info;
 
 std::unordered_map<int, std::string> cdaudio_tracks;
 std::vector<byte> cdaudio_trackContents;
-std::vector<short> cdaudio_stagingBuffer;
+std::vector<float> cdaudio_stagingBuffer;
 
 AudioQueueRef cdaudio_audioqueue = NULL;
 AudioQueueBufferRef cdaudio_firstBuffer = NULL;
@@ -50,18 +50,18 @@ void CDAudio_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef b
 	if (cdaudio_audioqueue == nullptr)
 		return;
 
-	cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size());
+	cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	if (cdaudio_lastCopied == 0 && cdaudio_playLooping)
 	{
 		stb_vorbis_seek_start(cdaudio_stream);
-        cdaudio_lastCopied = stb_vorbis_get_samples_short_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size());
+        cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	}
 
 	if (cdaudio_lastCopied == 0)
 		return;
 
     pthread_mutex_lock(&cdaudio_lock);
-    memcpy(buffer->mAudioData, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 2);
+    memcpy(buffer->mAudioData, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 3);
     AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
     pthread_mutex_unlock(&cdaudio_lock);
 }
@@ -197,10 +197,10 @@ void CDAudio_Play(byte track, qboolean looping)
     AudioStreamBasicDescription format { };
     format.mSampleRate = cdaudio_info.sample_rate;
     format.mFormatID = kAudioFormatLinearPCM;
-    format.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked;
-    format.mBitsPerChannel = 16;
+    format.mFormatFlags = kLinearPCMFormatFlagIsFloat | kLinearPCMFormatFlagIsPacked;
+    format.mBitsPerChannel = 32;
     format.mChannelsPerFrame = cdaudio_info.channels;
-    format.mBytesPerFrame = cdaudio_info.channels * 16/8;
+    format.mBytesPerFrame = cdaudio_info.channels * format.mBitsPerChannel/8;
     format.mFramesPerPacket = 1;
     format.mBytesPerPacket = format.mBytesPerFrame * format.mFramesPerPacket;
     format.mReserved = 0;
