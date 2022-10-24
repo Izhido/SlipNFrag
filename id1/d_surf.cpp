@@ -134,25 +134,16 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	qboolean                wrapped_this_time;
 
 	if (width < 0)
-	{
-		Con_Printf ("D_SCAlloc: bad cache width %d\n", width);
-		return nullptr;
-	}
+		Sys_Error ("D_SCAlloc: bad cache width %d\n", width);
 
 	if (size <= 0)
-	{
-		Con_Printf ("D_SCAlloc: bad cache size %d\n", size);
-		return nullptr;
-	}
+		Sys_Error ("D_SCAlloc: bad cache size %d\n", size);
 	
     auto size_ptr = (size_t)&((surfcache_t *)0)->data[size];
     size = (int)size_ptr;
 	size = (size + 7) & ~7;
 	if (size > sc_size)
-	{
-		Con_Printf ("D_SCAlloc: %i > cache size\n",size);
-		return nullptr;
-	}
+		Sys_Error ("D_SCAlloc: %i > cache size",size);
 
 // if there is not size bytes after the rover, reset to the start
 	wrapped_this_time = false;
@@ -165,35 +156,21 @@ surfcache_t     *D_SCAlloc (int width, int size)
 		}
 		sc_rover = sc_base;
 	}
-		
+
 // colect and free surfcache_t blocks until the rover block is large enough
 	new_surf = sc_rover;
 	if (sc_rover->owner)
 		*sc_rover->owner = NULL;
-	
+
 	while (new_surf->size < size)
 	{
-		if (sc_rover->next == nullptr)
-		{
-			Con_Printf ("D_SCAlloc: hit the end of memory\n");
-
-			if (d_roverwrapped)
-			{
-				if (wrapped_this_time || (sc_rover >= d_initial_rover))
-					r_cache_thrash = true;
-			}
-			else if (wrapped_this_time)
-			{
-				d_roverwrapped = true;
-			}
-
-			return nullptr;
-		}
 	// free another
 		sc_rover = sc_rover->next;
+		if (!sc_rover)
+			Sys_Error ("D_SCAlloc: hit the end of memory");
 		if (sc_rover->owner)
 			*sc_rover->owner = NULL;
-			
+
 		new_surf->size += sc_rover->size;
 		new_surf->next = sc_rover->next;
 	}
@@ -211,7 +188,7 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	}
 	else
 		sc_rover = new_surf->next;
-	
+
 	new_surf->width = width;
 // DEBUG
 	if (width > 0)
