@@ -391,37 +391,37 @@ void R_BuildLightMapColored (void)
 	{
 		t = (int)blocklights[i];
 
-		if (t < (1 << 8))
-			t = (1 << 8);
-		if (t > (1 << 16))
-			t = (1 << 16);
+		if (t < 255)
+			t = 255;
+		if (t > 65535)
+			t = 65535;
 
 		blocklights[i] = t;
 
 		t = (int)blocklights[i+1];
 
-		if (t < (1 << 8))
-			t = (1 << 8);
-		if (t > (1 << 16))
-			t = (1 << 16);
+		if (t < 255)
+			t = 255;
+		if (t > 65535)
+			t = 65535;
 
 		blocklights[i+1] = t;
 
 		t = (int)blocklights[i+2];
 
-		if (t < (1 << 8))
-			t = (1 << 8);
-		if (t > (1 << 16))
-			t = (1 << 16);
+		if (t < 255)
+			t = 255;
+		if (t > 65535)
+			t = 65535;
 
 		blocklights[i+2] = t;
 
 		t = (int)blocklights[i+3];
 
-		if (t < (1 << 8))
-			t = (1 << 8);
-		if (t > (1 << 16))
-			t = (1 << 16);
+		if (t < 255)
+			t = 255;
+		if (t > 65535)
+			t = 65535;
 
 		blocklights[i+3] = t;
 	}
@@ -429,10 +429,10 @@ void R_BuildLightMapColored (void)
 	{
 		t = (int)blocklights[i];
 
-		if (t < (1 << 8))
-			t = (1 << 8);
-		if (t > (1 << 16))
-			t = (1 << 16);
+		if (t < 255)
+			t = 255;
+		if (t > 65535)
+			t = 65535;
 
 		blocklights[i] = t;
 	}
