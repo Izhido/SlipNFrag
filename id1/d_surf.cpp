@@ -382,6 +382,7 @@ surfcache_t* D_CacheLightmap (msurface_t *surface)
 	r_blocklights_smax = (surface->extents[0]>>4)+1;
 	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax;
+	auto sizeinbytes = r_blocklights_size * sizeof(unsigned);
 
 //
 // see if the cache holds apropriate data
@@ -394,16 +395,21 @@ surfcache_t* D_CacheLightmap (msurface_t *surface)
 			&& cache->lightadj[1] == r_drawsurf.lightadj[1]
 			&& cache->lightadj[2] == r_drawsurf.lightadj[2]
 			&& cache->lightadj[3] == r_drawsurf.lightadj[3]
-			&& cache->size >= r_blocklights_size * sizeof(unsigned) )
+			&& cache->size >= sizeinbytes )
 		return cache;
 
 //
 // allocate memory if needed
 //
+	if (cache && cache->size < sizeinbytes)
+	{
+		*cache->owner = NULL;
+		cache = NULL;
+	}
 	if (!cache)     // if a texture just animated, don't reallocate it
 	{
 		cache = D_SCAlloc (r_blocklights_smax * sizeof(unsigned),
-						   r_blocklights_size * sizeof(unsigned));
+						   sizeinbytes);
 		surface->cachespots[0] = cache;
 		if (cache == nullptr)
 		{
