@@ -275,7 +275,8 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 	r_drawsurf.lightadj[1] = d_lightstylevalue[surface->styles[1]];
 	r_drawsurf.lightadj[2] = d_lightstylevalue[surface->styles[2]];
 	r_drawsurf.lightadj[3] = d_lightstylevalue[surface->styles[3]];
-	
+	r_drawsurf.surfwidth = surface->extents[0] >> miplevel;
+
 //
 // see if the cache holds apropriate data
 //
@@ -286,7 +287,8 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 			&& cache->lightadj[0] == r_drawsurf.lightadj[0]
 			&& cache->lightadj[1] == r_drawsurf.lightadj[1]
 			&& cache->lightadj[2] == r_drawsurf.lightadj[2]
-			&& cache->lightadj[3] == r_drawsurf.lightadj[3] )
+			&& cache->lightadj[3] == r_drawsurf.lightadj[3]
+			&& cache->width == r_drawsurf.surfwidth )
 		return cache;
 
 //
@@ -294,13 +296,18 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 //
 	surfscale = 1.0 / (1<<miplevel);
 	r_drawsurf.surfmip = miplevel;
-	r_drawsurf.surfwidth = surface->extents[0] >> miplevel;
 	r_drawsurf.rowbytes = r_drawsurf.surfwidth;
 	r_drawsurf.surfheight = surface->extents[1] >> miplevel;
 	
 //
 // allocate memory if needed
 //
+	if (cache && cache->width != r_drawsurf.surfwidth)
+	{
+		if (cache->owner)
+			*cache->owner = NULL;
+		cache = NULL;
+	}
 	if (!cache)     // if a texture just animated, don't reallocate it
 	{
 		cache = D_SCAlloc (r_drawsurf.surfwidth,
@@ -382,7 +389,7 @@ surfcache_t* D_CacheLightmap (msurface_t *surface)
 	r_blocklights_smax = (surface->extents[0]>>4)+1;
 	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax;
-	auto sizeinbytes = r_blocklights_size * sizeof(unsigned);
+	auto widthinbytes = r_blocklights_smax * sizeof(unsigned);
 
 //
 // see if the cache holds apropriate data
@@ -395,21 +402,22 @@ surfcache_t* D_CacheLightmap (msurface_t *surface)
 			&& cache->lightadj[1] == r_drawsurf.lightadj[1]
 			&& cache->lightadj[2] == r_drawsurf.lightadj[2]
 			&& cache->lightadj[3] == r_drawsurf.lightadj[3]
-			&& cache->size >= sizeinbytes )
+			&& cache->width == widthinbytes )
 		return cache;
 
 //
 // allocate memory if needed
 //
-	if (cache && cache->size < sizeinbytes)
+	if (cache && cache->width != widthinbytes)
 	{
-		*cache->owner = NULL;
+		if (cache->owner)
+			*cache->owner = NULL;
 		cache = NULL;
 	}
 	if (!cache)     // if a texture just animated, don't reallocate it
 	{
-		cache = D_SCAlloc (r_blocklights_smax * sizeof(unsigned),
-						   sizeinbytes);
+		cache = D_SCAlloc (widthinbytes,
+						   r_blocklights_size * sizeof(unsigned));
 		surface->cachespots[0] = cache;
 		if (cache == nullptr)
 		{
