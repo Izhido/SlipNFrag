@@ -104,6 +104,7 @@ struct dskybox_t
 struct dlists_t
 {
 	int last_surface;
+	int last_surface_colored_lights;
 	int last_surface_rgba;
 	int last_surface_rgba_no_glow;
 	int last_surface_rotated;
@@ -147,6 +148,7 @@ struct dlists_t
 	float vup1;
 	float vup2;
 	std::vector<dsurface_t> surfaces;
+	std::vector<dsurface_t> surfaces_colored_lights;
 	std::vector<dsurfacewithglow_t> surfaces_rgba;
 	std::vector<dsurface_t> surfaces_rgba_no_glow;
 	std::vector<dsurfacerotated_t> surfaces_rotated;
@@ -187,6 +189,7 @@ extern qboolean d_uselists;
 
 void D_ResetLists ();
 void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);

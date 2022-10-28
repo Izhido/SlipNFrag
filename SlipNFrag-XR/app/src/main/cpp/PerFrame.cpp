@@ -455,6 +455,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
 		SortedSurfaces::LoadVertices(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, stagingBuffer, offset);
@@ -474,6 +475,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
 		SortedSurfaces::LoadAttributes(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, stagingBuffer, offset);
@@ -495,6 +497,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		if (appState.Scene.sortedIndices16Size > 0)
 		{
 			SortedSurfaces::LoadIndices16(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, stagingBuffer, offset);
@@ -518,6 +521,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		else
 		{
 			SortedSurfaces::LoadIndices32(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, stagingBuffer, offset);
@@ -549,6 +553,17 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			*target++ = (float)((entry >> 24) & 255) / 255;
 		}
 		offset += appState.Scene.paletteSize;
+		source = d_8to24table;
+		target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		for (auto i = 0; i < 256; i++)
+		{
+			auto entry = *source++;
+			*target++ = (float)(entry & 255) / 255;
+			*target++ = (float)((entry >> 8) & 255) / 255;
+			*target++ = (float)((entry >> 16) & 255) / 255;
+			*target++ = (float)((entry >> 24) & 255) / 255;
+		}
+		offset += appState.Scene.paletteSize;
 	}
 	if (appState.Scene.colormapSize > 0)
 	{
@@ -561,6 +576,17 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmap->source, loadedLightmap->size);
 		offset += loadedLightmap->size;
 		loadedLightmap = loadedLightmap->next;
+	}
+	while (offset % 8 != 0)
+	{
+		offset++;
+	}
+	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
+	while (loadedLightmapRGBA != nullptr)
+	{
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmapRGBA->source, loadedLightmapRGBA->size);
+		offset += loadedLightmapRGBA->size;
+		loadedLightmapRGBA = loadedLightmapRGBA->next;
 	}
 	for (auto& entry : appState.Scene.surfaceTextures)
 	{
@@ -881,6 +907,12 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
+
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.neutralPalette->buffer, 1, &bufferCopy);
+		bufferCopy.srcOffset += bufferCopy.size;
+
+		barrier.buffer = appState.Scene.neutralPalette->buffer;
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
 	}
 
 	appState.Scene.stagingBuffer.buffer = stagingBuffer;
@@ -893,6 +925,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		colormap->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += appState.Scene.colormapSize;
 	}
+
 	appState.Scene.lightmapTexturesInUse.clear();
 	auto loadedLightmap = appState.Scene.lightmaps.first;
 	while (loadedLightmap != nullptr)
@@ -911,6 +944,31 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		appState.Scene.stagingBuffer.offset += loadedLightmap->size;
 		loadedLightmap = loadedLightmap->next;
 	}
+
+	while (appState.Scene.stagingBuffer.offset % 8 != 0)
+	{
+		appState.Scene.stagingBuffer.offset++;
+	}
+
+	appState.Scene.lightmapRGBATexturesInUse.clear();
+	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
+	while (loadedLightmapRGBA != nullptr)
+	{
+		auto lightmapTexture = &*loadedLightmapRGBA->lightmap->texture;
+		if (appState.Scene.lightmapRGBATexturesInUse.insert(lightmapTexture).second)
+		{
+			lightmapTexture->regionCount = 0;
+		}
+		auto& region = lightmapTexture->regions[lightmapTexture->regionCount];
+		region.bufferOffset = appState.Scene.stagingBuffer.offset;
+		region.imageSubresource.baseArrayLayer = loadedLightmapRGBA->lightmap->allocatedIndex;
+		region.imageExtent.width = loadedLightmapRGBA->lightmap->width;
+		region.imageExtent.height = loadedLightmapRGBA->lightmap->height;
+		lightmapTexture->regionCount++;
+		appState.Scene.stagingBuffer.offset += loadedLightmapRGBA->size;
+		loadedLightmapRGBA = loadedLightmapRGBA->next;
+	}
+
 	for (auto lightmapTexture : appState.Scene.lightmapTexturesInUse)
 	{
 		appState.Scene.stagingBuffer.lastStartBarrier++;
@@ -945,14 +1003,57 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		endBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		endBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
+
+	for (auto lightmapTexture : appState.Scene.lightmapRGBATexturesInUse)
+	{
+		appState.Scene.stagingBuffer.lastStartBarrier++;
+		if (appState.Scene.stagingBuffer.imageStartBarriers.size() <= appState.Scene.stagingBuffer.lastStartBarrier)
+		{
+			appState.Scene.stagingBuffer.imageStartBarriers.emplace_back();
+		}
+
+		auto& startBarrier = appState.Scene.stagingBuffer.imageStartBarriers[appState.Scene.stagingBuffer.lastStartBarrier];
+		startBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		startBarrier.srcAccessMask = 0;
+		startBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		startBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		startBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		startBarrier.image = lightmapTexture->image;
+		startBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		startBarrier.subresourceRange.baseMipLevel = 0;
+		startBarrier.subresourceRange.levelCount = 1;
+		startBarrier.subresourceRange.baseArrayLayer = 0;
+		startBarrier.subresourceRange.layerCount = lightmapTexture->allocated.size();
+
+		appState.Scene.stagingBuffer.lastEndBarrier++;
+		if (appState.Scene.stagingBuffer.imageEndBarriers.size() <= appState.Scene.stagingBuffer.lastEndBarrier)
+		{
+			appState.Scene.stagingBuffer.imageEndBarriers.emplace_back();
+		}
+
+		auto& endBarrier = appState.Scene.stagingBuffer.imageEndBarriers[appState.Scene.stagingBuffer.lastEndBarrier];
+		endBarrier = startBarrier;
+		endBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		endBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		endBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		endBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+
 	if (appState.Scene.stagingBuffer.lastStartBarrier >= 0)
 	{
 		vkCmdPipelineBarrier(appState.Scene.stagingBuffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, appState.Scene.stagingBuffer.lastStartBarrier + 1, appState.Scene.stagingBuffer.imageStartBarriers.data());
 	}
+
 	for (auto lightmapTexture : appState.Scene.lightmapTexturesInUse)
 	{
 		vkCmdCopyBufferToImage(appState.Scene.stagingBuffer.commandBuffer, appState.Scene.stagingBuffer.buffer->buffer, lightmapTexture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, lightmapTexture->regionCount, lightmapTexture->regions.data());
 	}
+
+	for (auto lightmapTexture : appState.Scene.lightmapRGBATexturesInUse)
+	{
+		vkCmdCopyBufferToImage(appState.Scene.stagingBuffer.commandBuffer, appState.Scene.stagingBuffer.buffer->buffer, lightmapTexture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, lightmapTexture->regionCount, lightmapTexture->regions.data());
+	}
+
 	for (auto& entry : appState.Scene.surfaceTextures)
 	{
 		auto loadedTexture = entry.first;
@@ -1052,6 +1153,7 @@ void PerFrame::SetPushConstants(const LoadedAlias& loaded, float pushConstants[]
 void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 {
 	if (appState.Scene.surfaces.last < 0 &&
+		appState.Scene.surfacesColoredLights.last < 0 &&
 		appState.Scene.surfacesRGBA.last < 0 &&
 		appState.Scene.surfacesRGBANoGlow.last < 0 &&
 		appState.Scene.surfacesRotated.last < 0 &&
@@ -1114,7 +1216,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 		vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 		host_colormapResources.created = true;
 	}
-	if (!sceneMatricesResources.created || !sceneMatricesAndPaletteResources.created || (!sceneMatricesAndColormapResources.created && colormap != nullptr))
+	if (!sceneMatricesResources.created || !sceneMatricesAndPaletteResources.created || !sceneMatricesAndNeutralPaletteResources.created || (!sceneMatricesAndColormapResources.created && colormap != nullptr))
 	{
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[0].descriptorCount = 1;
@@ -1134,16 +1236,16 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 			sceneMatricesResources.created = true;
 		}
-		if (!sceneMatricesAndPaletteResources.created || (!sceneMatricesAndColormapResources.created && colormap != nullptr))
+		if (!sceneMatricesAndPaletteResources.created || !sceneMatricesAndNeutralPaletteResources.created || (!sceneMatricesAndColormapResources.created && colormap != nullptr))
 		{
 			poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			poolSizes[1].descriptorCount = 1;
-			bufferInfo[1].buffer = appState.Scene.palette->buffer;
-			bufferInfo[1].range = appState.Scene.palette->size;
 			writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			writes[1].pBufferInfo = bufferInfo + 1;
 			if (!sceneMatricesAndPaletteResources.created)
 			{
+				bufferInfo[1].buffer = appState.Scene.palette->buffer;
+				bufferInfo[1].range = appState.Scene.palette->size;
 				descriptorPoolCreateInfo.poolSizeCount = 2;
 				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesAndPaletteResources.descriptorPool));
 				descriptorSetAllocateInfo.descriptorPool = sceneMatricesAndPaletteResources.descriptorPool;
@@ -1154,8 +1256,24 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 				vkUpdateDescriptorSets(appState.Device, 2, writes, 0, nullptr);
 				sceneMatricesAndPaletteResources.created = true;
 			}
+			if (!sceneMatricesAndNeutralPaletteResources.created)
+			{
+				bufferInfo[1].buffer = appState.Scene.neutralPalette->buffer;
+				bufferInfo[1].range = appState.Scene.neutralPalette->size;
+				descriptorPoolCreateInfo.poolSizeCount = 2;
+				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesAndNeutralPaletteResources.descriptorPool));
+				descriptorSetAllocateInfo.descriptorPool = sceneMatricesAndNeutralPaletteResources.descriptorPool;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.doubleBufferLayout;
+				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &sceneMatricesAndNeutralPaletteResources.descriptorSet));
+				writes[0].dstSet = sceneMatricesAndNeutralPaletteResources.descriptorSet;
+				writes[1].dstSet = sceneMatricesAndNeutralPaletteResources.descriptorSet;
+				vkUpdateDescriptorSets(appState.Device, 2, writes, 0, nullptr);
+				sceneMatricesAndNeutralPaletteResources.created = true;
+			}
 			if (!sceneMatricesAndColormapResources.created && colormap != nullptr)
 			{
+				bufferInfo[1].buffer = appState.Scene.palette->buffer;
+				bufferInfo[1].range = appState.Scene.palette->size;
 				poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				poolSizes[2].descriptorCount = 1;
 				textureInfo.sampler = appState.Scene.samplers[colormap->mipCount];
@@ -1186,6 +1304,10 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 		writes[1].dstSet = sceneMatricesAndPaletteResources.descriptorSet;
 		vkUpdateDescriptorSets(appState.Device, 1, &writes[1], 0, nullptr);
 		writes[1].dstSet = sceneMatricesAndColormapResources.descriptorSet;
+		vkUpdateDescriptorSets(appState.Device, 1, &writes[1], 0, nullptr);
+		bufferInfo.buffer = appState.Scene.neutralPalette->buffer;
+		bufferInfo.range = appState.Scene.neutralPalette->size;
+		writes[1].dstSet = sceneMatricesAndNeutralPaletteResources.descriptorSet;
 		vkUpdateDescriptorSets(appState.Device, 1, &writes[1], 0, nullptr);
 		palette = appState.Scene.palette;
 	}
@@ -1304,6 +1426,34 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 				for (auto& subEntry : entry.textures)
 				{
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
+					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
+					indexBase += subEntry.indexCount;
+				}
+			}
+		}
+		if (appState.Scene.surfacesColoredLights.last >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesColoredLights.vertexBase;
+			auto attributeBase = appState.Scene.attributesSize + appState.Scene.surfacesColoredLights.attributeBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributeBase);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.surfacesColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.surfacesColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			VkDeviceSize indexBase = 0;
+			for (auto& entry : appState.Scene.surfacesColoredLights.sorted)
+			{
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipelineLayout, 1, 1, &entry.lightmap, 0, nullptr);
+				for (auto& subEntry : entry.textures)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipelineLayout, 2, 1, &subEntry.texture, 0, nullptr);
 					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
 					indexBase += subEntry.indexCount;
 				}

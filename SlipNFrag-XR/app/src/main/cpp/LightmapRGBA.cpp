@@ -1,20 +1,20 @@
-#include "Lightmap.h"
+#include "LightmapRGBA.h"
 #include "AppState.h"
 #include "Utils.h"
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage)
+void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage)
 {
 	this->width = width;
 	this->height = height;
 
 	size_t slot = std::ceil(std::log2(std::max(width, height)));
-	if (appState.Scene.lightmapTextures.size() <= slot)
+	if (appState.Scene.lightmapRGBATextures.size() <= slot)
 	{
-		appState.Scene.lightmapTextures.resize(slot + 1);
+		appState.Scene.lightmapRGBATextures.resize(slot + 1);
 	}
-	auto lightmapTexture = appState.Scene.lightmapTextures[slot];
+	auto lightmapTexture = appState.Scene.lightmapRGBATextures[slot];
 	bool found = false;
 	while (lightmapTexture != nullptr)
 	{
@@ -46,29 +46,29 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 	{
 		if (lightmapTexture == nullptr)
 		{
-			if (appState.Scene.deletedLightmapTextures != nullptr)
+			if (appState.Scene.deletedLightmapRGBATextures != nullptr)
 			{
-				lightmapTexture = appState.Scene.deletedLightmapTextures;
-				appState.Scene.deletedLightmapTextures = appState.Scene.deletedLightmapTextures->next;
+				lightmapTexture = appState.Scene.deletedLightmapRGBATextures;
+				appState.Scene.deletedLightmapRGBATextures = appState.Scene.deletedLightmapRGBATextures->next;
 				lightmapTexture->Initialize();
 			}
 			else
 			{
-				lightmapTexture = new LightmapTexture { };
+				lightmapTexture = new LightmapRGBATexture { };
 			}
-			appState.Scene.lightmapTextures[slot] = lightmapTexture;
+			appState.Scene.lightmapRGBATextures[slot] = lightmapTexture;
 		}
 		else
 		{
-			if (appState.Scene.deletedLightmapTextures != nullptr)
+			if (appState.Scene.deletedLightmapRGBATextures != nullptr)
 			{
-				lightmapTexture->next = appState.Scene.deletedLightmapTextures;
-				appState.Scene.deletedLightmapTextures = appState.Scene.deletedLightmapTextures->next;
+				lightmapTexture->next = appState.Scene.deletedLightmapRGBATextures;
+				appState.Scene.deletedLightmapRGBATextures = appState.Scene.deletedLightmapRGBATextures->next;
 				lightmapTexture->next->Initialize();
 			}
 			else
 			{
-				lightmapTexture->next = new LightmapTexture { };
+				lightmapTexture->next = new LightmapRGBATexture { };
 			}
 			lightmapTexture->next->previous = lightmapTexture;
 			lightmapTexture = lightmapTexture->next;
@@ -154,7 +154,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, VkFor
 	}
 }
 
-void Lightmap::Delete(AppState& appState) const
+void LightmapRGBA::Delete(AppState& appState) const
 {
 	texture->allocated[allocatedIndex] = false;
 	texture->allocatedCount--;
@@ -175,13 +175,13 @@ void Lightmap::Delete(AppState& appState) const
 		else
 		{
 			size_t slot = std::ceil(std::log2(std::max(width, height)));
-			appState.Scene.lightmapTextures[slot] = texture->next;
+			appState.Scene.lightmapRGBATextures[slot] = texture->next;
 		}
 		if (texture->next != nullptr)
 		{
 			texture->next->previous = texture->previous;
 		}
-		texture->next = appState.Scene.deletedLightmapTextures;
-		appState.Scene.deletedLightmapTextures = texture;
+		texture->next = appState.Scene.deletedLightmapRGBATextures;
+		appState.Scene.deletedLightmapRGBATextures = texture;
 	}
 }

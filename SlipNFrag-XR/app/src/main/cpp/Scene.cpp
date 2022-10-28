@@ -329,6 +329,8 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	CreateShader(appState, app, "shaders/surface.vert.spv", &surfaceVertex);
 	VkShaderModule surfaceFragment;
 	CreateShader(appState, app, "shaders/surface.frag.spv", &surfaceFragment);
+	VkShaderModule surfaceColoredLightsFragment;
+	CreateShader(appState, app, "shaders/surface_colored_lights.frag.spv", &surfaceColoredLightsFragment);
 	VkShaderModule surfaceRGBAVertex;
 	CreateShader(appState, app, "shaders/surface_rgba.vert.spv", &surfaceRGBAVertex);
 	VkShaderModule surfaceRGBAFragment;
@@ -738,6 +740,12 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	stages[1].module = surfaceFragment;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfaces.pipeline));
 
+	descriptorSetLayouts[0] = doubleBufferLayout;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesColoredLights.pipelineLayout));
+	graphicsPipelineCreateInfo.layout = surfacesColoredLights.pipelineLayout;
+	stages[1].module = surfaceColoredLightsFragment;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesColoredLights.pipeline));
+
 	descriptorSetLayouts[0] = singleBufferLayout;
 	descriptorSetLayouts[3] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 4;
@@ -1003,6 +1011,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	vkDestroyShaderModule(appState.Device, surfaceRGBANoGlowFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceRGBAFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceRGBAVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, surfaceColoredLightsFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 
@@ -1047,6 +1056,8 @@ void Scene::Initialize()
 	indexBuffers.Initialize();
 	lightmaps.first = nullptr;
 	lightmaps.current = nullptr;
+	lightmapsRGBA.first = nullptr;
+	lightmapsRGBA.current = nullptr;
 	for (auto& cached : surfaceTextures)
 	{
 		cached.first = nullptr;
@@ -1289,6 +1300,46 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			size += loaded.lightmap.size;
 			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
 			lightmaps.Setup(loaded.lightmap);
+		}
+		else
+		{
+			loaded.lightmap.lightmap = lightmap;
+		}
+	}
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size)
+{
+	GetStagingBufferSize(appState, (const dturbulent_t&)surface, loaded, size);
+	auto lightmapEntry = lightmapsRGBA.lightmaps.find(surface.face);
+	if (lightmapEntry == lightmapsRGBA.lightmaps.end())
+	{
+		auto lightmap = new LightmapRGBA { };
+		lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16G16B16A16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		lightmap->createdFrameCount = surface.created;
+		loaded.lightmap.lightmap = lightmap;
+		loaded.lightmap.size = surface.lightmap_size * sizeof(uint16_t);
+		size += loaded.lightmap.size;
+		loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+		lightmapsRGBA.Setup(loaded.lightmap);
+		lightmapsRGBA.lightmaps.insert({ surface.face, lightmap });
+	}
+	else
+	{
+		auto lightmap = lightmapEntry->second;
+		if (lightmap->createdFrameCount != surface.created)
+		{
+			lightmap->next = lightmapsRGBA.oldLightmaps;
+			lightmapsRGBA.oldLightmaps = lightmap;
+			lightmap = new LightmapRGBA { };
+			lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16G16B16A16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			lightmap->createdFrameCount = surface.created;
+			lightmapEntry->second = lightmap;
+			loaded.lightmap.lightmap = lightmap;
+			loaded.lightmap.size = surface.lightmap_size * sizeof(uint16_t);
+			size += loaded.lightmap.size;
+			loaded.lightmap.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+			lightmapsRGBA.Setup(loaded.lightmap);
 		}
 		else
 		{
@@ -1841,6 +1892,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 {
 	surfaces.Allocate(d_lists.last_surface);
+	surfacesColoredLights.Allocate(d_lists.last_surface_colored_lights);
 	surfacesRGBA.Allocate(d_lists.last_surface_rgba);
 	surfacesRGBANoGlow.Allocate(d_lists.last_surface_rgba_no_glow);
 	surfacesRotated.Allocate(d_lists.last_surface_rotated);
@@ -1912,6 +1964,40 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		palette = newPalette;
 		paletteSize = palette->size;
 		size += paletteSize;
+		newPalette = nullptr;
+		skip = true;
+		for (auto p = &neutralPalette; *p != nullptr; )
+		{
+			if (skip)
+			{
+				p = &(*p)->next;
+				skip = false;
+			}
+			else
+			{
+				(*p)->unusedCount++;
+				if ((*p)->unusedCount >= Constants::maxUnusedCount)
+				{
+					auto next = (*p)->next;
+					newPalette = (*p);
+					newPalette->unusedCount = 0;
+					(*p) = next;
+					break;
+				}
+				else
+				{
+					p = &(*p)->next;
+				}
+			}
+		}
+		if (newPalette == nullptr)
+		{
+			newPalette = new SharedMemoryBuffer { };
+			newPalette->CreateUniformBuffer(appState, 256 * 4 * sizeof(float));
+		}
+		newPalette->next = neutralPalette;
+		neutralPalette = newPalette;
+		size += paletteSize;
 		paletteChangedFrame = pal_changed;
 	}
 	if (!host_colormap.empty() && perFrame.colormap == nullptr)
@@ -1921,6 +2007,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		colormapSize = 16384;
 		size += colormapSize;
 	}
+	surfaces.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
 	sorted.Initialize(surfaces.sorted);
 	for (auto i = 0; i <= surfaces.last; i++)
@@ -1933,6 +2020,19 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(surfaces.sorted);
+	surfacesColoredLights.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
+	previousTexture = nullptr;
+	sorted.Initialize(surfacesColoredLights.sorted);
+	for (auto i = 0; i <= surfacesColoredLights.last; i++)
+	{
+		auto& loaded = surfacesColoredLights.loaded[i];
+		GetStagingBufferSize(appState, d_lists.surfaces_colored_lights[i], loaded, size);
+		sorted.Sort(appState, loaded, i, surfacesColoredLights.sorted);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 16 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(surfacesColoredLights.sorted);
 	surfacesRGBA.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
 	previousGlowTexture = nullptr;
@@ -2264,6 +2364,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		sortedIndices16Size = sortedIndicesCount * sizeof(uint16_t);
 		sortedIndices32Size = 0;
+		surfaces.ScaleIndexBase(sizeof(uint16_t));
+		surfacesColoredLights.ScaleIndexBase(sizeof(uint16_t));
 		surfacesRGBA.ScaleIndexBase(sizeof(uint16_t));
 		surfacesRGBANoGlow.ScaleIndexBase(sizeof(uint16_t));
 		surfacesRotated.ScaleIndexBase(sizeof(uint16_t));
@@ -2284,6 +2386,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		sortedIndices16Size = 0;
 		sortedIndices32Size = sortedIndicesCount * sizeof(uint32_t);
+		surfaces.ScaleIndexBase(sizeof(uint32_t));
+		surfacesColoredLights.ScaleIndexBase(sizeof(uint32_t));
 		surfacesRGBA.ScaleIndexBase(sizeof(uint32_t));
 		surfacesRGBANoGlow.ScaleIndexBase(sizeof(uint32_t));
 		surfacesRotated.ScaleIndexBase(sizeof(uint32_t));
@@ -2363,6 +2467,13 @@ void Scene::Reset()
 	{
 		cached.DisposeFront();
 	}
+	while (deletedLightmapRGBATextures != nullptr)
+	{
+		auto lightmapTexture = deletedLightmapRGBATextures;
+		deletedLightmapRGBATextures = deletedLightmapRGBATextures->next;
+		delete lightmapTexture;
+	}
+	lightmapsRGBA.DisposeFront();
 	while (deletedLightmapTextures != nullptr)
 	{
 		auto lightmapTexture = deletedLightmapTextures;
@@ -2372,6 +2483,13 @@ void Scene::Reset()
 	lightmaps.DisposeFront();
 	indexBuffers.DisposeFront();
 	buffers.DisposeFront();
+	for (SharedMemoryBuffer* p = neutralPalette, *next; p != nullptr; p = next)
+	{
+		next = p->next;
+		p->next = oldPalettes;
+		oldPalettes = p;
+	}
+	neutralPalette = nullptr;
 	for (SharedMemoryBuffer* p = palette, *next; p != nullptr; p = next)
 	{
 		next = p->next;

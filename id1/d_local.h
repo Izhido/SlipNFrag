@@ -93,7 +93,8 @@ void D_DrawFenceSpans8 (espan_t *pspans);
 void R_ShowSubDiv (void);
 extern void (*prealspandrawer)(void);
 surfcache_t	*D_CacheSurface (msurface_t *surface, int miplevel);
-surfcache_t* D_CacheLightmap (msurface_t *surface);
+surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture);
+surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture);
 
 extern int D_MipLevelForScale (float scale);
 

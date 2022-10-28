@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 
@@ -17,6 +17,7 @@ extern vec3_t r_plightvec;
 void D_ResetLists ()
 {
 	d_lists.last_surface = -1;
+	d_lists.last_surface_colored_lights = -1;
 	d_lists.last_surface_rgba = -1;
 	d_lists.last_surface_rgba_no_glow = -1;
 	d_lists.last_surface_rotated = -1;
@@ -71,6 +72,28 @@ void D_FillLightmap (dsurface_t& surface, surfcache_s* cache)
 	}
 }
 
+void D_FillColoredLightmap (dsurface_t& surface, surfcache_s* cache)
+{
+	surface.lightmap_width = cache->width / (3 * sizeof(unsigned));
+	surface.lightmap_height = cache->height;
+	surface.lightmap_size = surface.lightmap_width * surface.lightmap_height * 4;
+	while (d_lists.lightmap_texels.size() <= d_lists.last_lightmap_texel + surface.lightmap_size)
+	{
+		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
+	}
+	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
+	d_lists.last_lightmap_texel += surface.lightmap_size;
+	auto source = (unsigned*)&cache->data[0];
+	auto target = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+	for (auto i = 0; i < surface.lightmap_size; i += 4)
+	{
+		*target++ = *source++;
+		*target++ = *source++;
+		*target++ = *source++;
+		*target++ = 65535;
+	}
+}
+
 void D_FillSurfaceSize(dturbulent_t& turbulent, int component_size, int mips)
 {
 	auto size = turbulent.width * turbulent.height * component_size;
@@ -101,6 +124,21 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 	D_FillSurfaceSize(surface, 1, mips);
 	surface.data = (unsigned char*)texture + texture->offsets[0];
 	D_FillLightmap(surface, cache);
+	surface.count = face->numedges;
+}
+
+void D_FillSurfaceColoredLightsData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+{
+	surface.face = face;
+	surface.entity = entity;
+	surface.model = entity->model;
+	surface.created = cache->created;
+	auto texture = (texture_t*)(cache->texture);
+	surface.width = texture->width;
+	surface.height = texture->height;
+	D_FillSurfaceSize(surface, 1, mips);
+	surface.data = (unsigned char*)texture + texture->offsets[0];
+	D_FillColoredLightmap(surface, cache);
 	surface.count = face->numedges;
 }
 
@@ -196,6 +234,21 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity
 	}
 	auto& surface = d_lists.surfaces[d_lists.last_surface];
 	D_FillSurfaceData(surface, face, cache, entity, MIPLEVELS);
+}
+
+void D_AddSurfaceColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_surface_colored_lights++;
+	if (d_lists.last_surface_colored_lights >= d_lists.surfaces_colored_lights.size())
+	{
+		d_lists.surfaces_colored_lights.emplace_back();
+	}
+	auto& surface = d_lists.surfaces_colored_lights[d_lists.last_surface_colored_lights];
+	D_FillSurfaceColoredLightsData(surface, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddSurfaceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)

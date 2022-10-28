@@ -149,6 +149,8 @@ typedef struct edge_s
 	int				pad; // to 64 bytes
 } edge_t;
 
+texture_t *R_TextureAnimation (texture_t *base);
+
 #endif	// _R_SHARED_H_
 
 #endif	// GLQUAKE

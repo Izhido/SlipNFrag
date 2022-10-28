@@ -41,6 +41,7 @@ struct PerFrame
 	DescriptorResources host_colormapResources;
 	DescriptorResources sceneMatricesResources;
 	DescriptorResources sceneMatricesAndPaletteResources;
+	DescriptorResources sceneMatricesAndNeutralPaletteResources;
 	DescriptorResources sceneMatricesAndColormapResources;
 	DescriptorResourcesLists colormapResources;
 	DescriptorResources floorResources;

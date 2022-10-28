@@ -140,7 +140,6 @@ void R_TransformFrustum (void);
 void R_Load24To8Coverage (void);
 void R_SetSkyFrame (void);
 void R_DrawSurfaceBlock16 (void);
-texture_t *R_TextureAnimation (texture_t *base);
 
 #if	id386
 
@@ -289,7 +288,7 @@ extern int 						r_blocklights_tmax;
 extern int 						r_blocklights_size;
 
 void R_BuildLightMap (void);
-void R_BuildLightMapColored (void);
+void R_BuildColoredLightMap (void);
 
 extern qboolean r_skip_fov_check;
 extern qboolean	r_fov_greater_than_90;

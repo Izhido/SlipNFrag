@@ -1581,6 +1581,7 @@ void android_main(struct android_app* app)
 			{
 				entry.DeleteOld(appState);
 			}
+			appState.Scene.lightmapsRGBA.DeleteOld(appState);
 			appState.Scene.lightmaps.DeleteOld(appState);
 			appState.Scene.indexBuffers.DeleteOld(appState);
 			appState.Scene.buffers.DeleteOld(appState);
@@ -2682,6 +2683,7 @@ void android_main(struct android_app* app)
 				perFrame.second.skyRGBAResources.Delete(appState);
 				perFrame.second.skyResources.Delete(appState);
 				perFrame.second.sceneMatricesAndColormapResources.Delete(appState);
+				perFrame.second.sceneMatricesAndNeutralPaletteResources.Delete(appState);
 				perFrame.second.sceneMatricesAndPaletteResources.Delete(appState);
 				perFrame.second.sceneMatricesResources.Delete(appState);
 				perFrame.second.host_colormapResources.Delete(appState);
@@ -2740,6 +2742,9 @@ void android_main(struct android_app* app)
 			}
 			appState.Scene.surfaceTextures.clear();
 
+			appState.Scene.lightmapsRGBA.Delete(appState);
+			appState.Scene.lightmapRGBATextures.clear();
+
 			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.lightmapTextures.clear();
 
@@ -2785,6 +2790,7 @@ void android_main(struct android_app* app)
 			appState.Scene.surfacesRotated.Delete(appState);
 			appState.Scene.surfacesRGBANoGlow.Delete(appState);
 			appState.Scene.surfacesRGBA.Delete(appState);
+			appState.Scene.surfacesColoredLights.Delete(appState);
 			appState.Scene.surfaces.Delete(appState);
 
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);

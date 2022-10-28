@@ -146,10 +146,10 @@ void R_AddDynamicLights (void)
 
 /*
 ===============
-R_AddDynamicLightsColored
+R_AddDynamicColoredLights
 ===============
 */
-void R_AddDynamicLightsColored (void)
+void R_AddDynamicColoredLights (void)
 {
 	msurface_t *surf;
 	int			lnum;
@@ -329,12 +329,12 @@ void R_BuildLightMap (void)
 
 /*
 ===============
-R_BuildLightMapColored
+R_BuildColoredLightMap
 
 Combine and scale multiple colored lightmaps into the 8.8 format in blocklights
 ===============
 */
-void R_BuildLightMapColored (void)
+void R_BuildColoredLightMap (void)
 {
 	int			t;
 	int			i;
@@ -383,7 +383,7 @@ void R_BuildLightMapColored (void)
 
 // add all the dynamic lights
 	if (surf->dlightframe == r_framecount)
-		R_AddDynamicLightsColored ();
+		R_AddDynamicColoredLights ();
 	
 
 // bound
@@ -584,7 +584,7 @@ void R_DrawSurfaceColored (void)
 	texture_t		*mt;
 
 // calculate the lightings
-	R_BuildLightMapColored ();
+	R_BuildColoredLightMap ();
 	
 	surfrowbytes = r_drawsurf.rowbytes;
 

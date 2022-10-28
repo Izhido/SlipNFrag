@@ -8,7 +8,7 @@ set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.25")
 set(OVR_OPENXR_DIR "${ROOT_DIR}/ovr_openxr_mobile_sdk_46.0")
 set(ADRENO_DIR "${ROOT_DIR}/VkAdrenoLayer_v1.4")
-set(ANDROID_BINARIES_DIR "${ROOT_DIR}/android-binaries-1.3.224.1")
+set(ANDROID_BINARIES_DIR "${ROOT_DIR}/android-binaries-1.3.231.0")
 set(ASAN_DIR "${ANDROID_NDK}/toolchains/llvm/prebuilt/darwin-x86_64/lib64/clang/14.0.6/lib/linux")
 
 option(BUILD_WITH_ASAN "Build with Address Sanitizer" OFF)

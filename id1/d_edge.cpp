@@ -341,7 +341,8 @@ void D_DrawSurfaces (void)
 				D_TurbCalcGradients (pface);
 				if (pface->samples != nullptr)
 				{
-					pcurrentcache = D_CacheLightmap (pface);
+					auto texture = R_TextureAnimation (pface->texinfo->texture);
+					pcurrentcache = D_CacheLightmap (pface, texture);
 					if (pcurrentcache == nullptr)
 					{
 						Turbulent8Non64 (s->spans);
@@ -575,12 +576,6 @@ void D_DrawSurfacesToLists (void)
 			else if (s->flags & SURF_DRAWTURB)
 			{
 				pface = (msurface_t*)s->data;
-				miplevel = 0;
-				cacheblock = (pixel_t *)
-						((byte *)pface->texinfo->texture +
-						pface->texinfo->texture->offsets[0]);
-				auto texture = pface->texinfo->texture;
-				cachewidth = texture->width;
 
 				if (s->insubmodel)
 				{
@@ -596,9 +591,11 @@ void D_DrawSurfacesToLists (void)
 										// make entity passed in
 				}
 
+				auto texture = R_TextureAnimation (pface->texinfo->texture);
+
 				if (pface->samples != nullptr)
 				{
-					pcurrentcache = D_CacheLightmap (pface);
+					pcurrentcache = D_CacheLightmap (pface, texture);
 					if (pcurrentcache == nullptr)
 					{
 						if (texture->external_color != nullptr)
@@ -656,20 +653,19 @@ void D_DrawSurfacesToLists (void)
 
 				pface = (msurface_t*)s->data;
 
-				pcurrentcache = D_CacheLightmap (pface);
+				auto texture = R_TextureAnimation (pface->texinfo->texture);
 
-				if (pcurrentcache != nullptr)
+				if (currententity->origin[0] == 0 &&
+					currententity->origin[1] == 0 &&
+					currententity->origin[2] == 0 &&
+					currententity->angles[YAW] == 0 &&
+					currententity->angles[PITCH] == 0 &&
+					currententity->angles[ROLL] == 0)
 				{
-					auto texture = (texture_t*)(pcurrentcache->texture);
-
-					if (currententity->origin[0] == 0 &&
-						currententity->origin[1] == 0 &&
-						currententity->origin[2] == 0 &&
-						currententity->angles[YAW] == 0 &&
-						currententity->angles[PITCH] == 0 &&
-						currententity->angles[ROLL] == 0)
+					if (s->isfence)
 					{
-						if (s->isfence)
+						auto pcurrentcache = D_CacheLightmap (pface, texture);
+						if (pcurrentcache != nullptr)
 						{
 							if (texture->external_color != nullptr && texture->external_glow != nullptr)
 								D_AddFenceRGBAToLists (pface, pcurrentcache, currententity);
@@ -678,17 +674,50 @@ void D_DrawSurfacesToLists (void)
 							else
 								D_AddFenceToLists (pface, pcurrentcache, currententity);
 						}
+					}
+					else
+					{
+						if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						{
+							auto pcurrentcache = D_CacheLightmap (pface, texture);
+							if (pcurrentcache != nullptr)
+							{
+								D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
+							}
+						}
+						else if (texture->external_color != nullptr)
+						{
+							auto pcurrentcache = D_CacheLightmap (pface, texture);
+							if (pcurrentcache != nullptr)
+							{
+								D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+							}
+						}
 						else
 						{
-							if (texture->external_color != nullptr && texture->external_glow != nullptr)
-								D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
-							else if (texture->external_color != nullptr)
-								D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+							if (pface->samplesRGB != NULL)
+							{
+								auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
+								if (pcurrentcache != nullptr)
+								{
+									D_AddSurfaceColoredLightsToLists (pface, pcurrentcache, currententity);
+								}
+							}
 							else
-								D_AddSurfaceToLists (pface, pcurrentcache, currententity);
+							{
+								auto pcurrentcache = D_CacheLightmap (pface, texture);
+								if (pcurrentcache != nullptr)
+								{
+									D_AddSurfaceToLists (pface, pcurrentcache, currententity);
+								}
+							}
 						}
 					}
-					else if (s->isfence)
+				}
+				else if (s->isfence)
+				{
+					auto pcurrentcache = D_CacheLightmap (pface, texture);
+					if (pcurrentcache != nullptr)
 					{
 						if (texture->external_color != nullptr && texture->external_glow != nullptr)
 							D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
@@ -697,7 +726,11 @@ void D_DrawSurfacesToLists (void)
 						else
 							D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
 					}
-					else
+				}
+				else
+				{
+					auto pcurrentcache = D_CacheLightmap (pface, texture);
+					if (pcurrentcache != nullptr)
 					{
 						if (texture->external_color != nullptr && texture->external_glow != nullptr)
 							D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
@@ -812,12 +845,6 @@ void D_DrawSurfacesToListsIfNeeded (void)
 			else if (s->flags & SURF_DRAWTURB)
 			{
 				pface = (msurface_t*)s->data;
-				miplevel = 0;
-				cacheblock = (pixel_t *)
-						((byte *)pface->texinfo->texture +
-						pface->texinfo->texture->offsets[0]);
-				auto texture = pface->texinfo->texture;
-				cachewidth = texture->width;
 
 				if (s->insubmodel)
 				{
@@ -833,9 +860,11 @@ void D_DrawSurfacesToListsIfNeeded (void)
 										// make entity passed in
 				}
 
+				auto texture = R_TextureAnimation (pface->texinfo->texture);
+
 				if (pface->samples != nullptr)
 				{
-					pcurrentcache = D_CacheLightmap (pface);
+					pcurrentcache = D_CacheLightmap (pface, texture);
 					if (pcurrentcache == nullptr)
 					{
 						if (texture->external_color != nullptr)
@@ -893,20 +922,19 @@ void D_DrawSurfacesToListsIfNeeded (void)
 
 				pface = (msurface_t*)s->data;
 
-				pcurrentcache = D_CacheLightmap (pface);
+				auto texture = R_TextureAnimation (pface->texinfo->texture);
 
-				if (pcurrentcache != nullptr)
+				if (currententity->origin[0] == 0 &&
+					currententity->origin[1] == 0 &&
+					currententity->origin[2] == 0 &&
+					currententity->angles[YAW] == 0 &&
+					currententity->angles[PITCH] == 0 &&
+					currententity->angles[ROLL] == 0)
 				{
-					auto texture = (texture_t*)(pcurrentcache->texture);
-
-					if (currententity->origin[0] == 0 &&
-						currententity->origin[1] == 0 &&
-						currententity->origin[2] == 0 &&
-						currententity->angles[YAW] == 0 &&
-						currententity->angles[PITCH] == 0 &&
-						currententity->angles[ROLL] == 0)
+					if (s->isfence)
 					{
-						if (s->isfence)
+						auto pcurrentcache = D_CacheLightmap (pface, texture);
+						if (pcurrentcache != nullptr)
 						{
 							if (texture->external_color != nullptr && texture->external_glow != nullptr)
 								D_AddFenceRGBAToLists (pface, pcurrentcache, currententity);
@@ -915,17 +943,50 @@ void D_DrawSurfacesToListsIfNeeded (void)
 							else
 								D_AddFenceToLists (pface, pcurrentcache, currententity);
 						}
+					}
+					else
+					{
+						if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						{
+							auto pcurrentcache = D_CacheLightmap (pface, texture);
+							if (pcurrentcache != nullptr)
+							{
+								D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
+							}
+						}
+						else if (texture->external_color != nullptr)
+						{
+							auto pcurrentcache = D_CacheLightmap (pface, texture);
+							if (pcurrentcache != nullptr)
+							{
+								D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+							}
+						}
 						else
 						{
-							if (texture->external_color != nullptr && texture->external_glow != nullptr)
-								D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
-							else if (texture->external_color != nullptr)
-								D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+							if (pface->samplesRGB != NULL)
+							{
+								auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
+								if (pcurrentcache != nullptr)
+								{
+									D_AddSurfaceColoredLightsToLists (pface, pcurrentcache, currententity);
+								}
+							}
 							else
-								D_AddSurfaceToLists (pface, pcurrentcache, currententity);
+							{
+								auto pcurrentcache = D_CacheLightmap (pface, texture);
+								if (pcurrentcache != nullptr)
+								{
+									D_AddSurfaceToLists (pface, pcurrentcache, currententity);
+								}
+							}
 						}
 					}
-					else if (s->isfence)
+				}
+				else if (s->isfence)
+				{
+					auto pcurrentcache = D_CacheLightmap (pface, texture);
+					if (pcurrentcache != nullptr)
 					{
 						if (texture->external_color != nullptr && texture->external_glow != nullptr)
 							D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
@@ -934,7 +995,11 @@ void D_DrawSurfacesToListsIfNeeded (void)
 						else
 							D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
 					}
-					else
+				}
+				else
+				{
+					auto pcurrentcache = D_CacheLightmap (pface, texture);
+					if (pcurrentcache != nullptr)
 					{
 						if (texture->external_color != nullptr && texture->external_glow != nullptr)
 							D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
@@ -1018,16 +1083,11 @@ void D_DrawOneSurface (msurface_t* surf)
 		}
 		else if (surf->flags & SURF_DRAWTURB)
 		{
-			miplevel = 0;
-			cacheblock = (pixel_t *)
-					((byte *)surf->texinfo->texture +
-					 surf->texinfo->texture->offsets[0]);
-			auto texture = surf->texinfo->texture;
-			cachewidth = texture->width;
+			auto texture = R_TextureAnimation (surf->texinfo->texture);
 
 			if (surf->samples != nullptr)
 			{
-				auto pcurrentcache = D_CacheLightmap (surf);
+				auto pcurrentcache = D_CacheLightmap (surf, texture);
 				if (pcurrentcache == nullptr)
 				{
 					if (texture->external_color != nullptr)
@@ -1053,20 +1113,19 @@ void D_DrawOneSurface (msurface_t* surf)
 		}
 		else
 		{
-			auto pcurrentcache = D_CacheLightmap (surf);
+			auto texture = R_TextureAnimation (surf->texinfo->texture);
 
-			if (pcurrentcache != nullptr)
+			if (currententity->origin[0] == 0 &&
+				currententity->origin[1] == 0 &&
+				currententity->origin[2] == 0 &&
+				currententity->angles[YAW] == 0 &&
+				currententity->angles[PITCH] == 0 &&
+				currententity->angles[ROLL] == 0)
 			{
-				auto texture = (texture_t*)(pcurrentcache->texture);
-
-				if (currententity->origin[0] == 0 &&
-					currententity->origin[1] == 0 &&
-					currententity->origin[2] == 0 &&
-					currententity->angles[YAW] == 0 &&
-					currententity->angles[PITCH] == 0 &&
-					currententity->angles[ROLL] == 0)
+				if (texture->name[0] == '{')
 				{
-					if (texture->name[0] == '{')
+					auto pcurrentcache = D_CacheLightmap (surf, texture);
+					if (pcurrentcache != nullptr)
 					{
 						if (texture->external_color != nullptr && texture->external_glow != nullptr)
 							D_AddFenceRGBAToLists (surf, pcurrentcache, currententity);
@@ -1075,17 +1134,50 @@ void D_DrawOneSurface (msurface_t* surf)
 						else
 							D_AddFenceToLists (surf, pcurrentcache, currententity);
 					}
+				}
+				else
+				{
+					if (texture->external_color != nullptr && texture->external_glow != nullptr)
+					{
+						auto pcurrentcache = D_CacheLightmap (surf, texture);
+						if (pcurrentcache != nullptr)
+						{
+							D_AddSurfaceRGBAToLists (surf, pcurrentcache, currententity);
+						}
+					}
+					else if (texture->external_color != nullptr)
+					{
+						auto pcurrentcache = D_CacheLightmap (surf, texture);
+						if (pcurrentcache != nullptr)
+						{
+							D_AddSurfaceRGBANoGlowToLists (surf, pcurrentcache, currententity);
+						}
+					}
 					else
 					{
-						if (texture->external_color != nullptr && texture->external_glow != nullptr)
-							D_AddSurfaceRGBAToLists (surf, pcurrentcache, currententity);
-						else if (texture->external_color != nullptr)
-							D_AddSurfaceRGBANoGlowToLists (surf, pcurrentcache, currententity);
+						if (surf->samplesRGB != NULL)
+						{
+							auto pcurrentcache = D_CacheColoredLightmap (surf, texture);
+							if (pcurrentcache != nullptr)
+							{
+								D_AddSurfaceColoredLightsToLists (surf, pcurrentcache, currententity);
+							}
+						}
 						else
-							D_AddSurfaceToLists (surf, pcurrentcache, currententity);
+						{
+							auto pcurrentcache = D_CacheLightmap (surf, texture);
+							if (pcurrentcache != nullptr)
+							{
+								D_AddSurfaceToLists (surf, pcurrentcache, currententity);
+							}
+						}
 					}
 				}
-				else if (texture->name[0] == '{')
+			}
+			else if (texture->name[0] == '{')
+			{
+				auto pcurrentcache = D_CacheLightmap (surf, texture);
+				if (pcurrentcache != nullptr)
 				{
 					if (texture->external_color != nullptr && texture->external_glow != nullptr)
 						D_AddFenceRotatedRGBAToLists (surf, pcurrentcache, currententity);
@@ -1094,7 +1186,11 @@ void D_DrawOneSurface (msurface_t* surf)
 					else
 						D_AddFenceRotatedToLists (surf, pcurrentcache, currententity);
 				}
-				else
+			}
+			else
+			{
+				auto pcurrentcache = D_CacheLightmap (surf, texture);
+				if (pcurrentcache != nullptr)
 				{
 					if (texture->external_color != nullptr && texture->external_glow != nullptr)
 						D_AddSurfaceRotatedRGBAToLists (surf, pcurrentcache, currententity);
