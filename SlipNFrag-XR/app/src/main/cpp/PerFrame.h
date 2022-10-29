@@ -68,5 +68,6 @@ struct PerFrame
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer);
 	void Reset(AppState& appState);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
+	static void SetTintPushConstants(float pushConstants[]);
 	void Render(AppState& appState, VkCommandBuffer commandBuffer);
 };

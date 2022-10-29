@@ -1150,6 +1150,15 @@ void PerFrame::SetPushConstants(const LoadedAlias& loaded, float pushConstants[]
 	pushConstants[14] = loaded.transform[2][3];
 }
 
+void PerFrame::SetTintPushConstants(float* pushConstants)
+{
+	pushConstants[0] = v_blend[0] * 255;
+	pushConstants[1] = v_blend[1] * 255;
+	pushConstants[2] = v_blend[2] * 255;
+	pushConstants[3] = v_blend[3];
+	pushConstants[4] = v_gamma.value;
+}
+
 void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 {
 	if (appState.Scene.surfaces.last < 0 &&
@@ -1447,6 +1456,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.surfacesColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
 			}
+			SetTintPushConstants(pushConstants);
+			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.surfacesColoredLights.sorted)
 			{
@@ -1476,11 +1487,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.surfacesRGBA.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.surfacesRGBA.sorted)
@@ -1511,11 +1518,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.surfacesRGBANoGlow.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.surfacesRGBANoGlow.sorted)
@@ -1573,11 +1576,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.surfacesRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.surfacesRotatedRGBA.sorted)
@@ -1608,11 +1607,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.surfacesRotatedRGBANoGlow.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.surfacesRotatedRGBANoGlow.sorted)
@@ -1671,11 +1666,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.fencesRGBA.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.fencesRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.fencesRGBA.sorted)
@@ -1706,11 +1697,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.fencesRGBANoGlow.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.fencesRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.fencesRGBANoGlow.sorted)
@@ -1768,11 +1755,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.fencesRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.fencesRotatedRGBA.sorted)
@@ -1803,11 +1786,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.fencesRotatedRGBANoGlow.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			VkDeviceSize indexBase = 0;
 			for (auto& entry : appState.Scene.fencesRotatedRGBANoGlow.sorted)
@@ -1863,11 +1842,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.turbulentRGBA.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			VkDeviceSize indexBase = 0;
@@ -1924,11 +1899,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.turbulentLitRGBA.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			pushConstants[0] = v_blend[0] * 255;
-			pushConstants[1] = v_blend[1] * 255;
-			pushConstants[2] = v_blend[2] * 255;
-			pushConstants[3] = v_blend[3];
-			pushConstants[4] = v_gamma.value;
+			SetTintPushConstants(pushConstants);
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentLitRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			VkDeviceSize indexBase = 0;

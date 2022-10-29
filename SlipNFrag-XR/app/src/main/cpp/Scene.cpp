@@ -741,6 +741,10 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfaces.pipeline));
 
 	descriptorSetLayouts[0] = doubleBufferLayout;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = 5 * sizeof(float);
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesColoredLights.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = surfacesColoredLights.pipelineLayout;
 	stages[1].module = surfaceColoredLightsFragment;
@@ -749,10 +753,6 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	descriptorSetLayouts[0] = singleBufferLayout;
 	descriptorSetLayouts[3] = singleImageLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 4;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 5 * sizeof(float);
-	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRGBA.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = surfacesRGBA.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &surfaceWithGlowAttributes.vertexInputState;
