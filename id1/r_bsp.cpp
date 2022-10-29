@@ -494,7 +494,7 @@ void R_DrawSubmodelPolygonsToLists (model_t *pmodel)
 		{
 			r_currentkey = ((mleaf_t *)currententity->topnode)->key;
 
-			D_DrawOneSurface (psurf);
+			D_DrawOneSurfaceToLists (psurf);
 		}
 	}
 }
@@ -638,7 +638,7 @@ void R_RenderAllWorldNodes (model_t *world)
 					if ((surf->flags & SURF_PLANEBACK) &&
 						(surf->visframe == r_framecount))
 					{
-							D_DrawOneSurface (surf);
+							D_DrawOneSurfaceToLists (surf);
 					}
 
 					surf++;
@@ -651,7 +651,7 @@ void R_RenderAllWorldNodes (model_t *world)
 					if (!(surf->flags & SURF_PLANEBACK) &&
 						(surf->visframe == r_framecount))
 					{
-							D_DrawOneSurface (surf);
+							D_DrawOneSurfaceToLists (surf);
 					}
 
 					surf++;

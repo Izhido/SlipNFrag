@@ -778,6 +778,14 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	stages[1].module = surfaceFragment;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRotated.pipeline));
 
+	descriptorSetLayouts[0] = doubleBufferLayout;
+	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+	pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesColoredLightsRotated.pipelineLayout));
+	graphicsPipelineCreateInfo.layout = surfacesColoredLightsRotated.pipelineLayout;
+	stages[1].module = surfaceColoredLightsFragment;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesColoredLightsRotated.pipeline));
+
 	descriptorSetLayouts[0] = singleBufferLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 4;
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
@@ -1643,6 +1651,17 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
 	loaded.roll = surface.roll;
 }
 
+void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceColoredLightsRotated& loaded, VkDeviceSize& size)
+{
+	GetStagingBufferSize(appState, (const dsurface_t&)surface, (LoadedSurfaceColoredLights&)loaded, size);
+	loaded.originX = surface.origin_x;
+	loaded.originY = surface.origin_y;
+	loaded.originZ = surface.origin_z;
+	loaded.yaw = surface.yaw;
+	loaded.pitch = surface.pitch;
+	loaded.roll = surface.roll;
+}
+
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, LoadedSurfaceRotated2Textures& loaded, VkDeviceSize& size)
 {
 	GetStagingBufferSize(appState, (const dsurfacewithglow_t&)surface, loaded, size);
@@ -1896,6 +1915,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	surfacesRGBA.Allocate(d_lists.last_surface_rgba);
 	surfacesRGBANoGlow.Allocate(d_lists.last_surface_rgba_no_glow);
 	surfacesRotated.Allocate(d_lists.last_surface_rotated);
+	surfacesColoredLightsRotated.Allocate(d_lists.last_surface_colored_lights_rotated);
 	surfacesRotatedRGBA.Allocate(d_lists.last_surface_rotated_rgba);
 	surfacesRotatedRGBANoGlow.Allocate(d_lists.last_surface_rotated_rgba_no_glow);
 	fences.Allocate(d_lists.last_fence);
@@ -2073,6 +2093,19 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(surfacesRotated.sorted);
+	surfacesColoredLightsRotated.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
+	previousTexture = nullptr;
+	sorted.Initialize(surfacesColoredLightsRotated.sorted);
+	for (auto i = 0; i <= surfacesColoredLightsRotated.last; i++)
+	{
+		auto& loaded = surfacesColoredLightsRotated.loaded[i];
+		GetStagingBufferSize(appState, d_lists.surfaces_colored_lights_rotated[i], loaded, size);
+		sorted.Sort(appState, loaded, i, surfacesColoredLightsRotated.sorted);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 24 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(surfacesColoredLightsRotated.sorted);
 	surfacesRotatedRGBA.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
 	previousTexture = nullptr;
 	previousGlowTexture = nullptr;
@@ -2369,6 +2402,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		surfacesRGBA.ScaleIndexBase(sizeof(uint16_t));
 		surfacesRGBANoGlow.ScaleIndexBase(sizeof(uint16_t));
 		surfacesRotated.ScaleIndexBase(sizeof(uint16_t));
+		surfacesColoredLightsRotated.ScaleIndexBase(sizeof(uint16_t));
 		surfacesRotatedRGBA.ScaleIndexBase(sizeof(uint16_t));
 		surfacesRotatedRGBANoGlow.ScaleIndexBase(sizeof(uint16_t));
 		fences.ScaleIndexBase(sizeof(uint16_t));
@@ -2391,6 +2425,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		surfacesRGBA.ScaleIndexBase(sizeof(uint32_t));
 		surfacesRGBANoGlow.ScaleIndexBase(sizeof(uint32_t));
 		surfacesRotated.ScaleIndexBase(sizeof(uint32_t));
+		surfacesColoredLightsRotated.ScaleIndexBase(sizeof(uint32_t));
 		surfacesRotatedRGBA.ScaleIndexBase(sizeof(uint32_t));
 		surfacesRotatedRGBANoGlow.ScaleIndexBase(sizeof(uint32_t));
 		fences.ScaleIndexBase(sizeof(uint32_t));

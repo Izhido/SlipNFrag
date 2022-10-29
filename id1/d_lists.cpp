@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
 qboolean d_uselists = false;
 
@@ -21,6 +21,7 @@ void D_ResetLists ()
 	d_lists.last_surface_rgba = -1;
 	d_lists.last_surface_rgba_no_glow = -1;
 	d_lists.last_surface_rotated = -1;
+	d_lists.last_surface_colored_lights_rotated = -1;
 	d_lists.last_surface_rotated_rgba = -1;
 	d_lists.last_surface_rotated_rgba_no_glow = -1;
 	d_lists.last_fence = -1;
@@ -199,6 +200,17 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	surface.roll = entity->angles[ROLL];
 }
 
+void D_FillSurfaceColoredLightsRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+{
+	D_FillSurfaceColoredLightsData(surface, face, cache, entity, mips);
+	surface.origin_x = entity->origin[0];
+	surface.origin_y = entity->origin[1];
+	surface.origin_z = entity->origin[2];
+	surface.yaw = entity->angles[YAW];
+	surface.pitch = entity->angles[PITCH];
+	surface.roll = entity->angles[ROLL];
+}
+
 void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
 	D_FillSurfaceRGBAData(surface, face, cache, entity, mips);
@@ -294,6 +306,21 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t*
 	}
 	auto& surface = d_lists.surfaces_rotated[d_lists.last_surface_rotated];
 	D_FillSurfaceRotatedData(surface, face, cache, entity, MIPLEVELS);
+}
+
+void D_AddSurfaceColoredLightsRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_surface_colored_lights_rotated++;
+	if (d_lists.last_surface_colored_lights_rotated >= d_lists.surfaces_colored_lights_rotated.size())
+	{
+		d_lists.surfaces_colored_lights_rotated.emplace_back();
+	}
+	auto& surface = d_lists.surfaces_colored_lights_rotated[d_lists.last_surface_colored_lights_rotated];
+	D_FillSurfaceColoredLightsRotatedData(surface, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)

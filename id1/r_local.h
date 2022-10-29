@@ -170,7 +170,7 @@ void R_ScanEdges (void);
 void D_DrawSurfaces (void);
 void D_DrawSurfacesToLists (void);
 void D_DrawSurfacesToListsIfNeeded (void);
-void D_DrawOneSurface (msurface_t* surf);
+void D_DrawOneSurfaceToLists (msurface_t* surf);
 void R_InsertNewEdges (edge_t *edgestoadd, edge_t *edgelist);
 void R_StepActiveU (edge_t *pedge);
 void R_RemoveEdges (edge_t *pedge);
