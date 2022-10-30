@@ -112,9 +112,11 @@ struct dlists_t
 	int last_surface_rotated_rgba;
 	int last_surface_rotated_rgba_no_glow;
 	int last_fence;
+	int last_fence_colored_lights;
 	int last_fence_rgba;
 	int last_fence_rgba_no_glow;
 	int last_fence_rotated;
+	int last_fence_colored_lights_rotated;
 	int last_fence_rotated_rgba;
 	int last_fence_rotated_rgba_no_glow;
 	int last_turbulent;
@@ -157,9 +159,11 @@ struct dlists_t
 	std::vector<dsurfacerotatedwithglow_t> surfaces_rotated_rgba;
 	std::vector<dsurfacerotated_t> surfaces_rotated_rgba_no_glow;
 	std::vector<dsurface_t> fences;
+	std::vector<dsurface_t> fences_colored_lights;
 	std::vector<dsurfacewithglow_t> fences_rgba;
 	std::vector<dsurface_t> fences_rgba_no_glow;
 	std::vector<dsurfacerotated_t> fences_rotated;
+	std::vector<dsurfacerotated_t> fences_colored_lights_rotated;
 	std::vector<dsurfacerotatedwithglow_t> fences_rotated_rgba;
 	std::vector<dsurfacerotated_t> fences_rotated_rgba_no_glow;
 	std::vector<dturbulent_t> turbulent;
@@ -199,9 +203,11 @@ void D_AddSurfaceColoredLightsRotatedToLists (msurface_t* face, struct surfcache
 void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddFenceColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddFenceColoredLightsRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);

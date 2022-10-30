@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
 qboolean d_uselists = false;
 
@@ -25,9 +25,11 @@ void D_ResetLists ()
 	d_lists.last_surface_rotated_rgba = -1;
 	d_lists.last_surface_rotated_rgba_no_glow = -1;
 	d_lists.last_fence = -1;
+	d_lists.last_fence_colored_lights = -1;
 	d_lists.last_fence_rgba = -1;
 	d_lists.last_fence_rgba_no_glow = -1;
 	d_lists.last_fence_rotated = -1;
+	d_lists.last_fence_colored_lights_rotated = -1;
 	d_lists.last_fence_rotated_rgba = -1;
 	d_lists.last_fence_rotated_rgba_no_glow = -1;
 	d_lists.last_turbulent = -1;
@@ -368,6 +370,21 @@ void D_AddFenceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 	D_FillSurfaceData(fence, face, cache, entity, MIPLEVELS);
 }
 
+void D_AddFenceColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_fence_colored_lights++;
+	if (d_lists.last_fence_colored_lights >= d_lists.fences_colored_lights.size())
+	{
+		d_lists.fences_colored_lights.emplace_back();
+	}
+	auto& fence = d_lists.fences_colored_lights[d_lists.last_fence_colored_lights];
+	D_FillSurfaceColoredLightsData(fence, face, cache, entity, MIPLEVELS);
+}
+
 void D_AddFenceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
@@ -411,6 +428,21 @@ void D_AddFenceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* e
 	}
 	auto& fence = d_lists.fences_rotated[d_lists.last_fence_rotated];
 	D_FillSurfaceRotatedData(fence, face, cache, entity, MIPLEVELS);
+}
+
+void D_AddFenceColoredLightsRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	{
+		return;
+	}
+	d_lists.last_fence_colored_lights_rotated++;
+	if (d_lists.last_fence_colored_lights_rotated >= d_lists.fences_colored_lights_rotated.size())
+	{
+		d_lists.fences_colored_lights_rotated.emplace_back();
+	}
+	auto& fence = d_lists.fences_colored_lights_rotated[d_lists.last_fence_colored_lights_rotated];
+	D_FillSurfaceColoredLightsRotatedData(fence, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddFenceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)

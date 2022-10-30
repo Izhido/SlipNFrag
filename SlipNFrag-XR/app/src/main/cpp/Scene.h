@@ -41,9 +41,11 @@ struct Scene
 	PipelineWithSorted<LoadedSurfaceRotated2Textures, SortedSurface2TexturesLightmap> surfacesRotatedRGBA;
 	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceLightmap> surfacesRotatedRGBANoGlow;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> fences;
+	PipelineWithSorted<LoadedSurfaceColoredLights, SortedSurfaceLightmap> fencesColoredLights;
 	PipelineWithSorted<LoadedSurface2Textures, SortedSurface2TexturesLightmap> fencesRGBA;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> fencesRGBANoGlow;
 	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceLightmap> fencesRotated;
+	PipelineWithSorted<LoadedSurfaceColoredLightsRotated, SortedSurfaceLightmap> fencesColoredLightsRotated;
 	PipelineWithSorted<LoadedSurfaceRotated2Textures, SortedSurface2TexturesLightmap> fencesRotatedRGBA;
 	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceLightmap> fencesRotatedRGBANoGlow;
 	PipelineWithSorted<LoadedTurbulent, SortedSurfaceTexture> turbulent;
