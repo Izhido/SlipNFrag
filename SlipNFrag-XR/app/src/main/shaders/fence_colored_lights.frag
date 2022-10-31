@@ -47,7 +47,9 @@ void main()
 	}
 	vec4 lowColor = palette[lowTexEntry.x];
 	vec4 highColor = palette[highTexEntry.x];
-	vec4 color = mix(lowColor, highColor, texLevel.y - texMip.x) * light;
+	vec4 color =
+		mix(lowColor, highColor, texLevel.y - texMip.x) *
+		((lowTexEntry.x >= 224 || highTexEntry.x >= 224) ? vec4(255, 255, 255, 255) : light);
 	vec4 tinted = mix(color, tint, tint.a);
 	vec4 gammaCorrected = vec4(
 		clamp((gamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , gamma ) + 0.5), 0, 255),

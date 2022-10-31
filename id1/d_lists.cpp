@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 
@@ -35,6 +35,7 @@ void D_ResetLists ()
 	d_lists.last_turbulent = -1;
 	d_lists.last_turbulent_rgba = -1;
 	d_lists.last_turbulent_lit = -1;
+	d_lists.last_turbulent_colored_lights = -1;
 	d_lists.last_turbulent_lit_rgba = -1;
 	d_lists.last_sprite = -1;
 	d_lists.last_alias = -1;
@@ -546,6 +547,23 @@ void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* e
 	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillLightmap(turbulent, cache);
+}
+
+void D_AddTurbulentColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+{
+	if (face->numedges < 3)
+	{
+		return;
+	}
+	d_lists.last_turbulent_colored_lights++;
+	if (d_lists.last_turbulent_colored_lights >= d_lists.turbulent_colored_lights.size())
+	{
+		d_lists.turbulent_colored_lights.emplace_back();
+	}
+	auto& turbulent = d_lists.turbulent_colored_lights[d_lists.last_turbulent_colored_lights];
+	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
+	turbulent.created = cache->created;
+	D_FillColoredLightmap(turbulent, cache);
 }
 
 void D_AddTurbulentLitRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)

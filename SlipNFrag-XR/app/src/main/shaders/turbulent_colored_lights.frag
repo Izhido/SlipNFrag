@@ -14,31 +14,34 @@ layout(set = 0, binding = 1) uniform Palette
 layout(set = 1, binding = 0) uniform usampler2DArray fragmentLightmap;
 layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
 
-layout(push_constant) uniform Tint
+layout(push_constant) uniform Turbulent
 {
 	layout(offset = 0) vec4 tint;
 	layout(offset = 16) float gamma;
+	layout(offset = 20) float time;
 };
 
-layout(location = 0) in vec4 fragmentCoords;
+layout(location = 0) in vec4 fragmentData;
 layout(location = 1) in flat highp ivec2 fragmentTextureIndices;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
-	ivec3 lightmapCoords = ivec3(floor(fragmentCoords.xy), fragmentTextureIndices.x);
+	ivec3 lightmapCoords = ivec3(floor(fragmentData.xy), fragmentTextureIndices.x);
 	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, lightmapCoords, 0);
 	vec4 lightmapTopRightEntry = texelFetch(fragmentLightmap, lightmapCoords + ivec3(1, 0, 0), 0);
 	vec4 lightmapBottomRightEntry = texelFetch(fragmentLightmap, lightmapCoords + ivec3(1, 1, 0), 0);
 	vec4 lightmapBottomLeftEntry = texelFetch(fragmentLightmap, lightmapCoords + ivec3(0, 1, 0), 0);
-	vec2 lightmapCoordsDelta = floor((fragmentCoords.xy - lightmapCoords.xy) * 16) / 16;
+	vec2 lightmapCoordsDelta = floor((fragmentData.xy - lightmapCoords.xy) * 16) / 16;
 	vec4 lightmapTopEntry = mix(lightmapTopLeftEntry, lightmapTopRightEntry, lightmapCoordsDelta.x);
 	vec4 lightmapBottomEntry = mix(lightmapBottomLeftEntry, lightmapBottomRightEntry, lightmapCoordsDelta.x);
 	vec4 lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);
 	vec4 light = lightmapEntry / 128;
-	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentCoords.zw);
+	vec2 distortion = sin(mod(time + fragmentData.zw * 5, 3.14159*2)) / 10;
+	vec2 texCoords = fragmentData.zw + distortion.yx;
+	vec2 texLevel = textureQueryLod(fragmentTexture, texCoords);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
-	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentTextureIndices.y);
+	vec3 fragmentTextureCoords = vec3(texCoords, fragmentTextureIndices.y);
 	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
 	uvec4 highTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
 	vec4 lowColor = palette[lowTexEntry.x];
