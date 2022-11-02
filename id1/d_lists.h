@@ -35,6 +35,16 @@ struct dsurfacewithglow_t : dturbulent_t
 	int lightmap_texels;
 };
 
+struct dturbulentrotated_t : dturbulent_t
+{
+	float origin_x;
+	float origin_y;
+	float origin_z;
+	float yaw;
+	float pitch;
+	float roll;
+};
+
 struct dsurfacerotated_t : dsurface_t
 {
 	float origin_x;
@@ -124,6 +134,7 @@ struct dlists_t
 	int last_turbulent_lit;
 	int last_turbulent_colored_lights;
 	int last_turbulent_lit_rgba;
+	int last_turbulent_rotated;
 	int last_sprite;
 	int last_alias;
 	int last_viewmodel;
@@ -172,6 +183,7 @@ struct dlists_t
 	std::vector<dsurface_t> turbulent_lit;
 	std::vector<dsurface_t> turbulent_colored_lights;
 	std::vector<dsurface_t> turbulent_lit_rgba;
+	std::vector<dturbulentrotated_t> turbulent_rotated;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dalias_t> alias;
 	std::vector<dalias_t> viewmodels;
@@ -217,6 +229,7 @@ void D_AddTurbulentRGBAToLists (msurface_t* face, entity_t* entity);
 void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddTurbulentColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddTurbulentLitRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
+void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
 void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);

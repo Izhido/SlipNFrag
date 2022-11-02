@@ -475,6 +475,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentLitRGBA.sorted, appState.Scene.turbulentLitRGBA.loaded, stagingBuffer, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, stagingBuffer, offset);
 	}
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
@@ -499,6 +500,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		SortedSurfaces::LoadAttributes(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, stagingBuffer, offset);
 		SortedSurfaces::LoadAttributes(appState.Scene.turbulentLitRGBA.sorted, appState.Scene.turbulentLitRGBA.loaded, stagingBuffer, offset);
+		SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, stagingBuffer, offset);
 	}
 	if (appState.Scene.sortedIndicesCount > 0)
 	{
@@ -525,6 +527,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			SortedSurfaces::LoadIndices16(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices16(appState.Scene.turbulentLitRGBA.sorted, appState.Scene.turbulentLitRGBA.loaded, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, stagingBuffer, offset);
 			while (offset % 4 != 0)
 			{
 				offset++;
@@ -553,6 +556,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			SortedSurfaces::LoadIndices32(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, stagingBuffer, offset);
 			SortedSurfaces::LoadIndices32(appState.Scene.turbulentLitRGBA.sorted, appState.Scene.turbulentLitRGBA.loaded, stagingBuffer, offset);
+			SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, stagingBuffer, offset);
 		}
 	}
 
@@ -1198,6 +1202,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 		appState.Scene.turbulentLit.last < 0 &&
 		appState.Scene.turbulentColoredLights.last < 0 &&
 		appState.Scene.turbulentLitRGBA.last < 0 &&
+		appState.Scene.turbulentRotated.last < 0 &&
 		appState.Scene.alias.last < 0 &&
 		appState.Scene.viewmodel.last < 0 &&
 		appState.Scene.lastSky < 0 &&
@@ -2053,6 +2058,32 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 					vkCmdDrawIndexed(commandBuffer, subEntry.indexCount, 1, indexBase, 0, 0);
 					indexBase += subEntry.indexCount;
 				}
+			}
+		}
+		if (appState.Scene.turbulentRotated.last >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRotated.vertexBase;
+			auto attributeBase = appState.Scene.attributesSize + appState.Scene.turbulentRotated.attributeBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &attributeBase);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, appState.Scene.indices16Size + appState.Scene.turbulentRotated.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.turbulentRotated.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			auto time = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotated.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
+			VkDeviceSize indexBase = 0;
+			for (auto& entry : appState.Scene.turbulentRotated.sorted)
+			{
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 1, 1, &entry.texture, 0, nullptr);
+				vkCmdDrawIndexed(commandBuffer, entry.indexCount, 1, indexBase, 0, 0);
+				indexBase += entry.indexCount;
 			}
 		}
 		if (appState.Scene.sprites.last >= 0)

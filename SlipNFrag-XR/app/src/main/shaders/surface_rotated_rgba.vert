@@ -15,9 +15,9 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 };
 
 layout(location = 0) in vec4 vertexPosition;
-layout(location = 1) in mat4 texturePosition;
-layout(location = 5) in vec4 origin;
-layout(location = 6) in vec4 angles;
+layout(location = 1) in vec4 origin;
+layout(location = 2) in vec4 angles;
+layout(location = 3) in mat4 texturePosition;
 layout(location = 0) out vec4 fragmentCoords;
 layout(location = 1) out flat ivec4 fragmentTextureIndices;
 

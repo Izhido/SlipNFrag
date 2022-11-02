@@ -361,6 +361,8 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	CreateShader(appState, app, "shaders/turbulent_colored_lights.frag.spv", &turbulentColoredLightsFragment);
 	VkShaderModule turbulentLitRGBAFragment;
 	CreateShader(appState, app, "shaders/turbulent_lit_rgba.frag.spv", &turbulentLitRGBAFragment);
+	VkShaderModule turbulentRotatedVertex;
+	CreateShader(appState, app, "shaders/turbulent_rotated.vert.spv", &turbulentRotatedVertex);
 	VkShaderModule spriteVertex;
 	CreateShader(appState, app, "shaders/sprite.vert.spv", &spriteVertex);
 	VkShaderModule spriteFragment;
@@ -637,6 +639,38 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	turbulentAttributes.vertexInputState.pVertexBindingDescriptions = turbulentAttributes.vertexBindings.data();
 	turbulentAttributes.vertexInputState.vertexAttributeDescriptionCount = turbulentAttributes.vertexAttributes.size();
 	turbulentAttributes.vertexInputState.pVertexAttributeDescriptions = turbulentAttributes.vertexAttributes.data();
+
+	PipelineAttributes turbulentRotatedAttributes { };
+	turbulentRotatedAttributes.vertexAttributes.resize(6);
+	turbulentRotatedAttributes.vertexBindings.resize(2);
+	turbulentRotatedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	turbulentRotatedAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+	turbulentRotatedAttributes.vertexAttributes[1].location = 1;
+	turbulentRotatedAttributes.vertexAttributes[1].binding = 1;
+	turbulentRotatedAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	turbulentRotatedAttributes.vertexAttributes[2].location = 2;
+	turbulentRotatedAttributes.vertexAttributes[2].binding = 1;
+	turbulentRotatedAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	turbulentRotatedAttributes.vertexAttributes[2].offset = 4 * sizeof(float);
+	turbulentRotatedAttributes.vertexAttributes[3].location = 3;
+	turbulentRotatedAttributes.vertexAttributes[3].binding = 1;
+	turbulentRotatedAttributes.vertexAttributes[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	turbulentRotatedAttributes.vertexAttributes[3].offset = 8 * sizeof(float);
+	turbulentRotatedAttributes.vertexAttributes[4].location = 4;
+	turbulentRotatedAttributes.vertexAttributes[4].binding = 1;
+	turbulentRotatedAttributes.vertexAttributes[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	turbulentRotatedAttributes.vertexAttributes[4].offset = 12 * sizeof(float);
+	turbulentRotatedAttributes.vertexAttributes[5].location = 5;
+	turbulentRotatedAttributes.vertexAttributes[5].binding = 1;
+	turbulentRotatedAttributes.vertexAttributes[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	turbulentRotatedAttributes.vertexAttributes[5].offset = 16 * sizeof(float);
+	turbulentRotatedAttributes.vertexBindings[1].binding = 1;
+	turbulentRotatedAttributes.vertexBindings[1].stride = 20 * sizeof(float);
+	turbulentRotatedAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	turbulentRotatedAttributes.vertexInputState.vertexBindingDescriptionCount = turbulentRotatedAttributes.vertexBindings.size();
+	turbulentRotatedAttributes.vertexInputState.pVertexBindingDescriptions = turbulentRotatedAttributes.vertexBindings.data();
+	turbulentRotatedAttributes.vertexInputState.vertexAttributeDescriptionCount = turbulentRotatedAttributes.vertexAttributes.size();
+	turbulentRotatedAttributes.vertexInputState.pVertexAttributeDescriptions = turbulentRotatedAttributes.vertexAttributes.data();
 
 	PipelineAttributes texturedAttributes { };
 	texturedAttributes.vertexAttributes.resize(2);
@@ -928,6 +962,14 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 
 	descriptorSetLayouts[0] = doubleBufferLayout;
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
+	pushConstantInfo.size = sizeof(float);
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &turbulentRotated.pipelineLayout));
+	graphicsPipelineCreateInfo.layout = turbulentRotated.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &turbulentRotatedAttributes.vertexInputState;
+	stages[0].module = turbulentRotatedVertex;
+	stages[1].module = turbulentFragment;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &turbulentRotated.pipeline));
+
 	pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
 	pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sprites.pipelineLayout));
@@ -1030,6 +1072,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	vkDestroyShaderModule(appState.Device, aliasVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, spriteFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, spriteVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, turbulentRotatedVertex, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentLitRGBAFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentColoredLightsFragment, nullptr);
 	vkDestroyShaderModule(appState.Device, turbulentLitFragment, nullptr);
@@ -1710,6 +1753,17 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerot
 	loaded.roll = surface.roll;
 }
 
+void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size)
+{
+	GetStagingBufferSize(appState, (const dturbulent_t&)turbulent, loaded, size);
+	loaded.originX = turbulent.origin_x;
+	loaded.originY = turbulent.origin_y;
+	loaded.originZ = turbulent.origin_z;
+	loaded.yaw = turbulent.yaw;
+	loaded.pitch = turbulent.pitch;
+	loaded.roll = turbulent.roll;
+}
+
 void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size)
 {
 	if (previousTexture != sprite.data)
@@ -1957,6 +2011,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	turbulentLit.Allocate(d_lists.last_turbulent_lit);
 	turbulentColoredLights.Allocate(d_lists.last_turbulent_colored_lights);
 	turbulentLitRGBA.Allocate(d_lists.last_turbulent_lit_rgba);
+	turbulentRotated.Allocate(d_lists.last_turbulent_rotated);
 	sprites.Allocate(d_lists.last_sprite);
 	alias.Allocate(d_lists.last_alias);
 	viewmodel.Allocate(d_lists.last_viewmodel);
@@ -2333,6 +2388,19 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedIndicesCount += ((loaded.count - 2) * 3);
 	}
 	SortedSurfaces::Cleanup(turbulentLitRGBA.sorted);
+	turbulentRotated.SetBases(sortedVerticesSize, sortedAttributesSize, sortedIndicesCount);
+	previousTexture = nullptr;
+	sorted.Initialize(turbulentRotated.sorted);
+	for (auto i = 0; i <= turbulentRotated.last; i++)
+	{
+		auto& loaded = turbulentRotated.loaded[i];
+		GetStagingBufferSize(appState, d_lists.turbulent_rotated[i], loaded, size);
+		sorted.Sort(appState, loaded, i, turbulentRotated.sorted);
+		sortedVerticesSize += (loaded.count * 3 * sizeof(float));
+		sortedAttributesSize += (loaded.count * 20 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
+	}
+	SortedSurfaces::Cleanup(turbulentRotated.sorted);
 	previousTexture = nullptr;
 	for (auto i = 0; i <= sprites.last; i++)
 	{
@@ -2486,6 +2554,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		turbulentLit.ScaleIndexBase(sizeof(uint16_t));
 		turbulentColoredLights.ScaleIndexBase(sizeof(uint16_t));
 		turbulentLitRGBA.ScaleIndexBase(sizeof(uint16_t));
+		turbulentRotated.ScaleIndexBase(sizeof(uint16_t));
 	}
 	else
 	{
@@ -2512,6 +2581,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		turbulentLit.ScaleIndexBase(sizeof(uint32_t));
 		turbulentColoredLights.ScaleIndexBase(sizeof(uint32_t));
 		turbulentLitRGBA.ScaleIndexBase(sizeof(uint32_t));
+		turbulentRotated.ScaleIndexBase(sizeof(uint32_t));
 	}
 
 	if (appState.IndexTypeUInt8Enabled)

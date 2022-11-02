@@ -511,44 +511,54 @@ D_DrawTurbulentToLists
 */
 void D_DrawTurbulentToLists (msurface_t* pface, texture_t* texture)
 {
-	if (pface->samplesRGB != nullptr)
+	if (currententity->origin[0] == 0 &&
+		currententity->origin[1] == 0 &&
+		currententity->origin[2] == 0 &&
+		currententity->angles[YAW] == 0 &&
+		currententity->angles[PITCH] == 0 &&
+		currententity->angles[ROLL] == 0)
 	{
-		if (texture->external_color != nullptr)
+		if (pface->samplesRGB != nullptr)
+		{
+			if (texture->external_color != nullptr)
+			{
+				auto pcurrentcache = D_CacheLightmap (pface, texture);
+				if (pcurrentcache == nullptr)
+					D_AddTurbulentRGBAToLists (pface, currententity);
+				else
+					D_AddTurbulentLitRGBAToLists (pface, pcurrentcache, currententity);
+			}
+			else
+			{
+				auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
+				if (pcurrentcache == nullptr)
+					D_AddTurbulentToLists (pface, currententity);
+				else
+					D_AddTurbulentColoredLightsToLists (pface, pcurrentcache, currententity);
+			}
+		}
+		else if (pface->samples != nullptr)
 		{
 			auto pcurrentcache = D_CacheLightmap (pface, texture);
 			if (pcurrentcache == nullptr)
-				D_AddTurbulentRGBAToLists (pface, currententity);
-			else
+			{
+				if (texture->external_color != nullptr)
+					D_AddTurbulentRGBAToLists (pface, currententity);
+				else
+					D_AddTurbulentToLists (pface, currententity);
+			}
+			else if (texture->external_color != nullptr)
 				D_AddTurbulentLitRGBAToLists (pface, pcurrentcache, currententity);
-		}
-		else
-		{
-			auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-			if (pcurrentcache == nullptr)
-				D_AddTurbulentToLists (pface, currententity);
 			else
-				D_AddTurbulentColoredLightsToLists (pface, pcurrentcache, currententity);
-		}
-	}
-	else if (pface->samples != nullptr)
-	{
-		auto pcurrentcache = D_CacheLightmap (pface, texture);
-		if (pcurrentcache == nullptr)
-		{
-			if (texture->external_color != nullptr)
-				D_AddTurbulentRGBAToLists (pface, currententity);
-			else
-				D_AddTurbulentToLists (pface, currententity);
+				D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
 		}
 		else if (texture->external_color != nullptr)
-			D_AddTurbulentLitRGBAToLists (pface, pcurrentcache, currententity);
+			D_AddTurbulentRGBAToLists (pface, currententity);
 		else
-			D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
+			D_AddTurbulentToLists (pface, currententity);
 	}
-	else if (texture->external_color != nullptr)
-		D_AddTurbulentRGBAToLists (pface, currententity);
 	else
-		D_AddTurbulentToLists (pface, currententity);
+		D_AddTurbulentRotatedToLists (pface, currententity);
 }
 
 

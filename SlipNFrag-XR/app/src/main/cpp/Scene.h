@@ -9,6 +9,7 @@
 #include "LoadedSurfaceColoredLightsRotated.h"
 #include "LoadedSurface2Textures.h"
 #include "LoadedSurfaceRotated2Textures.h"
+#include "LoadedTurbulentRotated.h"
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
 #include "LoadedSky.h"
@@ -53,6 +54,7 @@ struct Scene
 	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> turbulentLit;
 	PipelineWithSorted<LoadedSurfaceColoredLights, SortedSurfaceLightmap> turbulentColoredLights;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> turbulentLitRGBA;
+	PipelineWithSorted<LoadedTurbulentRotated, SortedSurfaceTexture> turbulentRotated;
 	PipelineWithLoaded<LoadedSprite> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;
 	PipelineWithLoaded<LoadedAlias> viewmodel;
@@ -170,6 +172,7 @@ struct Scene
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceColoredLightsRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, LoadedSurfaceRotated2Textures& loaded, VkDeviceSize& size);
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);
