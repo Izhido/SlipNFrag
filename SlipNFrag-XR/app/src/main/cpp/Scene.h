@@ -7,7 +7,7 @@
 #include "CachedIndexBuffers.h"
 #include "AliasVertices.h"
 #include "LoadedSurfaceColoredLightsRotated.h"
-#include "LoadedSurface2Textures.h"
+#include "LoadedSurface2TexturesColoredLights.h"
 #include "LoadedSurfaceRotated2Textures.h"
 #include "LoadedTurbulentRotated.h"
 #include "LoadedSprite.h"
@@ -36,7 +36,9 @@ struct Scene
 	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> surfaces;
 	PipelineWithSorted<LoadedSurfaceColoredLights, SortedSurfaceLightmap> surfacesColoredLights;
 	PipelineWithSorted<LoadedSurface2Textures, SortedSurface2TexturesLightmap> surfacesRGBA;
+	PipelineWithSorted<LoadedSurface2TexturesColoredLights, SortedSurface2TexturesLightmap> surfacesRGBAColoredLights;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> surfacesRGBANoGlow;
+	PipelineWithSorted<LoadedSurfaceColoredLights, SortedSurfaceLightmap> surfacesRGBANoGlowColoredLights;
 	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceLightmap> surfacesRotated;
 	PipelineWithSorted<LoadedSurfaceColoredLightsRotated, SortedSurfaceLightmap> surfacesColoredLightsRotated;
 	PipelineWithSorted<LoadedSurfaceRotated2Textures, SortedSurface2TexturesLightmap> surfacesRotatedRGBA;
@@ -162,12 +164,16 @@ struct Scene
 	void AddSampler(AppState& appState, uint32_t mipCount);
 	void AddToBufferBarrier(VkBuffer buffer);
 	static VkDeviceSize GetAllocatedFor(int width, int height);
+	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmap& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmapRGBA& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2Textures& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2TexturesColoredLights& loaded, VkDeviceSize& size);
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceColoredLightsRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, LoadedSurfaceRotated2Textures& loaded, VkDeviceSize& size);

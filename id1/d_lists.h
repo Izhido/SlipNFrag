@@ -25,14 +25,9 @@ struct dsurface_t : dturbulent_t
 	int lightmap_texels;
 };
 
-struct dsurfacewithglow_t : dturbulent_t
+struct dsurfacewithglow_t : dsurface_t
 {
 	unsigned char* glow_data;
-	int created;
-	int lightmap_width;
-	int lightmap_height;
-	int lightmap_size;
-	int lightmap_texels;
 };
 
 struct dturbulentrotated_t : dturbulent_t
@@ -116,7 +111,9 @@ struct dlists_t
 	int last_surface;
 	int last_surface_colored_lights;
 	int last_surface_rgba;
+	int last_surface_rgba_colored_lights;
 	int last_surface_rgba_no_glow;
+	int last_surface_rgba_no_glow_colored_lights;
 	int last_surface_rotated;
 	int last_surface_colored_lights_rotated;
 	int last_surface_rotated_rgba;
@@ -165,7 +162,9 @@ struct dlists_t
 	std::vector<dsurface_t> surfaces;
 	std::vector<dsurface_t> surfaces_colored_lights;
 	std::vector<dsurfacewithglow_t> surfaces_rgba;
+	std::vector<dsurfacewithglow_t> surfaces_rgba_colored_lights;
 	std::vector<dsurface_t> surfaces_rgba_no_glow;
+	std::vector<dsurface_t> surfaces_rgba_no_glow_colored_lights;
 	std::vector<dsurfacerotated_t> surfaces_rotated;
 	std::vector<dsurfacerotated_t> surfaces_colored_lights_rotated;
 	std::vector<dsurfacerotatedwithglow_t> surfaces_rotated_rgba;
@@ -211,7 +210,9 @@ void D_ResetLists ();
 void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceRGBAColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceColoredLightsRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);

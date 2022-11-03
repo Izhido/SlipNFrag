@@ -202,6 +202,41 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurface2Textures& loaded, in
 	}
 }
 
+void SortedSurfaces::Sort(AppState& appState, LoadedSurface2TexturesColoredLights& loaded, int index, std::list<SortedSurface2TexturesLightmap>& sorted)
+{
+	CacheVertices(appState, loaded);
+	auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
+	auto texture = loaded.texture.texture->descriptorSet;
+	auto entry = added2TexturesLightmaps.find(lightmap);
+	if (entry == added2TexturesLightmaps.end())
+	{
+		sorted.push_back({ lightmap });
+		auto lightmapEntry = sorted.end();
+		lightmapEntry--;
+		lightmapEntry->textures.push_back({ texture, loaded.glowTexture.texture->descriptorSet });
+		lightmapEntry->textures.back().entries.push_back(index);
+		added2TexturesLightmaps.insert({ lightmap, lightmapEntry });
+	}
+	else
+	{
+		auto subEntryFound = false;
+		for (auto& subEntry : entry->second->textures)
+		{
+			if (subEntry.texture == texture)
+			{
+				subEntryFound = true;
+				subEntry.entries.push_back(index);
+				break;
+			}
+		}
+		if (!subEntryFound)
+		{
+			entry->second->textures.push_back({ texture, loaded.glowTexture.texture->descriptorSet });
+			entry->second->textures.back().entries.push_back(index);
+		}
+	}
+}
+
 void SortedSurfaces::Sort(AppState& appState, LoadedTurbulent& loaded, int index, std::list<SortedSurfaceTexture>& sorted)
 {
 	CacheVertices(appState, loaded);
@@ -325,6 +360,24 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 }
 
 void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+{
+	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	for (auto& entry : sorted)
+	{
+		for (auto& subEntry : entry.textures)
+		{
+			for (auto i : subEntry.entries)
+			{
+				auto& surface = loaded[i];
+				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
+				target += surface.vertexCount;
+			}
+		}
+	}
+	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
+}
+
+void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -517,6 +570,48 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 }
 
 void SortedSurfaces::LoadAttributes(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+{
+	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto attributeCount = 0;
+	for (auto& entry : sorted)
+	{
+		for (auto& subEntry : entry.textures)
+		{
+			for (auto i : subEntry.entries)
+			{
+				auto& surface = loaded[i];
+				auto face = (msurface_t*)surface.face;
+				for (auto j = 0; j < face->numedges; j++)
+				{
+					*target++ = face->texinfo->vecs[0][0];
+					*target++ = face->texinfo->vecs[0][1];
+					*target++ = face->texinfo->vecs[0][2];
+					*target++ = face->texinfo->vecs[0][3];
+					*target++ = face->texinfo->vecs[1][0];
+					*target++ = face->texinfo->vecs[1][1];
+					*target++ = face->texinfo->vecs[1][2];
+					*target++ = face->texinfo->vecs[1][3];
+					*target++ = face->texturemins[0];
+					*target++ = face->texturemins[1];
+					*target++ = face->extents[0];
+					*target++ = face->extents[1];
+					*target++ = face->texinfo->texture->width;
+					*target++ = face->texinfo->texture->height;
+					*target++ = surface.lightmap.lightmap->allocatedIndex;
+					*target++ = surface.texture.index;
+					*target++ = surface.glowTexture.index;
+					*target++ = 0;
+					*target++ = 0;
+					*target++ = 0;
+				}
+				attributeCount += face->numedges;
+			}
+		}
+	}
+	offset += (attributeCount * 20 * sizeof(float));
+}
+
+void SortedSurfaces::LoadAttributes(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto attributeCount = 0;
@@ -1036,6 +1131,51 @@ void SortedSurfaces::LoadIndices16(std::list<SortedSurface2TexturesLightmap>& so
 	offset += (index16Count * sizeof(uint16_t));
 }
 
+void SortedSurfaces::LoadIndices16(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+{
+	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto index16Count = 0;
+	uint16_t index = 0;
+	for (auto& entry : sorted)
+	{
+		for (auto& subEntry : entry.textures)
+		{
+			VkDeviceSize indexCount = 0;
+			for (auto i : subEntry.entries)
+			{
+				auto& surface = loaded[i];
+				auto face = (msurface_t*)surface.face;
+				*target++ = index++;
+				*target++ = index++;
+				*target++ = index++;
+				auto revert = true;
+				for (auto j = 1; j < face->numedges - 2; j++)
+				{
+					if (revert)
+					{
+						*target++ = index;
+						*target++ = index - 1;
+						*target++ = index - 2;
+					}
+					else
+					{
+						*target++ = index - 2;
+						*target++ = index - 1;
+						*target++ = index;
+					}
+					index++;
+					revert = !revert;
+				}
+				auto count = (face->numedges - 2) * 3;
+				indexCount += count;
+				index16Count += count;
+			}
+			subEntry.indexCount = indexCount;
+		}
+	}
+	offset += (index16Count * sizeof(uint16_t));
+}
+
 void SortedSurfaces::LoadIndices16(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
@@ -1211,6 +1351,51 @@ void SortedSurfaces::LoadIndices32(std::list<SortedSurfaceLightmap>& sorted, std
 }
 
 void SortedSurfaces::LoadIndices32(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+{
+	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto index32Count = 0;
+	uint32_t index = 0;
+	for (auto& entry : sorted)
+	{
+		for (auto& subEntry : entry.textures)
+		{
+			VkDeviceSize indexCount = 0;
+			for (auto i : subEntry.entries)
+			{
+				auto& surface = loaded[i];
+				auto face = (msurface_t*)surface.face;
+				*target++ = index++;
+				*target++ = index++;
+				*target++ = index++;
+				auto revert = true;
+				for (auto j = 1; j < face->numedges - 2; j++)
+				{
+					if (revert)
+					{
+						*target++ = index;
+						*target++ = index - 1;
+						*target++ = index - 2;
+					}
+					else
+					{
+						*target++ = index - 2;
+						*target++ = index - 1;
+						*target++ = index;
+					}
+					index++;
+					revert = !revert;
+				}
+				auto count = (face->numedges - 2) * 3;
+				indexCount += count;
+				index32Count += count;
+			}
+			subEntry.indexCount = indexCount;
+		}
+	}
+	offset += (index32Count * sizeof(uint32_t));
+}
+
+void SortedSurfaces::LoadIndices32(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	auto index32Count = 0;

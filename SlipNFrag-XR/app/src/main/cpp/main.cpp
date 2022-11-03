@@ -2793,7 +2793,9 @@ void android_main(struct android_app* app)
 			appState.Scene.surfacesRotatedRGBA.Delete(appState);
 			appState.Scene.surfacesColoredLightsRotated.Delete(appState);
 			appState.Scene.surfacesRotated.Delete(appState);
+			appState.Scene.surfacesRGBANoGlowColoredLights.Delete(appState);
 			appState.Scene.surfacesRGBANoGlow.Delete(appState);
+			appState.Scene.surfacesRGBAColoredLights.Delete(appState);
 			appState.Scene.surfacesRGBA.Delete(appState);
 			appState.Scene.surfacesColoredLights.Delete(appState);
 			appState.Scene.surfaces.Delete(appState);
