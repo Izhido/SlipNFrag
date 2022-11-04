@@ -2,7 +2,7 @@
 
 #include "LoadedSurfaceColoredLights.h"
 
-struct LoadedSurfaceColoredLightsRotated : LoadedSurfaceColoredLights
+struct LoadedSurfaceRotatedColoredLights : LoadedSurfaceColoredLights
 {
 	float originX;
 	float originY;

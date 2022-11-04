@@ -23,7 +23,7 @@ void D_ResetLists ()
 	d_lists.last_surface_rgba_no_glow = -1;
 	d_lists.last_surface_rgba_no_glow_colored_lights = -1;
 	d_lists.last_surface_rotated = -1;
-	d_lists.last_surface_colored_lights_rotated = -1;
+	d_lists.last_surface_rotated_colored_lights = -1;
 	d_lists.last_surface_rotated_rgba = -1;
 	d_lists.last_surface_rotated_rgba_no_glow = -1;
 	d_lists.last_fence = -1;
@@ -31,7 +31,7 @@ void D_ResetLists ()
 	d_lists.last_fence_rgba = -1;
 	d_lists.last_fence_rgba_no_glow = -1;
 	d_lists.last_fence_rotated = -1;
-	d_lists.last_fence_colored_lights_rotated = -1;
+	d_lists.last_fence_rotated_colored_lights = -1;
 	d_lists.last_fence_rotated_rgba = -1;
 	d_lists.last_fence_rotated_rgba_no_glow = -1;
 	d_lists.last_turbulent = -1;
@@ -224,7 +224,7 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	surface.roll = entity->angles[ROLL];
 }
 
-void D_FillSurfaceColoredLightsRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+void D_FillSurfaceRotatedColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
 {
 	D_FillSurfaceColoredLightsData(surface, face, cache, entity, mips);
 	surface.origin_x = entity->origin[0];
@@ -362,19 +362,19 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t*
 	D_FillSurfaceRotatedData(surface, face, cache, entity, MIPLEVELS);
 }
 
-void D_AddSurfaceColoredLightsRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+void D_AddSurfaceRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
 	{
 		return;
 	}
-	d_lists.last_surface_colored_lights_rotated++;
-	if (d_lists.last_surface_colored_lights_rotated >= d_lists.surfaces_colored_lights_rotated.size())
+	d_lists.last_surface_rotated_colored_lights++;
+	if (d_lists.last_surface_rotated_colored_lights >= d_lists.surfaces_rotated_colored_lights.size())
 	{
-		d_lists.surfaces_colored_lights_rotated.emplace_back();
+		d_lists.surfaces_rotated_colored_lights.emplace_back();
 	}
-	auto& surface = d_lists.surfaces_colored_lights_rotated[d_lists.last_surface_colored_lights_rotated];
-	D_FillSurfaceColoredLightsRotatedData(surface, face, cache, entity, MIPLEVELS);
+	auto& surface = d_lists.surfaces_rotated_colored_lights[d_lists.last_surface_rotated_colored_lights];
+	D_FillSurfaceRotatedColoredLightsData(surface, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -482,19 +482,19 @@ void D_AddFenceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* e
 	D_FillSurfaceRotatedData(fence, face, cache, entity, MIPLEVELS);
 }
 
-void D_AddFenceColoredLightsRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+void D_AddFenceRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
 	{
 		return;
 	}
-	d_lists.last_fence_colored_lights_rotated++;
-	if (d_lists.last_fence_colored_lights_rotated >= d_lists.fences_colored_lights_rotated.size())
+	d_lists.last_fence_rotated_colored_lights++;
+	if (d_lists.last_fence_rotated_colored_lights >= d_lists.fences_rotated_colored_lights.size())
 	{
-		d_lists.fences_colored_lights_rotated.emplace_back();
+		d_lists.fences_rotated_colored_lights.emplace_back();
 	}
-	auto& fence = d_lists.fences_colored_lights_rotated[d_lists.last_fence_colored_lights_rotated];
-	D_FillSurfaceColoredLightsRotatedData(fence, face, cache, entity, MIPLEVELS);
+	auto& fence = d_lists.fences_rotated_colored_lights[d_lists.last_fence_rotated_colored_lights];
+	D_FillSurfaceRotatedColoredLightsData(fence, face, cache, entity, MIPLEVELS);
 }
 
 void D_AddFenceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)

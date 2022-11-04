@@ -2783,7 +2783,7 @@ void android_main(struct android_app* app)
 			appState.Scene.turbulent.Delete(appState);
 			appState.Scene.fencesRotatedRGBANoGlow.Delete(appState);
 			appState.Scene.fencesRotatedRGBA.Delete(appState);
-			appState.Scene.fencesColoredLightsRotated.Delete(appState);
+			appState.Scene.fencesRotatedColoredLights.Delete(appState);
 			appState.Scene.fencesRotated.Delete(appState);
 			appState.Scene.fencesRGBANoGlow.Delete(appState);
 			appState.Scene.fencesRGBA.Delete(appState);
@@ -2791,7 +2791,7 @@ void android_main(struct android_app* app)
 			appState.Scene.fences.Delete(appState);
 			appState.Scene.surfacesRotatedRGBANoGlow.Delete(appState);
 			appState.Scene.surfacesRotatedRGBA.Delete(appState);
-			appState.Scene.surfacesColoredLightsRotated.Delete(appState);
+			appState.Scene.surfacesRotatedColoredLights.Delete(appState);
 			appState.Scene.surfacesRotated.Delete(appState);
 			appState.Scene.surfacesRGBANoGlowColoredLights.Delete(appState);
 			appState.Scene.surfacesRGBANoGlow.Delete(appState);

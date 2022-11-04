@@ -692,7 +692,7 @@ void D_DrawSurfaceToLists (msurface_t* pface, texture_t* texture, qboolean isfen
 			auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
 			if (pcurrentcache != nullptr)
 			{
-				D_AddFenceColoredLightsRotatedToLists (pface, pcurrentcache, currententity);
+				D_AddFenceRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
 			}
 		}
 		else
@@ -727,7 +727,7 @@ void D_DrawSurfaceToLists (msurface_t* pface, texture_t* texture, qboolean isfen
 			auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
 			if (pcurrentcache != nullptr)
 			{
-				D_AddSurfaceColoredLightsRotatedToLists (pface, pcurrentcache, currententity);
+				D_AddSurfaceRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
 			}
 		}
 		else
