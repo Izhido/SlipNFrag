@@ -117,7 +117,9 @@ struct dlists_t
 	int last_surface_rotated;
 	int last_surface_rotated_colored_lights;
 	int last_surface_rotated_rgba;
+	int last_surface_rotated_rgba_colored_lights;
 	int last_surface_rotated_rgba_no_glow;
+	int last_surface_rotated_rgba_no_glow_colored_lights;
 	int last_fence;
 	int last_fence_colored_lights;
 	int last_fence_rgba;
@@ -168,7 +170,9 @@ struct dlists_t
 	std::vector<dsurfacerotated_t> surfaces_rotated;
 	std::vector<dsurfacerotated_t> surfaces_rotated_colored_lights;
 	std::vector<dsurfacerotatedwithglow_t> surfaces_rotated_rgba;
+	std::vector<dsurfacerotatedwithglow_t> surfaces_rotated_rgba_colored_lights;
 	std::vector<dsurfacerotated_t> surfaces_rotated_rgba_no_glow;
+	std::vector<dsurfacerotated_t> surfaces_rotated_rgba_no_glow_colored_lights;
 	std::vector<dsurface_t> fences;
 	std::vector<dsurface_t> fences_colored_lights;
 	std::vector<dsurfacewithglow_t> fences_rgba;
@@ -216,7 +220,9 @@ void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, struct surfca
 void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRotatedColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceRotatedRGBAColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
+void D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
 void D_AddFenceRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
