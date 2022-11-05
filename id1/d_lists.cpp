@@ -40,7 +40,7 @@ void D_ResetLists ()
 	d_lists.last_turbulent_rgba = -1;
 	d_lists.last_turbulent_lit = -1;
 	d_lists.last_turbulent_colored_lights = -1;
-	d_lists.last_turbulent_lit_rgba = -1;
+	d_lists.last_turbulent_rgba_lit = -1;
 	d_lists.last_turbulent_rotated = -1;
 	d_lists.last_sprite = -1;
 	d_lists.last_alias = -1;
@@ -671,18 +671,18 @@ void D_AddTurbulentColoredLightsToLists (msurface_t* face, surfcache_s* cache, e
 	D_FillColoredLightmap(turbulent, cache);
 }
 
-void D_AddTurbulentLitRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
+void D_AddTurbulentRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
 	if (face->numedges < 3)
 	{
 		return;
 	}
-	d_lists.last_turbulent_lit_rgba++;
-	if (d_lists.last_turbulent_lit_rgba >= d_lists.turbulent_lit_rgba.size())
+	d_lists.last_turbulent_rgba_lit++;
+	if (d_lists.last_turbulent_rgba_lit >= d_lists.turbulent_rgba_lit.size())
 	{
-		d_lists.turbulent_lit_rgba.emplace_back();
+		d_lists.turbulent_rgba_lit.emplace_back();
 	}
-	auto& turbulent = d_lists.turbulent_lit_rgba[d_lists.last_turbulent_lit_rgba];
+	auto& turbulent = d_lists.turbulent_rgba_lit[d_lists.last_turbulent_rgba_lit];
 	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillLightmap(turbulent, cache);

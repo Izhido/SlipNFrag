@@ -526,7 +526,7 @@ void D_DrawTurbulentToLists (msurface_t* pface, texture_t* texture)
 				if (pcurrentcache == nullptr)
 					D_AddTurbulentRGBAToLists (pface, currententity);
 				else
-					D_AddTurbulentLitRGBAToLists (pface, pcurrentcache, currententity);
+					D_AddTurbulentRGBALitToLists (pface, pcurrentcache, currententity);
 			}
 			else
 			{
@@ -548,7 +548,7 @@ void D_DrawTurbulentToLists (msurface_t* pface, texture_t* texture)
 					D_AddTurbulentToLists (pface, currententity);
 			}
 			else if (texture->external_color != nullptr)
-				D_AddTurbulentLitRGBAToLists (pface, pcurrentcache, currententity);
+				D_AddTurbulentRGBALitToLists (pface, pcurrentcache, currententity);
 			else
 				D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
 		}

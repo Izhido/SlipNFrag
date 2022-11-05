@@ -57,7 +57,7 @@ struct Scene
 	PipelineWithSorted<LoadedTurbulent, SortedSurfaceTexture> turbulentRGBA;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> turbulentLit;
 	PipelineWithSorted<LoadedSurfaceColoredLights, SortedSurfaceLightmap> turbulentColoredLights;
-	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> turbulentLitRGBA;
+	PipelineWithSorted<LoadedSurface, SortedSurfaceLightmap> turbulentRGBALit;
 	PipelineWithSorted<LoadedTurbulentRotated, SortedSurfaceTexture> turbulentRotated;
 	PipelineWithLoaded<LoadedSprite> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;

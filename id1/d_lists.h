@@ -132,7 +132,7 @@ struct dlists_t
 	int last_turbulent_rgba;
 	int last_turbulent_lit;
 	int last_turbulent_colored_lights;
-	int last_turbulent_lit_rgba;
+	int last_turbulent_rgba_lit;
 	int last_turbulent_rotated;
 	int last_sprite;
 	int last_alias;
@@ -185,7 +185,7 @@ struct dlists_t
 	std::vector<dturbulent_t> turbulent_rgba;
 	std::vector<dsurface_t> turbulent_lit;
 	std::vector<dsurface_t> turbulent_colored_lights;
-	std::vector<dsurface_t> turbulent_lit_rgba;
+	std::vector<dsurface_t> turbulent_rgba_lit;
 	std::vector<dturbulentrotated_t> turbulent_rotated;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dalias_t> alias;
@@ -235,7 +235,7 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
 void D_AddTurbulentRGBAToLists (msurface_t* face, entity_t* entity);
 void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddTurbulentColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
-void D_AddTurbulentLitRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
+void D_AddTurbulentRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
