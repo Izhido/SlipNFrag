@@ -511,52 +511,66 @@ D_DrawTurbulentToLists
 */
 void D_DrawTurbulentToLists (msurface_t* pface, texture_t* texture)
 {
-	if (currententity->origin[0] == 0 &&
-		currententity->origin[1] == 0 &&
-		currententity->origin[2] == 0 &&
-		currententity->angles[YAW] == 0 &&
-		currententity->angles[PITCH] == 0 &&
-		currententity->angles[ROLL] == 0)
+	if (pface->samplesRGB != nullptr)
 	{
-		if (pface->samplesRGB != nullptr)
+		auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
+		if (pcurrentcache != nullptr)
 		{
-			if (texture->external_color != nullptr)
+			if (currententity->origin[0] == 0 &&
+				currententity->origin[1] == 0 &&
+				currententity->origin[2] == 0 &&
+				currententity->angles[YAW] == 0 &&
+				currententity->angles[PITCH] == 0 &&
+				currententity->angles[ROLL] == 0)
 			{
-				auto pcurrentcache = D_CacheLightmap (pface, texture);
-				if (pcurrentcache == nullptr)
-					D_AddTurbulentRGBAToLists (pface, currententity);
-				else
-					D_AddTurbulentRGBALitToLists (pface, pcurrentcache, currententity);
-			}
-			else
-			{
-				auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-				if (pcurrentcache == nullptr)
-					D_AddTurbulentToLists (pface, currententity);
+				if (texture->external_color != nullptr)
+					D_AddTurbulentRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
 				else
 					D_AddTurbulentColoredLightsToLists (pface, pcurrentcache, currententity);
 			}
+			else if (texture->external_color != nullptr)
+				D_AddTurbulentRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+			else
+				D_AddTurbulentRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
 		}
-		else if (pface->samples != nullptr)
+	}
+	else if (pface->samples != nullptr)
+	{
+		auto pcurrentcache = D_CacheLightmap (pface, texture);
+		if (pcurrentcache != nullptr)
 		{
-			auto pcurrentcache = D_CacheLightmap (pface, texture);
-			if (pcurrentcache == nullptr)
+			if (currententity->origin[0] == 0 &&
+				currententity->origin[1] == 0 &&
+				currententity->origin[2] == 0 &&
+				currententity->angles[YAW] == 0 &&
+				currententity->angles[PITCH] == 0 &&
+				currententity->angles[ROLL] == 0)
 			{
 				if (texture->external_color != nullptr)
-					D_AddTurbulentRGBAToLists (pface, currententity);
+					D_AddTurbulentRGBALitToLists (pface, pcurrentcache, currententity);
 				else
-					D_AddTurbulentToLists (pface, currententity);
+					D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
 			}
 			else if (texture->external_color != nullptr)
-				D_AddTurbulentRGBALitToLists (pface, pcurrentcache, currententity);
+				D_AddTurbulentRotatedRGBALitToLists (pface, pcurrentcache, currententity);
 			else
-				D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
+				D_AddTurbulentRotatedLitToLists (pface, pcurrentcache, currententity);
 		}
-		else if (texture->external_color != nullptr)
+	}
+	else if (currententity->origin[0] == 0 &&
+	         currententity->origin[1] == 0 &&
+	         currententity->origin[2] == 0 &&
+	         currententity->angles[YAW] == 0 &&
+	         currententity->angles[PITCH] == 0 &&
+	         currententity->angles[ROLL] == 0)
+	{
+		if (texture->external_color != nullptr)
 			D_AddTurbulentRGBAToLists (pface, currententity);
 		else
 			D_AddTurbulentToLists (pface, currententity);
 	}
+	else if (texture->external_color != nullptr)
+		D_AddTurbulentRotatedRGBAToLists (pface, currententity);
 	else
 		D_AddTurbulentRotatedToLists (pface, currententity);
 }
@@ -569,196 +583,94 @@ D_DrawSurfaceToLists
 */
 void D_DrawSurfaceToLists (msurface_t* pface, texture_t* texture, qboolean isfence)
 {
-	if (currententity->origin[0] == 0 &&
-		currententity->origin[1] == 0 &&
-		currententity->origin[2] == 0 &&
-		currententity->angles[YAW] == 0 &&
-		currententity->angles[PITCH] == 0 &&
-		currententity->angles[ROLL] == 0)
+	if (pface->samplesRGB != NULL)
 	{
-		if (isfence)
+		auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
+		if (pcurrentcache != nullptr)
 		{
-			if (texture->external_color != nullptr && texture->external_glow != nullptr)
+			if (currententity->origin[0] == 0 &&
+				currententity->origin[1] == 0 &&
+				currententity->origin[2] == 0 &&
+				currententity->angles[YAW] == 0 &&
+				currententity->angles[PITCH] == 0 &&
+				currententity->angles[ROLL] == 0)
 			{
-				auto pcurrentcache = D_CacheLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
+				if (isfence)
 				{
-					D_AddFenceRGBAToLists (pface, pcurrentcache, currententity);
+					if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						D_AddFenceRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+					else if (texture->external_color != nullptr)
+						D_AddFenceRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity);
+					else
+						D_AddFenceColoredLightsToLists (pface, pcurrentcache, currententity);
 				}
-			}
-			else if (texture->external_color != nullptr)
-			{
-				auto pcurrentcache = D_CacheLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
-				{
-					D_AddFenceRGBANoGlowToLists (pface, pcurrentcache, currententity);
-				}
-			}
-			else if (pface->samplesRGB != NULL)
-			{
-				auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
-				{
-					D_AddFenceColoredLightsToLists (pface, pcurrentcache, currententity);
-				}
-			}
-			else
-			{
-				auto pcurrentcache = D_CacheLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
-				{
-					D_AddFenceToLists (pface, pcurrentcache, currententity);
-				}
-			}
-		}
-		else
-		{
-			if (texture->external_color != nullptr && texture->external_glow != nullptr)
-			{
-				if (pface->samplesRGB != NULL)
-				{
-					auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-					if (pcurrentcache != nullptr)
-					{
-						D_AddSurfaceRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
-					}
-				}
+				else if (texture->external_color != nullptr && texture->external_glow != nullptr)
+					D_AddSurfaceRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+				else if (texture->external_color != nullptr)
+					D_AddSurfaceRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity);
 				else
-				{
-					auto pcurrentcache = D_CacheLightmap (pface, texture);
-					if (pcurrentcache != nullptr)
-					{
-						D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
-					}
-				}
-			}
-			else if (texture->external_color != nullptr)
-			{
-				if (pface->samplesRGB != NULL)
-				{
-					auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-					if (pcurrentcache != nullptr)
-					{
-						D_AddSurfaceRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity);
-					}
-				}
-				else
-				{
-					auto pcurrentcache = D_CacheLightmap (pface, texture);
-					if (pcurrentcache != nullptr)
-					{
-						D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
-					}
-				}
-			}
-			else if (pface->samplesRGB != NULL)
-			{
-				auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
-				{
 					D_AddSurfaceColoredLightsToLists (pface, pcurrentcache, currententity);
-				}
 			}
+			else if (isfence)
+			{
+				if (texture->external_color != nullptr && texture->external_glow != nullptr)
+					D_AddFenceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+				else if (texture->external_color != nullptr)
+					D_AddFenceRotatedRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity);
+				else
+					D_AddFenceRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
+			}
+			else if (texture->external_color != nullptr && texture->external_glow != nullptr)
+				D_AddSurfaceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+			else if (texture->external_color != nullptr)
+				D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity);
 			else
-			{
-				auto pcurrentcache = D_CacheLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
-				{
-					D_AddSurfaceToLists (pface, pcurrentcache, currententity);
-				}
-			}
-		}
-	}
-	else if (isfence)
-	{
-		if (texture->external_color != nullptr && texture->external_glow != nullptr)
-		{
-			auto pcurrentcache = D_CacheLightmap (pface, texture);
-			if (pcurrentcache != nullptr)
-			{
-				D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
-			}
-		}
-		else if (texture->external_color != nullptr)
-		{
-			auto pcurrentcache = D_CacheLightmap (pface, texture);
-			if (pcurrentcache != nullptr)
-			{
-				D_AddFenceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
-			}
-		}
-		else if (pface->samplesRGB != NULL)
-		{
-			auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-			if (pcurrentcache != nullptr)
-			{
-				D_AddFenceRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
-			}
-		}
-		else
-		{
-			auto pcurrentcache = D_CacheLightmap (pface, texture);
-			if (pcurrentcache != nullptr)
-			{
-				D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
-			}
+				D_AddSurfaceRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
 		}
 	}
 	else
 	{
-		if (texture->external_color != nullptr && texture->external_glow != nullptr)
+		auto pcurrentcache = D_CacheLightmap (pface, texture);
+		if (pcurrentcache != nullptr)
 		{
-			if (pface->samplesRGB != NULL)
+			if (currententity->origin[0] == 0 &&
+				currententity->origin[1] == 0 &&
+				currententity->origin[2] == 0 &&
+				currententity->angles[YAW] == 0 &&
+				currententity->angles[PITCH] == 0 &&
+				currententity->angles[ROLL] == 0)
 			{
-				auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
+				if (isfence)
 				{
-					D_AddSurfaceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+					if (texture->external_color != nullptr && texture->external_glow != nullptr)
+						D_AddFenceRGBAToLists (pface, pcurrentcache, currententity);
+					else if (texture->external_color != nullptr)
+						D_AddFenceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+					else
+						D_AddFenceToLists (pface, pcurrentcache, currententity);
 				}
+				else if (texture->external_color != nullptr && texture->external_glow != nullptr)
+					D_AddSurfaceRGBAToLists (pface, pcurrentcache, currententity);
+				else if (texture->external_color != nullptr)
+					D_AddSurfaceRGBANoGlowToLists (pface, pcurrentcache, currententity);
+				else
+					D_AddSurfaceToLists (pface, pcurrentcache, currententity);
 			}
+			else if (isfence)
+			{
+				if (texture->external_color != nullptr && texture->external_glow != nullptr)
+					D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
+				else if (texture->external_color != nullptr)
+					D_AddFenceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
+				else
+					D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
+			}
+			else if (texture->external_color != nullptr && texture->external_glow != nullptr)
+				D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
+			else if (texture->external_color != nullptr)
+				D_AddSurfaceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
 			else
-			{
-				auto pcurrentcache = D_CacheLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
-				{
-					D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
-				}
-			}
-		}
-		else if (texture->external_color != nullptr)
-		{
-			if (pface->samplesRGB != NULL)
-			{
-				auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
-				{
-					D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity);
-				}
-			}
-			else
-			{
-				auto pcurrentcache = D_CacheLightmap (pface, texture);
-				if (pcurrentcache != nullptr)
-				{
-					D_AddSurfaceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
-				}
-			}
-		}
-		else if (pface->samplesRGB != NULL)
-		{
-			auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
-			if (pcurrentcache != nullptr)
-			{
-				D_AddSurfaceRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
-			}
-		}
-		else
-		{
-			auto pcurrentcache = D_CacheLightmap (pface, texture);
-			if (pcurrentcache != nullptr)
-			{
 				D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
-			}
 		}
 	}
 }

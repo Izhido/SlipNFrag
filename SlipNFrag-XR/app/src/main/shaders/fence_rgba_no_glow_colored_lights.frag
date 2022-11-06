@@ -8,7 +8,6 @@ precision highp int;
 
 layout(set = 1, binding = 0) uniform usampler2DArray fragmentLightmap;
 layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
-layout(set = 3, binding = 0) uniform usampler2DArray fragmentGlowTexture;
 
 layout(push_constant) uniform Tint
 {
@@ -17,7 +16,7 @@ layout(push_constant) uniform Tint
 };
 
 layout(location = 0) in vec4 fragmentCoords;
-layout(location = 1) in flat highp ivec4 fragmentTextureIndices;
+layout(location = 1) in flat highp ivec2 fragmentTextureIndices;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
@@ -37,11 +36,11 @@ void main()
 	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentTextureIndices.y);
 	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
 	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
-	vec3 fragmentGlowTextureCoords = vec3(fragmentCoords.zw, fragmentTextureIndices.z);
-	vec4 lowGlow = textureLod(fragmentGlowTexture, fragmentGlowTextureCoords, texMip.x);
-	vec4 highGlow = textureLod(fragmentGlowTexture, fragmentGlowTextureCoords, texMip.y);
-	vec4 glow = mix(lowGlow, highGlow, texLevel.y - texMip.x);
-	vec4 color = mix(lowColor, highColor, texLevel.y - texMip.x) * light + 2 * glow;
+	vec4 color = mix(lowColor, highColor, texLevel.y - texMip.x) * light;
+	if (color.a < 1.0 - (1.0 / 512.0))
+	{
+		discard;
+	}
 	vec4 tinted = mix(color, tint, tint.a);
 	vec4 gammaCorrected = vec4(
 		clamp((gamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , gamma ) + 0.5), 0, 255),
