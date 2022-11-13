@@ -1002,16 +1002,11 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 	alias.data = (byte *)aliashdr + skindesc->skin;
 	if (colormap == host_colormap.data())
 	{
-		alias.is_host_colormap = true;
+		alias.colormap = nullptr;
 	}
 	else
 	{
-		alias.is_host_colormap = false;
-		if (alias.colormap.size() < 16384)
-		{
-			alias.colormap.resize(16384);
-		}
-		memcpy(alias.colormap.data(), colormap, 16384);
+		alias.colormap = colormap;
 	}
 	alias.apverts = apverts;
 	alias.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
@@ -1022,6 +1017,55 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 	{
 		d_lists.colormapped_attributes.resize(new_size);
 	}
+	alias.count = mdl->numtris * 3;
+}
+
+void D_FillAliasLights (aliashdr_t* aliashdr, trivertx_t* apverts, mdl_t* mdl)
+{
+	auto vertex = apverts;
+	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
+	vec3_t lightvec { r_plightvec[0], r_plightvec[1], r_plightvec[2] };
+	for (auto i = 0; i < mdl->numverts; i++)
+	{
+		// lighting
+		float* plightnormal = r_avertexnormals[vertex->lightnormalindex];
+		auto lightcos = DotProduct (plightnormal, lightvec);
+		auto temp = r_ambientlight;
+
+		if (lightcos < 0)
+		{
+			temp += (int)(r_shadelight * lightcos);
+
+			// clamp; because we limited the minimum ambient and shading light, we
+			// don't have to clamp low light, just bright
+			if (temp < 0)
+				temp = 0;
+		}
+
+		float light = temp / 256;
+
+		*attribute++ = light;
+		*attribute++ = light;
+		vertex++;
+	}
+	d_lists.last_colormapped_attribute += mdl->numverts;
+	d_lists.last_colormapped_attribute += mdl->numverts;
+}
+
+void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)
+{
+	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
+	if (mdl->numtris <= 0)
+	{
+		return;
+	}
+	d_lists.last_alias++;
+	if (d_lists.last_alias >= d_lists.alias.size())
+	{
+		d_lists.alias.emplace_back();
+	}
+	auto& alias = d_lists.alias[d_lists.last_alias];
+	D_FillAliasData(alias, aliashdr, mdl, skindesc, colormap, apverts);
 	vec3_t angles;
 	angles[ROLL] = currententity->angles[ROLL];
 	angles[PITCH] = -currententity->angles[PITCH];
@@ -1046,82 +1090,23 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 	t2matrix[1][3] = currententity->origin[1];
 	t2matrix[2][3] = currententity->origin[2];
 	R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
-	auto vertex = apverts;
-	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
-	vec3_t lightvec { r_plightvec[0], r_plightvec[1], r_plightvec[2] };
-	for (auto i = 0; i < mdl->numverts; i++)
-	{
-		// lighting
-		float* plightnormal = r_avertexnormals[vertex->lightnormalindex];
-		auto lightcos = DotProduct (plightnormal, lightvec);
-		auto temp = r_ambientlight;
-
-		if (lightcos < 0)
-		{
-			temp += (int)(r_shadelight * lightcos);
-
-			// clamp; because we limited the minimum ambient and shading light, we
-			// don't have to clamp low light, just bright
-			if (temp < 0)
-				temp = 0;
-		}
-
-		float light = temp / 256;
-
-		*attribute++ = light;
-		*attribute++ = light;
-		vertex++;
-	}
-	d_lists.last_colormapped_attribute += mdl->numverts;
-	d_lists.last_colormapped_attribute += mdl->numverts;
-	alias.count = mdl->numtris * 3;
+	D_FillAliasLights(aliashdr, apverts, mdl);
 }
 
-void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)
+void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)
 {
 	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 	if (mdl->numtris <= 0)
 	{
 		return;
 	}
-	d_lists.last_alias++;
-	if (d_lists.last_alias >= d_lists.alias.size())
+	d_lists.last_viewmodel++;
+	if (d_lists.last_viewmodel >= d_lists.viewmodels.size())
 	{
-		d_lists.alias.emplace_back();
+		d_lists.viewmodels.emplace_back();
 	}
-	auto& alias = d_lists.alias[d_lists.last_alias];
-	D_FillAliasData(alias, aliashdr, mdl, skindesc, colormap, apverts);
-}
-
-void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)
-{
-	viewmodel.aliashdr = aliashdr;
-	viewmodel.width = mdl->skinwidth;
-	viewmodel.height = mdl->skinheight;
-	viewmodel.size = viewmodel.width * viewmodel.height;
-	viewmodel.data = (byte *)aliashdr + skindesc->skin;
-	if (colormap == host_colormap.data())
-	{
-		viewmodel.is_host_colormap = true;
-	}
-	else
-	{
-		viewmodel.is_host_colormap = false;
-		if (viewmodel.colormap.size() < 16384)
-		{
-			viewmodel.colormap.resize(16384);
-		}
-		memcpy(viewmodel.colormap.data(), colormap, 16384);
-	}
-	viewmodel.apverts = apverts;
-	viewmodel.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
-	viewmodel.vertex_count = mdl->numverts;
-	viewmodel.first_attribute = d_lists.last_colormapped_attribute + 1;
-	auto new_size = d_lists.last_colormapped_attribute + 1 + 2 * mdl->numverts;
-	if (d_lists.colormapped_attributes.size() < new_size)
-	{
-		d_lists.colormapped_attributes.resize(new_size);
-	}
+	auto& viewmodel = d_lists.viewmodels[d_lists.last_viewmodel];
+	D_FillAliasData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
 	vec3_t angles;
 	angles[ROLL] = currententity->angles[ROLL];
 	angles[PITCH] = -currententity->angles[PITCH];
@@ -1146,50 +1131,7 @@ void D_FillViewmodelData (dalias_t& viewmodel, aliashdr_t* aliashdr, mdl_t* mdl,
 	t2matrix[1][3] = currententity->origin[1] + r_modelorg_delta[1];
 	t2matrix[2][3] = currententity->origin[2] + r_modelorg_delta[2];
 	R_ConcatTransforms (t2matrix, tmatrix, viewmodel.transform);
-	auto vertex = apverts;
-	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
-	vec3_t lightvec { r_plightvec[0], r_plightvec[1], r_plightvec[2] };
-	for (auto i = 0; i < mdl->numverts; i++)
-	{
-		// lighting
-		float* plightnormal = r_avertexnormals[vertex->lightnormalindex];
-		auto lightcos = DotProduct (plightnormal, lightvec);
-		auto temp = r_ambientlight;
-
-		if (lightcos < 0)
-		{
-			temp += (int)(r_shadelight * lightcos);
-
-			// clamp; because we limited the minimum ambient and shading light, we
-			// don't have to clamp low light, just bright
-			if (temp < 0)
-				temp = 0;
-		}
-
-		float light = temp / 256;
-		*attribute++ = light;
-		*attribute++ = light;
-		vertex++;
-	}
-	d_lists.last_colormapped_attribute += mdl->numverts;
-	d_lists.last_colormapped_attribute += mdl->numverts;
-	viewmodel.count = mdl->numtris * 3;
-}
-
-void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)
-{
-	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
-	if (mdl->numtris <= 0)
-	{
-		return;
-	}
-	d_lists.last_viewmodel++;
-	if (d_lists.last_viewmodel >= d_lists.viewmodels.size())
-	{
-		d_lists.viewmodels.emplace_back();
-	}
-	auto& viewmodel = d_lists.viewmodels[d_lists.last_viewmodel];
-	D_FillViewmodelData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
+	D_FillAliasLights(aliashdr, apverts, mdl);
 }
 
 void D_AddParticleToLists (particle_t* part)

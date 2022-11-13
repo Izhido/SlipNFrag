@@ -77,8 +77,7 @@ struct dalias_t
 	int height;
 	int size;
 	unsigned char* data;
-	std::vector<unsigned char> colormap;
-	qboolean is_host_colormap;
+	unsigned char* colormap;
 	trivertx_t* apverts;
 	stvert_t* texture_coordinates;
 	int vertex_count;

@@ -2772,7 +2772,7 @@ void android_main(struct android_app* app)
 			appState.Scene.sky.Delete(appState);
 			appState.Scene.colored.Delete(appState);
 			appState.Scene.particle.Delete(appState);
-			appState.Scene.viewmodel.Delete(appState);
+			appState.Scene.viewmodels.Delete(appState);
 			appState.Scene.alias.Delete(appState);
 			appState.Scene.sprites.Delete(appState);
 			appState.Scene.turbulentRotatedRGBAColoredLights.Delete(appState);

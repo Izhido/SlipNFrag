@@ -1086,16 +1086,13 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 	stages[1].module = aliasFragment;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &alias.pipeline));
 
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 20 * sizeof(float);
-	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodel.pipelineLayout));
-	graphicsPipelineCreateInfo.layout = viewmodel.pipelineLayout;
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodels.pipelineLayout));
+	graphicsPipelineCreateInfo.layout = viewmodels.pipelineLayout;
 	stages[0].module = viewmodelVertex;
 	stages[1].module = viewmodelFragment;
-	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodel.pipeline));
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodels.pipeline));
 
 	pipelineLayoutCreateInfo.setLayoutCount = 1;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	pushConstantInfo.size = 8 * sizeof(float);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particle.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = particle.pipelineLayout;
@@ -2118,15 +2115,15 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		loaded.vertices.buffer = previousVertexBuffer;
 		loaded.texCoords.buffer = previousTexCoordsBuffer;
 	}
-	if (alias.is_host_colormap)
+	if (alias.colormap == nullptr)
 	{
-		loaded.colormapped.colormap.size = 0;
-		loaded.colormapped.colormap.texture = host_colormap;
+		loaded.colormap.size = 0;
+		loaded.colormap.texture = host_colormap;
 	}
 	else
 	{
-		loaded.colormapped.colormap.size = 16384;
-		size += loaded.colormapped.colormap.size;
+		loaded.colormap.size = 16384;
+		size += loaded.colormap.size;
 	}
 	if (previousTexture != alias.data)
 	{
@@ -2137,26 +2134,26 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 			auto texture = new SharedMemoryTexture { };
 			texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 			textures.MoveToFront(texture);
-			loaded.colormapped.texture.size = alias.size;
-			size += loaded.colormapped.texture.size;
-			loaded.colormapped.texture.texture = texture;
-			loaded.colormapped.texture.source = alias.data;
-			loaded.colormapped.texture.mips = 1;
-			textures.Setup(loaded.colormapped.texture);
+			loaded.texture.size = alias.size;
+			size += loaded.texture.size;
+			loaded.texture.texture = texture;
+			loaded.texture.source = alias.data;
+			loaded.texture.mips = 1;
+			textures.Setup(loaded.texture);
 			aliasTextureCache.insert({ alias.data, texture });
 		}
 		else
 		{
-			loaded.colormapped.texture.texture = entry->second;
-			loaded.colormapped.texture.index = 0;
+			loaded.texture.texture = entry->second;
+			loaded.texture.index = 0;
 		}
 		previousTexture = alias.data;
-		previousSharedMemoryTexture = loaded.colormapped.texture.texture;
+		previousSharedMemoryTexture = loaded.texture.texture;
 	}
 	else
 	{
-		loaded.colormapped.texture.texture = previousSharedMemoryTexture;
-		loaded.colormapped.texture.index = 0;
+		loaded.texture.texture = previousSharedMemoryTexture;
+		loaded.texture.index = 0;
 	}
 	auto entry = aliasIndexCache.find(alias.aliashdr);
 	if (entry == aliasIndexCache.end())
@@ -2255,7 +2252,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 		loaded.indices.indices = entry->second;
 	}
 	loaded.firstAttribute = alias.first_attribute;
-	loaded.isHostColormap = alias.is_host_colormap;
+	loaded.isHostColormap = (alias.colormap == nullptr);
 	loaded.count = alias.count;
 	for (auto j = 0; j < 3; j++)
 	{
@@ -2306,7 +2303,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	turbulentRotatedRGBAColoredLights.Allocate(d_lists.last_turbulent_rotated_rgba_colored_lights);
 	sprites.Allocate(d_lists.last_sprite);
 	alias.Allocate(d_lists.last_alias);
-	viewmodel.Allocate(d_lists.last_viewmodel);
+	viewmodels.Allocate(d_lists.last_viewmodel);
 	lastParticle = d_lists.last_particle_color;
 	lastColoredIndex8 = d_lists.last_colored_index8;
 	lastColoredIndex16 = d_lists.last_colored_index16;
@@ -2892,9 +2889,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
 	previousApverts = nullptr;
 	previousTexture = nullptr;
-	for (auto i = 0; i <= viewmodel.last; i++)
+	for (auto i = 0; i <= viewmodels.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.viewmodels[i], viewmodel.loaded[i], perFrame.colormap, size);
+		GetStagingBufferSize(appState, d_lists.viewmodels[i], viewmodels.loaded[i], perFrame.colormap, size);
 	}
 	if (lastSky >= 0)
 	{

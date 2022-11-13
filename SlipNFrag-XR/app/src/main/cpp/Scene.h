@@ -71,7 +71,7 @@ struct Scene
 	PipelineWithSorted<LoadedSurfaceRotatedColoredLights, SortedSurfaceLightmap> turbulentRotatedRGBAColoredLights;
 	PipelineWithLoaded<LoadedSprite> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;
-	PipelineWithLoaded<LoadedAlias> viewmodel;
+	PipelineWithLoaded<LoadedAlias> viewmodels;
 	Pipeline particle;
 	Pipeline colored;
 	Pipeline sky;
