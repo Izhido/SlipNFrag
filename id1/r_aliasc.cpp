@@ -718,43 +718,29 @@ void R_AliasColoredDrawModel (acoloredlight_t *plighting)
 	if (!currententity->colormap)
 		Sys_Error ("R_AliasColoredDrawModel: !currententity->colormap");
 
-	if (d_uselists)
+	r_affinetridesc.drawtype = (currententity->trivial_accept == 3);
+
+	if (r_affinetridesc.drawtype)
 	{
-		if (currententity == &cl.viewent)
-		{
-			D_AddViewmodelToLists (paliashdr, pskindesc, currententity->colormap, r_apverts);
-		}
-		else
-		{
-			D_AddAliasToLists (paliashdr, pskindesc, currententity->colormap, r_apverts);
-		}
+		D_PolysetUpdateTables ();		// FIXME: precalc...
 	}
 	else
 	{
-		r_affinetridesc.drawtype = (currententity->trivial_accept == 3);
-
-		if (r_affinetridesc.drawtype)
-		{
-			D_PolysetUpdateTables ();		// FIXME: precalc...
-		}
-		else
-		{
 #if	id386
-			D_Aff8Patch (currententity->colormap);
+		D_Aff8Patch (currententity->colormap);
 #endif
-		}
-
-		abasepal = host_basepal.data();
-
-		if (currententity != &cl.viewent)
-			ziscale = (float)0x8000 * (float)0x10000;
-		else
-			ziscale = (float)0x8000 * (float)0x10000 * 3.0;
-
-		if (currententity->trivial_accept)
-			R_AliasColoredPrepareUnclippedPoints ();
-		else
-			R_AliasColoredPreparePoints ();
 	}
+
+	abasepal = host_basepal.data();
+
+	if (currententity != &cl.viewent)
+		ziscale = (float)0x8000 * (float)0x10000;
+	else
+		ziscale = (float)0x8000 * (float)0x10000 * 3.0;
+
+	if (currententity->trivial_accept)
+		R_AliasColoredPrepareUnclippedPoints ();
+	else
+		R_AliasColoredPreparePoints ();
 }
 
