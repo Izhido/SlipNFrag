@@ -522,7 +522,7 @@ void android_main(struct android_app* app)
 		uint32_t vulkanSwapchainSampleCount;
 		{
 			std::vector<const char*> vulkanExtensions;
-			vulkanExtensions.push_back("VK_EXT_debug_report");
+			vulkanExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 
 			VkApplicationInfo appInfo { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 			appInfo.pApplicationName = "slipnfrag_xr";
@@ -1293,7 +1293,10 @@ void android_main(struct android_app* app)
 									CHECK_XRCMD(xrPerfSettingsSetPerformanceLevelEXT(appState.Session, XR_PERF_SETTINGS_DOMAIN_GPU_EXT, XR_PERF_SETTINGS_LEVEL_BOOST_EXT));
 								}
 
-								CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetAndroidApplicationThreadKHR", (PFN_xrVoidFunction*)(&appState.xrSetAndroidApplicationThreadKHR)));
+								if (appState.xrSetAndroidApplicationThreadKHR == nullptr)
+								{
+									CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetAndroidApplicationThreadKHR", (PFN_xrVoidFunction*) (&appState.xrSetAndroidApplicationThreadKHR)));
+								}
 
 								CHECK_XRCMD(appState.xrSetAndroidApplicationThreadKHR(appState.Session, XR_ANDROID_THREAD_TYPE_RENDERER_MAIN_KHR, appState.RenderThreadId));
 								
