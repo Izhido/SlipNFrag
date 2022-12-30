@@ -104,7 +104,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 sys_argv[i] = new char[arguments[i].length() + 1];
                 strcpy(sys_argv[i], arguments[i].c_str());
             }
-            sys_version = "Win64 1.0.21";
+            sys_version = "Win64 1.0.22";
             RECT clientRect;
             GetClientRect(hWnd, &clientRect);
             float windowWidth = clientRect.right - clientRect.left;
