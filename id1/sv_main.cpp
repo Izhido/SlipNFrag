@@ -298,7 +298,7 @@ void SV_SendServerinfo (client_t *client)
 		client->message.maxsize = MAX_MSGLEN;
 	}
 
-	if (sv_protocol_version == PROTOCOL_VERSION && host_client->message.maxsize == 0)
+	if (sv_protocol_version == PROTOCOL_VERSION && client->message.maxsize == 0)
 	{
 		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
 		MSG_WriteLong(client->message.data.data() + protocol_offset, sv_protocol_version);
@@ -1363,16 +1363,23 @@ void SV_SpawnServer (char *server)
 	SV_Physics ();
 	SV_Physics ();
 
-// create a baseline for more efficient communications
-    SV_SetProtocolVersion();
-    sv_bump_protocol_version = false;
-    SV_CreateBaseline ();
-    if (sv_protocol_version == PROTOCOL_VERSION)
-    {
-        sv.signon.maxsize = 8192;
-        if (sv.signon.cursize > sv.signon.maxsize)
-            Sys_Error("SV_SpawnServer: Signon message overflow");
+// perform first protocol version adjustment
+	SV_SetProtocolVersion();
+	sv_bump_protocol_version = false;
 
+// create a baseline for more efficient communications
+    SV_CreateBaseline ();
+
+// use signon message for second protocol version adjustment
+    if (sv_protocol_version == PROTOCOL_VERSION && sv.signon.cursize > NET_MAXMESSAGE)
+	{
+		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
+	}
+
+// if the protocol was not adjusted at this point, reset limits to their expected values
+	if (sv_protocol_version == PROTOCOL_VERSION)
+	{
+		sv.signon.maxsize = NET_MAXMESSAGE;
         sv.datagram.maxsize = MAX_DATAGRAM;
         sv.reliable_datagram.maxsize = MAX_DATAGRAM;
     }
