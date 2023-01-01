@@ -3136,7 +3136,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 
 void Scene::Reset()
 {
-	D_ResetLists();
 	aliasTextureCache.clear();
 	spriteCache.clear();
 	surfaceTextureCache.clear();

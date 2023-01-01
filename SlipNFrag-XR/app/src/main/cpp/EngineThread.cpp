@@ -152,10 +152,6 @@ void runEngine(AppState* appState, struct android_app* app)
 					appState->Scene.Reset();
 					appState->Scene.hostClearCount = host_clearcount;
 				}
-				else
-				{
-					D_ResetLists();
-				}
 				r_modelorg_delta[0] = positionX / scale;
 				r_modelorg_delta[1] = -positionZ / scale;
 				r_modelorg_delta[2] = positionY / scale;
@@ -165,6 +161,7 @@ void runEngine(AppState* appState, struct android_app* app)
 				cl.viewangles[ROLL] = roll;
 				auto nodrift = cl.nodrift;
 				cl.nodrift = true;
+				D_ResetLists();
 				Host_FrameRender();
 				cl.nodrift = nodrift;
 				// Restoring potential changes performed by server in view angles,
