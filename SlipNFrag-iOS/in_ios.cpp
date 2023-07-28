@@ -7,7 +7,7 @@
 //
 
 #include "quakedef.h"
-#include "in_macos.h"
+#include "in_ios.h"
 
 float   mouse_x, mouse_y;
 float   old_mouse_x, old_mouse_y;

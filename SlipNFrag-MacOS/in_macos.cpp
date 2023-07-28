@@ -33,7 +33,7 @@ float pdwRawValue[JOY_MAX_AXES];
 // each time.  this avoids any problems with getting back to a default usage
 // or when changing from one controller to another.  this way at least something
 // works.
-cvar_t    in_joystick = { "joystick","0", true };
+cvar_t    in_joystick = { "joystick","1", true };
 cvar_t    joy_name = { "joyname", "joystick" };
 cvar_t    joy_advanced = { "joyadvanced", "0" };
 cvar_t    joy_advaxisx = { "joyadvaxisx", "0" };
@@ -294,7 +294,7 @@ void IN_JoyMove(usercmd_t* cmd)
     }
     
     // verify joystick is available and that the user wants to use it
-    if (!joy_avail || !in_joystick.value)
+    if (!joy_avail)
     {
         return;
     }

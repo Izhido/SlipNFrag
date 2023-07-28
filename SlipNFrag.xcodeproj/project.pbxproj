@@ -7,11 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2803CF5B2A6E1480006AC44F /* Engine.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2803CF5A2A6E1480006AC44F /* Engine.mm */; };
+		2811E5292A6C722300B1498E /* SlipNFrag_VisionOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2811E5282A6C722300B1498E /* SlipNFrag_VisionOSApp.swift */; };
+		2811E52B2A6C722300B1498E /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2811E52A2A6C722300B1498E /* PlayView.swift */; };
+		2811E5312A6C722700B1498E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2811E5302A6C722700B1498E /* Assets.xcassets */; };
 		2822EE54229ED2B900B5332D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 2822EE53229ED2B900B5332D /* AppDelegate.m */; };
 		2822EE57229ED2B900B5332D /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2822EE56229ED2B900B5332D /* ViewController.mm */; };
 		2822EE59229ED2BA00B5332D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2822EE58229ED2BA00B5332D /* Assets.xcassets */; };
 		2822EE5C229ED2BA00B5332D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2822EE5A229ED2BA00B5332D /* Main.storyboard */; };
 		2822EE5F229ED2BA00B5332D /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2822EE5E229ED2BA00B5332D /* main.mm */; };
+		2829D95B2A6CE68700516C16 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2829D95A2A6CE68700516C16 /* AudioToolbox.framework */; };
+		2829D95C2A6CE6EB00516C16 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
+		2829D95D2A6CE6EB00516C16 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
+		2829D95E2A6CE6EB00516C16 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
+		2829D95F2A6CE6FD00516C16 /* snd_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2875DC442A6CE31700EED860 /* snd_visionos.cpp */; };
+		2829D9612A6CE7C000516C16 /* cd_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2829D9602A6CE7C000516C16 /* cd_visionos.cpp */; };
 		282A603A24AC3781001BAFDA /* d_lists.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 282A603924AC3781001BAFDA /* d_lists.cpp */; };
 		282A603B24AC37BD001BAFDA /* d_lists.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 282A603924AC3781001BAFDA /* d_lists.cpp */; };
 		282AF2AE250E5B8100E171DA /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 282AF2AD250E5B8100E171DA /* AppDelegate.m */; };
@@ -156,6 +166,73 @@
 		285D5B09229F9EE400B6ED09 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28BA2A6E229F31C2001830E9 /* MetalKit.framework */; };
 		2867E02622C79ADF0028B7BC /* PreferencesController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2867E02522C79ADF0028B7BC /* PreferencesController.mm */; };
 		286DF6C92324813B00B7537E /* net_sock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 286DF6C62323F3AA00B7537E /* net_sock.cpp */; };
+		2870E72B2A6F727800B2F088 /* vid_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2870E72A2A6F727800B2F088 /* vid_visionos.cpp */; };
+		2870E72D2A6F750200B2F088 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2870E72C2A6F750200B2F088 /* Shaders.metal */; };
+		2875DBFA2A6CA21100EED860 /* net_none.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BE8229E13EB00D68A47 /* net_none.cpp */; };
+		2875DBFF2A6CA3DA00EED860 /* r_bsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BCA229E0BE200D68A47 /* r_bsp.cpp */; };
+		2875DC002A6CA3DA00EED860 /* r_vars.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BF1229E16D400D68A47 /* r_vars.cpp */; };
+		2875DC012A6CA3DA00EED860 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
+		2875DC022A6CA3DA00EED860 /* r_light.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BC0229E010D00D68A47 /* r_light.cpp */; };
+		2875DC032A6CA3DA00EED860 /* d_part.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BD2229E0DE200D68A47 /* d_part.cpp */; };
+		2875DC042A6CA3DA00EED860 /* pr_cmds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BED229E146600D68A47 /* pr_cmds.cpp */; };
+		2875DC052A6CA3DA00EED860 /* chase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B81229DD46300D68A47 /* chase.cpp */; };
+		2875DC062A6CA3DA00EED860 /* cl_input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B87229DD8A200D68A47 /* cl_input.cpp */; };
+		2875DC072A6CA3DA00EED860 /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3250229DC1DC00AE6BFA /* common.cpp */; };
+		2875DC082A6CA3DA00EED860 /* crc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3252229DC1F400AE6BFA /* crc.cpp */; };
+		2875DC0A2A6CA3DA00EED860 /* net_loop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BEB229E141E00D68A47 /* net_loop.cpp */; };
+		2875DC0B2A6CA3DA00EED860 /* r_aclip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BE0229E11A300D68A47 /* r_aclip.cpp */; };
+		2875DC0C2A6CA3DA00EED860 /* r_alias.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BDA229E0F9700D68A47 /* r_alias.cpp */; };
+		2875DC0D2A6CA3DA00EED860 /* screen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BB4229DF8F600D68A47 /* screen.cpp */; };
+		2875DC0E2A6CA3DA00EED860 /* sv_user.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BAC229DF5B900D68A47 /* sv_user.cpp */; };
+		2875DC0F2A6CA3DA00EED860 /* r_part.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B9C229DE98800D68A47 /* r_part.cpp */; };
+		2875DC102A6CA3DA00EED860 /* d_vars.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BE6229E128B00D68A47 /* d_vars.cpp */; };
+		2875DC112A6CA3DA00EED860 /* pr_exec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BA6229DF43500D68A47 /* pr_exec.cpp */; };
+		2875DC122A6CA3DA00EED860 /* world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B9E229DE9BB00D68A47 /* world.cpp */; };
+		2875DC132A6CA3DA00EED860 /* draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B8B229DD94B00D68A47 /* draw.cpp */; };
+		2875DC142A6CA3DA00EED860 /* r_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BB6229DF97700D68A47 /* r_misc.cpp */; };
+		2875DC152A6CA3DA00EED860 /* sv_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BCE229E0CD400D68A47 /* sv_main.cpp */; };
+		2875DC162A6CA3DA00EED860 /* r_sprite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BBC229DFA5200D68A47 /* r_sprite.cpp */; };
+		2875DC172A6CA3DA00EED860 /* d_polycl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2884737D28E33D9E00B8A885 /* d_polycl.cpp */; };
+		2875DC182A6CA3DA00EED860 /* r_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BB0229DF78200D68A47 /* r_main.cpp */; };
+		2875DC192A6CA3DA00EED860 /* sv_phys.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B85229DD85500D68A47 /* sv_phys.cpp */; };
+		2875DC1A2A6CA3DA00EED860 /* sbar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BC6229E0A6400D68A47 /* sbar.cpp */; };
+		2875DC1B2A6CA3DA00EED860 /* cmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B96229DE33000D68A47 /* cmd.cpp */; };
+		2875DC1C2A6CA3DA00EED860 /* net_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B8D229DDA0000D68A47 /* net_main.cpp */; };
+		2875DC1D2A6CA3DA00EED860 /* d_polyse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BDD229E102700D68A47 /* d_polyse.cpp */; };
+		2875DC1E2A6CA3DA00EED860 /* d_scan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BBA229DFA1400D68A47 /* d_scan.cpp */; };
+		2875DC1F2A6CA3DA00EED860 /* cl_tent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B92229DDBB700D68A47 /* cl_tent.cpp */; };
+		2875DC202A6CA3DA00EED860 /* pr_edict.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BA4229DF1C600D68A47 /* pr_edict.cpp */; };
+		2875DC212A6CA3DA00EED860 /* d_modech.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BC8229E0AFD00D68A47 /* d_modech.cpp */; };
+		2875DC222A6CA3DA00EED860 /* d_init.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BB8229DF9CC00D68A47 /* d_init.cpp */; };
+		2875DC232A6CA3DA00EED860 /* cvar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B98229DE3F000D68A47 /* cvar.cpp */; };
+		2875DC242A6CA3DA00EED860 /* cl_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B7F229DD43600D68A47 /* cl_main.cpp */; };
+		2875DC252A6CA3DA00EED860 /* host.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B7B229DD10F00D68A47 /* host.cpp */; };
+		2875DC262A6CA3DA00EED860 /* net_vcr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BE4229E125600D68A47 /* net_vcr.cpp */; };
+		2875DC272A6CA3DA00EED860 /* r_aliasc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529028E29DFD009EFBCE /* r_aliasc.cpp */; };
+		2875DC282A6CA3DA00EED860 /* view.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BAE229DF60800D68A47 /* view.cpp */; };
+		2875DC292A6CA3DA00EED860 /* sv_move.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BEF229E168300D68A47 /* sv_move.cpp */; };
+		2875DC2A2A6CA3DA00EED860 /* r_surf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BA8229DF47900D68A47 /* r_surf.cpp */; };
+		2875DC2B2A6CA3DA00EED860 /* mathlib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B90229DDB8900D68A47 /* mathlib.cpp */; };
+		2875DC2D2A6CA3DA00EED860 /* d_edge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BC4229E01C900D68A47 /* d_edge.cpp */; };
+		2875DC2E2A6CA3DA00EED860 /* wad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BD0229E0DA100D68A47 /* wad.cpp */; };
+		2875DC2F2A6CA3DA00EED860 /* d_sprite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BBE229DFBCD00D68A47 /* d_sprite.cpp */; };
+		2875DC302A6CA3DA00EED860 /* model.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B94229DDC4C00D68A47 /* model.cpp */; };
+		2875DC312A6CA3DA00EED860 /* nonintel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BD6229E0F1E00D68A47 /* nonintel.cpp */; };
+		2875DC322A6CA3DA00EED860 /* cl_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B89229DD8CF00D68A47 /* cl_demo.cpp */; };
+		2875DC332A6CA3DA00EED860 /* r_aclipc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529128E29DFD009EFBCE /* r_aclipc.cpp */; };
+		2875DC342A6CA3DA00EED860 /* host_cmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BA2229DEE8000D68A47 /* host_cmd.cpp */; };
+		2875DC352A6CA3DA00EED860 /* d_sky.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BD8229E0F5100D68A47 /* d_sky.cpp */; };
+		2875DC362A6CA3DA00EED860 /* cl_parse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BE2229E11DF00D68A47 /* cl_parse.cpp */; };
+		2875DC372A6CA3DA00EED860 /* keys.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BD4229E0E1000D68A47 /* keys.cpp */; };
+		2875DC382A6CA3DA00EED860 /* r_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BC2229E01A100D68A47 /* r_draw.cpp */; };
+		2875DC392A6CA3DA00EED860 /* console.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B79229DCFD100D68A47 /* console.cpp */; };
+		2875DC3A2A6CA3DA00EED860 /* d_lists.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 282A603924AC3781001BAFDA /* d_lists.cpp */; };
+		2875DC3B2A6CA3DA00EED860 /* menu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BA0229DECC100D68A47 /* menu.cpp */; };
+		2875DC3C2A6CA3DA00EED860 /* d_surf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B9A229DE45D00D68A47 /* d_surf.cpp */; };
+		2875DC3D2A6CA3DA00EED860 /* r_efrag.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BCC229E0C3500D68A47 /* r_efrag.cpp */; };
+		2875DC3E2A6CA3DA00EED860 /* r_edge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BB2229DF89B00D68A47 /* r_edge.cpp */; };
+		2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BAA229DF50B00D68A47 /* r_sky.cpp */; };
+		2875DC432A6CC66800EED860 /* sys_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2875DC422A6CC66800EED860 /* sys_visionos.cpp */; };
 		287A3227229DBC4D00AE6BFA /* snd_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3222229DBC4D00AE6BFA /* snd_null.cpp */; };
 		287A3228229DBC4D00AE6BFA /* in_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3223229DBC4D00AE6BFA /* in_null.cpp */; };
 		287A3229229DBC4D00AE6BFA /* sys_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3224229DBC4D00AE6BFA /* sys_null.cpp */; };
@@ -244,6 +321,8 @@
 		28BA2AAD229F403C001830E9 /* world.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B9E229DE9BB00D68A47 /* world.cpp */; };
 		28BA2AB5229F40BD001830E9 /* sys_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2AB4229F40BD001830E9 /* sys_macos.cpp */; };
 		28BA2AB9229F4901001830E9 /* vid_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2AB7229F4901001830E9 /* vid_macos.cpp */; };
+		28C8FEB12A72FEFF00E3BA11 /* in_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28C8FEB02A72FEFF00E3BA11 /* in_visionos.cpp */; };
+		28C8FEB42A7310E400E3BA11 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28C8FEB32A7310E400E3BA11 /* GameController.framework */; };
 		28D060612808E77F009E0953 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
 		28D060622808E77F009E0953 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
 		28D060632808E77F009E0953 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
@@ -266,6 +345,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2803CF592A6E1468006AC44F /* Engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Engine.h; sourceTree = "<group>"; };
+		2803CF5A2A6E1480006AC44F /* Engine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Engine.mm; sourceTree = "<group>"; };
+		2811E5222A6C722300B1498E /* SlipNFrag-VisionOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SlipNFrag-VisionOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2811E5282A6C722300B1498E /* SlipNFrag_VisionOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlipNFrag_VisionOSApp.swift; sourceTree = "<group>"; };
+		2811E52A2A6C722300B1498E /* PlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayView.swift; sourceTree = "<group>"; };
+		2811E5302A6C722700B1498E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2819FD1822A0165800B51482 /* scantokey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scantokey.h; sourceTree = "<group>"; };
 		2822EE50229ED2B900B5332D /* Slip & Frag.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Slip & Frag.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2822EE52229ED2B900B5332D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -276,6 +361,8 @@
 		2822EE5B229ED2BA00B5332D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		2822EE5D229ED2BA00B5332D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2822EE5E229ED2BA00B5332D /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		2829D95A2A6CE68700516C16 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = Platforms/XROS.platform/Developer/SDKs/XROS1.0.sdk/System/Library/Frameworks/AudioToolbox.framework; sourceTree = DEVELOPER_DIR; };
+		2829D9602A6CE7C000516C16 /* cd_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = cd_visionos.cpp; sourceTree = "<group>"; };
 		282A603824AC3781001BAFDA /* d_lists.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = d_lists.h; sourceTree = "<group>"; };
 		282A603924AC3781001BAFDA /* d_lists.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_lists.cpp; sourceTree = "<group>"; };
 		282AF2AA250E5B8100E171DA /* SlipNFrag-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SlipNFrag-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -380,6 +467,17 @@
 		2867E02522C79ADF0028B7BC /* PreferencesController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PreferencesController.mm; sourceTree = "<group>"; };
 		286DF6C62323F3AA00B7537E /* net_sock.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = net_sock.cpp; sourceTree = "<group>"; };
 		286DF6C823247D9800B7537E /* net_sock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = net_sock.h; sourceTree = "<group>"; };
+		2870E7292A6F723700B2F088 /* vid_visionos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vid_visionos.h; sourceTree = "<group>"; };
+		2870E72A2A6F727800B2F088 /* vid_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vid_visionos.cpp; sourceTree = "<group>"; };
+		2870E72C2A6F750200B2F088 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		28734C102A72D57C00B32DE5 /* AppState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppState.h; sourceTree = "<group>"; };
+		28734C112A72D5BC00B32DE5 /* PerDrawable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PerDrawable.h; sourceTree = "<group>"; };
+		28734C122A72D62600B32DE5 /* PerView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PerView.h; sourceTree = "<group>"; };
+		28734C132A72E1D900B32DE5 /* Texture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Texture.h; sourceTree = "<group>"; };
+		2875DBF62A6C9A5900EED860 /* SlipNFrag-VisionOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SlipNFrag-VisionOS-Bridging-Header.h"; sourceTree = "<group>"; };
+		2875DC412A6CC65300EED860 /* sys_visionos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sys_visionos.h; sourceTree = "<group>"; };
+		2875DC422A6CC66800EED860 /* sys_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sys_visionos.cpp; sourceTree = "<group>"; };
+		2875DC442A6CE31700EED860 /* snd_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = snd_visionos.cpp; sourceTree = "<group>"; };
 		287A320D229DBAA100AE6BFA /* SlipNFrag */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SlipNFrag; sourceTree = BUILT_PRODUCTS_DIR; };
 		287A3222229DBC4D00AE6BFA /* snd_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_null.cpp; sourceTree = "<group>"; };
 		287A3223229DBC4D00AE6BFA /* in_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = in_null.cpp; sourceTree = "<group>"; };
@@ -443,6 +541,9 @@
 		28BA2AB6229F4154001830E9 /* sys_macos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sys_macos.h; sourceTree = "<group>"; };
 		28BA2AB7229F4901001830E9 /* vid_macos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vid_macos.cpp; sourceTree = "<group>"; };
 		28BA2ABA229F51F8001830E9 /* vid_macos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vid_macos.h; sourceTree = "<group>"; };
+		28C8FEB02A72FEFF00E3BA11 /* in_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = in_visionos.cpp; sourceTree = "<group>"; };
+		28C8FEB22A72FF3E00E3BA11 /* in_visionos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = in_visionos.h; sourceTree = "<group>"; };
+		28C8FEB32A7310E400E3BA11 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = Platforms/XROS.platform/Developer/SDKs/XROS1.0.sdk/System/Library/Frameworks/GameController.framework; sourceTree = DEVELOPER_DIR; };
 		28D0605E2808E77F009E0953 /* snd_float_dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_dma.cpp; sourceTree = "<group>"; };
 		28D0605F2808E77F009E0953 /* snd_float_mix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mix.cpp; sourceTree = "<group>"; };
 		28D060602808E77F009E0953 /* snd_float_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mem.cpp; sourceTree = "<group>"; };
@@ -452,6 +553,15 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2811E51F2A6C722300B1498E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				28C8FEB42A7310E400E3BA11 /* GameController.framework in Frameworks */,
+				2829D95B2A6CE68700516C16 /* AudioToolbox.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2822EE4D229ED2B900B5332D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -482,6 +592,32 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2811E5232A6C722300B1498E /* SlipNFrag-VisionOS */ = {
+			isa = PBXGroup;
+			children = (
+				2811E5282A6C722300B1498E /* SlipNFrag_VisionOSApp.swift */,
+				2811E52A2A6C722300B1498E /* PlayView.swift */,
+				2803CF592A6E1468006AC44F /* Engine.h */,
+				2803CF5A2A6E1480006AC44F /* Engine.mm */,
+				2811E5302A6C722700B1498E /* Assets.xcassets */,
+				2870E72C2A6F750200B2F088 /* Shaders.metal */,
+				2875DBF62A6C9A5900EED860 /* SlipNFrag-VisionOS-Bridging-Header.h */,
+				2829D9602A6CE7C000516C16 /* cd_visionos.cpp */,
+				28C8FEB02A72FEFF00E3BA11 /* in_visionos.cpp */,
+				28C8FEB22A72FF3E00E3BA11 /* in_visionos.h */,
+				2875DC442A6CE31700EED860 /* snd_visionos.cpp */,
+				2875DC422A6CC66800EED860 /* sys_visionos.cpp */,
+				2875DC412A6CC65300EED860 /* sys_visionos.h */,
+				2870E72A2A6F727800B2F088 /* vid_visionos.cpp */,
+				2870E7292A6F723700B2F088 /* vid_visionos.h */,
+				28734C102A72D57C00B32DE5 /* AppState.h */,
+				28734C112A72D5BC00B32DE5 /* PerDrawable.h */,
+				28734C122A72D62600B32DE5 /* PerView.h */,
+				28734C132A72E1D900B32DE5 /* Texture.h */,
+			);
+			path = "SlipNFrag-VisionOS";
+			sourceTree = "<group>";
+		};
 		2822EE51229ED2B900B5332D /* SlipNFrag-MacOS */ = {
 			isa = PBXGroup;
 			children = (
@@ -552,6 +688,7 @@
 				287A320F229DBAA100AE6BFA /* SlipNFrag */,
 				2822EE51229ED2B900B5332D /* SlipNFrag-MacOS */,
 				282AF2AB250E5B8100E171DA /* SlipNFrag-iOS */,
+				2811E5232A6C722300B1498E /* SlipNFrag-VisionOS */,
 				287A320E229DBAA100AE6BFA /* Products */,
 				28BA2A6D229F31C1001830E9 /* Frameworks */,
 			);
@@ -563,6 +700,7 @@
 				287A320D229DBAA100AE6BFA /* SlipNFrag */,
 				2822EE50229ED2B900B5332D /* Slip & Frag.app */,
 				282AF2AA250E5B8100E171DA /* SlipNFrag-iOS.app */,
+				2811E5222A6C722300B1498E /* SlipNFrag-VisionOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -709,6 +847,8 @@
 		28BA2A6D229F31C1001830E9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				28C8FEB32A7310E400E3BA11 /* GameController.framework */,
+				2829D95A2A6CE68700516C16 /* AudioToolbox.framework */,
 				282AF31E250EEB0800E171DA /* ARKit.framework */,
 				282AF317250E803000E171DA /* MetalKit.framework */,
 				282AF315250E802400E171DA /* AudioToolbox.framework */,
@@ -738,6 +878,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2811E5212A6C722300B1498E /* SlipNFrag-VisionOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2811E5352A6C722700B1498E /* Build configuration list for PBXNativeTarget "SlipNFrag-VisionOS" */;
+			buildPhases = (
+				2811E51E2A6C722300B1498E /* Sources */,
+				2811E51F2A6C722300B1498E /* Frameworks */,
+				2811E5202A6C722300B1498E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "SlipNFrag-VisionOS";
+			packageProductDependencies = (
+			);
+			productName = "SlipNFrag-VisionOS";
+			productReference = 2811E5222A6C722300B1498E /* SlipNFrag-VisionOS.app */;
+			productType = "com.apple.product-type.application";
+		};
 		2822EE4F229ED2B900B5332D /* SlipNFrag-MacOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2822EE61229ED2BA00B5332D /* Build configuration list for PBXNativeTarget "SlipNFrag-MacOS" */;
@@ -795,9 +954,14 @@
 		287A3205229DBAA000AE6BFA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1230;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1420;
 				ORGANIZATIONNAME = "Heriberto Delgado";
 				TargetAttributes = {
+					2811E5212A6C722300B1498E = {
+						CreatedOnToolsVersion = 15.0;
+						LastSwiftMigration = 1500;
+					};
 					2822EE4F229ED2B900B5332D = {
 						CreatedOnToolsVersion = 10.2.1;
 						SystemCapabilities = {
@@ -830,11 +994,20 @@
 				287A320C229DBAA100AE6BFA /* SlipNFrag */,
 				2822EE4F229ED2B900B5332D /* SlipNFrag-MacOS */,
 				282AF2A9250E5B8100E171DA /* SlipNFrag-iOS */,
+				2811E5212A6C722300B1498E /* SlipNFrag-VisionOS */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2811E5202A6C722300B1498E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2811E5312A6C722700B1498E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2822EE4E229ED2B900B5332D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -857,6 +1030,89 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2811E51E2A6C722300B1498E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2875DC142A6CA3DA00EED860 /* r_misc.cpp in Sources */,
+				2875DC272A6CA3DA00EED860 /* r_aliasc.cpp in Sources */,
+				2875DBFA2A6CA21100EED860 /* net_none.cpp in Sources */,
+				2875DC362A6CA3DA00EED860 /* cl_parse.cpp in Sources */,
+				2875DC032A6CA3DA00EED860 /* d_part.cpp in Sources */,
+				2829D95C2A6CE6EB00516C16 /* snd_float_dma.cpp in Sources */,
+				2875DC332A6CA3DA00EED860 /* r_aclipc.cpp in Sources */,
+				2875DC192A6CA3DA00EED860 /* sv_phys.cpp in Sources */,
+				28C8FEB12A72FEFF00E3BA11 /* in_visionos.cpp in Sources */,
+				2870E72D2A6F750200B2F088 /* Shaders.metal in Sources */,
+				2875DBFF2A6CA3DA00EED860 /* r_bsp.cpp in Sources */,
+				2875DC072A6CA3DA00EED860 /* common.cpp in Sources */,
+				2875DC112A6CA3DA00EED860 /* pr_exec.cpp in Sources */,
+				2875DC0C2A6CA3DA00EED860 /* r_alias.cpp in Sources */,
+				2829D9612A6CE7C000516C16 /* cd_visionos.cpp in Sources */,
+				2875DC162A6CA3DA00EED860 /* r_sprite.cpp in Sources */,
+				2875DC152A6CA3DA00EED860 /* sv_main.cpp in Sources */,
+				2875DC212A6CA3DA00EED860 /* d_modech.cpp in Sources */,
+				2875DC062A6CA3DA00EED860 /* cl_input.cpp in Sources */,
+				2875DC432A6CC66800EED860 /* sys_visionos.cpp in Sources */,
+				2875DC372A6CA3DA00EED860 /* keys.cpp in Sources */,
+				2875DC182A6CA3DA00EED860 /* r_main.cpp in Sources */,
+				2875DC242A6CA3DA00EED860 /* cl_main.cpp in Sources */,
+				2875DC1F2A6CA3DA00EED860 /* cl_tent.cpp in Sources */,
+				2875DC352A6CA3DA00EED860 /* d_sky.cpp in Sources */,
+				2875DC2D2A6CA3DA00EED860 /* d_edge.cpp in Sources */,
+				2875DC102A6CA3DA00EED860 /* d_vars.cpp in Sources */,
+				2875DC382A6CA3DA00EED860 /* r_draw.cpp in Sources */,
+				2875DC0B2A6CA3DA00EED860 /* r_aclip.cpp in Sources */,
+				2811E52B2A6C722300B1498E /* PlayView.swift in Sources */,
+				2875DC3B2A6CA3DA00EED860 /* menu.cpp in Sources */,
+				2875DC122A6CA3DA00EED860 /* world.cpp in Sources */,
+				2875DC222A6CA3DA00EED860 /* d_init.cpp in Sources */,
+				2875DC2F2A6CA3DA00EED860 /* d_sprite.cpp in Sources */,
+				2875DC252A6CA3DA00EED860 /* host.cpp in Sources */,
+				2875DC3E2A6CA3DA00EED860 /* r_edge.cpp in Sources */,
+				2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */,
+				2875DC3D2A6CA3DA00EED860 /* r_efrag.cpp in Sources */,
+				2875DC202A6CA3DA00EED860 /* pr_edict.cpp in Sources */,
+				2875DC1D2A6CA3DA00EED860 /* d_polyse.cpp in Sources */,
+				2875DC262A6CA3DA00EED860 /* net_vcr.cpp in Sources */,
+				2875DC342A6CA3DA00EED860 /* host_cmd.cpp in Sources */,
+				2875DC002A6CA3DA00EED860 /* r_vars.cpp in Sources */,
+				2829D95E2A6CE6EB00516C16 /* snd_float_mix.cpp in Sources */,
+				2875DC022A6CA3DA00EED860 /* r_light.cpp in Sources */,
+				2875DC012A6CA3DA00EED860 /* r_image.cpp in Sources */,
+				2875DC3C2A6CA3DA00EED860 /* d_surf.cpp in Sources */,
+				2875DC172A6CA3DA00EED860 /* d_polycl.cpp in Sources */,
+				2829D95D2A6CE6EB00516C16 /* snd_float_mem.cpp in Sources */,
+				2875DC3A2A6CA3DA00EED860 /* d_lists.cpp in Sources */,
+				2829D95F2A6CE6FD00516C16 /* snd_visionos.cpp in Sources */,
+				2875DC1A2A6CA3DA00EED860 /* sbar.cpp in Sources */,
+				2875DC0E2A6CA3DA00EED860 /* sv_user.cpp in Sources */,
+				2875DC042A6CA3DA00EED860 /* pr_cmds.cpp in Sources */,
+				2811E5292A6C722300B1498E /* SlipNFrag_VisionOSApp.swift in Sources */,
+				2875DC2E2A6CA3DA00EED860 /* wad.cpp in Sources */,
+				2875DC052A6CA3DA00EED860 /* chase.cpp in Sources */,
+				2875DC132A6CA3DA00EED860 /* draw.cpp in Sources */,
+				2875DC302A6CA3DA00EED860 /* model.cpp in Sources */,
+				2875DC312A6CA3DA00EED860 /* nonintel.cpp in Sources */,
+				2803CF5B2A6E1480006AC44F /* Engine.mm in Sources */,
+				2875DC0D2A6CA3DA00EED860 /* screen.cpp in Sources */,
+				2875DC2B2A6CA3DA00EED860 /* mathlib.cpp in Sources */,
+				2875DC082A6CA3DA00EED860 /* crc.cpp in Sources */,
+				2875DC1C2A6CA3DA00EED860 /* net_main.cpp in Sources */,
+				2875DC1E2A6CA3DA00EED860 /* d_scan.cpp in Sources */,
+				2870E72B2A6F727800B2F088 /* vid_visionos.cpp in Sources */,
+				2875DC282A6CA3DA00EED860 /* view.cpp in Sources */,
+				2875DC2A2A6CA3DA00EED860 /* r_surf.cpp in Sources */,
+				2875DC0A2A6CA3DA00EED860 /* net_loop.cpp in Sources */,
+				2875DC322A6CA3DA00EED860 /* cl_demo.cpp in Sources */,
+				2875DC1B2A6CA3DA00EED860 /* cmd.cpp in Sources */,
+				2875DC0F2A6CA3DA00EED860 /* r_part.cpp in Sources */,
+				2875DC392A6CA3DA00EED860 /* console.cpp in Sources */,
+				2875DC232A6CA3DA00EED860 /* cvar.cpp in Sources */,
+				2875DC292A6CA3DA00EED860 /* sv_move.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2822EE4C229ED2B900B5332D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1141,6 +1397,87 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		2811E5362A6C722700B1498E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"USE_LONGJMP=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SlipNFrag-VisionOS/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Izhido.SlipNFrag-VisionOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "SlipNFrag-VisionOS/SlipNFrag-VisionOS-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 1.0;
+			};
+			name = Debug;
+		};
+		2811E5372A6C722700B1498E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = "USE_LONGJMP=1";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SlipNFrag-VisionOS/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Izhido.SlipNFrag-VisionOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = xros;
+				SUPPORTED_PLATFORMS = "xros xrsimulator";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "SlipNFrag-VisionOS/SlipNFrag-VisionOS-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				VALIDATE_PRODUCT = YES;
+				XROS_DEPLOYMENT_TARGET = 1.0;
+			};
+			name = Release;
+		};
 		2822EE62229ED2BA00B5332D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1372,6 +1709,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2811E5352A6C722700B1498E /* Build configuration list for PBXNativeTarget "SlipNFrag-VisionOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2811E5362A6C722700B1498E /* Debug */,
+				2811E5372A6C722700B1498E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		2822EE61229ED2BA00B5332D /* Build configuration list for PBXNativeTarget "SlipNFrag-MacOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

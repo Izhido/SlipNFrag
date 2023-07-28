@@ -6,7 +6,7 @@
 //  Copyright © 2020 Heriberto Delgado. All rights reserved.
 //
 
-#include "vid_macos.h"
+#include "vid_ios.h"
 #include "d_local.h"
 
 extern viddef_t vid;

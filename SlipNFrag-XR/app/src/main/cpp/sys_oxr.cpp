@@ -142,7 +142,11 @@ void Sys_Error(const char* error, ...)
     __android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Sys_Error: %s", string.data());
     sys_errormessage = string.data();
     Host_Shutdown();
-    throw std::runtime_error("Sys_Error called");
+#ifdef USE_LONGJMP
+	std::longjmp(host_jmpbuf, 3); // 3 = Sys_Error reached
+#else
+	throw std::runtime_error("Sys_Error called");
+#endif
 }
 
 void Sys_Printf(const char* fmt, ...)

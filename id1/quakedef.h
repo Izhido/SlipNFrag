@@ -241,6 +241,10 @@ typedef struct
 #include "glquake.h"
 #endif
 
+#ifdef USE_LONGJMP
+#include <csetjmp>
+#endif
+
 //=============================================================================
 
 // the host system specifies the base of the directory tree, the
@@ -282,6 +286,10 @@ extern	int			host_framecount;	// incremented every frame, never reset
 extern	double		realtime;			// not bounded in any way, changed at
 										// start of every frame, never reset
 extern	std::string	sys_version;
+
+#ifdef USE_LONGJMP
+extern std::jmp_buf host_jmpbuf;
+#endif
 
 void Host_ClearMemory (void);
 void Host_ServerFrame (void);

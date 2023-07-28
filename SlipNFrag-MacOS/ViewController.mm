@@ -15,6 +15,8 @@
 #include "in_macos.h"
 #include "AppDelegate.h"
 
+extern m_state_t m_state;
+
 @interface ViewController () <MTKViewDelegate>
 
 @end
@@ -532,96 +534,232 @@
     return NO;
 }
 
--(void)controllerDidConnect:(GCController*)controller
+-(void)controllerDidConnect:(NSNotification*)notification
 {
-    if (joystick != nullptr && controller.extendedGamepad != nil)
+    if (joystick == nullptr)
     {
-        joystick = controller;
-        joy_avail = YES;
-        [self enableJoystick];
+		auto controller = (GCController*)notification.object;
+		if (controller.extendedGamepad != nil)
+		{
+			joystick = controller;
+			joy_avail = YES;
+			[self enableJoystick];
+		}
     }
 }
 
--(void)controllerDidDisconnect:(GCController*)controller
+-(void)controllerDidDisconnect:(NSNotification*)notification
 {
-    if (joystick != nullptr && controller == joystick)
+    if (joystick != nullptr)
     {
-        [self enableJoystick];
-        joy_avail = NO;
-        joystick = nil;
+		auto controller = (GCController*)notification.object;
+		if (joystick == controller)
+		{
+			[self disableJoystick];
+			joy_avail = NO;
+			joystick = nil;
+		}
     }
 }
 
 -(void)enableJoystick
 {
     joystick.playerIndex = GCControllerPlayerIndex1;
-    joystick.controllerPausedHandler = ^(GCController * _Nonnull controller)
-    {
-        Key_Event(27, YES);
-        Key_Event(27, NO);
-    };
+	if (@available(macOS 10.15, *)) {
+		[joystick.extendedGamepad.buttonMenu setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
+		 {
+			Key_Event(K_ESCAPE, pressed);
+		}];
+	} else {
+		joystick.controllerPausedHandler = ^(GCController * _Nonnull controller)
+		{
+			Key_Event(K_ESCAPE, YES);
+			Key_Event(K_ESCAPE, NO);
+		};
+	}
     [joystick.extendedGamepad.buttonA setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(203, pressed);
+		if (key_dest == key_menu)
+		{
+			if (m_state != m_quit)
+			{
+				Key_Event(K_ENTER, pressed);
+			}
+		}
+		else if (key_dest == key_game)
+		{
+			if (pressed)
+			{
+				Cmd_ExecuteString("+jump", src_command);
+			}
+			else
+			{
+				Cmd_ExecuteString("-jump", src_command);
+			}
+		}
      }];
     [joystick.extendedGamepad.buttonB setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(204, pressed);
+		if (key_dest == key_menu)
+		{
+			if (m_state != m_quit)
+			{
+				Key_Event(K_ESCAPE, pressed);
+			}
+		}
+		else if (key_dest == key_game)
+		{
+			if (pressed)
+			{
+				Cmd_ExecuteString("+movedown", src_command);
+			}
+			else
+			{
+				Cmd_ExecuteString("-movedown", src_command);
+			}
+		}
      }];
     [joystick.extendedGamepad.buttonX setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(205, pressed);
+		if (key_dest == key_menu)
+		{
+			if (m_state != m_quit)
+			{
+				Key_Event(K_ENTER, pressed);
+			}
+		}
+		else if (key_dest == key_game)
+		{
+			if (pressed)
+			{
+				Cmd_ExecuteString("+speed", src_command);
+			}
+			else
+			{
+				Cmd_ExecuteString("-speed", src_command);
+			}
+		}
      }];
     [joystick.extendedGamepad.buttonY setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(206, pressed);
+		if (key_dest == key_menu)
+		{
+			if (m_state == m_quit)
+			{
+				Key_Event('y', pressed);
+			}
+			else
+			{
+				Key_Event(K_ESCAPE, pressed);
+			}
+		}
+		else if (key_dest == key_game)
+		{
+			if (pressed)
+			{
+				Cmd_ExecuteString("+moveup", src_command);
+			}
+			else
+			{
+				Cmd_ExecuteString("-moveup", src_command);
+			}
+		}
      }];
     [joystick.extendedGamepad.leftTrigger setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(207, pressed);
+		if (key_dest == key_menu)
+		{
+			if (m_state != m_quit)
+			{
+				Key_Event(K_ENTER, pressed);
+			}
+		}
+		else if (key_dest == key_game)
+		{
+			if (pressed)
+			{
+				Cmd_ExecuteString("+attack", src_command);
+			}
+			else
+			{
+				Cmd_ExecuteString("-attack", src_command);
+			}
+		}
      }];
     [joystick.extendedGamepad.leftShoulder setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(208, pressed);
+		if (key_dest == key_menu)
+		{
+			if (m_state != m_quit)
+			{
+				Key_Event(K_ESCAPE, pressed);
+			}
+		}
+		else if (key_dest == key_game)
+		{
+			if (pressed)
+			{
+				Cmd_ExecuteString("impulse 10", src_command);
+			}
+		}
      }];
     [joystick.extendedGamepad.rightTrigger setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(209, pressed);
+		if (key_dest == key_menu)
+		{
+			if (m_state != m_quit)
+			{
+				Key_Event(K_ENTER, pressed);
+			}
+		}
+		else if (key_dest == key_game)
+		{
+			if (pressed)
+			{
+				Cmd_ExecuteString("+attack", src_command);
+			}
+			else
+			{
+				Cmd_ExecuteString("-attack", src_command);
+			}
+		}
      }];
     [joystick.extendedGamepad.rightShoulder setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(210, pressed);
+		if (key_dest == key_menu)
+		{
+			if (m_state != m_quit)
+			{
+				Key_Event(K_ESCAPE, pressed);
+			}
+		}
+		else if (key_dest == key_game)
+		{
+			if (pressed)
+			{
+				Cmd_ExecuteString("impulse 10", src_command);
+			}
+		}
      }];
     [joystick.extendedGamepad.dpad.up setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(211, pressed);
+         Key_Event(128, pressed);
      }];
     [joystick.extendedGamepad.dpad.left setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(212, pressed);
+         Key_Event(130, pressed);
      }];
     [joystick.extendedGamepad.dpad.right setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(213, pressed);
+         Key_Event(131, pressed);
      }];
     [joystick.extendedGamepad.dpad.down setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
      {
-         Key_Event(214, pressed);
+         Key_Event(129, pressed);
      }];
-    if (@available(macOS 10.14.1, *))
-    {
-        [joystick.extendedGamepad.leftThumbstickButton setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-         {
-             Key_Event(215, pressed);
-         }];
-        [joystick.extendedGamepad.rightThumbstickButton setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-         {
-             Key_Event(216, pressed);
-         }];
-    }
     [joystick.extendedGamepad.leftThumbstick setValueChangedHandler:^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue)
      {
-         pdwRawValue[JOY_AXIS_X] = xValue;
+         pdwRawValue[JOY_AXIS_X] = -xValue;
          pdwRawValue[JOY_AXIS_Y] = -yValue;
      }];
     [joystick.extendedGamepad.rightThumbstick setValueChangedHandler:^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue)
@@ -629,14 +767,31 @@
          pdwRawValue[JOY_AXIS_Z] = xValue;
          pdwRawValue[JOY_AXIS_R] = -yValue;
      }];
-    [joystick.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-         pdwRawValue[JOY_AXIS_U] = value;
-     }];
-    [joystick.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-         pdwRawValue[JOY_AXIS_V] = value;
-     }];
+	[joystick.extendedGamepad.leftThumbstickButton setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
+	 {
+		if (pressed)
+		{
+			Cmd_ExecuteString("centerview", src_command);
+		}
+	 }];
+	[joystick.extendedGamepad.rightThumbstickButton setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
+	 {
+		if (pressed)
+		{
+			Cmd_ExecuteString("+mlook", src_command);
+		}
+		else
+		{
+			Cmd_ExecuteString("-mlook", src_command);
+		}
+	 }];
+
+	Cvar_SetValue("joyadvanced", 1);
+	Cvar_SetValue("joyadvaxisx", AxisSide);
+	Cvar_SetValue("joyadvaxisy", AxisForward);
+	Cvar_SetValue("joyadvaxisz", AxisTurn);
+	Cvar_SetValue("joyadvaxisr", AxisLook);
+	Joy_AdvancedUpdate_f();
 }
 
 -(void)disableJoystick

@@ -51,6 +51,10 @@ std::vector<byte>	host_basepal;
 std::vector<byte>	host_colormap;
 std::vector<unsigned>	host_basepalcoverage;
 
+#ifdef USE_LONGJMP
+std::jmp_buf host_jmpbuf;
+#endif
+
 cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
 cvar_t	host_speeds = {"host_speeds","0"};			// set for running times
 
@@ -109,7 +113,11 @@ void Host_EndGame (const char *message, ...)
 	else
 		CL_Disconnect ();
 
+#ifdef USE_LONGJMP
+	std::longjmp(host_jmpbuf, 1); // 1 = Host_EndGame reached
+#else
 	throw std::runtime_error("Host_EndGame called");
+#endif
 }
 
 /*
@@ -155,7 +163,11 @@ void Host_Error (const char *error, ...)
 
 	inerror = false;
 
+#ifdef USE_LONGJMP
+	std::longjmp(host_jmpbuf, 2); // 2 = Host_Error reached
+#else
 	throw std::runtime_error("Host_Error called");
+#endif
 }
 
 /*
@@ -694,7 +706,16 @@ double _host_frame_time1 = 0;
 
 qboolean _Host_FrameUpdate (float time)
 {
+#ifdef USE_LONGJMP
+	if (setjmp(host_jmpbuf) > 0)
+	{
+		_Host_FrameReset();
+		return false;
+	}
+	else
+#else
 	try
+#endif
 	{
 // keep the random time dependent
         Sys_Random ();
@@ -755,11 +776,13 @@ qboolean _Host_FrameUpdate (float time)
         
         return true;
     }
+#ifndef USE_LONGJMP
     catch (...)
     {
         _Host_FrameReset ();
         return false;
     }
+#endif
 }
 
 void _Host_FrameRender (void)
@@ -773,7 +796,15 @@ void _Host_FrameFinish (void)
     static double        time3 = 0;
     int            pass1, pass2, pass3;
     
-    try
+#ifdef USE_LONGJMP
+	if (setjmp(host_jmpbuf) > 0)
+	{
+		_Host_FrameReset();
+	}
+	else
+#else
+	try
+#endif
     {
         if (host_speeds.value)
             time2 = Sys_FloatTime ();
@@ -804,10 +835,12 @@ void _Host_FrameFinish (void)
 	
         host_framecount++;
 	}
+#ifndef USE_LONGJMP
 	catch (...)
 	{
         _Host_FrameReset();
 	}
+#endif
 }
 
 double host_frame_time1;
@@ -932,7 +965,15 @@ Host_Init
 */
 void Host_Init (quakeparms_t *parms)
 {
+#ifdef USE_LONGJMP
+	if (setjmp(host_jmpbuf) > 0)
+	{
+		// Do nothing - error messages (and Sys_Error) will already be handled before getting here
+	}
+	else
+#else
 	try
+#endif
 	{
     
 	host_parms = *parms;
@@ -994,10 +1035,12 @@ void Host_Init (quakeparms_t *parms)
 	
 	Sys_Printf ("========Quake Initialized=========\n");	
 	}
+#ifndef USE_LONGJMP
 	catch (...)
 	{
 		// Do nothing - error messages (and Sys_Error) will already be handled before getting here
 	}
+#endif
 }
 
 
