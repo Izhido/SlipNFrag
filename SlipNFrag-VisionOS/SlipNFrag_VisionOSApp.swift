@@ -16,53 +16,77 @@ struct SlipNFrag_VisionOSApp: App {
 	
 	@Environment(\.dismissImmersiveSpace) var dismissImmersiveSpace
 	@Environment(\.dismissWindow) private var dismissWindow
-	
+	@Environment(\.openWindow) private var openWindow
+
 	var body: some Scene {
 		WindowGroup(id: "WindowGroup") {
-			PlayView()
-			.alert("Slip & Frag", isPresented: $stopGame) {
-				Button("Close") {
-					exit(0)
+			PlayView(hidePlayButton: $stopGame)
+				.alert("Slip & Frag", isPresented: $stopGame) {
+					Button("Close") {
+						exit(0)
+					}
+				} message: {
+					Text("\n" + stopGameMessage + "\n")
 				}
-			} message: {
-				Text("\n" + stopGameMessage + "\n")
-			}
 		}
 		ImmersiveSpace(id: "ImmersiveSpace") {
 			CompositorLayer() { layerRenderer in
-				let renderThread = Thread {
+				let locks = Locks()
+				let engineThread = Thread {
 					let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
 					NSLog(url.path)
 					if (url.startAccessingSecurityScopedResource())
 					{
-						let args = [
-							"SlipNFrag-VisionOS",
-							"-basedir",
-							url.path
-						]
-						Task {
-							dismissWindow(id: "WindowGroup")
-						}
-						let engine = Engine()
-						engine.startGame(args, layerRenderer: layerRenderer)
-						url.stopAccessingSecurityScopedResource()
-						Task {
-							await dismissImmersiveSpace()
-						}
-						if (engine.stopGameMessage != nil)
+						let found = FileManager.default.fileExists(atPath: url.path + "/id1/pak0.pak")
+						if (found)
 						{
-							stopGameMessage = engine.stopGameMessage
-							stopGame = true
+							let args = [
+								"SlipNFrag-VisionOS",
+								"-basedir",
+								url.path
+							]
+							let engine = Engine()
+							engine.start(args, locks: locks)
 						}
+						else
+						{
+							locks.stopEngineMessage = "The folder " + url.path + " does not contain a folder 'id1' with a file 'pak0.pak' - the game will not start.\n\nEnsure that all required files are present before starting the game."
+							locks.stopEngine = true
+						}
+						url.stopAccessingSecurityScopedResource()
 					}
 					else
 					{
-						stopGameMessage = "Unable to find game assets."
-						stopGame = true
+						locks.stopEngineMessage = "Permission denied to access the folder " + url.path + " with the game assets."
+						locks.stopEngine = true
 					}
 				}
-				renderThread.name = "Render Thread"
-				renderThread.start()
+				let rendererThread = Thread {
+					Task {
+						dismissWindow(id: "WindowGroup")
+					}
+					let renderer = Renderer()
+					renderer.start(layerRenderer, locks: locks)
+					Task {
+						await dismissImmersiveSpace()
+					}
+					Task {
+						openWindow(id: "WindowGroup")
+					}
+					if (locks.stopEngineMessage != nil)
+					{
+						stopGameMessage = locks.stopEngineMessage
+						stopGame = true
+					}
+					else
+					{
+						exit(0)
+					}
+				}
+				engineThread.name = "Engine Thread"
+				engineThread.start()
+				rendererThread.name = "Renderer Thread"
+				rendererThread.start()
 			}
 		}
 	}

@@ -260,6 +260,8 @@
 		28A5375F23106A85005007EE /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28A5375E23106A85005007EE /* GameController.framework */; };
 		28AA1D9722C07E2D00264AD0 /* snd_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */; };
 		28AA1DA122C089E600264AD0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28AA1DA022C089E600264AD0 /* AudioToolbox.framework */; };
+		28AF30FF2A77262E0072610B /* Renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28AF30FE2A77262E0072610B /* Renderer.mm */; };
+		28AF31022A7729390072610B /* Locks.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28AF31012A7729390072610B /* Locks.mm */; };
 		28BA2A73229F3271001830E9 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2A72229F3271001830E9 /* Shaders.metal */; };
 		28BA2A74229F403C001830E9 /* chase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B81229DD46300D68A47 /* chase.cpp */; };
 		28BA2A75229F403C001830E9 /* cl_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B89229DD8CF00D68A47 /* cl_demo.cpp */; };
@@ -534,6 +536,10 @@
 		28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = snd_macos.cpp; sourceTree = "<group>"; };
 		28AA1D9E22C0881200264AD0 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		28AA1DA022C089E600264AD0 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		28AF30FD2A7725230072610B /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
+		28AF30FE2A77262E0072610B /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
+		28AF31002A7727450072610B /* Locks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Locks.h; sourceTree = "<group>"; };
+		28AF31012A7729390072610B /* Locks.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Locks.mm; sourceTree = "<group>"; };
 		28BA2A6E229F31C2001830E9 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		28BA2A70229F31D1001830E9 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		28BA2A72229F3271001830E9 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
@@ -597,8 +603,16 @@
 			children = (
 				2811E5282A6C722300B1498E /* SlipNFrag_VisionOSApp.swift */,
 				2811E52A2A6C722300B1498E /* PlayView.swift */,
+				28734C102A72D57C00B32DE5 /* AppState.h */,
 				2803CF592A6E1468006AC44F /* Engine.h */,
 				2803CF5A2A6E1480006AC44F /* Engine.mm */,
+				28AF31002A7727450072610B /* Locks.h */,
+				28AF31012A7729390072610B /* Locks.mm */,
+				28734C112A72D5BC00B32DE5 /* PerDrawable.h */,
+				28734C122A72D62600B32DE5 /* PerView.h */,
+				28AF30FD2A7725230072610B /* Renderer.h */,
+				28AF30FE2A77262E0072610B /* Renderer.mm */,
+				28734C132A72E1D900B32DE5 /* Texture.h */,
 				2811E5302A6C722700B1498E /* Assets.xcassets */,
 				2870E72C2A6F750200B2F088 /* Shaders.metal */,
 				2875DBF62A6C9A5900EED860 /* SlipNFrag-VisionOS-Bridging-Header.h */,
@@ -610,10 +624,6 @@
 				2875DC412A6CC65300EED860 /* sys_visionos.h */,
 				2870E72A2A6F727800B2F088 /* vid_visionos.cpp */,
 				2870E7292A6F723700B2F088 /* vid_visionos.h */,
-				28734C102A72D57C00B32DE5 /* AppState.h */,
-				28734C112A72D5BC00B32DE5 /* PerDrawable.h */,
-				28734C122A72D62600B32DE5 /* PerView.h */,
-				28734C132A72E1D900B32DE5 /* Texture.h */,
 			);
 			path = "SlipNFrag-VisionOS";
 			sourceTree = "<group>";
@@ -1070,6 +1080,7 @@
 				2875DC2F2A6CA3DA00EED860 /* d_sprite.cpp in Sources */,
 				2875DC252A6CA3DA00EED860 /* host.cpp in Sources */,
 				2875DC3E2A6CA3DA00EED860 /* r_edge.cpp in Sources */,
+				28AF31022A7729390072610B /* Locks.mm in Sources */,
 				2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */,
 				2875DC3D2A6CA3DA00EED860 /* r_efrag.cpp in Sources */,
 				2875DC202A6CA3DA00EED860 /* pr_edict.cpp in Sources */,
@@ -1099,6 +1110,7 @@
 				2875DC2B2A6CA3DA00EED860 /* mathlib.cpp in Sources */,
 				2875DC082A6CA3DA00EED860 /* crc.cpp in Sources */,
 				2875DC1C2A6CA3DA00EED860 /* net_main.cpp in Sources */,
+				28AF30FF2A77262E0072610B /* Renderer.mm in Sources */,
 				2875DC1E2A6CA3DA00EED860 /* d_scan.cpp in Sources */,
 				2870E72B2A6F727800B2F088 /* vid_visionos.cpp in Sources */,
 				2875DC282A6CA3DA00EED860 /* view.cpp in Sources */,

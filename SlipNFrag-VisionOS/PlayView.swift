@@ -12,13 +12,17 @@ import RealityKit
 struct PlayView: View {
     @Environment(\.openImmersiveSpace) var openImmersiveSpace
 
+	@Binding var hidePlayButton: Bool
+	
     var body: some View {
 		VStack {
-			Button(action: {
-				Task {
-					await openImmersiveSpace(id: "ImmersiveSpace")
-				}
-			}) { Image("play") }
+			if !self.$hidePlayButton.wrappedValue {
+				Button(action: {
+					Task {
+						await openImmersiveSpace(id: "ImmersiveSpace")
+					}
+				}) { Image("play") }
+			}
 		}
     }
 }
