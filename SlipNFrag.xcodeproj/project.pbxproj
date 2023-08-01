@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -233,6 +233,8 @@
 		2875DC3E2A6CA3DA00EED860 /* r_edge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BB2229DF89B00D68A47 /* r_edge.cpp */; };
 		2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BAA229DF50B00D68A47 /* r_sky.cpp */; };
 		2875DC432A6CC66800EED860 /* sys_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2875DC422A6CC66800EED860 /* sys_visionos.cpp */; };
+		2875EBEA2A78C2C600F66CDB /* Engine.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2875EBE92A78C2C600F66CDB /* Engine.mm */; };
+		2875EBED2A78C31C00F66CDB /* Locks.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2875EBEC2A78C31C00F66CDB /* Locks.mm */; };
 		287A3227229DBC4D00AE6BFA /* snd_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3222229DBC4D00AE6BFA /* snd_null.cpp */; };
 		287A3228229DBC4D00AE6BFA /* in_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3223229DBC4D00AE6BFA /* in_null.cpp */; };
 		287A3229229DBC4D00AE6BFA /* sys_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3224229DBC4D00AE6BFA /* sys_null.cpp */; };
@@ -480,6 +482,10 @@
 		2875DC412A6CC65300EED860 /* sys_visionos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sys_visionos.h; sourceTree = "<group>"; };
 		2875DC422A6CC66800EED860 /* sys_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sys_visionos.cpp; sourceTree = "<group>"; };
 		2875DC442A6CE31700EED860 /* snd_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = snd_visionos.cpp; sourceTree = "<group>"; };
+		2875EBE82A78C2A200F66CDB /* Engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Engine.h; sourceTree = "<group>"; };
+		2875EBE92A78C2C600F66CDB /* Engine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Engine.mm; sourceTree = "<group>"; };
+		2875EBEB2A78C2F200F66CDB /* Locks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Locks.h; sourceTree = "<group>"; };
+		2875EBEC2A78C31C00F66CDB /* Locks.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Locks.mm; sourceTree = "<group>"; };
 		287A320D229DBAA100AE6BFA /* SlipNFrag */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SlipNFrag; sourceTree = BUILT_PRODUCTS_DIR; };
 		287A3222229DBC4D00AE6BFA /* snd_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_null.cpp; sourceTree = "<group>"; };
 		287A3223229DBC4D00AE6BFA /* in_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = in_null.cpp; sourceTree = "<group>"; };
@@ -634,10 +640,14 @@
 				2848A7F122FF991E00735495 /* Slip & Frag.entitlements */,
 				2822EE52229ED2B900B5332D /* AppDelegate.h */,
 				2822EE53229ED2B900B5332D /* AppDelegate.m */,
-				2822EE55229ED2B900B5332D /* ViewController.h */,
-				2822EE56229ED2B900B5332D /* ViewController.mm */,
+				2875EBE82A78C2A200F66CDB /* Engine.h */,
+				2875EBE92A78C2C600F66CDB /* Engine.mm */,
+				2875EBEB2A78C2F200F66CDB /* Locks.h */,
+				2875EBEC2A78C31C00F66CDB /* Locks.mm */,
 				2867E02422C79ADF0028B7BC /* PreferencesController.h */,
 				2867E02522C79ADF0028B7BC /* PreferencesController.mm */,
+				2822EE55229ED2B900B5332D /* ViewController.h */,
+				2822EE56229ED2B900B5332D /* ViewController.mm */,
 				2822EE58229ED2BA00B5332D /* Assets.xcassets */,
 				2822EE5A229ED2BA00B5332D /* Main.storyboard */,
 				2822EE5D229ED2BA00B5332D /* Info.plist */,
@@ -964,8 +974,9 @@
 		287A3205229DBAA000AE6BFA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1420;
+				LastUpgradeCheck = 1430;
 				ORGANIZATIONNAME = "Heriberto Delgado";
 				TargetAttributes = {
 					2811E5212A6C722300B1498E = {
@@ -1174,6 +1185,7 @@
 				28BA2A91229F403C001830E9 /* net_main.cpp in Sources */,
 				28BA2A9C229F403C001830E9 /* r_efrag.cpp in Sources */,
 				28BA2A7C229F403C001830E9 /* console.cpp in Sources */,
+				2875EBED2A78C31C00F66CDB /* Locks.mm in Sources */,
 				28BA2AA9229F403C001830E9 /* sv_phys.cpp in Sources */,
 				2884737F28E33D9E00B8A885 /* d_polycl.cpp in Sources */,
 				28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */,
@@ -1184,6 +1196,7 @@
 				28BA2A86229F403C001830E9 /* d_sprite.cpp in Sources */,
 				28BA2A9D229F403C001830E9 /* r_light.cpp in Sources */,
 				28BA2A8D229F403C001830E9 /* mathlib.cpp in Sources */,
+				2875EBEA2A78C2C600F66CDB /* Engine.mm in Sources */,
 				28BA2A87229F403C001830E9 /* d_surf.cpp in Sources */,
 				28BA2A84229F403C001830E9 /* d_scan.cpp in Sources */,
 				28BA2A8B229F403C001830E9 /* host_cmd.cpp in Sources */,
@@ -1419,6 +1432,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
@@ -1436,6 +1450,7 @@
 					"@executable_path/Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Izhido.SlipNFrag-VisionOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1461,6 +1476,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
@@ -1475,6 +1491,7 @@
 					"@executable_path/Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "Izhido.SlipNFrag-VisionOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1499,6 +1516,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 22;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "SlipNFrag-MacOS/Info.plist";
@@ -1506,7 +1524,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0.22;
 				PRODUCT_BUNDLE_IDENTIFIER = "Izhido.SlipNFrag-MacOS";
 				PRODUCT_NAME = "Slip & Frag";
@@ -1523,6 +1541,7 @@
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 22;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "SlipNFrag-MacOS/Info.plist";
@@ -1530,7 +1549,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0.22;
 				PRODUCT_BUNDLE_IDENTIFIER = "Izhido.SlipNFrag-MacOS";
 				PRODUCT_NAME = "Slip & Frag";
@@ -1552,6 +1571,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0.17;
 				PRODUCT_BUNDLE_IDENTIFIER = "Izhido.SlipNFrag-iOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1575,6 +1595,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0.17;
 				PRODUCT_BUNDLE_IDENTIFIER = "Izhido.SlipNFrag-iOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1620,6 +1641,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -1680,6 +1702,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1695,6 +1718,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
 		};
@@ -1703,7 +1727,9 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = EZ7GK5VS2K;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1713,7 +1739,9 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = EZ7GK5VS2K;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

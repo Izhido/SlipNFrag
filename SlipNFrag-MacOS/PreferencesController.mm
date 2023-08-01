@@ -1,5 +1,5 @@
 //
-//  PreferencesController.m
+//  PreferencesController.mm
 //  SlipNFrag-MacOS
 //
 //  Created by Heriberto Delgado on 6/29/19.

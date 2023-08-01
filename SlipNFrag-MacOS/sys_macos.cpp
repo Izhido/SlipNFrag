@@ -22,6 +22,7 @@ std::vector<FILE*> sys_handles;
 std::string sys_errormessage;
 
 int sys_nogamedata;
+int sys_quitcalled;
 
 int findhandle()
 {
@@ -164,7 +165,7 @@ void Sys_Printf(const char* fmt, ...)
 void Sys_Quit()
 {
     Host_Shutdown();
-    exit(0);
+	sys_quitcalled = 1;
 }
 
 double Sys_FloatTime()
@@ -215,14 +216,4 @@ void Sys_Init(int argc, char** argv)
     parms.argv = com_argv;
     printf("Host_Init\n");
     Host_Init(&parms);
-}
-
-void Sys_Frame(float frame_lapse)
-{
-    auto updated = Host_FrameUpdate(frame_lapse);
-    if (updated)
-    {
-        Host_FrameRender();
-    }
-    Host_FrameFinish(updated);
 }

@@ -1,5 +1,5 @@
 //
-//  ViewController.m
+//  ViewController.mm
 //  SlipNFrag-MacOS
 //
 //  Created by Heriberto Delgado on 5/29/19.
@@ -9,6 +9,8 @@
 #import "ViewController.h"
 #import <MetalKit/MetalKit.h>
 #import <GameController/GameController.h>
+#import "Locks.h"
+#import "Engine.h"
 #include "scantokey.h"
 #include "sys_macos.h"
 #include "vid_macos.h"
@@ -25,6 +27,8 @@ extern m_state_t m_state;
 {
     NSButton* playButton;
     NSButton* preferencesButton;
+	Locks* locks;
+	NSThread* engineThread;
     id<MTLCommandQueue> commandQueue;
     MTKView* mtkView;
     id<MTLRenderPipelineState> pipelineState;
@@ -35,13 +39,10 @@ extern m_state_t m_state;
     id<MTLSamplerState> consoleSamplerState;
     id<MTLSamplerState> paletteSamplerState;
     id<MTLBuffer> screenPlane;
-    NSTimeInterval previousTime;
-    NSTimeInterval currentTime;
     BOOL firstFrame;
     NSEventModifierFlags previousModifierFlags;
     NSTrackingArea* trackingArea;
     NSCursor* blankCursor;
-    GCController* joystick;
 }
 
 - (void)viewDidLoad
@@ -52,7 +53,7 @@ extern m_state_t m_state;
     playButton.alternateImage = [NSImage imageNamed:@"play-pressed"];
     playButton.bordered = NO;
     playButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [playButton setButtonType:NSMomentaryChangeButton];
+	[playButton setButtonType:NSButtonTypeMomentaryChange];
     [playButton setTarget:self];
     [playButton setAction:@selector(play:)];
     [self.view addSubview:playButton];
@@ -65,7 +66,7 @@ extern m_state_t m_state;
     preferencesButton.bordered = NO;
     preferencesButton.translatesAutoresizingMaskIntoConstraints = NO;
     preferencesButton.imageScaling = NSImageScaleProportionallyUpOrDown;
-    [preferencesButton setButtonType:NSMomentaryChangeButton];
+	[preferencesButton setButtonType:NSButtonTypeMomentaryChange];
     [preferencesButton setTarget:self];
     [preferencesButton setAction:@selector(preferences:)];
     [self.view addSubview:preferencesButton];
@@ -201,33 +202,29 @@ extern m_state_t m_state;
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    if (sys_errormessage.length() > 0)
+	if (sys_quitcalled)
+	{
+		[NSApplication.sharedApplication.mainWindow close];
+	}
+
+	if (sys_errormessage.length() > 0)
     {
         return;
     }
-    if (previousTime < 0)
-    {
-        previousTime = CACurrentMediaTime();
-    }
-    else if (currentTime < 0)
-    {
-        currentTime = CACurrentMediaTime();
-    }
-    else
-    {
-        previousTime = currentTime;
-        currentTime = CACurrentMediaTime();
-        frame_lapse = currentTime - previousTime;
-    }
-    auto width = mtkView.bounds.size.width;
+
+	auto width = mtkView.bounds.size.width;
     auto height = mtkView.bounds.size.height;
     if (firstFrame || vid_width != (int)width || vid_height != (int)height)
     {
-        vid_width = (int)width;
-        vid_height = (int)height;
-        [self calculateConsoleDimensions];
-        VID_Resize();
-        MTLTextureDescriptor* screenDescriptor = [MTLTextureDescriptor new];
+		@synchronized(self->locks.renderLock)
+		{
+			vid_width = (int)width;
+			vid_height = (int)height;
+			[self calculateConsoleDimensions];
+			VID_Resize();
+		}
+
+		MTLTextureDescriptor* screenDescriptor = [MTLTextureDescriptor new];
         screenDescriptor.pixelFormat = MTLPixelFormatR8Unorm;
         screenDescriptor.width = vid_width;
         screenDescriptor.height = vid_height;
@@ -241,21 +238,17 @@ extern m_state_t m_state;
         console = [mtkView.device newTextureWithDescriptor:consoleDescriptor];
         firstFrame = NO;
     }
-    if (r_cache_thrash)
-    {
-        VID_ReallocSurfCache();
-    }
-    Sys_Frame(frame_lapse);
-    if ([self displaySysErrorIfNeeded])
-    {
-        return;
-    }
-    MTLRegion screenRegion = MTLRegionMake2D(0, 0, vid_width, vid_height);
-    [screen replaceRegion:screenRegion mipmapLevel:0 withBytes:vid_buffer.data() bytesPerRow:vid_width];
-    MTLRegion consoleRegion = MTLRegionMake2D(0, 0, con_width, con_height);
-    [console replaceRegion:consoleRegion mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:con_width];
-    MTLRegion paletteRegion = MTLRegionMake1D(0, 256);
-    [palette replaceRegion:paletteRegion mipmapLevel:0 withBytes:d_8to24table bytesPerRow:0];
+
+	@synchronized(self->locks.renderLock)
+	{
+		MTLRegion screenRegion = MTLRegionMake2D(0, 0, vid_width, vid_height);
+		[screen replaceRegion:screenRegion mipmapLevel:0 withBytes:vid_buffer.data() bytesPerRow:vid_width];
+		MTLRegion consoleRegion = MTLRegionMake2D(0, 0, con_width, con_height);
+		[console replaceRegion:consoleRegion mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:con_width];
+		MTLRegion paletteRegion = MTLRegionMake1D(0, 256);
+		[palette replaceRegion:paletteRegion mipmapLevel:0 withBytes:d_8to24table bytesPerRow:0];
+	}
+	
     id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
     MTLRenderPassDescriptor* renderPassDescriptor = mtkView.currentRenderPassDescriptor;
     id<CAMetalDrawable> currentDrawable = mtkView.currentDrawable;
@@ -282,7 +275,65 @@ extern m_state_t m_state;
 -(void)play:(NSButton*)sender
 {
     [playButton removeFromSuperview];
-    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+
+	locks = [Locks new];
+	
+	vid_width = (int)self.view.frame.size.width;
+	vid_height = (int)self.view.frame.size.height;
+	[self calculateConsoleDimensions];
+
+	auto arguments = [NSMutableArray<NSString*> new];
+	[arguments addObject:@"SlipNFrag-MacOS"];
+	NSData* basedir = [NSUserDefaults.standardUserDefaults objectForKey:@"basedir_bookmark"];
+	if (basedir != nil)
+	{
+		NSURL* url = [NSURL URLByResolvingBookmarkData:basedir options:NSURLBookmarkResolutionWithSecurityScope relativeToURL:nil bookmarkDataIsStale:nil error:nil];
+		[url startAccessingSecurityScopedResource];
+		[arguments addObject:[NSString stringWithCString:"-basedir" encoding:[NSString defaultCStringEncoding]]];
+		[arguments addObject:url.path];
+	}
+	if ([NSUserDefaults.standardUserDefaults boolForKey:@"hipnotic_radio"])
+	{
+		[arguments addObject:[NSString stringWithCString:"-hipnotic" encoding:[NSString defaultCStringEncoding]]];
+	}
+	else if ([NSUserDefaults.standardUserDefaults boolForKey:@"rogue_radio"])
+	{
+		[arguments addObject:[NSString stringWithCString:"-rogue" encoding:[NSString defaultCStringEncoding]]];
+	}
+	else if ([NSUserDefaults.standardUserDefaults boolForKey:@"game_radio"])
+	{
+		auto game = [NSUserDefaults.standardUserDefaults stringForKey:@"game_text"];
+		if (game != nil && ![game isEqualToString:@""])
+		{
+			[arguments addObject:[NSString stringWithCString:"-game" encoding:[NSString defaultCStringEncoding]]];
+			[arguments addObject:game];
+		}
+	}
+	auto commandLine = [NSUserDefaults.standardUserDefaults stringForKey:@"command_line_text"];
+	if (commandLine != nil && ![commandLine isEqualToString:@""])
+	{
+		NSArray<NSString*>* components = [commandLine componentsSeparatedByString:@" "];
+		[arguments addObjectsFromArray:components];
+	}
+
+	engineThread = [[NSThread alloc] initWithBlock:^{
+		auto engine = [Engine new];
+		[engine StartEngine:arguments locks:self->locks];
+	}];
+	engineThread.name = @"Engine Thread";
+	[engineThread start];
+
+	while (!locks.engineStarted && !locks.stopEngine)
+	{
+		[NSThread sleepForTimeInterval:0];
+	}
+
+	if ([self displaySysErrorIfNeeded])
+	{
+		return;
+	}
+
+	id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     mtkView = [[MTKView alloc] initWithFrame:CGRectZero device:device];
     mtkView.delegate = self;
     mtkView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -319,7 +370,7 @@ extern m_state_t m_state;
     if (error != nil)
     {
         NSLog(@"%@", error);
-        [NSApplication.sharedApplication terminate:self];
+		[NSApplication.sharedApplication.mainWindow close];
     }
     MTLTextureDescriptor* paletteDescriptor = [MTLTextureDescriptor new];
     paletteDescriptor.textureType = MTLTextureType1D;
@@ -334,62 +385,7 @@ extern m_state_t m_state;
     paletteSamplerState = [device newSamplerStateWithDescriptor:paletteSamplerDescriptor];
     float screenPlaneVertices[] = { -1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, -1, -1, 0, 1, 0, 1, 1, -1, 0, 1, 1, 1 };
     screenPlane = [device newBufferWithBytes:screenPlaneVertices length:sizeof(screenPlaneVertices) options:0];
-    vid_width = (int)self.view.frame.size.width;
-    vid_height = (int)self.view.frame.size.height;
-    [self calculateConsoleDimensions];
-    NSString* version = NSBundle.mainBundle.infoDictionary[@"CFBundleShortVersionString"];
-    sys_version = std::string("MacOS ") + [version cStringUsingEncoding:NSString.defaultCStringEncoding];
-    std::vector<std::string> arguments;
-    arguments.emplace_back(sys_argv[0]);
-    NSData* basedir = [NSUserDefaults.standardUserDefaults objectForKey:@"basedir_bookmark"];
-    if (basedir != nil)
-    {
-        NSURL* url = [NSURL URLByResolvingBookmarkData:basedir options:NSURLBookmarkResolutionWithSecurityScope relativeToURL:nil bookmarkDataIsStale:nil error:nil];
-        [url startAccessingSecurityScopedResource];
-        arguments.emplace_back("-basedir");
-        arguments.emplace_back([url.path cStringUsingEncoding:NSString.defaultCStringEncoding]);
-    }
-    if ([NSUserDefaults.standardUserDefaults boolForKey:@"hipnotic_radio"])
-    {
-        arguments.emplace_back("-hipnotic");
-    }
-    else if ([NSUserDefaults.standardUserDefaults boolForKey:@"rogue_radio"])
-    {
-        arguments.emplace_back("-rogue");
-    }
-    else if ([NSUserDefaults.standardUserDefaults boolForKey:@"game_radio"])
-    {
-        auto game = [NSUserDefaults.standardUserDefaults stringForKey:@"game_text"];
-        if (game != nil && ![game isEqualToString:@""])
-        {
-            arguments.emplace_back("-game");
-            arguments.emplace_back([game cStringUsingEncoding:NSString.defaultCStringEncoding]);
-        }
-    }
-    auto commandLine = [NSUserDefaults.standardUserDefaults stringForKey:@"command_line_text"];
-    if (commandLine != nil && ![commandLine isEqualToString:@""])
-    {
-        NSArray<NSString*>* components = [commandLine componentsSeparatedByString:@" "];
-        for (NSString* component : components)
-        {
-            auto componentAsString = [component cStringUsingEncoding:NSString.defaultCStringEncoding];
-            arguments.emplace_back(componentAsString);
-        }
-    }
-    sys_argc = (int)arguments.size();
-    sys_argv = new char*[sys_argc];
-    for (auto i = 0; i < arguments.size(); i++)
-    {
-        sys_argv[i] = new char[arguments[i].length() + 1];
-        strcpy(sys_argv[i], arguments[i].c_str());
-    }
-    Sys_Init(sys_argc, sys_argv);
-    if ([self displaySysErrorIfNeeded])
-    {
-        return;
-    }
-    previousTime = -1;
-    currentTime = -1;
+	
     previousModifierFlags = 0;
     blankCursor = [[NSCursor alloc] initWithImage:[NSImage imageNamed:@"blank"] hotSpot:NSZeroPoint];
     firstFrame = YES;
@@ -401,7 +397,10 @@ extern m_state_t m_state;
          }
          unsigned short code = event.keyCode;
          int mapped = scantokey[code];
-         Key_Event(mapped, YES);
+         @synchronized(self->locks.inputLock)
+		 {
+			 Key_Event(mapped, true);
+         }
          return nil;
      }];
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyUp handler:^NSEvent * _Nullable(NSEvent * _Nonnull event)
@@ -412,7 +411,10 @@ extern m_state_t m_state;
          }
          unsigned short code = event.keyCode;
          int mapped = scantokey[code];
-         Key_Event(mapped, NO);
+         @synchronized(self->locks.inputLock)
+         {
+			 Key_Event(mapped, false);
+         }
          return nil;
      }];
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskFlagsChanged handler:^NSEvent * _Nullable(NSEvent * _Nonnull event)
@@ -423,46 +425,49 @@ extern m_state_t m_state;
          }
          if ((event.modifierFlags & NSEventModifierFlagOption) != 0 && (self->previousModifierFlags & NSEventModifierFlagOption) == 0)
          {
-             Key_Event(132, YES);
+			 @synchronized(self->locks.inputLock)
+			 {
+				 Key_Event(K_ALT, true);
+			 }
          }
          else if ((event.modifierFlags & NSEventModifierFlagOption) == 0 && (self->previousModifierFlags & NSEventModifierFlagOption) != 0)
          {
-             Key_Event(132, NO);
+			 @synchronized(self->locks.inputLock)
+			 {
+				 Key_Event(K_ALT, false);
+			 }
          }
          if ((event.modifierFlags & NSEventModifierFlagControl) != 0 && (self->previousModifierFlags & NSEventModifierFlagControl) == 0)
          {
-             Key_Event(133, YES);
+			 @synchronized(self->locks.inputLock)
+			 {
+				 Key_Event(K_CTRL, true);
+			 }
          }
          else if ((event.modifierFlags & NSEventModifierFlagControl) == 0 && (self->previousModifierFlags & NSEventModifierFlagControl) != 0)
          {
-             Key_Event(133, NO);
+			 @synchronized(self->locks.inputLock)
+			 {
+				 Key_Event(K_CTRL, false);
+			 }
          }
          if ((event.modifierFlags & NSEventModifierFlagShift) != 0 && (self->previousModifierFlags & NSEventModifierFlagShift) == 0)
          {
-             Key_Event(134, YES);
+			 @synchronized(self->locks.inputLock)
+			 {
+				 Key_Event(K_SHIFT, true);
+			 }
          }
          else if ((event.modifierFlags & NSEventModifierFlagShift) == 0 && (self->previousModifierFlags & NSEventModifierFlagShift) != 0)
          {
-             Key_Event(134, NO);
+			 @synchronized(self->locks.inputLock)
+			 {
+				 Key_Event(K_SHIFT, false);
+			 }
          }
          self->previousModifierFlags = event.modifierFlags;
          return nil;
      }];
-    if (joy_initialized)
-    {
-        for (GCController* controller in [GCController controllers])
-        {
-            if (controller.extendedGamepad != nil)
-            {
-                joystick = controller;
-                joy_avail = YES;
-                [self enableJoystick];
-                break;
-            }
-        }
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(controllerDidConnect:) name:GCControllerDidConnectNotification object:nil];
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(controllerDidDisconnect:) name:GCControllerDidDisconnectNotification object:nil];
-    }
 }
 
 -(void)preferences:(NSButton*)sender
@@ -532,274 +537,6 @@ extern m_state_t m_state;
         return YES;
     }
     return NO;
-}
-
--(void)controllerDidConnect:(NSNotification*)notification
-{
-    if (joystick == nullptr)
-    {
-		auto controller = (GCController*)notification.object;
-		if (controller.extendedGamepad != nil)
-		{
-			joystick = controller;
-			joy_avail = YES;
-			[self enableJoystick];
-		}
-    }
-}
-
--(void)controllerDidDisconnect:(NSNotification*)notification
-{
-    if (joystick != nullptr)
-    {
-		auto controller = (GCController*)notification.object;
-		if (joystick == controller)
-		{
-			[self disableJoystick];
-			joy_avail = NO;
-			joystick = nil;
-		}
-    }
-}
-
--(void)enableJoystick
-{
-    joystick.playerIndex = GCControllerPlayerIndex1;
-	if (@available(macOS 10.15, *)) {
-		[joystick.extendedGamepad.buttonMenu setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-		 {
-			Key_Event(K_ESCAPE, pressed);
-		}];
-	} else {
-		joystick.controllerPausedHandler = ^(GCController * _Nonnull controller)
-		{
-			Key_Event(K_ESCAPE, YES);
-			Key_Event(K_ESCAPE, NO);
-		};
-	}
-    [joystick.extendedGamepad.buttonA setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-		if (key_dest == key_menu)
-		{
-			if (m_state != m_quit)
-			{
-				Key_Event(K_ENTER, pressed);
-			}
-		}
-		else if (key_dest == key_game)
-		{
-			if (pressed)
-			{
-				Cmd_ExecuteString("+jump", src_command);
-			}
-			else
-			{
-				Cmd_ExecuteString("-jump", src_command);
-			}
-		}
-     }];
-    [joystick.extendedGamepad.buttonB setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-		if (key_dest == key_menu)
-		{
-			if (m_state != m_quit)
-			{
-				Key_Event(K_ESCAPE, pressed);
-			}
-		}
-		else if (key_dest == key_game)
-		{
-			if (pressed)
-			{
-				Cmd_ExecuteString("+movedown", src_command);
-			}
-			else
-			{
-				Cmd_ExecuteString("-movedown", src_command);
-			}
-		}
-     }];
-    [joystick.extendedGamepad.buttonX setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-		if (key_dest == key_menu)
-		{
-			if (m_state != m_quit)
-			{
-				Key_Event(K_ENTER, pressed);
-			}
-		}
-		else if (key_dest == key_game)
-		{
-			if (pressed)
-			{
-				Cmd_ExecuteString("+speed", src_command);
-			}
-			else
-			{
-				Cmd_ExecuteString("-speed", src_command);
-			}
-		}
-     }];
-    [joystick.extendedGamepad.buttonY setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-		if (key_dest == key_menu)
-		{
-			if (m_state == m_quit)
-			{
-				Key_Event('y', pressed);
-			}
-			else
-			{
-				Key_Event(K_ESCAPE, pressed);
-			}
-		}
-		else if (key_dest == key_game)
-		{
-			if (pressed)
-			{
-				Cmd_ExecuteString("+moveup", src_command);
-			}
-			else
-			{
-				Cmd_ExecuteString("-moveup", src_command);
-			}
-		}
-     }];
-    [joystick.extendedGamepad.leftTrigger setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-		if (key_dest == key_menu)
-		{
-			if (m_state != m_quit)
-			{
-				Key_Event(K_ENTER, pressed);
-			}
-		}
-		else if (key_dest == key_game)
-		{
-			if (pressed)
-			{
-				Cmd_ExecuteString("+attack", src_command);
-			}
-			else
-			{
-				Cmd_ExecuteString("-attack", src_command);
-			}
-		}
-     }];
-    [joystick.extendedGamepad.leftShoulder setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-		if (key_dest == key_menu)
-		{
-			if (m_state != m_quit)
-			{
-				Key_Event(K_ESCAPE, pressed);
-			}
-		}
-		else if (key_dest == key_game)
-		{
-			if (pressed)
-			{
-				Cmd_ExecuteString("impulse 10", src_command);
-			}
-		}
-     }];
-    [joystick.extendedGamepad.rightTrigger setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-		if (key_dest == key_menu)
-		{
-			if (m_state != m_quit)
-			{
-				Key_Event(K_ENTER, pressed);
-			}
-		}
-		else if (key_dest == key_game)
-		{
-			if (pressed)
-			{
-				Cmd_ExecuteString("+attack", src_command);
-			}
-			else
-			{
-				Cmd_ExecuteString("-attack", src_command);
-			}
-		}
-     }];
-    [joystick.extendedGamepad.rightShoulder setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-		if (key_dest == key_menu)
-		{
-			if (m_state != m_quit)
-			{
-				Key_Event(K_ESCAPE, pressed);
-			}
-		}
-		else if (key_dest == key_game)
-		{
-			if (pressed)
-			{
-				Cmd_ExecuteString("impulse 10", src_command);
-			}
-		}
-     }];
-    [joystick.extendedGamepad.dpad.up setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-         Key_Event(128, pressed);
-     }];
-    [joystick.extendedGamepad.dpad.left setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-         Key_Event(130, pressed);
-     }];
-    [joystick.extendedGamepad.dpad.right setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-         Key_Event(131, pressed);
-     }];
-    [joystick.extendedGamepad.dpad.down setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-     {
-         Key_Event(129, pressed);
-     }];
-    [joystick.extendedGamepad.leftThumbstick setValueChangedHandler:^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue)
-     {
-         pdwRawValue[JOY_AXIS_X] = -xValue;
-         pdwRawValue[JOY_AXIS_Y] = -yValue;
-     }];
-    [joystick.extendedGamepad.rightThumbstick setValueChangedHandler:^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue)
-     {
-         pdwRawValue[JOY_AXIS_Z] = xValue;
-         pdwRawValue[JOY_AXIS_R] = -yValue;
-     }];
-	[joystick.extendedGamepad.leftThumbstickButton setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-	 {
-		if (pressed)
-		{
-			Cmd_ExecuteString("centerview", src_command);
-		}
-	 }];
-	[joystick.extendedGamepad.rightThumbstickButton setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-	 {
-		if (pressed)
-		{
-			Cmd_ExecuteString("+mlook", src_command);
-		}
-		else
-		{
-			Cmd_ExecuteString("-mlook", src_command);
-		}
-	 }];
-
-	Cvar_SetValue("joyadvanced", 1);
-	Cvar_SetValue("joyadvaxisx", AxisSide);
-	Cvar_SetValue("joyadvaxisy", AxisForward);
-	Cvar_SetValue("joyadvaxisz", AxisTurn);
-	Cvar_SetValue("joyadvaxisr", AxisLook);
-	Joy_AdvancedUpdate_f();
-}
-
--(void)disableJoystick
-{
-    in_forwardmove = 0.0;
-    in_sidestepmove = 0.0;
-    in_rollangle = 0.0;
-    in_pitchangle = 0.0;
 }
 
 @end
