@@ -9,12 +9,13 @@
 #import "ViewController.h"
 #import <MetalKit/MetalKit.h>
 #import <GameController/GameController.h>
-#import "Locks.h"
 #import "Engine.h"
 #include "scantokey.h"
 #include "sys_macos.h"
 #include "vid_macos.h"
 #include "in_macos.h"
+#include "Locks.h"
+#include "DirectRect.h"
 #include "AppDelegate.h"
 
 extern m_state_t m_state;
@@ -27,7 +28,6 @@ extern m_state_t m_state;
 {
     NSButton* playButton;
     NSButton* preferencesButton;
-	Locks* locks;
 	NSThread* engineThread;
     id<MTLCommandQueue> commandQueue;
     MTKView* mtkView;
@@ -38,6 +38,9 @@ extern m_state_t m_state;
     id<MTLSamplerState> screenSamplerState;
     id<MTLSamplerState> consoleSamplerState;
     id<MTLSamplerState> paletteSamplerState;
+	MTLRegion screenRegion;
+	MTLRegion consoleRegion;
+	MTLRegion paletteRegion;
     id<MTLBuffer> screenPlane;
     BOOL firstFrame;
     NSEventModifierFlags previousModifierFlags;
@@ -45,7 +48,7 @@ extern m_state_t m_state;
     NSCursor* blankCursor;
 }
 
-- (void)viewDidLoad
+-(void)viewDidLoad
 {
     [super viewDidLoad];
     playButton = [[NSButton alloc] initWithFrame:NSZeroRect];
@@ -160,15 +163,21 @@ extern m_state_t m_state;
 {
     if (event.type == NSEventTypeLeftMouseDown)
     {
-        Key_Event(200, YES);
+		std::lock_guard<std::mutex> lock(Locks::InputMutex);
+		
+        Key_Event(K_MOUSE1, true);
     }
     else if (event.type == NSEventTypeRightMouseDown)
     {
-        Key_Event(202, YES);
+		std::lock_guard<std::mutex> lock(Locks::InputMutex);
+		
+        Key_Event(K_MOUSE3, true);
     }
     else if (event.type == NSEventTypeOtherMouseDown)
     {
-        Key_Event(201, YES);
+		std::lock_guard<std::mutex> lock(Locks::InputMutex);
+		
+        Key_Event(K_MOUSE2, true);
     }
     else
     {
@@ -180,15 +189,21 @@ extern m_state_t m_state;
 {
     if (event.type == NSEventTypeLeftMouseUp)
     {
-        Key_Event(200, NO);
+		std::lock_guard<std::mutex> lock(Locks::InputMutex);
+		
+        Key_Event(K_MOUSE1, false);
     }
     else if (event.type == NSEventTypeRightMouseUp)
     {
-        Key_Event(202, NO);
+		std::lock_guard<std::mutex> lock(Locks::InputMutex);
+		
+        Key_Event(K_MOUSE3, false);
     }
     else if (event.type == NSEventTypeOtherMouseUp)
     {
-        Key_Event(201, NO);
+		std::lock_guard<std::mutex> lock(Locks::InputMutex);
+		
+        Key_Event(K_MOUSE2, false);
     }
     else
     {
@@ -200,84 +215,109 @@ extern m_state_t m_state;
 {
 }
 
-- (void)drawInMTKView:(MTKView *)view
+-(void)buildScreenTexturesWithWidth:(CGFloat)width andHeight:(CGFloat)height
+{
+	vid_width = (int)width;
+	vid_height = (int)height;
+	[self calculateConsoleDimensions];
+	
+	VID_Resize();
+	
+	MTLTextureDescriptor* screenDescriptor = [MTLTextureDescriptor new];
+	screenDescriptor.pixelFormat = MTLPixelFormatR8Unorm;
+	screenDescriptor.width = vid_width;
+	screenDescriptor.height = vid_height;
+	screenDescriptor.storageMode = MTLStorageModeManaged;
+	screen = [mtkView.device newTextureWithDescriptor:screenDescriptor];
+	
+	screenRegion = MTLRegionMake2D(0, 0, vid_width, vid_height);
+	
+	MTLTextureDescriptor* consoleDescriptor = [MTLTextureDescriptor new];
+	consoleDescriptor.pixelFormat = MTLPixelFormatR8Unorm;
+	consoleDescriptor.width = con_width;
+	consoleDescriptor.height = con_height;
+	screenDescriptor.storageMode = MTLStorageModeManaged;
+	console = [mtkView.device newTextureWithDescriptor:consoleDescriptor];
+	
+	consoleRegion = MTLRegionMake2D(0, 0, con_width, con_height);
+}
+
+-(void)drawInMTKView:(MTKView *)view
 {
 	if (sys_quitcalled)
 	{
 		[NSApplication.sharedApplication.mainWindow close];
 	}
-
+	
 	if (sys_errormessage.length() > 0)
-    {
-        return;
-    }
-
-	auto width = mtkView.bounds.size.width;
-    auto height = mtkView.bounds.size.height;
-    if (firstFrame || vid_width != (int)width || vid_height != (int)height)
-    {
-		@synchronized(self->locks.renderLock)
-		{
-			vid_width = (int)width;
-			vid_height = (int)height;
-			[self calculateConsoleDimensions];
-			VID_Resize();
-		}
-
-		MTLTextureDescriptor* screenDescriptor = [MTLTextureDescriptor new];
-        screenDescriptor.pixelFormat = MTLPixelFormatR8Unorm;
-        screenDescriptor.width = vid_width;
-        screenDescriptor.height = vid_height;
-        screenDescriptor.storageMode = MTLStorageModeManaged;
-        screen = [mtkView.device newTextureWithDescriptor:screenDescriptor];
-        MTLTextureDescriptor* consoleDescriptor = [MTLTextureDescriptor new];
-        consoleDescriptor.pixelFormat = MTLPixelFormatR8Unorm;
-        consoleDescriptor.width = con_width;
-        consoleDescriptor.height = con_height;
-        screenDescriptor.storageMode = MTLStorageModeManaged;
-        console = [mtkView.device newTextureWithDescriptor:consoleDescriptor];
-        firstFrame = NO;
-    }
-
-	@synchronized(self->locks.renderLock)
 	{
-		MTLRegion screenRegion = MTLRegionMake2D(0, 0, vid_width, vid_height);
-		[screen replaceRegion:screenRegion mipmapLevel:0 withBytes:vid_buffer.data() bytesPerRow:vid_width];
-		MTLRegion consoleRegion = MTLRegionMake2D(0, 0, con_width, con_height);
-		[console replaceRegion:consoleRegion mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:con_width];
-		MTLRegion paletteRegion = MTLRegionMake1D(0, 256);
-		[palette replaceRegion:paletteRegion mipmapLevel:0 withBytes:d_8to24table bytesPerRow:0];
+		return;
 	}
 	
-    id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
-    MTLRenderPassDescriptor* renderPassDescriptor = mtkView.currentRenderPassDescriptor;
-    id<CAMetalDrawable> currentDrawable = mtkView.currentDrawable;
-    if (renderPassDescriptor != nil && currentDrawable != nil)
-    {
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1);
-        renderPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
-        id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
-        [commandEncoder setRenderPipelineState:pipelineState];
-        [commandEncoder setVertexBuffer:screenPlane offset:0 atIndex:0];
-        [commandEncoder setFragmentTexture:screen atIndex:0];
-        [commandEncoder setFragmentTexture:console atIndex:1];
-        [commandEncoder setFragmentTexture:palette atIndex:2];
-        [commandEncoder setFragmentSamplerState:screenSamplerState atIndex:0];
-        [commandEncoder setFragmentSamplerState:consoleSamplerState atIndex:1];
-        [commandEncoder setFragmentSamplerState:paletteSamplerState atIndex:2];
-        [commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
-        [commandEncoder endEncoding];
-        [commandBuffer presentDrawable:currentDrawable];
-    }
-    [commandBuffer commit];
+	auto width = mtkView.bounds.size.width;
+	auto height = mtkView.bounds.size.height;
+
+	{
+		std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+		
+		if (firstFrame)
+		{
+			[self buildScreenTexturesWithWidth:width andHeight:height];
+			firstFrame = NO;
+		}
+		
+		[screen replaceRegion:screenRegion mipmapLevel:0 withBytes:vid_buffer.data() bytesPerRow:vid_width];
+		[console replaceRegion:consoleRegion mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:con_width];
+		[palette replaceRegion:paletteRegion mipmapLevel:0 withBytes:d_8to24table bytesPerRow:0];
+	}
+		
+	{
+		std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+		
+		for (auto& directRect : DirectRect::directRects)
+		{
+			auto x = directRect.x * (consoleRegion.size.width - directRect.width) / (screenRegion.size.width - directRect.width);
+			auto y = directRect.y * (consoleRegion.size.height - directRect.width) / (screenRegion.size.height - directRect.height);
+
+			MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
+			[console replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
+		}
+	}
+
+	id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+	MTLRenderPassDescriptor* renderPassDescriptor = mtkView.currentRenderPassDescriptor;
+	id<CAMetalDrawable> currentDrawable = mtkView.currentDrawable;
+	if (renderPassDescriptor != nil && currentDrawable != nil)
+	{
+		renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1);
+		renderPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
+		id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+		[commandEncoder setRenderPipelineState:pipelineState];
+		[commandEncoder setVertexBuffer:screenPlane offset:0 atIndex:0];
+		[commandEncoder setFragmentTexture:screen atIndex:0];
+		[commandEncoder setFragmentTexture:console atIndex:1];
+		[commandEncoder setFragmentTexture:palette atIndex:2];
+		[commandEncoder setFragmentSamplerState:screenSamplerState atIndex:0];
+		[commandEncoder setFragmentSamplerState:consoleSamplerState atIndex:1];
+		[commandEncoder setFragmentSamplerState:paletteSamplerState atIndex:2];
+		[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+		[commandEncoder endEncoding];
+		[commandBuffer presentDrawable:currentDrawable];
+	}
+	[commandBuffer commit];
+
+	if (vid_width != (int)width || vid_height != (int)height)
+	{
+		std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+		
+		[self buildScreenTexturesWithWidth:width andHeight:height];
+	}
 }
 
 -(void)play:(NSButton*)sender
 {
     [playButton removeFromSuperview];
 
-	locks = [Locks new];
-	
 	vid_width = (int)self.view.frame.size.width;
 	vid_height = (int)self.view.frame.size.height;
 	[self calculateConsoleDimensions];
@@ -318,12 +358,12 @@ extern m_state_t m_state;
 
 	engineThread = [[NSThread alloc] initWithBlock:^{
 		auto engine = [Engine new];
-		[engine StartEngine:arguments locks:self->locks];
+		[engine StartEngine:arguments];
 	}];
 	engineThread.name = @"Engine Thread";
 	[engineThread start];
 
-	while (!locks.engineStarted && !locks.stopEngine)
+	while (!Locks::EngineStarted && !Locks::StopEngine)
 	{
 		[NSThread sleepForTimeInterval:0];
 	}
@@ -383,7 +423,8 @@ extern m_state_t m_state;
     consoleSamplerState = [device newSamplerStateWithDescriptor:consoleSamplerDescriptor];
     MTLSamplerDescriptor* paletteSamplerDescriptor = [MTLSamplerDescriptor new];
     paletteSamplerState = [device newSamplerStateWithDescriptor:paletteSamplerDescriptor];
-    float screenPlaneVertices[] = { -1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, -1, -1, 0, 1, 0, 1, 1, -1, 0, 1, 1, 1 };
+	paletteRegion = MTLRegionMake1D(0, 256);
+	float screenPlaneVertices[] = { -1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, -1, -1, 0, 1, 0, 1, 1, -1, 0, 1, 1, 1 };
     screenPlane = [device newBufferWithBytes:screenPlaneVertices length:sizeof(screenPlaneVertices) options:0];
 	
     previousModifierFlags = 0;
@@ -397,8 +438,9 @@ extern m_state_t m_state;
          }
          unsigned short code = event.keyCode;
          int mapped = scantokey[code];
-         @synchronized(self->locks.inputLock)
 		 {
+			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
+			 
 			 Key_Event(mapped, true);
          }
          return nil;
@@ -411,8 +453,9 @@ extern m_state_t m_state;
          }
          unsigned short code = event.keyCode;
          int mapped = scantokey[code];
-         @synchronized(self->locks.inputLock)
          {
+			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
+			 
 			 Key_Event(mapped, false);
          }
          return nil;
@@ -425,45 +468,39 @@ extern m_state_t m_state;
          }
          if ((event.modifierFlags & NSEventModifierFlagOption) != 0 && (self->previousModifierFlags & NSEventModifierFlagOption) == 0)
          {
-			 @synchronized(self->locks.inputLock)
-			 {
-				 Key_Event(K_ALT, true);
-			 }
+			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
+			 
+			 Key_Event(K_ALT, true);
          }
          else if ((event.modifierFlags & NSEventModifierFlagOption) == 0 && (self->previousModifierFlags & NSEventModifierFlagOption) != 0)
          {
-			 @synchronized(self->locks.inputLock)
-			 {
-				 Key_Event(K_ALT, false);
-			 }
+			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
+			 
+			 Key_Event(K_ALT, false);
          }
          if ((event.modifierFlags & NSEventModifierFlagControl) != 0 && (self->previousModifierFlags & NSEventModifierFlagControl) == 0)
          {
-			 @synchronized(self->locks.inputLock)
-			 {
-				 Key_Event(K_CTRL, true);
-			 }
+			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
+			 
+			 Key_Event(K_CTRL, true);
          }
          else if ((event.modifierFlags & NSEventModifierFlagControl) == 0 && (self->previousModifierFlags & NSEventModifierFlagControl) != 0)
          {
-			 @synchronized(self->locks.inputLock)
-			 {
-				 Key_Event(K_CTRL, false);
-			 }
+			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
+			 Key_Event(K_CTRL, false);
          }
          if ((event.modifierFlags & NSEventModifierFlagShift) != 0 && (self->previousModifierFlags & NSEventModifierFlagShift) == 0)
          {
-			 @synchronized(self->locks.inputLock)
-			 {
-				 Key_Event(K_SHIFT, true);
-			 }
+			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
+			 Key_Event(K_SHIFT, true);
          }
          else if ((event.modifierFlags & NSEventModifierFlagShift) == 0 && (self->previousModifierFlags & NSEventModifierFlagShift) != 0)
          {
-			 @synchronized(self->locks.inputLock)
-			 {
-				 Key_Event(K_SHIFT, false);
-			 }
+			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
+			 Key_Event(K_SHIFT, false);
          }
          self->previousModifierFlags = event.modifierFlags;
          return nil;

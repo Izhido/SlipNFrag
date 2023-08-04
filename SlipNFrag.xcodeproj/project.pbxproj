@@ -163,6 +163,8 @@
 		283D4BF2229E16D400D68A47 /* r_vars.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BF1229E16D400D68A47 /* r_vars.cpp */; };
 		2849D47B260C41C900B4D4F0 /* cd_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2849D47A260C41C900B4D4F0 /* cd_macos.cpp */; };
 		284E087E22C568B3001DF320 /* in_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 284E087C22C568B3001DF320 /* in_macos.cpp */; };
+		285AD3842A7B6A9500D6D013 /* Locks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 285AD3832A7B6A9500D6D013 /* Locks.cpp */; };
+		285AD3882A7B733E00D6D013 /* DirectRect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 285AD3862A7B723F00D6D013 /* DirectRect.cpp */; };
 		285D5B09229F9EE400B6ED09 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28BA2A6E229F31C2001830E9 /* MetalKit.framework */; };
 		2867E02622C79ADF0028B7BC /* PreferencesController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2867E02522C79ADF0028B7BC /* PreferencesController.mm */; };
 		286DF6C92324813B00B7537E /* net_sock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 286DF6C62323F3AA00B7537E /* net_sock.cpp */; };
@@ -234,7 +236,6 @@
 		2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4BAA229DF50B00D68A47 /* r_sky.cpp */; };
 		2875DC432A6CC66800EED860 /* sys_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2875DC422A6CC66800EED860 /* sys_visionos.cpp */; };
 		2875EBEA2A78C2C600F66CDB /* Engine.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2875EBE92A78C2C600F66CDB /* Engine.mm */; };
-		2875EBED2A78C31C00F66CDB /* Locks.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2875EBEC2A78C31C00F66CDB /* Locks.mm */; };
 		287A3227229DBC4D00AE6BFA /* snd_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3222229DBC4D00AE6BFA /* snd_null.cpp */; };
 		287A3228229DBC4D00AE6BFA /* in_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3223229DBC4D00AE6BFA /* in_null.cpp */; };
 		287A3229229DBC4D00AE6BFA /* sys_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3224229DBC4D00AE6BFA /* sys_null.cpp */; };
@@ -464,6 +465,9 @@
 		2849D47A260C41C900B4D4F0 /* cd_macos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cd_macos.cpp; sourceTree = "<group>"; };
 		284E087C22C568B3001DF320 /* in_macos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = in_macos.cpp; sourceTree = "<group>"; };
 		284E087D22C568B3001DF320 /* in_macos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = in_macos.h; sourceTree = "<group>"; };
+		285AD3832A7B6A9500D6D013 /* Locks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Locks.cpp; sourceTree = "<group>"; };
+		285AD3852A7B720A00D6D013 /* DirectRect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DirectRect.h; sourceTree = "<group>"; };
+		285AD3862A7B723F00D6D013 /* DirectRect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DirectRect.cpp; sourceTree = "<group>"; };
 		285D5B0A229F9F9900B6ED09 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		285D5B0C229FA10500B6ED09 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		285D5B0E229FA12400B6ED09 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -485,7 +489,6 @@
 		2875EBE82A78C2A200F66CDB /* Engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Engine.h; sourceTree = "<group>"; };
 		2875EBE92A78C2C600F66CDB /* Engine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Engine.mm; sourceTree = "<group>"; };
 		2875EBEB2A78C2F200F66CDB /* Locks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Locks.h; sourceTree = "<group>"; };
-		2875EBEC2A78C31C00F66CDB /* Locks.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Locks.mm; sourceTree = "<group>"; };
 		287A320D229DBAA100AE6BFA /* SlipNFrag */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SlipNFrag; sourceTree = BUILT_PRODUCTS_DIR; };
 		287A3222229DBC4D00AE6BFA /* snd_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_null.cpp; sourceTree = "<group>"; };
 		287A3223229DBC4D00AE6BFA /* in_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = in_null.cpp; sourceTree = "<group>"; };
@@ -640,10 +643,12 @@
 				2848A7F122FF991E00735495 /* Slip & Frag.entitlements */,
 				2822EE52229ED2B900B5332D /* AppDelegate.h */,
 				2822EE53229ED2B900B5332D /* AppDelegate.m */,
+				285AD3862A7B723F00D6D013 /* DirectRect.cpp */,
+				285AD3852A7B720A00D6D013 /* DirectRect.h */,
 				2875EBE82A78C2A200F66CDB /* Engine.h */,
 				2875EBE92A78C2C600F66CDB /* Engine.mm */,
+				285AD3832A7B6A9500D6D013 /* Locks.cpp */,
 				2875EBEB2A78C2F200F66CDB /* Locks.h */,
-				2875EBEC2A78C31C00F66CDB /* Locks.mm */,
 				2867E02422C79ADF0028B7BC /* PreferencesController.h */,
 				2867E02522C79ADF0028B7BC /* PreferencesController.mm */,
 				2822EE55229ED2B900B5332D /* ViewController.h */,
@@ -1184,8 +1189,9 @@
 				28BA2AA5229F403C001830E9 /* sbar.cpp in Sources */,
 				28BA2A91229F403C001830E9 /* net_main.cpp in Sources */,
 				28BA2A9C229F403C001830E9 /* r_efrag.cpp in Sources */,
+				285AD3882A7B733E00D6D013 /* DirectRect.cpp in Sources */,
+				285AD3842A7B6A9500D6D013 /* Locks.cpp in Sources */,
 				28BA2A7C229F403C001830E9 /* console.cpp in Sources */,
-				2875EBED2A78C31C00F66CDB /* Locks.mm in Sources */,
 				28BA2AA9229F403C001830E9 /* sv_phys.cpp in Sources */,
 				2884737F28E33D9E00B8A885 /* d_polycl.cpp in Sources */,
 				28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */,

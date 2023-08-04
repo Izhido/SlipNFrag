@@ -8,11 +8,9 @@
 
 #include "quakedef.h"
 #include <AudioToolbox/AudioToolbox.h>
-#include <pthread.h>
+#include "Locks.h"
 
 AudioQueueRef snd_audioqueue = NULL;
-
-pthread_mutex_t snd_lock;
 
 qboolean snd_forceclear;
 
@@ -22,26 +20,29 @@ void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef bu
     {
         return;
     }
-    pthread_mutex_lock(&snd_lock);
-    if (snd_forceclear)
-    {
-        S_ClearBuffer();
-        snd_forceclear = false;
-    }
-    memcpy(buffer->mAudioData, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
-    AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
-	shm->samplepos += (shm->samples >> 3);
-    if(shm->samplepos >= shm->samples)
-    {
-		shm->samplepos = 0;
-    }
-    pthread_mutex_unlock(&snd_lock);
+	
+	{
+		std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+		
+		if (snd_forceclear)
+		{
+			S_ClearBuffer();
+			snd_forceclear = false;
+		}
+		memcpy(buffer->mAudioData, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
+		AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
+		shm->samplepos += (shm->samples >> 3);
+		if(shm->samplepos >= shm->samples)
+		{
+			shm->samplepos = 0;
+		}
+	}
 }
 
 qboolean SNDDMA_Init(void)
 {
-    pthread_mutex_init(&snd_lock, NULL);
-    pthread_mutex_lock(&snd_lock);
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+	
     shm = new dma_t;
     shm->splitbuffer = 0;
     shm->samplebits = 32;
@@ -107,7 +108,6 @@ qboolean SNDDMA_Init(void)
     {
         return false;
     }
-    pthread_mutex_unlock(&snd_lock);
     return true;
 }
 
@@ -122,12 +122,12 @@ void SNDDMA_Submit(void)
 
 void SNDDMA_Shutdown(void)
 {
-    pthread_mutex_lock(&snd_lock);
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+	
     if (snd_audioqueue != NULL)
     {
         AudioQueueStop(snd_audioqueue, false);
         AudioQueueDispose(snd_audioqueue, false);
     }
     snd_audioqueue = NULL;
-    pthread_mutex_unlock(&snd_lock);
 }

@@ -9,7 +9,7 @@
 #include "quakedef.h"
 #include "stb_vorbis.c"
 #include <AudioToolbox/AudioToolbox.h>
-#include <pthread.h>
+#include "Locks.h"
 #include <dirent.h>
 
 stb_vorbis* cdaudio_stream;
@@ -22,8 +22,6 @@ std::vector<float> cdaudio_stagingBuffer;
 AudioQueueRef cdaudio_audioqueue = NULL;
 AudioQueueBufferRef cdaudio_firstBuffer = NULL;
 AudioQueueBufferRef cdaudio_secondBuffer = NULL;
-
-pthread_mutex_t cdaudio_lock;
 
 int cdaudio_lastCopied;
 
@@ -60,10 +58,12 @@ void CDAudio_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef b
 	if (cdaudio_lastCopied == 0)
 		return;
 
-    pthread_mutex_lock(&cdaudio_lock);
-    memcpy(buffer->mAudioData, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 3);
-    AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
-    pthread_mutex_unlock(&cdaudio_lock);
+	{
+		std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+		
+		memcpy(buffer->mAudioData, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 3);
+		AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
+	}
 }
 
 void CDAudio_FindInPath (const char *path, const char *directory, const char *prefix, const char *extension, std::vector<std::string>& result)
@@ -127,7 +127,8 @@ static int CDAudio_GetAudioDiskInfo(void)
 
 void CDAudio_DisposeBuffers()
 {
-    pthread_mutex_lock(&cdaudio_lock);
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+	
     if (cdaudio_audioqueue != NULL)
     {
         AudioQueueStop(cdaudio_audioqueue, false);
@@ -143,7 +144,7 @@ void CDAudio_DisposeBuffers()
         AudioQueueDispose(cdaudio_audioqueue, false);
         cdaudio_audioqueue = NULL;
     }
-    pthread_mutex_unlock(&cdaudio_lock);
+
 	if (cdaudio_stream != nullptr)
 	{
 		stb_vorbis_close(cdaudio_stream);
@@ -184,6 +185,8 @@ void CDAudio_Play(byte track, qboolean looping)
 		return;
 	}
 
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
 	int error = VORBIS__no_error;
 	cdaudio_stream = stb_vorbis_open_memory(cdaudio_trackContents.data(), cdaudio_trackContents.size() - 1, &error, nullptr);
 	if (error != VORBIS__no_error)
@@ -193,7 +196,6 @@ void CDAudio_Play(byte track, qboolean looping)
 		return;
 	}
 	cdaudio_info = stb_vorbis_get_info(cdaudio_stream);
-    pthread_mutex_lock(&cdaudio_lock);
     AudioStreamBasicDescription format { };
     format.mSampleRate = cdaudio_info.sample_rate;
     format.mFormatID = kAudioFormatLinearPCM;
@@ -252,8 +254,8 @@ void CDAudio_Play(byte track, qboolean looping)
         CDAudio_DisposeBuffers();
         return;
     }
-    pthread_mutex_unlock(&cdaudio_lock);
-    cdaudio_stagingBuffer.resize(samples >> 3);
+
+	cdaudio_stagingBuffer.resize(samples >> 3);
     cdaudio_lastCopied = -1;
 
 	cdaudio_playLooping = looping;
@@ -447,8 +449,6 @@ int CDAudio_Init(void)
 
     cdaudio_initialized = true;
     cdaudio_enabled = true;
-
-    pthread_mutex_init(&cdaudio_lock, NULL);
 
     if (CDAudio_GetAudioDiskInfo())
 	{

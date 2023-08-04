@@ -7,10 +7,11 @@
 //
 
 #import "Engine.h"
+#import <GameController/GameController.h>
 #include "sys_macos.h"
 #include "vid_macos.h"
 #include "in_macos.h"
-#import <GameController/GameController.h>
+#include "Locks.h"
 
 extern "C" double CACurrentMediaTime();
 
@@ -22,8 +23,6 @@ extern m_state_t m_state;
 
 @implementation Engine
 {
-	Locks* locks;
-
 	GCController* joystick;
 
 	std::vector<int> inputQueueKeys;
@@ -33,10 +32,8 @@ extern m_state_t m_state;
 	int lastInputQueueItem;
 }
 
--(void)StartEngine:(NSArray<NSString*>*)args locks:(Locks*)locks
+-(void)StartEngine:(NSArray<NSString*>*)args
 {
-	self->locks = locks;
-
 	self->lastInputQueueItem = -1;
 	
 	NSString* version = NSBundle.mainBundle.infoDictionary[@"CFBundleShortVersionString"];
@@ -54,7 +51,7 @@ extern m_state_t m_state;
 	
 	if (sys_errormessage.length() > 0)
 	{
-		locks.stopEngine = true;
+		Locks::StopEngine = true;
 		return;
 	}
 
@@ -74,12 +71,12 @@ extern m_state_t m_state;
 		[NSNotificationCenter.defaultCenter addObserver:self selector:@selector(controllerDidDisconnect:) name:GCControllerDidDisconnectNotification object:nil];
 	}
 
-	locks.engineStarted = true;
+	Locks::EngineStarted = true;
 	
 	double previousTime = -1;
 	double currentTime = -1;
 	
-	while (!locks.stopEngine)
+	while (!Locks::StopEngine)
 	{
 		if (!host_initialized)
 		{
@@ -87,8 +84,9 @@ extern m_state_t m_state;
 			continue;
 		}
 
-		@synchronized(locks.inputLock)
 		{
+			std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
 			for (auto i = 0; i <= lastInputQueueItem; i++)
 			{
 				auto key = inputQueueKeys[i];
@@ -122,26 +120,24 @@ extern m_state_t m_state;
 		
 		if (r_cache_thrash)
 		{
-			@synchronized(locks.renderLock)
-			{
-				VID_ReallocSurfCache();
-			}
+			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
+			VID_ReallocSurfCache();
 		}
 
 		auto updated = Host_FrameUpdate(frame_lapse);
 
 		if (sys_quitcalled || sys_errormessage.length() > 0)
 		{
-			locks.stopEngine = true;
+			Locks::StopEngine = true;
 			return;
 		}
 
 		if (updated)
 		{
-			@synchronized(locks.renderLock)
-			{
-				Host_FrameRender();
-			}
+			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
+			Host_FrameRender();
 		}
 		Host_FrameFinish(updated);
 		
@@ -179,36 +175,34 @@ extern m_state_t m_state;
 
 -(void)addKeyInput:(int)key pressed:(bool)pressed
 {
-	@synchronized(locks.inputLock)
+	std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
+	lastInputQueueItem++;
+	if (lastInputQueueItem >= inputQueueKeys.size())
 	{
-		lastInputQueueItem++;
-		if (lastInputQueueItem >= inputQueueKeys.size())
-		{
-			inputQueueKeys.emplace_back();
-			inputQueuePressed.emplace_back();
-			inputQueueCommands.emplace_back();
-		}
-		inputQueueKeys[lastInputQueueItem] = key;
-		inputQueuePressed[lastInputQueueItem] = pressed;
-		inputQueueCommands[lastInputQueueItem].clear();
+		inputQueueKeys.emplace_back();
+		inputQueuePressed.emplace_back();
+		inputQueueCommands.emplace_back();
 	}
+	inputQueueKeys[lastInputQueueItem] = key;
+	inputQueuePressed[lastInputQueueItem] = pressed;
+	inputQueueCommands[lastInputQueueItem].clear();
 }
 
 -(void)addCommandInput:(const char*)command
 {
-	@synchronized(locks.inputLock)
+	std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
+	lastInputQueueItem++;
+	if (lastInputQueueItem >= inputQueueKeys.size())
 	{
-		lastInputQueueItem++;
-		if (lastInputQueueItem >= inputQueueKeys.size())
-		{
-			inputQueueKeys.emplace_back();
-			inputQueuePressed.emplace_back();
-			inputQueueCommands.emplace_back();
-		}
-		inputQueueKeys[lastInputQueueItem] = 0;
-		inputQueuePressed[lastInputQueueItem] = false;
-		inputQueueCommands[lastInputQueueItem] = command;
+		inputQueueKeys.emplace_back();
+		inputQueuePressed.emplace_back();
+		inputQueueCommands.emplace_back();
 	}
+	inputQueueKeys[lastInputQueueItem] = 0;
+	inputQueuePressed[lastInputQueueItem] = false;
+	inputQueueCommands[lastInputQueueItem] = command;
 }
 
 -(void)enableJoystick
@@ -220,10 +214,11 @@ extern m_state_t m_state;
 			[self addKeyInput:K_ESCAPE pressed:pressed];
 		}];
 	} else {
+		__weak auto weakSelf = self;
 		joystick.controllerPausedHandler = ^(GCController * _Nonnull controller)
 		{
-			[self addKeyInput:K_ESCAPE pressed:true];
-			[self addKeyInput:K_ESCAPE pressed:false];
+			[weakSelf addKeyInput:K_ESCAPE pressed:true];
+			[weakSelf addKeyInput:K_ESCAPE pressed:false];
 		};
 	}
 	[joystick.extendedGamepad.buttonA setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)

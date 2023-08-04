@@ -7,10 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "Locks.h"
 
 @interface Engine : NSObject
 
--(void)StartEngine:(NSArray<NSString*>*)args locks:(Locks*)locks;
+-(void)StartEngine:(NSArray<NSString*>*)args;
 
 @end
