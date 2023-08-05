@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <thread>
+#include <mutex>
 
 struct Locks
 {

@@ -265,6 +265,7 @@
 		28AA1DA122C089E600264AD0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28AA1DA022C089E600264AD0 /* AudioToolbox.framework */; };
 		28AF30FF2A77262E0072610B /* Renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28AF30FE2A77262E0072610B /* Renderer.mm */; };
 		28AF31022A7729390072610B /* Locks.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28AF31012A7729390072610B /* Locks.mm */; };
+		28B9DBDF2A7E0920008E09EE /* Input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28B9DBDE2A7E0920008E09EE /* Input.cpp */; };
 		28BA2A73229F3271001830E9 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2A72229F3271001830E9 /* Shaders.metal */; };
 		28BA2A74229F403C001830E9 /* chase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B81229DD46300D68A47 /* chase.cpp */; };
 		28BA2A75229F403C001830E9 /* cl_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B89229DD8CF00D68A47 /* cl_demo.cpp */; };
@@ -549,6 +550,8 @@
 		28AF30FE2A77262E0072610B /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
 		28AF31002A7727450072610B /* Locks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Locks.h; sourceTree = "<group>"; };
 		28AF31012A7729390072610B /* Locks.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Locks.mm; sourceTree = "<group>"; };
+		28B9DBDD2A7E08B2008E09EE /* Input.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Input.h; sourceTree = "<group>"; };
+		28B9DBDE2A7E0920008E09EE /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Input.cpp; sourceTree = "<group>"; };
 		28BA2A6E229F31C2001830E9 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		28BA2A70229F31D1001830E9 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		28BA2A72229F3271001830E9 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
@@ -647,6 +650,8 @@
 				285AD3852A7B720A00D6D013 /* DirectRect.h */,
 				2875EBE82A78C2A200F66CDB /* Engine.h */,
 				2875EBE92A78C2C600F66CDB /* Engine.mm */,
+				28B9DBDE2A7E0920008E09EE /* Input.cpp */,
+				28B9DBDD2A7E08B2008E09EE /* Input.h */,
 				285AD3832A7B6A9500D6D013 /* Locks.cpp */,
 				2875EBEB2A78C2F200F66CDB /* Locks.h */,
 				2867E02422C79ADF0028B7BC /* PreferencesController.h */,
@@ -1149,6 +1154,7 @@
 				28BA2A83229F403C001830E9 /* d_polyse.cpp in Sources */,
 				28BA2A9E229F403C001830E9 /* r_main.cpp in Sources */,
 				28BA2A82229F403C001830E9 /* d_part.cpp in Sources */,
+				28B9DBDF2A7E0920008E09EE /* Input.cpp in Sources */,
 				28A4529428E2A780009EFBCE /* r_aclipc.cpp in Sources */,
 				2880A4CA22C576E000AF513D /* net_dgrm.cpp in Sources */,
 				28BA2AA1229F403C001830E9 /* r_sky.cpp in Sources */,

@@ -17,6 +17,7 @@
 #include "Locks.h"
 #include "DirectRect.h"
 #include "AppDelegate.h"
+#include "Input.h"
 
 extern m_state_t m_state;
 
@@ -163,21 +164,15 @@ extern m_state_t m_state;
 {
     if (event.type == NSEventTypeLeftMouseDown)
     {
-		std::lock_guard<std::mutex> lock(Locks::InputMutex);
-		
-        Key_Event(K_MOUSE1, true);
+		Input::AddKeyInput(K_MOUSE1, true);
     }
     else if (event.type == NSEventTypeRightMouseDown)
     {
-		std::lock_guard<std::mutex> lock(Locks::InputMutex);
-		
-        Key_Event(K_MOUSE3, true);
+		Input::AddKeyInput(K_MOUSE3, true);
     }
     else if (event.type == NSEventTypeOtherMouseDown)
     {
-		std::lock_guard<std::mutex> lock(Locks::InputMutex);
-		
-        Key_Event(K_MOUSE2, true);
+		Input::AddKeyInput(K_MOUSE2, true);
     }
     else
     {
@@ -189,21 +184,15 @@ extern m_state_t m_state;
 {
     if (event.type == NSEventTypeLeftMouseUp)
     {
-		std::lock_guard<std::mutex> lock(Locks::InputMutex);
-		
-        Key_Event(K_MOUSE1, false);
+		Input::AddKeyInput(K_MOUSE1, false);
     }
     else if (event.type == NSEventTypeRightMouseUp)
     {
-		std::lock_guard<std::mutex> lock(Locks::InputMutex);
-		
-        Key_Event(K_MOUSE3, false);
+		Input::AddKeyInput(K_MOUSE3, false);
     }
     else if (event.type == NSEventTypeOtherMouseUp)
     {
-		std::lock_guard<std::mutex> lock(Locks::InputMutex);
-		
-        Key_Event(K_MOUSE2, false);
+		Input::AddKeyInput(K_MOUSE2, false);
     }
     else
     {
@@ -438,11 +427,7 @@ extern m_state_t m_state;
          }
          unsigned short code = event.keyCode;
          int mapped = scantokey[code];
-		 {
-			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
-			 
-			 Key_Event(mapped, true);
-         }
+         Input::AddKeyInput(mapped, true);
          return nil;
      }];
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyUp handler:^NSEvent * _Nullable(NSEvent * _Nonnull event)
@@ -453,11 +438,7 @@ extern m_state_t m_state;
          }
          unsigned short code = event.keyCode;
          int mapped = scantokey[code];
-         {
-			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
-			 
-			 Key_Event(mapped, false);
-         }
+         Input::AddKeyInput(mapped, false);
          return nil;
      }];
     [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskFlagsChanged handler:^NSEvent * _Nullable(NSEvent * _Nonnull event)
@@ -468,39 +449,27 @@ extern m_state_t m_state;
          }
          if ((event.modifierFlags & NSEventModifierFlagOption) != 0 && (self->previousModifierFlags & NSEventModifierFlagOption) == 0)
          {
-			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
-			 
-			 Key_Event(K_ALT, true);
+			 Input::AddKeyInput(K_ALT, true);
          }
          else if ((event.modifierFlags & NSEventModifierFlagOption) == 0 && (self->previousModifierFlags & NSEventModifierFlagOption) != 0)
          {
-			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
-			 
-			 Key_Event(K_ALT, false);
+			 Input::AddKeyInput(K_ALT, false);
          }
          if ((event.modifierFlags & NSEventModifierFlagControl) != 0 && (self->previousModifierFlags & NSEventModifierFlagControl) == 0)
          {
-			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
-			 
-			 Key_Event(K_CTRL, true);
+			 Input::AddKeyInput(K_CTRL, true);
          }
          else if ((event.modifierFlags & NSEventModifierFlagControl) == 0 && (self->previousModifierFlags & NSEventModifierFlagControl) != 0)
          {
-			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
-
-			 Key_Event(K_CTRL, false);
+			 Input::AddKeyInput(K_CTRL, false);
          }
          if ((event.modifierFlags & NSEventModifierFlagShift) != 0 && (self->previousModifierFlags & NSEventModifierFlagShift) == 0)
          {
-			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
-
-			 Key_Event(K_SHIFT, true);
+			 Input::AddKeyInput(K_SHIFT, true);
          }
          else if ((event.modifierFlags & NSEventModifierFlagShift) == 0 && (self->previousModifierFlags & NSEventModifierFlagShift) != 0)
          {
-			 std::lock_guard<std::mutex> lock(Locks::InputMutex);
-
-			 Key_Event(K_SHIFT, false);
+			 Input::AddKeyInput(K_SHIFT, false);
          }
          self->previousModifierFlags = event.modifierFlags;
          return nil;
