@@ -11,4 +11,3 @@ extern int sys_errorcalled;
 extern int sys_quitcalled;
 
 void Sys_Init(int argc, char** argv);
-void Sys_Frame(float frame_lapse);

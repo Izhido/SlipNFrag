@@ -3,6 +3,7 @@
 #include <mmeapi.h>
 #include <mmiscapi.h>
 #include <mmreg.h>
+#include "Locks.h"
 
 qboolean snd_forceclear;
 WAVEFORMATEX snd_waveformat { };
@@ -58,10 +59,13 @@ void SNDDMA_ReleaseAll(void)
 
 void SNDDMA_Callback(void* waveOut, void* waveHeader)
 {
-    if (snd_waveout == NULL || snd_waveout != waveOut)
+    if (shm == NULL || snd_waveout == NULL || snd_waveout != waveOut)
     {
         return;
     }
+
+    std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
     if (snd_forceclear)
     {
         S_ClearBuffer();
@@ -206,6 +210,8 @@ void SNDDMA_Submit(void)
 
 void SNDDMA_Shutdown(void)
 {
+    std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
     SNDDMA_ReleaseAll();
 	delete shm;
 	shm = nullptr;

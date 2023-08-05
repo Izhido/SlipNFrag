@@ -14,6 +14,10 @@
 #include <mmsystem.h>
 #include <objidl.h>
 #include <gdiplus.h>
+#include "Engine.h"
+#include "Locks.h"
+#include "Input.h"
+#include "DirectRect.h"
 
 using namespace Gdiplus;
 
@@ -71,6 +75,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (wParam == IDC_PLAY_BUTTON)
         {
             DestroyWindow(appState.playButton);
+
+            RECT clientRect;
+            GetClientRect(hWnd, &clientRect);
+            float windowWidth = clientRect.right - clientRect.left;
+            float windowHeight = clientRect.bottom - clientRect.top;
+            if (windowWidth < 320) windowWidth = 320;
+            if (windowHeight < 200) windowHeight = 200;
+            auto windowRowBytes = (float)(((int)ceil(windowWidth) + 3) & ~3);
+            auto factor = windowWidth / 320;
+            float consoleWidth = 320;
+            auto consoleHeight = ceil(windowHeight / factor);
+            if (consoleHeight < 200)
+            {
+                factor = consoleHeight / 200;
+                consoleHeight = 200;
+                consoleWidth = ceil(consoleWidth / factor);
+            }
+            auto consoleRowBytes = (float)(((int)ceil(consoleWidth) + 3) & ~3);
+            vid_width = (int)windowWidth;
+            vid_height = (int)windowHeight;
+            vid_rowbytes = (int)windowRowBytes;
+            con_width = (int)consoleWidth;
+            con_height = (int)consoleHeight;
+            con_rowbytes = (int)consoleRowBytes;
+
             std::vector<std::string> arguments;
             arguments.emplace_back();
             auto word_count = 0;
@@ -97,38 +126,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 arguments.pop_back();
             }
-            sys_argc = (int)arguments.size();
-            sys_argv = new char* [sys_argc];
-            for (auto i = 0; i < arguments.size(); i++)
-            {
-                sys_argv[i] = new char[arguments[i].length() + 1];
-                strcpy(sys_argv[i], arguments[i].c_str());
-            }
-            sys_version = "Win64 1.0.22";
-            RECT clientRect;
-            GetClientRect(hWnd, &clientRect);
-            float windowWidth = clientRect.right - clientRect.left;
-            float windowHeight = clientRect.bottom - clientRect.top;
-            if (windowWidth < 320) windowWidth = 320;
-            if (windowHeight < 200) windowHeight = 200;
-            auto windowRowBytes = (float)(((int)ceil(windowWidth) + 3) & ~3);
-            auto factor = windowWidth / 320;
-            float consoleWidth = 320;
-            auto consoleHeight = ceil(windowHeight / factor);
-            if (consoleHeight < 200)
-            {
-                factor = consoleHeight / 200;
-                consoleHeight = 200;
-                consoleWidth = ceil(consoleWidth / factor);
-            }
-            auto consoleRowBytes = (float)(((int)ceil(consoleWidth) + 3) & ~3);
-            vid_width = (int)windowWidth;
-            vid_height = (int)windowHeight;
-            vid_rowbytes = (int)windowRowBytes;
-            con_width = (int)consoleWidth;
-            con_height = (int)consoleHeight;
-            con_rowbytes = (int)consoleRowBytes;
-            Sys_Init(sys_argc, sys_argv);
+
+            appState.engineThread = new std::thread(&Engine::StartEngine, &appState.engine, arguments);
+
+            InvalidateRect(hWnd, NULL, FALSE);
+        }
+        break;
+    case WM_PAINT:
+    {
+        if (Locks::StopEngine)
+        {
             if (sys_errormessage.length() > 0)
             {
                 std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -140,30 +147,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 {
                     MessageBox(NULL, converter.from_bytes(sys_errormessage).c_str(), L"Slip & Frag - Sys_Error:", MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY | MB_OK);
                 }
-                PostQuitMessage(0);
             }
-            appState.started = true;
-            InvalidateRect(hWnd, NULL, FALSE);
+            PostQuitMessage(0);
         }
-        break;
-    case WM_PAINT:
-    {
-        if (appState.started)
+        else
         {
-            if (!appState.painting)
+            if (host_initialized)
             {
-                appState.painting = true;
-                if (appState.previousTime.QuadPart == 0)
+                if (!appState.painting)
                 {
-                    QueryPerformanceCounter(&appState.previousTime);
-                }
-                else
-                {
-                    LARGE_INTEGER time;
-                    QueryPerformanceCounter(&time);
-                    LARGE_INTEGER frequency;
-                    QueryPerformanceFrequency(&frequency);
-                    auto elapsed = (float)(time.QuadPart - appState.previousTime.QuadPart) / (float)frequency.QuadPart;
+                    appState.painting = true;
+
                     RECT clientRect;
                     GetClientRect(hWnd, &clientRect);
                     float windowWidth = clientRect.right - clientRect.left;
@@ -181,159 +175,197 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         consoleWidth = ceil(consoleWidth / factor);
                     }
                     auto consoleRowBytes = (float)(((int)ceil(consoleWidth) + 3) & ~3);
-                    if (vid_width != (int)windowWidth || vid_height != (int)windowHeight)
-                    {
-                        vid_width = (int)windowWidth;
-                        vid_height = (int)windowHeight;
-                        vid_rowbytes = (int)windowRowBytes;
-                        con_width = (int)consoleWidth;
-                        con_height = (int)consoleHeight;
-                        con_rowbytes = (int)consoleRowBytes;
-                        VID_Resize();
-                    }
-                    if (r_cache_thrash)
-                    {
-                        VID_ReallocSurfCache();
-                    }
-                    Sys_Frame(elapsed);
-                    if (sys_errorcalled || sys_quitcalled)
-                    {
-                        if (sys_errormessage.length() > 0)
-                        {
-                            std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-                            MessageBox(NULL, converter.from_bytes(sys_errormessage).c_str(), L"Slip & Frag - Sys_Error:", MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY | MB_OK);
-                        }
-                        appState.started = false;
-                        PostQuitMessage(0);
-                        break;
-                    }
+
                     PAINTSTRUCT ps;
-                    auto hdc = BeginPaint(hWnd, &ps);
-                    auto memdc = CreateCompatibleDC(hdc);
-                    BITMAPINFO bitmapInfo { };
-                    bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-                    bitmapInfo.bmiHeader.biPlanes = 1;
-                    bitmapInfo.bmiHeader.biBitCount = 8;
-                    bitmapInfo.bmiHeader.biCompression = BI_RGB;
-                    bitmapInfo.bmiHeader.biWidth = vid_width;
-                    bitmapInfo.bmiHeader.biHeight = -vid_height;
+                    HDC hdc;
+                    HDC memdc;
+                    HBITMAP bitmap;
                     VOID* bitmapBits;
-                    auto bitmap = CreateDIBSection(memdc, &bitmapInfo, DIB_RGB_COLORS, &bitmapBits, NULL, 0);
-                    unsigned char* vidSource = vid_buffer.data();
-                    unsigned char* conSource = con_buffer.data();
-                    auto target = (unsigned char*)bitmapBits;
-                    auto stepX = (uint64_t)(consoleWidth * 1024 * 1024 / windowWidth);
-                    auto stepY = (uint64_t)(consoleHeight * 1024 * 1024 / windowHeight);
-                    auto conRow = conSource;
-                    uint64_t posY = 0;
-                    uint32_t posYDiv20 = 0;
-                    auto previousPosYDiv20 = -1;
-                    bool hasCon;
-                    auto copyCount = 0;
-                    for (auto y = 0; y < vid_height; y++)
+
                     {
-                        if (previousPosYDiv20 != posYDiv20)
+                        std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
+                        if (vid_width != (int)windowWidth || vid_height != (int)windowHeight)
                         {
-                            if (copyCount > 0)
-                            {
-                                memcpy(target, vidSource, copyCount);
-                                vidSource += copyCount;
-                                target += copyCount;
-                                copyCount = 0;
-                            }
-                            hasCon = false;
-                            uint64_t posX = 0;
-                            for (auto x = 0; x < vid_rowbytes; x += 4)
-                            {
-                                auto out = *(uint32_t*)vidSource;
-                                uint32_t con = conRow[posX >> 20];
-                                if (con < 255)
-                                {
-                                    out = (out & 0xFFFFFF00) | con;
-                                    hasCon = true;
-                                }
-                                posX += stepX;
-                                con = conRow[posX >> 20];
-                                if (con < 255)
-                                {
-                                    out = (out & 0xFFFF00FF) | (con << 8);
-                                    hasCon = true;
-                                }
-                                posX += stepX;
-                                con = conRow[posX >> 20];
-                                if (con < 255)
-                                {
-                                    out = (out & 0xFF00FFFF) | (con << 16);
-                                    hasCon = true;
-                                }
-                                posX += stepX;
-                                con = conRow[posX >> 20];
-                                if (con < 255)
-                                {
-                                    out = (out & 0xFFFFFF) | (con << 24);
-                                    hasCon = true;
-                                }
-                                posX += stepX;
-                                *((uint32_t*)target) = out;
-                                vidSource += 4;
-                                target += 4;
-                            }
-                            previousPosYDiv20 = posYDiv20;
+                            vid_width = (int)windowWidth;
+                            vid_height = (int)windowHeight;
+                            vid_rowbytes = (int)windowRowBytes;
+                            con_width = (int)consoleWidth;
+                            con_height = (int)consoleHeight;
+                            con_rowbytes = (int)consoleRowBytes;
+                            VID_Resize();
                         }
-                        else if (hasCon)
+                        hdc = BeginPaint(hWnd, &ps);
+                        memdc = CreateCompatibleDC(hdc);
+                        BITMAPINFO bitmapInfo { };
+                        bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                        bitmapInfo.bmiHeader.biPlanes = 1;
+                        bitmapInfo.bmiHeader.biBitCount = 8;
+                        bitmapInfo.bmiHeader.biCompression = BI_RGB;
+                        bitmapInfo.bmiHeader.biWidth = vid_width;
+                        bitmapInfo.bmiHeader.biHeight = -vid_height;
+                        bitmap = CreateDIBSection(memdc, &bitmapInfo, DIB_RGB_COLORS, &bitmapBits, NULL, 0);
+                        unsigned char* vidSource = vid_buffer.data();
+                        unsigned char* conSource = con_buffer.data();
+                        auto target = (unsigned char*)bitmapBits;
+                        auto stepX = (uint64_t)(consoleWidth * 1024 * 1024 / windowWidth);
+                        auto stepY = (uint64_t)(consoleHeight * 1024 * 1024 / windowHeight);
+                        auto conRow = conSource;
+                        uint64_t posY = 0;
+                        uint32_t posYDiv20 = 0;
+                        auto previousPosYDiv20 = -1;
+                        bool hasCon;
+                        auto copyCount = 0;
+                        for (auto y = 0; y < vid_height; y++)
                         {
-                            if (copyCount > 0)
+                            if (previousPosYDiv20 != posYDiv20)
                             {
-                                memcpy(target, vidSource, copyCount);
-                                vidSource += copyCount;
-                                target += copyCount;
-                                copyCount = 0;
+                                if (copyCount > 0)
+                                {
+                                    memcpy(target, vidSource, copyCount);
+                                    vidSource += copyCount;
+                                    target += copyCount;
+                                    copyCount = 0;
+                                }
+                                hasCon = false;
+                                uint64_t posX = 0;
+                                for (auto x = 0; x < vid_rowbytes; x += 4)
+                                {
+                                    auto out = *(uint32_t*)vidSource;
+                                    uint32_t con = conRow[posX >> 20];
+                                    if (con < 255)
+                                    {
+                                        out = (out & 0xFFFFFF00) | con;
+                                        hasCon = true;
+                                    }
+                                    posX += stepX;
+                                    con = conRow[posX >> 20];
+                                    if (con < 255)
+                                    {
+                                        out = (out & 0xFFFF00FF) | (con << 8);
+                                        hasCon = true;
+                                    }
+                                    posX += stepX;
+                                    con = conRow[posX >> 20];
+                                    if (con < 255)
+                                    {
+                                        out = (out & 0xFF00FFFF) | (con << 16);
+                                        hasCon = true;
+                                    }
+                                    posX += stepX;
+                                    con = conRow[posX >> 20];
+                                    if (con < 255)
+                                    {
+                                        out = (out & 0xFFFFFF) | (con << 24);
+                                        hasCon = true;
+                                    }
+                                    posX += stepX;
+                                    *((uint32_t*)target) = out;
+                                    vidSource += 4;
+                                    target += 4;
+                                }
+                                previousPosYDiv20 = posYDiv20;
                             }
-                            uint64_t posX = 0;
-                            for (auto x = 0; x < vid_rowbytes; x += 4)
+                            else if (hasCon)
                             {
-                                auto out = *(uint32_t*)vidSource;
-                                uint32_t con = conRow[posX >> 20];
-                                if (con < 255)
+                                if (copyCount > 0)
                                 {
-                                    out = (out & 0xFFFFFF00) | con;
+                                    memcpy(target, vidSource, copyCount);
+                                    vidSource += copyCount;
+                                    target += copyCount;
+                                    copyCount = 0;
                                 }
-                                posX += stepX;
-                                con = conRow[posX >> 20];
-                                if (con < 255)
+                                uint64_t posX = 0;
+                                for (auto x = 0; x < vid_rowbytes; x += 4)
                                 {
-                                    out = (out & 0xFFFF00FF) | (con << 8);
+                                    auto out = *(uint32_t*)vidSource;
+                                    uint32_t con = conRow[posX >> 20];
+                                    if (con < 255)
+                                    {
+                                        out = (out & 0xFFFFFF00) | con;
+                                    }
+                                    posX += stepX;
+                                    con = conRow[posX >> 20];
+                                    if (con < 255)
+                                    {
+                                        out = (out & 0xFFFF00FF) | (con << 8);
+                                    }
+                                    posX += stepX;
+                                    con = conRow[posX >> 20];
+                                    if (con < 255)
+                                    {
+                                        out = (out & 0xFF00FFFF) | (con << 16);
+                                    }
+                                    posX += stepX;
+                                    con = conRow[posX >> 20];
+                                    if (con < 255)
+                                    {
+                                        out = (out & 0xFFFFFF) | (con << 24);
+                                    }
+                                    posX += stepX;
+                                    *((uint32_t*)target) = out;
+                                    vidSource += 4;
+                                    target += 4;
                                 }
-                                posX += stepX;
-                                con = conRow[posX >> 20];
-                                if (con < 255)
-                                {
-                                    out = (out & 0xFF00FFFF) | (con << 16);
-                                }
-                                posX += stepX;
-                                con = conRow[posX >> 20];
-                                if (con < 255)
-                                {
-                                    out = (out & 0xFFFFFF) | (con << 24);
-                                }
-                                posX += stepX;
-                                *((uint32_t*)target) = out;
-                                vidSource += 4;
-                                target += 4;
                             }
+                            else
+                            {
+                                copyCount += vid_rowbytes;
+                            }
+                            posY += stepY;
+                            posYDiv20 = posY >> 20;
+                            conRow = conSource + posYDiv20 * con_rowbytes;
                         }
-                        else
+                        if (copyCount > 0)
                         {
-                            copyCount += vid_rowbytes;
+                            memcpy(target, vidSource, copyCount);
                         }
-                        posY += stepY;
-                        posYDiv20 = posY >> 20;
-                        conRow = conSource + posYDiv20 * con_rowbytes;
                     }
-                    if (copyCount > 0)
+
                     {
-                        memcpy(target, vidSource, copyCount);
+                        std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+
+                        for (auto& directRect : DirectRect::directRects)
+                        {
+                            auto x = directRect.x * (con_width - directRect.width) / (directRect.vid_rowbytes - directRect.width);
+                            auto y = directRect.y * (con_height - directRect.width) / (directRect.vid_height - directRect.height);
+
+                            auto left = x * vid_rowbytes / con_width;
+                            auto top = y * vid_height / con_height;
+                            auto right = (x + directRect.width) * vid_rowbytes / con_width;
+                            auto bottom = (y + directRect.height) * vid_height / con_height;
+
+                            auto source = directRect.data;
+                            auto target = (unsigned char*)bitmapBits + top * vid_rowbytes + left;
+
+                            auto stepX = (uint64_t)(consoleWidth * 1024 * 1024 / windowWidth);
+                            auto stepY = (uint64_t)(consoleHeight * 1024 * 1024 / windowHeight);
+
+                            auto posY = 0;
+                            auto prevPosYDiv20 = 0;
+                            for (auto v = top; v < bottom; v++)
+                            {
+                                uint64_t posX = 0;
+                                for (auto h = left; h < right; h++)
+                                {
+                                    *target++ = *(source + (posX >> 20));
+
+                                    posX += stepX;
+                                }
+
+                                posY += stepY;
+                                auto posYDiv20 = posY >> 20;
+                                if (prevPosYDiv20 != posYDiv20)
+                                {
+                                    source += directRect.width;
+                                    prevPosYDiv20 = posYDiv20;
+                                }
+
+                                target += (vid_rowbytes - right + left);
+                            }
+                        }
                     }
+
                     auto previous = SelectObject(memdc, bitmap);
                     SetDIBColorTable(memdc, 0, 256, (RGBQUAD*)d_8to24table);
                     BitBlt(hdc, 0, 0, vid_width, vid_height, memdc, 0, 0, SRCCOPY);
@@ -341,11 +373,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     DeleteObject(bitmap);
                     DeleteDC(memdc);
                     EndPaint(hWnd, &ps);
-                    appState.previousTime = time;
+
+                    appState.painting = false;
                 }
-                InvalidateRect(hWnd, NULL, FALSE);
-                appState.painting = false;
             }
+
+            InvalidateRect(hWnd, NULL, FALSE);
         }
         break;
     }
@@ -383,7 +416,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case WM_KEYDOWN:
     {
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
             auto mapped = 0;
             if (wParam >= 0 && wParam < sizeof(virtualkeymap) / sizeof(int))
@@ -394,18 +427,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 auto final = MapVirtualKeyA(wParam, 2); // == MAPVK_VK_TO_CHAR
                 if (final > 255) final = 255;
-                Key_Event(final, true);
+                Input::AddKeyInput(final, true);
             }
             else
             {
-                Key_Event(mapped, true);
+                Input::AddKeyInput(mapped, true);
             }
         }
         break;
     }
     case WM_KEYUP:
     {
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
             auto mapped = 0;
             if (wParam >= 0 && wParam < sizeof(virtualkeymap) / sizeof(int))
@@ -416,69 +449,71 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 auto final = MapVirtualKeyA(wParam, 2); // == MAPVK_VK_TO_CHAR
                 if (final > 255) final = 255;
-                Key_Event(final, false);
+                Input::AddKeyInput(final, false);
             }
             else
             {
-                Key_Event(mapped, false);
+                Input::AddKeyInput(mapped, false);
             }
         }
         break;
     }
     case WM_LBUTTONDOWN:
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
-            Key_Event(K_MOUSE1, true);
+            Input::AddKeyInput(K_MOUSE1, true);
         }
         break;
     case WM_LBUTTONUP:
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
-            Key_Event(K_MOUSE1, false);
+            Input::AddKeyInput(K_MOUSE1, false);
         }
         break;
     case WM_RBUTTONDOWN:
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
-            Key_Event(K_MOUSE2, true);
+            Input::AddKeyInput(K_MOUSE2, true);
         }
         break;
     case WM_RBUTTONUP:
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
-            Key_Event(K_MOUSE2, false);
+            Input::AddKeyInput(K_MOUSE2, false);
         }
         break;
     case WM_MBUTTONDOWN:
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
-            Key_Event(K_MOUSE3, true);
+            Input::AddKeyInput(K_MOUSE3, true);
         }
         break;
     case WM_MBUTTONUP:
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
-            Key_Event(K_MOUSE3, false);
+            Input::AddKeyInput(K_MOUSE3, false);
         }
         break;
     case WM_MOUSEWHEEL:
-        if (appState.started)
+        if (host_initialized && !Locks::StopEngine)
         {
-            auto clicks = HIWORD(wParam);
-            if (clicks > 0)
+            auto clicks = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+            while (clicks > 0)
             {
-                Key_Event(K_MWHEELUP, true);
-                Key_Event(K_MWHEELUP, false);
+                Input::AddKeyInput(K_MWHEELUP, true);
+                Input::AddKeyInput(K_MWHEELUP, false);
+                clicks--;
             }
-            else if (clicks < 0)
+            while (clicks < 0)
             {
-                Key_Event(K_MWHEELDOWN, true);
-                Key_Event(K_MWHEELDOWN, false);
+                Input::AddKeyInput(K_MWHEELDOWN, true);
+                Input::AddKeyInput(K_MWHEELDOWN, false);
+                clicks++;
             }
         }
         break;
     case WM_SETCURSOR:
-        if (appState.started && key_dest == key_game && GetForegroundWindow() == appState.hWnd)
+        if (host_initialized && !Locks::StopEngine && key_dest == key_game && GetForegroundWindow() == appState.hWnd)
         {
             SetCursor(NULL);
             return TRUE;
@@ -487,6 +522,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case MM_WOM_DONE:
         SNDDMA_Callback((void*)wParam, (void*)lParam);
         CDAudio_Callback((void*)wParam, (void*)lParam);
+        break;
+    case WM_CLOSE:
+        Locks::StopEngine = true;
         break;
     case WM_DESTROY:
         PostQuitMessage(0);

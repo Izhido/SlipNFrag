@@ -209,7 +209,11 @@
       <FileType>CppHeader</FileType>
     </ClCompile>
     <ClCompile Include="cd_win64.cpp" />
+    <ClCompile Include="DirectRect.cpp" />
+    <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="in_win64.cpp" />
+    <ClCompile Include="Locks.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="snd_win64.cpp" />
     <ClCompile Include="sys_win64.cpp" />
@@ -263,7 +267,11 @@
     <ClInclude Include="..\id1\world.h" />
     <ClInclude Include="AppState.h" />
     <ClInclude Include="cd_win64.h" />
+    <ClInclude Include="DirectRect.h" />
+    <ClInclude Include="Engine.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="in_win64.h" />
+    <ClInclude Include="Locks.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="snd_win64.h" />
     <ClInclude Include="sys_win64.h" />

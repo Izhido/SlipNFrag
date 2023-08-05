@@ -3,6 +3,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <random>
+#include "Locks.h"
 
 int sys_argc;
 char** sys_argv;
@@ -210,10 +211,12 @@ int Sys_Random()
 
 void Sys_BeginClearMemory()
 {
+    Locks::RenderMutex.lock();
 }
 
 void Sys_EndClearMemory()
 {
+    Locks::RenderMutex.unlock();
 }
 
 void Sys_Init(int argc, char** argv)
@@ -225,14 +228,4 @@ void Sys_Init(int argc, char** argv)
 	parms.argv = com_argv;
 	printf("Host_Init");
 	Host_Init(&parms);
-}
-
-void Sys_Frame(float frame_lapse)
-{
-    auto updated = Host_FrameUpdate(frame_lapse);
-    if (updated)
-    {
-        Host_FrameRender();
-    }
-    Host_FrameFinish(updated);
 }

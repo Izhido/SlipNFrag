@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <string>
 #include <vector>
+#include <thread>
+#include "Engine.h"
 
 struct AppState
 {
@@ -16,11 +18,11 @@ struct AppState
     int nonClientWidth;
     int nonClientHeight;
     HWND playButton;
-    bool started;
     bool painting;
-    LARGE_INTEGER previousTime;
     bool cursorRelocated;
     std::vector<unsigned char> palette;
+    Engine engine;
+    std::thread* engineThread;
 };
 
 extern AppState appState;

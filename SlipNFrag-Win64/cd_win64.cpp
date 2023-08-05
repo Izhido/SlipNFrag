@@ -5,6 +5,7 @@
 #include <mmeapi.h>
 #include <mmiscapi.h>
 #include <mmreg.h>
+#include "Locks.h"
 
 stb_vorbis* cdaudio_stream;
 stb_vorbis_info cdaudio_info;
@@ -94,6 +95,8 @@ void CDAudio_Callback(void* waveOut, void* waveHeader)
 
 	if (cdaudio_waveout == NULL || cdaudio_waveout != waveOut)
 		return;
+
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
 	cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	if (cdaudio_lastCopied == 0 && cdaudio_playLooping)
@@ -185,6 +188,9 @@ void CDAudio_Play(byte track, qboolean looping)
 	{
 		if (cdaudio_playTrack == track)
 			return;
+
+		std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
 		CDAudio_DisposeBuffers();
 	}
 
@@ -201,6 +207,8 @@ void CDAudio_Play(byte track, qboolean looping)
 		Con_DPrintf("CDAudio: Empty file for track %u.\n", track);
 		return;
 	}
+
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
 	int error = VORBIS__no_error;
 	cdaudio_stream = stb_vorbis_open_memory(cdaudio_trackContents.data(), cdaudio_trackContents.size() - 1, &error, nullptr);
@@ -336,6 +344,8 @@ void CDAudio_Stop(void)
 
 	if (!cdaudio_playing)
 		return;
+
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
 	CDAudio_DisposeBuffers();
 
