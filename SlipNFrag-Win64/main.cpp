@@ -18,6 +18,9 @@
 #include "Locks.h"
 #include "Input.h"
 #include "DirectRect.h"
+#include <Xinput.h>
+
+extern m_state_t m_state;
 
 using namespace Gdiplus;
 
@@ -30,6 +33,323 @@ using namespace Gdiplus;
 #define IDC_PLAY_BUTTON 100
 
 AppState appState { };
+
+void HandleXInputState(XINPUT_STATE& previousState, XINPUT_STATE& newState)
+{
+    auto previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_START) != 0);
+    auto newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_START) != 0);
+    if (previousButton != newButton)
+    {
+        Input::AddKeyInput(K_ESCAPE, newButton);
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) != 0);
+    if (previousButton != newButton)
+    {
+        Input::AddKeyInput(K_ESCAPE, newButton);
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_A) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_A) != 0);
+    if (previousButton != newButton)
+    {
+        if (key_dest == key_menu)
+        {
+            if (m_state != m_quit)
+            {
+                Input::AddKeyInput(K_ENTER, newButton);
+            }
+        }
+        else if (key_dest == key_game)
+        {
+            if (newButton)
+            {
+                Input::AddCommandInput("+jump");
+            }
+            else
+            {
+                Input::AddCommandInput("-jump");
+            }
+        }
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_B) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_B) != 0);
+    if (previousButton != newButton)
+    {
+        if (key_dest == key_menu)
+        {
+            if (m_state != m_quit)
+            {
+                Input::AddKeyInput(K_ESCAPE, newButton);
+            }
+        }
+        else if (key_dest == key_game)
+        {
+            if (newButton)
+            {
+                Input::AddCommandInput("+movedown");
+            }
+            else
+            {
+                Input::AddCommandInput("-movedown");
+            }
+        }
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_X) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_X) != 0);
+    if (previousButton != newButton)
+    {
+        if (key_dest == key_menu)
+        {
+            if (m_state != m_quit)
+            {
+                Input::AddKeyInput(K_ENTER, newButton);
+            }
+        }
+        else if (key_dest == key_game)
+        {
+            if (newButton)
+            {
+                Input::AddCommandInput("+speed");
+            }
+            else
+            {
+                Input::AddCommandInput("-speed");
+            }
+        }
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_Y) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_Y) != 0);
+    if (previousButton != newButton)
+    {
+        if (key_dest == key_menu)
+        {
+            if (m_state == m_quit)
+            {
+                Input::AddKeyInput('y', newButton);
+            }
+            else
+            {
+                Input::AddKeyInput(K_ESCAPE, newButton);
+            }
+        }
+        else if (key_dest == key_game)
+        {
+            if (newButton)
+            {
+                Input::AddCommandInput("+moveup");
+            }
+            else
+            {
+                Input::AddCommandInput("-moveup");
+            }
+        }
+    }
+
+    previousButton = (previousState.Gamepad.bLeftTrigger > 127);
+    newButton = (newState.Gamepad.bLeftTrigger > 127);
+    if (previousButton != newButton)
+    {
+        if (key_dest == key_menu)
+        {
+            if (m_state != m_quit)
+            {
+                Input::AddKeyInput(K_ENTER, newButton);
+            }
+        }
+        else if (key_dest == key_game)
+        {
+            if (newButton)
+            {
+                Input::AddCommandInput("+attack");
+            }
+            else
+            {
+                Input::AddCommandInput("-attack");
+            }
+        }
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) != 0);
+    if (previousButton != newButton)
+    {
+        if (key_dest == key_menu)
+        {
+            if (m_state != m_quit)
+            {
+                Input::AddKeyInput(K_ESCAPE, newButton);
+            }
+        }
+        else if (key_dest == key_game)
+        {
+            if (newButton)
+            {
+                Input::AddCommandInput("impulse 10");
+            }
+        }
+    }
+
+    previousButton = (previousState.Gamepad.bRightTrigger > 127);
+    newButton = (newState.Gamepad.bRightTrigger > 127);
+    if (previousButton != newButton)
+    {
+        if (key_dest == key_menu)
+        {
+            if (m_state != m_quit)
+            {
+                Input::AddKeyInput(K_ENTER, newButton);
+            }
+        }
+        else if (key_dest == key_game)
+        {
+            if (newButton)
+            {
+                Input::AddCommandInput("+attack");
+            }
+            else
+            {
+                Input::AddCommandInput("-attack");
+            }
+        }
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) != 0);
+    if (previousButton != newButton)
+    {
+        if (key_dest == key_menu)
+        {
+            if (m_state != m_quit)
+            {
+                Input::AddKeyInput(K_ESCAPE, newButton);
+            }
+        }
+        else if (key_dest == key_game)
+        {
+            if (newButton)
+            {
+                Input::AddCommandInput("impulse 10");
+            }
+        }
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) != 0);
+    if (previousButton != newButton)
+    {
+        Input::AddKeyInput(K_UPARROW, newButton);
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) != 0);
+    if (previousButton != newButton)
+    {
+        Input::AddKeyInput(K_LEFTARROW, newButton);
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) != 0);
+    if (previousButton != newButton)
+    {
+        Input::AddKeyInput(K_RIGHTARROW, newButton);
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) != 0);
+    if (previousButton != newButton)
+    {
+        Input::AddKeyInput(K_DOWNARROW, newButton);
+    }
+
+    auto previousXValue = previousState.Gamepad.sThumbLX;
+    if (previousXValue < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE && previousXValue > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+    {
+        previousXValue = 0;
+    }
+    auto newXValue = newState.Gamepad.sThumbLX;
+    if (newXValue < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE && newXValue > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+    {
+        newXValue = 0;
+    }
+    if (previousXValue != newXValue)
+    {
+        pdwRawValue[JOY_AXIS_X] = -(float)newXValue / 32768;
+    }
+
+    auto previousYValue = previousState.Gamepad.sThumbLY;
+    if (previousYValue < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE && previousYValue > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+    {
+        previousYValue = 0;
+    }
+    auto newYValue = newState.Gamepad.sThumbLY;
+    if (newYValue < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE && newYValue > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+    {
+        newYValue = 0;
+    }
+    if (previousYValue != newYValue)
+    {
+        pdwRawValue[JOY_AXIS_Y] = -(float)newYValue / 32768;
+    }
+
+    previousXValue = previousState.Gamepad.sThumbRX;
+    if (previousXValue < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE && previousXValue > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+    {
+        previousXValue = 0;
+    }
+    newXValue = newState.Gamepad.sThumbRX;
+    if (newXValue < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE && newXValue > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+    {
+        newXValue = 0;
+    }
+    if (previousXValue != newXValue)
+    {
+        pdwRawValue[JOY_AXIS_Z] = (float)newXValue / 32768;
+    }
+
+    previousYValue = previousState.Gamepad.sThumbRY;
+    if (previousYValue < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE && previousYValue > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+    {
+        previousYValue = 0;
+    }
+    newYValue = newState.Gamepad.sThumbRY;
+    if (newYValue < XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE && newYValue > -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE)
+    {
+        newYValue = 0;
+    }
+    if (previousYValue != newYValue)
+    {
+        pdwRawValue[JOY_AXIS_R] = -(float)newYValue / 32768;
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) != 0);
+    if (previousButton != newButton)
+    {
+		if (newButton)
+		{
+			Input::AddCommandInput("centerview");
+		}
+    }
+
+    previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) != 0);
+    newButton = ((newState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) != 0);
+    if (previousButton != newButton)
+    {
+        if (newButton)
+        {
+            Input::AddCommandInput("+mlook");
+        }
+        else
+        {
+            Input::AddCommandInput("-mlook");
+        }
+    }
+}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -157,6 +477,43 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (!appState.painting)
                 {
                     appState.painting = true;
+
+                    XINPUT_STATE xInputState{ };
+                    if (XInputGetState(0, &xInputState) == ERROR_SUCCESS)
+                    {
+                        if (!appState.xInputEnabled)
+                        {
+                            appState.xInputEnabled = true;
+
+                            joy_avail = true;
+
+                            Cvar_SetValue("joyadvanced", 1);
+                            Cvar_SetValue("joyadvaxisx", AxisSide);
+                            Cvar_SetValue("joyadvaxisy", AxisForward);
+                            Cvar_SetValue("joyadvaxisz", AxisTurn);
+                            Cvar_SetValue("joyadvaxisr", AxisLook);
+
+                            Joy_AdvancedUpdate_f();
+                        }
+                        HandleXInputState(appState.xInputState, xInputState);
+                    }
+                    else
+                    {
+                        xInputState = { };
+                        HandleXInputState(appState.xInputState, xInputState);
+                        if (appState.xInputEnabled)
+                        {
+                            appState.xInputEnabled = false;
+
+                            in_forwardmove = 0.0;
+                            in_sidestepmove = 0.0;
+                            in_rollangle = 0.0;
+                            in_pitchangle = 0.0;
+
+                            joy_avail = false;
+                        }
+                    }
+                    appState.xInputState = xInputState;
 
                     RECT clientRect;
                     GetClientRect(hWnd, &clientRect);

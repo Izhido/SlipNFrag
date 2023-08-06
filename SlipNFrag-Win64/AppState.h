@@ -2,6 +2,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <Xinput.h>
 #include <string>
 #include <vector>
 #include <thread>
@@ -23,6 +24,8 @@ struct AppState
     std::vector<unsigned char> palette;
     Engine engine;
     std::thread* engineThread;
+    XINPUT_STATE xInputState;
+    bool xInputEnabled;
 };
 
 extern AppState appState;
