@@ -12,7 +12,6 @@
 
 struct Locks
 {
-	static bool EngineStarted;
 	static bool StopEngine;
 	
 	static std::mutex InputMutex;

@@ -8,8 +8,6 @@
 
 #include "Locks.h"
 
-bool Locks::EngineStarted;
-
 bool Locks::StopEngine;
 
 std::mutex Locks::InputMutex;

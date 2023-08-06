@@ -352,7 +352,7 @@ extern m_state_t m_state;
 	engineThread.name = @"Engine Thread";
 	[engineThread start];
 
-	while (!Locks::EngineStarted && !Locks::StopEngine)
+	while (!host_initialized && !Locks::StopEngine)
 	{
 		[NSThread sleepForTimeInterval:0];
 	}

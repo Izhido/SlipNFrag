@@ -64,8 +64,6 @@ extern m_state_t m_state;
 		[NSNotificationCenter.defaultCenter addObserver:self selector:@selector(controllerDidDisconnect:) name:GCControllerDidDisconnectNotification object:nil];
 	}
 
-	Locks::EngineStarted = true;
-	
 	double previousTime = -1;
 	double currentTime = -1;
 	

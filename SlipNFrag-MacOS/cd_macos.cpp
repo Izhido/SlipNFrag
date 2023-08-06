@@ -127,8 +127,6 @@ static int CDAudio_GetAudioDiskInfo(void)
 
 void CDAudio_DisposeBuffers()
 {
-	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
-	
     if (cdaudio_audioqueue != NULL)
     {
         AudioQueueStop(cdaudio_audioqueue, false);
@@ -168,6 +166,9 @@ void CDAudio_Play(byte track, qboolean looping)
 	{
 		if (cdaudio_playTrack == track)
 			return;
+
+		std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+		
 		CDAudio_DisposeBuffers();
 	}
 
@@ -274,6 +275,8 @@ void CDAudio_Stop(void)
 	if (!cdaudio_playing)
 		return;
 
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+	
 	CDAudio_DisposeBuffers();
 
     cdaudio_wasPlaying = false;

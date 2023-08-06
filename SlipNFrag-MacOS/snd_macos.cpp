@@ -16,26 +16,24 @@ qboolean snd_forceclear;
 
 void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef buffer)
 {
-    if (snd_audioqueue == nil)
+    if (shm == NULL || snd_audioqueue == nil)
     {
         return;
     }
+
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 	
+	if (snd_forceclear)
 	{
-		std::lock_guard<std::mutex> lock(Locks::SoundMutex);
-		
-		if (snd_forceclear)
-		{
-			S_ClearBuffer();
-			snd_forceclear = false;
-		}
-		memcpy(buffer->mAudioData, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
-		AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
-		shm->samplepos += (shm->samples >> 3);
-		if(shm->samplepos >= shm->samples)
-		{
-			shm->samplepos = 0;
-		}
+		S_ClearBuffer();
+		snd_forceclear = false;
+	}
+	memcpy(buffer->mAudioData, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
+	AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
+	shm->samplepos += (shm->samples >> 3);
+	if(shm->samplepos >= shm->samples)
+	{
+		shm->samplepos = 0;
 	}
 }
 
