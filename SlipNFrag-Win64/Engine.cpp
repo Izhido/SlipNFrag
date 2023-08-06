@@ -8,8 +8,41 @@
 
 void Engine::StartEngine(std::vector<std::string> arguments)
 {
-	sys_version = "Win64 1.0.22";
-    sys_argc = (int)arguments.size();
+	sys_version = "Win64 ";
+	{
+		DWORD dwHandle;
+		TCHAR fileName[MAX_PATH];
+
+		GetModuleFileName(NULL, fileName, MAX_PATH);
+		DWORD dwSize = GetFileVersionInfoSize(fileName, &dwHandle);
+		std::vector<TCHAR> buffer(dwSize);
+
+		VS_FIXEDFILEINFO* pvFileInfo = NULL;
+		UINT fiLen = 0;
+
+		if ((dwSize > 0) && GetFileVersionInfo(fileName, dwHandle, dwSize, buffer.data()))
+		{
+			VerQueryValue(buffer.data(), L"\\", (LPVOID*)&pvFileInfo, &fiLen);
+		}
+
+		char buf[25];
+		int len = sprintf(buf, "%hu.%hu.%hu",
+			HIWORD(pvFileInfo->dwFileVersionMS),
+			LOWORD(pvFileInfo->dwFileVersionMS),
+			HIWORD(pvFileInfo->dwFileVersionLS)
+		);
+
+		if (fiLen > 0)
+		{
+			sys_version += std::string(buf, len);
+		}
+		else
+		{
+			sys_version += "*.*.**";
+		}
+	}
+
+	sys_argc = (int)arguments.size();
     sys_argv = new char* [sys_argc];
     for (auto i = 0; i < arguments.size(); i++)
     {
