@@ -265,8 +265,8 @@ extern m_state_t m_state;
 		
 		for (auto& directRect : DirectRect::directRects)
 		{
-			auto x = directRect.x * (consoleRegion.size.width - directRect.width) / (screenRegion.size.width - directRect.width);
-			auto y = directRect.y * (consoleRegion.size.height - directRect.width) / (screenRegion.size.height - directRect.height);
+			auto x = directRect.x * (consoleRegion.size.width - directRect.width) / (directRect.vid_width - directRect.width);
+			auto y = directRect.y * (consoleRegion.size.height - directRect.width) / (directRect.vid_height - directRect.height);
 
 			MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
 			[console replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];

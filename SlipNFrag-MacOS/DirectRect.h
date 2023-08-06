@@ -17,6 +17,8 @@ struct DirectRect
 	int y;
 	int width;
 	int height;
+	int vid_width;
+	int vid_height;
 	unsigned char* data;
 
 	static std::vector<DirectRect> directRects;
