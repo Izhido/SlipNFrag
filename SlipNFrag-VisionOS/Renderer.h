@@ -7,12 +7,12 @@
 //
 
 #import <CompositorServices/CompositorServices.h>
-#import "Locks.h"
+#import "EngineStop.h"
 
 @interface Renderer : NSObject
 
 @property (nonatomic, assign) BOOL stopRenderer;
 
--(void)StartRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer locks:(Locks*)locks;
+-(void)StartRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer engineStop:(EngineStop*)engineStop;
 
 @end

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 53;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -254,6 +254,10 @@
 		2886A080280A21A100505651 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
 		2886A081280A21A100505651 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
 		2886A082280A21A100505651 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
+		289DCF0E2A8028E0005A4D55 /* EngineStop.mm in Sources */ = {isa = PBXBuildFile; fileRef = 289DCF0D2A8028E0005A4D55 /* EngineStop.mm */; };
+		289DCF112A802980005A4D55 /* Locks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 289DCF102A802980005A4D55 /* Locks.cpp */; };
+		289DCF142A802C87005A4D55 /* Input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 289DCF132A802C87005A4D55 /* Input.cpp */; };
+		289DCF172A8030E8005A4D55 /* DirectRect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 289DCF162A8030E8005A4D55 /* DirectRect.cpp */; };
 		28A4529228E2A77F009EFBCE /* r_aclipc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529128E29DFD009EFBCE /* r_aclipc.cpp */; };
 		28A4529328E2A77F009EFBCE /* r_aliasc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529028E29DFD009EFBCE /* r_aliasc.cpp */; };
 		28A4529428E2A780009EFBCE /* r_aclipc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28A4529128E29DFD009EFBCE /* r_aclipc.cpp */; };
@@ -264,7 +268,6 @@
 		28AA1D9722C07E2D00264AD0 /* snd_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */; };
 		28AA1DA122C089E600264AD0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28AA1DA022C089E600264AD0 /* AudioToolbox.framework */; };
 		28AF30FF2A77262E0072610B /* Renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28AF30FE2A77262E0072610B /* Renderer.mm */; };
-		28AF31022A7729390072610B /* Locks.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28AF31012A7729390072610B /* Locks.mm */; };
 		28B9DBDF2A7E0920008E09EE /* Input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28B9DBDE2A7E0920008E09EE /* Input.cpp */; };
 		28BA2A73229F3271001830E9 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2A72229F3271001830E9 /* Shaders.metal */; };
 		28BA2A74229F403C001830E9 /* chase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B81229DD46300D68A47 /* chase.cpp */; };
@@ -540,6 +543,14 @@
 		2880A4CC22C5774300AF513D /* net_udp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = net_udp.cpp; sourceTree = "<group>"; };
 		2883A669280A1FC1009E4681 /* stb_vorbis.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = stb_vorbis.c; sourceTree = "<group>"; };
 		2884737D28E33D9E00B8A885 /* d_polycl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_polycl.cpp; sourceTree = "<group>"; };
+		289DCF0C2A802885005A4D55 /* EngineStop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EngineStop.h; sourceTree = "<group>"; };
+		289DCF0D2A8028E0005A4D55 /* EngineStop.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = EngineStop.mm; sourceTree = "<group>"; };
+		289DCF0F2A80293E005A4D55 /* Locks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Locks.h; sourceTree = "<group>"; };
+		289DCF102A802980005A4D55 /* Locks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Locks.cpp; sourceTree = "<group>"; };
+		289DCF122A802C54005A4D55 /* Input.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Input.h; sourceTree = "<group>"; };
+		289DCF132A802C87005A4D55 /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Input.cpp; sourceTree = "<group>"; };
+		289DCF152A8030BE005A4D55 /* DirectRect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DirectRect.h; sourceTree = "<group>"; };
+		289DCF162A8030E8005A4D55 /* DirectRect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DirectRect.cpp; sourceTree = "<group>"; };
 		28A4529028E29DFD009EFBCE /* r_aliasc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_aliasc.cpp; sourceTree = "<group>"; };
 		28A4529128E29DFD009EFBCE /* r_aclipc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_aclipc.cpp; sourceTree = "<group>"; };
 		28A5375E23106A85005007EE /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
@@ -548,8 +559,6 @@
 		28AA1DA022C089E600264AD0 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		28AF30FD2A7725230072610B /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		28AF30FE2A77262E0072610B /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
-		28AF31002A7727450072610B /* Locks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Locks.h; sourceTree = "<group>"; };
-		28AF31012A7729390072610B /* Locks.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Locks.mm; sourceTree = "<group>"; };
 		28B9DBDD2A7E08B2008E09EE /* Input.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Input.h; sourceTree = "<group>"; };
 		28B9DBDE2A7E0920008E09EE /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Input.cpp; sourceTree = "<group>"; };
 		28BA2A6E229F31C2001830E9 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
@@ -616,10 +625,16 @@
 				2811E5282A6C722300B1498E /* SlipNFrag_VisionOSApp.swift */,
 				2811E52A2A6C722300B1498E /* PlayView.swift */,
 				28734C102A72D57C00B32DE5 /* AppState.h */,
+				289DCF162A8030E8005A4D55 /* DirectRect.cpp */,
+				289DCF152A8030BE005A4D55 /* DirectRect.h */,
 				2803CF592A6E1468006AC44F /* Engine.h */,
 				2803CF5A2A6E1480006AC44F /* Engine.mm */,
-				28AF31002A7727450072610B /* Locks.h */,
-				28AF31012A7729390072610B /* Locks.mm */,
+				289DCF0C2A802885005A4D55 /* EngineStop.h */,
+				289DCF0D2A8028E0005A4D55 /* EngineStop.mm */,
+				289DCF132A802C87005A4D55 /* Input.cpp */,
+				289DCF122A802C54005A4D55 /* Input.h */,
+				289DCF102A802980005A4D55 /* Locks.cpp */,
+				289DCF0F2A80293E005A4D55 /* Locks.h */,
 				28734C112A72D5BC00B32DE5 /* PerDrawable.h */,
 				28734C122A72D62600B32DE5 /* PerView.h */,
 				28AF30FD2A7725230072610B /* Renderer.h */,
@@ -1085,6 +1100,7 @@
 				2875DC212A6CA3DA00EED860 /* d_modech.cpp in Sources */,
 				2875DC062A6CA3DA00EED860 /* cl_input.cpp in Sources */,
 				2875DC432A6CC66800EED860 /* sys_visionos.cpp in Sources */,
+				289DCF172A8030E8005A4D55 /* DirectRect.cpp in Sources */,
 				2875DC372A6CA3DA00EED860 /* keys.cpp in Sources */,
 				2875DC182A6CA3DA00EED860 /* r_main.cpp in Sources */,
 				2875DC242A6CA3DA00EED860 /* cl_main.cpp in Sources */,
@@ -1101,7 +1117,6 @@
 				2875DC2F2A6CA3DA00EED860 /* d_sprite.cpp in Sources */,
 				2875DC252A6CA3DA00EED860 /* host.cpp in Sources */,
 				2875DC3E2A6CA3DA00EED860 /* r_edge.cpp in Sources */,
-				28AF31022A7729390072610B /* Locks.mm in Sources */,
 				2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */,
 				2875DC3D2A6CA3DA00EED860 /* r_efrag.cpp in Sources */,
 				2875DC202A6CA3DA00EED860 /* pr_edict.cpp in Sources */,
@@ -1126,6 +1141,7 @@
 				2875DC132A6CA3DA00EED860 /* draw.cpp in Sources */,
 				2875DC302A6CA3DA00EED860 /* model.cpp in Sources */,
 				2875DC312A6CA3DA00EED860 /* nonintel.cpp in Sources */,
+				289DCF112A802980005A4D55 /* Locks.cpp in Sources */,
 				2803CF5B2A6E1480006AC44F /* Engine.mm in Sources */,
 				2875DC0D2A6CA3DA00EED860 /* screen.cpp in Sources */,
 				2875DC2B2A6CA3DA00EED860 /* mathlib.cpp in Sources */,
@@ -1135,9 +1151,11 @@
 				2875DC1E2A6CA3DA00EED860 /* d_scan.cpp in Sources */,
 				2870E72B2A6F727800B2F088 /* vid_visionos.cpp in Sources */,
 				2875DC282A6CA3DA00EED860 /* view.cpp in Sources */,
+				289DCF0E2A8028E0005A4D55 /* EngineStop.mm in Sources */,
 				2875DC2A2A6CA3DA00EED860 /* r_surf.cpp in Sources */,
 				2875DC0A2A6CA3DA00EED860 /* net_loop.cpp in Sources */,
 				2875DC322A6CA3DA00EED860 /* cl_demo.cpp in Sources */,
+				289DCF142A802C87005A4D55 /* Input.cpp in Sources */,
 				2875DC1B2A6CA3DA00EED860 /* cmd.cpp in Sources */,
 				2875DC0F2A6CA3DA00EED860 /* r_part.cpp in Sources */,
 				2875DC392A6CA3DA00EED860 /* console.cpp in Sources */,

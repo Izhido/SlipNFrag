@@ -7,10 +7,12 @@
 //
 
 #import "Engine.h"
-#include "sys_visionos.h"
-#include "vid_visionos.h"
-#include "in_visionos.h"
 #import <GameController/GameController.h>
+#include "sys_macos.h"
+#include "vid_macos.h"
+#include "in_macos.h"
+#include "Locks.h"
+#include "Input.h"
 
 extern "C" double CACurrentMediaTime();
 
@@ -22,23 +24,11 @@ extern m_state_t m_state;
 
 @implementation Engine
 {
-	Locks* locks;
-
 	GCController* joystick;
-
-	std::vector<int> inputQueueKeys;
-	std::vector<bool> inputQueuePressed;
-	std::vector<std::string> inputQueueCommands;
-
-	int lastInputQueueItem;
 }
 
--(void)StartEngine:(NSArray<NSString*>*)args locks:(Locks*)locks
+-(void)StartEngine:(NSArray<NSString*>*)args engineStop:(EngineStop*)engineStop
 {
-	self->locks = locks;
-
-	self->lastInputQueueItem = -1;
-	
 	vid_width = 960;
 	vid_height = 600;
 	con_width = 320;
@@ -46,7 +36,7 @@ extern m_state_t m_state;
 
 	NSString* version = NSBundle.mainBundle.infoDictionary[@"CFBundleShortVersionString"];
 
-	sys_version = std::string("VisionOS ") + [version cStringUsingEncoding:NSString.defaultCStringEncoding];
+	sys_version = std::string("MacOS ") + [version cStringUsingEncoding:NSString.defaultCStringEncoding];
 	sys_argc = (int)args.count;
 	sys_argv = new char*[sys_argc];
 	for (auto i = 0; i < args.count; i++)
@@ -59,8 +49,7 @@ extern m_state_t m_state;
 	
 	if (sys_errormessage.length() > 0)
 	{
-		locks.stopEngineMessage = [NSString stringWithCString:sys_errormessage.c_str() encoding:[NSString defaultCStringEncoding]];
-		locks.stopEngine = true;
+		engineStop.stopEngine = true;
 		return;
 	}
 
@@ -80,12 +69,10 @@ extern m_state_t m_state;
 		[NSNotificationCenter.defaultCenter addObserver:self selector:@selector(controllerDidDisconnect:) name:GCControllerDidDisconnectNotification object:nil];
 	}
 
-	locks.engineStarted = true;
-	
 	double previousTime = -1;
 	double currentTime = -1;
 	
-	while (!locks.stopEngine)
+	while (!engineStop.stopEngine)
 	{
 		if (!host_initialized)
 		{
@@ -93,22 +80,23 @@ extern m_state_t m_state;
 			continue;
 		}
 
-		@synchronized(locks.inputLock)
 		{
-			for (auto i = 0; i <= lastInputQueueItem; i++)
+			std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
+			for (auto i = 0; i <= Input::lastInputQueueItem; i++)
 			{
-				auto key = inputQueueKeys[i];
+				auto key = Input::inputQueueKeys[i];
 				if (key > 0)
 				{
-					Key_Event(key, (qboolean)inputQueuePressed[i]);
+					Key_Event(key, (qboolean)Input::inputQueuePressed[i]);
 				}
-				auto& command = inputQueueCommands[i];
+				auto& command = Input::inputQueueCommands[i];
 				if (!command.empty())
 				{
 					Cmd_ExecuteString(command.c_str(), src_command);
 				}
 			}
-			lastInputQueueItem = -1;
+			Input::lastInputQueueItem = -1;
 		}
 
 		if (previousTime < 0)
@@ -128,6 +116,8 @@ extern m_state_t m_state;
 		
 		if (r_cache_thrash)
 		{
+			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
 			VID_ReallocSurfCache();
 		}
 
@@ -135,20 +125,15 @@ extern m_state_t m_state;
 
 		if (sys_quitcalled || sys_errormessage.length() > 0)
 		{
-			if (sys_errormessage.length() > 0)
-			{
-				locks.stopEngineMessage = [NSString stringWithCString:sys_errormessage.c_str() encoding:[NSString defaultCStringEncoding]];
-			}
-			locks.stopEngine = true;
+			engineStop.stopEngine = true;
 			return;
 		}
 
 		if (updated)
 		{
-			@synchronized(locks.renderLock)
-			{
-				Host_FrameRender();
-			}
+			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
+			Host_FrameRender();
 		}
 		Host_FrameFinish(updated);
 		
@@ -184,46 +169,12 @@ extern m_state_t m_state;
 	}
 }
 
--(void)addKeyInput:(int)key pressed:(bool)pressed
-{
-	@synchronized(locks.inputLock)
-	{
-		lastInputQueueItem++;
-		if (lastInputQueueItem >= inputQueueKeys.size())
-		{
-			inputQueueKeys.emplace_back();
-			inputQueuePressed.emplace_back();
-			inputQueueCommands.emplace_back();
-		}
-		inputQueueKeys[lastInputQueueItem] = key;
-		inputQueuePressed[lastInputQueueItem] = pressed;
-		inputQueueCommands[lastInputQueueItem].clear();
-	}
-}
-
--(void)addCommandInput:(const char*)command
-{
-	@synchronized(locks.inputLock)
-	{
-		lastInputQueueItem++;
-		if (lastInputQueueItem >= inputQueueKeys.size())
-		{
-			inputQueueKeys.emplace_back();
-			inputQueuePressed.emplace_back();
-			inputQueueCommands.emplace_back();
-		}
-		inputQueueKeys[lastInputQueueItem] = 0;
-		inputQueuePressed[lastInputQueueItem] = false;
-		inputQueueCommands[lastInputQueueItem] = command;
-	}
-}
-
 -(void)enableJoystick
 {
 	joystick.playerIndex = GCControllerPlayerIndex1;
 	[joystick.extendedGamepad.buttonMenu setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
 	 {
-		[self addKeyInput:K_ESCAPE pressed:pressed];
+		Input::AddKeyInput(K_ENTER, pressed);
 	}];
 	[joystick.extendedGamepad.buttonA setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
 	 {
@@ -231,18 +182,18 @@ extern m_state_t m_state;
 		{
 			if (m_state != m_quit)
 			{
-				[self addKeyInput:K_ENTER pressed:pressed];
+				Input::AddKeyInput(K_ENTER, pressed);
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			if (pressed)
 			{
-				[self addCommandInput:"+jump"];
+				Input::AddCommandInput("+jump");
 			}
 			else
 			{
-				[self addCommandInput:"-jump"];
+				Input::AddCommandInput("-jump");
 			}
 		}
 	 }];
@@ -252,18 +203,18 @@ extern m_state_t m_state;
 		{
 			if (m_state != m_quit)
 			{
-				[self addKeyInput:K_ESCAPE pressed:pressed];
+				Input::AddKeyInput(K_ESCAPE, pressed);
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			if (pressed)
 			{
-				[self addCommandInput:"+movedown"];
+				Input::AddCommandInput("+movedown");
 			}
 			else
 			{
-				[self addCommandInput:"-movedown"];
+				Input::AddCommandInput("-movedown");
 			}
 		}
 	 }];
@@ -273,18 +224,18 @@ extern m_state_t m_state;
 		{
 			if (m_state != m_quit)
 			{
-				[self addKeyInput:K_ENTER pressed:pressed];
+				Input::AddKeyInput(K_ENTER, pressed);
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			if (pressed)
 			{
-				[self addCommandInput:"+speed"];
+				Input::AddCommandInput("+speed");
 			}
 			else
 			{
-				[self addCommandInput:"-speed"];
+				Input::AddCommandInput("-speed");
 			}
 		}
 	 }];
@@ -294,22 +245,22 @@ extern m_state_t m_state;
 		{
 			if (m_state == m_quit)
 			{
-				[self addKeyInput:'y' pressed:pressed];
+				Input::AddKeyInput('y', pressed);
 			}
 			else
 			{
-				[self addKeyInput:K_ESCAPE pressed:pressed];
+				Input::AddKeyInput(K_ESCAPE, pressed);
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			if (pressed)
 			{
-				[self addCommandInput:"+moveup"];
+				Input::AddCommandInput("+moveup");
 			}
 			else
 			{
-				[self addCommandInput:"-moveup"];
+				Input::AddCommandInput("-moveup");
 			}
 		}
 	 }];
@@ -319,18 +270,18 @@ extern m_state_t m_state;
 		{
 			if (m_state != m_quit)
 			{
-				[self addKeyInput:K_ENTER pressed:pressed];
+				Input::AddKeyInput(K_ENTER, pressed);
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			if (pressed)
 			{
-				[self addCommandInput:"+attack"];
+				Input::AddCommandInput("+attack");
 			}
 			else
 			{
-				[self addCommandInput:"-attack"];
+				Input::AddCommandInput("-attack");
 			}
 		}
 	 }];
@@ -340,14 +291,14 @@ extern m_state_t m_state;
 		{
 			if (m_state != m_quit)
 			{
-				[self addKeyInput:K_ESCAPE pressed:pressed];
+				Input::AddKeyInput(K_ESCAPE, pressed);
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			if (pressed)
 			{
-				[self addCommandInput:"impulse 10"];
+				Input::AddCommandInput("impulse 10");
 			}
 		}
 	 }];
@@ -357,18 +308,18 @@ extern m_state_t m_state;
 		{
 			if (m_state != m_quit)
 			{
-				[self addKeyInput:K_ENTER pressed:pressed];
+				Input::AddKeyInput(K_ENTER, pressed);
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			if (pressed)
 			{
-				[self addCommandInput:"+attack"];
+				Input::AddCommandInput("+attack");
 			}
 			else
 			{
-				[self addCommandInput:"-attack"];
+				Input::AddCommandInput("-attack");
 			}
 		}
 	 }];
@@ -378,32 +329,32 @@ extern m_state_t m_state;
 		{
 			if (m_state != m_quit)
 			{
-				[self addKeyInput:K_ESCAPE pressed:pressed];
+				Input::AddKeyInput(K_ESCAPE, pressed);
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			if (pressed)
 			{
-				[self addCommandInput:"impulse 10"];
+				Input::AddCommandInput("impulse 10");
 			}
 		}
 	 }];
 	[joystick.extendedGamepad.dpad.up setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
 	 {
-		 [self addKeyInput:K_UPARROW pressed:pressed];
+		Input::AddKeyInput(K_UPARROW, pressed);
 	 }];
 	[joystick.extendedGamepad.dpad.left setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
 	 {
-		 [self addKeyInput:K_LEFTARROW pressed:pressed];
+		Input::AddKeyInput(K_LEFTARROW, pressed);
 	 }];
 	[joystick.extendedGamepad.dpad.right setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
 	 {
-		 [self addKeyInput:K_RIGHTARROW pressed:pressed];
+		Input::AddKeyInput(K_RIGHTARROW, pressed);
 	 }];
 	[joystick.extendedGamepad.dpad.down setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
 	 {
-		 [self addKeyInput:K_DOWNARROW pressed:pressed];
+		Input::AddKeyInput(K_DOWNARROW, pressed);
 	 }];
 	[joystick.extendedGamepad.leftThumbstick setValueChangedHandler:^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue)
 	 {
@@ -419,18 +370,18 @@ extern m_state_t m_state;
 	 {
 		if (pressed)
 		{
-			[self addCommandInput:"centerview"];
+			Input::AddCommandInput("centerview");
 		}
 	 }];
 	[joystick.extendedGamepad.rightThumbstickButton setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
 	 {
 		if (pressed)
 		{
-			[self addCommandInput:"+mlook"];
+			Input::AddCommandInput("+mlook");
 		}
 		else
 		{
-			[self addCommandInput:"-mlook"];
+			Input::AddCommandInput("-mlook");
 		}
 	 }];
 

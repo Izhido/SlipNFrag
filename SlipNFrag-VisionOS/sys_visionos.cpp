@@ -9,6 +9,7 @@
 #include "quakedef.h"
 #include "errno.h"
 #include <sys/stat.h>
+#include "Locks.h"
 
 extern "C" double CACurrentMediaTime();
 
@@ -201,10 +202,12 @@ int Sys_Random()
 
 void Sys_BeginClearMemory()
 {
+	Locks::RenderMutex.lock();
 }
 
 void Sys_EndClearMemory()
 {
+	Locks::RenderMutex.unlock();
 }
 
 void Sys_Init(int argc, char** argv)

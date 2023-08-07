@@ -11,6 +11,8 @@
 #include "sys_visionos.h"
 #include "vid_visionos.h"
 #include "AppState.h"
+#include "Locks.h"
+#include "DirectRect.h"
 
 @interface Renderer ()
 
@@ -18,9 +20,9 @@
 
 @implementation Renderer
 
--(void)StartRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer locks:(Locks*)locks
+-(void)StartRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer engineStop:(EngineStop*)engineStop
 {
-	while (!locks.engineStarted && !locks.stopEngine)
+	while (!host_initialized && !engineStop.stopEngine)
 	{
 		[NSThread sleepForTimeInterval:0];
 	}
@@ -67,8 +69,8 @@
 	id<MTLRenderPipelineState> pipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
 	if (error != nil)
 	{
-		locks.stopEngineMessage = @"Rendering pipeline could not be created.";
-		locks.stopEngine = true;
+		engineStop.stopEngineMessage = @"Rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
 		return;
 	}
 
@@ -83,7 +85,7 @@
 	
 	AppState appState { };
 	
-	while (!locks.stopEngine) @autoreleasepool
+	while (!engineStop.stopEngine) @autoreleasepool
 	{
 		switch (cp_layer_renderer_get_state(layerRenderer))
 		{
@@ -99,13 +101,6 @@
 					auto timing = cp_frame_predict_timing(frame);
 					if (timing != nullptr)
 					{
-						cp_frame_start_update(frame);
-						
-						//my_input_state input_state = my_engine_gather_inputs(engine, timing);
-						//my_engine_update_frame(engine, timing, input_state);
-						
-						cp_frame_end_update(frame);
-						
 						cp_time_wait_until(cp_frame_timing_get_optimal_input_time(timing));
 
 						cp_frame_start_submission(frame);
@@ -143,8 +138,9 @@
 										appState.drawables.emplace_back();
 										perDrawable = &appState.drawables.back();
 
-										@synchronized(locks.renderLock)
 										{
+											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+											
 											perDrawable->palette.descriptor = [MTLTextureDescriptor new];
 											perDrawable->palette.descriptor.textureType = MTLTextureType1D;
 											perDrawable->palette.descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm_sRGB;
@@ -221,13 +217,27 @@
 									auto cameraMatrix = simd_mul(poseTransform, cp_view_get_transform(view));
 									auto viewMatrix = simd_inverse(cameraMatrix);
 
-									@synchronized(locks.renderLock)
 									{
+										std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
 										[perDrawable->palette.texture replaceRegion:perDrawable->palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable->palette.region.size.width * 4];
 										[perDrawable->screen.texture replaceRegion:perDrawable->screen.region mipmapLevel:0 withBytes:vid_buffer.data() bytesPerRow:perDrawable->screen.region.size.width];
 										[perDrawable->console.texture replaceRegion:perDrawable->console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable->console.region.size.width];
 									}
 									
+									{
+										std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+										
+										for (auto& directRect : DirectRect::directRects)
+										{
+											auto x = directRect.x * (perDrawable->console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
+											auto y = directRect.y * (perDrawable->console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
+
+											MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
+											[perDrawable->console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
+										}
+									}
+
 									id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView->renderPassDescriptor];
 									[commandEncoder setRenderPipelineState:pipelineState];
 									[commandEncoder setVertexBuffer:screenPlane offset:0 atIndex:0];
@@ -258,7 +268,7 @@
 			break;
 
 			case cp_layer_renderer_state_invalidated:
-				locks.stopEngine = true;
+				engineStop.stopEngine = true;
 				break;
 		}
 	}

@@ -7,10 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "Locks.h"
+#import "EngineStop.h"
 
 @interface Engine : NSObject
 
--(void)StartEngine:(NSArray<NSString*>*)args locks:(Locks*)locks;
+-(void)StartEngine:(NSArray<NSString*>*)args engineStop:(EngineStop*)engineStop;
 
 @end

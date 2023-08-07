@@ -31,7 +31,7 @@ struct SlipNFrag_VisionOSApp: App {
 		}
 		ImmersiveSpace(id: "ImmersiveSpace") {
 			CompositorLayer() { layerRenderer in
-				let locks = Locks()
+				let engineStop = EngineStop()
 				let engineThread = Thread {
 					let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
 					NSLog(url.path)
@@ -46,19 +46,19 @@ struct SlipNFrag_VisionOSApp: App {
 								url.path
 							]
 							let engine = Engine()
-							engine.start(args, locks: locks)
+							engine.start(args, engineStop: engineStop)
 						}
 						else
 						{
-							locks.stopEngineMessage = "The folder " + url.path + " does not contain a folder 'id1' with a file 'pak0.pak' - the game will not start.\n\nEnsure that all required files are present before starting the game."
-							locks.stopEngine = true
+							engineStop.stopEngineMessage = "The folder " + url.path + " does not contain a folder 'id1' with a file 'pak0.pak' - the game will not start.\n\nEnsure that all required files are present before starting the game."
+							engineStop.stopEngine = true
 						}
 						url.stopAccessingSecurityScopedResource()
 					}
 					else
 					{
-						locks.stopEngineMessage = "Permission denied to access the folder " + url.path + " with the game assets."
-						locks.stopEngine = true
+						engineStop.stopEngineMessage = "Permission denied to access the folder " + url.path + " with the game assets."
+						engineStop.stopEngine = true
 					}
 				}
 				let rendererThread = Thread {
@@ -66,16 +66,16 @@ struct SlipNFrag_VisionOSApp: App {
 						dismissWindow(id: "WindowGroup")
 					}
 					let renderer = Renderer()
-					renderer.start(layerRenderer, locks: locks)
+					renderer.start(layerRenderer, engineStop: engineStop)
 					Task {
 						await dismissImmersiveSpace()
 					}
 					Task {
 						openWindow(id: "WindowGroup")
 					}
-					if (locks.stopEngineMessage != nil)
+					if (engineStop.stopEngineMessage != nil)
 					{
-						stopGameMessage = locks.stopEngineMessage
+						stopGameMessage = engineStop.stopEngineMessage
 						stopGame = true
 					}
 					else
