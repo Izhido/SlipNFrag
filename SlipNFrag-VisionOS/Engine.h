@@ -11,6 +11,8 @@
 
 @interface Engine : NSObject
 
--(void)StartEngine:(NSArray<NSString*>*)args engineStop:(EngineStop*)engineStop;
+-(void)startEngine:(NSArray<NSString*>*)args size:(CGSize)size engineStop:(EngineStop*)engineStop;
+
+-(void)loopEngine:(EngineStop*)engineStop;
 
 @end

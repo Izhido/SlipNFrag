@@ -20,18 +20,24 @@
 
 @implementation Renderer
 
--(void)StartRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer engineStop:(EngineStop*)engineStop
+static std::vector<unsigned char> vid_converted;
+static CGDataProviderRef vid_provider;
+
+static std::vector<unsigned char> con_converted;
+static CGDataProviderRef con_provider;
+
+-(void)startRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer engineStop:(EngineStop*)engineStop
 {
 	while (!host_initialized && !engineStop.stopEngine)
 	{
 		[NSThread sleepForTimeInterval:0];
 	}
-
+	
 	auto session = ar_session_create();
-
+	
 	ar_world_tracking_configuration_t world_tracking_config = ar_world_tracking_configuration_create();
 	auto world_tracking = ar_world_tracking_provider_create(world_tracking_config);
-
+	
 	ar_data_providers_t providers = ar_data_providers_create();
 	ar_data_providers_add_data_provider(providers, world_tracking);
 	ar_session_run(session, providers);
@@ -39,7 +45,7 @@
 	auto configuration = cp_layer_renderer_get_configuration(layerRenderer);
 	auto colorPixelFormat = cp_layer_renderer_configuration_get_color_format(configuration);
 	auto depthPixelFormat = cp_layer_renderer_configuration_get_depth_format(configuration);
-
+	
 	id<MTLDevice> device = MTLCreateSystemDefaultDevice();
 	id<MTLCommandQueue> commandQueue = [device newCommandQueue];
 	id<MTLLibrary> library = [device newDefaultLibrary];
@@ -73,14 +79,14 @@
 		engineStop.stopEngine = true;
 		return;
 	}
-
+	
 	float screenPlaneVertices[] = {
 		-1.6,  1, -2, 1,  0, 0,
-		 1.6,  1, -2, 1,  1, 0,
+		1.6,  1, -2, 1,  1, 0,
 		-1.6, -1, -2, 1,  0, 1,
-		 1.6, -1, -2, 1,  1, 1
+		1.6, -1, -2, 1,  1, 1
 	};
-
+	
 	id<MTLBuffer> screenPlane = [device newBufferWithBytes:screenPlaneVertices length:sizeof(screenPlaneVertices) options:0];
 	
 	AppState appState { };
@@ -92,7 +98,7 @@
 			case cp_layer_renderer_state_paused:
 				[NSThread sleepForTimeInterval:0];
 				break;
-
+				
 			case cp_layer_renderer_state_running:
 			{
 				auto frame = cp_layer_renderer_query_next_frame(layerRenderer);
@@ -102,7 +108,7 @@
 					if (timing != nullptr)
 					{
 						cp_time_wait_until(cp_frame_timing_get_optimal_input_time(timing));
-
+						
 						cp_frame_start_submission(frame);
 						auto drawable = cp_frame_query_drawable(frame);
 						if (drawable != nullptr)
@@ -111,19 +117,19 @@
 							
 							cp_frame_timing_t timing = cp_drawable_get_frame_timing(drawable);
 							auto pose = ar_pose_create();
-
+							
 							auto p_time = cp_time_to_cf_time_interval(cp_frame_timing_get_presentation_time(timing));
 							auto pose_status = ar_world_tracking_provider_query_pose_at_timestamp(world_tracking, p_time, pose);
 							if (pose_status == ar_pose_status_success)
 							{
 								cp_drawable_set_ar_pose(drawable, pose);
-
+								
 								id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
-
+								
 								for (auto v = 0; v < viewCount; v++)
 								{
 									PerDrawable* perDrawable = nullptr;
-
+									
 									for (size_t d = 0; d < appState.drawables.size(); d++)
 									{
 										if (appState.drawables[d].drawable == drawable)
@@ -137,7 +143,7 @@
 									{
 										appState.drawables.emplace_back();
 										perDrawable = &appState.drawables.back();
-
+										
 										{
 											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 											
@@ -190,36 +196,36 @@
 									}
 									
 									simd_float4x4 poseTransform = ar_pose_get_origin_from_device_transform(pose);
-
+									
 									cp_view_t view = cp_drawable_get_view(drawable, v);
 									simd_float4 tangents = cp_view_get_tangents(view);
 									simd_float2 depth_range = cp_drawable_get_depth_range(drawable);
 									auto projectiveTransform = SPProjectiveTransform3DMakeFromTangents(tangents[0], tangents[1], tangents[2], tangents[3], depth_range[1], depth_range[0], true);
 									auto& projectiveMatrix = projectiveTransform.matrix;
 									auto projectionMatrix = simd_matrix(
-										simd_make_float4(projectiveMatrix.columns[0][0],
-														 projectiveMatrix.columns[0][1],
-														 projectiveMatrix.columns[0][2],
-														 projectiveMatrix.columns[0][3]),
-										simd_make_float4(projectiveMatrix.columns[1][0],
-														 projectiveMatrix.columns[1][1],
-														 projectiveMatrix.columns[1][2],
-														 projectiveMatrix.columns[1][3]),
-										simd_make_float4(projectiveMatrix.columns[2][0],
-														 projectiveMatrix.columns[2][1],
-														 projectiveMatrix.columns[2][2],
-														 projectiveMatrix.columns[2][3]),
-										simd_make_float4(projectiveMatrix.columns[3][0],
-														 projectiveMatrix.columns[3][1],
-														 projectiveMatrix.columns[3][2],
-														 projectiveMatrix.columns[3][3]));
-
+																		simd_make_float4(projectiveMatrix.columns[0][0],
+																						 projectiveMatrix.columns[0][1],
+																						 projectiveMatrix.columns[0][2],
+																						 projectiveMatrix.columns[0][3]),
+																		simd_make_float4(projectiveMatrix.columns[1][0],
+																						 projectiveMatrix.columns[1][1],
+																						 projectiveMatrix.columns[1][2],
+																						 projectiveMatrix.columns[1][3]),
+																		simd_make_float4(projectiveMatrix.columns[2][0],
+																						 projectiveMatrix.columns[2][1],
+																						 projectiveMatrix.columns[2][2],
+																						 projectiveMatrix.columns[2][3]),
+																		simd_make_float4(projectiveMatrix.columns[3][0],
+																						 projectiveMatrix.columns[3][1],
+																						 projectiveMatrix.columns[3][2],
+																						 projectiveMatrix.columns[3][3]));
+									
 									auto cameraMatrix = simd_mul(poseTransform, cp_view_get_transform(view));
 									auto viewMatrix = simd_inverse(cameraMatrix);
-
+									
 									{
 										std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-
+										
 										[perDrawable->palette.texture replaceRegion:perDrawable->palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable->palette.region.size.width * 4];
 										[perDrawable->screen.texture replaceRegion:perDrawable->screen.region mipmapLevel:0 withBytes:vid_buffer.data() bytesPerRow:perDrawable->screen.region.size.width];
 										[perDrawable->console.texture replaceRegion:perDrawable->console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable->console.region.size.width];
@@ -232,12 +238,12 @@
 										{
 											auto x = directRect.x * (perDrawable->console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
 											auto y = directRect.y * (perDrawable->console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
-
+											
 											MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
 											[perDrawable->console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
 										}
 									}
-
+									
 									id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView->renderPassDescriptor];
 									[commandEncoder setRenderPipelineState:pipelineState];
 									[commandEncoder setVertexBuffer:screenPlane offset:0 atIndex:0];
@@ -254,24 +260,119 @@
 								}
 								
 								cp_drawable_encode_present(drawable, commandBuffer);
-
+								
 								[commandBuffer commit];
 							}
-
+							
 							cp_frame_end_submission(frame);
 						}
 					}
 				}
-
+				
 				[NSThread sleepForTimeInterval:0];
 			}
-			break;
-
+				break;
+				
 			case cp_layer_renderer_state_invalidated:
 				engineStop.stopEngine = true;
 				break;
 		}
 	}
+}
+
++(void)renderFrame:(CGContextRef)context size:(CGSize)size date:(NSDate*)date
+{
+	{
+		std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+		
+		size_t vid_converted_length = vid_width * vid_height * 4;
+		size_t vid_converted_width = vid_width * 4;
+		size_t vid_converted_decrement = vid_converted_width * 2;
+
+		if (vid_converted_length == 0) {
+			return;
+		}
+
+		if (vid_converted.size() != vid_converted_length)
+		{
+			vid_converted.resize(vid_converted_length);
+			vid_provider = CGDataProviderCreateWithData(NULL, vid_converted.data(), vid_converted.size(), NULL);
+		}
+
+		auto source = vid_buffer.data();
+		auto target = vid_converted.data() + (vid_height - 1) * vid_converted_width;
+		
+		for (size_t y = 0; y < vid_height; y++)
+		{
+			for (size_t x = 0; x < vid_width; x++)
+			{
+				auto entry = d_8to24table[*source++];
+				*target++ = entry & 255;
+				*target++ = (entry >> 8) & 255;
+				*target++ = (entry >> 16) & 255;
+				*target++ = (entry >> 24) & 255;
+			}
+			
+			target -= vid_converted_decrement;
+		}
+
+		size_t con_converted_length = con_width * con_height * 4;
+		size_t con_converted_width = con_width * 4;
+		size_t con_converted_decrement = con_converted_width * 2;
+
+		if (con_converted.size() != con_converted_length)
+		{
+			con_converted.resize(con_converted_length);
+			con_provider = CGDataProviderCreateWithData(NULL, con_converted.data(), con_converted.size(), NULL);
+		}
+
+		source = con_buffer.data();
+		target = con_converted.data() + (con_height - 1) * con_converted_width;
+		
+		for (size_t y = 0; y < con_height; y++)
+		{
+			for (size_t x = 0; x < con_width; x++)
+			{
+				auto entry = d_8to24table[*source++];
+				if (entry == 0 || entry == 255)
+				{
+					*target++ = 0;
+					*target++ = 0;
+					*target++ = 0;
+					*target++ = 0;
+				}
+				else
+				{
+					*target++ = entry & 255;
+					*target++ = (entry >> 8) & 255;
+					*target++ = (entry >> 16) & 255;
+					*target++ = (entry >> 24) & 255;
+				}
+			}
+			
+			target -= con_converted_decrement;
+		}
+	}
+
+	auto colorspace = CGColorSpaceCreateDeviceRGB();
+
+	auto vid_image = CGImageCreate(vid_width, vid_height, 8, 32, vid_width * 4, colorspace,
+				  (int)kCGBitmapByteOrderDefault | (int)kCGImageAlphaLast,
+				  vid_provider, NULL, false, kCGRenderingIntentDefault);
+	
+	auto con_image = CGImageCreate(con_width, con_height, 8, 32, con_width * 4, colorspace,
+				  (int)kCGBitmapByteOrderDefault | (int)kCGImageAlphaLast,
+				  con_provider, NULL, false, kCGRenderingIntentDefault);
+
+	auto quality = CGContextGetInterpolationQuality(context);
+	CGContextSetInterpolationQuality(context, kCGInterpolationNone);
+	CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), vid_image);
+	CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), con_image);
+	CGContextSetInterpolationQuality(context, quality);
+
+	CGImageRelease(con_image);
+
+	CGImageRelease(vid_image);
 }
 
 @end

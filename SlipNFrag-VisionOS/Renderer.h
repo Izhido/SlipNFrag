@@ -13,6 +13,8 @@
 
 @property (nonatomic, assign) BOOL stopRenderer;
 
--(void)StartRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer engineStop:(EngineStop*)engineStop;
+-(void)startRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer engineStop:(EngineStop*)engineStop;
+
++(void)renderFrame:(CGContextRef)context size:(CGSize)size date:(NSDate*)date;
 
 @end

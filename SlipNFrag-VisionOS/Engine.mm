@@ -27,15 +27,25 @@ extern m_state_t m_state;
 	GCController* joystick;
 }
 
--(void)StartEngine:(NSArray<NSString*>*)args engineStop:(EngineStop*)engineStop
+-(void)startEngine:(NSArray<NSString*>*)args size:(CGSize)size engineStop:(EngineStop*)engineStop
 {
-	vid_width = 960;
-	vid_height = 600;
-	con_width = 320;
-	con_height = 200;
+	vid_width = size.width;
+	vid_height = size.height;
+
+	auto factor = (double)vid_width / 320;
+	double new_conwidth = 320;
+	auto new_conheight = ceil((double)vid_height / factor);
+	if (new_conheight < 200)
+	{
+		factor = (double)vid_height / 200;
+		new_conheight = 200;
+		new_conwidth = (double)(((int)ceil((double)vid_width / factor) + 3) & ~3);
+	}
+	con_width = (int)new_conwidth;
+	con_height = (int)new_conheight;
 
 	NSString* version = NSBundle.mainBundle.infoDictionary[@"CFBundleShortVersionString"];
-
+	
 	sys_version = std::string("MacOS ") + [version cStringUsingEncoding:NSString.defaultCStringEncoding];
 	sys_argc = (int)args.count;
 	sys_argv = new char*[sys_argc];
@@ -44,15 +54,16 @@ extern m_state_t m_state;
 		sys_argv[i] = new char[args[i].length + 1];
 		strcpy(sys_argv[i], [args[i] cStringUsingEncoding:[NSString defaultCStringEncoding]]);
 	}
-
+	
 	Sys_Init(sys_argc, sys_argv);
 	
 	if (sys_errormessage.length() > 0)
 	{
 		engineStop.stopEngine = true;
+		engineStop.stopEngineMessage = [NSString stringWithCString:sys_errormessage.c_str() encoding:[NSString defaultCStringEncoding]];
 		return;
 	}
-
+	
 	if (joy_initialized)
 	{
 		for (GCController* controller in [GCController controllers])
@@ -68,7 +79,10 @@ extern m_state_t m_state;
 		[NSNotificationCenter.defaultCenter addObserver:self selector:@selector(controllerDidConnect:) name:GCControllerDidConnectNotification object:nil];
 		[NSNotificationCenter.defaultCenter addObserver:self selector:@selector(controllerDidDisconnect:) name:GCControllerDidDisconnectNotification object:nil];
 	}
+}
 
+-(void)loopEngine:(EngineStop*)engineStop
+{
 	double previousTime = -1;
 	double currentTime = -1;
 	
@@ -123,9 +137,16 @@ extern m_state_t m_state;
 
 		auto updated = Host_FrameUpdate(frame_lapse);
 
-		if (sys_quitcalled || sys_errormessage.length() > 0)
+		if (sys_quitcalled)
 		{
 			engineStop.stopEngine = true;
+			return;
+		}
+		
+		if (sys_errormessage.length() > 0)
+		{
+			engineStop.stopEngine = true;
+			engineStop.stopEngineMessage = [NSString stringWithCString:sys_errormessage.c_str() encoding:[NSString defaultCStringEncoding]];
 			return;
 		}
 
