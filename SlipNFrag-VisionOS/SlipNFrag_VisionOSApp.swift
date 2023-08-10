@@ -14,7 +14,7 @@ struct SlipNFrag_VisionOSApp: App {
 	@State var stopEngine = false
 	@State var stopEngineMessage = ""
 
-	var size = CGSize(width: 960, height: 600)
+	var size = CGSize(width: 1280, height: 800)
 	
 	var body: some Scene {
 		WindowGroup(id: "WindowGroup") {

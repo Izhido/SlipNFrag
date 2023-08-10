@@ -46,7 +46,7 @@ extern m_state_t m_state;
 
 	NSString* version = NSBundle.mainBundle.infoDictionary[@"CFBundleShortVersionString"];
 	
-	sys_version = std::string("MacOS ") + [version cStringUsingEncoding:NSString.defaultCStringEncoding];
+	sys_version = std::string("VisionOS ") + [version cStringUsingEncoding:NSString.defaultCStringEncoding];
 	sys_argc = (int)args.count;
 	sys_argv = new char*[sys_argc];
 	for (auto i = 0; i < args.count; i++)

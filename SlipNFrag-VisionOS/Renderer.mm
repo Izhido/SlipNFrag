@@ -20,10 +20,10 @@
 
 @implementation Renderer
 
-static std::vector<unsigned char> vid_converted;
+static std::vector<unsigned> vid_converted;
 static CGDataProviderRef vid_provider;
 
-static std::vector<unsigned char> con_converted;
+static std::vector<unsigned> con_converted;
 static CGDataProviderRef con_provider;
 
 -(void)startRenderer:(CP_OBJECT_cp_layer_renderer*)layerRenderer engineStop:(EngineStop*)engineStop
@@ -285,9 +285,8 @@ static CGDataProviderRef con_provider;
 	{
 		std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 		
-		size_t vid_converted_length = vid_width * vid_height * 4;
-		size_t vid_converted_width = vid_width * 4;
-		size_t vid_converted_decrement = vid_converted_width * 2;
+		size_t vid_length = vid_width * vid_height;
+		size_t vid_converted_length = vid_length * 4;
 
 		if (vid_converted_length == 0) {
 			return;
@@ -300,25 +299,19 @@ static CGDataProviderRef con_provider;
 		}
 
 		auto source = vid_buffer.data();
-		auto target = vid_converted.data() + (vid_height - 1) * vid_converted_width;
+		auto target = vid_converted.data();
 		
-		for (size_t y = 0; y < vid_height; y++)
+		while (vid_length > 0)
 		{
-			for (size_t x = 0; x < vid_width; x++)
-			{
-				auto entry = d_8to24table[*source++];
-				*target++ = entry & 255;
-				*target++ = (entry >> 8) & 255;
-				*target++ = (entry >> 16) & 255;
-				*target++ = (entry >> 24) & 255;
-			}
-			
-			target -= vid_converted_decrement;
+			auto entry = d_8to24table[*source++];
+
+			*target++ = entry;
+
+			vid_length--;
 		}
 
-		size_t con_converted_length = con_width * con_height * 4;
-		size_t con_converted_width = con_width * 4;
-		size_t con_converted_decrement = con_converted_width * 2;
+		size_t con_length = con_width * con_height;
+		size_t con_converted_length = con_length * 4;
 
 		if (con_converted.size() != con_converted_length)
 		{
@@ -327,30 +320,47 @@ static CGDataProviderRef con_provider;
 		}
 
 		source = con_buffer.data();
-		target = con_converted.data() + (con_height - 1) * con_converted_width;
+		target = con_converted.data();
 		
-		for (size_t y = 0; y < con_height; y++)
+		while (con_length > 0)
 		{
-			for (size_t x = 0; x < con_width; x++)
+			auto color = *source++;
+			if (color == 0 || color == 255)
 			{
-				auto entry = d_8to24table[*source++];
-				if (entry == 0 || entry == 255)
-				{
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-				}
-				else
-				{
-					*target++ = entry & 255;
-					*target++ = (entry >> 8) & 255;
-					*target++ = (entry >> 16) & 255;
-					*target++ = (entry >> 24) & 255;
-				}
+				*target++ = 0;
+			}
+			else
+			{
+				auto entry = d_8to24table[color];
+				*target++ = entry;
 			}
 			
-			target -= con_converted_decrement;
+			con_length--;
+		}
+	}
+
+	{
+		std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+		
+		for (auto& directRect : DirectRect::directRects)
+		{
+			auto x = directRect.x * (con_width - directRect.width) / (directRect.vid_width - directRect.width);
+			auto y = directRect.y * (con_height - directRect.height) / (directRect.vid_height - directRect.height);
+
+			auto source = directRect.data;
+			auto target = con_converted.data() + y * con_width + x;
+			
+			for (auto v = 0; v < directRect.height; v++)
+			{
+				for (auto h = 0; h < directRect.width; h++)
+				{
+					auto entry = d_8to24table[*source++];
+
+					*target++ = entry;
+				}
+				target += con_width;
+				target -= directRect.width;
+			}
 		}
 	}
 
@@ -364,15 +374,19 @@ static CGDataProviderRef con_provider;
 				  (int)kCGBitmapByteOrderDefault | (int)kCGImageAlphaLast,
 				  con_provider, NULL, false, kCGRenderingIntentDefault);
 
-	auto quality = CGContextGetInterpolationQuality(context);
+	CGContextSaveGState(context);
 	CGContextSetInterpolationQuality(context, kCGInterpolationNone);
+	CGContextTranslateCTM(context, 0, size.height);
+	CGContextScaleCTM(context, 1.0, -1.0);
 	CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), vid_image);
 	CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), con_image);
-	CGContextSetInterpolationQuality(context, quality);
+	CGContextRestoreGState(context);
 
 	CGImageRelease(con_image);
 
 	CGImageRelease(vid_image);
+	
+	CGColorSpaceRelease(colorspace);
 }
 
 @end
