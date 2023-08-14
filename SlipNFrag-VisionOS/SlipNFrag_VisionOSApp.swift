@@ -7,28 +7,10 @@
 //
 
 import SwiftUI
-import CompositorServices
 
 @main
 struct SlipNFrag_VisionOSApp: App {
-	@State var stopEngine = false
-	@State var stopEngineMessage = ""
-
-	var size = CGSize(width: 1280, height: 800)
-	
 	var body: some Scene {
-		WindowGroup(id: "WindowGroup") {
-			PlayView(
-				stopEngine: $stopEngine,
-				stopEngineMessage: $stopEngineMessage,
-				size: size
-			).alert("Slip & Frag", isPresented: $stopEngine) {
-				Button("Close") {
-					exit(0)
-				}
-			} message: {
-				Text("\n" + stopEngineMessage + "\n")
-			}
-		}.defaultSize(size)
+		MainScene()
 	}
 }

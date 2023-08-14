@@ -16,5 +16,7 @@
 	</array>
 	<key>GCSupportsControllerUserInteraction</key>
 	<true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 </dict>
 </plist>
