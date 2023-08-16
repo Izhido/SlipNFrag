@@ -6,19 +6,20 @@
 //  Copyright © 2023 Heriberto Delgado. All rights reserved.
 //
 
-#pragma once
+#import <CompositorServices/CompositorServices.h>
+#import "Texture.h"
+#import "PerView.h"
 
-#include <vector>
-#include "Texture.h"
-#include "PerView.h"
+@interface PerDrawable : NSObject
 
-struct PerDrawable
-{
-	cp_drawable_t drawable;
+@property (nonatomic, assign) cp_drawable_t drawable;
 	
-	Texture palette;
-	Texture screen;
-	Texture console;
+@property (nonatomic, strong) Texture* palette;
+
+@property (nonatomic, strong) Texture* screen;
+
+@property (nonatomic, strong) Texture* console;
 	
-	std::vector<PerView> views;
-};
+@property (nonatomic, strong) NSMutableDictionary<NSNumber*, PerView*>* views;
+
+@end

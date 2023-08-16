@@ -6,13 +6,18 @@
 //  Copyright © 2023 Heriberto Delgado. All rights reserved.
 //
 
-#pragma once
+#import <Metal/Metal.h>
 
-struct Texture
-{
-	MTLTextureDescriptor* descriptor;
-	id<MTLTexture> texture;
-	MTLSamplerDescriptor* samplerDescriptor;
-	id<MTLSamplerState> samplerState;
-	MTLRegion region;
-};
+@interface Texture : NSObject
+
+@property (nonatomic, strong) MTLTextureDescriptor* descriptor;
+
+@property (nonatomic, strong) id<MTLTexture> texture;
+
+@property (nonatomic, strong) MTLSamplerDescriptor* samplerDescriptor;
+
+@property (nonatomic, strong) id<MTLSamplerState> samplerState;
+
+@property (nonatomic, assign) MTLRegion region;
+
+@end

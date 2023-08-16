@@ -6,11 +6,10 @@
 //  Copyright © 2023 Heriberto Delgado. All rights reserved.
 //
 
-#pragma once
-
 #import <Metal/Metal.h>
 
-struct PerView
-{
-	MTLRenderPassDescriptor* renderPassDescriptor;
-};
+@interface PerView : NSObject
+
+@property (nonatomic, strong) MTLRenderPassDescriptor* renderPassDescriptor;
+
+@end
