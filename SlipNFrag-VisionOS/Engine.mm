@@ -8,11 +8,14 @@
 
 #import "Engine.h"
 #import <GameController/GameController.h>
-#include "sys_macos.h"
-#include "vid_macos.h"
-#include "in_macos.h"
+#include "sys_visionos.h"
+#include "vid_visionos.h"
+#include "in_visionos.h"
 #include "Locks.h"
 #include "Input.h"
+#include "AppState.h"
+#include "r_local.h"
+#include "d_lists.h"
 
 extern "C" double CACurrentMediaTime();
 
@@ -113,50 +116,158 @@ extern m_state_t m_state;
 			Input::lastInputQueueItem = -1;
 		}
 
-		if (previousTime < 0)
+		AppMode mode;
 		{
-			previousTime = CACurrentMediaTime();
-		}
-		else if (currentTime < 0)
-		{
-			currentTime = CACurrentMediaTime();
-		}
-		else
-		{
-			previousTime = currentTime;
-			currentTime = CACurrentMediaTime();
-			frame_lapse = currentTime - previousTime;
-		}
-		
-		if (r_cache_thrash)
-		{
-			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+			std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
 
-			VID_ReallocSurfCache();
+			mode = appState.Mode;
 		}
 
-		auto updated = Host_FrameUpdate(frame_lapse);
-
-		if (sys_quitcalled)
+		if (mode == AppScreenMode)
 		{
-			engineStop.stopEngine = true;
-			return;
+			if (previousTime < 0)
+			{
+				previousTime = CACurrentMediaTime();
+			}
+			else if (currentTime < 0)
+			{
+				currentTime = CACurrentMediaTime();
+			}
+			else
+			{
+				previousTime = currentTime;
+				currentTime = CACurrentMediaTime();
+				frame_lapse = currentTime - previousTime;
+			}
+			
+			if (r_cache_thrash)
+			{
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+				
+				VID_ReallocSurfCache();
+			}
+			
+			auto updated = Host_FrameUpdate(frame_lapse);
+			
+			if (sys_quitcalled)
+			{
+				engineStop.stopEngine = true;
+				return;
+			}
+			
+			if (sys_errormessage.length() > 0)
+			{
+				engineStop.stopEngine = true;
+				engineStop.stopEngineMessage = [NSString stringWithCString:sys_errormessage.c_str() encoding:[NSString defaultCStringEncoding]];
+				return;
+			}
+			
+			if (updated)
+			{
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+				
+				Host_FrameRender();
+			}
+			Host_FrameFinish(updated);
 		}
-		
-		if (sys_errormessage.length() > 0)
+		else if (mode == AppWorldMode)
 		{
-			engineStop.stopEngine = true;
-			engineStop.stopEngineMessage = [NSString stringWithCString:sys_errormessage.c_str() encoding:[NSString defaultCStringEncoding]];
-			return;
-		}
+			float positionX;
+			float positionY;
+			float positionZ;
+			float scale;
+			float yaw;
+			float pitch;
+			float roll;
+			{
+				std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
 
-		if (updated)
-		{
-			std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+				yaw = appState.Yaw * 180 / M_PI + 90;
+				pitch = -appState.Pitch * 180 / M_PI;
+				roll = -appState.Roll * 180 / M_PI;
+				positionX = appState.PositionX;
+				positionY = appState.PositionY;
+				positionZ = appState.PositionZ;
+				scale = appState.Scale;
+			}
+			
+			if (previousTime < 0)
+			{
+				previousTime = CACurrentMediaTime();
+			}
+			else if (currentTime < 0)
+			{
+				currentTime = CACurrentMediaTime();
+			}
+			else
+			{
+				previousTime = currentTime;
+				currentTime = CACurrentMediaTime();
+				frame_lapse = currentTime - previousTime;
+			}
+			
+			if (r_cache_thrash)
+			{
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+				
+				VID_ReallocSurfCache();
+			}
+			
+			cl.viewangles[YAW] = yaw;
+			cl.viewangles[PITCH] = pitch;
+			cl.viewangles[ROLL] = roll;
 
-			Host_FrameRender();
+			auto updated = Host_FrameUpdate(frame_lapse);
+
+			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:
+			auto previousYaw = cl.viewangles[YAW];
+			auto previousPitch = cl.viewangles[PITCH];
+			auto previousRoll = cl.viewangles[ROLL];
+
+			if (sys_quitcalled)
+			{
+				engineStop.stopEngine = true;
+				return;
+			}
+			
+			if (sys_errormessage.length() > 0)
+			{
+				engineStop.stopEngine = true;
+				engineStop.stopEngineMessage = [NSString stringWithCString:sys_errormessage.c_str() encoding:[NSString defaultCStringEncoding]];
+				return;
+			}
+			
+			if (updated)
+			{
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+				
+				r_modelorg_delta[0] = positionX / scale;
+				r_modelorg_delta[1] = -positionZ / scale;
+				r_modelorg_delta[2] = positionY / scale;
+
+				// Setting again view angles just in case the server changed them:
+				cl.viewangles[YAW] = yaw;
+				cl.viewangles[PITCH] = pitch;
+				cl.viewangles[ROLL] = roll;
+
+				auto nodrift = cl.nodrift;
+				cl.nodrift = true;
+
+				D_ResetLists();
+
+				Host_FrameRender();
+
+				cl.nodrift = nodrift;
+
+				// Restoring potential changes performed by server in view angles,
+				// to allow code outside Host_***() calls to act upon them:
+				cl.viewangles[YAW] = previousYaw;
+				cl.viewangles[PITCH] = previousPitch;
+				cl.viewangles[ROLL] = previousRoll;
+			}
+
+			Host_FrameFinish(updated);
 		}
-		Host_FrameFinish(updated);
 		
 		[NSThread sleepForTimeInterval:0];
 	}
@@ -275,6 +386,9 @@ extern m_state_t m_state;
 		}
 		else if (key_dest == key_game)
 		{
+#if TARGET_OS_SIMULATOR
+			Input::AddKeyInput(K_ESCAPE, pressed);
+#else
 			if (pressed)
 			{
 				Input::AddCommandInput("+moveup");
@@ -283,6 +397,7 @@ extern m_state_t m_state;
 			{
 				Input::AddCommandInput("-moveup");
 			}
+#endif
 		}
 	 }];
 	[joystick.extendedGamepad.leftTrigger setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)

@@ -10,9 +10,14 @@
 #import <Spatial/Spatial.h>
 #include "sys_visionos.h"
 #include "vid_visionos.h"
+#include "in_visionos.h"
 #include "Locks.h"
 #include "DirectRect.h"
 #import "PerDrawable.h"
+#import "AppState.h"
+#import "r_local.h"
+#import "d_lists.h"
+#import "Input.h"
 
 @interface Renderer ()
 
@@ -33,13 +38,82 @@ static CGDataProviderRef con_provider;
 		[NSThread sleepForTimeInterval:0];
 	}
 	
+	auto floors = [NSMutableDictionary<NSString*, ar_plane_anchor_t> new];
+
 	auto session = ar_session_create();
 	
 	ar_world_tracking_configuration_t world_tracking_config = ar_world_tracking_configuration_create();
 	auto world_tracking = ar_world_tracking_provider_create(world_tracking_config);
 	
-	ar_data_providers_t providers = ar_data_providers_create();
+	auto plane_detection_config = ar_plane_detection_configuration_create();
+	ar_plane_detection_configuration_set_alignment(plane_detection_config, ar_plane_alignment_horizontal);
+	auto plane_detection = ar_plane_detection_provider_create(plane_detection_config);
+	ar_plane_detection_provider_set_update_handler(plane_detection, NULL,
+		^(ar_plane_anchors_t _Nonnull added_anchors,
+		  ar_plane_anchors_t _Nonnull updated_anchors,
+		  ar_plane_anchors_t _Nonnull removed_anchors) {
+		std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
+		
+		ar_plane_anchors_enumerate_anchors(added_anchors,
+			^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
+			auto classification = ar_plane_anchor_get_plane_classification(plane_anchor);
+			if (classification == ar_plane_classification_floor)
+			{
+				unsigned char identifier[64] { };
+				ar_anchor_get_identifier(plane_anchor, identifier);
+				auto identifierAsString = [NSString stringWithCString:(const char*)identifier encoding:NSString.defaultCStringEncoding];
+				[floors setObject:plane_anchor forKey:identifierAsString];
+			}
+			return true;
+		});
+		
+		ar_plane_anchors_enumerate_anchors(updated_anchors,
+			^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
+			auto classification = ar_plane_anchor_get_plane_classification(plane_anchor);
+			if (classification == ar_plane_classification_floor)
+			{
+				unsigned char identifier[64] { };
+				ar_anchor_get_identifier(plane_anchor, identifier);
+				auto identifierAsString = [NSString stringWithCString:(const char*)identifier encoding:NSString.defaultCStringEncoding];
+				[floors setObject:plane_anchor forKey:identifierAsString];
+			}
+			return true;
+		});
+		
+		ar_plane_anchors_enumerate_anchors(removed_anchors,
+			^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
+			auto classification = ar_plane_anchor_get_plane_classification(plane_anchor);
+			if (classification == ar_plane_classification_floor)
+			{
+				unsigned char identifier[64] { };
+				ar_anchor_get_identifier(plane_anchor, identifier);
+				auto identifierAsString = [NSString stringWithCString:(const char*)identifier encoding:NSString.defaultCStringEncoding];
+				[floors removeObjectForKey:identifierAsString];
+			}
+			return true;
+		});
+	});
+	
+	auto providers = ar_data_providers_create();
 	ar_data_providers_add_data_provider(providers, world_tracking);
+	
+	ar_session_request_authorization(session, ar_authorization_type_world_sensing,
+		^(ar_authorization_results_t _Nonnull authorization_results,
+		  ar_error_t _Nullable error) {
+		auto error_code = ar_error_get_error_code(error);
+		if (error_code == 0)
+		{
+			ar_authorization_results_enumerate_results(authorization_results, ^bool(ar_authorization_result_t _Nonnull authorization_result) {
+				auto result = ar_authorization_result_get_status(authorization_result);
+				if (result == ar_authorization_status_allowed)
+				{
+					ar_data_providers_add_data_provider(providers, plane_detection);
+				}
+				return true;
+			});
+		}
+	});
+
 	ar_session_run(session, providers);
 	
 	auto configuration = cp_layer_renderer_get_configuration(layerRenderer);
@@ -49,9 +123,11 @@ static CGDataProviderRef con_provider;
 	id<MTLDevice> device = MTLCreateSystemDefaultDevice();
 	id<MTLCommandQueue> commandQueue = [device newCommandQueue];
 	id<MTLLibrary> library = [device newDefaultLibrary];
-	id<MTLFunction> vertexProgram = [library newFunctionWithName:@"vertexMain"];
-	id<MTLFunction> fragmentProgram = [library newFunctionWithName:@"fragmentMain"];
-	MTLVertexDescriptor* vertexDescriptor = [MTLVertexDescriptor new];
+
+	id<MTLFunction> vertexProgram = [library newFunctionWithName:@"planarVertexMain"];
+	id<MTLFunction> fragmentProgram = [library newFunctionWithName:@"planarFragmentMain"];
+
+	auto vertexDescriptor = [MTLVertexDescriptor new];
 	vertexDescriptor.attributes[0].format = MTLVertexFormatFloat4;
 	vertexDescriptor.attributes[0].offset = 0;
 	vertexDescriptor.attributes[0].bufferIndex = 0;
@@ -59,7 +135,8 @@ static CGDataProviderRef con_provider;
 	vertexDescriptor.attributes[1].offset = 16;
 	vertexDescriptor.attributes[1].bufferIndex = 0;
 	vertexDescriptor.layouts[0].stride = 24;
-	MTLRenderPipelineDescriptor* pipelineStateDescriptor = [MTLRenderPipelineDescriptor new];
+
+	auto pipelineStateDescriptor = [MTLRenderPipelineDescriptor new];
 	pipelineStateDescriptor.vertexDescriptor = vertexDescriptor;
 	pipelineStateDescriptor.vertexFunction = vertexProgram;
 	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
@@ -71,24 +148,63 @@ static CGDataProviderRef con_provider;
 	pipelineStateDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
 	pipelineStateDescriptor.depthAttachmentPixelFormat = depthPixelFormat;
 	pipelineStateDescriptor.rasterSampleCount = 1;
+
 	NSError* error = nil;
-	id<MTLRenderPipelineState> pipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	auto planarPipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
 	if (error != nil)
 	{
-		engineStop.stopEngineMessage = @"Rendering pipeline could not be created.";
+		engineStop.stopEngineMessage = @"Planar rendering pipeline could not be created.";
 		engineStop.stopEngine = true;
 		return;
 	}
 	
+	fragmentProgram = [library newFunctionWithName:@"consoleFragmentMain"];
+
+	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
+
+	auto consolePipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Console rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return;
+	}
+
+	auto depthStencilDescriptor = [MTLDepthStencilDescriptor new];
+	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
+	
+	auto consoleDepthStencilState = [device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+	
 	float screenPlaneVertices[] = {
-		-1.6,  1, -2, 1,  0, 0,
-		1.6,  1, -2, 1,  1, 0,
-		-1.6, -1, -2, 1,  0, 1,
-		1.6, -1, -2, 1,  1, 1
+		-1.6,  1,    -2, 1,  0, 0,
+		1.6,   1,    -2, 1,  1, 0,
+		-1.6, -1,    -2, 1,  0, 1,
+		1.6,  -1,    -2, 1,  1, 1
 	};
 	
 	id<MTLBuffer> screenPlane = [device newBufferWithBytes:screenPlaneVertices length:sizeof(screenPlaneVertices) options:0];
 	
+	float consoleTopPlaneVertices[] = {
+		-1.6,  1,    -2, 1,  0, 0,
+		1.6,   1,    -2, 1,  1, 0,
+		-1.6, -0.52, -2, 1,  0, 0.76,
+		1.6,  -0.52, -2, 1,  1, 0.76
+	};
+	
+	id<MTLBuffer> consoleTopPlane = [device newBufferWithBytes:consoleTopPlaneVertices length:sizeof(consoleTopPlaneVertices) options:0];
+	
+	float consoleBottomPlaneVertices[] = {
+		-1.6, -0.88, -2, 1,  0, 0.76,
+		-0.8, -0.88, -2, 1,  1, 0.76,
+		-1.6, -1,    -2, 1,  0, 1,
+		-0.8, -1,    -2, 1,  1, 1
+	};
+	
+	id<MTLBuffer> consoleBottomPlane = [device newBufferWithBytes:consoleBottomPlaneVertices length:sizeof(consoleBottomPlaneVertices) options:0];
+	
+	auto locked_head_pose = matrix_identity_float4x4;
+	locked_head_pose.columns[3][2] = 0.5;
+
 	auto drawables = [NSMutableArray<PerDrawable*> new];
 	
 	while (!engineStop.stopEngine) @autoreleasepool
@@ -107,6 +223,79 @@ static CGDataProviderRef con_provider;
 					auto timing = cp_frame_predict_timing(frame);
 					if (timing != nullptr)
 					{
+						cp_frame_start_update(frame);
+						
+						AppMode mode;
+						{
+							std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
+
+							if (cls.demoplayback || cl.intermission || con_forcedup || scr_disabled_for_loading)
+							{
+								appState.Mode = AppScreenMode;
+							}
+							else
+							{
+								appState.Mode = AppWorldMode;
+							}
+
+							if (appState.PreviousMode != appState.Mode)
+							{
+								if (appState.PreviousMode == AppStartupMode)
+								{
+									appState.DefaultFOV = (int)Cvar_VariableValue("fov");
+									r_load_as_rgba = true;
+									d_skipfade = true;
+								}
+
+								if (appState.Mode == AppScreenMode)
+								{
+									std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
+									D_ResetLists();
+									d_uselists = false;
+									r_skip_fov_check = false;
+									sb_onconsole = false;
+									Cvar_SetValue("joyadvanced", 1);
+									Cvar_SetValue("joyadvaxisx", AxisSide);
+									Cvar_SetValue("joyadvaxisy", AxisForward);
+									Cvar_SetValue("joyadvaxisz", AxisTurn);
+									Cvar_SetValue("joyadvaxisr", AxisLook);
+									Joy_AdvancedUpdate_f();
+									Cvar_SetValue("fov", appState.DefaultFOV);
+									VID_Resize(320.0 / 240.0);
+								}
+								else if (appState.Mode == AppWorldMode)
+								{
+									std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+									D_ResetLists();
+									d_uselists = true;
+									r_skip_fov_check = true;
+									sb_onconsole = true;
+									Cvar_SetValue("joyadvanced", 1);
+									Cvar_SetValue("joyadvaxisx", AxisSide);
+									Cvar_SetValue("joyadvaxisy", AxisForward);
+									Cvar_SetValue("joyadvaxisz", AxisNada);
+									Cvar_SetValue("joyadvaxisr", AxisNada);
+									Joy_AdvancedUpdate_f();
+
+									// The following is to prevent having stuck arrow keys at transition time:
+									Input::AddKeyInput(K_DOWNARROW, false);
+									Input::AddKeyInput(K_UPARROW, false);
+									Input::AddKeyInput(K_LEFTARROW, false);
+									Input::AddKeyInput(K_RIGHTARROW, false);
+
+									Cvar_SetValue("fov", appState.FOV);
+									VID_Resize(1);
+								}
+
+								appState.PreviousMode = appState.Mode;
+							}
+
+							mode = appState.Mode;
+						}
+
+						cp_frame_end_update(frame);
+						
 						cp_time_wait_until(cp_frame_timing_get_optimal_input_time(timing));
 						
 						cp_frame_start_submission(frame);
@@ -123,6 +312,92 @@ static CGDataProviderRef con_provider;
 							if (pose_status == ar_pose_status_success)
 							{
 								cp_drawable_set_ar_pose(drawable, pose);
+								
+								auto head_pose = ar_pose_get_origin_from_device_transform(pose);
+
+								{
+									std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
+									
+									auto quaternion = simd_quaternion(head_pose);
+									
+									auto x = quaternion.vector[0];
+									auto y = quaternion.vector[1];
+									auto z = quaternion.vector[2];
+									auto w = quaternion.vector[3];
+
+									float Q[3] = { x, y, z };
+									float ww = w * w;
+									float Q11 = Q[1] * Q[1];
+									float Q22 = Q[0] * Q[0];
+									float Q33 = Q[2] * Q[2];
+									const float psign = -1;
+									float s2 = psign * 2 * (psign * w * Q[0] + Q[1] * Q[2]);
+									const float singularityRadius = 1e-12;
+									if (s2 < singularityRadius - 1)
+									{
+										appState.Yaw = 0;
+										appState.Pitch = -M_PI / 2;
+										appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
+									}
+									else if (s2 > 1 - singularityRadius)
+									{
+										appState.Yaw = 0;
+										appState.Pitch = M_PI / 2;
+										appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
+									}
+									else
+									{
+										appState.Yaw = -(atan2(-2 * (w * Q[1] - psign * Q[0] * Q[2]), ww + Q33 - Q11 - Q22));
+										appState.Pitch = asin(s2);
+										appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
+									}
+
+									appState.PositionX = head_pose.columns[3][0];
+									appState.PositionY = head_pose.columns[3][1];
+									appState.PositionZ = head_pose.columns[3][2];
+
+									auto playerHeight = 32;
+									if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
+									{
+										auto player = &cl_entities[cl.viewentity];
+										if (player != nullptr)
+										{
+											auto model = player->model;
+											if (model != nullptr)
+											{
+												playerHeight = model->maxs[1] - model->mins[1];
+											}
+										}
+									}
+
+									auto distanceToFloor = 1.6;
+									for(NSString* floorKey in floors)
+									{
+										auto geometry = ar_plane_anchor_get_geometry([floors objectForKey:floorKey]);
+										auto extent = ar_plane_geometry_get_plane_extent(geometry);
+										auto transform = ar_plane_extent_get_plane_anchor_from_plane_extent_transform(extent);
+										
+										distanceToFloor = transform.columns[3][3];
+										NSLog(@"Distance to floor: %f", distanceToFloor);
+
+										// Stop at the first found key in floors:
+										break;
+									}
+
+									appState.Scale = -distanceToFloor / playerHeight;
+
+									float horizontalAngle = 0;
+									for (NSUInteger v = 0; v < viewCount; v++)
+									{
+										cp_view_t view = cp_drawable_get_view(drawable, v);
+										simd_float4 tangents = cp_view_get_tangents(view);
+										
+										horizontalAngle = std::max(horizontalAngle, atan(tangents[0]));
+										horizontalAngle = std::max(horizontalAngle, atan(tangents[1]));
+									}
+									
+									appState.FOV = 2 * horizontalAngle * 180 / M_PI;
+								}
 								
 								id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
 								
@@ -204,8 +479,6 @@ static CGDataProviderRef con_provider;
 										perView.renderPassDescriptor.rasterizationRateMap = cp_drawable_get_rasterization_rate_map(drawable, v);
 									}
 									
-									simd_float4x4 poseTransform = ar_pose_get_origin_from_device_transform(pose);
-									
 									cp_view_t view = cp_drawable_get_view(drawable, v);
 									simd_float4 tangents = cp_view_get_tangents(view);
 									simd_float2 depth_range = cp_drawable_get_depth_range(drawable);
@@ -228,44 +501,93 @@ static CGDataProviderRef con_provider;
 														 projectiveMatrix.columns[3][1],
 														 projectiveMatrix.columns[3][2],
 														 projectiveMatrix.columns[3][3]));
-									
-									auto cameraMatrix = simd_mul(poseTransform, cp_view_get_transform(view));
+
+									auto cameraMatrix = simd_mul(head_pose, cp_view_get_transform(view));
 									auto viewMatrix = simd_inverse(cameraMatrix);
 									
+									if (mode == AppWorldMode)
 									{
-										std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-										
-										[perDrawable.palette.texture replaceRegion:perDrawable.palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable.palette.region.size.width * 4];
-										[perDrawable.screen.texture replaceRegion:perDrawable.screen.region mipmapLevel:0 withBytes:vid_buffer.data() bytesPerRow:perDrawable.screen.region.size.width];
-										[perDrawable.console.texture replaceRegion:perDrawable.console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable.console.region.size.width];
-									}
-									
-									{
-										std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
-										
-										for (auto& directRect : DirectRect::directRects)
 										{
-											auto x = directRect.x * (perDrawable.console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
-											auto y = directRect.y * (perDrawable.console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
+											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 											
-											MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
-											[perDrawable.console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
+											[perDrawable.palette.texture replaceRegion:perDrawable.palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable.palette.region.size.width * 4];
+											[perDrawable.console.texture replaceRegion:perDrawable.console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable.console.region.size.width];
 										}
+
+										{
+											std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+											
+											for (auto& directRect : DirectRect::directRects)
+											{
+												auto x = directRect.x * (perDrawable.console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
+												auto y = directRect.y * (perDrawable.console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
+												
+												MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
+												[perDrawable.console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
+											}
+										}
+
+										id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
+
+										// Render immersive content here. Then:
+										
+										cameraMatrix = simd_mul(locked_head_pose, cp_view_get_transform(view));
+										viewMatrix = simd_inverse(cameraMatrix);
+
+										[commandEncoder setRenderPipelineState:consolePipelineState];
+										[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:1];
+										[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:2];
+										[commandEncoder setFragmentTexture:perDrawable.console.texture atIndex:0];
+										[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:1];
+										[commandEncoder setFragmentSamplerState:perDrawable.console.samplerState atIndex:0];
+										[commandEncoder setFragmentSamplerState:perDrawable.palette.samplerState atIndex:1];
+										[commandEncoder setDepthStencilState:consoleDepthStencilState];
+
+										[commandEncoder setVertexBuffer:consoleTopPlane offset:0 atIndex:0];
+										[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+
+										[commandEncoder setVertexBuffer:consoleBottomPlane offset:0 atIndex:0];
+										[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+
+										[commandEncoder endEncoding];
 									}
-									
-									id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
-									[commandEncoder setRenderPipelineState:pipelineState];
-									[commandEncoder setVertexBuffer:screenPlane offset:0 atIndex:0];
-									[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:1];
-									[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:2];
-									[commandEncoder setFragmentTexture:perDrawable.screen.texture atIndex:0];
-									[commandEncoder setFragmentTexture:perDrawable.console.texture atIndex:1];
-									[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:2];
-									[commandEncoder setFragmentSamplerState:perDrawable.screen.samplerState atIndex:0];
-									[commandEncoder setFragmentSamplerState:perDrawable.console.samplerState atIndex:1];
-									[commandEncoder setFragmentSamplerState:perDrawable.palette.samplerState atIndex:2];
-									[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
-									[commandEncoder endEncoding];
+									else if (mode == AppScreenMode)
+									{
+										{
+											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+											
+											[perDrawable.palette.texture replaceRegion:perDrawable.palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable.palette.region.size.width * 4];
+											[perDrawable.screen.texture replaceRegion:perDrawable.screen.region mipmapLevel:0 withBytes:vid_buffer.data() bytesPerRow:perDrawable.screen.region.size.width];
+											[perDrawable.console.texture replaceRegion:perDrawable.console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable.console.region.size.width];
+										}
+										
+										{
+											std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+											
+											for (auto& directRect : DirectRect::directRects)
+											{
+												auto x = directRect.x * (perDrawable.console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
+												auto y = directRect.y * (perDrawable.console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
+												
+												MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
+												[perDrawable.console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
+											}
+										}
+										
+										id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
+										[commandEncoder setRenderPipelineState:planarPipelineState];
+										[commandEncoder setVertexBuffer:screenPlane offset:0 atIndex:0];
+										[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:1];
+										[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:2];
+										[commandEncoder setFragmentTexture:perDrawable.screen.texture atIndex:0];
+										[commandEncoder setFragmentTexture:perDrawable.console.texture atIndex:1];
+										[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:2];
+										[commandEncoder setFragmentSamplerState:perDrawable.screen.samplerState atIndex:0];
+										[commandEncoder setFragmentSamplerState:perDrawable.console.samplerState atIndex:1];
+										[commandEncoder setFragmentSamplerState:perDrawable.palette.samplerState atIndex:2];
+										[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+										[commandEncoder endEncoding];
+									}
 								}
 								
 								cp_drawable_encode_present(drawable, commandBuffer);

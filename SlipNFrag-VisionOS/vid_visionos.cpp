@@ -82,7 +82,7 @@ void VID_Init(unsigned char *palette)
 	D_InitCaches(surfcache.data(), (int)surfcache.size());
 }
 
-void VID_Resize()
+void VID_Resize(float forced_aspect)
 {
 	D_FlushCaches();
 	vid_buffer.resize(vid_width * vid_height);
@@ -91,7 +91,7 @@ void VID_Resize()
 	vid.conwidth = con_width;
 	vid.height = vid_height;
 	vid.conheight = con_height;
-	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+	vid.aspect = ((float)vid.height / (float)vid.width) * forced_aspect;
 	vid.buffer = vid_buffer.data();
 	vid.conbuffer = con_buffer.data();
 	vid.rowbytes = vid_width;

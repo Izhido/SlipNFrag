@@ -246,6 +246,7 @@
 		287A322B229DBC4D00AE6BFA /* cd_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3226229DBC4D00AE6BFA /* cd_null.cpp */; };
 		287A3251229DC1DC00AE6BFA /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3250229DC1DC00AE6BFA /* common.cpp */; };
 		287A3253229DC1F400AE6BFA /* crc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3252229DC1F400AE6BFA /* crc.cpp */; };
+		287EC31C2A8DC65300B1DFDF /* AppState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287EC31B2A8DC65300B1DFDF /* AppState.cpp */; };
 		2880A4C722C5757F00AF513D /* net_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4C522C5757F00AF513D /* net_macos.cpp */; };
 		2880A4CA22C576E000AF513D /* net_dgrm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4C822C576E000AF513D /* net_dgrm.cpp */; };
 		2880A4CD22C5774300AF513D /* net_udp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4CC22C5774300AF513D /* net_udp.cpp */; };
@@ -545,6 +546,9 @@
 		287A324F229DC0FD00AE6BFA /* r_shared.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = r_shared.h; sourceTree = "<group>"; };
 		287A3250229DC1DC00AE6BFA /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
 		287A3252229DC1F400AE6BFA /* crc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = crc.cpp; sourceTree = "<group>"; };
+		287EC31A2A8DC61600B1DFDF /* AppState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppState.h; sourceTree = "<group>"; };
+		287EC31B2A8DC65300B1DFDF /* AppState.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AppState.cpp; sourceTree = "<group>"; };
+		287EC31D2A8DC68F00B1DFDF /* AppMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppMode.h; sourceTree = "<group>"; };
 		2880A4C522C5757F00AF513D /* net_macos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = net_macos.cpp; sourceTree = "<group>"; };
 		2880A4C822C576E000AF513D /* net_dgrm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = net_dgrm.cpp; sourceTree = "<group>"; };
 		2880A4C922C576E000AF513D /* net_dgrm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = net_dgrm.h; sourceTree = "<group>"; };
@@ -641,6 +645,9 @@
 				2847C6912A8AACFD000A839F /* MainScene.swift */,
 				2811E52A2A6C722300B1498E /* PlayView.swift */,
 				28E9CEC62A8843BB00EDEF92 /* SettingsView.swift */,
+				287EC31B2A8DC65300B1DFDF /* AppState.cpp */,
+				287EC31A2A8DC61600B1DFDF /* AppState.h */,
+				287EC31D2A8DC68F00B1DFDF /* AppMode.h */,
 				289DCF162A8030E8005A4D55 /* DirectRect.cpp */,
 				289DCF152A8030BE005A4D55 /* DirectRect.h */,
 				2803CF592A6E1468006AC44F /* Engine.h */,
@@ -1142,6 +1149,7 @@
 				2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */,
 				2875DC3D2A6CA3DA00EED860 /* r_efrag.cpp in Sources */,
 				2875DC202A6CA3DA00EED860 /* pr_edict.cpp in Sources */,
+				287EC31C2A8DC65300B1DFDF /* AppState.cpp in Sources */,
 				2875DC1D2A6CA3DA00EED860 /* d_polyse.cpp in Sources */,
 				2875DC262A6CA3DA00EED860 /* net_vcr.cpp in Sources */,
 				2875DC342A6CA3DA00EED860 /* host_cmd.cpp in Sources */,
