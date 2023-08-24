@@ -19,7 +19,11 @@
 @property (nonatomic, strong) Texture* screen;
 
 @property (nonatomic, strong) Texture* console;
-	
+
+@property (nonatomic, strong) id<MTLBuffer> vertices;
+
+@property (nonatomic, strong) id<MTLBuffer> indices;
+
 @property (nonatomic, strong) NSMutableDictionary<NSNumber*, PerView*>* views;
 
 @end

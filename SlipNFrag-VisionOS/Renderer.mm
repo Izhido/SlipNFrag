@@ -245,16 +245,6 @@ static CGDataProviderRef con_provider;
 
 	auto drawables = [NSMutableArray<PerDrawable*> new];
 	
-	std::unordered_map<NSUInteger, NSUInteger> verticesIndex;
-	auto verticesCache = [NSMutableArray<id<MTLBuffer>> new];
-
-	id<MTLBuffer> vertices;
-
-	std::unordered_map<NSUInteger, NSUInteger> indicesIndex;
-	auto indicesCache = [NSMutableArray<id<MTLBuffer>> new];
-
-	id<MTLBuffer> indices;
-
 	std::unordered_map<void*, NSUInteger> textureIndex;
 	auto textureCache = [NSMutableArray<Texture*> new];
 
@@ -355,15 +345,11 @@ static CGDataProviderRef con_provider;
 							textureIndex.clear();
 							[textureCache removeAllObjects];
 
-							indices = nil;
-							
-							indicesIndex.clear();
-							[indicesCache removeAllObjects];
-
-							vertices = nil;
-							
-							verticesIndex.clear();
-							[verticesCache removeAllObjects];
+							for (NSUInteger d = 0; d < drawables.count; d++)
+							{
+								drawables[d].indices = nil;
+								drawables[d].vertices = nil;
+							}
 							
 							clearCount = host_clearcount;
 						}
@@ -478,14 +464,12 @@ static CGDataProviderRef con_provider;
 								for (NSUInteger v = 0; v < viewCount; v++)
 								{
 									PerDrawable* perDrawable = nil;
-									NSUInteger perDrawableIndex = 0;
 									
 									for (NSUInteger d = 0; d < drawables.count; d++)
 									{
 										if (drawables[d].drawable == drawable)
 										{
 											perDrawable = drawables[d];
-											perDrawableIndex = d;
 											break;
 										}
 									}
@@ -494,7 +478,6 @@ static CGDataProviderRef con_provider;
 									{
 										perDrawable = [PerDrawable new];
 										perDrawable.drawable = drawable;
-										perDrawableIndex = drawables.count;
 										[drawables addObject:perDrawable];
 										
 										{
@@ -656,50 +639,18 @@ static CGDataProviderRef con_provider;
 											
 											if (lastSurfaceEntry >= 0)
 											{
-												auto verticesEntry = verticesIndex.find(perDrawableIndex);
-												if (verticesEntry == verticesIndex.end())
+												if (perDrawable.vertices == nil || perDrawable.vertices.length < verticesSize || perDrawable.vertices.length > verticesSize / 2)
 												{
-													vertices = [device newBufferWithLength:verticesSize * 3 / 2 options:0];
-													
-													verticesIndex.insert({perDrawableIndex, verticesCache.count});
-													
-													[verticesCache addObject:vertices];
-												}
-												else
-												{
-													vertices = verticesCache[verticesEntry->second];
-													
-													if (vertices == nil || vertices.length < verticesSize || vertices.length > verticesSize / 2)
-													{
-														vertices = [device newBufferWithLength:verticesSize * 3 / 2 options:0];
-														
-														verticesCache[verticesEntry->second] = vertices;
-													}
+													perDrawable.vertices = [device newBufferWithLength:verticesSize * 3 / 2 options:0];
 												}
 												
-												auto indicesEntry = indicesIndex.find(perDrawableIndex);
-												if (indicesEntry == indicesIndex.end())
+												if (perDrawable.indices == nil || perDrawable.indices.length < indicesSize || perDrawable.indices.length > indicesSize / 2)
 												{
-													indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
-													
-													indicesIndex.insert({perDrawableIndex, indicesCache.count});
-													
-													[indicesCache addObject:indices];
-												}
-												else
-												{
-													indices = indicesCache[indicesEntry->second];
-													
-													if (indices == nil || indices.length < indicesSize || indices.length > indicesSize / 2)
-													{
-														indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
-														
-														indicesCache[verticesEntry->second] = indices;
-													}
+													perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
 												}
 												
-												auto verticesTarget = (float*)vertices.contents;
-												auto indicesTarget = (uint32_t*)indices.contents;
+												auto verticesTarget = (float*)perDrawable.vertices.contents;
+												auto indicesTarget = (uint32_t*)perDrawable.indices.contents;
 												
 												uint32_t indexBase = 0;
 												
@@ -833,7 +784,7 @@ static CGDataProviderRef con_provider;
 											[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:3];
 											[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:1];
 											[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
-											[commandEncoder setVertexBuffer:vertices offset:0 atIndex:0];
+											[commandEncoder setVertexBuffer:perDrawable.vertices offset:0 atIndex:0];
 
 											NSUInteger indexBase = 0;
 											
@@ -846,7 +797,7 @@ static CGDataProviderRef con_provider;
 												{
 													[commandEncoder setFragmentTexture:textureCache[texture.second.texture].texture atIndex:0];
 													[commandEncoder setFragmentSamplerState:surfaceSamplerState atIndex:0];
-													[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:(NSUInteger)texture.second.indices indexType:MTLIndexTypeUInt32 indexBuffer:indices indexBufferOffset:indexBase];
+													[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:(NSUInteger)texture.second.indices indexType:MTLIndexTypeUInt32 indexBuffer:perDrawable.indices indexBufferOffset:indexBase];
 													
 													indexBase += (NSUInteger)texture.second.indices * sizeof(uint32_t);
 												}
