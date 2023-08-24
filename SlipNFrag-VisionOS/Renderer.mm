@@ -18,6 +18,7 @@
 #import "r_local.h"
 #import "d_lists.h"
 #import "Input.h"
+#import "SortedSurfaceLightmap.h"
 
 @interface Renderer ()
 
@@ -170,11 +171,48 @@ static CGDataProviderRef con_provider;
 		return;
 	}
 
+	vertexDescriptor = [MTLVertexDescriptor new];
+	vertexDescriptor.attributes[0].format = MTLVertexFormatFloat3;
+	vertexDescriptor.attributes[0].offset = 0;
+	vertexDescriptor.attributes[0].bufferIndex = 0;
+	vertexDescriptor.layouts[0].stride = 12;
+
+	pipelineStateDescriptor.vertexDescriptor = vertexDescriptor;
+
+	vertexProgram = [library newFunctionWithName:@"surfaceVertexMain"];
+	fragmentProgram = [library newFunctionWithName:@"surfaceFragmentMain"];
+
+	pipelineStateDescriptor.vertexFunction = vertexProgram;
+	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
+
+	auto surfacePipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Surface rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return;
+	}
+
 	auto depthStencilDescriptor = [MTLDepthStencilDescriptor new];
+	depthStencilDescriptor.depthWriteEnabled = false;
 	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
 	
 	auto consoleDepthStencilState = [device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
 	
+	depthStencilDescriptor.depthWriteEnabled = true;
+	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionGreater;
+
+	auto surfaceDepthStencilState = [device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+
+	auto samplerDescriptor = [MTLSamplerDescriptor new];
+
+	auto planarSamplerState = [device newSamplerStateWithDescriptor:samplerDescriptor];
+
+	samplerDescriptor.sAddressMode = MTLSamplerAddressModeRepeat;
+	samplerDescriptor.tAddressMode = MTLSamplerAddressModeRepeat;
+
+	auto surfaceSamplerState = [device newSamplerStateWithDescriptor:samplerDescriptor];
+
 	float screenPlaneVertices[] = {
 		-1.6,  1,    -2, 1,  0, 0,
 		1.6,   1,    -2, 1,  1, 0,
@@ -207,6 +245,24 @@ static CGDataProviderRef con_provider;
 
 	auto drawables = [NSMutableArray<PerDrawable*> new];
 	
+	std::unordered_map<NSUInteger, NSUInteger> verticesIndex;
+	auto verticesCache = [NSMutableArray<id<MTLBuffer>> new];
+
+	id<MTLBuffer> vertices;
+
+	std::unordered_map<NSUInteger, NSUInteger> indicesIndex;
+	auto indicesCache = [NSMutableArray<id<MTLBuffer>> new];
+
+	id<MTLBuffer> indices;
+
+	std::unordered_map<void*, NSUInteger> textureIndex;
+	auto textureCache = [NSMutableArray<Texture*> new];
+
+	auto clearCount = 0;
+	
+	simd_float4x4 vertexTransformMatrix { };
+	vertexTransformMatrix.columns[3][3] = 1;
+
 	while (!engineStop.stopEngine) @autoreleasepool
 	{
 		switch (cp_layer_renderer_get_state(layerRenderer))
@@ -292,6 +348,24 @@ static CGDataProviderRef con_provider;
 							}
 
 							mode = appState.Mode;
+						}
+
+						if (clearCount != host_clearcount)
+						{
+							textureIndex.clear();
+							[textureCache removeAllObjects];
+
+							indices = nil;
+							
+							indicesIndex.clear();
+							[indicesCache removeAllObjects];
+
+							vertices = nil;
+							
+							verticesIndex.clear();
+							[verticesCache removeAllObjects];
+							
+							clearCount = host_clearcount;
 						}
 
 						cp_frame_end_update(frame);
@@ -404,12 +478,14 @@ static CGDataProviderRef con_provider;
 								for (NSUInteger v = 0; v < viewCount; v++)
 								{
 									PerDrawable* perDrawable = nil;
+									NSUInteger perDrawableIndex = 0;
 									
 									for (NSUInteger d = 0; d < drawables.count; d++)
 									{
 										if (drawables[d].drawable == drawable)
 										{
 											perDrawable = drawables[d];
+											perDrawableIndex = d;
 											break;
 										}
 									}
@@ -418,6 +494,7 @@ static CGDataProviderRef con_provider;
 									{
 										perDrawable = [PerDrawable new];
 										perDrawable.drawable = drawable;
+										perDrawableIndex = drawables.count;
 										[drawables addObject:perDrawable];
 										
 										{
@@ -429,8 +506,6 @@ static CGDataProviderRef con_provider;
 											perDrawable.palette.descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm_sRGB;
 											perDrawable.palette.descriptor.width = 256;
 											perDrawable.palette.texture = [device newTextureWithDescriptor:perDrawable.palette.descriptor];
-											perDrawable.palette.samplerDescriptor = [MTLSamplerDescriptor new];
-											perDrawable.palette.samplerState = [device newSamplerStateWithDescriptor:perDrawable.palette.samplerDescriptor];
 											perDrawable.palette.region = MTLRegionMake1D(0, 256);
 											
 											perDrawable.screen = [Texture new];
@@ -439,8 +514,6 @@ static CGDataProviderRef con_provider;
 											perDrawable.screen.descriptor.width = vid_width;
 											perDrawable.screen.descriptor.height = vid_height;
 											perDrawable.screen.texture = [device newTextureWithDescriptor:perDrawable.screen.descriptor];
-											perDrawable.screen.samplerDescriptor = [MTLSamplerDescriptor new];
-											perDrawable.screen.samplerState = [device newSamplerStateWithDescriptor:perDrawable.screen.samplerDescriptor];
 											perDrawable.screen.region = MTLRegionMake2D(0, 0, vid_width, vid_height);
 											
 											perDrawable.console = [Texture new];
@@ -449,8 +522,6 @@ static CGDataProviderRef con_provider;
 											perDrawable.console.descriptor.width = con_width;
 											perDrawable.console.descriptor.height = con_height;
 											perDrawable.console.texture = [device newTextureWithDescriptor:perDrawable.console.descriptor];
-											perDrawable.console.samplerDescriptor = [MTLSamplerDescriptor new];
-											perDrawable.console.samplerState = [device newSamplerStateWithDescriptor:perDrawable.console.samplerDescriptor];
 											perDrawable.console.region = MTLRegionMake2D(0, 0, con_width, con_height);
 										}
 									}
@@ -475,6 +546,7 @@ static CGDataProviderRef con_provider;
 										perView.renderPassDescriptor.depthAttachment.texture = cp_drawable_get_depth_texture(drawable, v);
 										perView.renderPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
 										perView.renderPassDescriptor.depthAttachment.storeAction = MTLStoreActionStore;
+										perView.renderPassDescriptor.depthAttachment.clearDepth = 0;
 										perView.renderPassDescriptor.renderTargetArrayLength = viewCount;
 										perView.renderPassDescriptor.rasterizationRateMap = cp_drawable_get_rasterization_rate_map(drawable, v);
 									}
@@ -503,45 +575,295 @@ static CGDataProviderRef con_provider;
 														 projectiveMatrix.columns[3][3]));
 
 									auto cameraMatrix = simd_mul(head_pose, cp_view_get_transform(view));
-									auto viewMatrix = simd_inverse(cameraMatrix);
+									auto viewMatrix = simd_transpose(cameraMatrix);
 									
 									if (mode == AppWorldMode)
 									{
+										std::unordered_map<void*, SortedSurfaceLightmap> sortedSurfaces;
+
+										int lastSurfaceEntry = -1;
+										
 										{
 											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 											
 											[perDrawable.palette.texture replaceRegion:perDrawable.palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable.palette.region.size.width * 4];
 											[perDrawable.console.texture replaceRegion:perDrawable.console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable.console.region.size.width];
-										}
 
-										{
-											std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
-											
-											for (auto& directRect : DirectRect::directRects)
 											{
-												auto x = directRect.x * (perDrawable.console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
-												auto y = directRect.y * (perDrawable.console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
+												std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
 												
-												MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
-												[perDrawable.console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
+												for (auto& directRect : DirectRect::directRects)
+												{
+													auto x = directRect.x * (perDrawable.console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
+													auto y = directRect.y * (perDrawable.console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
+													
+													MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
+													[perDrawable.console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
+												}
+											}
+
+											vertexTransformMatrix.columns[0][0] = -appState.Scale;
+											vertexTransformMatrix.columns[1][2] = appState.Scale;
+											vertexTransformMatrix.columns[2][1] = -appState.Scale;
+											vertexTransformMatrix.columns[3][0] = d_lists.vieworg0 * appState.Scale;
+											vertexTransformMatrix.columns[3][1] = d_lists.vieworg2 * appState.Scale;
+											vertexTransformMatrix.columns[3][2] = -d_lists.vieworg1 * appState.Scale;
+
+											NSUInteger verticesSize = 0;
+											NSUInteger indicesSize = 0;
+											
+											for (auto s = 0; s <= d_lists.last_surface; s++)
+											{
+												auto& surface = d_lists.surfaces[s];
+												auto face = (msurface_t*)surface.face;
+
+												auto& lightmap = sortedSurfaces[surface.face];
+												
+												if (!lightmap.set)
+												{
+													auto texinfo = face->texinfo;
+
+													lightmap.vecs[0][0] = texinfo->vecs[0][0];
+													lightmap.vecs[0][1] = texinfo->vecs[0][1];
+													lightmap.vecs[0][2] = texinfo->vecs[0][2];
+													lightmap.vecs[0][3] = texinfo->vecs[0][3];
+													lightmap.vecs[1][0] = texinfo->vecs[1][0];
+													lightmap.vecs[1][1] = texinfo->vecs[1][1];
+													lightmap.vecs[1][2] = texinfo->vecs[1][2];
+													lightmap.vecs[1][3] = texinfo->vecs[1][3];
+													
+													lightmap.size[0] = texinfo->texture->width;
+													lightmap.size[1] = texinfo->texture->height;
+													
+													lightmap.set = true;
+												}
+
+												auto& texture = lightmap.textures[surface.data];
+												
+												texture.entries.push_back(s);
+												
+												auto numedges = face->numedges;
+												
+												auto indices = (numedges - 2) * 3;
+
+												texture.indices += indices;
+												
+												verticesSize += numedges * 3 * sizeof(float);
+												indicesSize += indices * sizeof(uint32_t);
+											}
+											
+											lastSurfaceEntry = d_lists.last_surface;
+											
+											if (lastSurfaceEntry >= 0)
+											{
+												auto verticesEntry = verticesIndex.find(perDrawableIndex);
+												if (verticesEntry == verticesIndex.end())
+												{
+													vertices = [device newBufferWithLength:verticesSize * 3 / 2 options:0];
+													
+													verticesIndex.insert({perDrawableIndex, verticesCache.count});
+													
+													[verticesCache addObject:vertices];
+												}
+												else
+												{
+													vertices = verticesCache[verticesEntry->second];
+													
+													if (vertices == nil || vertices.length < verticesSize || vertices.length > verticesSize / 2)
+													{
+														vertices = [device newBufferWithLength:verticesSize * 3 / 2 options:0];
+														
+														verticesCache[verticesEntry->second] = vertices;
+													}
+												}
+												
+												auto indicesEntry = indicesIndex.find(perDrawableIndex);
+												if (indicesEntry == indicesIndex.end())
+												{
+													indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
+													
+													indicesIndex.insert({perDrawableIndex, indicesCache.count});
+													
+													[indicesCache addObject:indices];
+												}
+												else
+												{
+													indices = indicesCache[indicesEntry->second];
+													
+													if (indices == nil || indices.length < indicesSize || indices.length > indicesSize / 2)
+													{
+														indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
+														
+														indicesCache[verticesEntry->second] = indices;
+													}
+												}
+												
+												auto verticesTarget = (float*)vertices.contents;
+												auto indicesTarget = (uint32_t*)indices.contents;
+												
+												uint32_t indexBase = 0;
+												
+												for (auto& lightmap : sortedSurfaces)
+												{
+													for (auto& texture : lightmap.second.textures)
+													{
+														for (auto s : texture.second.entries)
+														{
+															auto& surface = d_lists.surfaces[s];
+															auto face = (msurface_t*)surface.face;
+															auto model = (model_t*)surface.model;
+															auto edge = model->surfedges[face->firstedge];
+															unsigned int index;
+															if (edge >= 0)
+															{
+																index = model->edges[edge].v[0];
+															}
+															else
+															{
+																index = model->edges[-edge].v[1];
+															}
+															auto vertexes = (float*)model->vertexes;
+															auto source = vertexes + index * 3;
+															*verticesTarget++ = *source++;
+															*verticesTarget++ = *source++;
+															*verticesTarget++ = *source;
+															auto next_front = 0;
+															auto next_back = face->numedges;
+															auto use_back = false;
+															for (auto j = 1; j < face->numedges; j++)
+															{
+																if (use_back)
+																{
+																	next_back--;
+																	edge = model->surfedges[face->firstedge + next_back];
+																}
+																else
+																{
+																	next_front++;
+																	edge = model->surfedges[face->firstedge + next_front];
+																}
+																use_back = !use_back;
+																if (edge >= 0)
+																{
+																	index = model->edges[edge].v[0];
+																}
+																else
+																{
+																	index = model->edges[-edge].v[1];
+																}
+																source = vertexes + index * 3;
+																*verticesTarget++ = *source++;
+																*verticesTarget++ = *source++;
+																*verticesTarget++ = *source;
+															}
+															
+															*indicesTarget++ = indexBase++;
+															*indicesTarget++ = indexBase++;
+															*indicesTarget++ = indexBase++;
+															auto revert = true;
+															for (auto j = 1; j < face->numedges - 2; j++)
+															{
+																if (revert)
+																{
+																	*indicesTarget++ = indexBase;
+																	*indicesTarget++ = indexBase - 1;
+																	*indicesTarget++ = indexBase - 2;
+																}
+																else
+																{
+																	*indicesTarget++ = indexBase - 2;
+																	*indicesTarget++ = indexBase - 1;
+																	*indicesTarget++ = indexBase;
+																}
+																indexBase++;
+																revert = !revert;
+															}
+															
+															if (!texture.second.set)
+															{
+																auto entry = textureIndex.find(surface.data);
+																if (entry == textureIndex.end())
+																{
+																	auto newTexture = [Texture new];
+																	newTexture.descriptor = [MTLTextureDescriptor new];
+																	newTexture.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
+																	newTexture.descriptor.width = surface.width;
+																	newTexture.descriptor.height = surface.height;
+																	newTexture.descriptor.mipmapLevelCount = surface.mips;
+																	newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
+																	newTexture.region = MTLRegionMake2D(0, 0, surface.width, surface.height);
+																	
+																	auto data = (unsigned char*)surface.data;
+																	auto region = newTexture.region;
+																	for (auto m = 0; m < surface.mips; m++)
+																	{
+																		[newTexture.texture replaceRegion:region mipmapLevel:m withBytes:data bytesPerRow:region.size.width];
+																		data += region.size.width * region.size.height;
+																		region.size.width /= 2;
+																		region.size.height /= 2;
+																	}
+
+																	textureIndex.insert({surface.data, textureCache.count});
+																	
+																	texture.second.texture = (uint32_t)textureCache.count;
+																	
+																	[textureCache addObject:newTexture];
+																}
+																else
+																{
+																	texture.second.texture = (uint32_t)entry->second;
+																}
+
+																texture.second.set = true;
+															}
+														}
+													}
+												}
 											}
 										}
 
 										id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
 
-										// Render immersive content here. Then:
-										
+										if (lastSurfaceEntry >= 0)
+										{
+											[commandEncoder setRenderPipelineState:surfacePipelineState];
+											[commandEncoder setDepthStencilState:surfaceDepthStencilState];
+											[commandEncoder setVertexBytes:&vertexTransformMatrix length:sizeof(vertexTransformMatrix) atIndex:1];
+											[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:2];
+											[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:3];
+											[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:1];
+											[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
+											[commandEncoder setVertexBuffer:vertices offset:0 atIndex:0];
+
+											NSUInteger indexBase = 0;
+											
+											for (auto& lightmap : sortedSurfaces)
+											{
+												[commandEncoder setVertexBytes:&lightmap.second.vecs length:sizeof(lightmap.second.vecs) atIndex:4];
+												[commandEncoder setVertexBytes:&lightmap.second.size length:sizeof(lightmap.second.size) atIndex:5];
+
+												for (auto& texture : lightmap.second.textures)
+												{
+													[commandEncoder setFragmentTexture:textureCache[texture.second.texture].texture atIndex:0];
+													[commandEncoder setFragmentSamplerState:surfaceSamplerState atIndex:0];
+													[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:(NSUInteger)texture.second.indices indexType:MTLIndexTypeUInt32 indexBuffer:indices indexBufferOffset:indexBase];
+													
+													indexBase += (NSUInteger)texture.second.indices * sizeof(uint32_t);
+												}
+											}
+										}
+
 										cameraMatrix = simd_mul(locked_head_pose, cp_view_get_transform(view));
-										viewMatrix = simd_inverse(cameraMatrix);
+										viewMatrix = simd_transpose(cameraMatrix);
 
 										[commandEncoder setRenderPipelineState:consolePipelineState];
+										[commandEncoder setDepthStencilState:consoleDepthStencilState];
 										[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:1];
 										[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:2];
 										[commandEncoder setFragmentTexture:perDrawable.console.texture atIndex:0];
 										[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:1];
-										[commandEncoder setFragmentSamplerState:perDrawable.console.samplerState atIndex:0];
-										[commandEncoder setFragmentSamplerState:perDrawable.palette.samplerState atIndex:1];
-										[commandEncoder setDepthStencilState:consoleDepthStencilState];
+										[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:0];
+										[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
 
 										[commandEncoder setVertexBuffer:consoleTopPlane offset:0 atIndex:0];
 										[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
@@ -582,9 +904,9 @@ static CGDataProviderRef con_provider;
 										[commandEncoder setFragmentTexture:perDrawable.screen.texture atIndex:0];
 										[commandEncoder setFragmentTexture:perDrawable.console.texture atIndex:1];
 										[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:2];
-										[commandEncoder setFragmentSamplerState:perDrawable.screen.samplerState atIndex:0];
-										[commandEncoder setFragmentSamplerState:perDrawable.console.samplerState atIndex:1];
-										[commandEncoder setFragmentSamplerState:perDrawable.palette.samplerState atIndex:2];
+										[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:0];
+										[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
+										[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:2];
 										[commandEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
 										[commandEncoder endEncoding];
 									}

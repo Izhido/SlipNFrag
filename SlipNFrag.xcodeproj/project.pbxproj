@@ -473,6 +473,8 @@
 		283D4BED229E146600D68A47 /* pr_cmds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pr_cmds.cpp; sourceTree = "<group>"; };
 		283D4BEF229E168300D68A47 /* sv_move.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sv_move.cpp; sourceTree = "<group>"; };
 		283D4BF1229E16D400D68A47 /* r_vars.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = r_vars.cpp; sourceTree = "<group>"; };
+		284557442A95B9D700A9D7B2 /* SortedSurfaceLightmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedSurfaceLightmap.h; sourceTree = "<group>"; };
+		284557452A95BA7C00A9D7B2 /* SortedSurfaceTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedSurfaceTexture.h; sourceTree = "<group>"; };
 		2847C68D2A8A7930000A839F /* EngineMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineMode.swift; sourceTree = "<group>"; };
 		2847C68F2A8A7966000A839F /* GameMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMode.swift; sourceTree = "<group>"; };
 		2847C6912A8AACFD000A839F /* MainScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScene.swift; sourceTree = "<group>"; };
@@ -664,6 +666,8 @@
 				288AA3CF2A8C8C62008B3C91 /* PerView.mm */,
 				28AF30FD2A7725230072610B /* Renderer.h */,
 				28AF30FE2A77262E0072610B /* Renderer.mm */,
+				284557442A95B9D700A9D7B2 /* SortedSurfaceLightmap.h */,
+				284557452A95BA7C00A9D7B2 /* SortedSurfaceTexture.h */,
 				28734C132A72E1D900B32DE5 /* Texture.h */,
 				288AA3CD2A8C8BE6008B3C91 /* Texture.mm */,
 				2811E5302A6C722700B1498E /* Assets.xcassets */,

@@ -14,10 +14,6 @@
 
 @property (nonatomic, strong) id<MTLTexture> texture;
 
-@property (nonatomic, strong) MTLSamplerDescriptor* samplerDescriptor;
-
-@property (nonatomic, strong) id<MTLSamplerState> samplerState;
-
 @property (nonatomic, assign) MTLRegion region;
 
 @end
