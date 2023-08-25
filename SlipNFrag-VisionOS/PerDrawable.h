@@ -7,7 +7,7 @@
 //
 
 #import <CompositorServices/CompositorServices.h>
-#import "Texture.h"
+#import "Lightmap.h"
 #import "PerView.h"
 
 @interface PerDrawable : NSObject
@@ -16,6 +16,8 @@
 	
 @property (nonatomic, strong) Texture* palette;
 
+@property (nonatomic, strong) Texture* colormap;
+
 @property (nonatomic, strong) Texture* screen;
 
 @property (nonatomic, strong) Texture* console;
@@ -23,6 +25,8 @@
 @property (nonatomic, strong) id<MTLBuffer> vertices;
 
 @property (nonatomic, strong) id<MTLBuffer> indices;
+
+@property (nonatomic, strong) NSMutableArray<Lightmap*>* lightmapCache;
 
 @property (nonatomic, strong) NSMutableDictionary<NSNumber*, PerView*>* views;
 

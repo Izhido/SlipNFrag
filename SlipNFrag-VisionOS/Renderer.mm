@@ -210,8 +210,17 @@ static CGDataProviderRef con_provider;
 
 	samplerDescriptor.sAddressMode = MTLSamplerAddressModeRepeat;
 	samplerDescriptor.tAddressMode = MTLSamplerAddressModeRepeat;
+	samplerDescriptor.mipFilter = MTLSamplerMipFilterNearest;
 
-	auto surfaceSamplerState = [device newSamplerStateWithDescriptor:samplerDescriptor];
+	auto textureSamplerState = [device newSamplerStateWithDescriptor:samplerDescriptor];
+
+	samplerDescriptor.sAddressMode = MTLSamplerAddressModeClampToEdge;
+	samplerDescriptor.tAddressMode = MTLSamplerAddressModeClampToEdge;
+	samplerDescriptor.minFilter = MTLSamplerMinMagFilterLinear;
+	samplerDescriptor.magFilter = MTLSamplerMinMagFilterLinear;
+	samplerDescriptor.mipFilter = MTLSamplerMipFilterNotMipmapped;
+
+	auto lightmapSamplerState = [device newSamplerStateWithDescriptor:samplerDescriptor];
 
 	float screenPlaneVertices[] = {
 		-1.6,  1,    -2, 1,  0, 0,
@@ -244,6 +253,8 @@ static CGDataProviderRef con_provider;
 	locked_head_pose.columns[3][2] = 0.5;
 
 	auto drawables = [NSMutableArray<PerDrawable*> new];
+
+	std::vector<std::unordered_map<void*, NSUInteger>> lightmapIndices;
 	
 	std::unordered_map<void*, NSUInteger> textureIndex;
 	auto textureCache = [NSMutableArray<Texture*> new];
@@ -345,8 +356,14 @@ static CGDataProviderRef con_provider;
 							textureIndex.clear();
 							[textureCache removeAllObjects];
 
+							for (size_t i = 0; i < lightmapIndices.size(); i++)
+							{
+								lightmapIndices[i].clear();
+							}
+
 							for (NSUInteger d = 0; d < drawables.count; d++)
 							{
+								[drawables[d].lightmapCache removeAllObjects];
 								drawables[d].indices = nil;
 								drawables[d].vertices = nil;
 							}
@@ -464,12 +481,15 @@ static CGDataProviderRef con_provider;
 								for (NSUInteger v = 0; v < viewCount; v++)
 								{
 									PerDrawable* perDrawable = nil;
-									
+									std::unordered_map<void*, NSUInteger>* lightmapIndex = nullptr;
+
 									for (NSUInteger d = 0; d < drawables.count; d++)
 									{
 										if (drawables[d].drawable == drawable)
 										{
 											perDrawable = drawables[d];
+											lightmapIndex = &lightmapIndices[d];
+
 											break;
 										}
 									}
@@ -478,7 +498,11 @@ static CGDataProviderRef con_provider;
 									{
 										perDrawable = [PerDrawable new];
 										perDrawable.drawable = drawable;
+										perDrawable.lightmapCache = [NSMutableArray<Lightmap*> new];
 										[drawables addObject:perDrawable];
+										
+										lightmapIndices.emplace_back();
+										lightmapIndex = &lightmapIndices.back();
 										
 										{
 											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -490,6 +514,14 @@ static CGDataProviderRef con_provider;
 											perDrawable.palette.descriptor.width = 256;
 											perDrawable.palette.texture = [device newTextureWithDescriptor:perDrawable.palette.descriptor];
 											perDrawable.palette.region = MTLRegionMake1D(0, 256);
+											
+											perDrawable.colormap = [Texture new];
+											perDrawable.colormap.descriptor = [MTLTextureDescriptor new];
+											perDrawable.colormap.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
+											perDrawable.colormap.descriptor.width = 256;
+											perDrawable.colormap.descriptor.height = 64;
+											perDrawable.colormap.texture = [device newTextureWithDescriptor:perDrawable.colormap.descriptor];
+											perDrawable.colormap.region = MTLRegionMake2D(0, 0, 256, 64);
 											
 											perDrawable.screen = [Texture new];
 											perDrawable.screen.descriptor = [MTLTextureDescriptor new];
@@ -569,7 +601,8 @@ static CGDataProviderRef con_provider;
 										{
 											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 											
-											[perDrawable.palette.texture replaceRegion:perDrawable.palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable.palette.region.size.width * 4];
+											[perDrawable.palette.texture replaceRegion:perDrawable.palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable.palette.region.size.width * sizeof(unsigned)];
+											[perDrawable.colormap.texture replaceRegion:perDrawable.colormap.region mipmapLevel:0 withBytes:host_colormap.data() bytesPerRow:perDrawable.colormap.region.size.width];
 											[perDrawable.console.texture replaceRegion:perDrawable.console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable.console.region.size.width];
 
 											{
@@ -602,23 +635,29 @@ static CGDataProviderRef con_provider;
 
 												auto& lightmap = sortedSurfaces[surface.face];
 												
-												if (!lightmap.set)
+												if (!lightmap.texturePositionSet)
 												{
 													auto texinfo = face->texinfo;
 
-													lightmap.vecs[0][0] = texinfo->vecs[0][0];
-													lightmap.vecs[0][1] = texinfo->vecs[0][1];
-													lightmap.vecs[0][2] = texinfo->vecs[0][2];
-													lightmap.vecs[0][3] = texinfo->vecs[0][3];
-													lightmap.vecs[1][0] = texinfo->vecs[1][0];
-													lightmap.vecs[1][1] = texinfo->vecs[1][1];
-													lightmap.vecs[1][2] = texinfo->vecs[1][2];
-													lightmap.vecs[1][3] = texinfo->vecs[1][3];
+													lightmap.texturePosition[0] = texinfo->vecs[0][0];
+													lightmap.texturePosition[1] = texinfo->vecs[0][1];
+													lightmap.texturePosition[2] = texinfo->vecs[0][2];
+													lightmap.texturePosition[3] = texinfo->vecs[0][3];
+													lightmap.texturePosition[4] = texinfo->vecs[1][0];
+													lightmap.texturePosition[5] = texinfo->vecs[1][1];
+													lightmap.texturePosition[6] = texinfo->vecs[1][2];
+													lightmap.texturePosition[7] = texinfo->vecs[1][3];
 													
-													lightmap.size[0] = texinfo->texture->width;
-													lightmap.size[1] = texinfo->texture->height;
+													lightmap.texturePosition[8] = face->texturemins[0];
+													lightmap.texturePosition[9] = face->texturemins[1];
+
+													lightmap.texturePosition[10] = face->extents[0];
+													lightmap.texturePosition[11] = face->extents[1];
+
+													lightmap.texturePosition[12] = texinfo->texture->width;
+													lightmap.texturePosition[13] = texinfo->texture->height;
 													
-													lightmap.set = true;
+													lightmap.texturePositionSet = true;
 												}
 
 												auto& texture = lightmap.textures[surface.data];
@@ -730,6 +769,43 @@ static CGDataProviderRef con_provider;
 																revert = !revert;
 															}
 															
+															if (!lightmap.second.lightmapSet)
+															{
+																auto entry = lightmapIndex->find(surface.face);
+																if (entry == lightmapIndex->end())
+																{
+																	auto newLightmap = [Lightmap new];
+																	newLightmap.descriptor = [MTLTextureDescriptor new];
+																	newLightmap.descriptor.pixelFormat = MTLPixelFormatR16Unorm;
+																	newLightmap.descriptor.width = surface.lightmap_width;
+																	newLightmap.descriptor.height = surface.lightmap_height;
+																	newLightmap.texture = [device newTextureWithDescriptor:newLightmap.descriptor];
+																	newLightmap.region = MTLRegionMake2D(0, 0, surface.lightmap_width, surface.lightmap_height);
+																	
+																	newLightmap.createdCount = surface.created;
+
+																	[newLightmap.texture replaceRegion:newLightmap.region mipmapLevel:0 withBytes:d_lists.lightmap_texels.data() + surface.lightmap_texels bytesPerRow:newLightmap.region.size.width * sizeof(uint16_t)];
+
+																	lightmapIndex->insert({surface.face, perDrawable.lightmapCache.count});
+																	
+																	lightmap.second.lightmap = (uint32_t)perDrawable.lightmapCache.count;
+																	
+																	[perDrawable.lightmapCache addObject:newLightmap];
+																}
+																else
+																{
+																	lightmap.second.lightmap = (uint32_t)entry->second;
+
+																	auto existingLightmap = perDrawable.lightmapCache[lightmap.second.lightmap];
+																	if (existingLightmap.createdCount != surface.created)
+																	{
+																		[existingLightmap.texture replaceRegion:existingLightmap.region mipmapLevel:0 withBytes:d_lists.lightmap_texels.data() + surface.lightmap_texels bytesPerRow:existingLightmap.region.size.width * sizeof(uint16_t)];
+																	}
+																}
+
+																lightmap.second.lightmapSet = true;
+															}
+
 															if (!texture.second.set)
 															{
 																auto entry = textureIndex.find(surface.data);
@@ -782,7 +858,9 @@ static CGDataProviderRef con_provider;
 											[commandEncoder setVertexBytes:&vertexTransformMatrix length:sizeof(vertexTransformMatrix) atIndex:1];
 											[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:2];
 											[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:3];
-											[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:1];
+											[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:0];
+											[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:0];
+											[commandEncoder setFragmentTexture:perDrawable.colormap.texture atIndex:1];
 											[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
 											[commandEncoder setVertexBuffer:perDrawable.vertices offset:0 atIndex:0];
 
@@ -790,13 +868,15 @@ static CGDataProviderRef con_provider;
 											
 											for (auto& lightmap : sortedSurfaces)
 											{
-												[commandEncoder setVertexBytes:&lightmap.second.vecs length:sizeof(lightmap.second.vecs) atIndex:4];
-												[commandEncoder setVertexBytes:&lightmap.second.size length:sizeof(lightmap.second.size) atIndex:5];
+												[commandEncoder setVertexBytes:&lightmap.second.texturePosition length:sizeof(lightmap.second.texturePosition) atIndex:4];
+												[commandEncoder setFragmentTexture:perDrawable.lightmapCache[lightmap.second.lightmap].texture atIndex:2];
+												[commandEncoder setFragmentSamplerState:lightmapSamplerState atIndex:2];
 
 												for (auto& texture : lightmap.second.textures)
 												{
-													[commandEncoder setFragmentTexture:textureCache[texture.second.texture].texture atIndex:0];
-													[commandEncoder setFragmentSamplerState:surfaceSamplerState atIndex:0];
+													[commandEncoder setFragmentTexture:textureCache[texture.second.texture].texture atIndex:3];
+													[commandEncoder setFragmentSamplerState:textureSamplerState atIndex:3];
+
 													[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:(NSUInteger)texture.second.indices indexType:MTLIndexTypeUInt32 indexBuffer:perDrawable.indices indexBufferOffset:indexBase];
 													
 													indexBase += (NSUInteger)texture.second.indices * sizeof(uint32_t);

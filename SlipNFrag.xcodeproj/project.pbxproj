@@ -342,6 +342,7 @@
 		28D060612808E77F009E0953 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
 		28D060622808E77F009E0953 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
 		28D060632808E77F009E0953 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
+		28D336BF2A9715F6000DDE59 /* Lightmap.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28D336BE2A9715F6000DDE59 /* Lightmap.mm */; };
 		28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28DFACDD28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28DFACDE28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
@@ -592,6 +593,8 @@
 		28D0605E2808E77F009E0953 /* snd_float_dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_dma.cpp; sourceTree = "<group>"; };
 		28D0605F2808E77F009E0953 /* snd_float_mix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mix.cpp; sourceTree = "<group>"; };
 		28D060602808E77F009E0953 /* snd_float_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mem.cpp; sourceTree = "<group>"; };
+		28D336BD2A971571000DDE59 /* Lightmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lightmap.h; sourceTree = "<group>"; };
+		28D336BE2A9715F6000DDE59 /* Lightmap.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Lightmap.mm; sourceTree = "<group>"; };
 		28DFACDB28A4B2DB00646DE0 /* r_image.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_image.cpp; sourceTree = "<group>"; };
 		28E95FA9260C50A0000DDF6C /* cd_ios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cd_ios.cpp; sourceTree = "<group>"; };
 		28E9CEC62A8843BB00EDEF92 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -658,6 +661,8 @@
 				289DCF0D2A8028E0005A4D55 /* EngineStop.mm */,
 				289DCF132A802C87005A4D55 /* Input.cpp */,
 				289DCF122A802C54005A4D55 /* Input.h */,
+				28D336BD2A971571000DDE59 /* Lightmap.h */,
+				28D336BE2A9715F6000DDE59 /* Lightmap.mm */,
 				289DCF102A802980005A4D55 /* Locks.cpp */,
 				289DCF0F2A80293E005A4D55 /* Locks.h */,
 				28734C112A72D5BC00B32DE5 /* PerDrawable.h */,
@@ -1189,6 +1194,7 @@
 				2875DC282A6CA3DA00EED860 /* view.cpp in Sources */,
 				289DCF0E2A8028E0005A4D55 /* EngineStop.mm in Sources */,
 				2875DC2A2A6CA3DA00EED860 /* r_surf.cpp in Sources */,
+				28D336BF2A9715F6000DDE59 /* Lightmap.mm in Sources */,
 				2875DC0A2A6CA3DA00EED860 /* net_loop.cpp in Sources */,
 				288AA3CE2A8C8BE6008B3C91 /* Texture.mm in Sources */,
 				2875DC322A6CA3DA00EED860 /* cl_demo.cpp in Sources */,

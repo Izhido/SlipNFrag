@@ -12,11 +12,13 @@
 
 struct SortedSurfaceLightmap
 {
-	float vecs[2][4];
+	float texturePosition[16];
 
-	float size[2];
+	bool texturePositionSet;
 
-	bool set;
+	uint32_t lightmap;
 	
+	bool lightmapSet;
+
 	std::unordered_map<void*, SortedSurfaceTexture> textures;
 };
