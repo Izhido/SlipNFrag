@@ -14,11 +14,13 @@
 #include "Locks.h"
 #include "DirectRect.h"
 #import "PerDrawable.h"
-#import "AppState.h"
-#import "r_local.h"
-#import "d_lists.h"
-#import "Input.h"
-#import "SortedSurfaceLightmap.h"
+#include "AppState.h"
+#include "r_local.h"
+#include "d_lists.h"
+#include "Input.h"
+#include "SortedSurfaceLightmap.h"
+#import "Pipelines.h"
+#include "Surfaces.h"
 
 @interface Renderer ()
 
@@ -40,7 +42,7 @@ static CGDataProviderRef con_provider;
 	}
 	
 	auto floors = [NSMutableDictionary<NSString*, ar_plane_anchor_t> new];
-
+	
 	auto session = ar_session_create();
 	
 	ar_world_tracking_configuration_t world_tracking_config = ar_world_tracking_configuration_create();
@@ -50,13 +52,13 @@ static CGDataProviderRef con_provider;
 	ar_plane_detection_configuration_set_alignment(plane_detection_config, ar_plane_alignment_horizontal);
 	auto plane_detection = ar_plane_detection_provider_create(plane_detection_config);
 	ar_plane_detection_provider_set_update_handler(plane_detection, NULL,
-		^(ar_plane_anchors_t _Nonnull added_anchors,
-		  ar_plane_anchors_t _Nonnull updated_anchors,
-		  ar_plane_anchors_t _Nonnull removed_anchors) {
+												   ^(ar_plane_anchors_t _Nonnull added_anchors,
+													 ar_plane_anchors_t _Nonnull updated_anchors,
+													 ar_plane_anchors_t _Nonnull removed_anchors) {
 		std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
 		
 		ar_plane_anchors_enumerate_anchors(added_anchors,
-			^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
+										   ^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
 			auto classification = ar_plane_anchor_get_plane_classification(plane_anchor);
 			if (classification == ar_plane_classification_floor)
 			{
@@ -69,7 +71,7 @@ static CGDataProviderRef con_provider;
 		});
 		
 		ar_plane_anchors_enumerate_anchors(updated_anchors,
-			^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
+										   ^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
 			auto classification = ar_plane_anchor_get_plane_classification(plane_anchor);
 			if (classification == ar_plane_classification_floor)
 			{
@@ -82,7 +84,7 @@ static CGDataProviderRef con_provider;
 		});
 		
 		ar_plane_anchors_enumerate_anchors(removed_anchors,
-			^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
+										   ^bool(ar_plane_anchor_t _Nonnull plane_anchor) {
 			auto classification = ar_plane_anchor_get_plane_classification(plane_anchor);
 			if (classification == ar_plane_classification_floor)
 			{
@@ -99,8 +101,8 @@ static CGDataProviderRef con_provider;
 	ar_data_providers_add_data_provider(providers, world_tracking);
 	
 	ar_session_request_authorization(session, ar_authorization_type_world_sensing,
-		^(ar_authorization_results_t _Nonnull authorization_results,
-		  ar_error_t _Nullable error) {
+									 ^(ar_authorization_results_t _Nonnull authorization_results,
+									   ar_error_t _Nullable error) {
 		auto error_code = ar_error_get_error_code(error);
 		if (error_code == 0)
 		{
@@ -114,7 +116,7 @@ static CGDataProviderRef con_provider;
 			});
 		}
 	});
-
+	
 	ar_session_run(session, providers);
 	
 	auto configuration = cp_layer_renderer_get_configuration(layerRenderer);
@@ -123,76 +125,13 @@ static CGDataProviderRef con_provider;
 	
 	id<MTLDevice> device = MTLCreateSystemDefaultDevice();
 	id<MTLCommandQueue> commandQueue = [device newCommandQueue];
-	id<MTLLibrary> library = [device newDefaultLibrary];
-
-	id<MTLFunction> vertexProgram = [library newFunctionWithName:@"planarVertexMain"];
-	id<MTLFunction> fragmentProgram = [library newFunctionWithName:@"planarFragmentMain"];
-
-	auto vertexDescriptor = [MTLVertexDescriptor new];
-	vertexDescriptor.attributes[0].format = MTLVertexFormatFloat4;
-	vertexDescriptor.attributes[0].offset = 0;
-	vertexDescriptor.attributes[0].bufferIndex = 0;
-	vertexDescriptor.attributes[1].format = MTLVertexFormatFloat2;
-	vertexDescriptor.attributes[1].offset = 16;
-	vertexDescriptor.attributes[1].bufferIndex = 0;
-	vertexDescriptor.layouts[0].stride = 24;
-
-	auto pipelineStateDescriptor = [MTLRenderPipelineDescriptor new];
-	pipelineStateDescriptor.vertexDescriptor = vertexDescriptor;
-	pipelineStateDescriptor.vertexFunction = vertexProgram;
-	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
-	pipelineStateDescriptor.colorAttachments[0].pixelFormat = colorPixelFormat;
-	pipelineStateDescriptor.colorAttachments[0].blendingEnabled = YES;
-	pipelineStateDescriptor.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
-	pipelineStateDescriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-	pipelineStateDescriptor.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-	pipelineStateDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-	pipelineStateDescriptor.depthAttachmentPixelFormat = depthPixelFormat;
-	pipelineStateDescriptor.rasterSampleCount = 1;
-
-	NSError* error = nil;
-	auto planarPipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
-	if (error != nil)
+	
+	auto pipelines = [Pipelines new];
+	if (![pipelines create:device colorPixelFormat:colorPixelFormat depthPixelFormat:depthPixelFormat engineStop:engineStop])
 	{
-		engineStop.stopEngineMessage = @"Planar rendering pipeline could not be created.";
-		engineStop.stopEngine = true;
 		return;
 	}
 	
-	fragmentProgram = [library newFunctionWithName:@"consoleFragmentMain"];
-
-	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
-
-	auto consolePipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
-	if (error != nil)
-	{
-		engineStop.stopEngineMessage = @"Console rendering pipeline could not be created.";
-		engineStop.stopEngine = true;
-		return;
-	}
-
-	vertexDescriptor = [MTLVertexDescriptor new];
-	vertexDescriptor.attributes[0].format = MTLVertexFormatFloat3;
-	vertexDescriptor.attributes[0].offset = 0;
-	vertexDescriptor.attributes[0].bufferIndex = 0;
-	vertexDescriptor.layouts[0].stride = 12;
-
-	pipelineStateDescriptor.vertexDescriptor = vertexDescriptor;
-
-	vertexProgram = [library newFunctionWithName:@"surfaceVertexMain"];
-	fragmentProgram = [library newFunctionWithName:@"surfaceFragmentMain"];
-
-	pipelineStateDescriptor.vertexFunction = vertexProgram;
-	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
-
-	auto surfacePipelineState = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
-	if (error != nil)
-	{
-		engineStop.stopEngineMessage = @"Surface rendering pipeline could not be created.";
-		engineStop.stopEngine = true;
-		return;
-	}
-
 	auto depthStencilDescriptor = [MTLDepthStencilDescriptor new];
 	depthStencilDescriptor.depthWriteEnabled = false;
 	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
@@ -596,8 +535,6 @@ static CGDataProviderRef con_provider;
 									{
 										std::unordered_map<void*, SortedSurfaceLightmap> sortedSurfaces;
 
-										int lastSurfaceEntry = -1;
-										
 										{
 											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 											
@@ -628,55 +565,9 @@ static CGDataProviderRef con_provider;
 											NSUInteger verticesSize = 0;
 											NSUInteger indicesSize = 0;
 											
-											for (auto s = 0; s <= d_lists.last_surface; s++)
-											{
-												auto& surface = d_lists.surfaces[s];
-												auto face = (msurface_t*)surface.face;
-
-												auto& lightmap = sortedSurfaces[surface.face];
-												
-												if (!lightmap.texturePositionSet)
-												{
-													auto texinfo = face->texinfo;
-
-													lightmap.texturePosition[0] = texinfo->vecs[0][0];
-													lightmap.texturePosition[1] = texinfo->vecs[0][1];
-													lightmap.texturePosition[2] = texinfo->vecs[0][2];
-													lightmap.texturePosition[3] = texinfo->vecs[0][3];
-													lightmap.texturePosition[4] = texinfo->vecs[1][0];
-													lightmap.texturePosition[5] = texinfo->vecs[1][1];
-													lightmap.texturePosition[6] = texinfo->vecs[1][2];
-													lightmap.texturePosition[7] = texinfo->vecs[1][3];
-													
-													lightmap.texturePosition[8] = face->texturemins[0];
-													lightmap.texturePosition[9] = face->texturemins[1];
-
-													lightmap.texturePosition[10] = face->extents[0];
-													lightmap.texturePosition[11] = face->extents[1];
-
-													lightmap.texturePosition[12] = texinfo->texture->width;
-													lightmap.texturePosition[13] = texinfo->texture->height;
-													
-													lightmap.texturePositionSet = true;
-												}
-
-												auto& texture = lightmap.textures[surface.data];
-												
-												texture.entries.push_back(s);
-												
-												auto numedges = face->numedges;
-												
-												auto indices = (numedges - 2) * 3;
-
-												texture.indices += indices;
-												
-												verticesSize += numedges * 3 * sizeof(float);
-												indicesSize += indices * sizeof(uint32_t);
-											}
+											Surfaces::Sort(sortedSurfaces, verticesSize, indicesSize);
 											
-											lastSurfaceEntry = d_lists.last_surface;
-											
-											if (lastSurfaceEntry >= 0)
+											if (verticesSize > 0 && indicesSize > 0)
 											{
 												if (perDrawable.vertices == nil || perDrawable.vertices.length < verticesSize || perDrawable.vertices.length > verticesSize / 2)
 												{
@@ -693,201 +584,18 @@ static CGDataProviderRef con_provider;
 												
 												uint32_t indexBase = 0;
 												
-												for (auto& lightmap : sortedSurfaces)
-												{
-													for (auto& texture : lightmap.second.textures)
-													{
-														for (auto s : texture.second.entries)
-														{
-															auto& surface = d_lists.surfaces[s];
-															auto face = (msurface_t*)surface.face;
-															auto model = (model_t*)surface.model;
-															auto edge = model->surfedges[face->firstedge];
-															unsigned int index;
-															if (edge >= 0)
-															{
-																index = model->edges[edge].v[0];
-															}
-															else
-															{
-																index = model->edges[-edge].v[1];
-															}
-															auto vertexes = (float*)model->vertexes;
-															auto source = vertexes + index * 3;
-															*verticesTarget++ = *source++;
-															*verticesTarget++ = *source++;
-															*verticesTarget++ = *source;
-															auto next_front = 0;
-															auto next_back = face->numedges;
-															auto use_back = false;
-															for (auto j = 1; j < face->numedges; j++)
-															{
-																if (use_back)
-																{
-																	next_back--;
-																	edge = model->surfedges[face->firstedge + next_back];
-																}
-																else
-																{
-																	next_front++;
-																	edge = model->surfedges[face->firstedge + next_front];
-																}
-																use_back = !use_back;
-																if (edge >= 0)
-																{
-																	index = model->edges[edge].v[0];
-																}
-																else
-																{
-																	index = model->edges[-edge].v[1];
-																}
-																source = vertexes + index * 3;
-																*verticesTarget++ = *source++;
-																*verticesTarget++ = *source++;
-																*verticesTarget++ = *source;
-															}
-															
-															*indicesTarget++ = indexBase++;
-															*indicesTarget++ = indexBase++;
-															*indicesTarget++ = indexBase++;
-															auto revert = true;
-															for (auto j = 1; j < face->numedges - 2; j++)
-															{
-																if (revert)
-																{
-																	*indicesTarget++ = indexBase;
-																	*indicesTarget++ = indexBase - 1;
-																	*indicesTarget++ = indexBase - 2;
-																}
-																else
-																{
-																	*indicesTarget++ = indexBase - 2;
-																	*indicesTarget++ = indexBase - 1;
-																	*indicesTarget++ = indexBase;
-																}
-																indexBase++;
-																revert = !revert;
-															}
-															
-															if (!lightmap.second.lightmapSet)
-															{
-																auto entry = lightmapIndex->find(surface.face);
-																if (entry == lightmapIndex->end())
-																{
-																	auto newLightmap = [Lightmap new];
-																	newLightmap.descriptor = [MTLTextureDescriptor new];
-																	newLightmap.descriptor.pixelFormat = MTLPixelFormatR16Unorm;
-																	newLightmap.descriptor.width = surface.lightmap_width;
-																	newLightmap.descriptor.height = surface.lightmap_height;
-																	newLightmap.texture = [device newTextureWithDescriptor:newLightmap.descriptor];
-																	newLightmap.region = MTLRegionMake2D(0, 0, surface.lightmap_width, surface.lightmap_height);
-																	
-																	newLightmap.createdCount = surface.created;
-
-																	[newLightmap.texture replaceRegion:newLightmap.region mipmapLevel:0 withBytes:d_lists.lightmap_texels.data() + surface.lightmap_texels bytesPerRow:newLightmap.region.size.width * sizeof(uint16_t)];
-
-																	lightmapIndex->insert({surface.face, perDrawable.lightmapCache.count});
-																	
-																	lightmap.second.lightmap = (uint32_t)perDrawable.lightmapCache.count;
-																	
-																	[perDrawable.lightmapCache addObject:newLightmap];
-																}
-																else
-																{
-																	lightmap.second.lightmap = (uint32_t)entry->second;
-
-																	auto existingLightmap = perDrawable.lightmapCache[lightmap.second.lightmap];
-																	if (existingLightmap.createdCount != surface.created)
-																	{
-																		[existingLightmap.texture replaceRegion:existingLightmap.region mipmapLevel:0 withBytes:d_lists.lightmap_texels.data() + surface.lightmap_texels bytesPerRow:existingLightmap.region.size.width * sizeof(uint16_t)];
-																	}
-																}
-
-																lightmap.second.lightmapSet = true;
-															}
-
-															if (!texture.second.set)
-															{
-																auto entry = textureIndex.find(surface.data);
-																if (entry == textureIndex.end())
-																{
-																	auto newTexture = [Texture new];
-																	newTexture.descriptor = [MTLTextureDescriptor new];
-																	newTexture.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
-																	newTexture.descriptor.width = surface.width;
-																	newTexture.descriptor.height = surface.height;
-																	newTexture.descriptor.mipmapLevelCount = surface.mips;
-																	newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
-																	newTexture.region = MTLRegionMake2D(0, 0, surface.width, surface.height);
-																	
-																	auto data = (unsigned char*)surface.data;
-																	auto region = newTexture.region;
-																	for (auto m = 0; m < surface.mips; m++)
-																	{
-																		[newTexture.texture replaceRegion:region mipmapLevel:m withBytes:data bytesPerRow:region.size.width];
-																		data += region.size.width * region.size.height;
-																		region.size.width /= 2;
-																		region.size.height /= 2;
-																	}
-
-																	textureIndex.insert({surface.data, textureCache.count});
-																	
-																	texture.second.texture = (uint32_t)textureCache.count;
-																	
-																	[textureCache addObject:newTexture];
-																}
-																else
-																{
-																	texture.second.texture = (uint32_t)entry->second;
-																}
-
-																texture.second.set = true;
-															}
-														}
-													}
-												}
+												Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
 											}
 										}
 
 										id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
 
-										if (lastSurfaceEntry >= 0)
-										{
-											[commandEncoder setRenderPipelineState:surfacePipelineState];
-											[commandEncoder setDepthStencilState:surfaceDepthStencilState];
-											[commandEncoder setVertexBytes:&vertexTransformMatrix length:sizeof(vertexTransformMatrix) atIndex:1];
-											[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:2];
-											[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:3];
-											[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:0];
-											[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:0];
-											[commandEncoder setFragmentTexture:perDrawable.colormap.texture atIndex:1];
-											[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
-											[commandEncoder setVertexBuffer:perDrawable.vertices offset:0 atIndex:0];
-
-											NSUInteger indexBase = 0;
-											
-											for (auto& lightmap : sortedSurfaces)
-											{
-												[commandEncoder setVertexBytes:&lightmap.second.texturePosition length:sizeof(lightmap.second.texturePosition) atIndex:4];
-												[commandEncoder setFragmentTexture:perDrawable.lightmapCache[lightmap.second.lightmap].texture atIndex:2];
-												[commandEncoder setFragmentSamplerState:lightmapSamplerState atIndex:2];
-
-												for (auto& texture : lightmap.second.textures)
-												{
-													[commandEncoder setFragmentTexture:textureCache[texture.second.texture].texture atIndex:3];
-													[commandEncoder setFragmentSamplerState:textureSamplerState atIndex:3];
-
-													[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:(NSUInteger)texture.second.indices indexType:MTLIndexTypeUInt32 indexBuffer:perDrawable.indices indexBufferOffset:indexBase];
-													
-													indexBase += (NSUInteger)texture.second.indices * sizeof(uint32_t);
-												}
-											}
-										}
+										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
 										cameraMatrix = simd_mul(locked_head_pose, cp_view_get_transform(view));
 										viewMatrix = simd_transpose(cameraMatrix);
 
-										[commandEncoder setRenderPipelineState:consolePipelineState];
+										[commandEncoder setRenderPipelineState:pipelines.console];
 										[commandEncoder setDepthStencilState:consoleDepthStencilState];
 										[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:1];
 										[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:2];
@@ -928,7 +636,7 @@ static CGDataProviderRef con_provider;
 										}
 										
 										id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
-										[commandEncoder setRenderPipelineState:planarPipelineState];
+										[commandEncoder setRenderPipelineState:pipelines.planar];
 										[commandEncoder setVertexBuffer:screenPlane offset:0 atIndex:0];
 										[commandEncoder setVertexBytes:&viewMatrix length:sizeof(viewMatrix) atIndex:1];
 										[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:2];

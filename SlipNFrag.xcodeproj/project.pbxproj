@@ -170,6 +170,8 @@
 		285AD3882A7B733E00D6D013 /* DirectRect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 285AD3862A7B723F00D6D013 /* DirectRect.cpp */; };
 		285D5B09229F9EE400B6ED09 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28BA2A6E229F31C2001830E9 /* MetalKit.framework */; };
 		2867E02622C79ADF0028B7BC /* PreferencesController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2867E02522C79ADF0028B7BC /* PreferencesController.mm */; };
+		286C04BD2A996905002C9126 /* Pipelines.mm in Sources */ = {isa = PBXBuildFile; fileRef = 286C04BC2A996905002C9126 /* Pipelines.mm */; };
+		286C04C02A997048002C9126 /* Surfaces.mm in Sources */ = {isa = PBXBuildFile; fileRef = 286C04BF2A997048002C9126 /* Surfaces.mm */; };
 		286DF6C92324813B00B7537E /* net_sock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 286DF6C62323F3AA00B7537E /* net_sock.cpp */; };
 		2870E72B2A6F727800B2F088 /* vid_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2870E72A2A6F727800B2F088 /* vid_visionos.cpp */; };
 		2870E72D2A6F750200B2F088 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2870E72C2A6F750200B2F088 /* Shaders.metal */; };
@@ -491,6 +493,10 @@
 		285D5B0E229FA12400B6ED09 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		2867E02422C79ADF0028B7BC /* PreferencesController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PreferencesController.h; sourceTree = "<group>"; };
 		2867E02522C79ADF0028B7BC /* PreferencesController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PreferencesController.mm; sourceTree = "<group>"; };
+		286C04BB2A996855002C9126 /* Pipelines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Pipelines.h; sourceTree = "<group>"; };
+		286C04BC2A996905002C9126 /* Pipelines.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Pipelines.mm; sourceTree = "<group>"; };
+		286C04BE2A996F95002C9126 /* Surfaces.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Surfaces.h; sourceTree = "<group>"; };
+		286C04BF2A997048002C9126 /* Surfaces.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Surfaces.mm; sourceTree = "<group>"; };
 		286DF6C62323F3AA00B7537E /* net_sock.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = net_sock.cpp; sourceTree = "<group>"; };
 		286DF6C823247D9800B7537E /* net_sock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = net_sock.h; sourceTree = "<group>"; };
 		2870E7292A6F723700B2F088 /* vid_visionos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vid_visionos.h; sourceTree = "<group>"; };
@@ -669,10 +675,14 @@
 				288AA3D12A8C8DA4008B3C91 /* PerDrawable.mm */,
 				28734C122A72D62600B32DE5 /* PerView.h */,
 				288AA3CF2A8C8C62008B3C91 /* PerView.mm */,
+				286C04BB2A996855002C9126 /* Pipelines.h */,
+				286C04BC2A996905002C9126 /* Pipelines.mm */,
 				28AF30FD2A7725230072610B /* Renderer.h */,
 				28AF30FE2A77262E0072610B /* Renderer.mm */,
 				284557442A95B9D700A9D7B2 /* SortedSurfaceLightmap.h */,
 				284557452A95BA7C00A9D7B2 /* SortedSurfaceTexture.h */,
+				286C04BE2A996F95002C9126 /* Surfaces.h */,
+				286C04BF2A997048002C9126 /* Surfaces.mm */,
 				28734C132A72E1D900B32DE5 /* Texture.h */,
 				288AA3CD2A8C8BE6008B3C91 /* Texture.mm */,
 				2811E5302A6C722700B1498E /* Assets.xcassets */,
@@ -1116,6 +1126,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2875DC142A6CA3DA00EED860 /* r_misc.cpp in Sources */,
+				286C04C02A997048002C9126 /* Surfaces.mm in Sources */,
 				288AA3D22A8C8DA4008B3C91 /* PerDrawable.mm in Sources */,
 				2875DC272A6CA3DA00EED860 /* r_aliasc.cpp in Sources */,
 				2875DBFA2A6CA21100EED860 /* net_none.cpp in Sources */,
@@ -1153,6 +1164,7 @@
 				2875DC122A6CA3DA00EED860 /* world.cpp in Sources */,
 				2875DC222A6CA3DA00EED860 /* d_init.cpp in Sources */,
 				2875DC2F2A6CA3DA00EED860 /* d_sprite.cpp in Sources */,
+				286C04BD2A996905002C9126 /* Pipelines.mm in Sources */,
 				2875DC252A6CA3DA00EED860 /* host.cpp in Sources */,
 				2875DC3E2A6CA3DA00EED860 /* r_edge.cpp in Sources */,
 				2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */,

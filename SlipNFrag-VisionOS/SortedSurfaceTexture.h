@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <vector>
+
 struct SortedSurfaceTexture
 {
 	std::vector<uint32_t> entries;
