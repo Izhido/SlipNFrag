@@ -415,76 +415,132 @@ static CGDataProviderRef con_provider;
 									appState.FOV = 2 * horizontalAngle * 180 / M_PI;
 								}
 								
+								PerDrawable* perDrawable = nil;
+								std::unordered_map<void*, NSUInteger>* lightmapIndex = nullptr;
+
+								for (NSUInteger d = 0; d < drawables.count; d++)
+								{
+									if (drawables[d].drawable == drawable)
+									{
+										perDrawable = drawables[d];
+										lightmapIndex = &lightmapIndices[d];
+
+										break;
+									}
+								}
+								
+								if (perDrawable == nil)
+								{
+									perDrawable = [PerDrawable new];
+									perDrawable.drawable = drawable;
+									perDrawable.lightmapCache = [NSMutableArray<Lightmap*> new];
+									[drawables addObject:perDrawable];
+									
+									lightmapIndices.emplace_back();
+									lightmapIndex = &lightmapIndices.back();
+									
+									{
+										std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+										
+										perDrawable.palette = [Texture new];
+										perDrawable.palette.descriptor = [MTLTextureDescriptor new];
+										perDrawable.palette.descriptor.textureType = MTLTextureType1D;
+										perDrawable.palette.descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm_sRGB;
+										perDrawable.palette.descriptor.width = 256;
+										perDrawable.palette.texture = [device newTextureWithDescriptor:perDrawable.palette.descriptor];
+										perDrawable.palette.region = MTLRegionMake1D(0, 256);
+										
+										perDrawable.colormap = [Texture new];
+										perDrawable.colormap.descriptor = [MTLTextureDescriptor new];
+										perDrawable.colormap.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
+										perDrawable.colormap.descriptor.width = 256;
+										perDrawable.colormap.descriptor.height = 64;
+										perDrawable.colormap.texture = [device newTextureWithDescriptor:perDrawable.colormap.descriptor];
+										perDrawable.colormap.region = MTLRegionMake2D(0, 0, 256, 64);
+										
+										perDrawable.screen = [Texture new];
+										perDrawable.screen.descriptor = [MTLTextureDescriptor new];
+										perDrawable.screen.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
+										perDrawable.screen.descriptor.width = vid_width;
+										perDrawable.screen.descriptor.height = vid_height;
+										perDrawable.screen.texture = [device newTextureWithDescriptor:perDrawable.screen.descriptor];
+										perDrawable.screen.region = MTLRegionMake2D(0, 0, vid_width, vid_height);
+										
+										perDrawable.console = [Texture new];
+										perDrawable.console.descriptor = [MTLTextureDescriptor new];
+										perDrawable.console.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
+										perDrawable.console.descriptor.width = con_width;
+										perDrawable.console.descriptor.height = con_height;
+										perDrawable.console.texture = [device newTextureWithDescriptor:perDrawable.console.descriptor];
+										perDrawable.console.region = MTLRegionMake2D(0, 0, con_width, con_height);
+									}
+								}
+								
+								if (perDrawable.views == nil)
+								{
+									perDrawable.views = [NSMutableDictionary<NSNumber*, PerView*> new];
+								}
+
+								std::unordered_map<void*, SortedSurfaceLightmap> sortedSurfaces;
+								
+								if (mode == AppWorldMode)
+								{
+									std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
+									[perDrawable.palette.texture replaceRegion:perDrawable.palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable.palette.region.size.width * sizeof(unsigned)];
+									[perDrawable.colormap.texture replaceRegion:perDrawable.colormap.region mipmapLevel:0 withBytes:host_colormap.data() bytesPerRow:perDrawable.colormap.region.size.width];
+									[perDrawable.console.texture replaceRegion:perDrawable.console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable.console.region.size.width];
+
+									{
+										std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+										
+										for (auto& directRect : DirectRect::directRects)
+										{
+											auto x = directRect.x * (perDrawable.console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
+											auto y = directRect.y * (perDrawable.console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
+											
+											MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
+											[perDrawable.console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
+										}
+									}
+
+									vertexTransformMatrix.columns[0][0] = -appState.Scale;
+									vertexTransformMatrix.columns[1][2] = appState.Scale;
+									vertexTransformMatrix.columns[2][1] = -appState.Scale;
+									vertexTransformMatrix.columns[3][0] = d_lists.vieworg0 * appState.Scale;
+									vertexTransformMatrix.columns[3][1] = d_lists.vieworg2 * appState.Scale;
+									vertexTransformMatrix.columns[3][2] = -d_lists.vieworg1 * appState.Scale;
+									
+									NSUInteger verticesSize = 0;
+									NSUInteger indicesSize = 0;
+									
+									Surfaces::Sort(sortedSurfaces, verticesSize, indicesSize);
+									
+									if (verticesSize > 0 && indicesSize > 0)
+									{
+										if (perDrawable.vertices == nil || perDrawable.vertices.length < verticesSize || perDrawable.vertices.length > verticesSize / 2)
+										{
+											perDrawable.vertices = [device newBufferWithLength:verticesSize * 3 / 2 options:0];
+										}
+										
+										if (perDrawable.indices == nil || perDrawable.indices.length < indicesSize || perDrawable.indices.length > indicesSize / 2)
+										{
+											perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
+										}
+										
+										auto verticesTarget = (float*)perDrawable.vertices.contents;
+										auto indicesTarget = (uint32_t*)perDrawable.indices.contents;
+										
+										uint32_t indexBase = 0;
+										
+										Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
+									}
+								}
+
 								id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
 								
 								for (NSUInteger v = 0; v < viewCount; v++)
 								{
-									PerDrawable* perDrawable = nil;
-									std::unordered_map<void*, NSUInteger>* lightmapIndex = nullptr;
-
-									for (NSUInteger d = 0; d < drawables.count; d++)
-									{
-										if (drawables[d].drawable == drawable)
-										{
-											perDrawable = drawables[d];
-											lightmapIndex = &lightmapIndices[d];
-
-											break;
-										}
-									}
-									
-									if (perDrawable == nil)
-									{
-										perDrawable = [PerDrawable new];
-										perDrawable.drawable = drawable;
-										perDrawable.lightmapCache = [NSMutableArray<Lightmap*> new];
-										[drawables addObject:perDrawable];
-										
-										lightmapIndices.emplace_back();
-										lightmapIndex = &lightmapIndices.back();
-										
-										{
-											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-											
-											perDrawable.palette = [Texture new];
-											perDrawable.palette.descriptor = [MTLTextureDescriptor new];
-											perDrawable.palette.descriptor.textureType = MTLTextureType1D;
-											perDrawable.palette.descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm_sRGB;
-											perDrawable.palette.descriptor.width = 256;
-											perDrawable.palette.texture = [device newTextureWithDescriptor:perDrawable.palette.descriptor];
-											perDrawable.palette.region = MTLRegionMake1D(0, 256);
-											
-											perDrawable.colormap = [Texture new];
-											perDrawable.colormap.descriptor = [MTLTextureDescriptor new];
-											perDrawable.colormap.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
-											perDrawable.colormap.descriptor.width = 256;
-											perDrawable.colormap.descriptor.height = 64;
-											perDrawable.colormap.texture = [device newTextureWithDescriptor:perDrawable.colormap.descriptor];
-											perDrawable.colormap.region = MTLRegionMake2D(0, 0, 256, 64);
-											
-											perDrawable.screen = [Texture new];
-											perDrawable.screen.descriptor = [MTLTextureDescriptor new];
-											perDrawable.screen.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
-											perDrawable.screen.descriptor.width = vid_width;
-											perDrawable.screen.descriptor.height = vid_height;
-											perDrawable.screen.texture = [device newTextureWithDescriptor:perDrawable.screen.descriptor];
-											perDrawable.screen.region = MTLRegionMake2D(0, 0, vid_width, vid_height);
-											
-											perDrawable.console = [Texture new];
-											perDrawable.console.descriptor = [MTLTextureDescriptor new];
-											perDrawable.console.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
-											perDrawable.console.descriptor.width = con_width;
-											perDrawable.console.descriptor.height = con_height;
-											perDrawable.console.texture = [device newTextureWithDescriptor:perDrawable.console.descriptor];
-											perDrawable.console.region = MTLRegionMake2D(0, 0, con_width, con_height);
-										}
-									}
-									
-									if (perDrawable.views == nil)
-									{
-										perDrawable.views = [NSMutableDictionary<NSNumber*, PerView*> new];
-									}
-
 									auto perView = [perDrawable.views objectForKey:@(v)];
 
 									if (perView == nil)
@@ -533,61 +589,6 @@ static CGDataProviderRef con_provider;
 									
 									if (mode == AppWorldMode)
 									{
-										std::unordered_map<void*, SortedSurfaceLightmap> sortedSurfaces;
-
-										{
-											std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-											
-											[perDrawable.palette.texture replaceRegion:perDrawable.palette.region mipmapLevel:0 withBytes:d_8to24table bytesPerRow:perDrawable.palette.region.size.width * sizeof(unsigned)];
-											[perDrawable.colormap.texture replaceRegion:perDrawable.colormap.region mipmapLevel:0 withBytes:host_colormap.data() bytesPerRow:perDrawable.colormap.region.size.width];
-											[perDrawable.console.texture replaceRegion:perDrawable.console.region mipmapLevel:0 withBytes:con_buffer.data() bytesPerRow:perDrawable.console.region.size.width];
-
-											{
-												std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
-												
-												for (auto& directRect : DirectRect::directRects)
-												{
-													auto x = directRect.x * (perDrawable.console.region.size.width - directRect.width) / (directRect.vid_width - directRect.width);
-													auto y = directRect.y * (perDrawable.console.region.size.height - directRect.width) / (directRect.vid_height - directRect.height);
-													
-													MTLRegion directRegion = MTLRegionMake2D(x, y, directRect.width, directRect.height);
-													[perDrawable.console.texture replaceRegion:directRegion mipmapLevel:0 withBytes:directRect.data bytesPerRow:directRect.width];
-												}
-											}
-
-											vertexTransformMatrix.columns[0][0] = -appState.Scale;
-											vertexTransformMatrix.columns[1][2] = appState.Scale;
-											vertexTransformMatrix.columns[2][1] = -appState.Scale;
-											vertexTransformMatrix.columns[3][0] = d_lists.vieworg0 * appState.Scale;
-											vertexTransformMatrix.columns[3][1] = d_lists.vieworg2 * appState.Scale;
-											vertexTransformMatrix.columns[3][2] = -d_lists.vieworg1 * appState.Scale;
-
-											NSUInteger verticesSize = 0;
-											NSUInteger indicesSize = 0;
-											
-											Surfaces::Sort(sortedSurfaces, verticesSize, indicesSize);
-											
-											if (verticesSize > 0 && indicesSize > 0)
-											{
-												if (perDrawable.vertices == nil || perDrawable.vertices.length < verticesSize || perDrawable.vertices.length > verticesSize / 2)
-												{
-													perDrawable.vertices = [device newBufferWithLength:verticesSize * 3 / 2 options:0];
-												}
-												
-												if (perDrawable.indices == nil || perDrawable.indices.length < indicesSize || perDrawable.indices.length > indicesSize / 2)
-												{
-													perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
-												}
-												
-												auto verticesTarget = (float*)perDrawable.vertices.contents;
-												auto indicesTarget = (uint32_t*)perDrawable.indices.contents;
-												
-												uint32_t indexBase = 0;
-												
-												Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
-											}
-										}
-
 										id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
 
 										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
