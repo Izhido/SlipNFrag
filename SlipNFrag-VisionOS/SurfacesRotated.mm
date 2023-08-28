@@ -1,21 +1,21 @@
 //
-//  Surfaces.mm
+//  SurfacesRotated.mm
 //  SlipNFrag-VisionOS
 //
-//  Created by Heriberto Delgado on 25/8/23.
+//  Created by Heriberto Delgado on 27/8/23.
 //  Copyright © 2023 Heriberto Delgado. All rights reserved.
 //
 
-#include "Surfaces.h"
+#include "SurfacesRotated.h"
 #include "vid_visionos.h"
 #include "d_lists.h"
 #import "Lightmap.h"
 
-void Surfaces::Sort(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, NSUInteger& verticesSize, NSUInteger& indicesSize)
+void SurfacesRotated::Sort(std::unordered_map<void*, SortedSurfaceRotatedLightmap>& sorted, NSUInteger& verticesSize, NSUInteger& indicesSize)
 {
-	for (auto s = 0; s <= d_lists.last_surface; s++)
+	for (auto s = 0; s <= d_lists.last_surface_rotated; s++)
 	{
-		auto& surface = d_lists.surfaces[s];
+		auto& surface = d_lists.surfaces_rotated[s];
 		auto face = (msurface_t*)surface.face;
 
 		auto& lightmap = sorted[surface.face];
@@ -53,6 +53,8 @@ void Surfaces::Sort(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, NS
 		
 		auto indices = (numedges - 2) * 3;
 
+		texture.indicesPerSurface.push_back(indices);
+		
 		texture.indices += indices;
 		
 		verticesSize += numedges * 3 * sizeof(float);
@@ -60,7 +62,7 @@ void Surfaces::Sort(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, NS
 	}
 }
 
-void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, float*& vertices, uint32_t*& indices, uint32_t& base, std::unordered_map<void*, NSUInteger>* lightmapIndex, id<MTLDevice> device, PerDrawable* perDrawable, std::unordered_map<void*, NSUInteger>& textureIndex, NSMutableArray<Texture*>* textureCache)
+void SurfacesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightmap>& sorted, float*& vertices, uint32_t*& indices, float*& rotation, uint32_t& base, std::unordered_map<void*, NSUInteger>* lightmapIndex, id<MTLDevice> device, PerDrawable* perDrawable, std::unordered_map<void*, NSUInteger>& textureIndex, NSMutableArray<Texture*>* textureCache)
 {
 	for (auto& lightmap : sorted)
 	{
@@ -68,7 +70,7 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 		{
 			for (auto s : texture.second.entries)
 			{
-				auto& surface = d_lists.surfaces[s];
+				auto& surface = d_lists.surfaces_rotated[s];
 				auto face = (msurface_t*)surface.face;
 				auto model = (model_t*)surface.model;
 				auto edge = model->surfedges[face->firstedge];
@@ -138,6 +140,15 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 					revert = !revert;
 				}
 				
+				*rotation++ = surface.origin_x;
+				*rotation++ = surface.origin_y;
+				*rotation++ = surface.origin_z;
+				*rotation++ = 0;
+				*rotation++ = surface.yaw * M_PI / 180;
+				*rotation++ = surface.pitch * M_PI / 180;
+				*rotation++ = surface.roll * M_PI / 180;
+				*rotation++ = 0;
+
 				if (!lightmap.second.lightmapSet)
 				{
 					auto entry = lightmapIndex->find(surface.face);
@@ -217,7 +228,7 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 	}
 }
 
-void Surfaces::Render(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> pipeline, id<MTLDepthStencilState> depthStencilState, simd_float4x4& vertexTransformMatrix, simd_float4x4& viewMatrix, simd_float4x4& projectionMatrix, PerDrawable* perDrawable, id<MTLSamplerState> planarSamplerState, id<MTLSamplerState> lightmapSamplerState, NSMutableArray<Texture*>* textureCache, id<MTLSamplerState> textureSamplerState)
+void SurfacesRotated::Render(std::unordered_map<void*, SortedSurfaceRotatedLightmap>& sorted, id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> pipeline, id<MTLDepthStencilState> depthStencilState, simd_float4x4& vertexTransformMatrix, simd_float4x4& viewMatrix, simd_float4x4& projectionMatrix, PerDrawable* perDrawable, NSUInteger indexBase, float* rotation, id<MTLSamplerState> planarSamplerState, id<MTLSamplerState> lightmapSamplerState, NSMutableArray<Texture*>* textureCache, id<MTLSamplerState> textureSamplerState)
 {
 	if (sorted.size() >= 0)
 	{
@@ -232,8 +243,6 @@ void Surfaces::Render(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, 
 		[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
 		[commandEncoder setVertexBuffer:perDrawable.vertices offset:0 atIndex:0];
 
-		NSUInteger indexBase = 0;
-		
 		for (auto& lightmap : sorted)
 		{
 			[commandEncoder setVertexBytes:&lightmap.second.texturePosition length:sizeof(lightmap.second.texturePosition) atIndex:4];
@@ -244,10 +253,16 @@ void Surfaces::Render(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, 
 			{
 				[commandEncoder setFragmentTexture:textureCache[texture.second.texture].texture atIndex:3];
 				[commandEncoder setFragmentSamplerState:textureSamplerState atIndex:3];
-
-				[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:(NSUInteger)texture.second.indices indexType:MTLIndexTypeUInt32 indexBuffer:perDrawable.indices indexBufferOffset:indexBase];
 				
-				indexBase += (NSUInteger)texture.second.indices * sizeof(uint32_t);
+				for (auto indices : texture.second.indicesPerSurface)
+				{
+					[commandEncoder setVertexBytes:rotation length:8 * sizeof(float) atIndex:5];
+
+					[commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:(NSUInteger)indices indexType:MTLIndexTypeUInt32 indexBuffer:perDrawable.indices indexBufferOffset:indexBase];
+					
+					indexBase += (NSUInteger)indices * sizeof(uint32_t);
+					rotation += 8;
+				}
 			}
 		}
 	}

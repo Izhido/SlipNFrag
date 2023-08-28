@@ -442,7 +442,7 @@ int		loadable[MAX_SAVEGAMES];
 void M_ScanSaves (void)
 {
 	int		i;
-	char	name[MAX_OSPATH];
+	std::string	name;
 	int	    f;
 	int		version;
 
@@ -450,8 +450,8 @@ void M_ScanSaves (void)
 	{
 		strcpy (m_filenames[i], "--- UNUSED SLOT ---");
 		loadable[i] = false;
-		sprintf (name, "%s/s%i.sav", com_gamedir.c_str(), i);
-        Sys_FileOpenRead (name, &f);
+		name = com_gamedir + "/s" + std::to_string(i) + ".sav";
+        Sys_FileOpenRead (name.c_str(), &f);
 		if (f < 0)
 			continue;
         std::string to_read;

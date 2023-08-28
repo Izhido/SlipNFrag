@@ -19,8 +19,10 @@
 #include "d_lists.h"
 #include "Input.h"
 #include "SortedSurfaceLightmap.h"
+#include "SortedSurfaceRotatedLightmap.h"
 #import "Pipelines.h"
 #include "Surfaces.h"
+#include "SurfacesRotated.h"
 
 @interface Renderer ()
 
@@ -195,6 +197,8 @@ static CGDataProviderRef con_provider;
 
 	std::vector<std::unordered_map<void*, NSUInteger>> lightmapIndices;
 	
+	std::vector<std::vector<float>> rotations;
+	
 	std::unordered_map<void*, NSUInteger> textureIndex;
 	auto textureCache = [NSMutableArray<Texture*> new];
 
@@ -295,13 +299,12 @@ static CGDataProviderRef con_provider;
 							textureIndex.clear();
 							[textureCache removeAllObjects];
 
-							for (size_t i = 0; i < lightmapIndices.size(); i++)
-							{
-								lightmapIndices[i].clear();
-							}
-
 							for (NSUInteger d = 0; d < drawables.count; d++)
 							{
+								rotations[d].clear();
+								
+								lightmapIndices[d].clear();
+
 								[drawables[d].lightmapCache removeAllObjects];
 								drawables[d].indices = nil;
 								drawables[d].vertices = nil;
@@ -417,6 +420,7 @@ static CGDataProviderRef con_provider;
 								
 								PerDrawable* perDrawable = nil;
 								std::unordered_map<void*, NSUInteger>* lightmapIndex = nullptr;
+								std::vector<float>* rotation = nullptr;
 
 								for (NSUInteger d = 0; d < drawables.count; d++)
 								{
@@ -424,6 +428,7 @@ static CGDataProviderRef con_provider;
 									{
 										perDrawable = drawables[d];
 										lightmapIndex = &lightmapIndices[d];
+										rotation = &rotations[d];
 
 										break;
 									}
@@ -438,6 +443,9 @@ static CGDataProviderRef con_provider;
 									
 									lightmapIndices.emplace_back();
 									lightmapIndex = &lightmapIndices.back();
+									
+									rotations.emplace_back();
+									rotation = &rotations.back();
 									
 									{
 										std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -482,7 +490,10 @@ static CGDataProviderRef con_provider;
 								}
 
 								std::unordered_map<void*, SortedSurfaceLightmap> sortedSurfaces;
-								
+
+								NSUInteger surfacesRotatedIndexBase = 0;
+								std::unordered_map<void*, SortedSurfaceRotatedLightmap> sortedSurfacesRotated;
+
 								if (mode == AppWorldMode)
 								{
 									std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -516,6 +527,9 @@ static CGDataProviderRef con_provider;
 									
 									Surfaces::Sort(sortedSurfaces, verticesSize, indicesSize);
 									
+									surfacesRotatedIndexBase = indicesSize;
+									SurfacesRotated::Sort(sortedSurfacesRotated, verticesSize, indicesSize);
+									
 									if (verticesSize > 0 && indicesSize > 0)
 									{
 										if (perDrawable.vertices == nil || perDrawable.vertices.length < verticesSize || perDrawable.vertices.length > verticesSize / 2)
@@ -528,12 +542,22 @@ static CGDataProviderRef con_provider;
 											perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
 										}
 										
+										size_t rotationSize = (d_lists.last_surface_rotated + 1) * 8;
+										
+										if (rotationSize > rotation->size() || rotationSize < rotation->size() / 2)
+										{
+											rotation->resize(rotationSize * 3 / 2);
+										}
+
 										auto verticesTarget = (float*)perDrawable.vertices.contents;
 										auto indicesTarget = (uint32_t*)perDrawable.indices.contents;
 										
 										uint32_t indexBase = 0;
+										auto rotationData = rotation->data();
 										
 										Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
+										
+										SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
 									}
 								}
 
@@ -592,6 +616,8 @@ static CGDataProviderRef con_provider;
 										id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
 
 										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
+
+										SurfacesRotated::Render(sortedSurfacesRotated, commandEncoder, pipelines.surfaceRotated, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesRotatedIndexBase, rotation->data(), planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
 										cameraMatrix = simd_mul(locked_head_pose, cp_view_get_transform(view));
 										viewMatrix = simd_transpose(cameraMatrix);

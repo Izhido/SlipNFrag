@@ -17,6 +17,8 @@
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> surface;
 
+@property (nonatomic, strong) id<MTLRenderPipelineState> surfaceRotated;
+
 -(bool)create:(id<MTLDevice>)device colorPixelFormat:(MTLPixelFormat)colorPixelFormat depthPixelFormat:(MTLPixelFormat)depthPixelFormat engineStop:(EngineStop*)engineStop;
 
 @end

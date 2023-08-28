@@ -86,6 +86,18 @@
 		return false;
 	}
 
+	vertexProgram = [library newFunctionWithName:@"surfaceRotatedVertexMain"];
+
+	pipelineStateDescriptor.vertexFunction = vertexProgram;
+
+	self.surfaceRotated = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Rotated surface rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
 	return true;
 }
 

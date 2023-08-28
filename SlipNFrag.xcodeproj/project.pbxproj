@@ -345,6 +345,7 @@
 		28D060622808E77F009E0953 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
 		28D060632808E77F009E0953 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
 		28D336BF2A9715F6000DDE59 /* Lightmap.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28D336BE2A9715F6000DDE59 /* Lightmap.mm */; };
+		28D698202A9BF72100EA7F5B /* SurfacesRotated.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28D6981F2A9BF72100EA7F5B /* SurfacesRotated.mm */; };
 		28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28DFACDD28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28DFACDE28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
@@ -601,6 +602,10 @@
 		28D060602808E77F009E0953 /* snd_float_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mem.cpp; sourceTree = "<group>"; };
 		28D336BD2A971571000DDE59 /* Lightmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Lightmap.h; sourceTree = "<group>"; };
 		28D336BE2A9715F6000DDE59 /* Lightmap.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Lightmap.mm; sourceTree = "<group>"; };
+		28D6981E2A9BF70600EA7F5B /* SurfacesRotated.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SurfacesRotated.h; sourceTree = "<group>"; };
+		28D6981F2A9BF72100EA7F5B /* SurfacesRotated.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SurfacesRotated.mm; sourceTree = "<group>"; };
+		28D698232A9C126D00EA7F5B /* SortedSurfaceRotatedLightmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedSurfaceRotatedLightmap.h; sourceTree = "<group>"; };
+		28D698242A9C129E00EA7F5B /* SortedSurfaceRotatedTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedSurfaceRotatedTexture.h; sourceTree = "<group>"; };
 		28DFACDB28A4B2DB00646DE0 /* r_image.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_image.cpp; sourceTree = "<group>"; };
 		28E95FA9260C50A0000DDF6C /* cd_ios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cd_ios.cpp; sourceTree = "<group>"; };
 		28E9CEC62A8843BB00EDEF92 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -680,9 +685,13 @@
 				28AF30FD2A7725230072610B /* Renderer.h */,
 				28AF30FE2A77262E0072610B /* Renderer.mm */,
 				284557442A95B9D700A9D7B2 /* SortedSurfaceLightmap.h */,
+				28D698232A9C126D00EA7F5B /* SortedSurfaceRotatedLightmap.h */,
+				28D698242A9C129E00EA7F5B /* SortedSurfaceRotatedTexture.h */,
 				284557452A95BA7C00A9D7B2 /* SortedSurfaceTexture.h */,
 				286C04BE2A996F95002C9126 /* Surfaces.h */,
 				286C04BF2A997048002C9126 /* Surfaces.mm */,
+				28D6981E2A9BF70600EA7F5B /* SurfacesRotated.h */,
+				28D6981F2A9BF72100EA7F5B /* SurfacesRotated.mm */,
 				28734C132A72E1D900B32DE5 /* Texture.h */,
 				288AA3CD2A8C8BE6008B3C91 /* Texture.mm */,
 				2811E5302A6C722700B1498E /* Assets.xcassets */,
@@ -1188,6 +1197,7 @@
 				2875DC0E2A6CA3DA00EED860 /* sv_user.cpp in Sources */,
 				2875DC042A6CA3DA00EED860 /* pr_cmds.cpp in Sources */,
 				2847C6902A8A7966000A839F /* GameMode.swift in Sources */,
+				28D698202A9BF72100EA7F5B /* SurfacesRotated.mm in Sources */,
 				2811E5292A6C722300B1498E /* SlipNFrag_VisionOSApp.swift in Sources */,
 				2875DC2E2A6CA3DA00EED860 /* wad.cpp in Sources */,
 				2875DC052A6CA3DA00EED860 /* chase.cpp in Sources */,
