@@ -84,6 +84,13 @@ extern m_state_t m_state;
 	}
 }
 
++(void)setAppScreenMode
+{
+	std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
+		
+	appState.Mode = AppScreenMode;
+}
+
 -(void)loopEngine:(EngineStop*)engineStop
 {
 	double previousTime = -1;

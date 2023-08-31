@@ -13,6 +13,8 @@
 
 -(void)startEngine:(NSArray<NSString*>*)args size:(CGSize)size engineStop:(EngineStop*)engineStop;
 
++(void)setAppScreenMode;
+
 -(void)loopEngine:(EngineStop*)engineStop;
 
 @end

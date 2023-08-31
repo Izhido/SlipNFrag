@@ -16,6 +16,8 @@
 	</array>
 	<key>GCSupportsControllerUserInteraction</key>
 	<true/>
+	<key>NSWorldSensingUsageDescription</key>
+	<string>To locate the floor below you.</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 </dict>

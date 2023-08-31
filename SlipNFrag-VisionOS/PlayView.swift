@@ -130,6 +130,9 @@ struct PlayView: View {
 
 							} else {
 								engineStarted = true
+
+								Engine.setAppScreenMode()
+
 								engine.loopEngine(engineStop)
 								if engineStop.stopEngineMessage != nil {
 
@@ -143,7 +146,7 @@ struct PlayView: View {
 							url!.stopAccessingSecurityScopedResource()
 							
 							if (engineStop.stopEngine && engineStop.stopEngineMessage == nil) {
-								dismiss()
+								exit(0)
 							}
 						}
 					}

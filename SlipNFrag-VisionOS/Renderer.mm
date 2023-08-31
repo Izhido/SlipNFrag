@@ -8,6 +8,7 @@
 
 #import "Renderer.h"
 #import <Spatial/Spatial.h>
+#import <ARKit/ARKit.h>
 #include "sys_visionos.h"
 #include "vid_visionos.h"
 #include "in_visionos.h"
@@ -105,7 +106,11 @@ static CGDataProviderRef con_provider;
 	ar_session_request_authorization(session, ar_authorization_type_world_sensing,
 									 ^(ar_authorization_results_t _Nonnull authorization_results,
 									   ar_error_t _Nullable error) {
-		auto error_code = ar_error_get_error_code(error);
+		ar_error_code_t error_code = 0;
+		if (error != nil)
+		{
+			error_code = ar_error_get_error_code(error);
+		}
 		if (error_code == 0)
 		{
 			ar_authorization_results_enumerate_results(authorization_results, ^bool(ar_authorization_result_t _Nonnull authorization_result) {
@@ -323,16 +328,16 @@ static CGDataProviderRef con_provider;
 						{
 							auto viewCount = (NSUInteger)cp_drawable_get_view_count(drawable);
 							
-							cp_frame_timing_t frame_timing = cp_drawable_get_frame_timing(drawable);
-							auto pose = ar_pose_create();
-							
-							auto p_time = cp_time_to_cf_time_interval(cp_frame_timing_get_presentation_time(frame_timing));
-							auto pose_status = ar_world_tracking_provider_query_pose_at_timestamp(world_tracking, p_time, pose);
-							if (pose_status == ar_pose_status_success)
+							auto timing_info = cp_drawable_get_frame_timing(drawable);
+							auto time = cp_time_to_cf_time_interval(cp_frame_timing_get_presentation_time(timing_info));
+							auto device_anchor = ar_device_anchor_create();
+							const ar_device_anchor_query_status_t status = ar_world_tracking_provider_query_device_anchor_at_timestamp(world_tracking, time, device_anchor);
+
+							if (status == ar_device_anchor_query_status_success)
 							{
-								cp_drawable_set_ar_pose(drawable, pose);
+								cp_drawable_set_device_anchor(drawable, device_anchor);
 								
-								auto head_pose = ar_pose_get_origin_from_device_transform(pose);
+								auto head_pose = ar_anchor_get_origin_from_anchor_transform(device_anchor);
 
 								{
 									std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
@@ -701,6 +706,12 @@ static CGDataProviderRef con_provider;
 
 +(void)renderFrame:(CGContextRef)context size:(CGSize)size date:(NSDate*)date
 {
+	{
+		std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
+		
+		appState.Mode = AppScreenMode;
+	}
+
 	{
 		std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 		

@@ -15,6 +15,7 @@ struct MainScene: Scene {
 	@Environment(\.dismissWindow) private var dismissWindow
 	@Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
 
+	@State private var selectedImmersionStyle: ImmersionStyle = .full
 	@State private var stopEngine = false
 	@State private var stopEngineMessage = ""
 	@State private var stopEngineExit = true
@@ -102,12 +103,14 @@ struct MainScene: Scene {
 								Task {
 									await dismissImmersiveSpace()
 								}
-
-								exit(0)
 							}
 						}
 
 						url!.stopAccessingSecurityScopedResource()
+						
+						if (engineStop.stopEngine && engineStop.stopEngineMessage == nil) {
+							exit(0)
+						}
 					}
 				}
 
@@ -142,7 +145,7 @@ struct MainScene: Scene {
 				rendererThread.name = "Renderer Thread"
 				rendererThread.start()
 			}
-		}
+		}.immersionStyle(selection:$selectedImmersionStyle, in: .full)
 	}
 	
 	private func dismissAndAlert(message: String) {
