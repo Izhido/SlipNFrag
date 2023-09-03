@@ -102,3 +102,22 @@ struct SurfaceVertexOut
 	outVertex.lightmapSize = (floor(extents / 16) + 1) * 16;
 	return outVertex;
 }
+
+[[vertex]] VertexOut turbulentVertexMain(SurfaceVertexIn inVertex [[stage_in]], constant float4x4& vertexTransformMatrix [[buffer(1)]], constant float4x4& viewMatrix [[buffer(2)]], constant float4x4& projectionMatrix [[buffer(3)]], constant float2x4& texturePosition [[buffer(4)]], constant float2& textureSize [[buffer(5)]])
+{
+	VertexOut outVertex;
+	auto position = float4(inVertex.position, 1);
+	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * position;
+	auto texCoords = float2(dot(position, texturePosition[0]), dot(position, texturePosition[1]));
+	outVertex.texCoords = texCoords / textureSize;
+	return outVertex;
+}
+
+[[fragment]] half4 turbulentFragmentMain(VertexOut input [[stage_in]], constant float& time [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> surfaceTexture [[texture(1)]], sampler paletteSampler [[sampler(0)]], sampler textureSampler [[sampler(1)]])
+{
+	auto distortion = sin(fmod(time + input.texCoords * 5, 3.14159*2)) / 10;
+	auto texCoords = input.texCoords.xy + distortion.yx;
+	auto entry = surfaceTexture.sample(textureSampler, texCoords)[0];
+	auto color = paletteTexture.sample(paletteSampler, entry);
+	return color;
+}

@@ -19,11 +19,10 @@
 #include "r_local.h"
 #include "d_lists.h"
 #include "Input.h"
-#include "SortedSurfaceLightmap.h"
-#include "SortedSurfaceRotatedLightmap.h"
 #import "Pipelines.h"
-#include "Surfaces.h"
-#include "SurfacesRotated.h"
+#import "Surfaces.h"
+#import "SurfacesRotated.h"
+#import "Turbulent.h"
 
 @interface Renderer ()
 
@@ -499,6 +498,9 @@ static CGDataProviderRef con_provider;
 								NSUInteger surfacesRotatedIndexBase = 0;
 								std::unordered_map<void*, SortedSurfaceRotatedLightmap> sortedSurfacesRotated;
 
+								NSUInteger turbulentIndexBase = 0;
+								std::unordered_map<void*, SortedTurbulentTexture> sortedTurbulent;
+
 								if (mode == AppWorldMode)
 								{
 									std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -535,6 +537,9 @@ static CGDataProviderRef con_provider;
 									surfacesRotatedIndexBase = indicesSize;
 									SurfacesRotated::Sort(sortedSurfacesRotated, verticesSize, indicesSize);
 									
+									turbulentIndexBase = indicesSize;
+									Turbulent::Sort(sortedTurbulent, verticesSize, indicesSize);
+									
 									if (verticesSize > 0 && indicesSize > 0)
 									{
 										if (perDrawable.vertices == nil || perDrawable.vertices.length < verticesSize || perDrawable.vertices.length > verticesSize / 2)
@@ -563,6 +568,8 @@ static CGDataProviderRef con_provider;
 										Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
 										
 										SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
+										
+										Turbulent::Fill(sortedTurbulent, verticesTarget, indicesTarget, indexBase, device, perDrawable, textureIndex, textureCache);
 									}
 								}
 
@@ -623,6 +630,8 @@ static CGDataProviderRef con_provider;
 										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
 										SurfacesRotated::Render(sortedSurfacesRotated, commandEncoder, pipelines.surfaceRotated, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesRotatedIndexBase, rotation->data(), planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
+
+										Turbulent::Render(sortedTurbulent, commandEncoder, pipelines.turbulent, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, turbulentIndexBase, planarSamplerState, textureCache, textureSamplerState);
 
 										cameraMatrix = simd_mul(locked_head_pose, cp_view_get_transform(view));
 										viewMatrix = simd_transpose(cameraMatrix);

@@ -257,6 +257,7 @@
 		2884737E28E33D9E00B8A885 /* d_polycl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2884737D28E33D9E00B8A885 /* d_polycl.cpp */; };
 		2884737F28E33D9E00B8A885 /* d_polycl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2884737D28E33D9E00B8A885 /* d_polycl.cpp */; };
 		2884738028E33D9E00B8A885 /* d_polycl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2884737D28E33D9E00B8A885 /* d_polycl.cpp */; };
+		2884E5322AA43455008C984A /* Turbulent.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2884E5312AA43455008C984A /* Turbulent.mm */; };
 		2886A080280A21A100505651 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
 		2886A081280A21A100505651 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
 		2886A082280A21A100505651 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
@@ -566,6 +567,9 @@
 		2880A4CC22C5774300AF513D /* net_udp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = net_udp.cpp; sourceTree = "<group>"; };
 		2883A669280A1FC1009E4681 /* stb_vorbis.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; path = stb_vorbis.c; sourceTree = "<group>"; };
 		2884737D28E33D9E00B8A885 /* d_polycl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = d_polycl.cpp; sourceTree = "<group>"; };
+		2884E5302AA43439008C984A /* Turbulent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Turbulent.h; sourceTree = "<group>"; };
+		2884E5312AA43455008C984A /* Turbulent.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Turbulent.mm; sourceTree = "<group>"; };
+		2884E5332AA4358A008C984A /* SortedTurbulentTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedTurbulentTexture.h; sourceTree = "<group>"; };
 		288AA3CD2A8C8BE6008B3C91 /* Texture.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Texture.mm; sourceTree = "<group>"; };
 		288AA3CF2A8C8C62008B3C91 /* PerView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PerView.mm; sourceTree = "<group>"; };
 		288AA3D12A8C8DA4008B3C91 /* PerDrawable.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PerDrawable.mm; sourceTree = "<group>"; };
@@ -688,12 +692,15 @@
 				28D698232A9C126D00EA7F5B /* SortedSurfaceRotatedLightmap.h */,
 				28D698242A9C129E00EA7F5B /* SortedSurfaceRotatedTexture.h */,
 				284557452A95BA7C00A9D7B2 /* SortedSurfaceTexture.h */,
+				2884E5332AA4358A008C984A /* SortedTurbulentTexture.h */,
 				286C04BE2A996F95002C9126 /* Surfaces.h */,
 				286C04BF2A997048002C9126 /* Surfaces.mm */,
 				28D6981E2A9BF70600EA7F5B /* SurfacesRotated.h */,
 				28D6981F2A9BF72100EA7F5B /* SurfacesRotated.mm */,
 				28734C132A72E1D900B32DE5 /* Texture.h */,
 				288AA3CD2A8C8BE6008B3C91 /* Texture.mm */,
+				2884E5302AA43439008C984A /* Turbulent.h */,
+				2884E5312AA43455008C984A /* Turbulent.mm */,
 				2811E5302A6C722700B1498E /* Assets.xcassets */,
 				2870E72C2A6F750200B2F088 /* Shaders.metal */,
 				2875DBF62A6C9A5900EED860 /* SlipNFrag-VisionOS-Bridging-Header.h */,
@@ -1215,6 +1222,7 @@
 				2870E72B2A6F727800B2F088 /* vid_visionos.cpp in Sources */,
 				2875DC282A6CA3DA00EED860 /* view.cpp in Sources */,
 				289DCF0E2A8028E0005A4D55 /* EngineStop.mm in Sources */,
+				2884E5322AA43455008C984A /* Turbulent.mm in Sources */,
 				2875DC2A2A6CA3DA00EED860 /* r_surf.cpp in Sources */,
 				28D336BF2A9715F6000DDE59 /* Lightmap.mm in Sources */,
 				2875DC0A2A6CA3DA00EED860 /* net_loop.cpp in Sources */,

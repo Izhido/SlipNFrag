@@ -19,6 +19,8 @@
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> surfaceRotated;
 
+@property (nonatomic, strong) id<MTLRenderPipelineState> turbulent;
+
 -(bool)create:(id<MTLDevice>)device colorPixelFormat:(MTLPixelFormat)colorPixelFormat depthPixelFormat:(MTLPixelFormat)depthPixelFormat engineStop:(EngineStop*)engineStop;
 
 @end

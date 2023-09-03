@@ -98,6 +98,20 @@
 		return false;
 	}
 
+	vertexProgram = [library newFunctionWithName:@"turbulentVertexMain"];
+	fragmentProgram = [library newFunctionWithName:@"turbulentFragmentMain"];
+
+	pipelineStateDescriptor.vertexFunction = vertexProgram;
+	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
+
+	self.turbulent = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Turbulent surface rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
 	return true;
 }
 
