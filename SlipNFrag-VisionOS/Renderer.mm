@@ -22,6 +22,7 @@
 #import "Pipelines.h"
 #import "Surfaces.h"
 #import "SurfacesRotated.h"
+#import "Alias.h"
 #import "Turbulent.h"
 
 @interface Renderer ()
@@ -206,6 +207,12 @@ static CGDataProviderRef con_provider;
 	std::unordered_map<void*, NSUInteger> textureIndex;
 	auto textureCache = [NSMutableArray<Texture*> new];
 
+	std::unordered_map<void*, NSUInteger> aliasIndicesIndex;
+	auto aliasIndicesCache = [NSMutableArray<id<MTLBuffer>> new];
+
+	std::unordered_map<void*, NSUInteger> colormapIndex;
+	auto colormapCache = [NSMutableArray<Texture*> new];
+
 	auto clearCount = 0;
 	
 	simd_float4x4 vertexTransformMatrix { };
@@ -300,6 +307,9 @@ static CGDataProviderRef con_provider;
 
 						if (clearCount != host_clearcount)
 						{
+							colormapIndex.clear();
+							[colormapCache removeAllObjects];
+
 							textureIndex.clear();
 							[textureCache removeAllObjects];
 
@@ -310,6 +320,7 @@ static CGDataProviderRef con_provider;
 								lightmapIndices[d].clear();
 
 								[drawables[d].lightmapCache removeAllObjects];
+								drawables[d].aliasVertices = nil;
 								drawables[d].indices = nil;
 								drawables[d].vertices = nil;
 							}
@@ -500,6 +511,8 @@ static CGDataProviderRef con_provider;
 
 								NSUInteger turbulentIndexBase = 0;
 								std::unordered_map<void*, SortedTurbulentTexture> sortedTurbulent;
+								
+								std::unordered_map<void*, SortedAliasTexture> sortedAlias;
 
 								if (mode == AppWorldMode)
 								{
@@ -531,7 +544,8 @@ static CGDataProviderRef con_provider;
 									
 									NSUInteger verticesSize = 0;
 									NSUInteger indicesSize = 0;
-									
+									NSUInteger aliasVerticesSize = 0;
+
 									Surfaces::Sort(sortedSurfaces, verticesSize, indicesSize);
 									
 									surfacesRotatedIndexBase = indicesSize;
@@ -539,6 +553,8 @@ static CGDataProviderRef con_provider;
 									
 									turbulentIndexBase = indicesSize;
 									Turbulent::Sort(sortedTurbulent, verticesSize, indicesSize);
+									
+									Alias::Sort(sortedAlias, aliasVerticesSize);
 									
 									if (verticesSize > 0 && indicesSize > 0)
 									{
@@ -570,6 +586,18 @@ static CGDataProviderRef con_provider;
 										SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
 										
 										Turbulent::Fill(sortedTurbulent, verticesTarget, indicesTarget, indexBase, device, perDrawable, textureIndex, textureCache);
+									}
+									
+									if (aliasVerticesSize > 0)
+									{
+										if (perDrawable.aliasVertices == nil || perDrawable.aliasVertices.length < aliasVerticesSize || perDrawable.aliasVertices.length > aliasVerticesSize / 2)
+										{
+											perDrawable.aliasVertices = [device newBufferWithLength:aliasVerticesSize * 3 / 2 options:0];
+										}
+										
+										auto target = (float*)perDrawable.aliasVertices.contents;
+
+										Alias::Fill(sortedAlias, target, device, perDrawable, textureIndex, textureCache, aliasIndicesIndex, aliasIndicesCache, colormapIndex, colormapCache);
 									}
 								}
 
@@ -633,6 +661,8 @@ static CGDataProviderRef con_provider;
 
 										Turbulent::Render(sortedTurbulent, commandEncoder, pipelines.turbulent, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, turbulentIndexBase, planarSamplerState, textureCache, textureSamplerState);
 
+										Alias::Render(sortedAlias, commandEncoder, pipelines.alias, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, planarSamplerState, textureCache, textureSamplerState, aliasIndicesCache, colormapCache);
+										
 										cameraMatrix = simd_mul(locked_head_pose, cp_view_get_transform(view));
 										viewMatrix = simd_transpose(cameraMatrix);
 

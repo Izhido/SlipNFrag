@@ -24,7 +24,7 @@ struct VertexOut
 
 struct SurfaceVertexIn
 {
-	float3 position [[attribute(0)]];
+	float4 position [[attribute(0)]];
 };
 
 struct SurfaceVertexOut
@@ -33,6 +33,20 @@ struct SurfaceVertexOut
 	float2 lightmapCoords;
 	float2 texCoords;
 	float2 lightmapSize;
+};
+
+struct AliasVertexIn
+{
+	float4 position [[attribute(0)]];
+	float2 texCoords [[attribute(1)]];
+	float light [[attribute(2)]];
+};
+
+struct AliasVertexOut
+{
+	float4 position [[position]];
+	float2 texCoords;
+	float light;
 };
 
 [[vertex]] VertexOut planarVertexMain(VertexIn inVertex [[stage_in]], constant float4x4& viewMatrix [[buffer(1)]], constant float4x4& projectionMatrix [[buffer(2)]])
@@ -59,7 +73,7 @@ struct SurfaceVertexOut
 [[vertex]] SurfaceVertexOut surfaceVertexMain(SurfaceVertexIn inVertex [[stage_in]], constant float4x4& vertexTransformMatrix [[buffer(1)]], constant float4x4& viewMatrix [[buffer(2)]], constant float4x4& projectionMatrix [[buffer(3)]], constant float4x4& texturePosition [[buffer(4)]])
 {
 	SurfaceVertexOut outVertex;
-	auto position = float4(inVertex.position, 1);
+	auto position = inVertex.position;
 	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * position;
 	auto texCoords = float2(dot(position, texturePosition[0]), dot(position, texturePosition[1]));
 	auto mins = texturePosition[2].xy;
@@ -85,7 +99,7 @@ struct SurfaceVertexOut
 [[vertex]] SurfaceVertexOut surfaceRotatedVertexMain(SurfaceVertexIn inVertex [[stage_in]], constant float4x4& vertexTransformMatrix [[buffer(1)]], constant float4x4& viewMatrix [[buffer(2)]], constant float4x4& projectionMatrix [[buffer(3)]], constant float4x4& texturePosition [[buffer(4)]], constant float2x4& rotation [[buffer(5)]])
 {
 	SurfaceVertexOut outVertex;
-	auto position = float4(inVertex.position, 1);
+	auto position = inVertex.position;
 	auto translation = float4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, rotation[0].x, rotation[0].y, rotation[0].z, 1);
 	auto sine = float3(sin(-rotation[1].x), sin(-rotation[1].y), sin(-rotation[1].z));
 	auto cosine = float3(cos(-rotation[1].x), cos(-rotation[1].y), cos(-rotation[1].z));
@@ -106,7 +120,7 @@ struct SurfaceVertexOut
 [[vertex]] VertexOut turbulentVertexMain(SurfaceVertexIn inVertex [[stage_in]], constant float4x4& vertexTransformMatrix [[buffer(1)]], constant float4x4& viewMatrix [[buffer(2)]], constant float4x4& projectionMatrix [[buffer(3)]], constant float2x4& texturePosition [[buffer(4)]], constant float2& textureSize [[buffer(5)]])
 {
 	VertexOut outVertex;
-	auto position = float4(inVertex.position, 1);
+	auto position = inVertex.position;
 	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * position;
 	auto texCoords = float2(dot(position, texturePosition[0]), dot(position, texturePosition[1]));
 	outVertex.texCoords = texCoords / textureSize;
@@ -119,5 +133,24 @@ struct SurfaceVertexOut
 	auto texCoords = input.texCoords.xy + distortion.yx;
 	auto entry = surfaceTexture.sample(textureSampler, texCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, entry);
+	return color;
+}
+
+[[vertex]] AliasVertexOut aliasVertexMain(AliasVertexIn inVertex [[stage_in]], constant float4x4& aliasTransformMatrix  [[buffer(1)]], constant float4x4& vertexTransformMatrix [[buffer(2)]], constant float4x4& viewMatrix [[buffer(3)]], constant float4x4& projectionMatrix [[buffer(4)]])
+{
+	AliasVertexOut outVertex;
+	auto position = inVertex.position;
+	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * aliasTransformMatrix * position;
+	outVertex.texCoords = inVertex.texCoords;
+	outVertex.light = inVertex.light / 64;
+	return outVertex;
+}
+
+[[fragment]] half4 aliasFragmentMain(AliasVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<half> skinTexture [[texture(2)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler skinSampler [[sampler(2)]])
+{
+	auto textureEntry = skinTexture.sample(skinSampler, input.texCoords)[0];
+	auto colormapCoords = float2(textureEntry, input.light);
+	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
+	auto color = paletteTexture.sample(paletteSampler, colormapped);
 	return color;
 }

@@ -112,6 +112,34 @@
 		return false;
 	}
 
+	vertexDescriptor = [MTLVertexDescriptor new];
+	vertexDescriptor.attributes[0].format = MTLVertexFormatFloat4;
+	vertexDescriptor.attributes[0].offset = 0;
+	vertexDescriptor.attributes[0].bufferIndex = 0;
+	vertexDescriptor.attributes[1].format = MTLVertexFormatFloat2;
+	vertexDescriptor.attributes[1].offset = 16;
+	vertexDescriptor.attributes[1].bufferIndex = 0;
+	vertexDescriptor.attributes[2].format = MTLVertexFormatFloat;
+	vertexDescriptor.attributes[2].offset = 24;
+	vertexDescriptor.attributes[2].bufferIndex = 0;
+	vertexDescriptor.layouts[0].stride = 28;
+
+	pipelineStateDescriptor.vertexDescriptor = vertexDescriptor;
+
+	vertexProgram = [library newFunctionWithName:@"aliasVertexMain"];
+	fragmentProgram = [library newFunctionWithName:@"aliasFragmentMain"];
+
+	pipelineStateDescriptor.vertexFunction = vertexProgram;
+	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
+
+	self.alias = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Alias model rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
 	return true;
 }
 

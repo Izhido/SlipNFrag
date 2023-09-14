@@ -170,6 +170,7 @@
 		285AD3882A7B733E00D6D013 /* DirectRect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 285AD3862A7B723F00D6D013 /* DirectRect.cpp */; };
 		285D5B09229F9EE400B6ED09 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28BA2A6E229F31C2001830E9 /* MetalKit.framework */; };
 		2867E02622C79ADF0028B7BC /* PreferencesController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2867E02522C79ADF0028B7BC /* PreferencesController.mm */; };
+		286944BB2AAD71B8009945B2 /* Alias.mm in Sources */ = {isa = PBXBuildFile; fileRef = 286944BA2AAD71B8009945B2 /* Alias.mm */; };
 		286C04BD2A996905002C9126 /* Pipelines.mm in Sources */ = {isa = PBXBuildFile; fileRef = 286C04BC2A996905002C9126 /* Pipelines.mm */; };
 		286C04C02A997048002C9126 /* Surfaces.mm in Sources */ = {isa = PBXBuildFile; fileRef = 286C04BF2A997048002C9126 /* Surfaces.mm */; };
 		286DF6C92324813B00B7537E /* net_sock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 286DF6C62323F3AA00B7537E /* net_sock.cpp */; };
@@ -495,6 +496,9 @@
 		285D5B0E229FA12400B6ED09 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		2867E02422C79ADF0028B7BC /* PreferencesController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PreferencesController.h; sourceTree = "<group>"; };
 		2867E02522C79ADF0028B7BC /* PreferencesController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PreferencesController.mm; sourceTree = "<group>"; };
+		286944B82AAD6CF8009945B2 /* Alias.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Alias.h; sourceTree = "<group>"; };
+		286944B92AAD6D22009945B2 /* SortedAliasTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedAliasTexture.h; sourceTree = "<group>"; };
+		286944BA2AAD71B8009945B2 /* Alias.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Alias.mm; sourceTree = "<group>"; };
 		286C04BB2A996855002C9126 /* Pipelines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Pipelines.h; sourceTree = "<group>"; };
 		286C04BC2A996905002C9126 /* Pipelines.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Pipelines.mm; sourceTree = "<group>"; };
 		286C04BE2A996F95002C9126 /* Surfaces.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Surfaces.h; sourceTree = "<group>"; };
@@ -581,6 +585,7 @@
 		289DCF132A802C87005A4D55 /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Input.cpp; sourceTree = "<group>"; };
 		289DCF152A8030BE005A4D55 /* DirectRect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DirectRect.h; sourceTree = "<group>"; };
 		289DCF162A8030E8005A4D55 /* DirectRect.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DirectRect.cpp; sourceTree = "<group>"; };
+		289EB15B2AAD74110094970B /* SortedAliasEntry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedAliasEntry.h; sourceTree = "<group>"; };
 		28A4529028E29DFD009EFBCE /* r_aliasc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_aliasc.cpp; sourceTree = "<group>"; };
 		28A4529128E29DFD009EFBCE /* r_aclipc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_aclipc.cpp; sourceTree = "<group>"; };
 		28A5375E23106A85005007EE /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
@@ -665,6 +670,8 @@
 				2847C6912A8AACFD000A839F /* MainScene.swift */,
 				2811E52A2A6C722300B1498E /* PlayView.swift */,
 				28E9CEC62A8843BB00EDEF92 /* SettingsView.swift */,
+				286944B82AAD6CF8009945B2 /* Alias.h */,
+				286944BA2AAD71B8009945B2 /* Alias.mm */,
 				287EC31B2A8DC65300B1DFDF /* AppState.cpp */,
 				287EC31A2A8DC61600B1DFDF /* AppState.h */,
 				287EC31D2A8DC68F00B1DFDF /* AppMode.h */,
@@ -688,6 +695,8 @@
 				286C04BC2A996905002C9126 /* Pipelines.mm */,
 				28AF30FD2A7725230072610B /* Renderer.h */,
 				28AF30FE2A77262E0072610B /* Renderer.mm */,
+				286944B92AAD6D22009945B2 /* SortedAliasTexture.h */,
+				289EB15B2AAD74110094970B /* SortedAliasEntry.h */,
 				284557442A95B9D700A9D7B2 /* SortedSurfaceLightmap.h */,
 				28D698232A9C126D00EA7F5B /* SortedSurfaceRotatedLightmap.h */,
 				28D698242A9C129E00EA7F5B /* SortedSurfaceRotatedTexture.h */,
@@ -1193,6 +1202,7 @@
 				288AA3D02A8C8C62008B3C91 /* PerView.mm in Sources */,
 				2875DC002A6CA3DA00EED860 /* r_vars.cpp in Sources */,
 				2829D95E2A6CE6EB00516C16 /* snd_float_mix.cpp in Sources */,
+				286944BB2AAD71B8009945B2 /* Alias.mm in Sources */,
 				2875DC022A6CA3DA00EED860 /* r_light.cpp in Sources */,
 				2875DC012A6CA3DA00EED860 /* r_image.cpp in Sources */,
 				2875DC3C2A6CA3DA00EED860 /* d_surf.cpp in Sources */,

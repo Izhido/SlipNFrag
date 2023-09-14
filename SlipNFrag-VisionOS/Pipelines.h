@@ -21,6 +21,8 @@
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> turbulent;
 
+@property (nonatomic, strong) id<MTLRenderPipelineState> alias;
+
 -(bool)create:(id<MTLDevice>)device colorPixelFormat:(MTLPixelFormat)colorPixelFormat depthPixelFormat:(MTLPixelFormat)depthPixelFormat engineStop:(EngineStop*)engineStop;
 
 @end

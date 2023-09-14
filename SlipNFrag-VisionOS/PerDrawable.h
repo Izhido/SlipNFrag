@@ -26,6 +26,8 @@
 
 @property (nonatomic, strong) id<MTLBuffer> indices;
 
+@property (nonatomic, strong) id<MTLBuffer> aliasVertices;
+
 @property (nonatomic, strong) NSMutableArray<Lightmap*>* lightmapCache;
 
 @property (nonatomic, strong) NSMutableDictionary<NSNumber*, PerView*>* views;
