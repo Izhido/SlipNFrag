@@ -343,6 +343,7 @@
 		28BA2AB9229F4901001830E9 /* vid_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2AB7229F4901001830E9 /* vid_macos.cpp */; };
 		28C8FEB12A72FEFF00E3BA11 /* in_visionos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28C8FEB02A72FEFF00E3BA11 /* in_visionos.cpp */; };
 		28C8FEB42A7310E400E3BA11 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28C8FEB32A7310E400E3BA11 /* GameController.framework */; };
+		28CAFEC52AB41ED300BE42F6 /* Viewmodel.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28CAFEC42AB41ED300BE42F6 /* Viewmodel.mm */; };
 		28D060612808E77F009E0953 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
 		28D060622808E77F009E0953 /* snd_float_mix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605F2808E77F009E0953 /* snd_float_mix.cpp */; };
 		28D060632808E77F009E0953 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
@@ -606,6 +607,8 @@
 		28C8FEB02A72FEFF00E3BA11 /* in_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = in_visionos.cpp; sourceTree = "<group>"; };
 		28C8FEB22A72FF3E00E3BA11 /* in_visionos.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = in_visionos.h; sourceTree = "<group>"; };
 		28C8FEB32A7310E400E3BA11 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = Platforms/XROS.platform/Developer/SDKs/XROS1.0.sdk/System/Library/Frameworks/GameController.framework; sourceTree = DEVELOPER_DIR; };
+		28CAFEC32AB41E8000BE42F6 /* Viewmodel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Viewmodel.h; sourceTree = "<group>"; };
+		28CAFEC42AB41ED300BE42F6 /* Viewmodel.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Viewmodel.mm; sourceTree = "<group>"; };
 		28D0605E2808E77F009E0953 /* snd_float_dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_dma.cpp; sourceTree = "<group>"; };
 		28D0605F2808E77F009E0953 /* snd_float_mix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mix.cpp; sourceTree = "<group>"; };
 		28D060602808E77F009E0953 /* snd_float_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = snd_float_mem.cpp; sourceTree = "<group>"; };
@@ -710,6 +713,8 @@
 				288AA3CD2A8C8BE6008B3C91 /* Texture.mm */,
 				2884E5302AA43439008C984A /* Turbulent.h */,
 				2884E5312AA43455008C984A /* Turbulent.mm */,
+				28CAFEC32AB41E8000BE42F6 /* Viewmodel.h */,
+				28CAFEC42AB41ED300BE42F6 /* Viewmodel.mm */,
 				2811E5302A6C722700B1498E /* Assets.xcassets */,
 				2870E72C2A6F750200B2F088 /* Shaders.metal */,
 				2875DBF62A6C9A5900EED860 /* SlipNFrag-VisionOS-Bridging-Header.h */,
@@ -1200,6 +1205,7 @@
 				2875DC262A6CA3DA00EED860 /* net_vcr.cpp in Sources */,
 				2875DC342A6CA3DA00EED860 /* host_cmd.cpp in Sources */,
 				288AA3D02A8C8C62008B3C91 /* PerView.mm in Sources */,
+				28CAFEC52AB41ED300BE42F6 /* Viewmodel.mm in Sources */,
 				2875DC002A6CA3DA00EED860 /* r_vars.cpp in Sources */,
 				2829D95E2A6CE6EB00516C16 /* snd_float_mix.cpp in Sources */,
 				286944BB2AAD71B8009945B2 /* Alias.mm in Sources */,

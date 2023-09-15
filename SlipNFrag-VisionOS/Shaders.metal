@@ -49,6 +49,14 @@ struct AliasVertexOut
 	float light;
 };
 
+struct ViewmodelVertexOut
+{
+	float4 position [[position]];
+	float2 texCoords;
+	float light;
+	float alpha;
+};
+
 [[vertex]] VertexOut planarVertexMain(VertexIn inVertex [[stage_in]], constant float4x4& viewMatrix [[buffer(1)]], constant float4x4& projectionMatrix [[buffer(2)]])
 {
 	VertexOut outVertex;
@@ -139,8 +147,7 @@ struct AliasVertexOut
 [[vertex]] AliasVertexOut aliasVertexMain(AliasVertexIn inVertex [[stage_in]], constant float4x4& aliasTransformMatrix  [[buffer(1)]], constant float4x4& vertexTransformMatrix [[buffer(2)]], constant float4x4& viewMatrix [[buffer(3)]], constant float4x4& projectionMatrix [[buffer(4)]])
 {
 	AliasVertexOut outVertex;
-	auto position = inVertex.position;
-	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * aliasTransformMatrix * position;
+	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * aliasTransformMatrix * inVertex.position;
 	outVertex.texCoords = inVertex.texCoords;
 	outVertex.light = inVertex.light / 64;
 	return outVertex;
@@ -153,4 +160,24 @@ struct AliasVertexOut
 	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, colormapped);
 	return color;
+}
+
+[[vertex]] ViewmodelVertexOut viewmodelVertexMain(AliasVertexIn inVertex [[stage_in]], constant float4x4& aliasTransformMatrix  [[buffer(1)]], constant float4x4& vertexTransformMatrix [[buffer(2)]], constant float4x4& viewMatrix [[buffer(3)]], constant float4x4& projectionMatrix [[buffer(4)]])
+{
+	ViewmodelVertexOut outVertex;
+	auto position = viewMatrix * vertexTransformMatrix * aliasTransformMatrix * inVertex.position;
+	outVertex.position = projectionMatrix * position;
+	outVertex.texCoords = inVertex.texCoords;
+	outVertex.light = inVertex.light / 64;
+	outVertex.alpha = clamp(-position.z * 9 - 2, 0.0, 1.0);
+	return outVertex;
+}
+
+[[fragment]] half4 viewmodelFragmentMain(ViewmodelVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<half> skinTexture [[texture(2)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler skinSampler [[sampler(2)]])
+{
+	auto textureEntry = skinTexture.sample(skinSampler, input.texCoords)[0];
+	auto colormapCoords = float2(textureEntry, input.light);
+	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
+	auto color = paletteTexture.sample(paletteSampler, colormapped);
+	return color * half4(1, 1, 1, input.alpha);
 }

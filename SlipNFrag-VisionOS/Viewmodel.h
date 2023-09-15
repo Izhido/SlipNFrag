@@ -1,8 +1,8 @@
 //
-//  Alias.h
+//  Viewmodel.h
 //  SlipNFrag
 //
-//  Created by Heriberto Delgado on 9/9/23.
+//  Created by Heriberto Delgado on 14/9/23.
 //  Copyright © 2023 Heriberto Delgado. All rights reserved.
 //
 
@@ -13,7 +13,7 @@
 #import <Metal/Metal.h>
 #import "PerDrawable.h"
 
-struct Alias
+struct Viewmodel
 {
 	static void Sort(std::unordered_map<void*, SortedAliasTexture>& sorted, NSUInteger& verticesSize);
 	

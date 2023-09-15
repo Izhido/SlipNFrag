@@ -140,6 +140,20 @@
 		return false;
 	}
 
+	vertexProgram = [library newFunctionWithName:@"viewmodelVertexMain"];
+	fragmentProgram = [library newFunctionWithName:@"viewmodelFragmentMain"];
+
+	pipelineStateDescriptor.vertexFunction = vertexProgram;
+	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
+
+	self.viewmodel = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Viewmodel rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
 	return true;
 }
 

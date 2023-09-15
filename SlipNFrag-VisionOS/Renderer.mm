@@ -22,8 +22,9 @@
 #import "Pipelines.h"
 #import "Surfaces.h"
 #import "SurfacesRotated.h"
-#import "Alias.h"
 #import "Turbulent.h"
+#import "Alias.h"
+#import "Viewmodel.h"
 
 @interface Renderer ()
 
@@ -514,6 +515,8 @@ static CGDataProviderRef con_provider;
 								
 								std::unordered_map<void*, SortedAliasTexture> sortedAlias;
 
+								std::unordered_map<void*, SortedAliasTexture> sortedViewmodel;
+
 								if (mode == AppWorldMode)
 								{
 									std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -555,6 +558,8 @@ static CGDataProviderRef con_provider;
 									Turbulent::Sort(sortedTurbulent, verticesSize, indicesSize);
 									
 									Alias::Sort(sortedAlias, aliasVerticesSize);
+									
+									Viewmodel::Sort(sortedViewmodel, aliasVerticesSize);
 									
 									if (verticesSize > 0 && indicesSize > 0)
 									{
@@ -598,6 +603,8 @@ static CGDataProviderRef con_provider;
 										auto target = (float*)perDrawable.aliasVertices.contents;
 
 										Alias::Fill(sortedAlias, target, device, perDrawable, textureIndex, textureCache, aliasIndicesIndex, aliasIndicesCache, colormapIndex, colormapCache);
+
+										Viewmodel::Fill(sortedViewmodel, target, device, perDrawable, textureIndex, textureCache, aliasIndicesIndex, aliasIndicesCache, colormapIndex, colormapCache);
 									}
 								}
 
@@ -661,7 +668,11 @@ static CGDataProviderRef con_provider;
 
 										Turbulent::Render(sortedTurbulent, commandEncoder, pipelines.turbulent, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, turbulentIndexBase, planarSamplerState, textureCache, textureSamplerState);
 
-										Alias::Render(sortedAlias, commandEncoder, pipelines.alias, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, planarSamplerState, textureCache, textureSamplerState, aliasIndicesCache, colormapCache);
+										NSUInteger aliasVertexBase = 0;
+
+										Alias::Render(sortedAlias, commandEncoder, pipelines.alias, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, aliasVertexBase, planarSamplerState, textureCache, textureSamplerState, aliasIndicesCache, colormapCache);
+										
+										Viewmodel::Render(sortedViewmodel, commandEncoder, pipelines.viewmodel, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, aliasVertexBase, planarSamplerState, textureCache, textureSamplerState, aliasIndicesCache, colormapCache);
 										
 										cameraMatrix = simd_mul(locked_head_pose, cp_view_get_transform(view));
 										viewMatrix = simd_transpose(cameraMatrix);

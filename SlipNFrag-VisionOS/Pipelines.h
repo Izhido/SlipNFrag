@@ -23,6 +23,8 @@
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> alias;
 
+@property (nonatomic, strong) id<MTLRenderPipelineState> viewmodel;
+
 -(bool)create:(id<MTLDevice>)device colorPixelFormat:(MTLPixelFormat)colorPixelFormat depthPixelFormat:(MTLPixelFormat)depthPixelFormat engineStop:(EngineStop*)engineStop;
 
 @end
