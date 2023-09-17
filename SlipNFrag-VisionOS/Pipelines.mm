@@ -64,6 +64,20 @@
 		return false;
 	}
 
+	vertexProgram = [library newFunctionWithName:@"skyVertexMain"];
+	fragmentProgram = [library newFunctionWithName:@"skyFragmentMain"];
+
+	pipelineStateDescriptor.vertexFunction = vertexProgram;
+	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
+
+	self.sky = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Sky rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
 	vertexDescriptor = [MTLVertexDescriptor new];
 	vertexDescriptor.attributes[0].format = MTLVertexFormatFloat3;
 	vertexDescriptor.attributes[0].offset = 0;

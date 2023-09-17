@@ -57,6 +57,23 @@ struct ViewmodelVertexOut
 	float alpha;
 };
 
+struct SkyRotation
+{
+	float forwardX;
+	float forwardY;
+	float forwardZ;
+	float rightX;
+	float rightY;
+	float rightZ;
+	float upX;
+	float upY;
+	float upZ;
+	float width;
+	float height;
+	float maxSize;
+	float speed;
+};
+
 [[vertex]] VertexOut planarVertexMain(VertexIn inVertex [[stage_in]], constant float4x4& viewMatrix [[buffer(1)]], constant float4x4& projectionMatrix [[buffer(2)]])
 {
 	VertexOut outVertex;
@@ -180,4 +197,35 @@ struct ViewmodelVertexOut
 	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, colormapped);
 	return color * half4(1, 1, 1, input.alpha);
+}
+
+[[vertex]] VertexOut skyVertexMain(VertexIn inVertex [[stage_in]], constant float4x4& projectionMatrix [[buffer(1)]])
+{
+	VertexOut outVertex;
+	outVertex.position = projectionMatrix * inVertex.position;
+	outVertex.texCoords = inVertex.texCoords;
+	return outVertex;
+}
+
+[[fragment]] half4 skyFragmentMain(VertexOut input [[stage_in]], constant SkyRotation& rotation [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> surfaceTexture [[texture(1)]], sampler paletteSampler [[sampler(0)]], sampler textureSampler [[sampler(1)]])
+{
+	int u = int(input.texCoords.x * int(rotation.width));
+	int v = int(input.texCoords.y * int(rotation.height));
+	float	wu, wv, temp;
+	float3	end;
+	temp = rotation.maxSize;
+	wu = 8192.0f * float(u-int(int(rotation.width)>>1)) / temp;
+	wv = 8192.0f * float(int(int(rotation.height)>>1)-v) / temp;
+	end[0] = 4096.0f*rotation.forwardX + wu*rotation.rightX + wv*rotation.upX;
+	end[1] = 4096.0f*rotation.forwardY + wu*rotation.rightY + wv*rotation.upY;
+	end[2] = 4096.0f*rotation.forwardZ + wu*rotation.rightZ + wv*rotation.upZ;
+	end[2] *= 3;
+	end = normalize(end);
+	temp = rotation.speed;
+	float s = float((temp + 6*(128/2-1)*end[0]));
+	float t = float((temp + 6*(128/2-1)*end[1]));
+	auto texCoords = float2(s / 128.0f, t / 128.0f);
+	auto entry = surfaceTexture.sample(textureSampler, texCoords)[0];
+	auto color = paletteTexture.sample(paletteSampler, entry);
+	return color;
 }

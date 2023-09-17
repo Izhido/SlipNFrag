@@ -181,7 +181,7 @@ void Turbulent::Render(std::unordered_map<void*, SortedTurbulentTexture>& sorted
 		[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:3];
 		[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:0];
 		[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:0];
-		[commandEncoder setVertexBuffer:perDrawable.vertices offset:0 atIndex:0];
+		[commandEncoder setVertexBuffer:perDrawable.surfaceVertices offset:0 atIndex:0];
 		[commandEncoder setFragmentBytes:&time length:sizeof(time) atIndex:0];
 
 		for (auto& texture : sorted)

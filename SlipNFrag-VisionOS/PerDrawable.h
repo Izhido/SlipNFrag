@@ -22,9 +22,11 @@
 
 @property (nonatomic, strong) Texture* console;
 
-@property (nonatomic, strong) id<MTLBuffer> vertices;
-
 @property (nonatomic, strong) id<MTLBuffer> indices;
+
+@property (nonatomic, strong) id<MTLBuffer> skyVertices;
+
+@property (nonatomic, strong) id<MTLBuffer> surfaceVertices;
 
 @property (nonatomic, strong) id<MTLBuffer> aliasVertices;
 

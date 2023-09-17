@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2800455E2AB4DAB1001091C7 /* Sky.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2800455D2AB4DAB1001091C7 /* Sky.mm */; };
 		2803CF5B2A6E1480006AC44F /* Engine.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2803CF5A2A6E1480006AC44F /* Engine.mm */; };
 		2811E5292A6C722300B1498E /* SlipNFrag_VisionOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2811E5282A6C722300B1498E /* SlipNFrag_VisionOSApp.swift */; };
 		2811E52B2A6C722300B1498E /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2811E52A2A6C722300B1498E /* PlayView.swift */; };
@@ -369,6 +370,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2800455B2AB4D91D001091C7 /* SkyEntry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SkyEntry.h; sourceTree = "<group>"; };
+		2800455C2AB4D97F001091C7 /* Sky.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sky.h; sourceTree = "<group>"; };
+		2800455D2AB4DAB1001091C7 /* Sky.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Sky.mm; sourceTree = "<group>"; };
 		2803CF592A6E1468006AC44F /* Engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Engine.h; sourceTree = "<group>"; };
 		2803CF5A2A6E1480006AC44F /* Engine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Engine.mm; sourceTree = "<group>"; };
 		2811E5222A6C722300B1498E /* SlipNFrag-VisionOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SlipNFrag-VisionOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -698,6 +702,9 @@
 				286C04BC2A996905002C9126 /* Pipelines.mm */,
 				28AF30FD2A7725230072610B /* Renderer.h */,
 				28AF30FE2A77262E0072610B /* Renderer.mm */,
+				2800455C2AB4D97F001091C7 /* Sky.h */,
+				2800455D2AB4DAB1001091C7 /* Sky.mm */,
+				2800455B2AB4D91D001091C7 /* SkyEntry.h */,
 				286944B92AAD6D22009945B2 /* SortedAliasTexture.h */,
 				289EB15B2AAD74110094970B /* SortedAliasEntry.h */,
 				284557442A95B9D700A9D7B2 /* SortedSurfaceLightmap.h */,
@@ -1155,6 +1162,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2800455E2AB4DAB1001091C7 /* Sky.mm in Sources */,
 				2875DC142A6CA3DA00EED860 /* r_misc.cpp in Sources */,
 				286C04C02A997048002C9126 /* Surfaces.mm in Sources */,
 				288AA3D22A8C8DA4008B3C91 /* PerDrawable.mm in Sources */,

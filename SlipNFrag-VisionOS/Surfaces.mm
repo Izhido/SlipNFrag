@@ -217,7 +217,7 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 	}
 }
 
-void Surfaces::Render(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> pipeline, id<MTLDepthStencilState> depthStencilState, simd_float4x4& vertexTransformMatrix, simd_float4x4& viewMatrix, simd_float4x4& projectionMatrix, PerDrawable* perDrawable, id<MTLSamplerState> planarSamplerState, id<MTLSamplerState> lightmapSamplerState, NSMutableArray<Texture*>* textureCache, id<MTLSamplerState> textureSamplerState)
+void Surfaces::Render(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> pipeline, id<MTLDepthStencilState> depthStencilState, simd_float4x4& vertexTransformMatrix, simd_float4x4& viewMatrix, simd_float4x4& projectionMatrix, PerDrawable* perDrawable, NSUInteger indexBase, id<MTLSamplerState> planarSamplerState, id<MTLSamplerState> lightmapSamplerState, NSMutableArray<Texture*>* textureCache, id<MTLSamplerState> textureSamplerState)
 {
 	if (sorted.size() >= 0)
 	{
@@ -230,10 +230,8 @@ void Surfaces::Render(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, 
 		[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:0];
 		[commandEncoder setFragmentTexture:perDrawable.colormap.texture atIndex:1];
 		[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
-		[commandEncoder setVertexBuffer:perDrawable.vertices offset:0 atIndex:0];
+		[commandEncoder setVertexBuffer:perDrawable.surfaceVertices offset:0 atIndex:0];
 
-		NSUInteger indexBase = 0;
-		
 		for (auto& lightmap : sorted)
 		{
 			[commandEncoder setVertexBytes:&lightmap.second.texturePosition length:sizeof(lightmap.second.texturePosition) atIndex:4];

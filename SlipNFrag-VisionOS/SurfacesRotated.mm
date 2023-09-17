@@ -241,7 +241,7 @@ void SurfacesRotated::Render(std::unordered_map<void*, SortedSurfaceRotatedLight
 		[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:0];
 		[commandEncoder setFragmentTexture:perDrawable.colormap.texture atIndex:1];
 		[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:1];
-		[commandEncoder setVertexBuffer:perDrawable.vertices offset:0 atIndex:0];
+		[commandEncoder setVertexBuffer:perDrawable.surfaceVertices offset:0 atIndex:0];
 
 		for (auto& lightmap : sorted)
 		{

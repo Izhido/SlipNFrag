@@ -25,6 +25,7 @@
 #import "Turbulent.h"
 #import "Alias.h"
 #import "Viewmodel.h"
+#import "Sky.h"
 
 @interface Renderer ()
 
@@ -218,6 +219,8 @@ static CGDataProviderRef con_provider;
 	
 	simd_float4x4 vertexTransformMatrix { };
 	vertexTransformMatrix.columns[3][3] = 1;
+	
+	std::vector<unsigned char> skyBuffer;
 
 	while (!engineStop.stopEngine) @autoreleasepool
 	{
@@ -322,8 +325,9 @@ static CGDataProviderRef con_provider;
 
 								[drawables[d].lightmapCache removeAllObjects];
 								drawables[d].aliasVertices = nil;
+								drawables[d].surfaceVertices = nil;
+								drawables[d].skyVertices = nil;
 								drawables[d].indices = nil;
-								drawables[d].vertices = nil;
 							}
 							
 							clearCount = host_clearcount;
@@ -505,6 +509,9 @@ static CGDataProviderRef con_provider;
 									perDrawable.views = [NSMutableDictionary<NSNumber*, PerView*> new];
 								}
 
+								std::vector<SkyEntry> sky;
+
+								NSUInteger surfacesIndexBase = 0;
 								std::unordered_map<void*, SortedSurfaceLightmap> sortedSurfaces;
 
 								NSUInteger surfacesRotatedIndexBase = 0;
@@ -516,7 +523,7 @@ static CGDataProviderRef con_provider;
 								std::unordered_map<void*, SortedAliasTexture> sortedAlias;
 
 								std::unordered_map<void*, SortedAliasTexture> sortedViewmodel;
-
+								
 								if (mode == AppWorldMode)
 								{
 									std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -545,65 +552,86 @@ static CGDataProviderRef con_provider;
 									vertexTransformMatrix.columns[3][1] = d_lists.vieworg2 * appState.Scale;
 									vertexTransformMatrix.columns[3][2] = -d_lists.vieworg1 * appState.Scale;
 									
-									NSUInteger verticesSize = 0;
 									NSUInteger indicesSize = 0;
+									NSUInteger skyVerticesSize = 0;
+									NSUInteger surfacesVerticesSize = 0;
 									NSUInteger aliasVerticesSize = 0;
 
-									Surfaces::Sort(sortedSurfaces, verticesSize, indicesSize);
+									Sky::Sort(sky, skyVerticesSize, indicesSize);
+
+									surfacesIndexBase = indicesSize;
+									Surfaces::Sort(sortedSurfaces, surfacesVerticesSize, indicesSize);
 									
 									surfacesRotatedIndexBase = indicesSize;
-									SurfacesRotated::Sort(sortedSurfacesRotated, verticesSize, indicesSize);
+									SurfacesRotated::Sort(sortedSurfacesRotated, surfacesVerticesSize, indicesSize);
 									
 									turbulentIndexBase = indicesSize;
-									Turbulent::Sort(sortedTurbulent, verticesSize, indicesSize);
+									Turbulent::Sort(sortedTurbulent, surfacesVerticesSize, indicesSize);
 									
 									Alias::Sort(sortedAlias, aliasVerticesSize);
 									
 									Viewmodel::Sort(sortedViewmodel, aliasVerticesSize);
-									
-									if (verticesSize > 0 && indicesSize > 0)
-									{
-										if (perDrawable.vertices == nil || perDrawable.vertices.length < verticesSize || perDrawable.vertices.length > verticesSize / 2)
-										{
-											perDrawable.vertices = [device newBufferWithLength:verticesSize * 3 / 2 options:0];
-										}
-										
-										if (perDrawable.indices == nil || perDrawable.indices.length < indicesSize || perDrawable.indices.length > indicesSize / 2)
-										{
-											perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
-										}
-										
-										size_t rotationSize = (d_lists.last_surface_rotated + 1) * 8;
-										
-										if (rotationSize > rotation->size() || rotationSize < rotation->size() / 2)
-										{
-											rotation->resize(rotationSize * 3 / 2);
-										}
 
-										auto verticesTarget = (float*)perDrawable.vertices.contents;
-										auto indicesTarget = (uint32_t*)perDrawable.indices.contents;
-										
-										uint32_t indexBase = 0;
-										auto rotationData = rotation->data();
-										
-										Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
-										
-										SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
-										
-										Turbulent::Fill(sortedTurbulent, verticesTarget, indicesTarget, indexBase, device, perDrawable, textureIndex, textureCache);
+									if (indicesSize > 0 && (perDrawable.indices == nil || perDrawable.indices.length < indicesSize || perDrawable.indices.length > indicesSize / 2))
+									{
+										perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
 									}
 									
-									if (aliasVerticesSize > 0)
+									if (skyVerticesSize > 0 && perDrawable.skyVertices == nil)
 									{
-										if (perDrawable.aliasVertices == nil || perDrawable.aliasVertices.length < aliasVerticesSize || perDrawable.aliasVertices.length > aliasVerticesSize / 2)
+										perDrawable.skyVertices = [device newBufferWithLength:skyVerticesSize options:0];
+									}
+
+									if (surfacesVerticesSize > 0 && (perDrawable.surfaceVertices == nil || perDrawable.surfaceVertices.length < surfacesVerticesSize || perDrawable.surfaceVertices.length > surfacesVerticesSize / 2))
+									{
+										perDrawable.surfaceVertices = [device newBufferWithLength:surfacesVerticesSize * 3 / 2 options:0];
+									}
+
+									if (aliasVerticesSize > 0 && (perDrawable.aliasVertices == nil || perDrawable.aliasVertices.length < aliasVerticesSize || perDrawable.aliasVertices.length > aliasVerticesSize / 2))
+									{
+										perDrawable.aliasVertices = [device newBufferWithLength:aliasVerticesSize * 3 / 2 options:0];
+									}
+									
+									if (indicesSize > 0)
+									{
+										auto indicesTarget = (uint32_t*)perDrawable.indices.contents;
+										
+										if (skyVerticesSize > 0)
 										{
-											perDrawable.aliasVertices = [device newBufferWithLength:aliasVerticesSize * 3 / 2 options:0];
+											auto verticesTarget = (float*)perDrawable.skyVertices.contents;
+											
+											Sky::Fill(sky, verticesTarget, indicesTarget, device, perDrawable, skyBuffer, textureIndex, textureCache);
 										}
 										
+										if (surfacesVerticesSize > 0)
+										{
+											auto verticesTarget = (float*)perDrawable.surfaceVertices.contents;
+											
+											uint32_t indexBase = 0;
+											
+											Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
+											
+											size_t rotationSize = (d_lists.last_surface_rotated + 1) * 8;
+											
+											if (rotationSize > rotation->size() || rotationSize < rotation->size() / 2)
+											{
+												rotation->resize(rotationSize * 3 / 2);
+											}
+											
+											auto rotationData = rotation->data();
+											
+											SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
+											
+											Turbulent::Fill(sortedTurbulent, verticesTarget, indicesTarget, indexBase, device, perDrawable, textureIndex, textureCache);
+										}
+									}
+
+									if (aliasVerticesSize > 0)
+									{
 										auto target = (float*)perDrawable.aliasVertices.contents;
-
+										
 										Alias::Fill(sortedAlias, target, device, perDrawable, textureIndex, textureCache, aliasIndicesIndex, aliasIndicesCache, colormapIndex, colormapCache);
-
+										
 										Viewmodel::Fill(sortedViewmodel, target, device, perDrawable, textureIndex, textureCache, aliasIndicesIndex, aliasIndicesCache, colormapIndex, colormapCache);
 									}
 								}
@@ -661,8 +689,10 @@ static CGDataProviderRef con_provider;
 									if (mode == AppWorldMode)
 									{
 										id<MTLRenderCommandEncoder> commandEncoder = [commandBuffer renderCommandEncoderWithDescriptor:perView.renderPassDescriptor];
+										
+										Sky::Render(sky, commandEncoder, pipelines.sky, consoleDepthStencilState, projectionMatrix, perDrawable, head_pose, drawable, v, planarSamplerState, textureCache, textureSamplerState);
 
-										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
+										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesIndexBase, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
 										SurfacesRotated::Render(sortedSurfacesRotated, commandEncoder, pipelines.surfaceRotated, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesRotatedIndexBase, rotation->data(), planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
