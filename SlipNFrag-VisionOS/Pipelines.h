@@ -27,6 +27,8 @@
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> viewmodel;
 
+@property (nonatomic, strong) id<MTLRenderPipelineState> particle;
+
 -(bool)create:(id<MTLDevice>)device colorPixelFormat:(MTLPixelFormat)colorPixelFormat depthPixelFormat:(MTLPixelFormat)depthPixelFormat engineStop:(EngineStop*)engineStop;
 
 @end

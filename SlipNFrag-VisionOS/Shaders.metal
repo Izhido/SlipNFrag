@@ -74,6 +74,18 @@ struct SkyRotation
 	float speed;
 };
 
+struct ParticleVertexIn
+{
+	float4 position [[attribute(0)]];
+	float color [[attribute(1)]];
+};
+
+struct ParticleVertexOut
+{
+	float4 position [[position]];
+	float color;
+};
+
 [[vertex]] VertexOut planarVertexMain(VertexIn inVertex [[stage_in]], constant float4x4& viewMatrix [[buffer(1)]], constant float4x4& projectionMatrix [[buffer(2)]])
 {
 	VertexOut outVertex;
@@ -227,5 +239,20 @@ struct SkyRotation
 	auto texCoords = float2(s / 128.0f, t / 128.0f);
 	auto entry = surfaceTexture.sample(textureSampler, texCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, entry);
+	return color;
+}
+
+[[vertex]] ParticleVertexOut particleVertexMain(ParticleVertexIn inVertex [[stage_in]], constant float4x4& vertexTransformMatrix [[buffer(1)]], constant float4x4& viewMatrix [[buffer(2)]], constant float4x4& projectionMatrix [[buffer(3)]])
+{
+	ParticleVertexOut outVertex;
+	auto position = inVertex.position;
+	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * position;
+	outVertex.color = (inVertex.color + 0.5) / 256;
+	return outVertex;
+}
+
+[[fragment]] half4 particleFragmentMain(ParticleVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], sampler paletteSampler [[sampler(0)]])
+{
+	auto color = paletteTexture.sample(paletteSampler, input.color);
 	return color;
 }
