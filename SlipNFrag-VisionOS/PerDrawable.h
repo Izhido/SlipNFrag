@@ -24,7 +24,7 @@
 
 @property (nonatomic, strong) id<MTLBuffer> indices;
 
-@property (nonatomic, strong) id<MTLBuffer> skyVertices;
+@property (nonatomic, strong) id<MTLBuffer> texturedVertices;
 
 @property (nonatomic, strong) id<MTLBuffer> surfaceVertices;
 

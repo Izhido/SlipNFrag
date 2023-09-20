@@ -28,7 +28,7 @@ void Sky::Sort(std::vector<SkyEntry>& skyEntries, NSUInteger& verticesSize, NSUI
 	}
 }
 
-void Sky::Fill(std::vector<SkyEntry>& skyEntries, float*& vertices, uint32_t*& indices, id<MTLDevice> device, PerDrawable* perDrawable, std::vector<unsigned char>& skyBuffer, std::unordered_map<void*, NSUInteger>& textureIndex, NSMutableArray<Texture*>* textureCache)
+void Sky::Fill(std::vector<SkyEntry>& skyEntries, float*& vertices, uint32_t*& indices, uint32_t& base, id<MTLDevice> device, PerDrawable* perDrawable, std::vector<unsigned char>& skyBuffer, std::unordered_map<void*, NSUInteger>& textureIndex, NSMutableArray<Texture*>* textureCache)
 {
 	for (auto& entry : skyEntries)
 	{
@@ -81,8 +81,8 @@ void Sky::Fill(std::vector<SkyEntry>& skyEntries, float*& vertices, uint32_t*& i
 			[texture.texture replaceRegion:texture.region mipmapLevel:0 withBytes:skyBuffer.data() bytesPerRow:texture.region.size.width];
 		}
 
-		auto vertexSource = d_lists.textured_vertices.data() + sky.first_vertex;
-		auto attributeSource = d_lists.textured_attributes.data() + sky.first_vertex;
+		auto vertexSource = d_lists.textured_vertices.data() + sky.first_vertex * 3;
+		auto attributeSource = d_lists.textured_attributes.data() + sky.first_vertex * 2;
 		for (auto i = 0; i < sky.count; i++)
 		{
 			*vertices++ = *vertexSource++;
@@ -93,12 +93,14 @@ void Sky::Fill(std::vector<SkyEntry>& skyEntries, float*& vertices, uint32_t*& i
 			*vertices++ = *attributeSource++;
 		}
 		
-		*indices++ = 0;
-		*indices++ = 1;
-		*indices++ = 2;
-		*indices++ = 1;
-		*indices++ = 3;
-		*indices++ = 2;
+		*indices++ = base;
+		*indices++ = base + 1;
+		*indices++ = base + 2;
+		*indices++ = base + 1;
+		*indices++ = base + 3;
+		*indices++ = base + 2;
+		
+		base += 4;
 	}
 }
 
@@ -130,7 +132,7 @@ void Sky::Render(std::vector<SkyEntry>& skyEntries, id<MTLRenderCommandEncoder> 
 		[commandEncoder setVertexBytes:&projectionMatrix length:sizeof(projectionMatrix) atIndex:1];
 		[commandEncoder setFragmentTexture:perDrawable.palette.texture atIndex:0];
 		[commandEncoder setFragmentSamplerState:planarSamplerState atIndex:0];
-		[commandEncoder setVertexBuffer:perDrawable.skyVertices offset:0 atIndex:0];
+		[commandEncoder setVertexBuffer:perDrawable.texturedVertices offset:0 atIndex:0];
 		[commandEncoder setFragmentBytes:rotation length:sizeof(rotation) atIndex:0];
 
 		auto indexBase = 0;

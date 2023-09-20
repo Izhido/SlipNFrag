@@ -20,12 +20,13 @@
 #include "d_lists.h"
 #include "Input.h"
 #import "Pipelines.h"
+#import "Sky.h"
 #import "Surfaces.h"
 #import "SurfacesRotated.h"
 #import "Turbulent.h"
 #import "Alias.h"
 #import "Viewmodel.h"
-#import "Sky.h"
+#import "Sprites.h"
 #import "Particles.h"
 
 @interface Renderer ()
@@ -327,7 +328,7 @@ static CGDataProviderRef con_provider;
 								[drawables[d].lightmapCache removeAllObjects];
 								drawables[d].aliasVertices = nil;
 								drawables[d].surfaceVertices = nil;
-								drawables[d].skyVertices = nil;
+								drawables[d].texturedVertices = nil;
 								drawables[d].indices = nil;
 							}
 							
@@ -525,6 +526,9 @@ static CGDataProviderRef con_provider;
 
 								std::unordered_map<void*, SortedAliasTexture> sortedViewmodel;
 								
+								NSUInteger spritesIndexBase = 0;
+								std::unordered_map<void*, SortedSpriteTexture> sortedSprites;
+
 								NSUInteger particlesIndexBase = 0;
 								std::vector<ParticlesEntry> particles;
 
@@ -557,12 +561,12 @@ static CGDataProviderRef con_provider;
 									vertexTransformMatrix.columns[3][2] = -d_lists.vieworg1 * appState.Scale;
 									
 									NSUInteger indicesSize = 0;
-									NSUInteger skyVerticesSize = 0;
+									NSUInteger texturedVerticesSize = 0;
 									NSUInteger surfacesVerticesSize = 0;
 									NSUInteger aliasVerticesSize = 0;
 									NSUInteger particlesVerticesSize = 0;
 
-									Sky::Sort(sky, skyVerticesSize, indicesSize);
+									Sky::Sort(sky, texturedVerticesSize, indicesSize);
 
 									surfacesIndexBase = indicesSize;
 									Surfaces::Sort(sortedSurfaces, surfacesVerticesSize, indicesSize);
@@ -577,6 +581,9 @@ static CGDataProviderRef con_provider;
 									
 									Viewmodel::Sort(sortedViewmodel, aliasVerticesSize);
 									
+									spritesIndexBase = indicesSize;
+									Sprites::Sort(sortedSprites, texturedVerticesSize, indicesSize);
+									
 									particlesIndexBase = indicesSize;
 									Particles::Sort(particles, particlesVerticesSize, indicesSize);
 
@@ -585,9 +592,9 @@ static CGDataProviderRef con_provider;
 										perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
 									}
 									
-									if (skyVerticesSize > 0 && perDrawable.skyVertices == nil)
+									if (texturedVerticesSize > 0 && (perDrawable.texturedVertices == nil || perDrawable.texturedVertices.length < texturedVerticesSize || perDrawable.texturedVertices.length > texturedVerticesSize / 2))
 									{
-										perDrawable.skyVertices = [device newBufferWithLength:skyVerticesSize options:0];
+										perDrawable.texturedVertices = [device newBufferWithLength:texturedVerticesSize * 3 / 2 options:0];
 									}
 
 									if (surfacesVerticesSize > 0 && (perDrawable.surfaceVertices == nil || perDrawable.surfaceVertices.length < surfacesVerticesSize || perDrawable.surfaceVertices.length > surfacesVerticesSize / 2))
@@ -609,11 +616,14 @@ static CGDataProviderRef con_provider;
 									{
 										auto indicesTarget = (uint32_t*)perDrawable.indices.contents;
 										
-										if (skyVerticesSize > 0)
+										float* texturedVerticesTarget = nullptr;
+										uint32_t texturedIndexBase = 0;
+										
+										if (texturedVerticesSize > 0)
 										{
-											auto verticesTarget = (float*)perDrawable.skyVertices.contents;
+											texturedVerticesTarget = (float*)perDrawable.texturedVertices.contents;
 											
-											Sky::Fill(sky, verticesTarget, indicesTarget, device, perDrawable, skyBuffer, textureIndex, textureCache);
+											Sky::Fill(sky, texturedVerticesTarget, indicesTarget, texturedIndexBase, device, perDrawable, skyBuffer, textureIndex, textureCache);
 										}
 										
 										if (surfacesVerticesSize > 0)
@@ -636,6 +646,11 @@ static CGDataProviderRef con_provider;
 											SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
 											
 											Turbulent::Fill(sortedTurbulent, verticesTarget, indicesTarget, indexBase, device, perDrawable, textureIndex, textureCache);
+										}
+										
+										if (texturedVerticesSize > 0)
+										{
+											Sprites::Fill(sortedSprites, texturedVerticesTarget, indicesTarget, texturedIndexBase, device, perDrawable, textureIndex, textureCache);
 										}
 										
 										if (particlesVerticesSize > 0)
@@ -723,6 +738,8 @@ static CGDataProviderRef con_provider;
 										Alias::Render(sortedAlias, commandEncoder, pipelines.alias, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, aliasVertexBase, planarSamplerState, textureCache, textureSamplerState, aliasIndicesCache, colormapCache);
 										
 										Viewmodel::Render(sortedViewmodel, commandEncoder, pipelines.viewmodel, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, aliasVertexBase, planarSamplerState, textureCache, textureSamplerState, aliasIndicesCache, colormapCache);
+										
+										Sprites::Render(sortedSprites, commandEncoder, pipelines.sprite, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, spritesIndexBase, planarSamplerState, textureCache, textureSamplerState);
 										
 										Particles::Render(particles, commandEncoder, pipelines.particle, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, particlesIndexBase, drawable, planarSamplerState);
 

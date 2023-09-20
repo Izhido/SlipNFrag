@@ -74,7 +74,7 @@ void Alias::Fill(std::unordered_map<void*, SortedAliasTexture>& sorted, float*& 
 					newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
 					newTexture.region = MTLRegionMake2D(0, 0, width, height);
 					
-					[newTexture.texture replaceRegion:newTexture.region mipmapLevel:0 withBytes:(unsigned char*)alias.data bytesPerRow:newTexture.region.size.width];
+					[newTexture.texture replaceRegion:newTexture.region mipmapLevel:0 withBytes:alias.data bytesPerRow:newTexture.region.size.width];
 
 					textureIndex.insert({alias.data, textureCache.count});
 					
@@ -174,7 +174,7 @@ void Alias::Fill(std::unordered_map<void*, SortedAliasTexture>& sorted, float*& 
 					newColormap.texture = [device newTextureWithDescriptor:perDrawable.colormap.descriptor];
 					newColormap.region = MTLRegionMake2D(0, 0, 256, 64);
 					
-					[newColormap.texture replaceRegion:newColormap.region mipmapLevel:0 withBytes:(unsigned char*)alias.colormap bytesPerRow:newColormap.region.size.width];
+					[newColormap.texture replaceRegion:newColormap.region mipmapLevel:0 withBytes:alias.colormap bytesPerRow:newColormap.region.size.width];
 
 					colormapIndex.insert({alias.colormap, colormapCache.count});
 					

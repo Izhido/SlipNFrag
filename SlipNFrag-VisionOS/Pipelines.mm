@@ -78,6 +78,20 @@
 		return false;
 	}
 
+	vertexProgram = [library newFunctionWithName:@"spriteVertexMain"];
+	fragmentProgram = [library newFunctionWithName:@"spriteFragmentMain"];
+
+	pipelineStateDescriptor.vertexFunction = vertexProgram;
+	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
+
+	self.sprite = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Sprite rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
 	vertexDescriptor = [MTLVertexDescriptor new];
 	vertexDescriptor.attributes[0].format = MTLVertexFormatFloat3;
 	vertexDescriptor.attributes[0].offset = 0;

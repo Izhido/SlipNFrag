@@ -17,6 +17,8 @@
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> sky;
 
+@property (nonatomic, strong) id<MTLRenderPipelineState> sprite;
+
 @property (nonatomic, strong) id<MTLRenderPipelineState> surface;
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> surfaceRotated;
