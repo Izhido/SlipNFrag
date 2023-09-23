@@ -148,6 +148,8 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 						newLightmap.descriptor.pixelFormat = MTLPixelFormatR16Unorm;
 						newLightmap.descriptor.width = surface.lightmap_width;
 						newLightmap.descriptor.height = surface.lightmap_height;
+						newLightmap.descriptor.resourceOptions = MTLResourceCPUCacheModeWriteCombined;
+						newLightmap.descriptor.usage = MTLTextureUsageShaderRead;
 						newLightmap.texture = [device newTextureWithDescriptor:newLightmap.descriptor];
 						newLightmap.region = MTLRegionMake2D(0, 0, surface.lightmap_width, surface.lightmap_height);
 						
@@ -186,6 +188,7 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 						newTexture.descriptor.width = surface.width;
 						newTexture.descriptor.height = surface.height;
 						newTexture.descriptor.mipmapLevelCount = surface.mips;
+						newTexture.descriptor.usage = MTLTextureUsageShaderRead;
 						newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
 						newTexture.region = MTLRegionMake2D(0, 0, surface.width, surface.height);
 						

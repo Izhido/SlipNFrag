@@ -589,27 +589,27 @@ static CGDataProviderRef con_provider;
 
 									if (indicesSize > 0 && (perDrawable.indices == nil || perDrawable.indices.length < indicesSize || perDrawable.indices.length > indicesSize / 2))
 									{
-										perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:0];
+										perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 									
 									if (texturedVerticesSize > 0 && (perDrawable.texturedVertices == nil || perDrawable.texturedVertices.length < texturedVerticesSize || perDrawable.texturedVertices.length > texturedVerticesSize / 2))
 									{
-										perDrawable.texturedVertices = [device newBufferWithLength:texturedVerticesSize * 3 / 2 options:0];
+										perDrawable.texturedVertices = [device newBufferWithLength:texturedVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 
 									if (surfacesVerticesSize > 0 && (perDrawable.surfaceVertices == nil || perDrawable.surfaceVertices.length < surfacesVerticesSize || perDrawable.surfaceVertices.length > surfacesVerticesSize / 2))
 									{
-										perDrawable.surfaceVertices = [device newBufferWithLength:surfacesVerticesSize * 3 / 2 options:0];
+										perDrawable.surfaceVertices = [device newBufferWithLength:surfacesVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 
 									if (aliasVerticesSize > 0 && (perDrawable.aliasVertices == nil || perDrawable.aliasVertices.length < aliasVerticesSize || perDrawable.aliasVertices.length > aliasVerticesSize / 2))
 									{
-										perDrawable.aliasVertices = [device newBufferWithLength:aliasVerticesSize * 3 / 2 options:0];
+										perDrawable.aliasVertices = [device newBufferWithLength:aliasVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 									
 									if (particlesVerticesSize > 0 && (perDrawable.particleVertices == nil || perDrawable.particleVertices.length < particlesVerticesSize || perDrawable.particleVertices.length > particlesVerticesSize / 2))
 									{
-										perDrawable.particleVertices = [device newBufferWithLength:particlesVerticesSize * 3 / 2 options:0];
+										perDrawable.particleVertices = [device newBufferWithLength:particlesVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 
 									if (indicesSize > 0)

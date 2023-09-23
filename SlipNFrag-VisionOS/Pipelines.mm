@@ -141,16 +141,16 @@
 	}
 
 	vertexDescriptor = [MTLVertexDescriptor new];
-	vertexDescriptor.attributes[0].format = MTLVertexFormatFloat4;
+	vertexDescriptor.attributes[0].format = MTLVertexFormatUChar4;
 	vertexDescriptor.attributes[0].offset = 0;
 	vertexDescriptor.attributes[0].bufferIndex = 0;
 	vertexDescriptor.attributes[1].format = MTLVertexFormatFloat2;
-	vertexDescriptor.attributes[1].offset = 16;
+	vertexDescriptor.attributes[1].offset = 4;
 	vertexDescriptor.attributes[1].bufferIndex = 0;
 	vertexDescriptor.attributes[2].format = MTLVertexFormatFloat;
-	vertexDescriptor.attributes[2].offset = 24;
+	vertexDescriptor.attributes[2].offset = 12;
 	vertexDescriptor.attributes[2].bufferIndex = 0;
-	vertexDescriptor.layouts[0].stride = 28;
+	vertexDescriptor.layouts[0].stride = 16;
 
 	pipelineStateDescriptor.vertexDescriptor = vertexDescriptor;
 

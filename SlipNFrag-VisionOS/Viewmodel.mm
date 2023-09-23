@@ -45,7 +45,7 @@ void Viewmodel::Sort(std::unordered_map<void*, SortedAliasTexture>& sorted, NSUI
 
 		entry.indices = 3 * mdl->numtris;
 		
-		entry.vertices = 2 * 7 * viewmodel.vertex_count;
+		entry.vertices = 2 * 4 * viewmodel.vertex_count;
 		verticesSize += entry.vertices * sizeof(float);
 	}
 }
@@ -71,6 +71,7 @@ void Viewmodel::Fill(std::unordered_map<void*, SortedAliasTexture>& sorted, floa
 					newTexture.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
 					newTexture.descriptor.width = width;
 					newTexture.descriptor.height = height;
+					newTexture.descriptor.usage = MTLTextureUsageShaderRead;
 					newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
 					newTexture.region = MTLRegionMake2D(0, 0, width, height);
 					
@@ -99,23 +100,20 @@ void Viewmodel::Fill(std::unordered_map<void*, SortedAliasTexture>& sorted, floa
 				auto y = vertexSource->v[1];
 				auto z = vertexSource->v[2];
 
+				auto v = ((uint32_t)1 << 24) | ((uint32_t)z << 16) | ((uint32_t)y << 8) | x;
+				auto vf = *(float*)((uint32_t*)&v);
+
 				auto s = (float)(texCoordsSource->s >> 16);
 				auto t = (float)(texCoordsSource->t >> 16);
 				s /= width;
 				t /= height;
 				
-				*vertices++ = x;
-				*vertices++ = y;
-				*vertices++ = z;
-				*vertices++ = 1;
+				*vertices++ = vf;
 				*vertices++ = s;
 				*vertices++ = t;
 				*vertices++ = *lightsSource++;
 
-				*vertices++ = x;
-				*vertices++ = y;
-				*vertices++ = z;
-				*vertices++ = 1;
+				*vertices++ = vf;
 				*vertices++ = s + 0.5;
 				*vertices++ = t;
 				*vertices++ = *lightsSource++;
@@ -132,7 +130,7 @@ void Viewmodel::Fill(std::unordered_map<void*, SortedAliasTexture>& sorted, floa
 				auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
 				auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
 
-				auto newIndices = [device newBufferWithLength:entry.indices * sizeof(uint32_t) options:0];
+				auto newIndices = [device newBufferWithLength:entry.indices * sizeof(uint32_t) options:MTLResourceCPUCacheModeWriteCombined];
 
 				auto target = (uint32_t*)newIndices.contents;
 

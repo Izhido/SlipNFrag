@@ -47,6 +47,7 @@ void Sprites::Fill(std::unordered_map<void*, SortedSpriteTexture>& sorted, float
 					newTexture.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
 					newTexture.descriptor.width = sprite.width;
 					newTexture.descriptor.height = sprite.height;
+					newTexture.descriptor.usage = MTLTextureUsageShaderRead;
 					newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
 					newTexture.region = MTLRegionMake2D(0, 0, sprite.width, sprite.height);
 					

@@ -61,6 +61,7 @@ void Sky::Fill(std::vector<SkyEntry>& skyEntries, float*& vertices, uint32_t*& i
 			newTexture.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
 			newTexture.descriptor.width = width;
 			newTexture.descriptor.height = height;
+			newTexture.descriptor.usage = MTLTextureUsageShaderRead;
 			newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
 			newTexture.region = MTLRegionMake2D(0, 0, width, height);
 			

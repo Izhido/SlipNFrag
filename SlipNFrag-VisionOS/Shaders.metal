@@ -37,7 +37,7 @@ struct SurfaceVertexOut
 
 struct AliasVertexIn
 {
-	float4 position [[attribute(0)]];
+	uchar4 position [[attribute(0)]];
 	float2 texCoords [[attribute(1)]];
 	float light [[attribute(2)]];
 };
@@ -207,7 +207,7 @@ struct ParticleVertexOut
 [[vertex]] AliasVertexOut aliasVertexMain(AliasVertexIn inVertex [[stage_in]], constant float4x4& aliasTransformMatrix  [[buffer(1)]], constant float4x4& vertexTransformMatrix [[buffer(2)]], constant float4x4& viewMatrix [[buffer(3)]], constant float4x4& projectionMatrix [[buffer(4)]])
 {
 	AliasVertexOut outVertex;
-	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * aliasTransformMatrix * inVertex.position;
+	outVertex.position = projectionMatrix * viewMatrix * vertexTransformMatrix * aliasTransformMatrix * float4(inVertex.position);
 	outVertex.texCoords = inVertex.texCoords;
 	outVertex.light = inVertex.light / 64;
 	return outVertex;
@@ -225,7 +225,7 @@ struct ParticleVertexOut
 [[vertex]] ViewmodelVertexOut viewmodelVertexMain(AliasVertexIn inVertex [[stage_in]], constant float4x4& aliasTransformMatrix  [[buffer(1)]], constant float4x4& vertexTransformMatrix [[buffer(2)]], constant float4x4& viewMatrix [[buffer(3)]], constant float4x4& projectionMatrix [[buffer(4)]])
 {
 	ViewmodelVertexOut outVertex;
-	auto position = viewMatrix * vertexTransformMatrix * aliasTransformMatrix * inVertex.position;
+	auto position = viewMatrix * vertexTransformMatrix * aliasTransformMatrix * float4(inVertex.position);
 	outVertex.position = projectionMatrix * position;
 	outVertex.texCoords = inVertex.texCoords;
 	outVertex.light = inVertex.light / 64;
