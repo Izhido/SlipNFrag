@@ -32,6 +32,8 @@
 
 @property (nonatomic, strong) id<MTLBuffer> particleVertices;
 
+@property (nonatomic, strong) id<MTLBuffer> lightmapBuffer;
+
 @property (nonatomic, strong) NSMutableArray<Lightmap*>* lightmapCache;
 
 @property (nonatomic, strong) NSMutableDictionary<NSNumber*, PerView*>* views;

@@ -599,6 +599,7 @@
 		28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = snd_macos.cpp; sourceTree = "<group>"; };
 		28AA1D9E22C0881200264AD0 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		28AA1DA022C089E600264AD0 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		28AA71732ABFEDAD0057F549 /* LightmapCopying.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LightmapCopying.h; sourceTree = "<group>"; };
 		28AF30FD2A7725230072610B /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		28AF30FE2A77262E0072610B /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
 		28B9DBDD2A7E08B2008E09EE /* Input.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Input.h; sourceTree = "<group>"; };
@@ -700,6 +701,7 @@
 				289DCF122A802C54005A4D55 /* Input.h */,
 				28D336BD2A971571000DDE59 /* Lightmap.h */,
 				28D336BE2A9715F6000DDE59 /* Lightmap.mm */,
+				28AA71732ABFEDAD0057F549 /* LightmapCopying.h */,
 				289DCF102A802980005A4D55 /* Locks.cpp */,
 				289DCF0F2A80293E005A4D55 /* Locks.h */,
 				28C021252AB7FCBD00783212 /* Particles.h */,

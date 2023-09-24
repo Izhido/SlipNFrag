@@ -62,7 +62,7 @@ void SurfacesRotated::Sort(std::unordered_map<void*, SortedSurfaceRotatedLightma
 	}
 }
 
-void SurfacesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightmap>& sorted, float*& vertices, uint32_t*& indices, float*& rotation, uint32_t& base, std::unordered_map<void*, NSUInteger>* lightmapIndex, id<MTLDevice> device, PerDrawable* perDrawable, std::unordered_map<void*, NSUInteger>& textureIndex, NSMutableArray<Texture*>* textureCache)
+void SurfacesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightmap>& sorted, float*& vertices, uint32_t*& indices, float*& rotation, uint32_t& base, std::unordered_map<void*, NSUInteger>* lightmapIndex, NSUInteger& lightmapBufferSize, std::vector<LightmapCopying>& lightmapCopying, id<MTLDevice> device, PerDrawable* perDrawable, std::unordered_map<void*, NSUInteger>& textureIndex, NSMutableArray<Texture*>* textureCache)
 {
 	for (auto& lightmap : sorted)
 	{
@@ -159,20 +159,31 @@ void SurfacesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightma
 						newLightmap.descriptor.pixelFormat = MTLPixelFormatR16Unorm;
 						newLightmap.descriptor.width = surface.lightmap_width;
 						newLightmap.descriptor.height = surface.lightmap_height;
-						newLightmap.descriptor.resourceOptions = MTLResourceCPUCacheModeWriteCombined;
+						newLightmap.descriptor.resourceOptions = MTLResourceStorageModePrivate;
 						newLightmap.descriptor.usage = MTLTextureUsageShaderRead;
 						newLightmap.texture = [device newTextureWithDescriptor:newLightmap.descriptor];
 						newLightmap.region = MTLRegionMake2D(0, 0, surface.lightmap_width, surface.lightmap_height);
 						
 						newLightmap.createdCount = surface.created;
 
-						[newLightmap.texture replaceRegion:newLightmap.region mipmapLevel:0 withBytes:d_lists.lightmap_texels.data() + surface.lightmap_texels bytesPerRow:newLightmap.region.size.width * sizeof(uint16_t)];
-
 						lightmapIndex->insert({surface.face, perDrawable.lightmapCache.count});
 						
 						lightmap.second.lightmap = (uint32_t)perDrawable.lightmapCache.count;
 						
 						[perDrawable.lightmapCache addObject:newLightmap];
+
+						uint32_t bytesPerRow = surface.lightmap_width * sizeof(uint16_t);
+						uint32_t lightmapSize = bytesPerRow * surface.lightmap_height;
+						lightmapBufferSize += lightmapSize;
+						
+						lightmapCopying.emplace_back();
+						auto& lightmapCopyingEntry = lightmapCopying.back();
+						lightmapCopyingEntry.lightmap = lightmap.second.lightmap;
+						lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+						lightmapCopyingEntry.width = surface.lightmap_width;
+						lightmapCopyingEntry.height = surface.lightmap_height;
+						lightmapCopyingEntry.size = lightmapSize;
+						lightmapCopyingEntry.bytesPerRow = bytesPerRow;
 					}
 					else
 					{
@@ -181,7 +192,20 @@ void SurfacesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightma
 						auto existingLightmap = perDrawable.lightmapCache[lightmap.second.lightmap];
 						if (existingLightmap.createdCount != surface.created)
 						{
-							[existingLightmap.texture replaceRegion:existingLightmap.region mipmapLevel:0 withBytes:d_lists.lightmap_texels.data() + surface.lightmap_texels bytesPerRow:existingLightmap.region.size.width * sizeof(uint16_t)];
+							uint32_t bytesPerRow = surface.lightmap_width * sizeof(uint16_t);
+							uint32_t lightmapSize = bytesPerRow * surface.lightmap_height;
+							lightmapBufferSize += lightmapSize;
+							
+							lightmapCopying.emplace_back();
+							auto& lightmapCopyingEntry = lightmapCopying.back();
+							lightmapCopyingEntry.lightmap = lightmap.second.lightmap;
+							lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+							lightmapCopyingEntry.width = surface.lightmap_width;
+							lightmapCopyingEntry.height = surface.lightmap_height;
+							lightmapCopyingEntry.size = lightmapSize;
+							lightmapCopyingEntry.bytesPerRow = bytesPerRow;
+							
+							existingLightmap.createdCount = surface.created;
 						}
 					}
 

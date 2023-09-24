@@ -531,6 +531,8 @@ static CGDataProviderRef con_provider;
 
 								NSUInteger particlesIndexBase = 0;
 								std::vector<ParticlesEntry> particles;
+								
+								std::vector<LightmapCopying> lightmapCopying;
 
 								if (mode == AppWorldMode)
 								{
@@ -587,27 +589,27 @@ static CGDataProviderRef con_provider;
 									particlesIndexBase = indicesSize;
 									Particles::Sort(particles, particlesVerticesSize, indicesSize);
 
-									if (indicesSize > 0 && (perDrawable.indices == nil || perDrawable.indices.length < indicesSize || perDrawable.indices.length > indicesSize / 2))
+									if (indicesSize > 0 && (perDrawable.indices == nil || perDrawable.indices.length < indicesSize || perDrawable.indices.length > indicesSize * 2))
 									{
 										perDrawable.indices = [device newBufferWithLength:indicesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 									
-									if (texturedVerticesSize > 0 && (perDrawable.texturedVertices == nil || perDrawable.texturedVertices.length < texturedVerticesSize || perDrawable.texturedVertices.length > texturedVerticesSize / 2))
+									if (texturedVerticesSize > 0 && (perDrawable.texturedVertices == nil || perDrawable.texturedVertices.length < texturedVerticesSize || perDrawable.texturedVertices.length > texturedVerticesSize * 2))
 									{
 										perDrawable.texturedVertices = [device newBufferWithLength:texturedVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 
-									if (surfacesVerticesSize > 0 && (perDrawable.surfaceVertices == nil || perDrawable.surfaceVertices.length < surfacesVerticesSize || perDrawable.surfaceVertices.length > surfacesVerticesSize / 2))
+									if (surfacesVerticesSize > 0 && (perDrawable.surfaceVertices == nil || perDrawable.surfaceVertices.length < surfacesVerticesSize || perDrawable.surfaceVertices.length > surfacesVerticesSize * 2))
 									{
 										perDrawable.surfaceVertices = [device newBufferWithLength:surfacesVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 
-									if (aliasVerticesSize > 0 && (perDrawable.aliasVertices == nil || perDrawable.aliasVertices.length < aliasVerticesSize || perDrawable.aliasVertices.length > aliasVerticesSize / 2))
+									if (aliasVerticesSize > 0 && (perDrawable.aliasVertices == nil || perDrawable.aliasVertices.length < aliasVerticesSize || perDrawable.aliasVertices.length > aliasVerticesSize * 2))
 									{
 										perDrawable.aliasVertices = [device newBufferWithLength:aliasVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 									
-									if (particlesVerticesSize > 0 && (perDrawable.particleVertices == nil || perDrawable.particleVertices.length < particlesVerticesSize || perDrawable.particleVertices.length > particlesVerticesSize / 2))
+									if (particlesVerticesSize > 0 && (perDrawable.particleVertices == nil || perDrawable.particleVertices.length < particlesVerticesSize || perDrawable.particleVertices.length > particlesVerticesSize * 2))
 									{
 										perDrawable.particleVertices = [device newBufferWithLength:particlesVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
@@ -632,7 +634,9 @@ static CGDataProviderRef con_provider;
 											
 											uint32_t indexBase = 0;
 											
-											Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
+											NSUInteger lightmapBufferSize = 0;
+											
+											Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
 											
 											size_t rotationSize = (d_lists.last_surface_rotated + 1) * 8;
 											
@@ -643,9 +647,14 @@ static CGDataProviderRef con_provider;
 											
 											auto rotationData = rotation->data();
 											
-											SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, device, perDrawable, textureIndex, textureCache);
+											SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
 											
 											Turbulent::Fill(sortedTurbulent, verticesTarget, indicesTarget, indexBase, device, perDrawable, textureIndex, textureCache);
+											
+											if (lightmapBufferSize > 0 && (perDrawable.lightmapBuffer == nil || perDrawable.lightmapBuffer.length < lightmapBufferSize || perDrawable.lightmapBuffer.length > lightmapBufferSize * 2))
+											{
+												perDrawable.lightmapBuffer = [device newBufferWithLength:lightmapBufferSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
+											}
 										}
 										
 										if (texturedVerticesSize > 0)
@@ -673,6 +682,33 @@ static CGDataProviderRef con_provider;
 
 								id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
 								
+								if (lightmapCopying.size() > 0)
+								{
+									auto target = (unsigned char*)perDrawable.lightmapBuffer.contents;
+									for (auto& entry : lightmapCopying)
+									{
+										memcpy(target, entry.data, entry.size);
+
+										target += entry.size;
+									}
+
+									id<MTLBlitCommandEncoder> commandEncoder = [commandBuffer blitCommandEncoder];
+									
+									auto origin = MTLOriginMake(0, 0, 0);
+
+									NSUInteger offset = 0;
+									for (auto& entry : lightmapCopying)
+									{
+										auto size = MTLSizeMake(entry.width, entry.height, 1);
+										
+										[commandEncoder copyFromBuffer:perDrawable.lightmapBuffer sourceOffset:offset sourceBytesPerRow:entry.bytesPerRow sourceBytesPerImage:0 sourceSize:size toTexture:perDrawable.lightmapCache[entry.lightmap].texture destinationSlice:0 destinationLevel:0 destinationOrigin:origin];
+										
+										offset += entry.size;
+									}
+									
+									[commandEncoder endEncoding];
+								}
+
 								for (NSUInteger v = 0; v < viewCount; v++)
 								{
 									auto perView = [perDrawable.views objectForKey:@(v)];
