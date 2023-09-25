@@ -401,16 +401,16 @@ Writes a SAVEGAME_COMMENT_LENGTH character comment describing the current
 void Host_SavegameComment (char *text)
 {
 	int		i;
-	char	kills[20];
+	char	kills[SAVEGAME_COMMENT_LENGTH-22];
 
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
 		text[i] = ' ';
-	memcpy (text, cl.levelname, strlen(cl.levelname));
-	sprintf (kills,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+	snprintf (text, SAVEGAME_COMMENT_LENGTH, "%s", cl.levelname);
+	snprintf (kills,SAVEGAME_COMMENT_LENGTH-22,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	memcpy (text+22, kills, strlen(kills));
 // convert space to _ to make stdio happy
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
-		if (text[i] == ' ')
+		if (text[i] <= ' ')
 			text[i] = '_';
 	text[SAVEGAME_COMMENT_LENGTH] = '\0';
 }
