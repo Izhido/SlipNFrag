@@ -663,7 +663,7 @@ void R_DrawEntitiesOnList (void)
 			VectorCopy (currententity->origin, r_entorigin);
 			VectorSubtract (r_origin, r_entorigin, modelorg);
 
-			if (!d_uselists && cl.worldmodel->lightRGBdata != NULL && currententity->colormap == host_colormap.data())
+			if (!d_uselists && cl.worldmodel->lightRGBdata != NULL && currententity->colormap == vid.colormap)
 			{
 			// see if the bounding box lets us trivially reject, also sets
 			// trivial accept status
@@ -791,7 +791,7 @@ void R_DrawViewModel (void)
 	VectorCopy (vup, viewlightvec);
 	VectorInverse (viewlightvec);
 
-	if (!d_uselists && cl.worldmodel->lightRGBdata != NULL && currententity->colormap == host_colormap.data())
+	if (!d_uselists && cl.worldmodel->lightRGBdata != NULL && currententity->colormap == vid.colormap)
 	{
 		auto j = R_ColoredLightPoint (currententity->origin);
 

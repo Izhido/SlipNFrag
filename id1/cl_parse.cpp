@@ -140,10 +140,13 @@ entity_t	*CL_EntityNum (int num)
 {
 	if (num >= cl_entities.size())
 	{
-		while (cl_entities.size()<=num)
+		auto start = cl_entities.size();
+		cl_entities.resize(num + 1);
+		auto end = cl_entities.size();
+		
+		for (auto i = start; i < end; i++)
         {
-            cl_entities.emplace_back();
-			cl_entities[cl_entities.size() - 1].colormap = vid.colormap;
+			cl_entities[i].colormap = vid.colormap;
 		}
 	}
 		

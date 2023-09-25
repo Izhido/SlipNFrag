@@ -105,6 +105,7 @@
 		282AF31A250E80A000E171DA /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 282AF319250E80A000E171DA /* Shaders.metal */; };
 		282AF31D250EC17800E171DA /* GameView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 282AF31C250EC17800E171DA /* GameView.mm */; };
 		282AF31F250EEB0800E171DA /* ARKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 282AF31E250EEB0800E171DA /* ARKit.framework */; };
+		283AA6D42AC13BB100B461F4 /* TurbulentLit.mm in Sources */ = {isa = PBXBuildFile; fileRef = 283AA6D32AC13BB100B461F4 /* TurbulentLit.mm */; };
 		283D4B7A229DCFD100D68A47 /* console.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B79229DCFD100D68A47 /* console.cpp */; };
 		283D4B7C229DD10F00D68A47 /* host.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B7B229DD10F00D68A47 /* host.cpp */; };
 		283D4B80229DD43600D68A47 /* cl_main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B7F229DD43600D68A47 /* cl_main.cpp */; };
@@ -423,6 +424,8 @@
 		282AF31B250EC17800E171DA /* GameView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameView.h; sourceTree = "<group>"; };
 		282AF31C250EC17800E171DA /* GameView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GameView.mm; sourceTree = "<group>"; };
 		282AF31E250EEB0800E171DA /* ARKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ARKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS13.7.sdk/System/Library/Frameworks/ARKit.framework; sourceTree = DEVELOPER_DIR; };
+		283AA6D22AC13B5600B461F4 /* TurbulentLit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TurbulentLit.h; sourceTree = "<group>"; };
+		283AA6D32AC13BB100B461F4 /* TurbulentLit.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = TurbulentLit.mm; sourceTree = "<group>"; };
 		283D4B79229DCFD100D68A47 /* console.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = console.cpp; sourceTree = "<group>"; };
 		283D4B7B229DD10F00D68A47 /* host.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = host.cpp; sourceTree = "<group>"; };
 		283D4B7D229DD13200D68A47 /* r_local.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = r_local.h; sourceTree = "<group>"; };
@@ -736,6 +739,8 @@
 				288AA3CD2A8C8BE6008B3C91 /* Texture.mm */,
 				2884E5302AA43439008C984A /* Turbulent.h */,
 				2884E5312AA43455008C984A /* Turbulent.mm */,
+				283AA6D22AC13B5600B461F4 /* TurbulentLit.h */,
+				283AA6D32AC13BB100B461F4 /* TurbulentLit.mm */,
 				28CAFEC32AB41E8000BE42F6 /* Viewmodel.h */,
 				28CAFEC42AB41ED300BE42F6 /* Viewmodel.mm */,
 				2811E5302A6C722700B1498E /* Assets.xcassets */,
@@ -1185,6 +1190,7 @@
 				2875DC272A6CA3DA00EED860 /* r_aliasc.cpp in Sources */,
 				2875DBFA2A6CA21100EED860 /* net_none.cpp in Sources */,
 				2875DC362A6CA3DA00EED860 /* cl_parse.cpp in Sources */,
+				283AA6D42AC13BB100B461F4 /* TurbulentLit.mm in Sources */,
 				2875DC032A6CA3DA00EED860 /* d_part.cpp in Sources */,
 				28E9CEC72A8843BB00EDEF92 /* SettingsView.swift in Sources */,
 				2829D95C2A6CE6EB00516C16 /* snd_float_dma.cpp in Sources */,

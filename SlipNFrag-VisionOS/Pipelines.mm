@@ -100,10 +100,10 @@
 
 	pipelineStateDescriptor.vertexDescriptor = vertexDescriptor;
 
-	vertexProgram = [library newFunctionWithName:@"surfaceVertexMain"];
+	auto surfaceVertexProgram = [library newFunctionWithName:@"surfaceVertexMain"];
 	fragmentProgram = [library newFunctionWithName:@"surfaceFragmentMain"];
 
-	pipelineStateDescriptor.vertexFunction = vertexProgram;
+	pipelineStateDescriptor.vertexFunction = surfaceVertexProgram;
 	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
 
 	self.surface = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
@@ -122,6 +122,19 @@
 	if (error != nil)
 	{
 		engineStop.stopEngineMessage = @"Rotated surface rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
+	fragmentProgram = [library newFunctionWithName:@"turbulentLitFragmentMain"];
+
+	pipelineStateDescriptor.vertexFunction = surfaceVertexProgram;
+	pipelineStateDescriptor.fragmentFunction = fragmentProgram;
+
+	self.turbulentLit = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Turbulent lit rendering pipeline could not be created.";
 		engineStop.stopEngine = true;
 		return false;
 	}

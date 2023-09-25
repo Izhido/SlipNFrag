@@ -1000,7 +1000,7 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 	alias.height = mdl->skinheight;
 	alias.size = alias.width * alias.height;
 	alias.data = (byte *)aliashdr + skindesc->skin;
-	if (colormap == host_colormap.data())
+	if (colormap == vid.colormap)
 	{
 		alias.colormap = nullptr;
 	}

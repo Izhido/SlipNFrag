@@ -23,6 +23,8 @@
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> surfaceRotated;
 
+@property (nonatomic, strong) id<MTLRenderPipelineState> turbulentLit;
+
 @property (nonatomic, strong) id<MTLRenderPipelineState> turbulent;
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> alias;

@@ -23,6 +23,7 @@
 #import "Sky.h"
 #import "Surfaces.h"
 #import "SurfacesRotated.h"
+#import "TurbulentLit.h"
 #import "Turbulent.h"
 #import "Alias.h"
 #import "Viewmodel.h"
@@ -260,7 +261,7 @@ static CGDataProviderRef con_provider;
 								if (appState.PreviousMode == AppStartupMode)
 								{
 									appState.DefaultFOV = (int)Cvar_VariableValue("fov");
-									r_load_as_rgba = true;
+									//r_load_as_rgba = true;
 									d_skipfade = true;
 								}
 
@@ -284,6 +285,7 @@ static CGDataProviderRef con_provider;
 								else if (appState.Mode == AppWorldMode)
 								{
 									std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
 									D_ResetLists();
 									d_uselists = true;
 									r_skip_fov_check = true;
@@ -519,6 +521,9 @@ static CGDataProviderRef con_provider;
 								NSUInteger surfacesRotatedIndexBase = 0;
 								std::unordered_map<void*, SortedSurfaceRotatedLightmap> sortedSurfacesRotated;
 
+								NSUInteger turbulentLitIndexBase = 0;
+								std::unordered_map<void*, SortedSurfaceLightmap> sortedTurbulentLit;
+								
 								NSUInteger turbulentIndexBase = 0;
 								std::unordered_map<void*, SortedTurbulentTexture> sortedTurbulent;
 								
@@ -575,6 +580,9 @@ static CGDataProviderRef con_provider;
 									
 									surfacesRotatedIndexBase = indicesSize;
 									SurfacesRotated::Sort(sortedSurfacesRotated, surfacesVerticesSize, indicesSize);
+									
+									turbulentLitIndexBase = indicesSize;
+									TurbulentLit::Sort(sortedTurbulentLit, surfacesVerticesSize, indicesSize);
 									
 									turbulentIndexBase = indicesSize;
 									Turbulent::Sort(sortedTurbulent, surfacesVerticesSize, indicesSize);
@@ -649,6 +657,8 @@ static CGDataProviderRef con_provider;
 											
 											SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
 											
+											TurbulentLit::Fill(sortedTurbulentLit, verticesTarget, indicesTarget, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
+
 											Turbulent::Fill(sortedTurbulent, verticesTarget, indicesTarget, indexBase, device, perDrawable, textureIndex, textureCache);
 											
 											if (lightmapBufferSize > 0 && (perDrawable.lightmapBuffer == nil || perDrawable.lightmapBuffer.length < lightmapBufferSize || perDrawable.lightmapBuffer.length > lightmapBufferSize * 2))
@@ -766,6 +776,8 @@ static CGDataProviderRef con_provider;
 										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesIndexBase, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
 										SurfacesRotated::Render(sortedSurfacesRotated, commandEncoder, pipelines.surfaceRotated, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesRotatedIndexBase, rotation->data(), planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
+
+										TurbulentLit::Render(sortedTurbulentLit, commandEncoder, pipelines.turbulentLit, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, turbulentLitIndexBase, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
 										Turbulent::Render(sortedTurbulent, commandEncoder, pipelines.turbulent, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, turbulentIndexBase, planarSamplerState, textureCache, textureSamplerState);
 
