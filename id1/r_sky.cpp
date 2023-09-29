@@ -108,14 +108,65 @@ void R_InitSky (texture_t *mt)
 
     r_skyinitialized = true;
     
-    if (mt->width != 256 || mt->height != 128)
-    {
-        memset(newsky, 0, 128*256);
-        memset(bottommask, 0, 128*131);
-        memset(bottomsky, 0, 128*131);
+	if (mt->width < 2 || mt->height < 1)
+	{
+		memset(newsky, 0, 128*256);
+		memset(bottommask, 0, 128*131);
+		memset(bottomsky, 0, 128*131);
+
 		r_skysource = newsky;
-        Con_Printf ("R_InitSky: %ix%i instead of 256x128\n", mt->width, mt->height);
-        return;
+
+		Con_Printf ("R_InitSky: %ix%i instead of 256x128\n", mt->width, mt->height);
+
+		return;
+	}
+
+	if (mt->width != 256 || mt->height != 128)
+    {
+		unsigned width = mt->width;
+		unsigned halfwidth = width / 2;
+		unsigned height = mt->height;
+		
+		src = (byte *)mt + mt->offsets[0];
+
+		for (i=0 ; i<128 ; i++)
+		{
+			unsigned y = i * height / 128;
+
+			for (j=0 ; j<128 ; j++)
+			{
+				unsigned x = j * halfwidth / 128;
+
+				newsky[(i*256) + j + 128] = src[y*width + x + halfwidth];
+			}
+		}
+
+		for (i=0 ; i<128 ; i++)
+		{
+			unsigned y = i * height / 128;
+
+			for (j=0 ; j<131 ; j++)
+			{
+				unsigned x = j * halfwidth / 128;
+
+				if (src[y*width + (x % halfwidth)])
+				{
+					bottomsky[(i*131) + j] = src[y*width + (x % halfwidth)];
+					bottommask[(i*131) + j] = 0;
+				}
+				else
+				{
+					bottomsky[(i*131) + j] = 0;
+					bottommask[(i*131) + j] = 0xff;
+				}
+			}
+		}
+		
+		r_skysource = newsky;
+
+		Con_Printf ("R_InitSky: %ix%i instead of 256x128\n", mt->width, mt->height);
+        
+		return;
     }
 
     src = (byte *)mt + mt->offsets[0];
