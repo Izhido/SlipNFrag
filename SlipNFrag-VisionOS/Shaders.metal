@@ -22,6 +22,17 @@ struct VertexOut
 	float2 texCoords;
 };
 
+struct SkyboxVertexIn
+{
+	float4 position [[attribute(0)]];
+};
+
+struct SkyboxVertexOut
+{
+	float4 position [[position]];
+	float4 texCoords;
+};
+
 struct SurfaceVertexIn
 {
 	float4 position [[attribute(0)]];
@@ -115,7 +126,7 @@ struct ParticleVertexOut
 	return outVertex;
 }
 
-[[fragment]] half4 skyFragmentMain(VertexOut input [[stage_in]], constant SkyRotation& rotation [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> surfaceTexture [[texture(1)]], sampler paletteSampler [[sampler(0)]], sampler textureSampler [[sampler(1)]])
+[[fragment]] half4 skyFragmentMain(VertexOut input [[stage_in]], constant SkyRotation& rotation [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> surfaceTexture [[texture(1)]], sampler paletteSampler [[sampler(0)]], sampler surfaceSampler [[sampler(1)]])
 {
 	int u = int(input.texCoords.x * int(rotation.width));
 	int v = int(input.texCoords.y * int(rotation.height));
@@ -133,7 +144,23 @@ struct ParticleVertexOut
 	float s = float((temp + 6*(128/2-1)*end[0]));
 	float t = float((temp + 6*(128/2-1)*end[1]));
 	auto texCoords = float2(s / 128.0f, t / 128.0f);
-	auto entry = surfaceTexture.sample(textureSampler, texCoords)[0];
+	auto entry = surfaceTexture.sample(surfaceSampler, texCoords)[0];
+	auto color = paletteTexture.sample(paletteSampler, entry);
+	return color;
+}
+
+[[vertex]] SkyboxVertexOut skyboxVertexMain(SkyboxVertexIn inVertex [[stage_in]], constant float4x4& viewMatrix [[buffer(1)]], constant float4x4& projectionMatrix [[buffer(2)]])
+{
+	SkyboxVertexOut outVertex;
+	outVertex.position = projectionMatrix * viewMatrix * inVertex.position;
+	outVertex.texCoords = inVertex.position;
+	return outVertex;
+}
+
+[[fragment]] half4 skyboxFragmentMain(SkyboxVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texturecube<half> skyboxTexture [[texture(1)]], sampler paletteSampler [[sampler(0)]], sampler skyboxSampler [[sampler(1)]])
+{
+	auto texCoords = float3(input.texCoords.x, input.texCoords.y, -input.texCoords.z);
+	auto entry = skyboxTexture.sample(skyboxSampler, texCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, entry);
 	return color;
 }
@@ -153,11 +180,11 @@ struct ParticleVertexOut
 	return outVertex;
 }
 
-[[fragment]] half4 surfaceFragmentMain(SurfaceVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<float> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler textureSampler [[sampler(3)]])
+[[fragment]] half4 surfaceFragmentMain(SurfaceVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<float> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler surfaceSampler [[sampler(3)]])
 {
 	auto lightmapCoords = floor(input.lightmapCoords * input.lightmapSize) / input.lightmapSize;
 	auto light = lightmapTexture.sample(lightmapSampler, lightmapCoords)[0] * 4;
-	auto textureEntry = surfaceTexture.sample(textureSampler, input.texCoords)[0];
+	auto textureEntry = surfaceTexture.sample(surfaceSampler, input.texCoords)[0];
 	auto colormapCoords = float2(textureEntry, light);
 	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, colormapped);
@@ -185,13 +212,13 @@ struct ParticleVertexOut
 	return outVertex;
 }
 
-[[fragment]] half4 turbulentLitFragmentMain(SurfaceVertexOut input [[stage_in]], constant float& time [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<float> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler textureSampler [[sampler(3)]])
+[[fragment]] half4 turbulentLitFragmentMain(SurfaceVertexOut input [[stage_in]], constant float& time [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<float> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler surfaceSampler [[sampler(3)]])
 {
 	auto lightmapCoords = floor(input.lightmapCoords * input.lightmapSize) / input.lightmapSize;
 	auto light = lightmapTexture.sample(lightmapSampler, lightmapCoords)[0] * 4;
 	auto distortion = sin(fmod(time + input.texCoords * 5, 3.14159*2)) / 10;
 	auto texCoords = input.texCoords.xy + distortion.yx;
-	auto textureEntry = surfaceTexture.sample(textureSampler, texCoords)[0];
+	auto textureEntry = surfaceTexture.sample(surfaceSampler, texCoords)[0];
 	auto colormapCoords = float2(textureEntry, light);
 	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, colormapped);
@@ -208,11 +235,11 @@ struct ParticleVertexOut
 	return outVertex;
 }
 
-[[fragment]] half4 turbulentFragmentMain(VertexOut input [[stage_in]], constant float& time [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> surfaceTexture [[texture(1)]], sampler paletteSampler [[sampler(0)]], sampler textureSampler [[sampler(1)]])
+[[fragment]] half4 turbulentFragmentMain(VertexOut input [[stage_in]], constant float& time [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> surfaceTexture [[texture(1)]], sampler paletteSampler [[sampler(0)]], sampler surfaceSampler [[sampler(1)]])
 {
 	auto distortion = sin(fmod(time + input.texCoords * 5, 3.14159*2)) / 10;
 	auto texCoords = input.texCoords.xy + distortion.yx;
-	auto entry = surfaceTexture.sample(textureSampler, texCoords)[0];
+	auto entry = surfaceTexture.sample(surfaceSampler, texCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, entry);
 	return color;
 }

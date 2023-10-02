@@ -21,6 +21,7 @@
 #include "Input.h"
 #import "Pipelines.h"
 #import "Sky.h"
+#import "Skybox.h"
 #import "Surfaces.h"
 #import "SurfacesRotated.h"
 #import "TurbulentLit.h"
@@ -330,6 +331,7 @@ static CGDataProviderRef con_provider;
 								[drawables[d].lightmapCache removeAllObjects];
 								drawables[d].aliasVertices = nil;
 								drawables[d].surfaceVertices = nil;
+								drawables[d].skyboxVertices = nil;
 								drawables[d].texturedVertices = nil;
 								drawables[d].indices = nil;
 							}
@@ -514,6 +516,8 @@ static CGDataProviderRef con_provider;
 								}
 
 								std::vector<SkyEntry> sky;
+								
+								std::vector<SkyEntry> skybox;
 
 								NSUInteger surfacesIndexBase = 0;
 								std::unordered_map<void*, SortedSurfaceLightmap> sortedSurfaces;
@@ -569,12 +573,15 @@ static CGDataProviderRef con_provider;
 									
 									NSUInteger indicesSize = 0;
 									NSUInteger texturedVerticesSize = 0;
+									NSUInteger skyboxVerticesSize = 0;
 									NSUInteger surfacesVerticesSize = 0;
 									NSUInteger aliasVerticesSize = 0;
 									NSUInteger particlesVerticesSize = 0;
 
 									Sky::Sort(sky, texturedVerticesSize, indicesSize);
 
+									Skybox::Sort(skybox, skyboxVerticesSize, indicesSize);
+									
 									surfacesIndexBase = indicesSize;
 									Surfaces::Sort(sortedSurfaces, surfacesVerticesSize, indicesSize);
 									
@@ -607,6 +614,11 @@ static CGDataProviderRef con_provider;
 										perDrawable.texturedVertices = [device newBufferWithLength:texturedVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
 									}
 
+									if (skyboxVerticesSize > 0 && (perDrawable.skyboxVertices == nil || perDrawable.skyboxVertices.length < skyboxVerticesSize || perDrawable.skyboxVertices.length > skyboxVerticesSize * 2))
+									{
+										perDrawable.skyboxVertices = [device newBufferWithLength:skyboxVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
+									}
+
 									if (surfacesVerticesSize > 0 && (perDrawable.surfaceVertices == nil || perDrawable.surfaceVertices.length < surfacesVerticesSize || perDrawable.surfaceVertices.length > surfacesVerticesSize * 2))
 									{
 										perDrawable.surfaceVertices = [device newBufferWithLength:surfacesVerticesSize * 3 / 2 options:MTLResourceCPUCacheModeWriteCombined];
@@ -634,6 +646,13 @@ static CGDataProviderRef con_provider;
 											texturedVerticesTarget = (float*)perDrawable.texturedVertices.contents;
 											
 											Sky::Fill(sky, texturedVerticesTarget, indicesTarget, texturedIndexBase, device, perDrawable, skyBuffer, textureIndex, textureCache);
+										}
+										
+										if (skyboxVerticesSize > 0)
+										{
+											auto verticesTarget = (float*)perDrawable.skyboxVertices.contents;
+											
+											Skybox::Fill(skybox, verticesTarget, indicesTarget, device, perDrawable, textureIndex, textureCache);
 										}
 										
 										if (surfacesVerticesSize > 0)
@@ -773,6 +792,8 @@ static CGDataProviderRef con_provider;
 										
 										Sky::Render(sky, commandEncoder, pipelines.sky, consoleDepthStencilState, projectionMatrix, perDrawable, head_pose, drawable, v, planarSamplerState, textureCache, textureSamplerState);
 
+										Skybox::Render(skybox, commandEncoder, pipelines.skybox, consoleDepthStencilState, projectionMatrix, perDrawable, head_pose, drawable, planarSamplerState, textureCache, textureSamplerState);
+										
 										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesIndexBase, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
 										SurfacesRotated::Render(sortedSurfacesRotated, commandEncoder, pipelines.surfaceRotated, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesRotatedIndexBase, rotation->data(), planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);

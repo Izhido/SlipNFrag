@@ -6,6 +6,8 @@
 //  Copyright © 2023 Heriberto Delgado. All rights reserved.
 //
 
+#pragma once
+
 struct SkyEntry
 {
 	uint32_t entry;

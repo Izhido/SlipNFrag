@@ -23,7 +23,7 @@ void Sky::Sort(std::vector<SkyEntry>& skyEntries, NSUInteger& verticesSize, NSUI
 
 		entry.indices = 6;
 
-		verticesSize = sky.count * 6 * sizeof(float);
+		verticesSize += sky.count * 6 * sizeof(float);
 		indicesSize += entry.indices * sizeof(uint32_t);
 	}
 }

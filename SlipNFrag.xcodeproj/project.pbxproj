@@ -356,6 +356,7 @@
 		28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28DFACDD28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28DFACDE28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
+		28E8074B2ACA719700067E76 /* Skybox.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28E8074A2ACA719700067E76 /* Skybox.mm */; };
 		28E95FAA260C50A0000DDF6C /* cd_ios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28E95FA9260C50A0000DDF6C /* cd_ios.cpp */; };
 		28E9CEC72A8843BB00EDEF92 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E9CEC62A8843BB00EDEF92 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
@@ -635,6 +636,8 @@
 		28D698232A9C126D00EA7F5B /* SortedSurfaceRotatedLightmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedSurfaceRotatedLightmap.h; sourceTree = "<group>"; };
 		28D698242A9C129E00EA7F5B /* SortedSurfaceRotatedTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedSurfaceRotatedTexture.h; sourceTree = "<group>"; };
 		28DFACDB28A4B2DB00646DE0 /* r_image.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_image.cpp; sourceTree = "<group>"; };
+		28E807492ACA707F00067E76 /* Skybox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Skybox.h; sourceTree = "<group>"; };
+		28E8074A2ACA719700067E76 /* Skybox.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Skybox.mm; sourceTree = "<group>"; };
 		28E95FA9260C50A0000DDF6C /* cd_ios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cd_ios.cpp; sourceTree = "<group>"; };
 		28E9CEC62A8843BB00EDEF92 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		28EDD8EE22C5D0D300BA8D90 /* libnetwork.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libnetwork.tbd; path = usr/lib/libnetwork.tbd; sourceTree = SDKROOT; };
@@ -720,6 +723,8 @@
 				28AF30FE2A77262E0072610B /* Renderer.mm */,
 				2800455C2AB4D97F001091C7 /* Sky.h */,
 				2800455D2AB4DAB1001091C7 /* Sky.mm */,
+				28E807492ACA707F00067E76 /* Skybox.h */,
+				28E8074A2ACA719700067E76 /* Skybox.mm */,
 				2800455B2AB4D91D001091C7 /* SkyEntry.h */,
 				286944B92AAD6D22009945B2 /* SortedAliasTexture.h */,
 				289EB15B2AAD74110094970B /* SortedAliasEntry.h */,
@@ -1281,6 +1286,7 @@
 				2875DC0F2A6CA3DA00EED860 /* r_part.cpp in Sources */,
 				2875DC392A6CA3DA00EED860 /* console.cpp in Sources */,
 				2875DC232A6CA3DA00EED860 /* cvar.cpp in Sources */,
+				28E8074B2ACA719700067E76 /* Skybox.mm in Sources */,
 				2847C68E2A8A7930000A839F /* EngineMode.swift in Sources */,
 				2875DC292A6CA3DA00EED860 /* sv_move.cpp in Sources */,
 			);

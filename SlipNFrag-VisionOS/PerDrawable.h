@@ -26,6 +26,8 @@
 
 @property (nonatomic, strong) id<MTLBuffer> texturedVertices;
 
+@property (nonatomic, strong) id<MTLBuffer> skyboxVertices;
+
 @property (nonatomic, strong) id<MTLBuffer> surfaceVertices;
 
 @property (nonatomic, strong) id<MTLBuffer> aliasVertices;
