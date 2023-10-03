@@ -136,14 +136,37 @@
 		return false;
 	}
 
-	vertexProgram = [library newFunctionWithName:@"surfaceRotatedVertexMain"];
+	auto surfaceRotatedVertexProgram = [library newFunctionWithName:@"surfaceRotatedVertexMain"];
 
-	pipelineStateDescriptor.vertexFunction = vertexProgram;
+	pipelineStateDescriptor.vertexFunction = surfaceRotatedVertexProgram;
 
 	self.surfaceRotated = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
 	if (error != nil)
 	{
 		engineStop.stopEngineMessage = @"Rotated surface rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
+	auto fenceFragmentProgram = [library newFunctionWithName:@"fenceFragmentMain"];
+	
+	pipelineStateDescriptor.vertexFunction = surfaceVertexProgram;
+	pipelineStateDescriptor.fragmentFunction = fenceFragmentProgram;
+
+	self.fence = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Fence rendering pipeline could not be created.";
+		engineStop.stopEngine = true;
+		return false;
+	}
+
+	pipelineStateDescriptor.vertexFunction = surfaceRotatedVertexProgram;
+
+	self.fenceRotated = [device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor error:&error];
+	if (error != nil)
+	{
+		engineStop.stopEngineMessage = @"Rotated fence rendering pipeline could not be created.";
 		engineStop.stopEngine = true;
 		return false;
 	}

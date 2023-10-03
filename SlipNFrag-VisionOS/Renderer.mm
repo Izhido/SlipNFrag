@@ -24,6 +24,8 @@
 #import "Skybox.h"
 #import "Surfaces.h"
 #import "SurfacesRotated.h"
+#import "Fences.h"
+#import "FencesRotated.h"
 #import "TurbulentLit.h"
 #import "Turbulent.h"
 #import "Alias.h"
@@ -525,6 +527,12 @@ static CGDataProviderRef con_provider;
 								NSUInteger surfacesRotatedIndexBase = 0;
 								std::unordered_map<void*, SortedSurfaceRotatedLightmap> sortedSurfacesRotated;
 
+								NSUInteger fencesIndexBase = 0;
+								std::unordered_map<void*, SortedSurfaceLightmap> sortedFences;
+
+								NSUInteger fencesRotatedIndexBase = 0;
+								std::unordered_map<void*, SortedSurfaceRotatedLightmap> sortedFencesRotated;
+
 								NSUInteger turbulentLitIndexBase = 0;
 								std::unordered_map<void*, SortedSurfaceLightmap> sortedTurbulentLit;
 								
@@ -587,6 +595,12 @@ static CGDataProviderRef con_provider;
 									
 									surfacesRotatedIndexBase = indicesSize;
 									SurfacesRotated::Sort(sortedSurfacesRotated, surfacesVerticesSize, indicesSize);
+									
+									fencesIndexBase = indicesSize;
+									Fences::Sort(sortedFences, surfacesVerticesSize, indicesSize);
+									
+									fencesRotatedIndexBase = indicesSize;
+									FencesRotated::Sort(sortedFencesRotated, surfacesVerticesSize, indicesSize);
 									
 									turbulentLitIndexBase = indicesSize;
 									TurbulentLit::Sort(sortedTurbulentLit, surfacesVerticesSize, indicesSize);
@@ -665,7 +679,7 @@ static CGDataProviderRef con_provider;
 											
 											Surfaces::Fill(sortedSurfaces, verticesTarget, indicesTarget, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
 											
-											size_t rotationSize = (d_lists.last_surface_rotated + 1) * 8;
+											size_t rotationSize = (d_lists.last_surface_rotated + 1 + d_lists.last_fence_rotated + 1) * 8;
 											
 											if (rotationSize > rotation->size() || rotationSize < rotation->size() / 2)
 											{
@@ -675,6 +689,10 @@ static CGDataProviderRef con_provider;
 											auto rotationData = rotation->data();
 											
 											SurfacesRotated::Fill(sortedSurfacesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
+											
+											Fences::Fill(sortedFences, verticesTarget, indicesTarget, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
+											
+											FencesRotated::Fill(sortedFencesRotated, verticesTarget, indicesTarget, rotationData, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
 											
 											TurbulentLit::Fill(sortedTurbulentLit, verticesTarget, indicesTarget, indexBase, lightmapIndex, lightmapBufferSize, lightmapCopying, device, perDrawable, textureIndex, textureCache);
 
@@ -796,7 +814,13 @@ static CGDataProviderRef con_provider;
 										
 										Surfaces::Render(sortedSurfaces, commandEncoder, pipelines.surface, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesIndexBase, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
-										SurfacesRotated::Render(sortedSurfacesRotated, commandEncoder, pipelines.surfaceRotated, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesRotatedIndexBase, rotation->data(), planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
+										auto rotationData = rotation->data();
+										
+										SurfacesRotated::Render(sortedSurfacesRotated, commandEncoder, pipelines.surfaceRotated, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, surfacesRotatedIndexBase, rotationData, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
+
+										Fences::Render(sortedFences, commandEncoder, pipelines.fence, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, fencesIndexBase, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
+
+										FencesRotated::Render(sortedFencesRotated, commandEncoder, pipelines.fenceRotated, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, fencesRotatedIndexBase, rotationData, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 
 										TurbulentLit::Render(sortedTurbulentLit, commandEncoder, pipelines.turbulentLit, surfaceDepthStencilState, vertexTransformMatrix, viewMatrix, projectionMatrix, perDrawable, turbulentLitIndexBase, planarSamplerState, lightmapSamplerState, textureCache, textureSamplerState);
 

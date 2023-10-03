@@ -227,7 +227,7 @@ void SurfacesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightma
 						newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
 						newTexture.region = MTLRegionMake2D(0, 0, surface.width, surface.height);
 						
-						auto data = (unsigned char*)surface.data;
+						auto data = surface.data;
 						auto region = newTexture.region;
 						for (auto m = 0; m < surface.mips; m++)
 						{
@@ -255,7 +255,7 @@ void SurfacesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightma
 	}
 }
 
-void SurfacesRotated::Render(std::unordered_map<void*, SortedSurfaceRotatedLightmap>& sorted, id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> pipeline, id<MTLDepthStencilState> depthStencilState, simd_float4x4& vertexTransformMatrix, simd_float4x4& viewMatrix, simd_float4x4& projectionMatrix, PerDrawable* perDrawable, NSUInteger indexBase, float* rotation, id<MTLSamplerState> planarSamplerState, id<MTLSamplerState> lightmapSamplerState, NSMutableArray<Texture*>* textureCache, id<MTLSamplerState> textureSamplerState)
+void SurfacesRotated::Render(std::unordered_map<void*, SortedSurfaceRotatedLightmap>& sorted, id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> pipeline, id<MTLDepthStencilState> depthStencilState, simd_float4x4& vertexTransformMatrix, simd_float4x4& viewMatrix, simd_float4x4& projectionMatrix, PerDrawable* perDrawable, NSUInteger indexBase, float*& rotation, id<MTLSamplerState> planarSamplerState, id<MTLSamplerState> lightmapSamplerState, NSMutableArray<Texture*>* textureCache, id<MTLSamplerState> textureSamplerState)
 {
 	if (sorted.size() >= 0)
 	{

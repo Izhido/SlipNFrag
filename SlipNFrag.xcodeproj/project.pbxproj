@@ -281,6 +281,8 @@
 		28AA1D9722C07E2D00264AD0 /* snd_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28AA1D9522C07E2D00264AD0 /* snd_macos.cpp */; };
 		28AA1DA122C089E600264AD0 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28AA1DA022C089E600264AD0 /* AudioToolbox.framework */; };
 		28AF30FF2A77262E0072610B /* Renderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28AF30FE2A77262E0072610B /* Renderer.mm */; };
+		28B2FE3D2ACBD4B100882C61 /* Fences.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28B2FE3C2ACBD4B100882C61 /* Fences.mm */; };
+		28B2FE3F2ACBD62400882C61 /* FencesRotated.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28B2FE3E2ACBD62400882C61 /* FencesRotated.mm */; };
 		28B9DBDF2A7E0920008E09EE /* Input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28B9DBDE2A7E0920008E09EE /* Input.cpp */; };
 		28BA2A73229F3271001830E9 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 28BA2A72229F3271001830E9 /* Shaders.metal */; };
 		28BA2A74229F403C001830E9 /* chase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 283D4B81229DD46300D68A47 /* chase.cpp */; };
@@ -606,6 +608,10 @@
 		28AA71732ABFEDAD0057F549 /* LightmapCopying.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LightmapCopying.h; sourceTree = "<group>"; };
 		28AF30FD2A7725230072610B /* Renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Renderer.h; sourceTree = "<group>"; };
 		28AF30FE2A77262E0072610B /* Renderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Renderer.mm; sourceTree = "<group>"; };
+		28B2FE382ACBD35D00882C61 /* Fences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Fences.h; sourceTree = "<group>"; };
+		28B2FE3B2ACBD3F800882C61 /* FencesRotated.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FencesRotated.h; sourceTree = "<group>"; };
+		28B2FE3C2ACBD4B100882C61 /* Fences.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Fences.mm; sourceTree = "<group>"; };
+		28B2FE3E2ACBD62400882C61 /* FencesRotated.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = FencesRotated.mm; sourceTree = "<group>"; };
 		28B9DBDD2A7E08B2008E09EE /* Input.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Input.h; sourceTree = "<group>"; };
 		28B9DBDE2A7E0920008E09EE /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Input.cpp; sourceTree = "<group>"; };
 		28BA2A6E229F31C2001830E9 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
@@ -703,6 +709,10 @@
 				2803CF5A2A6E1480006AC44F /* Engine.mm */,
 				289DCF0C2A802885005A4D55 /* EngineStop.h */,
 				289DCF0D2A8028E0005A4D55 /* EngineStop.mm */,
+				28B2FE382ACBD35D00882C61 /* Fences.h */,
+				28B2FE3C2ACBD4B100882C61 /* Fences.mm */,
+				28B2FE3B2ACBD3F800882C61 /* FencesRotated.h */,
+				28B2FE3E2ACBD62400882C61 /* FencesRotated.mm */,
 				289DCF132A802C87005A4D55 /* Input.cpp */,
 				289DCF122A802C54005A4D55 /* Input.h */,
 				28D336BD2A971571000DDE59 /* Lightmap.h */,
@@ -1203,6 +1213,7 @@
 				2875DC192A6CA3DA00EED860 /* sv_phys.cpp in Sources */,
 				28C8FEB12A72FEFF00E3BA11 /* in_visionos.cpp in Sources */,
 				2870E72D2A6F750200B2F088 /* Shaders.metal in Sources */,
+				28B2FE3F2ACBD62400882C61 /* FencesRotated.mm in Sources */,
 				2875DBFF2A6CA3DA00EED860 /* r_bsp.cpp in Sources */,
 				2875DC072A6CA3DA00EED860 /* common.cpp in Sources */,
 				2875DC112A6CA3DA00EED860 /* pr_exec.cpp in Sources */,
@@ -1233,6 +1244,7 @@
 				2875DC252A6CA3DA00EED860 /* host.cpp in Sources */,
 				2875DC3E2A6CA3DA00EED860 /* r_edge.cpp in Sources */,
 				2875DC3F2A6CA3DA00EED860 /* r_sky.cpp in Sources */,
+				28B2FE3D2ACBD4B100882C61 /* Fences.mm in Sources */,
 				2875DC3D2A6CA3DA00EED860 /* r_efrag.cpp in Sources */,
 				2875DC202A6CA3DA00EED860 /* pr_edict.cpp in Sources */,
 				287EC31C2A8DC65300B1DFDF /* AppState.cpp in Sources */,

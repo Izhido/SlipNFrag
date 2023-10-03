@@ -142,7 +142,7 @@ void Turbulent::Fill(std::unordered_map<void*, SortedTurbulentTexture>& sorted, 
 					newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
 					newTexture.region = MTLRegionMake2D(0, 0, turbulent.width, turbulent.height);
 					
-					auto data = (unsigned char*)turbulent.data;
+					auto data = turbulent.data;
 					auto region = newTexture.region;
 					for (auto m = 0; m < turbulent.mips; m++)
 					{

@@ -25,6 +25,10 @@
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> surfaceRotated;
 
+@property (nonatomic, strong) id<MTLRenderPipelineState> fence;
+
+@property (nonatomic, strong) id<MTLRenderPipelineState> fenceRotated;
+
 @property (nonatomic, strong) id<MTLRenderPipelineState> turbulentLit;
 
 @property (nonatomic, strong) id<MTLRenderPipelineState> turbulent;

@@ -1,8 +1,8 @@
 //
-//  SurfacesRotated.h
+//  FencesRotated.h
 //  SlipNFrag
 //
-//  Created by Heriberto Delgado on 27/8/23.
+//  Created by Heriberto Delgado on 2/10/23.
 //  Copyright © 2023 Heriberto Delgado. All rights reserved.
 //
 
@@ -14,7 +14,7 @@
 #import "PerDrawable.h"
 #include "LightmapCopying.h"
 
-struct SurfacesRotated
+struct FencesRotated
 {
 	static void Sort(std::unordered_map<void*, SortedSurfaceRotatedLightmap>& sorted, NSUInteger& verticesSize, NSUInteger& indicesSize);
 	

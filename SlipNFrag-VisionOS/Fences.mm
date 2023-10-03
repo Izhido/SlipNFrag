@@ -1,24 +1,24 @@
 //
-//  Surfaces.mm
+//  Fences.mm
 //  SlipNFrag-VisionOS
 //
-//  Created by Heriberto Delgado on 25/8/23.
+//  Created by Heriberto Delgado on 2/10/23.
 //  Copyright © 2023 Heriberto Delgado. All rights reserved.
 //
 
-#include "Surfaces.h"
+#include "Fences.h"
 #include "vid_visionos.h"
 #include "d_lists.h"
 #import "Lightmap.h"
 
-void Surfaces::Sort(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, NSUInteger& verticesSize, NSUInteger& indicesSize)
+void Fences::Sort(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, NSUInteger& verticesSize, NSUInteger& indicesSize)
 {
-	for (auto s = 0; s <= d_lists.last_surface; s++)
+	for (auto f = 0; f <= d_lists.last_fence; f++)
 	{
-		auto& surface = d_lists.surfaces[s];
-		auto face = (msurface_t*)surface.face;
+		auto& fence = d_lists.fences[f];
+		auto face = (msurface_t*)fence.face;
 
-		auto& lightmap = sorted[surface.face];
+		auto& lightmap = sorted[fence.face];
 		
 		if (!lightmap.texturePositionSet)
 		{
@@ -45,9 +45,9 @@ void Surfaces::Sort(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, NS
 			lightmap.texturePositionSet = true;
 		}
 
-		auto& texture = lightmap.textures[surface.data];
+		auto& texture = lightmap.textures[fence.data];
 		
-		texture.entries.push_back(s);
+		texture.entries.push_back(f);
 		
 		auto numedges = face->numedges;
 		
@@ -60,17 +60,17 @@ void Surfaces::Sort(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, NS
 	}
 }
 
-void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, float*& vertices, uint32_t*& indices, uint32_t& base, std::unordered_map<void*, NSUInteger>* lightmapIndex, NSUInteger& lightmapBufferSize, std::vector<LightmapCopying>& lightmapCopying, id<MTLDevice> device, PerDrawable* perDrawable, std::unordered_map<void*, NSUInteger>& textureIndex, NSMutableArray<Texture*>* textureCache)
+void Fences::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, float*& vertices, uint32_t*& indices, uint32_t& base, std::unordered_map<void*, NSUInteger>* lightmapIndex, NSUInteger& lightmapBufferSize, std::vector<LightmapCopying>& lightmapCopying, id<MTLDevice> device, PerDrawable* perDrawable, std::unordered_map<void*, NSUInteger>& textureIndex, NSMutableArray<Texture*>* textureCache)
 {
 	for (auto& lightmap : sorted)
 	{
 		for (auto& texture : lightmap.second.textures)
 		{
-			for (auto s : texture.second.entries)
+			for (auto f : texture.second.entries)
 			{
-				auto& surface = d_lists.surfaces[s];
-				auto face = (msurface_t*)surface.face;
-				auto model = (model_t*)surface.model;
+				auto& fence = d_lists.fences[f];
+				auto face = (msurface_t*)fence.face;
+				auto model = (model_t*)fence.model;
 				auto edge = model->surfedges[face->firstedge];
 				unsigned int index;
 				if (edge >= 0)
@@ -140,37 +140,37 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 				
 				if (!lightmap.second.lightmapSet)
 				{
-					auto entry = lightmapIndex->find(surface.face);
+					auto entry = lightmapIndex->find(fence.face);
 					if (entry == lightmapIndex->end())
 					{
 						auto newLightmap = [Lightmap new];
 						newLightmap.descriptor = [MTLTextureDescriptor new];
 						newLightmap.descriptor.pixelFormat = MTLPixelFormatR16Unorm;
-						newLightmap.descriptor.width = surface.lightmap_width;
-						newLightmap.descriptor.height = surface.lightmap_height;
+						newLightmap.descriptor.width = fence.lightmap_width;
+						newLightmap.descriptor.height = fence.lightmap_height;
 						newLightmap.descriptor.resourceOptions = MTLResourceStorageModePrivate;
 						newLightmap.descriptor.usage = MTLTextureUsageShaderRead;
 						newLightmap.texture = [device newTextureWithDescriptor:newLightmap.descriptor];
-						newLightmap.region = MTLRegionMake2D(0, 0, surface.lightmap_width, surface.lightmap_height);
+						newLightmap.region = MTLRegionMake2D(0, 0, fence.lightmap_width, fence.lightmap_height);
 						
-						newLightmap.createdCount = surface.created;
+						newLightmap.createdCount = fence.created;
 
-						lightmapIndex->insert({surface.face, perDrawable.lightmapCache.count});
+						lightmapIndex->insert({fence.face, perDrawable.lightmapCache.count});
 						
 						lightmap.second.lightmap = (uint32_t)perDrawable.lightmapCache.count;
 						
 						[perDrawable.lightmapCache addObject:newLightmap];
 
-						uint32_t bytesPerRow = surface.lightmap_width * sizeof(uint16_t);
-						uint32_t lightmapSize = bytesPerRow * surface.lightmap_height;
+						uint32_t bytesPerRow = fence.lightmap_width * sizeof(uint16_t);
+						uint32_t lightmapSize = bytesPerRow * fence.lightmap_height;
 						lightmapBufferSize += lightmapSize;
 						
 						lightmapCopying.emplace_back();
 						auto& lightmapCopyingEntry = lightmapCopying.back();
 						lightmapCopyingEntry.lightmap = lightmap.second.lightmap;
-						lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + surface.lightmap_texels;
-						lightmapCopyingEntry.width = surface.lightmap_width;
-						lightmapCopyingEntry.height = surface.lightmap_height;
+						lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + fence.lightmap_texels;
+						lightmapCopyingEntry.width = fence.lightmap_width;
+						lightmapCopyingEntry.height = fence.lightmap_height;
 						lightmapCopyingEntry.size = lightmapSize;
 						lightmapCopyingEntry.bytesPerRow = bytesPerRow;
 					}
@@ -179,22 +179,22 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 						lightmap.second.lightmap = (uint32_t)entry->second;
 
 						auto existingLightmap = perDrawable.lightmapCache[lightmap.second.lightmap];
-						if (existingLightmap.createdCount != surface.created)
+						if (existingLightmap.createdCount != fence.created)
 						{
-							uint32_t bytesPerRow = surface.lightmap_width * sizeof(uint16_t);
-							uint32_t lightmapSize = bytesPerRow * surface.lightmap_height;
+							uint32_t bytesPerRow = fence.lightmap_width * sizeof(uint16_t);
+							uint32_t lightmapSize = bytesPerRow * fence.lightmap_height;
 							lightmapBufferSize += lightmapSize;
 							
 							lightmapCopying.emplace_back();
 							auto& lightmapCopyingEntry = lightmapCopying.back();
 							lightmapCopyingEntry.lightmap = lightmap.second.lightmap;
-							lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + surface.lightmap_texels;
-							lightmapCopyingEntry.width = surface.lightmap_width;
-							lightmapCopyingEntry.height = surface.lightmap_height;
+							lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + fence.lightmap_texels;
+							lightmapCopyingEntry.width = fence.lightmap_width;
+							lightmapCopyingEntry.height = fence.lightmap_height;
 							lightmapCopyingEntry.size = lightmapSize;
 							lightmapCopyingEntry.bytesPerRow = bytesPerRow;
 							
-							existingLightmap.createdCount = surface.created;
+							existingLightmap.createdCount = fence.created;
 						}
 					}
 
@@ -203,22 +203,22 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 
 				if (!texture.second.set)
 				{
-					auto entry = textureIndex.find(surface.data);
+					auto entry = textureIndex.find(fence.data);
 					if (entry == textureIndex.end())
 					{
 						auto newTexture = [Texture new];
 						newTexture.descriptor = [MTLTextureDescriptor new];
 						newTexture.descriptor.pixelFormat = MTLPixelFormatR8Unorm;
-						newTexture.descriptor.width = surface.width;
-						newTexture.descriptor.height = surface.height;
-						newTexture.descriptor.mipmapLevelCount = surface.mips;
+						newTexture.descriptor.width = fence.width;
+						newTexture.descriptor.height = fence.height;
+						newTexture.descriptor.mipmapLevelCount = fence.mips;
 						newTexture.descriptor.usage = MTLTextureUsageShaderRead;
 						newTexture.texture = [device newTextureWithDescriptor:newTexture.descriptor];
-						newTexture.region = MTLRegionMake2D(0, 0, surface.width, surface.height);
+						newTexture.region = MTLRegionMake2D(0, 0, fence.width, fence.height);
 						
-						auto data = surface.data;
+						auto data = fence.data;
 						auto region = newTexture.region;
-						for (auto m = 0; m < surface.mips; m++)
+						for (auto m = 0; m < fence.mips; m++)
 						{
 							[newTexture.texture replaceRegion:region mipmapLevel:m withBytes:data bytesPerRow:region.size.width];
 							data += region.size.width * region.size.height;
@@ -226,7 +226,7 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 							region.size.height /= 2;
 						}
 
-						textureIndex.insert({surface.data, textureCache.count});
+						textureIndex.insert({fence.data, textureCache.count});
 						
 						texture.second.texture = (uint32_t)textureCache.count;
 						
@@ -244,7 +244,7 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 	}
 }
 
-void Surfaces::Render(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> pipeline, id<MTLDepthStencilState> depthStencilState, simd_float4x4& vertexTransformMatrix, simd_float4x4& viewMatrix, simd_float4x4& projectionMatrix, PerDrawable* perDrawable, NSUInteger indexBase, id<MTLSamplerState> planarSamplerState, id<MTLSamplerState> lightmapSamplerState, NSMutableArray<Texture*>* textureCache, id<MTLSamplerState> textureSamplerState)
+void Fences::Render(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, id<MTLRenderCommandEncoder> commandEncoder, id<MTLRenderPipelineState> pipeline, id<MTLDepthStencilState> depthStencilState, simd_float4x4& vertexTransformMatrix, simd_float4x4& viewMatrix, simd_float4x4& projectionMatrix, PerDrawable* perDrawable, NSUInteger indexBase, id<MTLSamplerState> planarSamplerState, id<MTLSamplerState> lightmapSamplerState, NSMutableArray<Texture*>* textureCache, id<MTLSamplerState> textureSamplerState)
 {
 	if (sorted.size() >= 0)
 	{
