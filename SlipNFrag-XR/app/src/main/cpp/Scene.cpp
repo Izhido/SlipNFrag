@@ -3121,16 +3121,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	size += indices32Size;
 	size += sortedIndices32Size;
 
-	// Add extra space (and also realign to a 4-byte boundary), due to potential alignment issues among 8, 16 and 32-bit index data:
-	if (size > 0)
-	{
-		size += 32;
-		while (size % 4 != 0)
-		{
-			size++;
-		}
-	}
-
 	return size;
 }
 

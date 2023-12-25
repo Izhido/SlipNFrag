@@ -1975,7 +1975,7 @@ void android_main(struct android_app* app)
 
 					if (perFrame.matrices.buffer == VK_NULL_HANDLE)
 					{
-						perFrame.matrices.CreateUpdatableUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
+						perFrame.matrices.CreateUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
 						CHECK_VKCMD(vkMapMemory(appState.Device, perFrame.matrices.memory, 0, VK_WHOLE_SIZE, 0, &perFrame.matrices.mapped));
 					}
 
