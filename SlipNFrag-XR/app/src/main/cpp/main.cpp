@@ -101,95 +101,55 @@ const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer
 	THROW_XR(xr, "xrPollEvent");
 }
 
-static VkBool32 DebugReport(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t /*location*/,
-							int32_t /*messageCode*/, const char* pLayerPrefix, const char* pMessage, void* /*userData*/)
+static VkBool32 DebugMessengerCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData)
 {
-	std::string flagNames;
-	std::string objName;
-	int priority = ANDROID_LOG_ERROR;
+	std::string severityName;
+	int priority = ANDROID_LOG_UNKNOWN;
 
-	if ((flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) != 0u)
+	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) != 0u)
 	{
-		flagNames += "DEBUG:";
-		priority = ANDROID_LOG_DEBUG;
-	}
-	if ((flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) != 0u)
-	{
-		flagNames += "INFO:";
-		priority = ANDROID_LOG_INFO;
-	}
-	if ((flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) != 0u)
-	{
-		flagNames += "PERF:";
-		priority = ANDROID_LOG_WARN;
-	}
-	if ((flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) != 0u)
-	{
-		flagNames += "WARN:";
-		priority = ANDROID_LOG_WARN;
-	}
-	if ((flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) != 0u)
-	{
-		flagNames += "ERROR:";
+		severityName += "ERROR:";
 		priority = ANDROID_LOG_ERROR;
 	}
-
-#define LIST_OBJECT_TYPES(_) \
-    _(UNKNOWN)               \
-    _(INSTANCE)              \
-    _(PHYSICAL_DEVICE)       \
-    _(DEVICE)                \
-    _(QUEUE)                 \
-    _(SEMAPHORE)             \
-    _(COMMAND_BUFFER)        \
-    _(FENCE)                 \
-    _(DEVICE_MEMORY)         \
-    _(BUFFER)                \
-    _(IMAGE)                 \
-    _(EVENT)                 \
-    _(QUERY_POOL)            \
-    _(BUFFER_VIEW)           \
-    _(IMAGE_VIEW)            \
-    _(SHADER_MODULE)         \
-    _(PIPELINE_CACHE)        \
-    _(PIPELINE_LAYOUT)       \
-    _(RENDER_PASS)           \
-    _(PIPELINE)              \
-    _(DESCRIPTOR_SET_LAYOUT) \
-    _(SAMPLER)               \
-    _(DESCRIPTOR_POOL)       \
-    _(DESCRIPTOR_SET)        \
-    _(FRAMEBUFFER)           \
-    _(COMMAND_POOL)          \
-    _(SURFACE_KHR)           \
-    _(SWAPCHAIN_KHR)         \
-    _(DISPLAY_KHR)           \
-    _(DISPLAY_MODE_KHR)
-
-	switch (objectType)
+	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) != 0u)
 	{
-		default:
-#define MK_OBJECT_TYPE_CASE(name)                  \
-    case VK_DEBUG_REPORT_OBJECT_TYPE_##name##_EXT: \
-        objName = #name;                           \
-        break;
-		LIST_OBJECT_TYPES(MK_OBJECT_TYPE_CASE)
-
-#if VK_HEADER_VERSION >= 46
-		MK_OBJECT_TYPE_CASE(DESCRIPTOR_UPDATE_TEMPLATE_KHR)
-#endif
-#if VK_HEADER_VERSION >= 70
-		MK_OBJECT_TYPE_CASE(DEBUG_REPORT_CALLBACK_EXT)
-#endif
+        severityName += "WARN:";
+		priority = ANDROID_LOG_WARN;
 	}
-
-	if ((objectType == VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT) && (strcmp(pLayerPrefix, "Loader Message") == 0) &&
-		(strncmp(pMessage, "Device Extension:", 17) == 0))
+	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) != 0u)
 	{
-		return VK_FALSE;
+        severityName += "INFO:";
+		priority = ANDROID_LOG_INFO;
 	}
+    if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) != 0u)
+    {
+        severityName += "VERB:";
+        priority = ANDROID_LOG_VERBOSE;
+    }
 
-	__android_log_print(priority, "slipnfrag_native", "%s (%s 0x%llx) [%s] %s", flagNames.c_str(), objName.c_str(), object, pLayerPrefix, pMessage);
+    std::string typeName;
+	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ) != 0u)
+	{
+		typeName += "GENERAL ";
+	}
+	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) != 0u)
+	{
+        typeName += "VALIDATION ";
+	}
+    if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) != 0u)
+    {
+        typeName += "PERFORMANCE ";
+    }
+    if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT) != 0u)
+    {
+        typeName += "DEVICE ADDRESS BINDING ";
+    }
+
+	__android_log_print(priority, "slipnfrag_native", "[%s%s] %s", typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
 	
 	return VK_FALSE;
 }
@@ -276,9 +236,9 @@ void android_main(struct android_app* app)
 		VkPhysicalDevice vulkanPhysicalDevice = VK_NULL_HANDLE;
 		uint32_t queueFamilyIndex = 0;
 
-		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT = nullptr;
-		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = nullptr;
-		VkDebugReportCallbackEXT vulkanDebugReporter = VK_NULL_HANDLE;
+		PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
+		PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
+        VkDebugUtilsMessengerEXT vulkanDebugMessenger = VK_NULL_HANDLE;
 
 		PFN_xrInitializeLoaderKHR xrInitializeLoaderKHR = nullptr;
 		XrResult res = xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*) (&xrInitializeLoaderKHR));
@@ -522,7 +482,7 @@ void android_main(struct android_app* app)
 		uint32_t vulkanSwapchainSampleCount;
 		{
 			std::vector<const char*> vulkanExtensions;
-			vulkanExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+			vulkanExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 			VkApplicationInfo appInfo { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 			appInfo.pApplicationName = "slipnfrag_xr";
@@ -551,15 +511,17 @@ void android_main(struct android_app* app)
 			CHECK_XRCMD(xrCreateVulkanInstanceKHR(instance, &vulkanCreateInfo, &vulkanInstance, &errCreateVulkanInstance));
 			CHECK_VKCMD(errCreateVulkanInstance);
 
-			vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugReportCallbackEXT");
-			vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugReportCallbackEXT");
-			VkDebugReportCallbackCreateInfoEXT debugInfo { VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT };
-			debugInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+            vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
+            vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
+            VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
+            messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+            messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
 #if !defined(NDEBUG)
-			debugInfo.flags |= VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT;
+            messengerCreateInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+            messengerCreateInfo.messageType |= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
 #endif
-			debugInfo.pfnCallback = &DebugReport;
-			CHECK_VKCMD(vkCreateDebugReportCallbackEXT(vulkanInstance, &debugInfo, nullptr, &vulkanDebugReporter));
+            messengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
+			CHECK_VKCMD(vkCreateDebugUtilsMessengerEXT(vulkanInstance, &messengerCreateInfo, nullptr, &vulkanDebugMessenger));
 
 			XrVulkanGraphicsDeviceGetInfoKHR deviceGetInfo { XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR };
 			deviceGetInfo.systemId = systemId;
@@ -2904,9 +2866,9 @@ void android_main(struct android_app* app)
 			appState.Device = VK_NULL_HANDLE;
 		}
 
-		if (vulkanDebugReporter != VK_NULL_HANDLE)
+		if (vulkanDebugMessenger != VK_NULL_HANDLE)
 		{
-			vkDestroyDebugReportCallbackEXT(vulkanInstance, vulkanDebugReporter, nullptr);
+			vkDestroyDebugUtilsMessengerEXT(vulkanInstance, vulkanDebugMessenger, nullptr);
 		}
 
 		if (vulkanInstance != VK_NULL_HANDLE)
