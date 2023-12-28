@@ -3179,5 +3179,4 @@ void Scene::Reset()
 	Skybox::MoveToPrevious(*this);
 	aliasIndexCache.clear();
 	aliasVertexCache.clear();
-	surfaceVertexCache.clear();
 }

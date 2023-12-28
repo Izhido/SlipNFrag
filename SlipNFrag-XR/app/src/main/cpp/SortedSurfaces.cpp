@@ -34,72 +34,8 @@ void SortedSurfaces::Initialize(std::list<SortedSurfaceTexture>& sorted)
 	addedTextures.clear();
 }
 
-void SortedSurfaces::CacheVertices(AppState& appState, LoadedTurbulent& loaded)
-{
-	auto face = (msurface_t*)loaded.face;
-	auto entry = appState.Scene.surfaceVertexCache.find(face);
-	if (entry == appState.Scene.surfaceVertexCache.end())
-	{
-		auto size = face->numedges * 3;
-		appState.Scene.surfaceVertexCache.emplace(face, size);
-		auto cached = appState.Scene.surfaceVertexCache[face].data();
-		loaded.vertices = cached;
-		loaded.vertexCount = size;
-		auto model = (model_t*)loaded.model;
-		auto edge = model->surfedges[face->firstedge];
-		unsigned int index;
-		if (edge >= 0)
-		{
-			index = model->edges[edge].v[0];
-		}
-		else
-		{
-			index = model->edges[-edge].v[1];
-		}
-		auto source = (float*)loaded.vertexes + index * 3;
-		*cached++ = *source++;
-		*cached++ = *source++;
-		*cached++ = *source;
-		auto next_front = 0;
-		auto next_back = face->numedges;
-		auto use_back = false;
-		for (auto j = 1; j < face->numedges; j++)
-		{
-			if (use_back)
-			{
-				next_back--;
-				edge = model->surfedges[face->firstedge + next_back];
-			}
-			else
-			{
-				next_front++;
-				edge = model->surfedges[face->firstedge + next_front];
-			}
-			use_back = !use_back;
-			if (edge >= 0)
-			{
-				index = model->edges[edge].v[0];
-			}
-			else
-			{
-				index = model->edges[-edge].v[1];
-			}
-			source = (float*)loaded.vertexes + index * 3;
-			*cached++ = *source++;
-			*cached++ = *source++;
-			*cached++ = *source;
-		}
-	}
-	else
-	{
-		loaded.vertices = entry->second.data();
-		loaded.vertexCount = entry->second.size();
-	}
-}
-
 void SortedSurfaces::Sort(AppState& appState, LoadedSurface& loaded, int index, std::list<SortedSurfaceLightmap>& sorted)
 {
-	CacheVertices(appState, loaded);
 	auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
 	auto texture = loaded.texture.texture->descriptorSet;
 	auto entry = addedLightmaps.find(lightmap);
@@ -134,7 +70,6 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurface& loaded, int index, 
 
 void SortedSurfaces::Sort(AppState& appState, LoadedSurfaceColoredLights& loaded, int index, std::list<SortedSurfaceLightmap>& sorted)
 {
-	CacheVertices(appState, loaded);
 	auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
 	auto texture = loaded.texture.texture->descriptorSet;
 	auto entry = addedLightmaps.find(lightmap);
@@ -169,7 +104,6 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurfaceColoredLights& loaded
 
 void SortedSurfaces::Sort(AppState& appState, LoadedSurface2Textures& loaded, int index, std::list<SortedSurface2TexturesLightmap>& sorted)
 {
-	CacheVertices(appState, loaded);
 	auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
 	auto texture = loaded.texture.texture->descriptorSet;
 	auto entry = added2TexturesLightmaps.find(lightmap);
@@ -204,7 +138,6 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurface2Textures& loaded, in
 
 void SortedSurfaces::Sort(AppState& appState, LoadedSurface2TexturesColoredLights& loaded, int index, std::list<SortedSurface2TexturesLightmap>& sorted)
 {
-	CacheVertices(appState, loaded);
 	auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
 	auto texture = loaded.texture.texture->descriptorSet;
 	auto entry = added2TexturesLightmaps.find(lightmap);
@@ -239,7 +172,6 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurface2TexturesColoredLight
 
 void SortedSurfaces::Sort(AppState& appState, LoadedTurbulent& loaded, int index, std::list<SortedSurfaceTexture>& sorted)
 {
-	CacheVertices(appState, loaded);
 	auto texture = loaded.texture.texture->descriptorSet;
 	auto entry = addedTextures.find(texture);
 	if (entry == addedTextures.end())
@@ -323,6 +255,56 @@ void SortedSurfaces::Cleanup(std::list<SortedSurfaceTexture>& sorted)
 	}
 }
 
+float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float* target)
+{
+    auto model = (model_t*)loaded.model;
+    auto face = (msurface_t*)loaded.face;
+    auto next_front = face->firstedge;
+    auto next_back = next_front + face->numedges;
+    auto edge = model->surfedges[next_front];
+    unsigned int index;
+    if (edge >= 0)
+    {
+        index = model->edges[edge].v[0];
+    }
+    else
+    {
+        index = model->edges[-edge].v[1];
+    }
+    auto source = (float*)loaded.vertexes + index * 3;
+    *target++ = *source++;
+    *target++ = *source++;
+    *target++ = *source;
+    auto use_back = false;
+    for (auto i = 1; i < face->numedges; i++)
+    {
+        if (use_back)
+        {
+            next_back--;
+            edge = model->surfedges[next_back];
+        }
+        else
+        {
+            next_front++;
+            edge = model->surfedges[next_front];
+        }
+        use_back = !use_back;
+        if (edge >= 0)
+        {
+            index = model->edges[edge].v[0];
+        }
+        else
+        {
+            index = model->edges[-edge].v[1];
+        }
+        source = (float*)loaded.vertexes + index * 3;
+        *target++ = *source++;
+        *target++ = *source++;
+        *target++ = *source;
+    }
+    return target;
+}
+
 void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
@@ -332,9 +314,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
-				target += surface.vertexCount;
+                target = CopyVertices(loaded[i], target);
 			}
 		}
 	}
@@ -350,9 +330,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
-				target += surface.vertexCount;
+                target = CopyVertices(loaded[i], target);
 			}
 		}
 	}
@@ -368,9 +346,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sor
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
-				target += surface.vertexCount;
+                target = CopyVertices(loaded[i], target);
 			}
 		}
 	}
@@ -386,9 +362,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sor
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
-				target += surface.vertexCount;
+                target = CopyVertices(loaded[i], target);
 			}
 		}
 	}
@@ -404,9 +378,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
-				target += surface.vertexCount;
+                target = CopyVertices(loaded[i], target);
 			}
 		}
 	}
@@ -422,9 +394,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
-				target += surface.vertexCount;
+                target = CopyVertices(loaded[i], target);
 			}
 		}
 	}
@@ -440,9 +410,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sor
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
-				target += surface.vertexCount;
+                target = CopyVertices(loaded[i], target);
 			}
 		}
 	}
@@ -458,9 +426,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sor
 		{
 			for (auto i : subEntry.entries)
 			{
-				auto& surface = loaded[i];
-				memcpy(target, surface.vertices, surface.vertexCount * sizeof(float));
-				target += surface.vertexCount;
+                target = CopyVertices(loaded[i], target);
 			}
 		}
 	}
@@ -474,9 +440,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 	{
 		for (auto i : entry.entries)
 		{
-			auto& turbulent = loaded[i];
-			memcpy(target, turbulent.vertices, turbulent.vertexCount * sizeof(float));
-			target += turbulent.vertexCount;
+            target = CopyVertices(loaded[i], target);
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
@@ -489,9 +453,7 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::
 	{
 		for (auto i : entry.entries)
 		{
-			auto& turbulent = loaded[i];
-			memcpy(target, turbulent.vertices, turbulent.vertexCount * sizeof(float));
-			target += turbulent.vertexCount;
+            target = CopyVertices(loaded[i], target);
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);

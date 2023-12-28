@@ -22,7 +22,6 @@ struct SortedSurfaces
 	void Initialize(std::list<SortedSurfaceLightmap>& sorted);
 	void Initialize(std::list<SortedSurface2TexturesLightmap>& sorted);
 	void Initialize(std::list<SortedSurfaceTexture>& sorted);
-	static void CacheVertices(AppState& appState, LoadedTurbulent& loaded);
 	void Sort(AppState& appState, LoadedSurface& loaded, int index, std::list<SortedSurfaceLightmap>& sorted);
 	void Sort(AppState& appState, LoadedSurfaceColoredLights& loaded, int index, std::list<SortedSurfaceLightmap>& sorted);
 	void Sort(AppState& appState, LoadedSurface2Textures& loaded, int index, std::list<SortedSurface2TexturesLightmap>& sorted);
@@ -31,6 +30,7 @@ struct SortedSurfaces
 	static void Cleanup(std::list<SortedSurfaceLightmap>& sorted);
 	static void Cleanup(std::list<SortedSurface2TexturesLightmap>& sorted);
 	static void Cleanup(std::list<SortedSurfaceTexture>& sorted);
+    static float* CopyVertices(LoadedTurbulent& loaded, float* target);
 	static void LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset);

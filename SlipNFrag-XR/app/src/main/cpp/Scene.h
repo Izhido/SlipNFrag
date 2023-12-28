@@ -85,7 +85,6 @@ struct Scene
 	int paletteChangedFrame;
 	CachedSharedMemoryBuffers buffers;
 	CachedIndexBuffers indexBuffers;
-	std::unordered_map<void*, std::vector<float>> surfaceVertexCache;
 	std::unordered_map<void*, AliasVertices> aliasVertexCache;
 	std::unordered_map<void*, IndexBuffer> aliasIndexCache;
 	int lastParticle;
