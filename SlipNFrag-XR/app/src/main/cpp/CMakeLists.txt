@@ -1,8 +1,10 @@
-project(SlipNFrag-XR)
 cmake_minimum_required(VERSION 3.22)
+project(SlipNFrag-XR)
 
 set(ROOT_DIR "${PROJECT_SOURCE_DIR}/../../../../..")
+set(LOCAL_DIR ".")
 set(ID1_DIR "${ROOT_DIR}/id1")
+set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.30")
@@ -15,8 +17,9 @@ option(BUILD_WITH_ASAN "Build with Address Sanitizer" OFF)
 option(BUILD_WITH_VALIDATION "Build with Vulkan validation layer" OFF)
 option(BUILD_WITH_ADRENO "Build with Adreno validation / performance layer" OFF)
 
-file(GLOB LOCAL_SOURCE "*.cpp")
+file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
+file(GLOB RENDERER_SOURCE "${RENDERER_DIR}/*.cpp")
 file(GLOB SND_FLOAT_SOURCE "${SND_FLOAT_DIR}/*.cpp")
 
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_win")
@@ -32,6 +35,7 @@ add_definitions(
 add_library(slipnfrag_native MODULE
         ${LOCAL_SOURCE}
         ${ID1_SOURCE}
+        ${RENDERER_SOURCE}
         ${SND_FLOAT_SOURCE}
         ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
 )
@@ -57,7 +61,9 @@ target_include_directories(slipnfrag_native PRIVATE
         ${OPENXR_DIR}/include
         ${OPENXR_DIR}/src
         ${VULKAN_INCLUDE_DIRS}
+        ${LOCAL_DIR}
         ${ID1_DIR}
+        ${RENDERER_DIR}
         ${STB_DIR}
         ${ANDROID_NDK}/sources/android/native_app_glue
 )

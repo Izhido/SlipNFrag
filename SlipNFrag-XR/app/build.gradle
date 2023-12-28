@@ -25,6 +25,13 @@ android {
                 arguments "-DANDROID_STL=c++_shared"
             }
         }
+        sourceSets {
+            main {
+                shaders {
+                    srcDirs '../../shaders/'
+                }
+            }
+        }
     }
 
     buildTypes {
