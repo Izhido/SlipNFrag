@@ -18,7 +18,8 @@ layout(location = 0) in vec4 vertexPosition;
 layout(location = 1) in mat4 texturePosition;
 layout(location = 5) in vec4 glowTexturePosition;
 layout(location = 0) out vec4 fragmentCoords;
-layout(location = 1) out flat ivec4 fragmentTextureIndices;
+layout(location = 1) out flat ivec3 fragmentIndices;
+layout(location = 2) out flat ivec2 fragmentSizes;
 
 out gl_PerVertex
 {
@@ -32,5 +33,6 @@ void main(void)
 	vec2 lightmapSizeMinusOne = floor(texturePosition[2].zw / 16);
 	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * lightmapSizeMinusOne / texturePosition[2].zw;
 	fragmentCoords = vec4(lightmapCoords, texCoords / texturePosition[3].xy);
-	fragmentTextureIndices = ivec4(texturePosition[3].zw, glowTexturePosition.x, 0);
+	fragmentIndices = ivec3(texturePosition[3].zw, glowTexturePosition.x);
+	fragmentSizes = ivec2(lightmapSizeMinusOne - 1);
 }

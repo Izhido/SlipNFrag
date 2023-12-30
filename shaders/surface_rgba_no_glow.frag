@@ -16,12 +16,12 @@ layout(push_constant) uniform Tint
 };
 
 layout(location = 0) in vec4 fragmentCoords;
-layout(location = 1) in flat highp ivec2 fragmentTextureIndices;
+layout(location = 1) in flat highp ivec4 fragmentFlat;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
-	ivec3 lightmapCoords = ivec3(floor(fragmentCoords.xy), fragmentTextureIndices.x);
+	ivec3 lightmapCoords = ivec3(floor(clamp(fragmentCoords.xy, ivec2(0, 0), fragmentFlat.zw)), fragmentFlat.x);
 	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, lightmapCoords, 0);
 	vec4 lightmapTopRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 0));
 	vec4 lightmapBottomRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 1));
@@ -33,7 +33,7 @@ void main()
 	float light = 2 - lightmapEntry / (32 * 256);
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentCoords.zw);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
-	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentTextureIndices.y);
+	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentFlat.y);
 	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
 	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
 	vec4 color = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(light, light, light, 1);
