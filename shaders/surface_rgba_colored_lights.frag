@@ -23,12 +23,13 @@ layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
-	ivec3 lightmapCoords = ivec3(floor(clamp(fragmentCoords.xy, ivec2(0, 0), fragmentSizes)), fragmentIndices.x);
+	vec2 lightmapClamped = floor(clamp(fragmentCoords.xy, ivec2(0, 0), fragmentSizes));
+	ivec3 lightmapCoords = ivec3(lightmapClamped, fragmentIndices.x);
 	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, lightmapCoords, 0);
 	vec4 lightmapTopRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 0));
 	vec4 lightmapBottomRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 1));
 	vec4 lightmapBottomLeftEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(0, 1));
-	vec2 lightmapCoordsDelta = fragmentCoords.xy - lightmapCoords.xy;
+	vec2 lightmapCoordsDelta = fragmentCoords.xy - lightmapClamped;
 	vec4 lightmapTopEntry = mix(lightmapTopLeftEntry, lightmapTopRightEntry, lightmapCoordsDelta.x);
 	vec4 lightmapBottomEntry = mix(lightmapBottomLeftEntry, lightmapBottomRightEntry, lightmapCoordsDelta.x);
 	vec4 lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);

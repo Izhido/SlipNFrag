@@ -1399,7 +1399,7 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 			palette = appState.Scene.palette;
 		}
 	}
-	if (palette != appState.Scene.palette)
+	if (palette != appState.Scene.palette && appState.Scene.palette != nullptr)
 	{
 		VkDescriptorBufferInfo bufferInfo { };
 		bufferInfo.buffer = appState.Scene.palette->buffer;
