@@ -122,6 +122,7 @@ void VID_Update(vrect_t* /*rects*/)
 void D_BeginDirectRect(int x, int y, byte *pbitmap, int width, int height)
 {
     std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+
     auto found = false;
     for (auto& directRect : DirectRect::directRects)
     {
@@ -132,6 +133,7 @@ void D_BeginDirectRect(int x, int y, byte *pbitmap, int width, int height)
             break;
         }
     }
+
     if (!found)
     {
         DirectRect::directRects.push_back({ x, y, width, height, pbitmap });
@@ -141,12 +143,25 @@ void D_BeginDirectRect(int x, int y, byte *pbitmap, int width, int height)
 void D_EndDirectRect(int x, int y, int width, int height)
 {
     std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
+
+    auto found = false;
     for (auto directRect = DirectRect::directRects.begin(); directRect != DirectRect::directRects.end(); directRect++)
     {
         if (directRect->x == x && directRect->y == y && directRect->width == width && directRect->height == height)
         {
+            found = true;
             DirectRect::directRects.erase(directRect);
             break;
+        }
+    }
+
+    if (!found)
+    {
+        // If not found, simply drop the last item in the list - a patch for the bug that occurs
+        // if the screen size becomes different between the call to D_BeginDirectRect() and this one:
+        if (!DirectRect::directRects.empty())
+        {
+            DirectRect::directRects.pop_back();
         }
     }
 }
