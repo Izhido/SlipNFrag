@@ -12,8 +12,8 @@ android {
         applicationId "com.heribertodelgado.slipnfrag_xr"
         minSdkVersion 25
         targetSdkVersion 33
-        versionCode 22
-        versionName '1.0.22'
+        versionCode 24
+        versionName '1.0.24'
         shaders {
             glslcArgs.addAll(['-c', '-g'])
         }
