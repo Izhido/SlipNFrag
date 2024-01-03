@@ -514,33 +514,7 @@ void R_RenderAllWorldNodes (model_t *world)
 		if (leaf.contents == CONTENTS_SOLID)
 			continue;		// solid
 
-// cull the clipping planes if not trivial accept
-// FIXME: the compiler is doing a lousy job of optimizing here; it could be
-//  twice as fast in ASM
-		auto discarded = false;
-		for (auto i=0 ; i<4 ; i++)
-		{
-		// generate reject points
-		// FIXME: do with fast look-ups or integer tests based on the sign bit
-		// of the floating point values
-
-			auto pindex = pfrustum_indexes[i];
-
-			vec3_t rejectpt;
-			rejectpt[0] = (float)leaf.minmaxs[pindex[0]];
-			rejectpt[1] = (float)leaf.minmaxs[pindex[1]];
-			rejectpt[2] = (float)leaf.minmaxs[pindex[2]];
-			
-			auto d = DotProduct (rejectpt, view_clipplanes[i].normal);
-			d -= view_clipplanes[i].dist;
-
-			if (d <= 0)
-			{
-				discarded = true;
-				break;
-			}
-		}
-		if (discarded)
+		if (R_CullBox (leaf.minmaxs, leaf.minmaxs+3))
 			continue;
 
 // if a leaf node, draw stuff
@@ -573,33 +547,7 @@ void R_RenderAllWorldNodes (model_t *world)
 		if (node.contents == CONTENTS_SOLID)
 			continue;		// solid
 
-// cull the clipping planes if not trivial accept
-// FIXME: the compiler is doing a lousy job of optimizing here; it could be
-//  twice as fast in ASM
-		auto discarded = false;
-		for (auto i=0 ; i<4 ; i++)
-		{
-			// generate reject points
-			// FIXME: do with fast look-ups or integer tests based on the sign bit
-			// of the floating point values
-
-			auto pindex = pfrustum_indexes[i];
-
-			vec3_t rejectpt;
-			rejectpt[0] = (float)node.minmaxs[pindex[0]];
-			rejectpt[1] = (float)node.minmaxs[pindex[1]];
-			rejectpt[2] = (float)node.minmaxs[pindex[2]];
-
-			auto d = DotProduct (rejectpt, view_clipplanes[i].normal);
-			d -= view_clipplanes[i].dist;
-
-			if (d <= 0)
-			{
-				discarded = true;
-				break;
-			}
-		}
-		if (discarded)
+		if (R_CullBox (node.minmaxs, node.minmaxs+3))
 			continue;
 
 	// node is just a decision point, so go down the apropriate sides
