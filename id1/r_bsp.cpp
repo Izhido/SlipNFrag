@@ -502,10 +502,10 @@ void R_DrawSubmodelPolygonsToLists (model_t *pmodel)
 
 /*
 ================
-R_RenderAllWorldNodes
+R_RenderVisWorldNodes
 ================
 */
-void R_RenderAllWorldNodes (model_t *world)
+void R_RenderVisWorldNodes (model_t *world)
 {
 	for (auto leafp=r_visleaves.data() ; leafp<r_visleaf_p ; leafp++)
 	{
@@ -786,7 +786,7 @@ void R_RenderWorld (void)
 	r_pcurrentvertbase = clmodel->vertexes;
 
 	if (d_uselists && (r_visleaf_p - r_visleaves.data()) < 512)
-		R_RenderAllWorldNodes (clmodel);
+		R_RenderVisWorldNodes (clmodel);
 	else
 		R_RecursiveWorldNode (clmodel->nodes, 15);
 }
