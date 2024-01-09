@@ -4,7 +4,6 @@
 
 struct LoadedTurbulent
 {
-	void* vertexes;
 	void* face;
 	void* model;
 	LoadedSharedMemoryTexture texture;

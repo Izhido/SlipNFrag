@@ -161,7 +161,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
-    loaded.vertexes = ((model_t*)turbulent.model)->vertexes;
     loaded.face = turbulent.face;
     loaded.model = turbulent.model;
     if (previousTexture != turbulent.data)
@@ -234,7 +233,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
-    loaded.vertexes = ((model_t*)turbulent.model)->vertexes;
     loaded.face = turbulent.face;
     loaded.model = turbulent.model;
     if (previousTexture != turbulent.data)
@@ -319,7 +317,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2Textures& loaded, VkDeviceSize& size)
 {
-    loaded.vertexes = ((model_t*)surface.model)->vertexes;
     loaded.face = surface.face;
     loaded.model = surface.model;
     if (previousTexture != surface.data)
@@ -461,7 +458,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2TexturesColoredLights& loaded, VkDeviceSize& size)
 {
-    loaded.vertexes = ((model_t*)surface.model)->vertexes;
     loaded.face = surface.face;
     loaded.model = surface.model;
     if (previousTexture != surface.data)
@@ -603,7 +599,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
-    loaded.vertexes = ((model_t*)surface.model)->vertexes;
     loaded.face = surface.face;
     loaded.model = surface.model;
     if (previousTexture != surface.data)
@@ -677,7 +672,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size)
 {
-    loaded.vertexes = ((model_t*)surface.model)->vertexes;
     loaded.face = surface.face;
     loaded.model = surface.model;
     if (previousTexture != surface.data)
