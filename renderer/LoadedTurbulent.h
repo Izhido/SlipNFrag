@@ -6,6 +6,6 @@ struct LoadedTurbulent
 {
 	void* face;
 	void* model;
+    uint32_t count;
 	LoadedSharedMemoryTexture texture;
-	uint32_t count;
 };

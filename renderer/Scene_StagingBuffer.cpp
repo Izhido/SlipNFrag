@@ -163,6 +163,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 {
     loaded.face = turbulent.face;
     loaded.model = turbulent.model;
+    loaded.count = turbulent.count;
     if (previousTexture != turbulent.data)
     {
         auto entry = surfaceTextureCache.find(turbulent.data);
@@ -228,13 +229,13 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
         loaded.texture.texture = previousSharedMemoryTexture;
         loaded.texture.index = previousSharedMemoryTextureIndex;
     }
-    loaded.count = turbulent.count;
 }
 
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
     loaded.face = turbulent.face;
     loaded.model = turbulent.model;
+    loaded.count = turbulent.count;
     if (previousTexture != turbulent.data)
     {
         auto entry = surfaceTextureCache.find(turbulent.data);
@@ -300,7 +301,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
         loaded.texture.texture = previousSharedMemoryTexture;
         loaded.texture.index = previousSharedMemoryTextureIndex;
     }
-    loaded.count = turbulent.count;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
@@ -319,6 +319,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 {
     loaded.face = surface.face;
     loaded.model = surface.model;
+    loaded.count = surface.count;
     if (previousTexture != surface.data)
     {
         auto entry = surfaceTextureCache.find(surface.data);
@@ -453,13 +454,13 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
         loaded.glowTexture.index = previousGlowSharedMemoryTextureIndex;
     }
     GetStagingBufferSize(appState, surface, loaded.lightmap, size);
-    loaded.count = surface.count;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2TexturesColoredLights& loaded, VkDeviceSize& size)
 {
     loaded.face = surface.face;
     loaded.model = surface.model;
+    loaded.count = surface.count;
     if (previousTexture != surface.data)
     {
         auto entry = surfaceTextureCache.find(surface.data);
@@ -594,13 +595,13 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
         loaded.glowTexture.index = previousGlowSharedMemoryTextureIndex;
     }
     GetStagingBufferSize(appState, surface, loaded.lightmap, size);
-    loaded.count = surface.count;
 }
 
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size)
 {
     loaded.face = surface.face;
     loaded.model = surface.model;
+    loaded.count = surface.count;
     if (previousTexture != surface.data)
     {
         auto entry = surfaceTextureCache.find(surface.data);
@@ -667,13 +668,13 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
         loaded.texture.index = previousSharedMemoryTextureIndex;
     }
     GetStagingBufferSize(appState, surface, loaded.lightmap, size);
-    loaded.count = surface.count;
 }
 
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size)
 {
     loaded.face = surface.face;
     loaded.model = surface.model;
+    loaded.count = surface.count;
     if (previousTexture != surface.data)
     {
         auto entry = surfaceTextureCache.find(surface.data);
@@ -740,7 +741,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
         loaded.texture.index = previousSharedMemoryTextureIndex;
     }
     GetStagingBufferSize(appState, surface, loaded.lightmap, size);
-    loaded.count = surface.count;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
