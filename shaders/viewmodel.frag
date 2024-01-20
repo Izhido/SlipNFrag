@@ -1,7 +1,4 @@
-#version 440 core
-
-#extension GL_EXT_shader_io_blocks : enable
-#extension GL_ARB_enhanced_layouts : enable
+#version 460
 
 precision mediump float;
 precision mediump int;

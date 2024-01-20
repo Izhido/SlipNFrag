@@ -394,7 +394,7 @@ int main(int argc, char* argv[])
 			appInfo.applicationVersion = 1;
 			appInfo.pEngineName = "slipnfrag_xr";
 			appInfo.engineVersion = 1;
-			appInfo.apiVersion = VK_API_VERSION_1_0;
+			appInfo.apiVersion = VK_MAKE_API_VERSION(0, 1, 1, 0);
 
 			VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 			instInfo.pApplicationInfo = &appInfo;
@@ -464,7 +464,6 @@ int main(int argc, char* argv[])
 			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
 			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
 
-			auto multiviewEnabled = false;
 			auto indexTypeUInt8Enabled = false;
 			
 			const std::string indentStr(4, ' ');
@@ -473,25 +472,13 @@ int main(int argc, char* argv[])
 			{
 				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
 
-				if (strcmp(availableExtensions[i].extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME) == 0)
-				{
-					multiviewEnabled = true;
-				}
 				if (strcmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME) == 0)
 				{
 					indexTypeUInt8Enabled = true;
 				}
 			}
 
-			if (!multiviewEnabled)
-			{
-				THROW(Fmt("Device does not support %s extension", VK_KHR_MULTIVIEW_EXTENSION_NAME));
-			}
-
-			std::vector<const char*> deviceExtensions
-			{
-				VK_KHR_MULTIVIEW_EXTENSION_NAME
-			};
+			std::vector<const char*> deviceExtensions;
 			if (indexTypeUInt8Enabled)
 			{
 				deviceExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);

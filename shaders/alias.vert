@@ -1,8 +1,6 @@
-#version 440 core
+#version 460
 
-#extension GL_EXT_shader_io_blocks : enable
-#extension GL_ARB_enhanced_layouts : enable
-#extension GL_EXT_multiview : enable
+#extension GL_EXT_multiview : require
 
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
