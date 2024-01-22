@@ -51,16 +51,28 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 	return buffer;
 }
 
-Buffer* CachedBuffers::GetStorageBufferNoMinimum(AppState& appState, VkDeviceSize size)
+Buffer* CachedBuffers::GetHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(appState, size);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer();
-		buffer->CreateStorageBuffer(appState, size);
+		buffer->CreateHostVisibleStorageBuffer(appState, size);
 	}
 	MoveToFront(buffer);
 	return buffer;
+}
+
+Buffer* CachedBuffers::GetStorageBuffer(AppState& appState, VkDeviceSize size)
+{
+    auto buffer = Get(appState, size);
+    if (buffer == nullptr)
+    {
+        buffer = new Buffer();
+        buffer->CreateStorageBuffer(appState, MinimumAllocationFor(size));
+    }
+    MoveToFront(buffer);
+    return buffer;
 }
 
 void CachedBuffers::DeleteOld(AppState& appState)

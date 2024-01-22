@@ -9,6 +9,7 @@
 #include <openxr/openxr_platform.h>
 #include "Keyboard.h"
 #include "Scene.h"
+#include "FileLoader.h"
 #include "FromEngine.h"
 #include "PerFrame.h"
 #include <thread>
@@ -46,6 +47,7 @@ struct AppState
 	float KeyboardHitOffsetY;
 	XrSwapchain LeftArrowsSwapchain;
 	XrSwapchain RightArrowsSwapchain;
+    FileLoader* FileLoader;
 	Scene Scene;
 	FromEngine FromEngine;
 	std::unordered_map<uint32_t, PerFrame> PerFrame;

@@ -12,11 +12,10 @@ struct PipelineWithSorted : Pipeline
 	std::vector<Loaded> loaded;
 	std::list<Sorted> sorted;
 	VkDeviceSize vertexBase;
-	VkDeviceSize attributeBase;
 	VkDeviceSize indexBase;
 
 	void Allocate(int last);
-	void SetBases(VkDeviceSize vertexBase, VkDeviceSize attributeBase, VkDeviceSize indexBase);
+	void SetBases(VkDeviceSize vertexBase, VkDeviceSize indexBase);
 	void ScaleIndexBase(int scale);
 };
 

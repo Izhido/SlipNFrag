@@ -19,11 +19,6 @@ layout(location = 1) in vec2 vertexTexCoords;
 layout(location = 2) in float vertexLight;
 layout(location = 0) out mediump vec3 fragmentData;
 
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
 void main(void)
 {
 	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * aliasTransform * vertexPosition;

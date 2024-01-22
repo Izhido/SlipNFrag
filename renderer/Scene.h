@@ -29,6 +29,7 @@ struct AppState;
 struct Scene
 {
 	bool created;
+    VkDescriptorSetLayout singleStorageBufferLayout;
 	VkDescriptorSetLayout singleBufferLayout;
 	VkDescriptorSetLayout doubleBufferLayout;
 	VkDescriptorSetLayout twoBuffersAndImageLayout;
@@ -169,8 +170,8 @@ struct Scene
 
 	static void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	static void AddBorder(AppState& appState, std::vector<uint32_t>& target);
-	void Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo, struct android_app* app);
-	static void CreateShader(AppState& appState, struct android_app* app, const char* filename, VkShaderModule* shaderModule);
+	void Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo);
+	static void CreateShader(AppState& appState, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
 	void AddSampler(AppState& appState, uint32_t mipCount);
 	void AddToBufferBarrier(VkBuffer buffer);

@@ -9,8 +9,8 @@ layout(set = 0, binding = 1) uniform Palette
 };
 
 layout(set = 0, binding = 2) uniform usampler2D fragmentColormap;
-layout(set = 1, binding = 0) uniform usampler2DArray fragmentLightmap;
-layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
+layout(set = 2, binding = 0) uniform usampler2DArray fragmentLightmap;
+layout(set = 3, binding = 0) uniform usampler2DArray fragmentTexture;
 
 layout(location = 0) in vec4 fragmentCoords;
 layout(location = 1) in flat highp ivec4 fragmentFlat;

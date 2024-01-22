@@ -15,11 +15,6 @@ layout(location = 0) in vec4 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
 layout(location = 0) out vec2 fragmentTexCoords;
 
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
 void main(void)
 {
 	gl_Position = projectionMatrix[gl_ViewIndex] * vertexPosition;

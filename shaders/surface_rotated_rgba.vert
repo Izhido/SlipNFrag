@@ -12,32 +12,37 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 	layout(offset = 256) mat4 vertexTransform;
 };
 
+layout(set = 1, binding = 0) buffer TextureData
+{
+	vec4 textureData[];
+};
+
 layout(location = 0) in vec4 vertexPosition;
-layout(location = 1) in vec4 origin;
-layout(location = 2) in vec4 angles;
-layout(location = 3) in mat4 texturePosition;
 layout(location = 0) out vec4 fragmentCoords;
 layout(location = 1) out flat ivec3 fragmentIndices;
 layout(location = 2) out flat ivec2 fragmentSizes;
 
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
 void main(void)
 {
+	vec4 position = vec4(vertexPosition.xyz, 1);
+	int attributeIndex = int(vertexPosition.w);
+	vec4 origin = textureData[attributeIndex];
+	vec4 angles = textureData[attributeIndex + 1];
 	mat4 translation = mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, origin.x, origin.y, origin.z, origin.w);
 	vec3 sine = vec3(sin(-angles.x), sin(-angles.y), sin(-angles.z));
 	vec3 cosine = vec3(cos(-angles.x), cos(-angles.y), cos(-angles.z));
 	mat4 yawRotation = mat4(cosine.y, 0, sine.y, 0, 0, 1, 0, 0, -sine.y, 0, cosine.y, 0, 0, 0, 0, 1);
 	mat4 pitchRotation = mat4(cosine.x, -sine.x, 0, 0, sine.x, cosine.x, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 	mat4 rollRotation = mat4(1, 0, 0, 0, 0, cosine.z, -sine.z, 0, 0, sine.z, cosine.z, 0, 0, 0, 0, 1);
-	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * translation * rollRotation * pitchRotation * yawRotation * vertexPosition;
-	vec2 texCoords = vec2(dot(vertexPosition, texturePosition[0]), dot(vertexPosition, texturePosition[1]));
-	vec2 lightmapSizeMinusOne = floor(texturePosition[2].zw / 16);
-	vec2 lightmapCoords = (texCoords - texturePosition[2].xy) * lightmapSizeMinusOne / texturePosition[2].zw;
-	fragmentCoords = vec4(lightmapCoords, texCoords / texturePosition[3].xy);
-	fragmentIndices = ivec3(texturePosition[3].zw, angles.w);
+	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * translation * rollRotation * pitchRotation * yawRotation * position;
+	vec4 vecs0 = textureData[attributeIndex + 2];
+	vec4 vecs1 = textureData[attributeIndex + 3];
+	vec4 minsAndExtents = textureData[attributeIndex + 4];
+	vec4 sizesAndIndices = textureData[attributeIndex + 5];
+	vec2 texCoords = vec2(dot(position, vecs0), dot(position, vecs1));
+	vec2 lightmapSizeMinusOne = floor(minsAndExtents.zw / 16);
+	vec2 lightmapCoords = (texCoords - minsAndExtents.xy) * lightmapSizeMinusOne / minsAndExtents.zw;
+	fragmentCoords = vec4(lightmapCoords, texCoords / sizesAndIndices.xy);
+	fragmentIndices = ivec3(sizesAndIndices.zw, angles.w);
 	fragmentSizes = ivec2(lightmapSizeMinusOne - 1);
 }

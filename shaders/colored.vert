@@ -16,11 +16,6 @@ layout(location = 0) in vec4 vertexPosition;
 layout(location = 1) in float vertexColor;
 layout(location = 0) out int fragmentColor;
 
-out gl_PerVertex
-{
-	vec4 gl_Position;
-};
-
 void main(void)
 {
 	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * vertexPosition;

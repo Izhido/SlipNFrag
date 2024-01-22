@@ -1066,6 +1066,8 @@ int main(int argc, char* argv[])
 
 		XrEventDataBuffer eventDataBuffer { };
 
+        appState.FileLoader = new FileLoader();
+
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
 
@@ -1265,7 +1267,7 @@ int main(int argc, char* argv[])
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "OXR 1.0.22";
+						sys_version = "OXR 1.0.24";
 						sys_argc = argc;
 						sys_argv = argv;
 						Sys_Init(sys_argc, sys_argv);
@@ -1597,7 +1599,7 @@ int main(int argc, char* argv[])
 						if (stagingBufferSize > 0)
 						{
 							stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
-							stagingBuffer = perFrame.stagingBuffers.GetStorageBufferNoMinimum(appState, stagingBufferSize);
+							stagingBuffer = perFrame.stagingBuffers.GetHostVisibleStorageBuffer(appState, stagingBufferSize);
 							if (stagingBuffer->mapped == nullptr)
 							{
 								CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
@@ -1832,7 +1834,7 @@ int main(int argc, char* argv[])
 
 					if (screenPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 					{
-						screenPerFrame.stagingBuffer.CreateStorageBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
+						screenPerFrame.stagingBuffer.CreateHostVisibleStorageBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
 						CHECK_VKCMD(vkMapMemory(appState.Device, screenPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &screenPerFrame.stagingBuffer.mapped));
 					}
 
@@ -1977,7 +1979,7 @@ int main(int argc, char* argv[])
 
 						if (keyboardPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 						{
-							keyboardPerFrame.stagingBuffer.CreateStorageBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
+							keyboardPerFrame.stagingBuffer.CreateHostVisibleStorageBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 							CHECK_VKCMD(vkMapMemory(appState.Device, keyboardPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &keyboardPerFrame.stagingBuffer.mapped));
 						}
 
@@ -2454,13 +2456,14 @@ int main(int argc, char* argv[])
 				perFrame.second.controllerResources.Delete(appState);
 				perFrame.second.floorResources.Delete(appState);
 				perFrame.second.colormapResources.Delete(appState);
-				perFrame.second.skyRGBAResources.Delete(appState);
-				perFrame.second.skyResources.Delete(appState);
+                perFrame.second.storageAttributesResources.Delete(appState);
 				perFrame.second.sceneMatricesAndColormapResources.Delete(appState);
 				perFrame.second.sceneMatricesAndNeutralPaletteResources.Delete(appState);
 				perFrame.second.sceneMatricesAndPaletteResources.Delete(appState);
 				perFrame.second.sceneMatricesResources.Delete(appState);
 				perFrame.second.host_colormapResources.Delete(appState);
+                perFrame.second.skyRGBAResources.Delete(appState);
+                perFrame.second.skyResources.Delete(appState);
 				if (perFrame.second.skyRGBA != nullptr)
 				{
 					perFrame.second.skyRGBA->Delete(appState);
@@ -2479,6 +2482,7 @@ int main(int argc, char* argv[])
 				perFrame.second.cachedIndices32.Delete(appState);
 				perFrame.second.cachedIndices16.Delete(appState);
 				perFrame.second.cachedIndices8.Delete(appState);
+                perFrame.second.cachedStorageAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
 				perFrame.second.matrices.Delete(appState);
@@ -2594,12 +2598,16 @@ int main(int argc, char* argv[])
 			appState.Scene.doubleBufferLayout = VK_NULL_HANDLE;
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
 			appState.Scene.singleBufferLayout = VK_NULL_HANDLE;
+            vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleStorageBufferLayout, nullptr);
+            appState.Scene.singleStorageBufferLayout = VK_NULL_HANDLE;
 
 			vkDestroyCommandPool(appState.Device, appState.CommandPool, nullptr);
 			appState.CommandPool = VK_NULL_HANDLE;
 		}
 
 		appState.Scene.created = false;
+
+        delete appState.FileLoader;
 
 		if (appState.ActionSet != XR_NULL_HANDLE)
 		{

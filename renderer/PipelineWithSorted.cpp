@@ -11,10 +11,9 @@ void PipelineWithSorted<Loaded, Sorted>::Allocate(int last)
 }
 
 template <typename Loaded, typename Sorted>
-void PipelineWithSorted<Loaded, Sorted>::SetBases(VkDeviceSize vertexBase, VkDeviceSize attributeBase, VkDeviceSize indexBase)
+void PipelineWithSorted<Loaded, Sorted>::SetBases(VkDeviceSize vertexBase, VkDeviceSize indexBase)
 {
 	this->vertexBase = vertexBase;
-	this->attributeBase = attributeBase;
 	this->indexBase = indexBase;
 }
 

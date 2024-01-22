@@ -255,7 +255,7 @@ void SortedSurfaces::Cleanup(std::list<SortedSurfaceTexture>& sorted)
 	}
 }
 
-float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float* target)
+float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float attribute, float* target)
 {
     auto face = (msurface_t*)loaded.face;
     auto next_front = face->firstedge;
@@ -276,6 +276,7 @@ float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float* target)
     *target++ = vertex[0];
     *target++ = vertex[1];
     *target++ = vertex[2];
+    *target++ = attribute;
     auto use_back = false;
     for (auto i = 1; i < face->numedges; i++)
     {
@@ -302,11 +303,12 @@ float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float* target)
         *target++ = vertex[0];
         *target++ = vertex[1];
         *target++ = vertex[2];
+        *target++ = attribute;
     }
     return target;
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurface>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -315,14 +317,15 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 		{
 			for (auto i : subEntry.entries)
 			{
-                target = CopyVertices(loaded[i], target);
+                target = CopyVertices(loaded[i], attribute, target);
+                attribute += 4;
 			}
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -331,14 +334,15 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 		{
 			for (auto i : subEntry.entries)
 			{
-                target = CopyVertices(loaded[i], target);
+                target = CopyVertices(loaded[i], attribute, target);
+                attribute += 4;
 			}
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2Textures>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -347,14 +351,15 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sor
 		{
 			for (auto i : subEntry.entries)
 			{
-                target = CopyVertices(loaded[i], target);
+                target = CopyVertices(loaded[i], attribute, target);
+                attribute += 5;
 			}
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -363,14 +368,15 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sor
 		{
 			for (auto i : subEntry.entries)
 			{
-                target = CopyVertices(loaded[i], target);
+                target = CopyVertices(loaded[i], attribute, target);
+                attribute += 5;
 			}
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotated>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -379,14 +385,15 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 		{
 			for (auto i : subEntry.entries)
 			{
-                target = CopyVertices(loaded[i], target);
+                target = CopyVertices(loaded[i], attribute, target);
+                attribute += 6;
 			}
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotatedColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std::vector<LoadedSurfaceRotatedColoredLights>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -395,14 +402,15 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurfaceLightmap>& sorted, std:
 		{
 			for (auto i : subEntry.entries)
 			{
-                target = CopyVertices(loaded[i], target);
+                target = CopyVertices(loaded[i], attribute, target);
+                attribute += 6;
 			}
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurfaceRotated2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurfaceRotated2Textures>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -411,14 +419,15 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sor
 		{
 			for (auto i : subEntry.entries)
 			{
-                target = CopyVertices(loaded[i], target);
+                target = CopyVertices(loaded[i], attribute, target);
+                attribute += 6;
 			}
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurfaceRotated2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sorted, std::vector<LoadedSurfaceRotated2TexturesColoredLights>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
@@ -427,34 +436,37 @@ void SortedSurfaces::LoadVertices(std::list<SortedSurface2TexturesLightmap>& sor
 		{
 			for (auto i : subEntry.entries)
 			{
-                target = CopyVertices(loaded[i], target);
+                target = CopyVertices(loaded[i], attribute, target);
+                attribute += 6;
 			}
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulent>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
 	{
 		for (auto i : entry.entries)
 		{
-            target = CopyVertices(loaded[i], target);
+            target = CopyVertices(loaded[i], attribute, target);
+            attribute += 3;
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
 }
 
-void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulentRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+void SortedSurfaces::LoadVertices(std::list<SortedSurfaceTexture>& sorted, std::vector<LoadedTurbulentRotated>& loaded, float& attribute, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
 	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	for (auto& entry : sorted)
 	{
 		for (auto i : entry.entries)
 		{
-            target = CopyVertices(loaded[i], target);
+            target = CopyVertices(loaded[i], attribute, target);
+            attribute += 5;
 		}
 	}
 	offset += ((unsigned char*)target) - (((unsigned char*)stagingBuffer->mapped) + offset);
@@ -494,11 +506,8 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 				}
 				attributes.m[14] = surface.lightmap.lightmap->allocatedIndex;
 				attributes.m[15] = surface.texture.index;
-				for (auto j = 0; j < surface.count; j++)
-				{
-					*target++ = attributes;
-				}
-				attributeCount += surface.count;
+                *target++ = attributes;
+				attributeCount++;
 			}
 		}
 	}
@@ -539,11 +548,8 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 				}
 				attributes.m[14] = surface.lightmap.lightmap->allocatedIndex;
 				attributes.m[15] = surface.texture.index;
-				for (auto j = 0; j < surface.count; j++)
-				{
-					*target++ = attributes;
-				}
-				attributeCount += surface.count;
+                *target++ = attributes;
+				attributeCount++;
 			}
 		}
 	}
@@ -562,30 +568,27 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurface2TexturesLightmap>& s
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
-				for (auto j = 0; j < surface.count; j++)
-				{
-					*target++ = face->texinfo->vecs[0][0];
-					*target++ = face->texinfo->vecs[0][1];
-					*target++ = face->texinfo->vecs[0][2];
-					*target++ = face->texinfo->vecs[0][3];
-					*target++ = face->texinfo->vecs[1][0];
-					*target++ = face->texinfo->vecs[1][1];
-					*target++ = face->texinfo->vecs[1][2];
-					*target++ = face->texinfo->vecs[1][3];
-					*target++ = face->texturemins[0];
-					*target++ = face->texturemins[1];
-					*target++ = face->extents[0];
-					*target++ = face->extents[1];
-					*target++ = face->texinfo->texture->width;
-					*target++ = face->texinfo->texture->height;
-					*target++ = surface.lightmap.lightmap->allocatedIndex;
-					*target++ = surface.texture.index;
-					*target++ = surface.glowTexture.index;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-				}
-				attributeCount += surface.count;
+                *target++ = face->texinfo->vecs[0][0];
+                *target++ = face->texinfo->vecs[0][1];
+                *target++ = face->texinfo->vecs[0][2];
+                *target++ = face->texinfo->vecs[0][3];
+                *target++ = face->texinfo->vecs[1][0];
+                *target++ = face->texinfo->vecs[1][1];
+                *target++ = face->texinfo->vecs[1][2];
+                *target++ = face->texinfo->vecs[1][3];
+                *target++ = face->texturemins[0];
+                *target++ = face->texturemins[1];
+                *target++ = face->extents[0];
+                *target++ = face->extents[1];
+                *target++ = face->texinfo->texture->width;
+                *target++ = face->texinfo->texture->height;
+                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.texture.index;
+                *target++ = surface.glowTexture.index;
+                *target++ = 0;
+                *target++ = 0;
+                *target++ = 0;
+				attributeCount++;
 			}
 		}
 	}
@@ -604,30 +607,27 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurface2TexturesLightmap>& s
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
-				for (auto j = 0; j < surface.count; j++)
-				{
-					*target++ = face->texinfo->vecs[0][0];
-					*target++ = face->texinfo->vecs[0][1];
-					*target++ = face->texinfo->vecs[0][2];
-					*target++ = face->texinfo->vecs[0][3];
-					*target++ = face->texinfo->vecs[1][0];
-					*target++ = face->texinfo->vecs[1][1];
-					*target++ = face->texinfo->vecs[1][2];
-					*target++ = face->texinfo->vecs[1][3];
-					*target++ = face->texturemins[0];
-					*target++ = face->texturemins[1];
-					*target++ = face->extents[0];
-					*target++ = face->extents[1];
-					*target++ = face->texinfo->texture->width;
-					*target++ = face->texinfo->texture->height;
-					*target++ = surface.lightmap.lightmap->allocatedIndex;
-					*target++ = surface.texture.index;
-					*target++ = surface.glowTexture.index;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-				}
-				attributeCount += surface.count;
+                *target++ = face->texinfo->vecs[0][0];
+                *target++ = face->texinfo->vecs[0][1];
+                *target++ = face->texinfo->vecs[0][2];
+                *target++ = face->texinfo->vecs[0][3];
+                *target++ = face->texinfo->vecs[1][0];
+                *target++ = face->texinfo->vecs[1][1];
+                *target++ = face->texinfo->vecs[1][2];
+                *target++ = face->texinfo->vecs[1][3];
+                *target++ = face->texturemins[0];
+                *target++ = face->texturemins[1];
+                *target++ = face->extents[0];
+                *target++ = face->extents[1];
+                *target++ = face->texinfo->texture->width;
+                *target++ = face->texinfo->texture->height;
+                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.texture.index;
+                *target++ = surface.glowTexture.index;
+                *target++ = 0;
+                *target++ = 0;
+                *target++ = 0;
+				attributeCount++;
 			}
 		}
 	}
@@ -646,34 +646,31 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
-				for (auto j = 0; j < surface.count; j++)
-				{
-					*target++ = surface.originX;
-					*target++ = surface.originY;
-					*target++ = surface.originZ;
-					*target++ = 1;
-					*target++ = surface.yaw * M_PI / 180;
-					*target++ = surface.pitch * M_PI / 180;
-					*target++ = surface.roll * M_PI / 180;
-					*target++ = 0;
-					*target++ = face->texinfo->vecs[0][0];
-					*target++ = face->texinfo->vecs[0][1];
-					*target++ = face->texinfo->vecs[0][2];
-					*target++ = face->texinfo->vecs[0][3];
-					*target++ = face->texinfo->vecs[1][0];
-					*target++ = face->texinfo->vecs[1][1];
-					*target++ = face->texinfo->vecs[1][2];
-					*target++ = face->texinfo->vecs[1][3];
-					*target++ = face->texturemins[0];
-					*target++ = face->texturemins[1];
-					*target++ = face->extents[0];
-					*target++ = face->extents[1];
-					*target++ = face->texinfo->texture->width;
-					*target++ = face->texinfo->texture->height;
-					*target++ = surface.lightmap.lightmap->allocatedIndex;
-					*target++ = surface.texture.index;
-				}
-				attributeCount += surface.count;
+                *target++ = surface.originX;
+                *target++ = surface.originY;
+                *target++ = surface.originZ;
+                *target++ = 1;
+                *target++ = surface.yaw * M_PI / 180;
+                *target++ = surface.pitch * M_PI / 180;
+                *target++ = surface.roll * M_PI / 180;
+                *target++ = 0;
+                *target++ = face->texinfo->vecs[0][0];
+                *target++ = face->texinfo->vecs[0][1];
+                *target++ = face->texinfo->vecs[0][2];
+                *target++ = face->texinfo->vecs[0][3];
+                *target++ = face->texinfo->vecs[1][0];
+                *target++ = face->texinfo->vecs[1][1];
+                *target++ = face->texinfo->vecs[1][2];
+                *target++ = face->texinfo->vecs[1][3];
+                *target++ = face->texturemins[0];
+                *target++ = face->texturemins[1];
+                *target++ = face->extents[0];
+                *target++ = face->extents[1];
+                *target++ = face->texinfo->texture->width;
+                *target++ = face->texinfo->texture->height;
+                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.texture.index;
+				attributeCount++;
 			}
 		}
 	}
@@ -692,34 +689,31 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceLightmap>& sorted, st
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
-				for (auto j = 0; j < surface.count; j++)
-				{
-					*target++ = surface.originX;
-					*target++ = surface.originY;
-					*target++ = surface.originZ;
-					*target++ = 1;
-					*target++ = surface.yaw * M_PI / 180;
-					*target++ = surface.pitch * M_PI / 180;
-					*target++ = surface.roll * M_PI / 180;
-					*target++ = 0;
-					*target++ = face->texinfo->vecs[0][0];
-					*target++ = face->texinfo->vecs[0][1];
-					*target++ = face->texinfo->vecs[0][2];
-					*target++ = face->texinfo->vecs[0][3];
-					*target++ = face->texinfo->vecs[1][0];
-					*target++ = face->texinfo->vecs[1][1];
-					*target++ = face->texinfo->vecs[1][2];
-					*target++ = face->texinfo->vecs[1][3];
-					*target++ = face->texturemins[0];
-					*target++ = face->texturemins[1];
-					*target++ = face->extents[0];
-					*target++ = face->extents[1];
-					*target++ = face->texinfo->texture->width;
-					*target++ = face->texinfo->texture->height;
-					*target++ = surface.lightmap.lightmap->allocatedIndex;
-					*target++ = surface.texture.index;
-				}
-				attributeCount += surface.count;
+                *target++ = surface.originX;
+                *target++ = surface.originY;
+                *target++ = surface.originZ;
+                *target++ = 1;
+                *target++ = surface.yaw * M_PI / 180;
+                *target++ = surface.pitch * M_PI / 180;
+                *target++ = surface.roll * M_PI / 180;
+                *target++ = 0;
+                *target++ = face->texinfo->vecs[0][0];
+                *target++ = face->texinfo->vecs[0][1];
+                *target++ = face->texinfo->vecs[0][2];
+                *target++ = face->texinfo->vecs[0][3];
+                *target++ = face->texinfo->vecs[1][0];
+                *target++ = face->texinfo->vecs[1][1];
+                *target++ = face->texinfo->vecs[1][2];
+                *target++ = face->texinfo->vecs[1][3];
+                *target++ = face->texturemins[0];
+                *target++ = face->texturemins[1];
+                *target++ = face->extents[0];
+                *target++ = face->extents[1];
+                *target++ = face->texinfo->texture->width;
+                *target++ = face->texinfo->texture->height;
+                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.texture.index;
+				attributeCount++;
 			}
 		}
 	}
@@ -738,34 +732,31 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurface2TexturesLightmap>& s
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
-				for (auto j = 0; j < surface.count; j++)
-				{
-					*target++ = surface.originX;
-					*target++ = surface.originY;
-					*target++ = surface.originZ;
-					*target++ = 1;
-					*target++ = surface.yaw * M_PI / 180;
-					*target++ = surface.pitch * M_PI / 180;
-					*target++ = surface.roll * M_PI / 180;
-					*target++ = surface.glowTexture.index;
-					*target++ = face->texinfo->vecs[0][0];
-					*target++ = face->texinfo->vecs[0][1];
-					*target++ = face->texinfo->vecs[0][2];
-					*target++ = face->texinfo->vecs[0][3];
-					*target++ = face->texinfo->vecs[1][0];
-					*target++ = face->texinfo->vecs[1][1];
-					*target++ = face->texinfo->vecs[1][2];
-					*target++ = face->texinfo->vecs[1][3];
-					*target++ = face->texturemins[0];
-					*target++ = face->texturemins[1];
-					*target++ = face->extents[0];
-					*target++ = face->extents[1];
-					*target++ = face->texinfo->texture->width;
-					*target++ = face->texinfo->texture->height;
-					*target++ = surface.lightmap.lightmap->allocatedIndex;
-					*target++ = surface.texture.index;
-				}
-				attributeCount += surface.count;
+                *target++ = surface.originX;
+                *target++ = surface.originY;
+                *target++ = surface.originZ;
+                *target++ = 1;
+                *target++ = surface.yaw * M_PI / 180;
+                *target++ = surface.pitch * M_PI / 180;
+                *target++ = surface.roll * M_PI / 180;
+                *target++ = surface.glowTexture.index;
+                *target++ = face->texinfo->vecs[0][0];
+                *target++ = face->texinfo->vecs[0][1];
+                *target++ = face->texinfo->vecs[0][2];
+                *target++ = face->texinfo->vecs[0][3];
+                *target++ = face->texinfo->vecs[1][0];
+                *target++ = face->texinfo->vecs[1][1];
+                *target++ = face->texinfo->vecs[1][2];
+                *target++ = face->texinfo->vecs[1][3];
+                *target++ = face->texturemins[0];
+                *target++ = face->texturemins[1];
+                *target++ = face->extents[0];
+                *target++ = face->extents[1];
+                *target++ = face->texinfo->texture->width;
+                *target++ = face->texinfo->texture->height;
+                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.texture.index;
+				attributeCount++;
 			}
 		}
 	}
@@ -784,34 +775,31 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurface2TexturesLightmap>& s
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
-				for (auto j = 0; j < surface.count; j++)
-				{
-					*target++ = surface.originX;
-					*target++ = surface.originY;
-					*target++ = surface.originZ;
-					*target++ = 1;
-					*target++ = surface.yaw * M_PI / 180;
-					*target++ = surface.pitch * M_PI / 180;
-					*target++ = surface.roll * M_PI / 180;
-					*target++ = surface.glowTexture.index;
-					*target++ = face->texinfo->vecs[0][0];
-					*target++ = face->texinfo->vecs[0][1];
-					*target++ = face->texinfo->vecs[0][2];
-					*target++ = face->texinfo->vecs[0][3];
-					*target++ = face->texinfo->vecs[1][0];
-					*target++ = face->texinfo->vecs[1][1];
-					*target++ = face->texinfo->vecs[1][2];
-					*target++ = face->texinfo->vecs[1][3];
-					*target++ = face->texturemins[0];
-					*target++ = face->texturemins[1];
-					*target++ = face->extents[0];
-					*target++ = face->extents[1];
-					*target++ = face->texinfo->texture->width;
-					*target++ = face->texinfo->texture->height;
-					*target++ = surface.lightmap.lightmap->allocatedIndex;
-					*target++ = surface.texture.index;
-				}
-				attributeCount += surface.count;
+                *target++ = surface.originX;
+                *target++ = surface.originY;
+                *target++ = surface.originZ;
+                *target++ = 1;
+                *target++ = surface.yaw * M_PI / 180;
+                *target++ = surface.pitch * M_PI / 180;
+                *target++ = surface.roll * M_PI / 180;
+                *target++ = surface.glowTexture.index;
+                *target++ = face->texinfo->vecs[0][0];
+                *target++ = face->texinfo->vecs[0][1];
+                *target++ = face->texinfo->vecs[0][2];
+                *target++ = face->texinfo->vecs[0][3];
+                *target++ = face->texinfo->vecs[1][0];
+                *target++ = face->texinfo->vecs[1][1];
+                *target++ = face->texinfo->vecs[1][2];
+                *target++ = face->texinfo->vecs[1][3];
+                *target++ = face->texturemins[0];
+                *target++ = face->texturemins[1];
+                *target++ = face->extents[0];
+                *target++ = face->extents[1];
+                *target++ = face->texinfo->texture->width;
+                *target++ = face->texinfo->texture->height;
+                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.texture.index;
+				attributeCount++;
 			}
 		}
 	}
@@ -828,22 +816,19 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std
 		{
 			auto& surface = loaded[i];
 			auto face = (msurface_t*)surface.face;
-			for (auto j = 0; j < surface.count; j++)
-			{
-				*target++ = face->texinfo->vecs[0][0];
-				*target++ = face->texinfo->vecs[0][1];
-				*target++ = face->texinfo->vecs[0][2];
-				*target++ = face->texinfo->vecs[0][3];
-				*target++ = face->texinfo->vecs[1][0];
-				*target++ = face->texinfo->vecs[1][1];
-				*target++ = face->texinfo->vecs[1][2];
-				*target++ = face->texinfo->vecs[1][3];
-				*target++ = face->texinfo->texture->width;
-				*target++ = face->texinfo->texture->height;
-				*target++ = surface.texture.index;
-				*target++ = 0;
-			}
-			attributeCount += surface.count;
+            *target++ = face->texinfo->vecs[0][0];
+            *target++ = face->texinfo->vecs[0][1];
+            *target++ = face->texinfo->vecs[0][2];
+            *target++ = face->texinfo->vecs[0][3];
+            *target++ = face->texinfo->vecs[1][0];
+            *target++ = face->texinfo->vecs[1][1];
+            *target++ = face->texinfo->vecs[1][2];
+            *target++ = face->texinfo->vecs[1][3];
+            *target++ = face->texinfo->texture->width;
+            *target++ = face->texinfo->texture->height;
+            *target++ = surface.texture.index;
+            *target++ = 0;
+			attributeCount++;
 		}
 	}
 	offset += (attributeCount * 12 * sizeof(float));
@@ -859,30 +844,27 @@ void SortedSurfaces::LoadAttributes(std::list<SortedSurfaceTexture>& sorted, std
 		{
 			auto& surface = loaded[i];
 			auto face = (msurface_t*)surface.face;
-			for (auto j = 0; j < surface.count; j++)
-			{
-				*target++ = surface.originX;
-				*target++ = surface.originY;
-				*target++ = surface.originZ;
-				*target++ = 1;
-				*target++ = surface.yaw * M_PI / 180;
-				*target++ = surface.pitch * M_PI / 180;
-				*target++ = surface.roll * M_PI / 180;
-				*target++ = 0;
-				*target++ = face->texinfo->vecs[0][0];
-				*target++ = face->texinfo->vecs[0][1];
-				*target++ = face->texinfo->vecs[0][2];
-				*target++ = face->texinfo->vecs[0][3];
-				*target++ = face->texinfo->vecs[1][0];
-				*target++ = face->texinfo->vecs[1][1];
-				*target++ = face->texinfo->vecs[1][2];
-				*target++ = face->texinfo->vecs[1][3];
-				*target++ = face->texinfo->texture->width;
-				*target++ = face->texinfo->texture->height;
-				*target++ = surface.texture.index;
-				*target++ = 0;
-			}
-			attributeCount += surface.count;
+            *target++ = surface.originX;
+            *target++ = surface.originY;
+            *target++ = surface.originZ;
+            *target++ = 1;
+            *target++ = surface.yaw * M_PI / 180;
+            *target++ = surface.pitch * M_PI / 180;
+            *target++ = surface.roll * M_PI / 180;
+            *target++ = 0;
+            *target++ = face->texinfo->vecs[0][0];
+            *target++ = face->texinfo->vecs[0][1];
+            *target++ = face->texinfo->vecs[0][2];
+            *target++ = face->texinfo->vecs[0][3];
+            *target++ = face->texinfo->vecs[1][0];
+            *target++ = face->texinfo->vecs[1][1];
+            *target++ = face->texinfo->vecs[1][2];
+            *target++ = face->texinfo->vecs[1][3];
+            *target++ = face->texinfo->texture->width;
+            *target++ = face->texinfo->texture->height;
+            *target++ = surface.texture.index;
+            *target++ = 0;
+			attributeCount++;
 		}
 	}
 	offset += (attributeCount * 20 * sizeof(float));

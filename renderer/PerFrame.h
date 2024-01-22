@@ -18,6 +18,7 @@ struct PerFrame
 	VkFramebuffer framebuffer;
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedAttributes;
+    CachedBuffers cachedStorageAttributes;
 	CachedBuffers cachedIndices8;
 	CachedBuffers cachedIndices16;
 	CachedBuffers cachedIndices32;
@@ -30,6 +31,7 @@ struct PerFrame
 	Buffer matrices;
 	Buffer* vertices;
 	Buffer* attributes;
+    Buffer* storageAttributes;
 	Buffer* indices8;
 	Buffer* indices16;
 	Buffer* indices32;
@@ -43,6 +45,7 @@ struct PerFrame
 	DescriptorResources sceneMatricesAndPaletteResources;
 	DescriptorResources sceneMatricesAndNeutralPaletteResources;
 	DescriptorResources sceneMatricesAndColormapResources;
+    DescriptorResources storageAttributesResources;
 	DescriptorResourcesLists colormapResources;
 	DescriptorResources floorResources;
 	DescriptorResources controllerResources;
@@ -57,6 +60,7 @@ struct PerFrame
 	VkDeviceSize controllerIndexBase;
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
+    Buffer* previousStorageAttributes;
 
 	static float GammaCorrect(float component);
 	static byte AveragePixels(std::vector<byte>& pixdata);
