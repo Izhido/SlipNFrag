@@ -788,7 +788,7 @@ void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuf
 		}
 		if (previousBuffer != loaded->indices.buffer)
 		{
-			appState.Scene.AddToBufferBarrier(loaded->indices.buffer->buffer);
+			appState.Scene.AddToVertexInputBarriers(loaded->indices.buffer->buffer, VK_ACCESS_INDEX_READ_BIT);
 			previousBuffer = loaded->indices.buffer;
 		}
 		loaded = loaded->next;
@@ -800,23 +800,11 @@ void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuf
 	}
 }
 
-void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedSharedMemoryBuffer* first, VkBufferCopy& bufferCopy) const
-{
-	auto loaded = first;
-	while (loaded != nullptr)
-	{
-		bufferCopy.size = loaded->size;
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loaded->buffer->buffer, 1, &bufferCopy);
-		bufferCopy.srcOffset += loaded->size;
-		appState.Scene.AddToBufferBarrier(loaded->buffer->buffer);
-		loaded = loaded->next;
-	}
-}
-
 void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer)
 {
 	appState.Scene.stagingBuffer.lastStartBarrier = -1;
 	appState.Scene.stagingBuffer.lastEndBarrier = -1;
+    appState.Scene.stagingBuffer.lastVertexShaderEndBarrier = -1;
 	appState.Scene.stagingBuffer.descriptorSetsInUse.clear();
 
 	VkBufferCopy bufferCopy { };
@@ -840,7 +828,15 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 
 	bufferCopy.dstOffset = 0;
 
-	FillFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.buffers.firstAliasVertices, bufferCopy);
+    auto loaded = appState.Scene.buffers.firstAliasVertices;
+    while (loaded != nullptr)
+    {
+        bufferCopy.size = loaded->size;
+        vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loaded->buffer->buffer, 1, &bufferCopy);
+        bufferCopy.srcOffset += loaded->size;
+        appState.Scene.AddToVertexInputBarriers(loaded->buffer->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+        loaded = loaded->next;
+    }
 
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
@@ -853,7 +849,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		bufferCopy.size = loadedTexCoordsBuffer->size;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, loadedTexCoordsBuffer->buffer->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(loadedTexCoordsBuffer->buffer->buffer);
+		appState.Scene.AddToVertexInputBarriers(loadedTexCoordsBuffer->buffer->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 		loadedTexCoordsBuffer = loadedTexCoordsBuffer->next;
 	}
 
@@ -862,21 +858,21 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		bufferCopy.size = appState.Scene.verticesSize;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, vertices->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(vertices->buffer);
+		appState.Scene.AddToVertexInputBarriers(vertices->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 	}
 	if (appState.Scene.attributesSize > 0)
 	{
 		bufferCopy.size = appState.Scene.attributesSize;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, attributes->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(attributes->buffer);
+		appState.Scene.AddToVertexInputBarriers(attributes->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 	}
 	if (appState.Scene.colorsSize > 0)
 	{
 		bufferCopy.size = appState.Scene.colorsSize;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, colors->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(colors->buffer);
+		appState.Scene.AddToVertexInputBarriers(colors->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 	}
 
 	if (appState.Scene.indices8Size > 0)
@@ -884,7 +880,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		bufferCopy.size = appState.Scene.indices8Size;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, indices8->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(indices8->buffer);
+		appState.Scene.AddToVertexInputBarriers(indices8->buffer, VK_ACCESS_INDEX_READ_BIT);
 
 		while (bufferCopy.srcOffset % 4 != 0)
 		{
@@ -896,7 +892,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		bufferCopy.size = appState.Scene.indices16Size;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, indices16->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(indices16->buffer);
+		appState.Scene.AddToVertexInputBarriers(indices16->buffer, VK_ACCESS_INDEX_READ_BIT);
 
 		while (bufferCopy.srcOffset % 4 != 0)
 		{
@@ -908,7 +904,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		bufferCopy.size = appState.Scene.indices32Size;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, indices32->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.AddToBufferBarrier(indices32->buffer);
+		appState.Scene.AddToVertexInputBarriers(indices32->buffer, VK_ACCESS_INDEX_READ_BIT);
 	}
 
 	if (appState.Scene.sortedVerticesSize > 0)
@@ -920,7 +916,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		bufferCopy.srcOffset += bufferCopy.size;
 		if (appState.Scene.verticesSize == 0)
 		{
-			appState.Scene.AddToBufferBarrier(vertices->buffer);
+			appState.Scene.AddToVertexInputBarriers(vertices->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
 		}
 	}
 	if (appState.Scene.sortedAttributesSize > 0)
@@ -929,7 +925,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		bufferCopy.dstOffset = 0;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, storageAttributes->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
-        appState.Scene.AddToBufferBarrier(storageAttributes->buffer);
+        appState.Scene.AddToVertexShaderBarriers(storageAttributes->buffer, VK_ACCESS_SHADER_READ_BIT);
 	}
 	if (appState.Scene.sortedIndicesCount > 0)
 	{
@@ -942,7 +938,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 			bufferCopy.srcOffset += bufferCopy.size;
 			if (appState.Scene.indices16Size == 0)
 			{
-				appState.Scene.AddToBufferBarrier(indices16->buffer);
+				appState.Scene.AddToVertexInputBarriers(indices16->buffer, VK_ACCESS_INDEX_READ_BIT);
 			}
 			while (bufferCopy.srcOffset % 4 != 0)
 			{
@@ -958,17 +954,22 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 			bufferCopy.srcOffset += bufferCopy.size;
 			if (appState.Scene.indices32Size == 0)
 			{
-				appState.Scene.AddToBufferBarrier(indices32->buffer);
+				appState.Scene.AddToVertexInputBarriers(indices32->buffer, VK_ACCESS_INDEX_READ_BIT);
 			}
 		}
 	}
 
 	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)
 	{
-		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastEndBarrier + 1, appState.Scene.stagingBuffer.bufferBarriers.data(), 0, nullptr);
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastEndBarrier + 1, appState.Scene.stagingBuffer.vertexInputEndBarriers.data(), 0, nullptr);
 	}
 
-	if (appState.Scene.paletteSize > 0)
+    if (appState.Scene.stagingBuffer.lastVertexShaderEndBarrier >= 0)
+    {
+        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastVertexShaderEndBarrier + 1, appState.Scene.stagingBuffer.vertexShaderEndBarriers.data(), 0, nullptr);
+    }
+
+    if (appState.Scene.paletteSize > 0)
 	{
 		bufferCopy.size = appState.Scene.paletteSize;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.palette->buffer, 1, &bufferCopy);

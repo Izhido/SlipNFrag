@@ -1066,20 +1066,36 @@ void Scene::AddSampler(AppState& appState, uint32_t mipCount)
     }
 }
 
-void Scene::AddToBufferBarrier(VkBuffer buffer)
+void Scene::AddToVertexInputBarriers(VkBuffer buffer, VkAccessFlags flags)
 {
     stagingBuffer.lastEndBarrier++;
-    if (stagingBuffer.bufferBarriers.size() <= stagingBuffer.lastEndBarrier)
+    if (stagingBuffer.vertexInputEndBarriers.size() <= stagingBuffer.lastEndBarrier)
     {
-        stagingBuffer.bufferBarriers.emplace_back();
+        stagingBuffer.vertexInputEndBarriers.emplace_back();
     }
 
-    auto& barrier = stagingBuffer.bufferBarriers[stagingBuffer.lastEndBarrier];
+    auto& barrier = stagingBuffer.vertexInputEndBarriers[stagingBuffer.lastEndBarrier];
     barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
     barrier.buffer = buffer;
     barrier.size = VK_WHOLE_SIZE;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    barrier.dstAccessMask = flags;
+}
+
+void Scene::AddToVertexShaderBarriers(VkBuffer buffer, VkAccessFlags flags)
+{
+    stagingBuffer.lastVertexShaderEndBarrier++;
+    if (stagingBuffer.vertexShaderEndBarriers.size() <= stagingBuffer.lastVertexShaderEndBarrier)
+    {
+        stagingBuffer.vertexShaderEndBarriers.emplace_back();
+    }
+
+    auto& barrier = stagingBuffer.vertexShaderEndBarriers[stagingBuffer.lastVertexShaderEndBarrier];
+    barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    barrier.buffer = buffer;
+    barrier.size = VK_WHOLE_SIZE;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = flags;
 }
 
 VkDeviceSize Scene::GetAllocatedFor(int width, int height)
