@@ -1628,12 +1628,7 @@ int main(int argc, char* argv[])
 						}
 					}
 
-					commandBuffer = appState.CommandBuffers[appState.NextCommandBuffer];
-					appState.NextCommandBuffer++;
-					if (appState.NextCommandBuffer >= appState.CommandBuffers.size())
-					{
-						appState.NextCommandBuffer = 0;
-					}
+					commandBuffer = appState.CommandBuffers[swapchainImageIndex];
 
 					CHECK_VKCMD(vkResetCommandBuffer(commandBuffer, 0));
 					CHECK_VKCMD(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
@@ -1746,35 +1741,26 @@ int main(int argc, char* argv[])
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
 
-					if (perFrame.matrices.buffer == VK_NULL_HANDLE)
-					{
-						perFrame.matrices.CreateUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
-						CHECK_VKCMD(vkMapMemory(appState.Device, perFrame.matrices.memory, 0, VK_WHOLE_SIZE, 0, &perFrame.matrices.mapped));
-					}
-
-					static const size_t matricesSize = 2 * sizeof(XrMatrix4x4f);
-					memcpy(perFrame.matrices.mapped, appState.ViewMatrices.data(), matricesSize);
-					VkDeviceSize offset = matricesSize;
-					memcpy(((unsigned char*)perFrame.matrices.mapped) + offset, appState.ProjectionMatrices.data(), matricesSize);
-					offset += matricesSize;
-					auto target = ((float*)perFrame.matrices.mapped) + offset / sizeof(float);
-					*target++ = appState.Scale;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = -appState.Scale;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = appState.Scale;
-					*target++ = 0;
-					*target++ = 0;
-					*target++ = -appState.FromEngine.vieworg0 * appState.Scale;
-					*target++ = -appState.FromEngine.vieworg2 * appState.Scale;
-					*target++ = appState.FromEngine.vieworg1 * appState.Scale;
-					*target++ = 1;
-					offset += sizeof(XrMatrix4x4f);
+                    auto matrices = (float*)(((unsigned char*)appState.Scene.matricesMapped) + appState.Scene.matricesBufferSize * swapchainImageIndex);
+					memcpy(matrices, appState.ViewMatrices.data(), 2 * sizeof(XrMatrix4x4f));
+					memcpy(matrices + 2 * 16, appState.ProjectionMatrices.data(), 2 * sizeof(XrMatrix4x4f));
+                    matrices += 2 * 2 * 16;
+					*matrices++ = appState.Scale;
+					*matrices++ = 0;
+					*matrices++ = 0;
+					*matrices++ = 0;
+					*matrices++ = 0;
+					*matrices++ = 0;
+					*matrices++ = -appState.Scale;
+					*matrices++ = 0;
+					*matrices++ = 0;
+					*matrices++ = appState.Scale;
+					*matrices++ = 0;
+					*matrices++ = 0;
+					*matrices++ = -appState.FromEngine.vieworg0 * appState.Scale;
+					*matrices++ = -appState.FromEngine.vieworg2 * appState.Scale;
+					*matrices++ = appState.FromEngine.vieworg1 * appState.Scale;
+					*matrices++ = 1;
 
 					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 					renderPassBeginInfo.clearValueCount = 2;
@@ -1801,7 +1787,7 @@ int main(int argc, char* argv[])
 					vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 					vkCmdSetScissor(commandBuffer, 0, 1, &screenRect);
 
-					perFrame.Render(appState, commandBuffer);
+					perFrame.Render(appState, commandBuffer, swapchainImageIndex);
 
 					vkCmdEndRenderPass(commandBuffer);
 
@@ -2485,7 +2471,6 @@ int main(int argc, char* argv[])
                 perFrame.second.cachedStorageAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
-				perFrame.second.matrices.Delete(appState);
 			}
 
 			appState.PerFrame.clear();
@@ -2543,6 +2528,22 @@ int main(int argc, char* argv[])
 				delete p;
 			}
 			appState.Scene.oldPalettes = nullptr;
+
+            if (appState.Scene.matricesMapped != VK_NULL_HANDLE)
+            {
+                vkUnmapMemory(appState.Device, appState.Scene.matricesMemory);
+            }
+            for (auto& buffer : appState.Scene.matricesBuffers)
+            {
+                if (buffer != VK_NULL_HANDLE)
+                {
+                    vkDestroyBuffer(appState.Device, buffer, nullptr);
+                }
+            }
+            if (appState.Scene.matricesMemory != VK_NULL_HANDLE)
+            {
+                vkFreeMemory(appState.Device, appState.Scene.matricesMemory, nullptr);
+            }
 
 			appState.Scene.floorStrip.Delete(appState);
 			appState.Scene.floor.Delete(appState);

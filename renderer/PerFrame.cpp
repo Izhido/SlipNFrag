@@ -1236,7 +1236,7 @@ void PerFrame::SetTintPushConstants(float* pushConstants)
 	pushConstants[4] = v_gamma.value;
 }
 
-void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
+void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex)
 {
 	if (appState.Scene.surfaces.last < 0 &&
 		appState.Scene.surfacesColoredLights.last < 0 &&
@@ -1327,8 +1327,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer)
 	{
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[0].descriptorCount = 1;
-		bufferInfo[0].buffer = matrices.buffer;
-		bufferInfo[0].range = matrices.size;
+		bufferInfo[0].buffer = appState.Scene.matricesBuffers[swapchainImageIndex];
+		bufferInfo[0].range = appState.Scene.matricesBufferSize;
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		writes[0].pBufferInfo = bufferInfo;
 		if (!sceneMatricesResources.created)

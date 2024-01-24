@@ -1003,6 +1003,47 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &lightmapSampler));
 
+    auto screenImageCount = appState.Screen.swapchainImages.size();
+
+    bufferCreateInfo.size = (2 * 2 + 1) * sizeof(XrMatrix4x4f);
+    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    matricesBuffers.resize(screenImageCount);
+    for (uint32_t i = 0; i < screenImageCount; i++)
+    {
+        CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &matricesBuffers[i]));
+    }
+    vkGetBufferMemoryRequirements(appState.Device, matricesBuffers[0], &memoryRequirements);
+    matricesBufferSize = memoryRequirements.size;
+    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocateInfo.allocationSize = matricesBufferSize * screenImageCount;
+    auto properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    auto found = false;
+    for (auto i = 0; i < appState.MemoryProperties.memoryTypeCount; i++)
+    {
+        if ((memoryRequirements.memoryTypeBits & (1 << i)) != 0)
+        {
+            const VkFlags propertyFlags = appState.MemoryProperties.memoryTypes[i].propertyFlags;
+            if ((propertyFlags & properties) == properties)
+            {
+                found = true;
+                memoryAllocateInfo.memoryTypeIndex = i;
+                break;
+            }
+        }
+    }
+    if (!found)
+    {
+        THROW(Fmt("Scene::Create(): Memory type %d with properties %d not found.", memoryRequirements.memoryTypeBits, properties));
+    }
+    CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &matricesMemory));
+    VkDeviceSize memoryOffset = 0;
+    for (uint32_t i = 0; i < screenImageCount; i++)
+    {
+        CHECK_VKCMD(vkBindBufferMemory(appState.Device, matricesBuffers[i], matricesMemory, memoryOffset));
+        memoryOffset += matricesBufferSize;
+    }
+    CHECK_VKCMD(vkMapMemory(appState.Device, matricesMemory, 0, VK_WHOLE_SIZE, 0, &matricesMapped));
+
     appState.Keyboard.Create(appState);
 
     created = true;

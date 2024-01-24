@@ -29,7 +29,6 @@ struct AppState
 	XrSession Session;
 	VkCommandPool CommandPool;
 	std::vector<VkCommandBuffer> CommandBuffers;
-	VkDeviceSize NextCommandBuffer;
 	VkQueue Queue;
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
 	int DefaultFOV;

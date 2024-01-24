@@ -28,7 +28,6 @@ struct PerFrame
 	int colormapCount;
 	SharedMemoryBuffer* palette;
 	Texture* colormap;
-	Buffer matrices;
 	Buffer* vertices;
 	Buffer* attributes;
     Buffer* storageAttributes;
@@ -72,5 +71,5 @@ struct PerFrame
 	void Reset(AppState& appState);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	static void SetTintPushConstants(float pushConstants[]);
-	void Render(AppState& appState, VkCommandBuffer commandBuffer);
+	void Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex);
 };

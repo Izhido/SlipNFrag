@@ -79,6 +79,10 @@ struct Scene
 	Pipeline skyRGBA;
 	Pipeline floor;
 	Pipeline floorStrip;
+    std::vector<VkBuffer> matricesBuffers;
+    VkDeviceSize matricesBufferSize;
+    VkDeviceMemory matricesMemory;
+    void* matricesMapped;
 	int hostClearCount;
 	SharedMemoryBuffer* palette;
 	SharedMemoryBuffer* neutralPalette;
