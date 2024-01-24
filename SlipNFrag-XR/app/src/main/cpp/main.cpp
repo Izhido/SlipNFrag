@@ -1806,12 +1806,7 @@ void android_main(struct android_app* app)
 						}
 					}
 
-					commandBuffer = appState.CommandBuffers[appState.NextCommandBuffer];
-					appState.NextCommandBuffer++;
-					if (appState.NextCommandBuffer >= appState.CommandBuffers.size())
-					{
-						appState.NextCommandBuffer = 0;
-					}
+					commandBuffer = appState.CommandBuffers[swapchainImageIndex];
 
 					CHECK_VKCMD(vkResetCommandBuffer(commandBuffer, 0));
 					CHECK_VKCMD(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
