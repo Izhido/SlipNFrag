@@ -26,7 +26,7 @@ struct PerFrame
 	CachedBuffers stagingBuffers;
 	CachedTextures colormaps;
 	int colormapCount;
-	SharedMemoryBuffer* palette;
+    int paletteChangedFrame;
 	Texture* colormap;
 	Buffer* vertices;
 	Buffer* attributes;
@@ -67,7 +67,7 @@ struct PerFrame
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
-	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer);
+	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	static void SetTintPushConstants(float pushConstants[]);

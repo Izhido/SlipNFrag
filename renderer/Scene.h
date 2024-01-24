@@ -83,11 +83,11 @@ struct Scene
     VkDeviceSize matricesBufferSize;
     VkDeviceMemory matricesMemory;
     void* matricesMapped;
+    std::vector<VkBuffer> paletteBuffers;
+    std::vector<VkBuffer> neutralPaletteBuffers;
+    VkDeviceSize paletteBufferSize;
+    VkDeviceMemory paletteMemory;
 	int hostClearCount;
-	SharedMemoryBuffer* palette;
-	SharedMemoryBuffer* neutralPalette;
-	SharedMemoryBuffer* oldPalettes;
-	int paletteChangedFrame;
 	CachedSharedMemoryBuffers buffers;
 	CachedIndexBuffers indexBuffers;
 	std::unordered_map<void*, AliasVertices> aliasVertexCache;

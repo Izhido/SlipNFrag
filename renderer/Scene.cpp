@@ -1044,6 +1044,51 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     }
     CHECK_VKCMD(vkMapMemory(appState.Device, matricesMemory, 0, VK_WHOLE_SIZE, 0, &matricesMapped));
 
+    bufferCreateInfo.size = 256 * 4 * sizeof(float);
+    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    paletteBuffers.resize(screenImageCount);
+    for (uint32_t i = 0; i < screenImageCount; i++)
+    {
+        CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &paletteBuffers[i]));
+    }
+    neutralPaletteBuffers.resize(screenImageCount);
+    for (uint32_t i = 0; i < screenImageCount; i++)
+    {
+        CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &neutralPaletteBuffers[i]));
+    }
+    vkGetBufferMemoryRequirements(appState.Device, paletteBuffers[0], &memoryRequirements);
+    paletteBufferSize = memoryRequirements.size;
+    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memoryAllocateInfo.allocationSize = paletteBufferSize * 2 * screenImageCount;
+    properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    found = false;
+    for (auto i = 0; i < appState.MemoryProperties.memoryTypeCount; i++)
+    {
+        if ((memoryRequirements.memoryTypeBits & (1 << i)) != 0)
+        {
+            const VkFlags propertyFlags = appState.MemoryProperties.memoryTypes[i].propertyFlags;
+            if ((propertyFlags & properties) == properties)
+            {
+                found = true;
+                memoryAllocateInfo.memoryTypeIndex = i;
+                break;
+            }
+        }
+    }
+    if (!found)
+    {
+        THROW(Fmt("Scene::Create(): Memory type %d with properties %d not found.", memoryRequirements.memoryTypeBits, properties));
+    }
+    CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &paletteMemory));
+    memoryOffset = 0;
+    for (uint32_t i = 0; i < screenImageCount; i++)
+    {
+        CHECK_VKCMD(vkBindBufferMemory(appState.Device, paletteBuffers[i], paletteMemory, memoryOffset));
+        memoryOffset += paletteBufferSize;
+        CHECK_VKCMD(vkBindBufferMemory(appState.Device, neutralPaletteBuffers[i], paletteMemory, memoryOffset));
+        memoryOffset += paletteBufferSize;
+    }
+
     appState.Keyboard.Create(appState);
 
     created = true;
@@ -2179,78 +2224,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     appState.FromEngine.vup1 = d_lists.vup1;
     appState.FromEngine.vup2 = d_lists.vup2;
     VkDeviceSize size = 0;
-    if (palette == nullptr || paletteChangedFrame != pal_changed)
+    if (perFrame.paletteChangedFrame != pal_changed)
     {
-        SharedMemoryBuffer* newPalette = nullptr;
-        bool skip = true;
-        for (auto p = &palette; *p != nullptr; )
-        {
-            if (skip)
-            {
-                p = &(*p)->next;
-                skip = false;
-            }
-            else
-            {
-                (*p)->unusedCount++;
-                if ((*p)->unusedCount >= Constants::maxUnusedCount)
-                {
-                    auto next = (*p)->next;
-                    newPalette = (*p);
-                    newPalette->unusedCount = 0;
-                    (*p) = next;
-                    break;
-                }
-                else
-                {
-                    p = &(*p)->next;
-                }
-            }
-        }
-        if (newPalette == nullptr)
-        {
-            newPalette = new SharedMemoryBuffer { };
-            newPalette->CreateUniformBuffer(appState, 256 * 4 * sizeof(float));
-        }
-        newPalette->next = palette;
-        palette = newPalette;
-        paletteSize = palette->size;
+        paletteSize = appState.Scene.paletteBufferSize;
         size += paletteSize;
-        newPalette = nullptr;
-        skip = true;
-        for (auto p = &neutralPalette; *p != nullptr; )
-        {
-            if (skip)
-            {
-                p = &(*p)->next;
-                skip = false;
-            }
-            else
-            {
-                (*p)->unusedCount++;
-                if ((*p)->unusedCount >= Constants::maxUnusedCount)
-                {
-                    auto next = (*p)->next;
-                    newPalette = (*p);
-                    newPalette->unusedCount = 0;
-                    (*p) = next;
-                    break;
-                }
-                else
-                {
-                    p = &(*p)->next;
-                }
-            }
-        }
-        if (newPalette == nullptr)
-        {
-            newPalette = new SharedMemoryBuffer { };
-            newPalette->CreateUniformBuffer(appState, 256 * 4 * sizeof(float));
-        }
-        newPalette->next = neutralPalette;
-        neutralPalette = newPalette;
-        size += paletteSize;
-        paletteChangedFrame = pal_changed;
+        perFrame.paletteChangedFrame = pal_changed;
     }
     if (!host_colormap.empty() && perFrame.colormap == nullptr)
     {
@@ -3017,20 +2995,6 @@ void Scene::Reset()
     lightmaps.DisposeFront();
     indexBuffers.DisposeFront();
     buffers.DisposeFront();
-    for (SharedMemoryBuffer* p = neutralPalette, *next; p != nullptr; p = next)
-    {
-        next = p->next;
-        p->next = oldPalettes;
-        oldPalettes = p;
-    }
-    neutralPalette = nullptr;
-    for (SharedMemoryBuffer* p = palette, *next; p != nullptr; p = next)
-    {
-        next = p->next;
-        p->next = oldPalettes;
-        oldPalettes = p;
-    }
-    palette = nullptr;
     latestTextureDescriptorSets = nullptr;
     latestIndexBuffer32 = nullptr;
     usedInLatestIndexBuffer32 = 0;

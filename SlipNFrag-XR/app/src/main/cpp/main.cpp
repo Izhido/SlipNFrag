@@ -1540,25 +1540,6 @@ void android_main(struct android_app* app)
 			appState.Scene.indexBuffers.DeleteOld(appState);
 			appState.Scene.buffers.DeleteOld(appState);
 
-			if (appState.Scene.oldPalettes != nullptr)
-			{
-				for (auto p = &appState.Scene.oldPalettes; *p != nullptr; )
-				{
-					(*p)->unusedCount++;
-					if ((*p)->unusedCount >= Constants::maxUnusedCount)
-					{
-						auto next = (*p)->next;
-						(*p)->Delete(appState);
-						delete *p;
-						(*p) = next;
-					}
-					else
-					{
-						p = &(*p)->next;
-					}
-				}
-			}
-
 			Skybox::DeleteOld(appState);
 
 			XrFrameWaitInfo frameWaitInfo { XR_TYPE_FRAME_WAIT_INFO };
@@ -1813,7 +1794,7 @@ void android_main(struct android_app* app)
 
 					if (stagingBufferSize > 0)
 					{
-						perFrame.FillFromStagingBuffer(appState, stagingBuffer, commandBuffer);
+						perFrame.FillFromStagingBuffer(appState, stagingBuffer, commandBuffer, swapchainImageIndex);
 					}
 
 					VkClearValue clearValues[2] { };
@@ -2692,20 +2673,24 @@ void android_main(struct android_app* app)
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
 
-			for (SharedMemoryBuffer* p = appState.Scene.palette, *next; p != nullptr; p = next)
-			{
-				next = p->next;
-				p->Delete(appState);
-				delete p;
-			}
-			appState.Scene.palette = nullptr;
-			for (SharedMemoryBuffer* p = appState.Scene.oldPalettes, *next; p != nullptr; p = next)
-			{
-				next = p->next;
-				p->Delete(appState);
-				delete p;
-			}
-			appState.Scene.oldPalettes = nullptr;
+            for (auto& buffer : appState.Scene.neutralPaletteBuffers)
+            {
+                if (buffer != VK_NULL_HANDLE)
+                {
+                    vkDestroyBuffer(appState.Device, buffer, nullptr);
+                }
+            }
+            for (auto& buffer : appState.Scene.paletteBuffers)
+            {
+                if (buffer != VK_NULL_HANDLE)
+                {
+                    vkDestroyBuffer(appState.Device, buffer, nullptr);
+                }
+            }
+            if (appState.Scene.paletteMemory != VK_NULL_HANDLE)
+            {
+                vkFreeMemory(appState.Device, appState.Scene.paletteMemory, nullptr);
+            }
 
             if (appState.Scene.matricesMapped != VK_NULL_HANDLE)
             {
