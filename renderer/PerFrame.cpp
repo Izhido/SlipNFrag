@@ -1238,50 +1238,6 @@ void PerFrame::SetTintPushConstants(float* pushConstants)
 
 void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex)
 {
-	if (appState.Scene.surfaces.last < 0 &&
-		appState.Scene.surfacesColoredLights.last < 0 &&
-		appState.Scene.surfacesRGBA.last < 0 &&
-		appState.Scene.surfacesRGBAColoredLights.last < 0 &&
-		appState.Scene.surfacesRGBANoGlow.last < 0 &&
-		appState.Scene.surfacesRGBANoGlowColoredLights.last < 0 &&
-		appState.Scene.surfacesRotated.last < 0 &&
-		appState.Scene.surfacesRotatedColoredLights.last < 0 &&
-		appState.Scene.surfacesRotatedRGBA.last < 0 &&
-		appState.Scene.surfacesRotatedRGBAColoredLights.last < 0 &&
-		appState.Scene.surfacesRotatedRGBANoGlow.last < 0 &&
-		appState.Scene.surfacesRotatedRGBANoGlowColoredLights.last < 0 &&
-		appState.Scene.fences.last < 0 &&
-		appState.Scene.fencesColoredLights.last < 0 &&
-		appState.Scene.fencesRGBA.last < 0 &&
-		appState.Scene.fencesRGBAColoredLights.last < 0 &&
-		appState.Scene.fencesRGBANoGlow.last < 0 &&
-		appState.Scene.fencesRGBANoGlowColoredLights.last < 0 &&
-		appState.Scene.fencesRotated.last < 0 &&
-		appState.Scene.fencesRotatedColoredLights.last < 0 &&
-		appState.Scene.fencesRotatedRGBA.last < 0 &&
-		appState.Scene.fencesRotatedRGBAColoredLights.last < 0 &&
-		appState.Scene.fencesRotatedRGBANoGlow.last < 0 &&
-		appState.Scene.fencesRotatedRGBANoGlowColoredLights.last < 0 &&
-		appState.Scene.turbulent.last < 0 &&
-		appState.Scene.turbulentRGBA.last < 0 &&
-		appState.Scene.turbulentLit.last < 0 &&
-		appState.Scene.turbulentColoredLights.last < 0 &&
-		appState.Scene.turbulentRGBALit.last < 0 &&
-		appState.Scene.turbulentRGBAColoredLights.last < 0 &&
-		appState.Scene.turbulentRotated.last < 0 &&
-		appState.Scene.turbulentRotatedRGBA.last < 0 &&
-		appState.Scene.turbulentRotatedLit.last < 0 &&
-		appState.Scene.turbulentRotatedColoredLights.last < 0 &&
-		appState.Scene.turbulentRotatedRGBALit.last < 0 &&
-		appState.Scene.turbulentRotatedRGBAColoredLights.last < 0 &&
-		appState.Scene.alias.last < 0 &&
-		appState.Scene.viewmodels.last < 0 &&
-		appState.Scene.lastSky < 0 &&
-		appState.Scene.verticesSize == 0)
-	{
-		return;
-	}
-
 	VkDescriptorPoolSize poolSizes[3] { };
 
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
