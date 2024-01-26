@@ -87,6 +87,7 @@ struct Scene
     std::vector<VkBuffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;
     VkDeviceMemory paletteMemory;
+    Texture colormap;
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	CachedIndexBuffers indexBuffers;

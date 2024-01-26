@@ -2439,10 +2439,6 @@ int main(int argc, char* argv[])
 				{
 					perFrame.second.sky->Delete(appState);
 				}
-				if (perFrame.second.colormap != nullptr)
-				{
-					perFrame.second.colormap->Delete(appState);
-				}
 				perFrame.second.colormaps.Delete(appState);
 				perFrame.second.stagingBuffers.Delete(appState);
 				perFrame.second.cachedColors.Delete(appState);
@@ -2494,6 +2490,11 @@ int main(int argc, char* argv[])
 
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
+
+            if (appState.Scene.colormap.image != VK_NULL_HANDLE)
+            {
+                appState.Scene.colormap.Delete(appState);
+            }
 
             for (auto& buffer : appState.Scene.neutralPaletteBuffers)
             {

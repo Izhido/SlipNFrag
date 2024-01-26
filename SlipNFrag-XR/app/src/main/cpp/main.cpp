@@ -2617,10 +2617,6 @@ void android_main(struct android_app* app)
 				{
 					perFrame.second.sky->Delete(appState);
 				}
-				if (perFrame.second.colormap != nullptr)
-				{
-					perFrame.second.colormap->Delete(appState);
-				}
 				perFrame.second.colormaps.Delete(appState);
 				perFrame.second.stagingBuffers.Delete(appState);
 				perFrame.second.cachedColors.Delete(appState);
@@ -2672,6 +2668,11 @@ void android_main(struct android_app* app)
 
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.buffers.Delete(appState);
+
+            if (appState.Scene.colormap.image != VK_NULL_HANDLE)
+            {
+                appState.Scene.colormap.Delete(appState);
+            }
 
             for (auto& buffer : appState.Scene.neutralPaletteBuffers)
             {

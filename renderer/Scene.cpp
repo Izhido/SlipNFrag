@@ -2230,10 +2230,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         size += paletteSize;
         perFrame.paletteChangedFrame = pal_changed;
     }
-    if (!host_colormap.empty() && perFrame.colormap == nullptr)
+    if (!host_colormap.empty() && colormap.image == VK_NULL_HANDLE)
     {
-        perFrame.colormap = new Texture();
-        perFrame.colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        colormap.Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
         colormapSize = 16384;
         size += colormapSize;
     }
@@ -2722,13 +2721,13 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     previousTexture = nullptr;
     for (auto i = 0; i <= alias.last; i++)
     {
-        GetStagingBufferSize(appState, d_lists.alias[i], alias.loaded[i], perFrame.colormap, size);
+        GetStagingBufferSize(appState, d_lists.alias[i], alias.loaded[i], &colormap, size);
     }
     previousApverts = nullptr;
     previousTexture = nullptr;
     for (auto i = 0; i <= viewmodels.last; i++)
     {
-        GetStagingBufferSize(appState, d_lists.viewmodels[i], viewmodels.loaded[i], perFrame.colormap, size);
+        GetStagingBufferSize(appState, d_lists.viewmodels[i], viewmodels.loaded[i], &colormap, size);
     }
     if (lastSky >= 0)
     {

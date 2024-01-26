@@ -27,7 +27,6 @@ struct PerFrame
 	CachedTextures colormaps;
 	int colormapCount;
     int paletteChangedFrame;
-	Texture* colormap;
 	Buffer* vertices;
 	Buffer* attributes;
     Buffer* storageAttributes;

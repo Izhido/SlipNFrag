@@ -129,13 +129,16 @@ void Texture::Delete(AppState& appState)
 	if (view != VK_NULL_HANDLE)
 	{
 		vkDestroyImageView(appState.Device, view, nullptr);
+        view = VK_NULL_HANDLE;
 	}
 	if (image != VK_NULL_HANDLE)
 	{
 		vkDestroyImage(appState.Device, image, nullptr);
+        image = VK_NULL_HANDLE;
 	}
 	if (memory != VK_NULL_HANDLE)
 	{
 		vkFreeMemory(appState.Device, memory, nullptr);
+        memory = VK_NULL_HANDLE;
 	}
 }
