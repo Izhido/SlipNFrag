@@ -150,6 +150,7 @@ struct Scene
 	VkDeviceSize indices8Size;
 	VkDeviceSize indices16Size;
 	VkDeviceSize indices32Size;
+    VkDeviceSize sortedVerticesCount;
 	VkDeviceSize sortedVerticesSize;
 	VkDeviceSize sortedAttributesSize;
 	VkDeviceSize sortedIndicesCount;
