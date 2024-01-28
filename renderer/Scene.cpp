@@ -2995,6 +2995,13 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     size += indices32Size;
     size += sortedIndices32Size;
 
+    // Add extra space (and also realign to a 8-byte boundary) to compensate for alignment among 8-, 16-, 32- and 64-bit data:
+    size += 32;
+    while (size % 8 != 0)
+    {
+        size++;
+    }
+
     return size;
 }
 

@@ -188,7 +188,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += loadedAliasIndexBuffer->size;
 		loadedAliasIndexBuffer = loadedAliasIndexBuffer->next;
 	}
-	while (offset % 4 != 0)
+	while (offset % 2 != 0)
 	{
 		offset++;
 	}
@@ -266,10 +266,6 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 		offset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
-	}
-	while (offset % 4 != 0)
-	{
-		offset++;
 	}
 	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
@@ -837,7 +833,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	SharedMemoryBuffer* previousBuffer = nullptr;
 	FillAliasFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
 
-	while (bufferCopy.srcOffset % 4 != 0)
+	while (bufferCopy.srcOffset % 2 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
@@ -862,11 +858,6 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
         appState.Scene.AddToVertexInputBarriers(loaded->buffer->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
         loaded = loaded->next;
     }
-
-	while (bufferCopy.srcOffset % 4 != 0)
-	{
-		bufferCopy.srcOffset++;
-	}
 
 	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)

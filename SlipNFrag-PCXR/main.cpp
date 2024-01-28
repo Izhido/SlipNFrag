@@ -1577,10 +1577,6 @@ int main(int argc, char* argv[])
 
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
 
-                        // UGLY PATCH: There is a little amount of memory not being counted in the call above.
-                        // For now, and until the missing calculation is found, force some extra space:
-                        stagingBufferSize = stagingBufferSize * 5 / 4;
-
                         stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
                         stagingBuffer = perFrame.stagingBuffers.GetHostVisibleStorageBuffer(appState, stagingBufferSize);
                         if (stagingBuffer->mapped == nullptr)
