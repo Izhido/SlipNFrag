@@ -1755,16 +1755,17 @@ void android_main(struct android_app* app)
 
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
 
-						if (stagingBufferSize > 0)
-						{
-							stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
-							stagingBuffer = perFrame.stagingBuffers.GetHostVisibleStorageBuffer(appState, stagingBufferSize);
-							if (stagingBuffer->mapped == nullptr)
-							{
-								CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
-							}
-							perFrame.LoadStagingBuffer(appState, stagingBuffer);
-						}
+                        // UGLY PATCH: There is a little amount of memory not being counted in the call above.
+                        // For now, and until the missing calculation is found, force some extra space:
+                        stagingBufferSize = stagingBufferSize * 5 / 4;
+
+                        stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
+                        stagingBuffer = perFrame.stagingBuffers.GetHostVisibleStorageBuffer(appState, stagingBufferSize);
+                        if (stagingBuffer->mapped == nullptr)
+                        {
+                            CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
+                        }
+                        perFrame.LoadStagingBuffer(appState, stagingBuffer);
 
 						if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 						{
@@ -1792,10 +1793,7 @@ void android_main(struct android_app* app)
 					CHECK_VKCMD(vkResetCommandBuffer(commandBuffer, 0));
 					CHECK_VKCMD(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 
-					if (stagingBufferSize > 0)
-					{
-						perFrame.FillFromStagingBuffer(appState, stagingBuffer, commandBuffer, swapchainImageIndex);
-					}
+                    perFrame.FillFromStagingBuffer(appState, stagingBuffer, commandBuffer, swapchainImageIndex);
 
 					VkClearValue clearValues[2] { };
 					clearValues[0].color.float32[0] = clearR;
@@ -1899,27 +1897,6 @@ void android_main(struct android_app* app)
 						depthBarrier.subresourceRange = { VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 2 };
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
-
-                    auto matrices = (float*)(((unsigned char*)appState.Scene.matricesMapped) + appState.Scene.matricesBufferSize * swapchainImageIndex);
-					memcpy(matrices, appState.ViewMatrices.data(), 2 * sizeof(XrMatrix4x4f));
-					memcpy(matrices + 2 * 16, appState.ProjectionMatrices.data(), 2 * sizeof(XrMatrix4x4f));
-                    matrices += 2 * 2 * 16;
-					*matrices++ = appState.Scale;
-					*matrices++ = 0;
-					*matrices++ = 0;
-					*matrices++ = 0;
-					*matrices++ = 0;
-					*matrices++ = 0;
-					*matrices++ = -appState.Scale;
-					*matrices++ = 0;
-					*matrices++ = 0;
-					*matrices++ = appState.Scale;
-					*matrices++ = 0;
-					*matrices++ = 0;
-					*matrices++ = -appState.FromEngine.vieworg0 * appState.Scale;
-					*matrices++ = -appState.FromEngine.vieworg2 * appState.Scale;
-					*matrices++ = appState.FromEngine.vieworg1 * appState.Scale;
-					*matrices++ = 1;
 
 					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 					renderPassBeginInfo.clearValueCount = 2;
@@ -2693,10 +2670,6 @@ void android_main(struct android_app* app)
                 vkFreeMemory(appState.Device, appState.Scene.paletteMemory, nullptr);
             }
 
-            if (appState.Scene.matricesMapped != VK_NULL_HANDLE)
-            {
-                vkUnmapMemory(appState.Device, appState.Scene.matricesMemory);
-            }
             for (auto& buffer : appState.Scene.matricesBuffers)
             {
                 if (buffer != VK_NULL_HANDLE)

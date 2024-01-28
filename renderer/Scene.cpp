@@ -1006,7 +1006,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     auto screenImageCount = appState.Screen.swapchainImages.size();
 
     bufferCreateInfo.size = (2 * 2 + 1) * sizeof(XrMatrix4x4f);
-    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     matricesBuffers.resize(screenImageCount);
     for (uint32_t i = 0; i < screenImageCount; i++)
     {
@@ -1016,7 +1016,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     matricesBufferSize = memoryRequirements.size;
     memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memoryAllocateInfo.allocationSize = matricesBufferSize * screenImageCount;
-    auto properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    auto properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     auto found = false;
     for (auto i = 0; i < appState.MemoryProperties.memoryTypeCount; i++)
     {
@@ -1042,10 +1042,8 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
         CHECK_VKCMD(vkBindBufferMemory(appState.Device, matricesBuffers[i], matricesMemory, memoryOffset));
         memoryOffset += matricesBufferSize;
     }
-    CHECK_VKCMD(vkMapMemory(appState.Device, matricesMemory, 0, VK_WHOLE_SIZE, 0, &matricesMapped));
 
     bufferCreateInfo.size = 256 * 4 * sizeof(float);
-    bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     paletteBuffers.resize(screenImageCount);
     for (uint32_t i = 0; i < screenImageCount; i++)
     {
@@ -1058,9 +1056,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     }
     vkGetBufferMemoryRequirements(appState.Device, paletteBuffers[0], &memoryRequirements);
     paletteBufferSize = memoryRequirements.size;
-    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memoryAllocateInfo.allocationSize = paletteBufferSize * 2 * screenImageCount;
-    properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     found = false;
     for (auto i = 0; i < appState.MemoryProperties.memoryTypeCount; i++)
     {
@@ -2224,7 +2220,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     appState.FromEngine.vup0 = d_lists.vup0;
     appState.FromEngine.vup1 = d_lists.vup1;
     appState.FromEngine.vup2 = d_lists.vup2;
-    VkDeviceSize size = 0;
+
+    VkDeviceSize size = appState.Scene.matricesBufferSize;
+
     if (perFrame.paletteChangedFrame != pal_changed)
     {
         paletteSize = appState.Scene.paletteBufferSize;

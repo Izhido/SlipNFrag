@@ -82,7 +82,6 @@ struct Scene
     std::vector<VkBuffer> matricesBuffers;
     VkDeviceSize matricesBufferSize;
     VkDeviceMemory matricesMemory;
-    void* matricesMapped;
     std::vector<VkBuffer> paletteBuffers;
     std::vector<VkBuffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;
