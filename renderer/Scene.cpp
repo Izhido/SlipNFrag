@@ -2226,7 +2226,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     if (perFrame.paletteChangedFrame != pal_changed)
     {
         paletteSize = appState.Scene.paletteBufferSize;
-        size += paletteSize;
+        size += paletteSize + paletteSize;
         perFrame.paletteChangedFrame = pal_changed;
     }
     if (!host_colormap.empty() && colormap.image == VK_NULL_HANDLE)
