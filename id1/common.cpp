@@ -1619,7 +1619,7 @@ int COM_FindFile (const char *filename, qboolean log_failure, int *handle, int* 
 	if (handle)
 		*handle = -1;
 	else
-		*file = NULL;
+		*file = -1;
 	com_filesize = -1;
 	return -1;
 }
