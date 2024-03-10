@@ -6,12 +6,13 @@ plugins {
 android {
     compileSdk 34
     buildToolsVersion = '34.0.0'
-    ndkVersion '26.0.10792818'
+    ndkVersion '26.2.11394342'
 
     defaultConfig {
         applicationId "com.heribertodelgado.slipnfrag_xr"
-        minSdkVersion 25
-        targetSdkVersion 33
+        minSdkVersion 32
+        targetSdkVersion 32
+        compileSdk 34
         versionCode 24
         versionName '1.0.24'
         shaders {
