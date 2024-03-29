@@ -11,3 +11,5 @@ std::mutex Locks::RenderMutex;
 std::mutex Locks::DirectRectMutex;
 
 std::mutex Locks::SoundMutex;
+
+std::mutex Locks::SysPrintMutex;

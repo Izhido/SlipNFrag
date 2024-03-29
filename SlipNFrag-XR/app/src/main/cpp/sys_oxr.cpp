@@ -167,6 +167,9 @@ void Sys_Printf(const char* fmt, ...)
         }
         string.resize(needed + 1);
     }
+
+    std::lock_guard<std::mutex> lock(Locks::SysPrintMutex);
+
     std::copy(string.begin(), string.begin() + needed, std::back_inserter(buffered));
     auto start = 0;
     for (auto i = 0; i < buffered.size(); i++)

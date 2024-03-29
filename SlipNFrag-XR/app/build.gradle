@@ -11,10 +11,10 @@ android {
     defaultConfig {
         applicationId "com.heribertodelgado.slipnfrag_xr"
         minSdkVersion 32
-        targetSdkVersion 32
+        targetSdkVersion 33
         compileSdk 34
         versionCode 24
-        versionName '1.0.24'
+        versionName '1.0.25'
         shaders {
             glslcArgs.addAll(['-c', '-g'])
         }

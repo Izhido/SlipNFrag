@@ -10,4 +10,5 @@ struct Locks
 	static std::mutex RenderMutex;
 	static std::mutex DirectRectMutex;
 	static std::mutex SoundMutex;
+    static std::mutex SysPrintMutex;
 };
