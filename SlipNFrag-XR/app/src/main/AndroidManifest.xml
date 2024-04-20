@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 	<application android:allowBackup="false" android:label="Slip &amp; Frag" android:hasCode="false"
 		android:icon="@mipmap/ic_launcher">
-        <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2|quest3" />
+        <meta-data android:name="com.oculus.supportedDevices" android:value="all" />
 		<meta-data android:name="com.oculus.ossplash" android:value="true" />
 		<activity
 				android:name="android.app.NativeActivity"
@@ -17,7 +17,7 @@
 				android:launchMode="singleTask"
 				android:screenOrientation="landscape"
 				android:excludeFromRecents="true"
-				android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
+				android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode"
                 android:taskAffinity=""
                 android:exported="true">
 			<meta-data android:name="android.app.lib_name" android:value="slipnfrag_native" />
