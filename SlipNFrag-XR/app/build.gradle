@@ -65,9 +65,14 @@ android {
         }
     }
     namespace 'com.heribertodelgado.slipnfrag_xr'
+    buildFeatures {
+        prefab true
+    }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'org.khronos.openxr:openxr_loader_for_android:1.0.34'
+    implementation 'com.google.oboe:oboe:1.8.1'
 }
