@@ -35,6 +35,11 @@ public:
             return oboe::DataCallbackResult::Continue;
         }
 
+        if (cdaudio_stagingBuffer.size() < (numFrames << 1))
+        {
+            cdaudio_stagingBuffer.resize(numFrames << 1);
+        }
+
         cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), numFrames << 1);
         if (cdaudio_lastCopied < numFrames && cdaudio_playLooping)
         {
@@ -160,15 +165,6 @@ qboolean CDAudio_Start (byte track)
     {
         return false;
     }
-
-	for (auto samples = 1; samples < 1024 * 1024 * 1024; samples <<= 1)
-	{
-		if (samples >= cdaudio_info.sample_rate)
-		{
-			cdaudio_stagingBuffer.resize(samples >> 3);
-			break;
-		}
-	}
 
     result = cdaudio_audioStream->requestStart();
     if (result != oboe::Result::OK)
