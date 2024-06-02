@@ -55,7 +55,6 @@ espan_t	*span_p, *max_span_p;
 int		r_currentkey;
 
 extern	int	screenwidth;
-extern	std::unordered_set<surf_t*> d_drawnsurfaces;
 
 int	current_iv;
 
@@ -949,8 +948,6 @@ void R_ScanEdges (void)
 
 	span_p = basespan_p;
 
-	d_drawnsurfaces.clear();
-
 // clear active edges to just the background edges around the whole screen
 // FIXME: most of this only needs to be set up once
 	r_edge_head = &r_edges[0];
@@ -1016,10 +1013,7 @@ void R_ScanEdges (void)
 			S_ExtraUpdate ();	// don't let sound get messed up if going slow
 			VID_LockBuffer ();
 
-			if (d_uselists)
-				D_DrawSurfacesToListsIfNeeded();
-			else
-				D_DrawSurfaces ();
+			D_DrawSurfaces ();
 
 		// clear the surface span pointers
 			for (s = &surfaces[1] ; s<surface_p ; s++)
@@ -1052,14 +1046,7 @@ void R_ScanEdges (void)
 // draw whatever's left in the span list
 	if (d_uselists)
 	{
-		if (d_drawnsurfaces.empty())
-		{
-			D_DrawSurfacesToLists();
-		}
-		else
-		{
-			D_DrawSurfacesToListsIfNeeded();
-		}
+		D_DrawSurfacesToLists();
 	}
 	else
 	{
