@@ -2,6 +2,7 @@
 #include "stb_vorbis.c"
 #include <oboe/Oboe.h>
 #include <dirent.h>
+#include "Locks.h"
 
 stb_vorbis* cdaudio_stream;
 stb_vorbis_info cdaudio_info;
@@ -29,7 +30,9 @@ class CDAudio_CallbackClass : public oboe::AudioStreamDataCallback
 public:
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream*/* audioStream*/, void *audioData, int32_t numFrames)
     {
-        if (!cdaudio_enabled || !cdaudio_playing)
+        std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
+        if (!cdaudio_enabled || !cdaudio_playing || cdaudio_stream == nullptr)
         {
             memset(audioData, 0, numFrames << 3);
             return oboe::DataCallbackResult::Continue;
@@ -127,11 +130,19 @@ static int CDAudio_GetAudioDiskInfo(void)
 
 void CDAudio_DisposeBuffers()
 {
+    std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
     if (cdaudio_audioStream)
     {
         cdaudio_audioStream->stop();
         cdaudio_audioStream->close();
         cdaudio_audioStream.reset();
+    }
+
+    if (cdaudio_stream)
+    {
+        stb_vorbis_close(cdaudio_stream);
+        cdaudio_stream = nullptr;
     }
 }
 
@@ -171,6 +182,9 @@ qboolean CDAudio_Start (byte track)
     {
         cdaudio_audioStream->close();
         cdaudio_audioStream.reset();
+
+        stb_vorbis_close(cdaudio_stream);
+        cdaudio_stream = nullptr;
         return false;
     }
 
@@ -222,7 +236,9 @@ void CDAudio_Play(byte track, qboolean looping)
 
 void CDAudio_Stop(void)
 {
-	if (!cdaudio_enabled)
+    std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
+    if (!cdaudio_enabled)
 		return;
 
 	if (!cdaudio_playing)
@@ -238,6 +254,12 @@ void CDAudio_Stop(void)
         cdaudio_audioStream->stop();
         cdaudio_audioStream->close();
         cdaudio_audioStream.reset();
+    }
+
+    if (cdaudio_stream)
+    {
+        stb_vorbis_close(cdaudio_stream);
+        cdaudio_stream = nullptr;
     }
 
 	cdaudio_wasPlaying = false;

@@ -435,7 +435,6 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     viewportStateCreateInfo.scissorCount = 1;
 
     VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
-    rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizationStateCreateInfo.lineWidth = 1;
 
