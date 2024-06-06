@@ -531,7 +531,7 @@ void R_MarkLeaves (void)
 	r_visframecount++;
 	r_oldviewleaf = r_viewleaf;
 
-	vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel, false);
+	vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
 		
 	auto p = 0;
 	unsigned char m = 1;
@@ -590,7 +590,7 @@ void R_MarkLeavesForLists (void)
 
 	auto first_node = cl.worldmodel->nodes;
 
-	auto vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel, false);
+	auto vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
 		
 	auto p = 0;
 	unsigned char m = 1;
