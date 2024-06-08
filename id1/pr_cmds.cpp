@@ -543,13 +543,15 @@ void PF_ambientsound (void)
     if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
     {
         MSG_WriteByte(&sv.signon, svc_expandedspawnstaticsound);
+		for (i=0 ; i<3 ; i++)
+			MSG_WriteFloat(&sv.signon, pos[i]);
     }
     else
     {
         MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
+		for (i=0 ; i<3 ; i++)
+			MSG_WriteCoord(&sv.signon, pos[i]);
     }
-	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord(&sv.signon, pos[i]);
 
     if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
     {
@@ -1501,10 +1503,21 @@ void PF_makestatic (void)
 	MSG_WriteByte (&sv.signon, ent->v.frame);
 	MSG_WriteByte (&sv.signon, ent->v.colormap);
 	MSG_WriteByte (&sv.signon, ent->v.skin);
-	for (i=0 ; i<3 ; i++)
+	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
-		MSG_WriteCoord(&sv.signon, ent->v.origin[i]);
-		MSG_WriteAngle(&sv.signon, ent->v.angles[i]);
+		for (i=0 ; i<3 ; i++)
+		{
+			MSG_WriteFloat(&sv.signon, ent->v.origin[i]);
+			MSG_WriteFloat(&sv.signon, ent->v.angles[i]);
+		}
+	}
+	else
+	{
+		for (i=0 ; i<3 ; i++)
+		{
+			MSG_WriteCoord(&sv.signon, ent->v.origin[i]);
+			MSG_WriteAngle(&sv.signon, ent->v.angles[i]);
+		}
 	}
 
 // throw the entity away now

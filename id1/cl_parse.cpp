@@ -113,8 +113,8 @@ const char *svc_strings[] =
     "svc_expandedclientdata",
     "UNKNOWN",
     "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
+    "svc_expandedparticle",
+	"svc_expandeddamage",
     "svc_expandedspawnstatic",
     "UNKNOWN",
     "svc_expandedspawnbaseline",
@@ -228,7 +228,7 @@ void CL_ParseExpandedStartSoundPacket(void)
     channel &= 7;
 
     for (i=0 ; i<3 ; i++)
-        pos[i] = MSG_ReadCoord ();
+        pos[i] = MSG_ReadFloat ();
  
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 }
@@ -685,29 +685,29 @@ void CL_ParseExpandedUpdate (int bits)
     VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
     
     if (bits & U_ORIGIN1)
-        ent->msg_origins[0][0] = MSG_ReadCoord ();
+        ent->msg_origins[0][0] = MSG_ReadFloat ();
     else
         ent->msg_origins[0][0] = ent->baseline.origin[0];
     if (bits & U_ANGLE1)
-        ent->msg_angles[0][0] = MSG_ReadAngle();
+        ent->msg_angles[0][0] = MSG_ReadFloat();
     else
         ent->msg_angles[0][0] = ent->baseline.angles[0];
     
     if (bits & U_ORIGIN2)
-        ent->msg_origins[0][1] = MSG_ReadCoord ();
+        ent->msg_origins[0][1] = MSG_ReadFloat ();
     else
         ent->msg_origins[0][1] = ent->baseline.origin[1];
     if (bits & U_ANGLE2)
-        ent->msg_angles[0][1] = MSG_ReadAngle();
+        ent->msg_angles[0][1] = MSG_ReadFloat();
     else
         ent->msg_angles[0][1] = ent->baseline.angles[1];
     
     if (bits & U_ORIGIN3)
-        ent->msg_origins[0][2] = MSG_ReadCoord ();
+        ent->msg_origins[0][2] = MSG_ReadFloat ();
     else
         ent->msg_origins[0][2] = ent->baseline.origin[2];
     if (bits & U_ANGLE3)
-        ent->msg_angles[0][2] = MSG_ReadAngle();
+        ent->msg_angles[0][2] = MSG_ReadFloat();
     else
         ent->msg_angles[0][2] = ent->baseline.angles[2];
     
@@ -752,8 +752,8 @@ void CL_ParseExpandedBaseline (entity_t *ent)
     ent->baseline.skin = MSG_ReadByte();
     for (auto i=0 ; i<3 ; i++)
     {
-        ent->baseline.origin[i] = MSG_ReadCoord ();
-        ent->baseline.angles[i] = MSG_ReadAngle ();
+        ent->baseline.origin[i] = MSG_ReadFloat ();
+        ent->baseline.angles[i] = MSG_ReadFloat ();
     }
 }
 
@@ -1109,7 +1109,7 @@ void CL_ParseExpandedStaticSound (void)
     int            i;
     
     for (i=0 ; i<3 ; i++)
-        org[i] = MSG_ReadCoord ();
+        org[i] = MSG_ReadFloat ();
     sound_num = MSG_ReadLongFromString();
     vol = MSG_ReadByte ();
     atten = MSG_ReadByte ();
@@ -1220,9 +1220,13 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_damage:
-			V_ParseDamage ();
+			V_ParseDamage (false);
 			break;
 			
+		case svc_expandeddamage:
+			V_ParseDamage (true);
+			break;
+
 		case svc_serverinfo:
 			CL_ParseServerInfo ();
 			vid.recalc_refdef = true;	// leave intermission full screen
@@ -1285,6 +1289,10 @@ void CL_ParseServerMessage (void)
 			
 		case svc_particle:
 			R_ParseParticleEffect ();
+			break;
+
+		case svc_expandedparticle:
+			R_ParseExpandedParticleEffect();
 			break;
 
 		case svc_spawnbaseline:

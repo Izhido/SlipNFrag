@@ -313,7 +313,7 @@ qboolean V_CheckGamma (void)
 V_ParseDamage
 ===============
 */
-void V_ParseDamage (void)
+void V_ParseDamage (qboolean expanded)
 {
 	int		armor, blood;
 	vec3_t	from;
@@ -325,8 +325,16 @@ void V_ParseDamage (void)
 	
 	armor = MSG_ReadByte ();
 	blood = MSG_ReadByte ();
-	for (i=0 ; i<3 ; i++)
-		from[i] = MSG_ReadCoord ();
+	if (expanded)
+	{
+		for (i=0 ; i<3 ; i++)
+			from[i] = MSG_ReadFloat ();
+	}
+	else
+	{
+		for (i=0 ; i<3 ; i++)
+			from[i] = MSG_ReadCoord ();
+	}
 
 	count = blood*0.5 + armor*0.5;
 	if (count < 10)

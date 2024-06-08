@@ -287,7 +287,35 @@ else
 	
 	R_RunParticleEffect (org, dir, color, count);
 }
-	
+
+/*
+===============
+R_ParseExpandedParticleEffect
+
+Parse an effect out of the server message
+using the expanded protocol
+===============
+*/
+void R_ParseExpandedParticleEffect(void)
+{
+	vec3_t		org, dir;
+	int			i, count, msgcount, color;
+
+	for (i = 0; i < 3; i++)
+		org[i] = MSG_ReadFloat();
+	for (i = 0; i < 3; i++)
+		dir[i] = MSG_ReadChar() * (1.0 / 16);
+	msgcount = MSG_ReadByte();
+	color = MSG_ReadByte();
+
+	if (msgcount == 255)
+		count = 1024;
+	else
+		count = msgcount;
+
+	R_RunParticleEffect(org, dir, color, count);
+}
+
 /*
 ===============
 R_ParticleExplosion
