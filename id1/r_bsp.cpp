@@ -785,7 +785,7 @@ void R_RenderWorld (void)
 	clmodel = currententity->model;
 	r_pcurrentvertbase = clmodel->vertexes;
 
-	if (d_uselists && (r_visleaf_p - r_visleaves.data()) < 512)
+	if (d_uselists && (r_visleaf_p - r_visleaves.data()) < 1024)
 		R_RenderVisWorldNodes (clmodel);
 	else
 		R_RecursiveWorldNode (clmodel->nodes, 15);

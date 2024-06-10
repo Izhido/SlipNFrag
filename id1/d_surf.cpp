@@ -267,6 +267,17 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 {
 	surfcache_t     *cache;
 
+	r_blocklights_smax = (surface->extents[0]>>4)+1;
+	r_blocklights_tmax = (surface->extents[1]>>4)+1;
+
+//
+// safeguard for lightmaps that are too large
+//
+	if (r_blocklights_smax >= 1024 || r_blocklights_tmax >= 1024)
+	{
+		return nullptr;
+	}
+
 //
 // if the surface is animating or flashing, flush the cache
 //
@@ -341,8 +352,6 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 //
 	r_drawsurf.surf = surface;
 
-	r_blocklights_smax = (surface->extents[0]>>4)+1;
-	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax;
 	if (surface->samplesRGB != NULL)
 	{
@@ -374,6 +383,17 @@ surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture)
 {
 	surfcache_t     *cache;
 
+	r_blocklights_smax = (surface->extents[0]>>4)+1;
+	r_blocklights_tmax = (surface->extents[1]>>4)+1;
+
+//
+// safeguard for lightmaps that are too large
+//
+	if (r_blocklights_smax >= 1024 || r_blocklights_tmax >= 1024)
+	{
+		return nullptr;
+	}
+
 //
 // if the surface is animating or flashing, flush the cache
 //
@@ -386,8 +406,6 @@ surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture)
 //
 // determine shape of surface
 //
-	r_blocklights_smax = (surface->extents[0]>>4)+1;
-	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax;
 	auto widthinbytes = r_blocklights_smax * sizeof(unsigned);
 
@@ -464,6 +482,17 @@ surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture)
 {
 	surfcache_t     *cache;
 
+	r_blocklights_smax = (surface->extents[0]>>4)+1;
+	r_blocklights_tmax = (surface->extents[1]>>4)+1;
+
+//
+// safeguard for lightmaps that are too large
+//
+	if (r_blocklights_smax >= 1024 || r_blocklights_tmax >= 1024)
+	{
+		return nullptr;
+	}
+
 //
 // if the surface is animating or flashing, flush the cache
 //
@@ -476,8 +505,6 @@ surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture)
 //
 // determine shape of surface
 //
-	r_blocklights_smax = (surface->extents[0]>>4)+1;
-	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax*3;
 	auto widthinbytes = r_blocklights_smax * 3 * sizeof(unsigned);
 
