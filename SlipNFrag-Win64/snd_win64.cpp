@@ -59,12 +59,12 @@ void SNDDMA_ReleaseAll(void)
 
 void SNDDMA_Callback(void* waveOut, void* waveHeader)
 {
+    std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
     if (shm == NULL || snd_waveout == NULL || snd_waveout != waveOut)
     {
         return;
     }
-
-    std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
     if (snd_forceclear)
     {

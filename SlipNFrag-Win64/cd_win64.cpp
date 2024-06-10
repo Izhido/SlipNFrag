@@ -84,6 +84,8 @@ void CDAudio_DisposeBuffers()
 
 void CDAudio_Callback(void* waveOut, void* waveHeader)
 {
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
 	if (!cdaudio_enabled)
 		return;
 
@@ -95,8 +97,6 @@ void CDAudio_Callback(void* waveOut, void* waveHeader)
 
 	if (cdaudio_waveout == NULL || cdaudio_waveout != waveOut)
 		return;
-
-	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
 	cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
 	if (cdaudio_lastCopied == 0 && cdaudio_playLooping)
@@ -113,6 +113,9 @@ void CDAudio_Callback(void* waveOut, void* waveHeader)
 	if (result != MMSYSERR_NOERROR)
 	{
 		CDAudio_DisposeBuffers();
+
+		cdaudio_wasPlaying = false;
+		cdaudio_playing = false;
 	}
 }
 
