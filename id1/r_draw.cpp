@@ -579,7 +579,7 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 	surface_p->nearzi = r_nearzi;
 	surface_p->flags = fa->flags;
 	surface_p->insubmodel = insubmodel;
-	surface_p->isfence = (fa->texinfo->texture->name[0] == '{');
+	surface_p->isfence = (fa->flags & SURF_DRAWFENCE);
 	surface_p->draw = (d_uselists && r_horizontal != 0 ? 1 : 0);
 	surface_p->spanstate = 0;
 	surface_p->entity = currententity;
@@ -705,7 +705,7 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 	surface_p->nearzi = r_nearzi;
 	surface_p->flags = psurf->flags;
 	surface_p->insubmodel = true;
-	surface_p->isfence = (psurf->texinfo->texture->name[0] == '{');
+	surface_p->isfence = (psurf->flags & SURF_DRAWFENCE);
 	surface_p->draw = (d_uselists && r_horizontal != 0 ? 1 : 0);
 	surface_p->spanstate = 0;
 	surface_p->entity = currententity;

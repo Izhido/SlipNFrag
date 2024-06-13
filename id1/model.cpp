@@ -1347,6 +1347,9 @@ void Mod_LoadFaces (lump_t *l)
 			out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
 			continue;
 		}
+
+		if (out->texinfo->texture->name[0] == '{')
+			out->flags |= SURF_DRAWFENCE;
 	}
 }
 
@@ -1422,6 +1425,9 @@ void Mod_LoadBSP2Faces (lump_t *l)
             out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
             continue;
         }
+
+		if (out->texinfo->texture->name[0] == '{')
+			out->flags |= SURF_DRAWFENCE;
     }
 }
 

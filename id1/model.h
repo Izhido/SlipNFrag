@@ -86,6 +86,7 @@ struct texture_t
 #define SURF_DRAWTILED		0x20
 #define SURF_DRAWBACKGROUND	0x40
 #define SURF_DRAWSKYBOX     0x80
+#define SURF_DRAWFENCE		0x200
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct
