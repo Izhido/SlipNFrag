@@ -240,6 +240,7 @@ extern int		r_amodels_drawn;
 extern edge_t	*r_edges, *edge_p, *edge_max;
 
 extern	std::vector<edge_t*> newedges;
+extern	std::vector<edge_t*> newedges_lastadded;
 extern	std::vector<edge_t*> removeedges;
 
 extern	int	screenwidth;

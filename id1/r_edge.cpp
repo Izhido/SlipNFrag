@@ -48,6 +48,7 @@ int		r_skyleft, r_skytop, r_skyright, r_skybottom;
 // surfaces[1] is the background, and is used as the active surface stack
 
 std::vector<edge_t*> newedges;
+std::vector<edge_t*> newedges_lastadded;
 std::vector<edge_t*> removeedges;
 
 espan_t	*span_p, *max_span_p;
@@ -118,6 +119,7 @@ void R_BeginEdgeFrame (void)
 	}
 
 	std::fill(newedges.begin() + r_refdef.vrect.y, newedges.begin() + r_refdef.vrectbottom, nullptr);
+	std::fill(newedges_lastadded.begin() + r_refdef.vrect.y, newedges_lastadded.begin() + r_refdef.vrectbottom, nullptr);
 	std::fill(removeedges.begin() + r_refdef.vrect.y, removeedges.begin() + r_refdef.vrectbottom, nullptr);
 }
 

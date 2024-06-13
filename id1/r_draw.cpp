@@ -76,6 +76,7 @@ qboolean	r_lastvertvalid;
 void R_ResizeEdges()
 {
     newedges.resize(vid.height);
+	newedges_lastadded.resize(vid.height);
     removeedges.resize(vid.height);
 }
 
@@ -247,12 +248,16 @@ void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1)
 	}
 	else
 	{
-		pcheck = newedges[v];
+		if (newedges_lastadded[v] && newedges_lastadded[v]->u < u_check)
+			pcheck = newedges_lastadded[v];
+		else
+			pcheck = newedges[v];
 		while (pcheck->next && pcheck->next->u < u_check)
 			pcheck = pcheck->next;
 		edge->next = pcheck->next;
 		pcheck->next = edge;
 	}
+	newedges_lastadded[v] = edge;
 
 	edge->nextremove = removeedges[v2];
 	removeedges[v2] = edge;
