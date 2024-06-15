@@ -394,22 +394,22 @@ void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node)
 	
 // add an efrag if the node is a leaf
 
+	if (ent->leafnums == nullptr)
+	{
+		ent->leafnums = new int[MAX_ENT_LEAFS];
+		ent->leaf_size += MAX_ENT_LEAFS;
+	}
+	else if (ent->leaf_size <= ent->num_leafs)
+	{
+		auto previous = ent->leafnums;
+		ent->leafnums = new int[ent->leaf_size + MAX_ENT_LEAFS];
+		memcpy(ent->leafnums, previous, ent->leaf_size * sizeof(int));
+		delete[] previous;
+		ent->leaf_size += MAX_ENT_LEAFS;
+	}
+
 	if ( node->contents < 0)
 	{
-		if (ent->leafnums == nullptr)
-		{
-			ent->leafnums = new int[MAX_ENT_LEAFS];
-			ent->leaf_size += MAX_ENT_LEAFS;
-		}
-		else if (ent->leaf_size <= ent->num_leafs)
-		{
-			auto previous = ent->leafnums;
-			ent->leafnums = new int[ent->leaf_size + MAX_ENT_LEAFS];
-			memcpy(ent->leafnums, previous, ent->leaf_size * sizeof(int));
-			delete[] previous;
-			ent->leaf_size += MAX_ENT_LEAFS;
-		}
-
 		leaf = (mleaf_t *)node;
 		leafnum = leaf - sv.worldmodel->leafs - 1;
 
