@@ -2848,7 +2848,10 @@ void android_main(struct android_app* app)
 	else
 	{
 		// Shut down temporarily the sound system from the core engine:
-		CDAudio_DisposeBuffers ();
+        {
+            std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+            CDAudio_DisposeBuffers ();
+        }
 
 		if (sound_started)
 		{

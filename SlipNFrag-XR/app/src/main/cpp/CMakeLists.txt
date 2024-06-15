@@ -9,7 +9,7 @@ set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.34")
 set(ADRENO_DIR "${ROOT_DIR}/VkAdrenoLayer_v1.4")
-set(ANDROID_BINARIES_DIR "${ROOT_DIR}/android-binaries-1.3.236.0")
+set(ANDROID_BINARIES_DIR "${ROOT_DIR}/android-binaries-1.3.283.0")
 set(ASAN_DIR "${ANDROID_NDK}/toolchains/llvm/prebuilt/windows-x86_64/lib/clang/17/lib/linux")
 
 option(BUILD_WITH_ASAN "Build with Address Sanitizer" OFF)
@@ -53,7 +53,6 @@ find_library(ANDROID_LOG_LIBRARY NAMES log)
 find_library(VULKAN_LIBRARY NAMES vulkan)
 
 find_package(OpenXR REQUIRED CONFIG)
-find_package(oboe REQUIRED CONFIG)
 
 target_include_directories(slipnfrag_native PRIVATE
         ${OPENXR_DIR}/include
@@ -71,7 +70,7 @@ target_link_libraries(slipnfrag_native
         ${ANDROID_LOG_LIBRARY}
         ${VULKAN_LIBRARY}
         OpenXR::openxr_loader
-        oboe::oboe
+        OpenSLES
 )
 
 if(BUILD_WITH_VALIDATION)
