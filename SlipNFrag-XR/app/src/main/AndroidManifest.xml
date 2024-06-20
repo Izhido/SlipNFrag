@@ -7,9 +7,9 @@
 	<uses-feature android:name="android.hardware.vr.headtracking" android:required="true" android:version="1" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-	<application android:allowBackup="false" android:label="Slip &amp; Frag" android:hasCode="false"
+	<application android:allowBackup="false" android:label="Slip &amp; Frag"
 		android:icon="@mipmap/ic_launcher">
-        <meta-data android:name="com.oculus.supportedDevices" android:value="all" />
+        <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2|questpro|quest3" />
 		<meta-data android:name="com.oculus.ossplash" android:value="true" />
 		<activity
 				android:name="android.app.NativeActivity"
