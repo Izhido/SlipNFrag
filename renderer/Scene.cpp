@@ -888,6 +888,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
     pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &alias.pipelineLayout));
+    rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     graphicsPipelineCreateInfo.layout = alias.pipelineLayout;
     graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
     graphicsPipelineCreateInfo.pInputAssemblyState = &triangles;
@@ -904,6 +905,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     pipelineLayoutCreateInfo.setLayoutCount = 1;
     pushConstantInfo.size = 8 * sizeof(float);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particle.pipelineLayout));
+    rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
     graphicsPipelineCreateInfo.layout = particle.pipelineLayout;
     graphicsPipelineCreateInfo.pVertexInputState = &particleAttributes.vertexInputState;
     stages[0].module = particleVertex;
