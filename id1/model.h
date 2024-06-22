@@ -246,7 +246,7 @@ typedef struct
 	trivertx_t			bboxmin;
 	trivertx_t			bboxmax;
 	int					frame;
-	char				name[16];
+	char				name[20];
 } maliasframedesc_t;
 
 typedef struct

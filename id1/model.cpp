@@ -2094,7 +2094,8 @@ void * Mod_LoadAliasFrame (void * pin, int *pframeindex, int numv,
 
 	pdaliasframe = (daliasframe_t *)pin;
 
-	strcpy (name, pdaliasframe->name);
+	Q_memcpy (name, pdaliasframe->name, 16);
+    Q_memset (name + 16, 0, 4);
 
 	for (i=0 ; i<3 ; i++)
 	{
