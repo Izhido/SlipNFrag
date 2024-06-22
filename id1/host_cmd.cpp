@@ -690,11 +690,21 @@ void Host_Loadgame_f (void)
 		for (auto j = 0, k = 0; j < sv.num_edicts; j++, k += pr_edict_size)
 		{
 			auto e = (edict_t*)(sv.edicts.data() + k);
-			SV_UnlinkEdict(e);
+			ED_Free(e);
 		}
 		SV_ResizeEdicts(tocreate * pr_edict_size);
 		sv.edicts_reallocation_sequence++;
 	}
+	else
+	{
+		// Free edicts allocated during map loading but no longer used after restoring saved game state
+		for (auto j = entnum, k = entnum * pr_edict_size; j < sv.num_edicts; j++, k += pr_edict_size)
+		{
+			auto e = (edict_t*)(sv.edicts.data() + k);
+			ED_Free(e);
+		}
+	}
+
 	sv.num_edicts = entnum;
 
 // load the edicts out of the savegame file
