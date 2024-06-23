@@ -267,6 +267,14 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 {
 	surfcache_t     *cache;
 
+//
+// safeguard for surfaces with invalid extents
+//
+	if (surface->extents[0] <= 0 || surface->extents[1] <= 0)
+	{
+		return nullptr;
+	}
+
 	r_blocklights_smax = (surface->extents[0]>>4)+1;
 	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 
@@ -383,6 +391,14 @@ surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture)
 {
 	surfcache_t     *cache;
 
+//
+// safeguard for surfaces with invalid extents
+//
+	if (surface->extents[0] <= 0 || surface->extents[1] <= 0)
+	{
+		return nullptr;
+	}
+
 	r_blocklights_smax = (surface->extents[0]>>4)+1;
 	r_blocklights_tmax = (surface->extents[1]>>4)+1;
 
@@ -481,6 +497,14 @@ D_CacheColoredLightmap
 surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture)
 {
 	surfcache_t     *cache;
+
+//
+// safeguard for surfaces with invalid extents
+//
+	if (surface->extents[0] <= 0 || surface->extents[1] <= 0)
+	{
+		return nullptr;
+	}
 
 	r_blocklights_smax = (surface->extents[0]>>4)+1;
 	r_blocklights_tmax = (surface->extents[1]>>4)+1;

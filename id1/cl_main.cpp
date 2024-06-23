@@ -96,7 +96,7 @@ void client_state_t::Clear()
     gametype = 0;
     worldmodel = nullptr;
     free_efrags = nullptr;
-	viewent.Clear();
+	memset(&viewent, 0, sizeof(viewent));
     cdtrack = 0;
     looptrack = 0;
     scores.clear();

@@ -139,27 +139,6 @@ extern cvar_t	scr_fov;
 void CreatePassages (void);
 void SetVisibilityByPassages (void);
 
-void entity_t::Clear()
-{
-	forcelink = false;
-	memset(&baseline, 0, sizeof(baseline));
-	msgtime = 0;
-	memset(&msg_origins, 0, sizeof(msg_origins));
-	memset(origin, 0, sizeof(origin));
-	memset(msg_angles, 0, sizeof(msg_angles));
-	memset(angles, 0, sizeof(angles));
-	model = nullptr;
-	efrag = nullptr;
-	frame = 0;
-	syncbase = 0;
-	colormap = nullptr;
-	effects = 0;
-	skinnum = 0;
-	visframe = 0;
-	trivial_accept = 0;
-	topnode = nullptr;
-}
-
 /*
 ==================
 R_InitTextures
