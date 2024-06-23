@@ -259,13 +259,13 @@ extern	cvar_t	m_side;
 extern	client_state_t	cl;
 
 // FIXME, allocate dynamically
-extern std::list<efrag_t> cl_efrags;
-extern std::vector<entity_t> cl_entities;
-extern std::list<entity_t> cl_static_entities;
+extern	std::list<efrag_t>	cl_efrags;
+extern	std::vector<entity_t>	cl_entities;
+extern	std::list<entity_t>	cl_static_entities;
 extern	lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
-extern std::vector<dlight_t> cl_dlights;
-extern std::list<entity_t> cl_temp_entities;
-extern std::vector<beam_t> cl_beams;
+extern	std::vector<dlight_t>	cl_dlights;
+extern	std::vector<entity_t>	cl_temp_entities;
+extern	std::vector<beam_t>	cl_beams;
 
 extern int cl_protocol_version_from_server;
 extern int cl_protocol_version_upgrade_requested;

@@ -21,7 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-std::list<entity_t> cl_temp_entities;
+int			num_temp_entities;
+std::vector<entity_t> cl_temp_entities(MAX_TEMP_ENTITIES);
+bool		cl_increase_temp_entities;
 
 int additional_beams;
 std::vector<beam_t> cl_beams(MAX_BEAMS);
@@ -48,6 +50,8 @@ void CL_InitTEnts (void)
 	cl_sfx_ric2 = S_PrecacheSound ("weapons/ric2.wav");
 	cl_sfx_ric3 = S_PrecacheSound ("weapons/ric3.wav");
 	cl_sfx_r_exp3 = S_PrecacheSound ("weapons/r_exp3.wav");
+
+	cl_increase_temp_entities = false;
 }
 
 /*
@@ -267,8 +271,14 @@ entity_t *CL_NewTempEntity (void)
 {
 	entity_t	*ent;
 
-	cl_temp_entities.push_back({ });
-	ent = &cl_temp_entities.back();
+	if (num_temp_entities == cl_temp_entities.size())
+	{
+		cl_increase_temp_entities = true;
+		return NULL;
+	}
+	ent = &cl_temp_entities[num_temp_entities];
+	memset(ent, 0, sizeof(*ent));
+	num_temp_entities++;
     cl_visedicts.push_back(ent);
 
 	ent->colormap = vid.colormap;
@@ -291,7 +301,12 @@ void CL_UpdateTEnts (void)
 	float		yaw, pitch;
 	float		forward;
 
-	cl_temp_entities.clear();
+	if (cl_increase_temp_entities)
+	{
+		cl_temp_entities.resize(cl_temp_entities.size() + MAX_TEMP_ENTITIES);
+		cl_increase_temp_entities = false;
+	}
+	num_temp_entities = 0;
 
     if (additional_beams > 0)
     {

@@ -45,7 +45,7 @@ static aedge_t	aedges[12] = {
 
 extern float	r_avertexnormals[NUMVERTEXNORMALS][3];
 
-void R_AliasColoredTransformAndProjectFinalVerts (finalcoloredvert_t *fv,
+qboolean R_AliasColoredTransformAndProjectFinalVerts (finalcoloredvert_t *fv,
 	stvert_t *pstverts);
 void R_AliasColoredSetUpTransform (int trivial_accept);
 void R_AliasColoredTransformFinalVert (finalcoloredvert_t *fv, auxvert_t *av,
@@ -424,7 +424,7 @@ void R_AliasColoredTransformFinalVert (finalcoloredvert_t *fv, auxvert_t *av,
 R_AliasColoredTransformAndProjectFinalVerts
 ================
 */
-void R_AliasColoredTransformAndProjectFinalVerts (finalcoloredvert_t *fv, stvert_t *pstverts)
+qboolean R_AliasColoredTransformAndProjectFinalVerts (finalcoloredvert_t *fv, stvert_t *pstverts)
 {
 	int			i;
 	argbcolor_t temp;
@@ -448,6 +448,12 @@ void R_AliasColoredTransformAndProjectFinalVerts (finalcoloredvert_t *fv, stvert
 				aliastransform[0][3]) * zi) + aliasxcenter;
 		fv->v[1] = ((DotProduct(pverts->v, aliastransform[1]) +
 				aliastransform[1][3]) * zi) + aliasycenter;
+
+		if (fv->v[0] < r_refdef.aliasvrect.x || fv->v[0] >= r_refdef.aliasvrectright ||
+			fv->v[1] < r_refdef.aliasvrect.y || fv->v[1] >= r_refdef.aliasvrectbottom)
+		{
+			return false;
+		}
 
 		fv->v[2] = pstverts->s;
 		fv->v[3] = pstverts->t;
@@ -478,6 +484,8 @@ void R_AliasColoredTransformAndProjectFinalVerts (finalcoloredvert_t *fv, stvert
 		fv->v[5] = temp.color[1];
 		fv->v[6] = temp.color[2];
 	}
+
+	return true;
 }
 
 #endif
@@ -517,18 +525,19 @@ void R_AliasColoredPrepareUnclippedPoints (void)
 // FIXME: just use pfinalverts directly?
 	fv = pfinalcoloredverts;
 
-	R_AliasColoredTransformAndProjectFinalVerts (fv, pstverts);
+	if (R_AliasColoredTransformAndProjectFinalVerts (fv, pstverts))
+	{
+		if (r_affinetridesc.drawtype)
+			D_PolysetDrawFinalColoredVerts (fv, r_anumverts);
 
-	if (r_affinetridesc.drawtype)
-		D_PolysetDrawFinalColoredVerts (fv, r_anumverts);
+		r_affinetridesc.pfinalverts = NULL;
+		r_affinetridesc.pfinalcoloredverts = pfinalcoloredverts;
+		r_affinetridesc.ptriangles = (mtriangle_t *)
+				((byte *)paliashdr + paliashdr->triangles);
+		r_affinetridesc.numtriangles = pmdl->numtris;
 
-	r_affinetridesc.pfinalverts = NULL;
-	r_affinetridesc.pfinalcoloredverts = pfinalcoloredverts;
-	r_affinetridesc.ptriangles = (mtriangle_t *)
-			((byte *)paliashdr + paliashdr->triangles);
-	r_affinetridesc.numtriangles = pmdl->numtris;
-
-	D_PolysetDraw ();
+		D_PolysetDraw ();
+	}
 }
 
 /*
