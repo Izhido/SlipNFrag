@@ -17,7 +17,6 @@ option(BUILD_WITH_VALIDATION "Build with Vulkan validation layer" OFF)
 option(BUILD_WITH_ADRENO "Build with Adreno validation / performance layer" OFF)
 
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
-file(GLOB LOCAL_C_SOURCE "${LOCAL_DIR}/*.c")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
 file(GLOB RENDERER_SOURCE "${RENDERER_DIR}/*.cpp")
 file(GLOB SND_FLOAT_SOURCE "${SND_FLOAT_DIR}/*.cpp")
