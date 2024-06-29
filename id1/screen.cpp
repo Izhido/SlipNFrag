@@ -297,9 +297,6 @@ static void SCR_CalcRefdef (void)
 	if (scr_fov.value > 170)
 		Cvar_Set ("fov","170");
 
-	r_refdef.fov_x = scr_fov.value;
-	r_refdef.fov_y = CalcFov (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
-
 // intermission is always full screen	
 	if (cl.intermission)
 		size = 120;
@@ -331,6 +328,9 @@ static void SCR_CalcRefdef (void)
 
 // notify the refresh of the change
 	R_ViewChanged (&vrect, sb_lines, vid.aspect);
+
+	r_refdef.fov_x = scr_fov.value;
+	r_refdef.fov_y = CalcFov(r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
 }
 
 
