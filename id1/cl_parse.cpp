@@ -138,15 +138,16 @@ This error checks and tracks the total number of entities
 */
 entity_t	*CL_EntityNum (int num)
 {
-	if (num >= cl_entities.size())
+	if (num >= cl.num_entities)
 	{
-		auto start = cl_entities.size();
-		cl_entities.resize(num + 1);
-		auto end = cl_entities.size();
-		
-		for (auto i = start; i < end; i++)
-        {
-			cl_entities[i].colormap = vid.colormap;
+		while (num >= (int)cl_entities.size())
+		{
+			cl_entities.resize(cl_entities.size() + MAX_EDICTS);
+		}
+		while (cl.num_entities <= num)
+		{
+			cl_entities[cl.num_entities].colormap = vid.colormap;
+			cl.num_entities++;
 		}
 	}
 		
@@ -398,11 +399,7 @@ void CL_ParseServerInfo (void)
 
 
 // local state
-    if (cl_entities.size() == 0)
-    {
-        cl_entities.emplace_back();
-    }
-    cl_entities[0].model = cl.worldmodel = cl.model_precache[1];
+	cl_entities[0].model = cl.worldmodel = cl.model_precache[1];
 	
 	R_NewMap ();
 

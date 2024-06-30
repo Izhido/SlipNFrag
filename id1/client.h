@@ -211,6 +211,7 @@ struct client_state_t
 // refresh related state
 	struct model_s	*worldmodel;	// cl_entitites[0].model
 	struct efrag_s	*free_efrags;
+	int			num_entities;	// held in cl_entities array
 	entity_t	viewent;			// the gun model
 
 	int			cdtrack, looptrack;	// cd audio

@@ -45,7 +45,7 @@ client_static_t	cls;
 client_state_t	cl;
 // FIXME: put these on hunk?
 std::list<efrag_t> cl_efrags;
-std::vector<entity_t> cl_entities;
+std::vector<entity_t> cl_entities(MAX_EDICTS);
 std::list<entity_t> cl_static_entities;
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 std::vector<dlight_t> cl_dlights;
@@ -120,7 +120,7 @@ void CL_ClearState (void)
 
 // clear other arrays	
     if (cl_efrags.empty()) cl_efrags.resize(MAX_EFRAGS);
-    cl_entities.clear();
+    memset (cl_entities.data(), 0, cl_entities.size() * sizeof(entity_t));
     cl_static_entities.clear();
     cl_dlights.clear();
     cl_dlight_index.clear();
@@ -307,7 +307,7 @@ void CL_PrintEntities_f (void)
 	entity_t	*ent;
 	int			i;
 	
-	for (i=0,ent=cl_entities.data() ; i<cl_entities.size() ; i++,ent++)
+	for (i=0,ent=cl_entities.data() ; i<cl.num_entities ; i++,ent++)
 	{
 		Con_Printf ("%3i:",i);
 		if (!ent->model)
@@ -535,7 +535,7 @@ void CL_RelinkEntities (void)
 	bobjrotate = anglemod(100*cl.time);
 	
 // start on the entity after the world
-	for (i=1,ent=cl_entities.data()+1 ; i<cl_entities.size() ; i++,ent++)
+	for (i=1,ent=&cl_entities[1] ; i<cl.num_entities ; i++,ent++)
 	{
 		if (!ent->model)
 		{	// empty slot
