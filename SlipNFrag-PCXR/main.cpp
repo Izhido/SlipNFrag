@@ -140,6 +140,118 @@ static VkBool32 DebugMessengerCallback(
 	return VK_FALSE;
 }
 
+void PrintErrorMessage(const std::string& message)
+{
+	constexpr size_t columns = 80;
+	constexpr size_t rows = 25;
+	std::vector<size_t> lines;
+	size_t column = 0;
+	auto last_space = -1;
+	size_t position = 0;
+	while (position < message.length())
+	{
+		auto c = message[position];
+		if (c == '\n')
+		{
+			lines.push_back(position - column);
+			last_space = -1;
+			column = 0;
+			position++;
+		}
+		else if (c == ' ')
+		{
+			last_space = column;
+			column++;
+			position++;
+		}
+		else if (column >= columns - 4)
+		{
+			if (last_space >= 0)
+			{
+				position -= (column - last_space);
+				lines.push_back(position - column + 1);
+			}
+			else
+			{
+				lines.push_back(position - column);
+			}
+			last_space = -1;
+			column = 0;
+			position++;
+		}
+		else
+		{
+			column++;
+			position++;
+		}
+	}
+	lines.push_back(message.length());
+	for (auto i = 0; i < columns - 1; i++)
+	{
+		printf("*");
+	}
+	printf("\n");
+	auto blank = rows - 2 - (int)lines.size();
+	int top;
+	int bottom;
+	if (blank > 0)
+	{
+		top = (int)floor((float)blank / 2);
+		bottom = blank - top;
+	}
+	else
+	{
+		top = 0;
+		bottom = 0;
+	}
+	while (top > 0)
+	{
+		printf("*");
+		for (auto i = 0; i < columns - 3; i++)
+		{
+			printf(" ");
+		}
+		printf("*\n");
+		top--;
+	}
+	for (size_t l = 0; l < lines.size() - 1; l++)
+	{
+		auto start = lines[l];
+		auto end = lines[l + 1];
+		printf("* ");
+		for (size_t i = start; i < end; i++)
+		{
+			if (message[i] < ' ')
+			{
+				continue;
+			}
+			printf("%c", message[i]);
+		}
+		auto remaining = columns - 3 - end + start;
+		while (remaining > 0)
+		{
+			printf(" ");
+			remaining--;
+		}
+		printf("*\n");
+	}
+	while (bottom > 0)
+	{
+		printf("*");
+		for (auto i = 0; i < columns - 3; i++)
+		{
+			printf(" ");
+		}
+		printf("*\n");
+		bottom--;
+	}
+	for (auto i = 0; i < columns - 1; i++)
+	{
+		printf("*");
+	}
+	printf("\n");
+}
+
 AppState appState { -1, -1, -1 };
 
 int main(int argc, char* argv[])
@@ -268,7 +380,7 @@ int main(int argc, char* argv[])
 		createInfo.enabledApiLayerCount = (uint32_t)xrInstanceApiLayers.size();
 		createInfo.enabledApiLayerNames = xrInstanceApiLayers.data();
 
-		strcpy(createInfo.applicationInfo.applicationName, "SlipNFrag-XR");
+		strcpy(createInfo.applicationInfo.applicationName, "SlipNFrag-PCXR");
 		createInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
 
 		CHECK_XRCMD(xrCreateInstance(&createInfo, &instance));
@@ -2651,12 +2763,23 @@ int main(int argc, char* argv[])
 	}
 	catch (const std::exception& ex)
 	{
-		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Caught exception: %s", ex.what());
+		std::string message = "The following error ocurred:\n\n";
+		message += ex.what();
+		if (message.find("XR_ERROR_FORM_FACTOR_UNAVAILABLE"))
+		{
+			message += "\n\nThis usually indicates that the VR headset is not connected. ";
+			message += "Verify that the headset is connected to begin playing.";
+		}
+		message += "\n\nThe application will now exit.";
+		PrintErrorMessage(message);
 		return EXIT_FAILURE;
 	}
 	catch (...)
 	{
-		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Unknown Error");
+		std::string message = "An error occurred, for which no error message could be provided.\n\n";
+		message += "Check the logs above for hints on what could have happened.\n\n";
+		message += "The application will now exit.";
+		PrintErrorMessage(message);
 		return EXIT_FAILURE;
 	}
 
