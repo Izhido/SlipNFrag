@@ -321,7 +321,38 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			offset += appState.Scene.controllerVerticesSize;
 		}
 		texturedVertexBase = controllerVertexBase + appState.Scene.controllerVerticesSize;
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.textured_vertices.data(), appState.Scene.texturedVerticesSize);
+        if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
+        {
+            auto source = d_lists.textured_vertices.data();
+            auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+            auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
+            auto count = firstVertex * 3;
+            auto toCopy = count * sizeof(float);
+            memcpy(target, source, toCopy);
+            source += count;
+            target += toCopy;
+            auto skyTarget = (float*)target;
+            skyTarget[0] = -appState.SkyLeft + appState.SkyHorizontal * source[0];
+            skyTarget[1] = appState.SkyTop - appState.SkyVertical * source[1];
+            skyTarget[2] = -source[2];
+            skyTarget[3] = -appState.SkyLeft + appState.SkyHorizontal * source[3];
+            skyTarget[4] = appState.SkyTop - appState.SkyVertical * source[4];
+            skyTarget[5] = -source[5];
+            skyTarget[6] = -appState.SkyLeft + appState.SkyHorizontal * source[6];
+            skyTarget[7] = appState.SkyTop - appState.SkyVertical * source[7];
+            skyTarget[8] = -source[8];
+            skyTarget[9] = -appState.SkyLeft + appState.SkyHorizontal * source[9];
+            skyTarget[10] = appState.SkyTop - appState.SkyVertical * source[10];
+            skyTarget[11] = -source[11];
+            source += 12;
+            target += 12 * sizeof(float);
+            toCopy = appState.Scene.texturedVerticesSize - (count + 12) * sizeof(float);
+            memcpy(target, source, toCopy);
+        }
+        else
+        {
+            memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.textured_vertices.data(), appState.Scene.texturedVerticesSize);
+        }
 		offset += appState.Scene.texturedVerticesSize;
 		particlePositionBase = texturedVertexBase + appState.Scene.texturedVerticesSize;
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.particle_positions.data(), appState.Scene.particlePositionsSize);
@@ -358,7 +389,38 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += appState.Scene.controllerAttributesSize;
 	}
 	texturedAttributeBase = controllerAttributeBase + appState.Scene.controllerAttributesSize;
-	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.textured_attributes.data(), appState.Scene.texturedAttributesSize);
+    if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
+    {
+        float skyTexCoordsLeft = 0.5 - appState.SkyLeft / 2;
+        float skyTexCoordsTop = 0.5f - appState.SkyTop / 2;
+        float skyTexCoordsHorizontal = appState.SkyHorizontal / 2;
+        float skyTexCoordsVertical = appState.SkyVertical / 2;
+        auto source = d_lists.textured_attributes.data();
+        auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+        auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
+        auto count = firstVertex * 2;
+        auto toCopy = count * sizeof(float);
+        memcpy(target, source, toCopy);
+        source += count;
+        target += toCopy;
+        auto skyTarget = (float*)target;
+        skyTarget[0] = skyTexCoordsLeft + skyTexCoordsHorizontal * source[0];
+        skyTarget[1] = skyTexCoordsTop + skyTexCoordsVertical * source[1];
+        skyTarget[2] = skyTexCoordsLeft + skyTexCoordsHorizontal * source[2];
+        skyTarget[3] = skyTexCoordsTop + skyTexCoordsVertical * source[3];
+        skyTarget[4] = skyTexCoordsLeft + skyTexCoordsHorizontal * source[4];
+        skyTarget[5] = skyTexCoordsTop + skyTexCoordsVertical * source[5];
+        skyTarget[6] = skyTexCoordsLeft + skyTexCoordsHorizontal * source[6];
+        skyTarget[7] = skyTexCoordsTop + skyTexCoordsVertical * source[7];
+        source += 8;
+        target += 8 * sizeof(float);
+        toCopy = appState.Scene.texturedAttributesSize - (count + 8) * sizeof(float);
+        memcpy(target, source, toCopy);
+    }
+    else
+    {
+        memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.textured_attributes.data(), appState.Scene.texturedAttributesSize);
+    }
 	offset += appState.Scene.texturedAttributesSize;
 	colormappedAttributeBase = texturedAttributeBase + appState.Scene.texturedAttributesSize;
 	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colormapped_attributes.data(), appState.Scene.colormappedLightsSize);

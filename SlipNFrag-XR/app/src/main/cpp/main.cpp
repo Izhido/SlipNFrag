@@ -1691,14 +1691,21 @@ void android_main(struct android_app* app)
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
 
-						auto minHorizontal = FLT_MAX;
-						auto maxHorizontal = FLT_MIN;
+                        float angleHorizontal = FLT_MIN;
+                        float angleUp = 0;
+                        float angleDown = 0;
 						for (size_t i = 0; i < viewCountOutput; i++)
 						{
-							minHorizontal = std::min(minHorizontal, views[i].fov.angleLeft);
-							maxHorizontal = std::max(maxHorizontal, views[i].fov.angleRight);
+                            angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleLeft));
+                            angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleRight));
+                            angleUp += fabs(views[i].fov.angleUp);
+                            angleDown += fabs(views[i].fov.angleDown);
 						}
-						appState.FOV = (maxHorizontal - minHorizontal) * 180 / M_PI;
+						appState.FOV = 2 * (int)floor(angleHorizontal * 180 / M_PI);
+                        appState.SkyLeft = tan(angleHorizontal);
+                        appState.SkyHorizontal = 2 * appState.SkyLeft;
+                        appState.SkyTop = tan(angleUp / (float)viewCountOutput);
+                        appState.SkyVertical = appState.SkyTop + tan(angleDown / (float)viewCountOutput);
 					}
 					
 					projectionLayerViews.resize(viewCountOutput);

@@ -92,10 +92,6 @@ struct dsky_t
 	int height;
 	int size;
 	unsigned char* data;
-	float top;
-	float left;
-	float right;
-	float bottom;
 	int first_vertex;
 	int count;
 };

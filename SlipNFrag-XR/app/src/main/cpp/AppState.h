@@ -33,6 +33,10 @@ struct AppState
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
 	int DefaultFOV;
 	int FOV;
+    float SkyLeft;
+    float SkyHorizontal;
+    float SkyTop;
+    float SkyVertical;
 	uint32_t SwapchainWidth;
 	uint32_t SwapchainHeight;
 	uint32_t SwapchainSampleCount;

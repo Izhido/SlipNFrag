@@ -1161,25 +1161,22 @@ void D_AddParticleToLists (particle_t* part)
 
 void D_FillSkyData (dsky_t& sky, qboolean full_area)
 {
+    float top, left, right, bottom;
 	if (full_area)
 	{
-		sky.left = -0.1;
-		sky.right = 1.1;
-		sky.top = -0.1;
-		sky.bottom = 1.1;
+		left = 0;
+		right = 1;
+		top = 0;
+		bottom = 1;
 	}
 	else
 	{
-		auto left = r_skyleft;
-		auto right = r_skyright;
-		auto top = r_skytop;
-		auto bottom = r_skybottom;
-		int extra_horizontal = vid.width / 10;
-		int extra_vertical = vid.height / 10;
-		sky.left = (float)(left - extra_horizontal) / (float)vid.width;
-		sky.right = (float)(right + extra_horizontal) / (float)vid.width;
-		sky.top = (float)(top - extra_vertical) / (float)vid.height;
-		sky.bottom = (float)(bottom + extra_vertical) / (float)vid.height;
+		int extra_horizontal = vid.width / 20;
+		int extra_vertical = vid.height / 20;
+		left = (float)(r_skyleft - extra_horizontal) / (float)vid.width;
+		right = (float)(r_skyright + extra_horizontal) / (float)vid.width;
+		top = (float)(r_skytop - extra_vertical) / (float)vid.height;
+		bottom = (float)(r_skybottom + extra_vertical) / (float)vid.height;
 	}
 	sky.first_vertex = (d_lists.last_textured_vertex + 1) / 3;
 	sky.count = 4;
@@ -1193,59 +1190,46 @@ void D_FillSkyData (dsky_t& sky, qboolean full_area)
 	{
 		d_lists.textured_attributes.resize(new_size);
 	}
-	float x = sky.left * 2 - 1;
-	float y = 1;
-	float z = 1 - sky.top * 2;
-	float s = sky.left;
-	float t = sky.top;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = left;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = top;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = 1;
 	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
+	d_lists.textured_attributes[d_lists.last_textured_attribute] = left;
 	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
-	x = sky.right * 2 - 1;
-	s = sky.right;
+	d_lists.textured_attributes[d_lists.last_textured_attribute] = top;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = right;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = top;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = 1;
 	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
+	d_lists.textured_attributes[d_lists.last_textured_attribute] = right;
 	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
-	x = sky.left * 2 - 1;
-	z = 1 - sky.bottom * 2;
-	s = sky.left;
-	t = sky.bottom;
+	d_lists.textured_attributes[d_lists.last_textured_attribute] = top;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = left;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = bottom;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = 1;
 	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
+	d_lists.textured_attributes[d_lists.last_textured_attribute] = left;
 	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
-	x = sky.right * 2 - 1;
-	s = sky.right;
+	d_lists.textured_attributes[d_lists.last_textured_attribute] = bottom;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = x;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = right;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = z;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = bottom;
 	d_lists.last_textured_vertex++;
-	d_lists.textured_vertices[d_lists.last_textured_vertex] = -y;
+	d_lists.textured_vertices[d_lists.last_textured_vertex] = 1;
 	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = s;
+	d_lists.textured_attributes[d_lists.last_textured_attribute] = right;
 	d_lists.last_textured_attribute++;
-	d_lists.textured_attributes[d_lists.last_textured_attribute] = t;
+	d_lists.textured_attributes[d_lists.last_textured_attribute] = bottom;
 }
 
 void D_AddSkyToLists (qboolean full_area)
