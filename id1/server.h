@@ -180,6 +180,10 @@ extern	server_t		sv;					// local server
 
 extern	client_t	*host_client;
 
+#ifdef USE_LONGJMP
+extern	jmp_buf 	host_abortserver;
+#endif
+
 extern	double		host_time;
 
 extern	edict_t		*sv_player;

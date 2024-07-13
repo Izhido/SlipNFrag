@@ -147,7 +147,7 @@ void Sys_Error(const char* error, ...)
     sys_errormessage = string.data();
     Host_Shutdown();
 #ifdef USE_LONGJMP
-	std::longjmp(host_jmpbuf, 3); // 3 = Sys_Error reached
+	longjmp (host_abortserver, 1);
 #else
 	throw std::runtime_error("Sys_Error called");
 #endif

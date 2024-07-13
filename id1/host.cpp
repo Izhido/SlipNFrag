@@ -47,13 +47,13 @@ int			host_framecount;
 
 client_t	*host_client;			// current client
 
+#ifdef USE_LONGJMP
+jmp_buf 	host_abortserver;
+#endif
+
 std::vector<byte>	host_basepal;
 std::vector<byte>	host_colormap;
 std::vector<unsigned>	host_basepalcoverage;
-
-#ifdef USE_LONGJMP
-std::jmp_buf host_jmpbuf;
-#endif
 
 cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
 cvar_t	host_speeds = {"host_speeds","0"};			// set for running times
@@ -114,7 +114,7 @@ void Host_EndGame (const char *message, ...)
 		CL_Disconnect ();
 
 #ifdef USE_LONGJMP
-	std::longjmp(host_jmpbuf, 1); // 1 = Host_EndGame reached
+	longjmp (host_abortserver, 1);
 #else
 	throw std::runtime_error("Host_EndGame called");
 #endif
@@ -164,7 +164,7 @@ void Host_Error (const char *error, ...)
 	inerror = false;
 
 #ifdef USE_LONGJMP
-	std::longjmp(host_jmpbuf, 2); // 2 = Host_Error reached
+	longjmp (host_abortserver, 1);
 #else
 	throw std::runtime_error("Host_Error called");
 #endif
@@ -707,7 +707,7 @@ double _host_frame_time1 = 0;
 qboolean _Host_FrameUpdate (float time)
 {
 #ifdef USE_LONGJMP
-	if (setjmp(host_jmpbuf) > 0)
+	if (setjmp (host_abortserver) )
 	{
 		_Host_FrameReset();
 		return false;
@@ -797,7 +797,7 @@ void _Host_FrameFinish (void)
     int            pass1, pass2, pass3;
     
 #ifdef USE_LONGJMP
-	if (setjmp(host_jmpbuf) > 0)
+	if (setjmp (host_abortserver) )
 	{
 		_Host_FrameReset();
 	}
@@ -966,7 +966,7 @@ Host_Init
 void Host_Init (quakeparms_t *parms)
 {
 #ifdef USE_LONGJMP
-	if (setjmp(host_jmpbuf) > 0)
+	if (setjmp (host_abortserver) )
 	{
 		// Do nothing - error messages (and Sys_Error) will already be handled before getting here
 	}
