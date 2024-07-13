@@ -279,7 +279,12 @@ entity_t *CL_NewTempEntity (void)
 	ent = &cl_temp_entities[num_temp_entities];
 	memset(ent, 0, sizeof(*ent));
 	num_temp_entities++;
-    cl_visedicts.push_back(ent);
+	if (cl_numvisedicts >= (int)cl_visedicts.size())
+	{
+		cl_visedicts.resize(cl_visedicts.size() + MAX_VISEDICTS);
+	}
+	cl_visedicts[cl_numvisedicts] = ent;
+	cl_numvisedicts++;
 
 	ent->colormap = vid.colormap;
 	return ent;

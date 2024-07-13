@@ -44,17 +44,18 @@ cvar_t	m_side = {"m_side","0.8", true};
 client_static_t	cls;
 client_state_t	cl;
 // FIXME: put these on hunk?
-std::list<efrag_t> cl_efrags;
-std::vector<entity_t> cl_entities(MAX_EDICTS);
-std::list<entity_t> cl_static_entities;
+std::list<efrag_t>	cl_efrags;
+std::vector<entity_t>	cl_entities(MAX_EDICTS);
+std::list<entity_t>	cl_static_entities;
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
-std::vector<dlight_t> cl_dlights;
-std::unordered_map<int, int> cl_dlight_index;
+std::vector<dlight_t>	cl_dlights;
+std::unordered_map<int, int>	cl_dlight_index;
+
+int				cl_numvisedicts;
+std::vector<entity_t*>	cl_visedicts(MAX_VISEDICTS);
 
 int cl_protocol_version_from_server;
 int cl_protocol_version_upgrade_requested;
-
-std::vector<entity_t*> cl_visedicts;
 
 void client_state_t::Clear()
 {
@@ -509,7 +510,7 @@ void CL_RelinkEntities (void)
 // determine partial update time	
 	frac = CL_LerpPoint ();
 
-    cl_visedicts.clear();
+	cl_numvisedicts = 0;
 
 //
 // interpolate player info
@@ -646,7 +647,12 @@ void CL_RelinkEntities (void)
 		if (i == cl.viewentity && !chase_active.value)
 			continue;
 
-        cl_visedicts.push_back(ent);
+		if (cl_numvisedicts >= (int)cl_visedicts.size())
+		{
+			cl_visedicts.resize(cl_visedicts.size() + MAX_VISEDICTS);
+		}
+		cl_visedicts[cl_numvisedicts] = ent;
+		cl_numvisedicts++;
 	}
 
 }

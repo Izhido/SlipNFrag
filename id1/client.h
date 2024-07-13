@@ -287,7 +287,9 @@ void CL_Disconnect (void);
 void CL_Disconnect_f (void);
 void CL_NextDemo (void);
 
-extern std::vector<entity_t*> cl_visedicts;
+#define			MAX_VISEDICTS	256
+extern	int				cl_numvisedicts;
+extern	std::vector<entity_t*>	cl_visedicts;
 
 //
 // cl_input

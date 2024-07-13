@@ -623,7 +623,7 @@ void R_DrawEntitiesOnList (void)
 	if (!r_drawentities.value)
 		return;
 
-	for (i=0 ; i<cl_visedicts.size() ; i++)
+	for (i=0 ; i<cl_numvisedicts ; i++)
 	{
 		currententity = cl_visedicts[i];
 
@@ -944,7 +944,7 @@ void R_DrawBEntitiesOnList (void)
 	insubmodel = true;
 	r_dlightframecount = r_framecount;
 
-	for (i=0 ; i<cl_visedicts.size() ; i++)
+	for (i=0 ; i<cl_numvisedicts ; i++)
 	{
 		currententity = cl_visedicts[i];
 
