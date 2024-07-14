@@ -52,11 +52,6 @@ static mvertex_t	*pfrontenter, *pfrontexit;
 
 static qboolean		makeclippededge;
 
-extern std::vector<int> r_visleaves;
-extern std::vector<int> r_visnodes;
-
-extern int		*r_visleaf_p;
-extern int		*r_visnode_p;
 
 //===========================================================================
 
@@ -502,119 +497,6 @@ void R_DrawSubmodelPolygonsToLists (model_t *pmodel)
 
 /*
 ================
-R_RenderVisWorldNodes
-================
-*/
-void R_RenderVisWorldNodes (model_t *world)
-{
-	for (auto leafp=r_visleaves.data() ; leafp<r_visleaf_p ; leafp++)
-	{
-		auto& leaf = world->leafs[*leafp];
-
-		if (leaf.contents == CONTENTS_SOLID)
-			continue;		// solid
-
-		if (R_CullBox (leaf.minmaxs, leaf.minmaxs+3))
-			continue;
-
-// if a leaf node, draw stuff
-		auto mark = leaf.firstmarksurface;
-		auto c = leaf.nummarksurfaces;
-
-		if (c)
-		{
-			do
-			{
-				(*mark)->visframe = r_framecount;
-				mark++;
-			} while (--c);
-		}
-
-	// deal with model fragments in this leaf
-		if (leaf.efrags)
-		{
-			R_StoreEfrags (&leaf.efrags);
-		}
-
-		leaf.key = r_currentkey;
-		r_currentkey++;		// all bmodels in a leaf share the same key
-	}
-
-	for (auto nodep=r_visnodes.data() ; nodep<r_visnode_p ; nodep++)
-	{
-		auto& node = world->nodes[*nodep];
-
-		if (node.contents == CONTENTS_SOLID)
-			continue;		// solid
-
-		if (R_CullBox (node.minmaxs, node.minmaxs+3))
-			continue;
-
-	// node is just a decision point, so go down the apropriate sides
-
-	// find which side of the node we are on
-		auto plane = node.plane;
-
-		float dot;
-		switch (plane->type)
-		{
-		case PLANE_X:
-			dot = modelorg[0] - plane->dist;
-			break;
-		case PLANE_Y:
-			dot = modelorg[1] - plane->dist;
-			break;
-		case PLANE_Z:
-			dot = modelorg[2] - plane->dist;
-			break;
-		default:
-			dot = DotProduct (modelorg, plane->normal) - plane->dist;
-			break;
-		}
-	
-	// draw stuff
-		auto c = node.numsurfaces;
-
-		if (c)
-		{
-			auto surf = cl.worldmodel->surfaces + node.firstsurface;
-
-			if (dot < -BACKFACE_EPSILON)
-			{
-				do
-				{
-					if ((surf->flags & SURF_PLANEBACK) &&
-						(surf->visframe == r_framecount))
-					{
-							D_DrawOneSurfaceToLists (surf);
-					}
-
-					surf++;
-				} while (--c);
-			}
-			else if (dot > BACKFACE_EPSILON)
-			{
-				do
-				{
-					if (!(surf->flags & SURF_PLANEBACK) &&
-						(surf->visframe == r_framecount))
-					{
-							D_DrawOneSurfaceToLists (surf);
-					}
-
-					surf++;
-				} while (--c);
-			}
-
-		// all surfaces on the same node share the same sequence number
-			r_currentkey++;
-		}
-	}
-}
-
-
-/*
-================
 R_RecursiveWorldNode
 ================
 */
@@ -785,10 +667,7 @@ void R_RenderWorld (void)
 	clmodel = currententity->model;
 	r_pcurrentvertbase = clmodel->vertexes;
 
-	if (d_uselists && (r_visleaf_p - r_visleaves.data()) < 1024)
-		R_RenderVisWorldNodes (clmodel);
-	else
-		R_RecursiveWorldNode (clmodel->nodes, 15);
+	R_RecursiveWorldNode (clmodel->nodes, 15);
 }
 
 

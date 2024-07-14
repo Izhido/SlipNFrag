@@ -104,12 +104,6 @@ int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 float	dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
 float	se_time1, se_time2, de_time1, de_time2, dv_time1, dv_time2;
 
-std::vector<int> r_visleaves;
-std::vector<int> r_visnodes;
-
-int		*r_visleaf_p;
-int		*r_visnode_p;
-
 void R_MarkLeaves (void);
 
 cvar_t	r_draworder = {"r_draworder","0"};
@@ -527,69 +521,6 @@ void R_MarkLeaves (void)
 				node->visframe = r_visframecount;
 				node = node->parent;
 			} while (node);
-		}
-		if (m == 128)
-		{
-			m = 1;
-			p++;
-			v = vis[p];
-		}
-		else
-		{
-			m <<= 1;
-		}
-	}
-}
-
-
-/*
-===============
-R_MarkLeavesForLists
-===============
-*/
-void R_MarkLeavesForLists (void)
-{
-	if (r_oldviewleaf == r_viewleaf)
-		return;
-	
-	r_visframecount++;
-	r_oldviewleaf = r_viewleaf;
-
-	if (r_visleaves.size() < cl.worldmodel->numleafs + 1)
-	{
-		r_visleaves.resize(cl.worldmodel->numleafs + 1);
-	}
-	r_visleaf_p = r_visleaves.data();
-
-	if (r_visnodes.size() < cl.worldmodel->numnodes)
-	{
-		r_visnodes.resize(cl.worldmodel->numnodes);
-	}
-	r_visnode_p = r_visnodes.data();
-
-	auto first_node = cl.worldmodel->nodes;
-
-	auto vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
-		
-	auto p = 0;
-	unsigned char m = 1;
-	unsigned char v = vis[p];
-	for (auto i=1 ; i<=cl.worldmodel->numleafs ; i++)
-	{
-		if (v & m)
-		{
-			auto leaf = (mnode_t *)&cl.worldmodel->leafs[i];
-			leaf->visframe = r_visframecount;
-			*r_visleaf_p++ = i;
-			auto node = leaf->parent;
-			while (node)
-			{
-				if (node->visframe == r_visframecount)
-					break;
-				node->visframe = r_visframecount;
-				*r_visnode_p++ = (int)(node - first_node);
-				node = node->parent;
-			};
 		}
 		if (m == 128)
 		{
@@ -1163,10 +1094,7 @@ void R_RenderView_ (void)
 #ifdef PASSAGES
 SetVisibilityByPassages ();
 #else
-	if (d_uselists)
-		R_MarkLeavesForLists ();
-	else
-		R_MarkLeaves ();	// done here so we know if we're in water
+	R_MarkLeaves ();	// done here so we know if we're in water
 #endif
 
 // make FDIV fast. This reduces timing precision after we've been running for a

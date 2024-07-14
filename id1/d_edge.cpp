@@ -879,7 +879,7 @@ void D_DrawOneSurfaceToLists (msurface_t* surf)
 		{
 			auto texture = R_TextureAnimation (surf->texinfo->texture);
 
-			D_DrawSurfaceToLists(surf, texture, texture->name[0] == '{');
+			D_DrawSurfaceToLists(surf, texture, surf->flags & SURF_DRAWFENCE);
 		}
 	}
 }
