@@ -453,6 +453,8 @@ void SV_AddToFatPVS (const vec3_t org, mnode_t *node)
 	mplane_t	*plane;
 	float	d;
 
+	auto fatpvs64 = (uint64_t*)fatpvs.data();
+	auto trailing = fatbytes - fatbytes % 8;
 	while (1)
 	{
 	// if this is a leaf, accumulate the pvs bits
@@ -461,7 +463,10 @@ void SV_AddToFatPVS (const vec3_t org, mnode_t *node)
 			if (node->contents != CONTENTS_SOLID)
 			{
 				pvs = Mod_LeafPVS ( (mleaf_t *)node, sv.worldmodel);
-				for (i=0 ; i<fatbytes ; i++)
+				auto pvs64 = (uint64_t*)pvs;
+				for (i=0 ; i<trailing ; i+=8)
+					*fatpvs64++ |= *pvs64++;
+				for (i=trailing ; i<fatbytes ; i++)
 					fatpvs[i] |= pvs[i];
 			}
 			return;
