@@ -1089,8 +1089,6 @@ void R_RenderView_ (void)
 
 	R_SetupFrame ();
 
-	R_SetFrustum ();
-
 #ifdef PASSAGES
 SetVisibilityByPassages ();
 #else

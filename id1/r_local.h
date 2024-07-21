@@ -307,8 +307,6 @@ void R_AnimateLight (void);
 int R_LightPoint (const vec3_t p);
 argbcolor_t R_ColoredLightPoint (const vec3_t p);
 void R_SetupFrame (void);
-void R_SetFrustum (void);
-qboolean R_CullBox (vec3_t mins, vec3_t maxs);
 void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1);
 void R_ClipEdge (const mvertex_t *pv0, const mvertex_t *pv1, clipplane_t *clip);
 void R_SplitEntityOnNode2 (mnode_t *node);

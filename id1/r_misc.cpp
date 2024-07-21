@@ -395,58 +395,6 @@ void R_SetUpFrustumIndexes (void)
 }
 
 
-int SignbitsForPlane (mplane_t *out)
-{
-	int	bits, j;
-
-	// for fast box on planeside test
-
-	bits = 0;
-	for (j=0 ; j<3 ; j++)
-	{
-		if (out->normal[j] < 0)
-			bits |= 1<<j;
-	}
-	return bits;
-}
-
-
-void R_SetFrustum (void)
-{
-	int		i;
-
-	if (r_refdef.fov_x == 90)
-	{
-		// front side is visible
-
-		VectorAdd (vpn, vright, frustum[0].normal);
-		VectorSubtract (vpn, vright, frustum[1].normal);
-
-		VectorAdd (vpn, vup, frustum[2].normal);
-		VectorSubtract (vpn, vup, frustum[3].normal);
-	}
-	else
-	{
-		// rotate VPN right by FOV_X/2 degrees
-		RotatePointAroundVector( frustum[0].normal, vup, vpn, -(90-r_refdef.fov_x / 2 ) );
-		// rotate VPN left by FOV_X/2 degrees
-		RotatePointAroundVector( frustum[1].normal, vup, vpn, 90-r_refdef.fov_x / 2 );
-		// rotate VPN up by FOV_X/2 degrees
-		RotatePointAroundVector( frustum[2].normal, vright, vpn, 90-r_refdef.fov_y / 2 );
-		// rotate VPN down by FOV_X/2 degrees
-		RotatePointAroundVector( frustum[3].normal, vright, vpn, -( 90 - r_refdef.fov_y / 2 ) );
-	}
-
-	for (i=0 ; i<4 ; i++)
-	{
-		frustum[i].type = PLANE_ANYZ;
-		frustum[i].dist = DotProduct (r_origin, frustum[i].normal);
-		frustum[i].signbits = SignbitsForPlane (&frustum[i]);
-	}
-}
-
-
-
 /*
 ===============
 R_SetupFrame
@@ -614,23 +562,5 @@ r_refdef.viewangles[2]=    0;
 	r_outofedges = 0;
 
 	D_SetupFrame ();
-}
-
-
-/*
-=================
-R_CullBox
-
-Returns true if the box is completely outside the frustom
-=================
-*/
-qboolean R_CullBox (vec3_t mins, vec3_t maxs)
-{
-	int		i;
-
-	for (i=0 ; i<4 ; i++)
-		if (BoxOnPlaneSide (mins, maxs, &frustum[i]) == 2)
-			return true;
-	return false;
 }
 
