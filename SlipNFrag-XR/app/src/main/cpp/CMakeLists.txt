@@ -10,7 +10,7 @@ set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.34")
 set(ADRENO_DIR "${ROOT_DIR}/VkAdrenoLayer_v1.4")
 set(ANDROID_BINARIES_DIR "${ROOT_DIR}/android-binaries-1.3.283.0")
-set(ASAN_DIR "${ANDROID_NDK}/toolchains/llvm/prebuilt/windows-x86_64/lib/clang/17/lib/linux")
+set(ASAN_DIR "${ANDROID_NDK}/toolchains/llvm/prebuilt/windows-x86_64/lib/clang/18/lib/linux")
 
 option(BUILD_WITH_ASAN "Build with Address Sanitizer" OFF)
 option(BUILD_WITH_VALIDATION "Build with Vulkan validation layer" OFF)
@@ -47,6 +47,12 @@ if(BUILD_WITH_ASAN)
     set_target_properties(slipnfrag_native PROPERTIES LINK_FLAGS -fsanitize=address)
 endif()
 
+add_library(slipnfrag_app_glue STATIC
+        ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
+)
+
+set_target_properties(slipnfrag_app_glue PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
+
 find_library(ANDROID_LIBRARY NAMES android)
 find_library(ANDROID_LOG_LIBRARY NAMES log)
 find_library(VULKAN_LIBRARY NAMES vulkan)
@@ -70,6 +76,7 @@ target_link_libraries(slipnfrag_native
         ${VULKAN_LIBRARY}
         OpenXR::openxr_loader
         OpenSLES
+        slipnfrag_app_glue
 )
 
 if(BUILD_WITH_VALIDATION)
