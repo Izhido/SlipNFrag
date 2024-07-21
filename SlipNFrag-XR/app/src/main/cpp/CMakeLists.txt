@@ -36,7 +36,6 @@ add_library(slipnfrag_native MODULE
         ${ID1_SOURCE}
         ${RENDERER_SOURCE}
         ${SND_FLOAT_SOURCE}
-        ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
 )
 
 target_compile_options(slipnfrag_native PRIVATE -Wno-unused-parameter)
@@ -51,7 +50,7 @@ add_library(slipnfrag_app_glue STATIC
         ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
 )
 
-set_target_properties(slipnfrag_app_glue PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
+set_target_properties(slipnfrag_native PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
 
 find_library(ANDROID_LIBRARY NAMES android)
 find_library(ANDROID_LOG_LIBRARY NAMES log)
@@ -71,12 +70,12 @@ target_include_directories(slipnfrag_native PRIVATE
 )
 
 target_link_libraries(slipnfrag_native
+        slipnfrag_app_glue
         ${ANDROID_LIBRARY}
         ${ANDROID_LOG_LIBRARY}
         ${VULKAN_LIBRARY}
         OpenXR::openxr_loader
         OpenSLES
-        slipnfrag_app_glue
 )
 
 if(BUILD_WITH_VALIDATION)
