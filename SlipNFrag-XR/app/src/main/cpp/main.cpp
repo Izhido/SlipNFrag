@@ -1168,22 +1168,19 @@ void android_main(struct android_app* app)
 
 		while (app->destroyRequested == 0)
 		{
-			for (;;)
-			{
-				int events;
-				struct android_poll_source* source;
-				const int timeoutMilliseconds = ((!appState.Resumed && !sessionRunning && app->destroyRequested == 0) ? -1 : 0);
+            struct android_poll_source* poll_source;
+            const int timeoutMilliseconds = ((!appState.Resumed && !sessionRunning && app->destroyRequested == 0) ? -1 : 0);
+            auto result = ALooper_pollOnce(timeoutMilliseconds, nullptr, nullptr, (void**) &poll_source);
 
-				if (ALooper_pollAll(timeoutMilliseconds, nullptr, &events, (void**) &source) < 0)
-				{
-					break;
-				}
+            if (result == ALOOPER_POLL_ERROR)
+            {
+                THROW("ALooper_pollOnce returned ALOOPER_POLL_ERROR");
+            }
 
-				if (source != nullptr)
-				{
-					source->process(app, source);
-				}
-			}
+            if (poll_source != nullptr)
+            {
+                poll_source->process(app, poll_source);
+            }
 
 			auto exitRenderLoop = false;
 			auto requestRestart = false;
