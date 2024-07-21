@@ -168,12 +168,13 @@ byte *Mod_DecompressVis (byte *in, model_t *model)
 	int		row;
 
 	row = (model->numleafs+7)>>3;	
-    auto size = (model->numleafs+31)>>3;
-    if (size > decompressed.size())
+    size_t size = (model->numleafs+31)>>3;
+    if (decompressed.size() < size)
     {
         decompressed.resize(size);
     }
-    out = decompressed.data();
+	auto start = decompressed.data();
+    out = start;
 
 	if (!in)
 	{	// no vis info, so make all visible
@@ -182,7 +183,7 @@ byte *Mod_DecompressVis (byte *in, model_t *model)
 			*out++ = 0xff;
 			row--;
 		}
-		return decompressed.data();
+		return start;
 	}
 
 	do
@@ -200,9 +201,9 @@ byte *Mod_DecompressVis (byte *in, model_t *model)
 			*out++ = 0;
 			c--;
 		}
-	} while (out - decompressed.data() < row);
+	} while (out - start < row);
 	
-	return decompressed.data();
+	return start;
 }
 
 byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model)

@@ -443,7 +443,8 @@ crosses a waterline.
 =============================================================================
 */
 
-std::vector<byte> fatpvs;
+int		fatbytes;
+std::vector<byte>	fatpvs;
 
 void SV_AddToFatPVS (const vec3_t org, mnode_t *node)
 {
@@ -460,7 +461,7 @@ void SV_AddToFatPVS (const vec3_t org, mnode_t *node)
 			if (node->contents != CONTENTS_SOLID)
 			{
 				pvs = Mod_LeafPVS ( (mleaf_t *)node, sv.worldmodel);
-				for (i=0 ; i<fatpvs.size() ; i++)
+				for (i=0 ; i<fatbytes ; i++)
 					fatpvs[i] |= pvs[i];
 			}
 			return;
@@ -488,10 +489,14 @@ Calculates a PVS that is the inclusive or of all leafs within 8 pixels of the
 given point.
 =============
 */
-byte *SV_FatPVS (const vec3_t org)
+static byte *SV_FatPVS (const vec3_t org)
 {
-	fatpvs.resize((sv.worldmodel->numleafs+31)>>3);
-    std::fill(fatpvs.begin(), fatpvs.end(), 0);
+	fatbytes = (sv.worldmodel->numleafs+31)>>3;
+	if (fatbytes > (int)fatpvs.size())
+	{
+		fatpvs.resize(fatbytes);
+	}
+	Q_memset (fatpvs.data(), 0, fatbytes);
 	SV_AddToFatPVS (org, sv.worldmodel->nodes);
 	return fatpvs.data();
 }

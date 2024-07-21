@@ -727,8 +727,12 @@ int PF_newcheckclient (int check)
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
 	leaf = Mod_PointInLeaf (org, sv.worldmodel);
 	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
-    checkpvs.resize((sv.worldmodel->numleafs+7)>>3);
-    memcpy (checkpvs.data(), pvs, (sv.worldmodel->numleafs+7)>>3 );
+	size_t size = (sv.worldmodel->numleafs+7)>>3;
+	if (checkpvs.size() < size)
+	{
+		checkpvs.resize(size);
+	}
+    memcpy (checkpvs.data(), pvs, size );
 
 	return i;
 }
