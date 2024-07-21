@@ -1434,10 +1434,41 @@ void SV_SpawnServer (char *server)
 
 void SV_SetProtocolVersion()
 {
-    if (sv_bump_protocol_version || sv.models.size() >= MAX_MODELS || sv.sound_precache.size() >= MAX_SOUNDS || sv.num_edicts >= MAX_EDICTS || sv_static_entity_count >= MAX_STATIC_ENTITIES)
-        sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
-    else
-        sv_protocol_version = PROTOCOL_VERSION;
+	sv_protocol_version = PROTOCOL_VERSION;
+
+	if (sv_bump_protocol_version ||
+		sv.models.size() >= MAX_MODELS ||
+		sv.sound_precache.size() >= MAX_SOUNDS ||
+		sv.num_edicts >= MAX_EDICTS ||
+		sv_static_entity_count >= MAX_STATIC_ENTITIES)
+	{
+		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
+	}
+	else
+	{
+		auto beyond = false;
+		for (auto& model : sv.models)
+		{
+			if (model == nullptr)
+			{
+				continue;
+			}
+			if (model->mins[0] <= -4095 ||
+				model->mins[1] <= -4095 ||
+				model->mins[2] <= -4095 ||
+				model->maxs[0] >= 4095 ||
+				model->maxs[1] >= 4095 ||
+				model->maxs[2] >= 4095)
+			{
+				beyond = true;
+				break;
+			}
+		}
+		if (beyond)
+		{
+			sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
+		}
+	}
 }
 
 void SV_DeleteEdictLeafs(size_t start, size_t end)
