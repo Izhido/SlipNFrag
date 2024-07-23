@@ -363,7 +363,7 @@ void android_main(struct android_app* app)
 		createInfo.enabledApiLayerNames = xrInstanceApiLayers.data();
 
 		strcpy(createInfo.applicationInfo.applicationName, "SlipNFrag-XR");
-		createInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
+		createInfo.applicationInfo.apiVersion = USE_OPENXR_VERSION;
 
 		CHECK_XRCMD(xrCreateInstance(&createInfo, &instance));
 
