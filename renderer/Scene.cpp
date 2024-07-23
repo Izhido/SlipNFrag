@@ -1213,7 +1213,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
         loaded.lightmap = lightmap;
         loaded.size = surface.lightmap_size * sizeof(uint16_t);
         size += loaded.size;
-        loaded.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+        loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
         lightmaps.Setup(loaded);
         lightmaps.lightmaps.insert({ surface.face, lightmap });
     }
@@ -1231,7 +1231,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
             loaded.lightmap = lightmap;
             loaded.size = surface.lightmap_size * sizeof(uint16_t);
             size += loaded.size;
-            loaded.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+            loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
             lightmaps.Setup(loaded);
         }
         else
@@ -1252,7 +1252,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
         loaded.lightmap = lightmap;
         loaded.size = surface.lightmap_size * sizeof(uint16_t);
         size += loaded.size;
-        loaded.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+        loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
         lightmapsRGBA.Setup(loaded);
         lightmapsRGBA.lightmaps.insert({ surface.face, lightmap });
     }
@@ -1270,7 +1270,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
             loaded.lightmap = lightmap;
             loaded.size = surface.lightmap_size * sizeof(uint16_t);
             size += loaded.size;
-            loaded.source = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+            loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
             lightmapsRGBA.Setup(loaded);
         }
         else

@@ -79,10 +79,10 @@ void D_FillLightmap (dsurface_t& surface, surfcache_s* cache)
 	{
 		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}
-	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
+	surface.first_lightmap_texel = d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
 	auto source = (unsigned*)&cache->data[0];
-	auto target = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+	auto target = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 	for (auto i = 0; i < surface.lightmap_size; i++)
 	{
 		*target++ = *source++;
@@ -98,10 +98,10 @@ void D_FillColoredLightmap (dsurface_t& surface, surfcache_s* cache)
 	{
 		d_lists.lightmap_texels.resize(d_lists.lightmap_texels.size() + 64 * 1024);
 	}
-	surface.lightmap_texels = d_lists.last_lightmap_texel + 1;
+	surface.first_lightmap_texel = d_lists.last_lightmap_texel + 1;
 	d_lists.last_lightmap_texel += surface.lightmap_size;
 	auto source = (unsigned*)&cache->data[0];
-	auto target = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+	auto target = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 	for (auto i = 0; i < surface.lightmap_size; i += 4)
 	{
 		*target++ = *source++;

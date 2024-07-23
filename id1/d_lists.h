@@ -22,7 +22,7 @@ struct dsurface_t : dturbulent_t
 	int lightmap_width;
 	int lightmap_height;
 	int lightmap_size;
-	int lightmap_texels;
+	int first_lightmap_texel;
 };
 
 struct dsurfacewithglow_t : dsurface_t
