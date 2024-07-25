@@ -462,41 +462,6 @@ void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags)
 
 /*
 ================
-R_DrawSubmodelPolygonsToLists
-================
-*/
-void R_DrawSubmodelPolygonsToLists (model_t *pmodel)
-{
-	int			i;
-	vec_t		dot;
-	msurface_t	*psurf;
-	int			numsurfaces;
-	mplane_t	*pplane;
-
-	psurf = &pmodel->surfaces[pmodel->firstmodelsurface];
-	numsurfaces = pmodel->nummodelsurfaces;
-
-	for (i=0 ; i<numsurfaces ; i++, psurf++)
-	{
-	// find which side of the node we are on
-		pplane = psurf->plane;
-
-		dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
-
-	// draw the polygon
-		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
-			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
-		{
-			r_currentkey = ((mleaf_t *)currententity->topnode)->key;
-
-			D_DrawOneSurfaceToLists (psurf);
-		}
-	}
-}
-
-
-/*
-================
 R_RecursiveWorldNode
 ================
 */

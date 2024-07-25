@@ -160,7 +160,6 @@ void R_GenSkyTile16 (void *pdest);
 void R_Surf8Patch (void);
 void R_Surf16Patch (void);
 void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags);
-void R_DrawSubmodelPolygonsToLists (model_t* pmodel);
 void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel);
 
 void R_AliasDrawModel (alight_t *plighting);
@@ -169,7 +168,6 @@ void R_BeginEdgeFrame (void);
 void R_ScanEdges (void);
 void D_DrawSurfaces (void);
 void D_DrawSurfacesToLists (void);
-void D_DrawOneSurfaceToLists (msurface_t* surf);
 void R_InsertNewEdges (edge_t *edgestoadd, edge_t *edgelist);
 void R_StepActiveU (edge_t *pedge);
 void R_RemoveEdges (edge_t *pedge);
