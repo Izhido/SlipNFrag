@@ -1250,7 +1250,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
         lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, VK_FORMAT_R16G16B16A16_UINT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
         lightmap->createdFrameCount = surface.created;
         loaded.lightmap = lightmap;
-        loaded.size = surface.lightmap_size * sizeof(uint16_t);
+        loaded.size = surface.lightmap_size * sizeof(uint16_t) * 4 / 3;
         size += loaded.size;
         loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
         lightmapsRGBA.Setup(loaded);
@@ -1268,7 +1268,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
             lightmap->createdFrameCount = surface.created;
             lightmapEntry->second = lightmap;
             loaded.lightmap = lightmap;
-            loaded.size = surface.lightmap_size * sizeof(uint16_t);
+            loaded.size = surface.lightmap_size * sizeof(uint16_t) * 4 / 3;
             size += loaded.size;
             loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
             lightmapsRGBA.Setup(loaded);

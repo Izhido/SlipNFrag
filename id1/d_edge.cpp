@@ -507,8 +507,10 @@ void D_DrawSurfaces (void)
 D_DrawTurbulentToLists
 ==============
 */
-void D_DrawTurbulentToLists (msurface_t* pface, texture_t* texture)
+void D_DrawTurbulentToLists (surf_s* s)
 {
+	auto pface = (msurface_t*)s->data;
+	auto texture = R_TextureAnimation (pface->texinfo->texture);
 	if (pface->samplesRGB != nullptr)
 	{
 		auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
@@ -579,8 +581,10 @@ void D_DrawTurbulentToLists (msurface_t* pface, texture_t* texture)
 D_DrawSurfaceToLists
 ==============
 */
-void D_DrawSurfaceToLists (msurface_t* pface, texture_t* texture, qboolean isfence)
+void D_DrawSurfaceToLists (surf_s* s)
 {
+	auto pface = (msurface_t*)s->data;
+	auto texture = R_TextureAnimation (pface->texinfo->texture);
 	if (pface->samplesRGB != NULL)
 	{
 		auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
@@ -593,7 +597,7 @@ void D_DrawSurfaceToLists (msurface_t* pface, texture_t* texture, qboolean isfen
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0)
 			{
-				if (isfence)
+				if (s->isfence)
 				{
 					if (texture->external_color != nullptr && texture->external_glow != nullptr)
 						D_AddFenceRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
@@ -609,7 +613,7 @@ void D_DrawSurfaceToLists (msurface_t* pface, texture_t* texture, qboolean isfen
 				else
 					D_AddSurfaceColoredLightsToLists (pface, pcurrentcache, currententity);
 			}
-			else if (isfence)
+			else if (s->isfence)
 			{
 				if (texture->external_color != nullptr && texture->external_glow != nullptr)
 					D_AddFenceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
@@ -638,7 +642,7 @@ void D_DrawSurfaceToLists (msurface_t* pface, texture_t* texture, qboolean isfen
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0)
 			{
-				if (isfence)
+				if (s->isfence)
 				{
 					if (texture->external_color != nullptr && texture->external_glow != nullptr)
 						D_AddFenceRGBAToLists (pface, pcurrentcache, currententity);
@@ -654,7 +658,7 @@ void D_DrawSurfaceToLists (msurface_t* pface, texture_t* texture, qboolean isfen
 				else
 					D_AddSurfaceToLists (pface, pcurrentcache, currententity);
 			}
-			else if (isfence)
+			else if (s->isfence)
 			{
 				if (texture->external_color != nullptr && texture->external_glow != nullptr)
 					D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
@@ -682,7 +686,6 @@ D_DrawSurfacesToLists
 void D_DrawSurfacesToLists (void)
 {
 	surf_t			*s;
-	msurface_t		*pface;
 	vec3_t			world_transformed_modelorg;
 	vec3_t			local_modelorg;
 
@@ -701,7 +704,7 @@ void D_DrawSurfacesToLists (void)
 			auto data_ptr = (size_t)s->data;
 			int data = (int)data_ptr & 0xFF;
 
-			pface = (msurface_t*)s->data;
+			auto pface = (msurface_t*)s->data;
 
 			if (pface == nullptr)
 				continue;
@@ -758,9 +761,7 @@ void D_DrawSurfacesToLists (void)
 										// make entity passed in
 				}
 
-				pface = (msurface_t*)s->data;
-				auto texture = R_TextureAnimation (pface->texinfo->texture);
-				D_DrawTurbulentToLists(pface, texture);
+				D_DrawTurbulentToLists(s);
 
 				if (s->insubmodel)
 				{
@@ -794,9 +795,7 @@ void D_DrawSurfacesToLists (void)
 										// make entity passed in
 				}
 
-				pface = (msurface_t*)s->data;
-				auto texture = R_TextureAnimation (pface->texinfo->texture);
-				D_DrawSurfaceToLists(pface, texture, s->isfence);
+				D_DrawSurfaceToLists(s);
 
 				if (s->insubmodel)
 				{

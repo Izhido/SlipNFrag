@@ -218,7 +218,7 @@ struct dlists_t
 	std::vector<unsigned char> colored_indices8;
 	std::vector<uint16_t> colored_indices16;
 	std::vector<uint32_t> colored_indices32;
-	std::vector<uint16_t> lightmap_texels;
+	std::vector<uint32_t> lightmap_texels;
 };
 
 extern dlists_t d_lists;

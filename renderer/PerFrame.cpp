@@ -726,22 +726,41 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += appState.Scene.colormapSize;
 	}
 	auto loadedLightmap = appState.Scene.lightmaps.first;
-	while (loadedLightmap != nullptr)
+	if (loadedLightmap != nullptr)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmap->source, loadedLightmap->size);
-		offset += loadedLightmap->size;
-		loadedLightmap = loadedLightmap->next;
+		auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		while (loadedLightmap != nullptr)
+		{
+			auto source = (uint32_t*)loadedLightmap->source;
+			for (auto i = 0; i < loadedLightmap->size; i += 2)
+			{
+				*target++ = *source++;
+			}
+			offset += loadedLightmap->size;
+			loadedLightmap = loadedLightmap->next;
+		}
 	}
 	while (offset % 8 != 0)
 	{
 		offset++;
 	}
 	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
-	while (loadedLightmapRGBA != nullptr)
+	if (loadedLightmapRGBA != nullptr)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmapRGBA->source, loadedLightmapRGBA->size);
-		offset += loadedLightmapRGBA->size;
-		loadedLightmapRGBA = loadedLightmapRGBA->next;
+		auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		while (loadedLightmapRGBA != nullptr)
+		{
+			auto source = (uint32_t*)loadedLightmapRGBA->source;
+			for (auto i = 0; i < loadedLightmapRGBA->size; i += 8)
+			{
+				*target++ = *source++;
+				*target++ = *source++;
+				*target++ = *source++;
+				*target++ = 65535;
+			}
+			offset += loadedLightmapRGBA->size;
+			loadedLightmapRGBA = loadedLightmapRGBA->next;
+		}
 	}
 	for (auto& entry : appState.Scene.surfaceTextures)
 	{
