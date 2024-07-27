@@ -10,11 +10,10 @@ ResampleSfx
 void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
-	int		srcsample;
 	float	srcsamplefrac;
 	float	stepscale;
 	int		i;
-	int		y0, y1, y2, y3, samplefrac, fracstep;
+	int		y0, y1, y2, y3, fracstep;
     float	a0, a1, a2, a3, mu, mu2;
 	sfxcache_t	*sc;
 	
@@ -23,7 +22,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 		return;
 
 	stepscale = (float)inrate / shm->speed;	// this is usually 0.5, 1, or 2
-    auto srclength = sc->length;
+    uint64_t srclength = sc->length;
 	outcount = srclength / stepscale;
 	sc->length = outcount;
 	if (sc->loopstart != -1)
@@ -37,15 +36,30 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	sc->stereo = 0;
 
 // resample / decimate to the current source rate
+	auto out = (float*)(sc->data);
 
+	if (stepscale == 1 && inwidth == sc->width)
+	{
+// fast special cases
+		if (inwidth == 2)
+		{
+			for (i=0 ; i<outcount ; i++)
+				*out++ = (float)(LittleShort(((short*)data)[i])) / 32768;
+		}
+		else
+		{
+			for (i=0 ; i<outcount ; i++)
+				*out++ = (float)((unsigned char)(data[i]) - 128) / 128;
+		}
+	}
+	else
 	{
 // general case
-		samplefrac = 0;
+		uint64_t samplefrac = 0;
 		fracstep = stepscale*256;
-		auto out = (float*)(sc->data);
         for (i=0 ; i<outcount ; i++)
         {
-            srcsample = samplefrac >> 8;
+            uint64_t srcsample = samplefrac >> 8;
             srcsamplefrac = samplefrac - (srcsample << 8);
             samplefrac += fracstep;
             if (inwidth == 2)

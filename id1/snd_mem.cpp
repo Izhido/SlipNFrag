@@ -33,11 +33,10 @@ ResampleSfx
 void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
-	int		srcsample;
     float	srcsamplefrac;
 	float	stepscale;
 	int		i;
-	int		y0, y1, y2, y3, samplefrac, fracstep, sample;
+	int		y0, y1, y2, y3, fracstep, sample;
     float	a0, a1, a2, a3, mu, mu2;
 	sfxcache_t	*sc;
 	
@@ -71,11 +70,11 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	else
 	{
 // general case
-		samplefrac = 0;
+		uint64_t samplefrac = 0;
 		fracstep = stepscale*256;
         for (i=0 ; i<outcount ; i++)
         {
-            srcsample = samplefrac >> 8;
+            uint64_t srcsample = samplefrac >> 8;
             srcsamplefrac = samplefrac - (srcsample << 8);
             samplefrac += fracstep;
             if (inwidth == 2)
