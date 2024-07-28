@@ -65,66 +65,66 @@ const char *svc_strings[] =
 	"svc_cdtrack",			// [byte] track [byte] looptrack
 	"svc_sellscreen",
 	"svc_cutscene"
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "svc_expandedsound",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "svc_expandedclientdata",
-    "UNKNOWN",
-    "UNKNOWN",
-    "svc_expandedparticle",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"svc_expandedsound",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"svc_expandedclientdata",
+	"UNKNOWN",
+	"UNKNOWN",
+	"svc_expandedparticle",
 	"svc_expandeddamage",
-    "svc_expandedspawnstatic",
-    "UNKNOWN",
-    "svc_expandedspawnbaseline",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "UNKNOWN",
-    "svc_expandedspawnstaticsound"
+	"svc_expandedspawnstatic",
+	"UNKNOWN",
+	"svc_expandedspawnbaseline",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+	"svc_expandedspawnstaticsound"
 };
 
 //=============================================================================
@@ -203,33 +203,33 @@ CL_ParseExpandedStartSoundPacket
 void CL_ParseExpandedStartSoundPacket(void)
 {
     vec3_t  pos;
-    int     channel, ent;
-    int     sound_num;
-    int     volume;
-    int     field_mask;
-    float   attenuation;
-    int     i;
-               
-    field_mask = MSG_ReadByte();
+    int 	channel, ent;
+    int 	sound_num;
+    int 	volume;
+    int 	field_mask;
+    float 	attenuation;  
+ 	int		i;
+	           
+    field_mask = MSG_ReadByte(); 
 
     if (field_mask & SND_VOLUME)
-        volume = MSG_ReadByte ();
-    else
-        volume = DEFAULT_SOUND_PACKET_VOLUME;
-    
+		volume = MSG_ReadByte ();
+	else
+		volume = DEFAULT_SOUND_PACKET_VOLUME;
+	
     if (field_mask & SND_ATTENUATION)
-        attenuation = MSG_ReadByte () / 64.0;
-    else
-        attenuation = DEFAULT_SOUND_PACKET_ATTENUATION;
-    
-    channel = MSG_ReadLongFromString ();
-    sound_num = MSG_ReadLongFromString ();
+		attenuation = MSG_ReadByte () / 64.0;
+	else
+		attenuation = DEFAULT_SOUND_PACKET_ATTENUATION;
+	
+	channel = MSG_ReadLongFromString ();
+	sound_num = MSG_ReadLongFromString ();
 
-    ent = channel >> 3;
-    channel &= 7;
+	ent = channel >> 3;
+	channel &= 7;
 
-    for (i=0 ; i<3 ; i++)
-        pos[i] = MSG_ReadFloat ();
+	for (i=0 ; i<3 ; i++)
+		pos[i] = MSG_ReadFloat ();
  
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 }
@@ -302,8 +302,8 @@ void CL_ParseServerInfo (void)
 	char	*str;
 	int		i;
 	int		nummodels, numsounds;
-    std::vector<std::string> model_precache;
-	std::vector<std::string> sound_precache;
+	std::vector<std::string>	model_precache;
+	std::vector<std::string>	sound_precache;
 	
 	Con_DPrintf ("Serverinfo packet received.\n");
 //
@@ -317,8 +317,8 @@ void CL_ParseServerInfo (void)
 	{
 		Con_Printf ("Server returned version %i, not %i or 0x%.8x\n", i, PROTOCOL_VERSION, EXPANDED_PROTOCOL_VERSION);
 		return;
-    }
-    cl_protocol_version_from_server = i;
+	}
+	cl_protocol_version_from_server = i;
 
 // parse maxclients
 	cl.maxclients = MSG_ReadByte ();
@@ -327,8 +327,8 @@ void CL_ParseServerInfo (void)
 		Con_Printf("Bad maxclients (%u) from server\n", cl.maxclients);
 		return;
 	}
-    cl.scores.resize(cl.maxclients);
-    memset(cl.scores.data(), 0, cl.maxclients * sizeof(scoreboard_t));
+	cl.scores.resize(cl.maxclients);
+	memset(cl.scores.data(), 0, cl.maxclients * sizeof(scoreboard_t));
 
 // parse gametype
 	cl.gametype = MSG_ReadByte ();
@@ -348,37 +348,37 @@ void CL_ParseServerInfo (void)
 //
 
 // precache models
-    cl.model_precache.clear();
+	cl.model_precache.clear();
 	for (nummodels=1 ; ; nummodels++)
 	{
 		str = MSG_ReadString ();
 		if (!str[0])
 			break;
-		
-        model_precache.emplace_back(str);
+
+		model_precache.emplace_back(str);
 		Mod_TouchModel (str);
 	}
 
 // precache sounds
-    cl.sound_precache.clear();
+	cl.sound_precache.clear();
 	for (numsounds=1 ; ; numsounds++)
 	{
 		str = MSG_ReadString ();
 		if (!str[0])
 			break;
 
-        sound_precache.emplace_back(str);
+		sound_precache.emplace_back(str);
 		S_TouchSound (str);
 	}
 
 //
 // now we try to load everything else until a cache allocation fails
 //
-    cl.model_precache.push_back(nullptr);
+	cl.model_precache.push_back(nullptr);
 	for (i=1 ; i<nummodels ; i++)
 	{
-        auto m = Mod_ForName(model_precache[i-1].c_str(), false);
-        cl.model_precache.push_back(m);
+		auto m = Mod_ForName(model_precache[i-1].c_str(), false);
+		cl.model_precache.push_back(m);
 		if (cl.model_precache[i] == NULL)
 		{
 			Con_Printf("Model %s not found\n", model_precache[i-1].c_str());
@@ -388,11 +388,11 @@ void CL_ParseServerInfo (void)
 	}
 
 	S_BeginPrecaching ();
-    cl.sound_precache.push_back(nullptr);
+	cl.sound_precache.push_back(nullptr);
 	for (i=1 ; i<numsounds ; i++)
 	{
 		auto s = S_PrecacheSound (sound_precache[i-1].c_str());
-        cl.sound_precache.push_back(s);
+		cl.sound_precache.push_back(s);
 		CL_KeepaliveMessage ();
 	}
 	S_EndPrecaching ();
@@ -573,152 +573,152 @@ if (bits&(1<<i))
 
 void CL_ParseExpandedUpdate (int bits)
 {
-    int            i;
-    model_t        *model;
-    int            modnum;
-    qboolean    forcelink;
-    entity_t    *ent;
-    int            num;
+	int			i;
+	model_t		*model;
+	int			modnum;
+	qboolean	forcelink;
+	entity_t	*ent;
+	int			num;
     
-    if (cls.signon == SIGNONS - 1)
-    {    // first update is the final signon stage
-        cls.signon = SIGNONS;
-        CL_SignonReply ();
-    }
-    
-    if (bits & U_MOREBITS)
-    {
-        i = MSG_ReadByte ();
-        bits |= (i<<8);
-    }
-    
-    num = MSG_ReadLongFromString();
-    
-    ent = CL_EntityNum (num);
-    
-    for (i=0 ; i<16 ; i++)
-        if (bits&(1<<i))
-            bitcounts[i]++;
-    
-    if (ent->msgtime != cl.mtime[1])
-        forcelink = true;    // no previous frame to lerp from
-    else
-        forcelink = false;
-    
-    ent->msgtime = cl.mtime[0];
-    
-    if (bits & U_MODEL)
-    {
-        modnum = MSG_ReadLongFromString();
-    }
-    else
-        modnum = ent->baseline.modelindex;
-    
-    model = cl.model_precache[modnum];
-    if (model != ent->model)
-    {
-        ent->model = model;
-        // automatic animation (torches, etc) can be either all together
-        // or randomized
-        if (model)
-        {
-            if (model->synctype == ST_RAND)
-                ent->syncbase = (float)(Sys_Random()&0x7fff) / 0x7fff;
-            else
-                ent->syncbase = 0.0;
-        }
-        else
-            forcelink = true;    // hack to make null model players work
+	if (cls.signon == SIGNONS - 1)
+	{	// first update is the final signon stage
+		cls.signon = SIGNONS;
+		CL_SignonReply ();
+	}
+
+	if (bits & U_MOREBITS)
+	{
+		i = MSG_ReadByte ();
+		bits |= (i<<8);
+	}
+
+	num = MSG_ReadLongFromString();
+
+	ent = CL_EntityNum (num);
+
+for (i=0 ; i<16 ; i++)
+if (bits&(1<<i))
+	bitcounts[i]++;
+
+	if (ent->msgtime != cl.mtime[1])
+		forcelink = true;	// no previous frame to lerp from
+	else
+		forcelink = false;
+
+	ent->msgtime = cl.mtime[0];
+	
+	if (bits & U_MODEL)
+	{
+		modnum = MSG_ReadLongFromString();
+	}
+	else
+		modnum = ent->baseline.modelindex;
+		
+	model = cl.model_precache[modnum];
+	if (model != ent->model)
+	{
+		ent->model = model;
+	// automatic animation (torches, etc) can be either all together
+	// or randomized
+		if (model)
+		{
+			if (model->synctype == ST_RAND)
+				ent->syncbase = (float)(Sys_Random()&0x7fff) / 0x7fff;
+			else
+				ent->syncbase = 0.0;
+		}
+		else
+			forcelink = true;	// hack to make null model players work
 #ifdef GLQUAKE
-        if (num > 0 && num <= cl.maxclients)
-            R_TranslatePlayerSkin (num - 1);
+		if (num > 0 && num <= cl.maxclients)
+			R_TranslatePlayerSkin (num - 1);
 #endif
-    }
-    
-    if (bits & U_FRAME)
-        ent->frame = MSG_ReadByte ();
-    else
-        ent->frame = ent->baseline.frame;
-    
-    if (bits & U_COLORMAP)
-        i = MSG_ReadByte();
-    else
-        i = ent->baseline.colormap;
-    if (!i)
-        ent->colormap = vid.colormap;
-    else
-    {
-        if (i > cl.maxclients)
-            Sys_Error ("i >= cl.maxclients");
-        ent->colormap = cl.scores[i-1].translations;
-    }
-    
+	}
+	
+	if (bits & U_FRAME)
+		ent->frame = MSG_ReadByte ();
+	else
+		ent->frame = ent->baseline.frame;
+
+	if (bits & U_COLORMAP)
+		i = MSG_ReadByte();
+	else
+		i = ent->baseline.colormap;
+	if (!i)
+		ent->colormap = vid.colormap;
+	else
+	{
+		if (i > cl.maxclients)
+			Sys_Error ("i >= cl.maxclients");
+		ent->colormap = cl.scores[i-1].translations;
+	}
+
 #ifdef GLQUAKE
-    if (bits & U_SKIN)
-        skin = MSG_ReadByte();
-    else
-        skin = ent->baseline.skin;
-    if (skin != ent->skinnum) {
-        ent->skinnum = skin;
-        if (num > 0 && num <= cl.maxclients)
-            R_TranslatePlayerSkin (num - 1);
-    }
-    
+	if (bits & U_SKIN)
+		skin = MSG_ReadByte();
+	else
+		skin = ent->baseline.skin;
+	if (skin != ent->skinnum) {
+		ent->skinnum = skin;
+		if (num > 0 && num <= cl.maxclients)
+			R_TranslatePlayerSkin (num - 1);
+	}
+
 #else
-    
-    if (bits & U_SKIN)
-        ent->skinnum = MSG_ReadByte();
-    else
-        ent->skinnum = ent->baseline.skin;
+
+	if (bits & U_SKIN)
+		ent->skinnum = MSG_ReadByte();
+	else
+		ent->skinnum = ent->baseline.skin;
 #endif
-    
-    if (bits & U_EFFECTS)
-        ent->effects = MSG_ReadByte();
-    else
-        ent->effects = ent->baseline.effects;
-    
-    // shift the known values for interpolation
-    VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
-    VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
-    
-    if (bits & U_ORIGIN1)
-        ent->msg_origins[0][0] = MSG_ReadFloat ();
-    else
-        ent->msg_origins[0][0] = ent->baseline.origin[0];
-    if (bits & U_ANGLE1)
-        ent->msg_angles[0][0] = MSG_ReadFloat();
-    else
-        ent->msg_angles[0][0] = ent->baseline.angles[0];
-    
-    if (bits & U_ORIGIN2)
-        ent->msg_origins[0][1] = MSG_ReadFloat ();
-    else
-        ent->msg_origins[0][1] = ent->baseline.origin[1];
-    if (bits & U_ANGLE2)
-        ent->msg_angles[0][1] = MSG_ReadFloat();
-    else
-        ent->msg_angles[0][1] = ent->baseline.angles[1];
-    
-    if (bits & U_ORIGIN3)
-        ent->msg_origins[0][2] = MSG_ReadFloat ();
-    else
-        ent->msg_origins[0][2] = ent->baseline.origin[2];
-    if (bits & U_ANGLE3)
-        ent->msg_angles[0][2] = MSG_ReadFloat();
-    else
-        ent->msg_angles[0][2] = ent->baseline.angles[2];
-    
-    if ( bits & U_NOLERP )
-        ent->forcelink = true;
-    
-    if ( forcelink )
-    {    // didn't have an update last message
-        VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
-        VectorCopy (ent->msg_origins[0], ent->origin);
-        VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
-        VectorCopy (ent->msg_angles[0], ent->angles);
-        ent->forcelink = true;
-    }
+
+	if (bits & U_EFFECTS)
+		ent->effects = MSG_ReadByte();
+	else
+		ent->effects = ent->baseline.effects;
+
+// shift the known values for interpolation
+	VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
+	VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
+
+	if (bits & U_ORIGIN1)
+		ent->msg_origins[0][0] = MSG_ReadFloat ();
+	else
+		ent->msg_origins[0][0] = ent->baseline.origin[0];
+	if (bits & U_ANGLE1)
+		ent->msg_angles[0][0] = MSG_ReadFloat();
+	else
+		ent->msg_angles[0][0] = ent->baseline.angles[0];
+
+	if (bits & U_ORIGIN2)
+		ent->msg_origins[0][1] = MSG_ReadFloat ();
+	else
+		ent->msg_origins[0][1] = ent->baseline.origin[1];
+	if (bits & U_ANGLE2)
+		ent->msg_angles[0][1] = MSG_ReadFloat();
+	else
+		ent->msg_angles[0][1] = ent->baseline.angles[1];
+
+	if (bits & U_ORIGIN3)
+		ent->msg_origins[0][2] = MSG_ReadFloat ();
+	else
+		ent->msg_origins[0][2] = ent->baseline.origin[2];
+	if (bits & U_ANGLE3)
+		ent->msg_angles[0][2] = MSG_ReadFloat();
+	else
+		ent->msg_angles[0][2] = ent->baseline.angles[2];
+
+	if ( bits & U_NOLERP )
+		ent->forcelink = true;
+
+	if ( forcelink )
+	{	// didn't have an update last message
+		VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
+		VectorCopy (ent->msg_origins[0], ent->origin);
+		VectorCopy (ent->msg_angles[0], ent->msg_angles[1]);
+		VectorCopy (ent->msg_angles[0], ent->angles);
+		ent->forcelink = true;
+	}
 }
 
 /*
@@ -743,15 +743,17 @@ void CL_ParseBaseline (entity_t *ent)
 
 void CL_ParseExpandedBaseline (entity_t *ent)
 {
-    ent->baseline.modelindex = MSG_ReadLongFromString();
-    ent->baseline.frame = MSG_ReadByte ();
-    ent->baseline.colormap = MSG_ReadByte();
-    ent->baseline.skin = MSG_ReadByte();
-    for (auto i=0 ; i<3 ; i++)
-    {
-        ent->baseline.origin[i] = MSG_ReadFloat ();
-        ent->baseline.angles[i] = MSG_ReadFloat ();
-    }
+	int			i;
+	
+	ent->baseline.modelindex = MSG_ReadLongFromString();
+	ent->baseline.frame = MSG_ReadByte ();
+	ent->baseline.colormap = MSG_ReadByte();
+	ent->baseline.skin = MSG_ReadByte();
+	for (i=0 ; i<3 ; i++)
+	{
+		ent->baseline.origin[i] = MSG_ReadFloat ();
+		ent->baseline.angles[i] = MSG_ReadFloat ();
+	}
 }
 
 
@@ -765,11 +767,11 @@ Server information pertaining to this client only
 void CL_ParseClientdata (int bits)
 {
 	int		i, j;
-    
-    if (cl_protocol_version_from_server != PROTOCOL_VERSION)
-    {
-        Host_Error("CL_ParseClientdata: command unavailable for expanded protocol version\n");
-    }
+	
+	if (cl_protocol_version_from_server != PROTOCOL_VERSION)
+	{
+		Host_Error("CL_ParseClientdata: command unavailable for expanded protocol version\n");
+	}
 	if (bits & SU_VIEWHEIGHT)
 		cl.viewheight = MSG_ReadChar ();
 	else
@@ -833,11 +835,11 @@ void CL_ParseClientdata (int bits)
 		Sbar_Changed ();
 	}
 	
-    if (bits & SU_REQEXPPROTO)
-    {
-        cl_protocol_version_upgrade_requested = true;
-    }
-    
+	if (bits & SU_REQEXPPROTO)
+	{
+		cl_protocol_version_upgrade_requested = true;
+	}
+
 	i = MSG_ReadShort ();
 	if (cl.stats[STAT_HEALTH] != i)
 	{
@@ -884,116 +886,116 @@ void CL_ParseClientdata (int bits)
 
 void CL_ParseExpandedClientdata (int bits)
 {
-    int        i, j;
-    
-    if (cl_protocol_version_from_server != EXPANDED_PROTOCOL_VERSION)
-        Host_Error("CL_ParseExpandedClientdata: command unavailable for normal protocol version\n");
-    
-    if (bits & SU_VIEWHEIGHT)
-        cl.viewheight = MSG_ReadChar ();
-    else
-        cl.viewheight = DEFAULT_VIEWHEIGHT;
-    
-    if (bits & SU_IDEALPITCH)
-        cl.idealpitch = MSG_ReadChar ();
-    else
-        cl.idealpitch = 0;
-    
-    VectorCopy (cl.mvelocity[0], cl.mvelocity[1]);
-    for (i=0 ; i<3 ; i++)
-    {
-        if (bits & (SU_PUNCH1<<i) )
-            cl.punchangle[i] = MSG_ReadChar();
-        else
-            cl.punchangle[i] = 0;
-        if (bits & (SU_VELOCITY1<<i) )
-            cl.mvelocity[0][i] = MSG_ReadChar()*16;
-        else
-            cl.mvelocity[0][i] = 0;
-    }
-    
-    // [always sent]    if (bits & SU_ITEMS)
-    i = MSG_ReadLong ();
+	int		i, j;
+	
+	if (cl_protocol_version_from_server != EXPANDED_PROTOCOL_VERSION)
+		Host_Error("CL_ParseExpandedClientdata: command unavailable for normal protocol version\n");
 
-    if (cl.items != i)
-    {    // set flash times
-        Sbar_Changed ();
-        for (j=0 ; j<32 ; j++)
-            if ( (i & (1<<j)) && !(cl.items & (1<<j)))
-                cl.item_gettime[j] = cl.time;
-        cl.items = i;
-    }
+	if (bits & SU_VIEWHEIGHT)
+		cl.viewheight = MSG_ReadChar ();
+	else
+		cl.viewheight = DEFAULT_VIEWHEIGHT;
     
-    cl.onground = (bits & SU_ONGROUND) != 0;
-    cl.inwater = (bits & SU_INWATER) != 0;
+	if (bits & SU_IDEALPITCH)
+		cl.idealpitch = MSG_ReadChar ();
+	else
+		cl.idealpitch = 0;
+	
+	VectorCopy (cl.mvelocity[0], cl.mvelocity[1]);
+	for (i=0 ; i<3 ; i++)
+	{
+		if (bits & (SU_PUNCH1<<i) )
+			cl.punchangle[i] = MSG_ReadChar();
+		else
+			cl.punchangle[i] = 0;
+		if (bits & (SU_VELOCITY1<<i) )
+			cl.mvelocity[0][i] = MSG_ReadChar()*16;
+		else
+			cl.mvelocity[0][i] = 0;
+	}
     
-    if (bits & SU_WEAPONFRAME)
-        cl.stats[STAT_WEAPONFRAME] = MSG_ReadLongFromString ();
-    else
-        cl.stats[STAT_WEAPONFRAME] = 0;
-    
-    if (bits & SU_ARMOR)
-        i = MSG_ReadLongFromString ();
-    else
-        i = 0;
-    if (cl.stats[STAT_ARMOR] != i)
-    {
-        cl.stats[STAT_ARMOR] = i;
-        Sbar_Changed ();
-    }
-    
-    if (bits & SU_WEAPON)
-        i = MSG_ReadLongFromString ();
-    else
-        i = 0;
-    if (cl.stats[STAT_WEAPON] != i)
-    {
-        cl.stats[STAT_WEAPON] = i;
-        Sbar_Changed ();
-    }
-    
-    i = MSG_ReadLongFromString ();
-    if (cl.stats[STAT_HEALTH] != i)
-    {
-        cl.stats[STAT_HEALTH] = i;
-        Sbar_Changed ();
-    }
-    
-    i = MSG_ReadLongFromString ();
-    if (cl.stats[STAT_AMMO] != i)
-    {
-        cl.stats[STAT_AMMO] = i;
-        Sbar_Changed ();
-    }
-    
-    for (i=0 ; i<4 ; i++)
-    {
-        j = MSG_ReadLongFromString ();
-        if (cl.stats[STAT_SHELLS+i] != j)
-        {
-            cl.stats[STAT_SHELLS+i] = j;
-            Sbar_Changed ();
-        }
-    }
-    
-    i = MSG_ReadLongFromString ();
-    
-    if (standard_quake)
-    {
-        if (cl.stats[STAT_ACTIVEWEAPON] != i)
-        {
-            cl.stats[STAT_ACTIVEWEAPON] = i;
-            Sbar_Changed ();
-        }
-    }
-    else
-    {
-        if (cl.stats[STAT_ACTIVEWEAPON] != (1<<i))
-        {
-            cl.stats[STAT_ACTIVEWEAPON] = (1<<i);
-            Sbar_Changed ();
-        }
-    }
+// [always sent]	if (bits & SU_ITEMS)
+		i = MSG_ReadLong ();
+
+	if (cl.items != i)
+	{	// set flash times
+		Sbar_Changed ();
+		for (j=0 ; j<32 ; j++)
+			if ( (i & (1<<j)) && !(cl.items & (1<<j)))
+				cl.item_gettime[j] = cl.time;
+		cl.items = i;
+	}
+		
+	cl.onground = (bits & SU_ONGROUND) != 0;
+	cl.inwater = (bits & SU_INWATER) != 0;
+
+	if (bits & SU_WEAPONFRAME)
+		cl.stats[STAT_WEAPONFRAME] = MSG_ReadLongFromString ();
+	else
+		cl.stats[STAT_WEAPONFRAME] = 0;
+
+	if (bits & SU_ARMOR)
+		i = MSG_ReadLongFromString ();
+	else
+		i = 0;
+	if (cl.stats[STAT_ARMOR] != i)
+	{
+		cl.stats[STAT_ARMOR] = i;
+		Sbar_Changed ();
+	}
+
+	if (bits & SU_WEAPON)
+		i = MSG_ReadLongFromString ();
+	else
+		i = 0;
+	if (cl.stats[STAT_WEAPON] != i)
+	{
+		cl.stats[STAT_WEAPON] = i;
+		Sbar_Changed ();
+	}
+	
+	i = MSG_ReadLongFromString ();
+	if (cl.stats[STAT_HEALTH] != i)
+	{
+		cl.stats[STAT_HEALTH] = i;
+		Sbar_Changed ();
+	}
+
+	i = MSG_ReadLongFromString ();
+	if (cl.stats[STAT_AMMO] != i)
+	{
+		cl.stats[STAT_AMMO] = i;
+		Sbar_Changed ();
+	}
+
+	for (i=0 ; i<4 ; i++)
+	{
+		j = MSG_ReadLongFromString ();
+		if (cl.stats[STAT_SHELLS+i] != j)
+		{
+			cl.stats[STAT_SHELLS+i] = j;
+			Sbar_Changed ();
+		}
+	}
+
+	i = MSG_ReadLongFromString ();
+
+	if (standard_quake)
+	{
+		if (cl.stats[STAT_ACTIVEWEAPON] != i)
+		{
+			cl.stats[STAT_ACTIVEWEAPON] = i;
+			Sbar_Changed ();
+		}
+	}
+	else
+	{
+		if (cl.stats[STAT_ACTIVEWEAPON] != (1<<i))
+		{
+			cl.stats[STAT_ACTIVEWEAPON] = (1<<i);
+			Sbar_Changed ();
+		}
+	}
 }
 
 /*
@@ -1043,9 +1045,9 @@ void CL_ParseStatic (void)
 {
 	entity_t *ent;
 
-    cl_static_entities.emplace_back();
-    ent = &cl_static_entities.back();
-    CL_ParseBaseline (ent);
+	cl_static_entities.emplace_back();
+	ent = &cl_static_entities.back();
+	CL_ParseBaseline (ent);
 
 // copy it to the current state
 	ent->model = cl.model_precache[ent->baseline.modelindex];
@@ -1061,22 +1063,22 @@ void CL_ParseStatic (void)
 
 void CL_ParseExpandedStatic (void)
 {
-    entity_t *ent;
+	entity_t *ent;
 
-    cl_static_entities.emplace_back();
-    ent = &cl_static_entities.back();
-    CL_ParseExpandedBaseline(ent);
-    
-    // copy it to the current state
-    ent->model = cl.model_precache[ent->baseline.modelindex];
-    ent->frame = ent->baseline.frame;
-    ent->colormap = vid.colormap;
-    ent->skinnum = ent->baseline.skin;
-    ent->effects = ent->baseline.effects;
-    
-    VectorCopy(ent->baseline.origin, ent->origin);
-    VectorCopy(ent->baseline.angles, ent->angles);
-    R_AddEfrags(ent);
+	cl_static_entities.emplace_back();
+	ent = &cl_static_entities.back();
+	CL_ParseExpandedBaseline(ent);
+
+// copy it to the current state
+	ent->model = cl.model_precache[ent->baseline.modelindex];
+	ent->frame = ent->baseline.frame;
+	ent->colormap = vid.colormap;
+	ent->skinnum = ent->baseline.skin;
+	ent->effects = ent->baseline.effects;
+
+	VectorCopy(ent->baseline.origin, ent->origin);
+	VectorCopy(ent->baseline.angles, ent->angles);
+	R_AddEfrags(ent);
 }
 
 /*
@@ -1101,17 +1103,17 @@ void CL_ParseStaticSound (void)
 
 void CL_ParseExpandedStaticSound (void)
 {
-    vec3_t        org;
-    int            sound_num, vol, atten;
-    int            i;
-    
-    for (i=0 ; i<3 ; i++)
-        org[i] = MSG_ReadFloat ();
-    sound_num = MSG_ReadLongFromString();
-    vol = MSG_ReadByte ();
-    atten = MSG_ReadByte ();
-    
-    S_StaticSound (cl.sound_precache[sound_num], org, vol, atten);
+	vec3_t		org;
+	int			sound_num, vol, atten;
+	int			i;
+	
+	for (i=0 ; i<3 ; i++)
+		org[i] = MSG_ReadFloat ();
+	sound_num = MSG_ReadLongFromString();
+	vol = MSG_ReadByte ();
+	atten = MSG_ReadByte ();
+	
+	S_StaticSound (cl.sound_precache[sound_num], org, vol, atten);
 }
 
 
@@ -1134,8 +1136,8 @@ void CL_ParseServerMessage (void)
 		Con_Printf ("%i ",net_message.cursize);
 	else if (cl_shownet.value == 2)
 		Con_Printf ("------------------\n");
-
-	// Commenting out the following line seemed to help smooth things out with jumping animations:
+	
+// Commenting out the following line seemed to help smooth things out with jumping animations:
 	//cl.onground = false;	// unless the server says otherwise
 //
 // parse the message
@@ -1159,10 +1161,10 @@ void CL_ParseServerMessage (void)
 		if (cmd & 128)
 		{
 			SHOWNET("fast update");
-            if (cl_protocol_version_from_server == EXPANDED_PROTOCOL_VERSION)
-            	CL_ParseExpandedUpdate(cmd&127);
-            else
-                CL_ParseUpdate (cmd&127);
+			if (cl_protocol_version_from_server == EXPANDED_PROTOCOL_VERSION)
+				CL_ParseExpandedUpdate(cmd&127);
+			else
+				CL_ParseUpdate (cmd&127);
 			continue;
 		}
 
@@ -1188,18 +1190,18 @@ void CL_ParseServerMessage (void)
 			i = MSG_ReadShort ();
 			CL_ParseClientdata (i);
 			break;
-
-        case svc_expandedclientdata:
-            i = MSG_ReadLongFromString();
-            CL_ParseExpandedClientdata(i);
-            break;
+		
+		case svc_expandedclientdata:
+			i = MSG_ReadLongFromString();
+			CL_ParseExpandedClientdata(i);
+			break;
 
 		case svc_version:
 			i = MSG_ReadLong ();
 			if (i != PROTOCOL_VERSION && i != EXPANDED_PROTOCOL_VERSION)
 				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i\n", i, PROTOCOL_VERSION, EXPANDED_PROTOCOL_VERSION);
 			cl_protocol_version_from_server = i;
-            break;
+			break;
 			
 		case svc_disconnect:
 			Host_EndGame ("Server disconnected\n");
@@ -1250,10 +1252,10 @@ void CL_ParseServerMessage (void)
 			CL_ParseStartSoundPacket();
 			break;
 			
-        case svc_expandedsound:
-            CL_ParseExpandedStartSoundPacket();
-            break;
-            
+		case svc_expandedsound:
+			CL_ParseExpandedStartSoundPacket();
+			break;
+
 		case svc_stopsound:
 			i = MSG_ReadShort();
 			S_StopSound(i>>3, i&7);
@@ -1298,20 +1300,20 @@ void CL_ParseServerMessage (void)
 			CL_ParseBaseline (CL_EntityNum(i));
 			break;
 
-        case svc_expandedspawnbaseline:
-            i = MSG_ReadLongFromString();
-            CL_ParseExpandedBaseline(CL_EntityNum(i));
-            break;
+		case svc_expandedspawnbaseline:
+			i = MSG_ReadLongFromString();
+			CL_ParseExpandedBaseline(CL_EntityNum(i));
+			break;
 
-        case svc_spawnstatic:
+		case svc_spawnstatic:
 			CL_ParseStatic ();
 			break;
 
-        case svc_expandedspawnstatic:
-            CL_ParseExpandedStatic();
-            break;
+		case svc_expandedspawnstatic:
+			CL_ParseExpandedStatic();
+			break;
 
-        case svc_temp_entity:
+		case svc_temp_entity:
 			CL_ParseTEnt ();
 			break;
 
@@ -1357,10 +1359,10 @@ void CL_ParseServerMessage (void)
 			CL_ParseStaticSound ();
 			break;
 
-        case svc_expandedspawnstaticsound:
-            CL_ParseExpandedStaticSound ();
-            break;
-                
+		case svc_expandedspawnstaticsound:
+			CL_ParseExpandedStaticSound ();
+			break;
+
 		case svc_cdtrack:
 			cl.cdtrack = MSG_ReadByte ();
 			cl.looptrack = MSG_ReadByte ();
