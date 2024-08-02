@@ -12,7 +12,7 @@ layout(set = 0, binding = 0) uniform SceneMatrices
 	layout(offset = 256) mat4 vertexTransform;
 };
 
-layout(set = 1, binding = 0) buffer TextureData
+layout(set = 1, binding = 0) readonly buffer TextureData
 {
 	vec4 textureData[];
 };
