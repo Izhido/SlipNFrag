@@ -387,6 +387,9 @@ void R_EmitCachedEdge (void)
 	if (pedge_t->nearzi > r_nearzi)	// for mipmap finding
 		r_nearzi = pedge_t->nearzi;
 
+	// Now that all surfs are used, the cached edge cannot be used anymore:
+	r_pedge->cachededgeoffset = 0;
+
 	r_emitted = 1;
     r_horizontal = 0;
 }
@@ -476,7 +479,8 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 				}
 				else
 				{
-					if ((((size_t)edge_p - (size_t)r_edges) >
+					if ((r_pedge->cachededgeoffset > 0) &&
+						(((size_t)edge_p - (size_t)r_edges) >
 						 r_pedge->cachededgeoffset) &&
 						(((edge_t *)((size_t)r_edges +
 						 r_pedge->cachededgeoffset))->owner == r_pedge))
@@ -522,7 +526,8 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 				{
 				// it's cached if the cached edge is valid and is owned
 				// by this medge_t
-					if ((((size_t)edge_p - (size_t)r_edges) >
+					if ((r_pedge->cachededgeoffset > 0) &&
+						(((size_t)edge_p - (size_t)r_edges) >
 						 r_pedge->cachededgeoffset) &&
 						(((edge_t *)((size_t)r_edges +
 						 r_pedge->cachededgeoffset))->owner == r_pedge))
