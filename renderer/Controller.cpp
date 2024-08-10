@@ -42,19 +42,7 @@ float* Controller::WriteVertices(float* vertices)
 	*vertices++ = position.x + right.x * 0.015 - up.x * 0.015 - forward.x * 0.15;
 	*vertices++ = position.y + right.y * 0.015 - up.y * 0.015 - forward.y * 0.15;
 	*vertices++ = position.z + right.z * 0.015 - up.z * 0.015 - forward.z * 0.15;
-	
-	*vertices++ = position.x - right.x * 0.0025 - up.x * 0.0025;
-	*vertices++ = position.y - right.y * 0.0025 - up.y * 0.0025;
-	*vertices++ = position.z - right.z * 0.0025 - up.z * 0.0025;
-	*vertices++ = position.x - right.x * 0.0025 + up.x * 0.0025;
-	*vertices++ = position.y - right.y * 0.0025 + up.y * 0.0025;
-	*vertices++ = position.z - right.z * 0.0025 + up.z * 0.0025;
-	*vertices++ = position.x + right.x * 0.0025 + up.x * 0.0025;
-	*vertices++ = position.y + right.y * 0.0025 + up.y * 0.0025;
-	*vertices++ = position.z + right.z * 0.0025 + up.z * 0.0025;
-	*vertices++ = position.x + right.x * 0.0025 - up.x * 0.0025;
-	*vertices++ = position.y + right.y * 0.0025 - up.y * 0.0025;
-	*vertices++ = position.z + right.z * 0.0025 - up.z * 0.0025;
+
 	*vertices++ = position.x - right.x * 0.0025 - up.x * 0.0025 + forward.x;
 	*vertices++ = position.y - right.y * 0.0025 - up.y * 0.0025 + forward.y;
 	*vertices++ = position.z - right.z * 0.0025 - up.z * 0.0025 + forward.z;
@@ -67,6 +55,18 @@ float* Controller::WriteVertices(float* vertices)
 	*vertices++ = position.x + right.x * 0.0025 - up.x * 0.0025 + forward.x;
 	*vertices++ = position.y + right.y * 0.0025 - up.y * 0.0025 + forward.y;
 	*vertices++ = position.z + right.z * 0.0025 - up.z * 0.0025 + forward.z;
+	*vertices++ = position.x - right.x * 0.0025 - up.x * 0.0025;
+	*vertices++ = position.y - right.y * 0.0025 - up.y * 0.0025;
+	*vertices++ = position.z - right.z * 0.0025 - up.z * 0.0025;
+	*vertices++ = position.x - right.x * 0.0025 + up.x * 0.0025;
+	*vertices++ = position.y - right.y * 0.0025 + up.y * 0.0025;
+	*vertices++ = position.z - right.z * 0.0025 + up.z * 0.0025;
+	*vertices++ = position.x + right.x * 0.0025 + up.x * 0.0025;
+	*vertices++ = position.y + right.y * 0.0025 + up.y * 0.0025;
+	*vertices++ = position.z + right.z * 0.0025 + up.z * 0.0025;
+	*vertices++ = position.x + right.x * 0.0025 - up.x * 0.0025;
+	*vertices++ = position.y + right.y * 0.0025 - up.y * 0.0025;
+	*vertices++ = position.z + right.z * 0.0025 - up.z * 0.0025;
 	return vertices;
 }
 
@@ -90,14 +90,6 @@ float* Controller::WriteAttributes(float* attributes)
 	*attributes++ = 0.95;
 	
 	*attributes++ = 0;
-	*attributes++ = 0.1;
-	*attributes++ = 1;
-	*attributes++ = 0.1;
-	*attributes++ = 0;
-	*attributes++ = 0.1;
-	*attributes++ = 1;
-	*attributes++ = 0.1;
-	*attributes++ = 0;
 	*attributes++ = 0;
 	*attributes++ = 1;
 	*attributes++ = 0;
@@ -105,7 +97,15 @@ float* Controller::WriteAttributes(float* attributes)
 	*attributes++ = 0;
 	*attributes++ = 1;
 	*attributes++ = 0;
-	
+	*attributes++ = 0;
+	*attributes++ = 0.1;
+	*attributes++ = 1;
+	*attributes++ = 0.1;
+	*attributes++ = 0;
+	*attributes++ = 0.1;
+	*attributes++ = 1;
+	*attributes++ = 0.1;
+
 	return attributes;
 }
 

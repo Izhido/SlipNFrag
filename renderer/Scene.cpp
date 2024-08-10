@@ -435,6 +435,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     viewportStateCreateInfo.scissorCount = 1;
 
     VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
+	rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizationStateCreateInfo.lineWidth = 1;
 
@@ -888,7 +889,6 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
     pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &alias.pipelineLayout));
-    rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     graphicsPipelineCreateInfo.layout = alias.pipelineLayout;
     graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
     graphicsPipelineCreateInfo.pInputAssemblyState = &triangles;
@@ -905,7 +905,6 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     pipelineLayoutCreateInfo.setLayoutCount = 1;
     pushConstantInfo.size = 8 * sizeof(float);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particle.pipelineLayout));
-    rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
     graphicsPipelineCreateInfo.layout = particle.pipelineLayout;
     graphicsPipelineCreateInfo.pVertexInputState = &particleAttributes.vertexInputState;
     stages[0].module = particleVertex;
