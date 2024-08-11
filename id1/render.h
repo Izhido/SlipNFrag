@@ -100,9 +100,6 @@ extern vec3_t	r_origin, vpn, vright, vup;
 
 extern	struct texture_t	*r_notexture_mip;
 
-extern int r_edgesurfstackindex;
-extern int r_surfssize;
-
 extern qboolean increasebverts;
 extern qboolean increasebedges;
 

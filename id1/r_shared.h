@@ -59,6 +59,7 @@ extern	entity_t		*currententity;
 #define NUMSTACKEDGES		2400
 #define	MINEDGES			NUMSTACKEDGES
 #define NUMSTACKSURFACES	800
+#define MINSURFACES			NUMSTACKSURFACES
 #define	MAXSPANS			3000
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!

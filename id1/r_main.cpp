@@ -42,7 +42,7 @@ qboolean	r_dowarp, r_dowarpold, r_viewchanged;
 mvertex_t	*r_pcurrentvertbase;
 
 int			c_surf;
-int			r_maxsurfsseen, r_maxedgesseen;
+int			r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
 int			r_clipflags;
 
 byte		*r_warpbuffer;
@@ -93,9 +93,6 @@ int			r_frustum_indexes[4*6];
 mleaf_t		*r_viewleaf, *r_oldviewleaf;
 
 texture_t	*r_notexture_mip;
-
-int r_edgesurfstackindex = -1;
-int r_surfssize = NUMSTACKSURFACES;
 
 float		r_aliastransition, r_resfudge;
 
@@ -176,8 +173,8 @@ R_Init
 void R_Init (void)
 {
 	R_InitTurb ();
-    R_ResizeEdges();
-    
+	R_ResizeEdges();
+	
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);	
 
@@ -294,6 +291,11 @@ void R_NewMap (void)
 			}
 		}
 	}
+
+	if (r_cnumsurfs < r_maxsurfs.value) r_cnumsurfs = r_maxsurfs.value;
+
+	if (r_cnumsurfs <= MINSURFACES)
+		r_cnumsurfs = MINSURFACES;
 
 	r_maxedgesseen = 0;
 	r_maxsurfsseen = 0;
@@ -436,24 +438,24 @@ void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect)
 	screenedge[0].normal[1] = 0;
 	screenedge[0].normal[2] = 1;
 	screenedge[0].type = PLANE_ANYZ;
-
+	
 // right side clip
 	screenedge[1].normal[0] =
 			1.0 / ((1.0-xOrigin)*r_refdef.horizontalFieldOfView);
 	screenedge[1].normal[1] = 0;
 	screenedge[1].normal[2] = 1;
 	screenedge[1].type = PLANE_ANYZ;
-
+	
 // top side clip
 	screenedge[2].normal[0] = 0;
 	screenedge[2].normal[1] = -1.0 / (yOrigin*verticalFieldOfView);
 	screenedge[2].normal[2] = 1;
 	screenedge[2].type = PLANE_ANYZ;
-
+	
 // bottom side clip
 	screenedge[3].normal[0] = 0;
 	screenedge[3].normal[1] = 1.0 / ((1.0-yOrigin)*verticalFieldOfView);
-	screenedge[3].normal[2] = 1;
+	screenedge[3].normal[2] = 1;	
 	screenedge[3].type = PLANE_ANYZ;
 	
 	for (i=0 ; i<4 ; i++)
@@ -944,7 +946,7 @@ void R_DrawBEntitiesOnList (void)
 					if (r_pefragtopnode)
 					{
 						currententity->topnode = r_pefragtopnode;
-
+	
 						if (r_pefragtopnode->contents >= 0)
 						{
 						// not a leaf; has to be clipped to the world BSP
@@ -982,9 +984,9 @@ void R_DrawBEntitiesOnList (void)
 	insubmodel = false;
 }
 
-std::vector<std::vector<edge_t>> r_edgestack;
-std::vector<std::vector<surf_t>> r_surfstack;
-std::vector<std::vector<int>> r_fencestack;
+static std::vector<edge_t> ledges(4 + NUMSTACKEDGES + 1);
+static std::vector<surf_t> lsurfs(NUMSTACKSURFACES + 1);
+static std::vector<int> lfences(NUMSTACKSURFACES + 1);
 
 /*
 ================
@@ -993,41 +995,31 @@ R_EdgeDrawing
 */
 void R_EdgeDrawing (void)
 {
-    if (r_increaseledges)
-    {
+	if (r_increaseledges)
+	{
 		r_numallocatededges += NUMSTACKEDGES;
-    }
-    if (r_increaselsurfs)
-    {
-        r_surfssize += NUMSTACKSURFACES;
-    }
-    r_edgesurfstackindex++;
-    if (r_edgesurfstackindex >= r_edgestack.size())
-    {
-		r_edgestack.emplace_back(4 + r_numallocatededges + 1); // to include all of edge_max and the (former static) edge heads and tails...
-    }
-    else if (4 + r_numallocatededges + 1 > r_edgestack[r_edgesurfstackindex].size())
-    {
-		r_edgestack[r_edgesurfstackindex].resize(4 + r_numallocatededges + 1);
-    }
-    if (r_edgesurfstackindex >= r_surfstack.size())
-    {
-		r_surfstack.emplace_back(r_surfssize + 1);
-		r_fencestack.emplace_back(r_surfssize + 1);
-    }
-    else if (r_surfssize + 1 > r_surfstack[r_edgesurfstackindex].size())
-    {
-		r_surfstack[r_edgesurfstackindex].resize(r_surfssize + 1);
-		r_fencestack[r_edgesurfstackindex].resize(r_surfssize + 1);
-    }
-	r_edges =  r_edgestack[r_edgesurfstackindex].data();
-	surfaces =  r_surfstack[r_edgesurfstackindex].data();
-	surf_max = &surfaces[r_surfssize];
-	// surface 0 doesn't really exist; it's just a dummy because index 0
-	// is used to indicate no edge attached to surface
+	}
+	if (r_increaselsurfs)
+	{
+		r_cnumsurfs += NUMSTACKSURFACES;
+	}
+	if (ledges.size() < 4 + r_numallocatededges + 1)
+	{
+		ledges.resize(4 + r_numallocatededges + 1);
+	}
+	if (lsurfs.size() < r_cnumsurfs + 1)
+	{
+		lsurfs.resize(r_cnumsurfs + 1);
+		lfences.resize(r_cnumsurfs + 1);
+	}
+	r_edges =  ledges.data();
+	surfaces =  lsurfs.data();
+	surf_max = &surfaces[r_cnumsurfs];
+// surface 0 doesn't really exist; it's just a dummy because index 0
+// is used to indicate no edge attached to surface
 	R_SurfacePatch ();
-		
-	r_fences =  r_fencestack[r_edgesurfstackindex].data();
+	
+	r_fences =  lfences.data();
 
 	r_increaseledges = false;
 	r_increaselsurfs = false;
@@ -1066,9 +1058,7 @@ void R_EdgeDrawing (void)
 		VID_LockBuffer ();
 	}
 	
-        R_ScanEdges ();
-    
-    r_edgesurfstackindex--;
+		R_ScanEdges ();
 }
 
 std::vector<byte> warpbuffer(WARP_WIDTH * WARP_HEIGHT);
