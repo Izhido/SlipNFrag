@@ -29,6 +29,7 @@ vec3_t		viewlightvec;
 alight_t	r_viewlighting = {128, 192, viewlightvec};
 acoloredlight_t	r_viewcoloredlighting = { { 128, 128, 128 }, { 192, 192, 192 }, viewlightvec};
 float		r_time1;
+int			r_numallocatededges;
 int			r_pixbytes = 1;
 float		r_aliasuvscale = 1.0;
 int			r_outofsurfaces;
@@ -94,7 +95,6 @@ mleaf_t		*r_viewleaf, *r_oldviewleaf;
 texture_t	*r_notexture_mip;
 
 int r_edgesurfstackindex = -1;
-int r_edgessize = NUMSTACKEDGES;
 int r_surfssize = NUMSTACKSURFACES;
 
 float		r_aliastransition, r_resfudge;
@@ -297,6 +297,11 @@ void R_NewMap (void)
 
 	r_maxedgesseen = 0;
 	r_maxsurfsseen = 0;
+
+	if (r_numallocatededges < r_maxedges.value) r_numallocatededges = r_maxedges.value;
+
+	if (r_numallocatededges < MINEDGES)
+		r_numallocatededges = MINEDGES;
 
 	r_dowarpold = false;
 	r_viewchanged = false;
@@ -990,7 +995,7 @@ void R_EdgeDrawing (void)
 {
     if (r_increaseledges)
     {
-        r_edgessize += NUMSTACKEDGES;
+		r_numallocatededges += NUMSTACKEDGES;
     }
     if (r_increaselsurfs)
     {
@@ -999,11 +1004,11 @@ void R_EdgeDrawing (void)
     r_edgesurfstackindex++;
     if (r_edgesurfstackindex >= r_edgestack.size())
     {
-		r_edgestack.emplace_back(4 + r_edgessize + 1); // to include all of edge_max and the (former static) edge heads and tails...
+		r_edgestack.emplace_back(4 + r_numallocatededges + 1); // to include all of edge_max and the (former static) edge heads and tails...
     }
-    else if (4 + r_edgessize + 1 > r_edgestack[r_edgesurfstackindex].size())
+    else if (4 + r_numallocatededges + 1 > r_edgestack[r_edgesurfstackindex].size())
     {
-		r_edgestack[r_edgesurfstackindex].resize(4 + r_edgessize + 1);
+		r_edgestack[r_edgesurfstackindex].resize(4 + r_numallocatededges + 1);
     }
     if (r_edgesurfstackindex >= r_surfstack.size())
     {

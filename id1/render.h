@@ -101,7 +101,6 @@ extern vec3_t	r_origin, vpn, vright, vup;
 extern	struct texture_t	*r_notexture_mip;
 
 extern int r_edgesurfstackindex;
-extern int r_edgessize;
 extern int r_surfssize;
 
 extern qboolean increasebverts;
@@ -111,6 +110,7 @@ extern int basespan_stack_index;
 extern int increase_basespan;
 
 extern int warp_stack_index;
+
 
 void R_Init (void);
 void R_InitTextures (void);

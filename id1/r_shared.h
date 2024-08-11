@@ -57,6 +57,7 @@ extern	vec3_t	vright, base_vright;
 extern	entity_t		*currententity;
 
 #define NUMSTACKEDGES		2400
+#define	MINEDGES			NUMSTACKEDGES
 #define NUMSTACKSURFACES	800
 #define	MAXSPANS			3000
 

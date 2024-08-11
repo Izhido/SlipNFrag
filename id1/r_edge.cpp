@@ -92,7 +92,7 @@ R_BeginEdgeFrame
 void R_BeginEdgeFrame (void)
 {
 	edge_p = r_edges + 4; // to accomodate for the (former static) edge heads and tails
-	edge_max = &r_edges[r_edgessize];
+	edge_max = &r_edges[r_numallocatededges];
 
 	surface_p = &surfaces[2];	// background is surface 1,
 								//  surface 0 is a dummy
@@ -928,7 +928,8 @@ void R_ScanEdges (void)
 	int		iv, bottom;
 	espan_t	*basespan_p;
     surf_t	*s;
-    if (increase_basespan > 0)
+
+	if (increase_basespan > 0)
     {
         basespan_count += MAXSPANS * increase_basespan;
         basespan_size += MAXSPANS * increase_basespan * sizeof(espan_t);

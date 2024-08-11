@@ -235,6 +235,7 @@ void R_ReadPointFile_f (void);
 void R_SurfacePatch (void);
 
 extern int		r_amodels_drawn;
+extern int		r_numallocatededges;
 extern edge_t	*r_edges, *edge_p, *edge_max;
 
 extern	std::vector<edge_t*> newedges;
