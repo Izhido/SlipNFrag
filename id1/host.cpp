@@ -696,8 +696,7 @@ void _Host_FrameReset()
     sv_static_entity_count = 0;
     increasebverts = false;
     increasebedges = false;
-    basespan_stack_index = -1;
-    increase_basespan = 0;
+    increasebasespans = 0;
     warp_stack_index = -1;
 }
 

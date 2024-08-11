@@ -905,11 +905,10 @@ void R_GenerateSpansBackward (void)
 	R_CleanupSpan ();
 }
 
-std::vector<std::vector<byte>> basespan_stack;
-int basespan_stack_index = -1;
-int increase_basespan = 0;
-int basespan_count = MAXSPANS;
-int basespan_size = MAXSPANS * sizeof(espan_t) + CACHE_SIZE;
+int increasebasespans = 0;
+static int basespancount = MAXSPANS;
+static int basespansize = MAXSPANS*sizeof(espan_t)+CACHE_SIZE;
+static std::vector<byte> basespans(basespansize);
 
 /*
 ==============
@@ -929,25 +928,26 @@ void R_ScanEdges (void)
 	espan_t	*basespan_p;
     surf_t	*s;
 
-	if (increase_basespan > 0)
-    {
-        basespan_count += MAXSPANS * increase_basespan;
-        basespan_size += MAXSPANS * increase_basespan * sizeof(espan_t);
-        increase_basespan = 0;
-    }
-    basespan_stack_index++;
-    if (basespan_stack_index >= basespan_stack.size())
-    {
-        basespan_stack.emplace_back(basespan_size);
-    }
-    else
-    {
-        basespan_stack[basespan_stack_index].resize(basespan_size);
-    }
+	if (increasebasespans > 0)
+	{
+		basespancount += MAXSPANS * increasebasespans;
+		basespansize += MAXSPANS*sizeof(espan_t) * increasebasespans;
+		increasebasespans = 0;
+	}
+// adjust span list size if the screen width is larger than the list itself
+	while (basespancount <= r_refdef.vrect.width)
+	{
+		basespancount += MAXSPANS;
+		basespansize += MAXSPANS*sizeof(espan_t);
+	}
+	if (basespans.size() < basespansize)
+	{
+		basespans.resize(basespansize);
+	}
 
 	basespan_p = (espan_t *)
-			((size_t)(basespan_stack[basespan_stack_index].data() + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
-	max_span_p = &basespan_p[basespan_count - r_refdef.vrect.width];
+			((size_t)(basespans.data() + CACHE_SIZE - 1) & ~(CACHE_SIZE - 1));
+	max_span_p = &basespan_p[basespancount - r_refdef.vrect.width];
 
 	span_p = basespan_p;
 
@@ -1016,14 +1016,14 @@ void R_ScanEdges (void)
 			S_ExtraUpdate ();	// don't let sound get messed up if going slow
 			VID_LockBuffer ();
 
-			D_DrawSurfaces ();
+				D_DrawSurfaces ();
 
 		// clear the surface span pointers
 			for (s = &surfaces[1] ; s<surface_p ; s++)
 				s->spans = NULL;
 
-            span_p = basespan_p;
-            increase_basespan++;
+			span_p = basespan_p;
+			increasebasespans++;
 		}
 
 		if (removeedges[iv])
@@ -1055,8 +1055,6 @@ void R_ScanEdges (void)
 	{
 		D_DrawSurfaces ();
 	}
-    
-    basespan_stack_index--;
 }
 
 

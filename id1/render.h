@@ -102,9 +102,7 @@ extern	struct texture_t	*r_notexture_mip;
 
 extern qboolean increasebverts;
 extern qboolean increasebedges;
-
-extern int basespan_stack_index;
-extern int increase_basespan;
+extern int increasebasespans;
 
 extern int warp_stack_index;
 
