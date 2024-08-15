@@ -13,8 +13,8 @@ android {
         minSdkVersion 29
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 32
-        versionCode 26
-        versionName '1.0.26'
+        versionCode 27
+        versionName '1.0.27'
         shaders {
             glslcArgs.addAll(['-c', '-g'])
         }
