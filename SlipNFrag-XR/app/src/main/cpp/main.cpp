@@ -105,7 +105,7 @@ static VkBool32 DebugMessengerCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageTypes,
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData)
+        void* pUserData) __attribute__((pcs("aapcs-vfp")))
 {
 	std::string severityName;
 	int priority = ANDROID_LOG_UNKNOWN;
@@ -1392,7 +1392,7 @@ void android_main(struct android_app* app)
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "OXR 1.0.27";
+						sys_version = "OXR 1.0.28";
 						const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 						std::vector<std::string> arguments;
 						arguments.emplace_back("SlipNFrag");
