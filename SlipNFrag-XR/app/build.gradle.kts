@@ -42,6 +42,7 @@ android {
     }
     buildFeatures {
         prefab = true
+        shaders = true
     }
     externalNativeBuild {
         cmake {
