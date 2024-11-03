@@ -1,5 +1,4 @@
 #include <jni.h>
-#include <vulkan/vulkan.h>
 #include <string>
 #include <locale>
 #include <android/log.h>
@@ -105,7 +104,7 @@ static VkBool32 DebugMessengerCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageTypes,
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData) __attribute__((pcs("aapcs-vfp")))
+        void* pUserData)
 {
 	std::string severityName;
 	int priority = ANDROID_LOG_UNKNOWN;
@@ -379,7 +378,7 @@ void android_main(struct android_app* app)
 		systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 		CHECK_XRCMD(xrGetSystem(instance, &systemInfo, &systemId));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %d for form factor %s", systemId, to_string(systemInfo.formFactor));
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %lu for form factor %s", systemId, to_string(systemInfo.formFactor));
 
 		CHECK(systemId != XR_NULL_SYSTEM_ID);
 
@@ -1192,7 +1191,7 @@ void android_main(struct android_app* app)
 					case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
 					{
 						const auto& instanceLossPending = *reinterpret_cast<const XrEventDataInstanceLossPending*>(event);
-						__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "XrEventDataInstanceLossPending by %lld", instanceLossPending.lossTime);
+						__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "XrEventDataInstanceLossPending by %ld", instanceLossPending.lossTime);
 						exitRenderLoop = true;
 						requestRestart = true;
 						break;
@@ -1310,7 +1309,7 @@ void android_main(struct android_app* app)
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
 					{
 						const auto& referenceSpaceChangeEvent = *reinterpret_cast<const XrEventDataReferenceSpaceChangePending*>(event);
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %lld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
+						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %ld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
 						break;
 					}
 					default:

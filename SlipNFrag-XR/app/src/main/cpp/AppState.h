@@ -3,7 +3,6 @@
 #include "vid_oxr.h"
 #include "d_lists.h"
 #include "AppMode.h"
-#include <vulkan/vulkan.h>
 #include <common/xr_dependencies.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>

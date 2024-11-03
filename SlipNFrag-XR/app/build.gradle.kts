@@ -46,7 +46,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
+            version = "3.30.5"
         }
     }
     sourceSets {
@@ -54,7 +54,7 @@ android {
             shaders.srcDir("../../shaders/")
         }
     }
-    ndkVersion = "27.1.12297006"
+    ndkVersion = "27.2.12479018"
     buildToolsVersion = "35.0.0"
 }
 

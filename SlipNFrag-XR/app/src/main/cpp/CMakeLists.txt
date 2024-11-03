@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.30)
 
 project(SlipNFrag-XR)
 
@@ -8,7 +8,7 @@ set(ID1_DIR "${ROOT_DIR}/id1")
 set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(STB_DIR "${ROOT_DIR}/stb")
-set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.41")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.42")
 
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
@@ -49,7 +49,6 @@ find_library(VULKAN_LIBRARY NAMES vulkan)
 find_package(OpenXR REQUIRED CONFIG)
 
 target_include_directories(slipnfrag_native PRIVATE
-        ${OPENXR_DIR}/include
         ${OPENXR_DIR}/src
         ${VULKAN_INCLUDE_DIRS}
         ${LOCAL_DIR}
