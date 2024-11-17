@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.heribertodelgado.slipnfrag_xr"
         minSdk = 29
-        //noinspection ExpiredTargetSdkVersion
+        //noinspection ExpiredTargetSdk Version
         targetSdk = 32
         versionCode = 28
         versionName = "1.0.28"
@@ -47,7 +47,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.30.5"
+            version = "3.31.0"
         }
     }
     sourceSets {

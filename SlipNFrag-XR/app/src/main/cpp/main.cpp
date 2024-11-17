@@ -1058,18 +1058,18 @@ void android_main(struct android_app* app)
 			THROW(Fmt("No runtime swapchain format supported for color swapchain %i", Constants::colorFormat));
 		}
 
-		appState.SwapchainWidth = configViews[0].recommendedImageRectWidth;
-		appState.SwapchainHeight = configViews[0].recommendedImageRectHeight;
+		appState.SwapchainRect.extent.width = configViews[0].recommendedImageRectWidth;
+		appState.SwapchainRect.extent.height = configViews[0].recommendedImageRectHeight;
 		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;
 		
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainWidth, appState.SwapchainHeight);
+		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
 
 		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 		swapchainCreateInfo.format = Constants::colorFormat;
 		swapchainCreateInfo.sampleCount = VK_SAMPLE_COUNT_1_BIT;
-		swapchainCreateInfo.width = appState.SwapchainWidth;
-		swapchainCreateInfo.height = appState.SwapchainHeight;
+		swapchainCreateInfo.width = appState.SwapchainRect.extent.width;
+		swapchainCreateInfo.height = appState.SwapchainRect.extent.height;
 		swapchainCreateInfo.faceCount = 1;
 		swapchainCreateInfo.arraySize = viewCount;
 		swapchainCreateInfo.mipCount = 1;
@@ -1717,8 +1717,8 @@ void android_main(struct android_app* app)
 						projectionLayerViews[i].pose = views[i].pose;
 						projectionLayerViews[i].fov = views[i].fov;
 						projectionLayerViews[i].subImage.swapchain = swapchain;
-						projectionLayerViews[i].subImage.imageRect.extent.width = appState.SwapchainWidth;
-						projectionLayerViews[i].subImage.imageRect.extent.height = appState.SwapchainHeight;
+						projectionLayerViews[i].subImage.imageRect.extent.width = appState.SwapchainRect.extent.width;
+						projectionLayerViews[i].subImage.imageRect.extent.height = appState.SwapchainRect.extent.height;
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
 					}
 
@@ -1805,8 +1805,8 @@ void android_main(struct android_app* app)
 					{
 						VkImageCreateInfo imageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 						imageInfo.imageType = VK_IMAGE_TYPE_2D;
-						imageInfo.extent.width = appState.SwapchainWidth;
-						imageInfo.extent.height = appState.SwapchainHeight;
+						imageInfo.extent.width = appState.SwapchainRect.extent.width;
+						imageInfo.extent.height = appState.SwapchainRect.extent.height;
 						imageInfo.extent.depth = 1;
 						imageInfo.mipLevels = 1;
 						imageInfo.arrayLayers = 2;
@@ -1874,8 +1874,8 @@ void android_main(struct android_app* app)
 						framebufferInfo.renderPass = appState.RenderPass;
 						framebufferInfo.attachmentCount = 3;
 						framebufferInfo.pAttachments = attachments;
-						framebufferInfo.width = appState.SwapchainWidth;
-						framebufferInfo.height = appState.SwapchainHeight;
+						framebufferInfo.width = appState.SwapchainRect.extent.width;
+						framebufferInfo.height = appState.SwapchainRect.extent.height;
 						framebufferInfo.layers = 1;
 						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &framebufferInfo, nullptr, &perFrame.framebuffer));
 
@@ -1903,24 +1903,8 @@ void android_main(struct android_app* app)
 					
 					renderPassBeginInfo.renderPass = appState.RenderPass;
 					renderPassBeginInfo.framebuffer = perFrame.framebuffer;
-					renderPassBeginInfo.renderArea.offset = {0, 0};
-					renderPassBeginInfo.renderArea.extent.width = appState.SwapchainWidth;
-					renderPassBeginInfo.renderArea.extent.height = appState.SwapchainHeight;
+					renderPassBeginInfo.renderArea.extent = appState.SwapchainRect.extent;
 					vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-					VkRect2D screenRect { };
-					screenRect.extent.width = appState.SwapchainWidth;
-					screenRect.extent.height = appState.SwapchainHeight;
-					
-					VkViewport viewport;
-					viewport.x = (float)screenRect.offset.x;
-					viewport.y = (float)screenRect.offset.y;
-					viewport.width = (float)screenRect.extent.width;
-					viewport.height = (float)screenRect.extent.height;
-					viewport.minDepth = 0.0f;
-					viewport.maxDepth = 1.0f;
-					vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-					vkCmdSetScissor(commandBuffer, 0, 1, &screenRect);
 
 					perFrame.Render(appState, commandBuffer, swapchainImageIndex);
 

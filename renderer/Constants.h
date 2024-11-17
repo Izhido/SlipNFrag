@@ -12,5 +12,4 @@ struct Constants
 	static const int indexBuffer32BitSize = 16 * 65536;
 	static const int descriptorSetCount = 256;
 	static const int minimumBufferAllocation = 4096;
-	static const int lightmapTextureLayerCount = 256;
 };

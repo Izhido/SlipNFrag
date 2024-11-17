@@ -9,12 +9,18 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 	this->width = width;
 	this->height = height;
 
-	size_t slot = std::ceil(std::log2(std::max(width, height)));
-	if (appState.Scene.lightmapRGBATextures.size() <= slot)
+	size_t slot0 = std::ceil(std::log2(width));
+	size_t slot1 = std::ceil(std::log2(height));
+	if (appState.Scene.lightmapRGBATextures.size() <= slot0)
 	{
-		appState.Scene.lightmapRGBATextures.resize(slot + 1);
+		appState.Scene.lightmapRGBATextures.resize(slot0 + 1);
 	}
-	auto lightmapTexture = appState.Scene.lightmapRGBATextures[slot];
+	auto& lightmapTextures = appState.Scene.lightmapRGBATextures[slot0];
+	if (lightmapTextures.size() <= slot1)
+	{
+		lightmapTextures.resize(slot1 + 1);
+	}
+	auto lightmapTexture = lightmapTextures[slot1];
 	bool found = false;
 	while (lightmapTexture != nullptr)
 	{
@@ -56,7 +62,7 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 			{
 				lightmapTexture = new LightmapRGBATexture { };
 			}
-			appState.Scene.lightmapRGBATextures[slot] = lightmapTexture;
+			lightmapTextures[slot1] = lightmapTexture;
 		}
 		else
 		{
@@ -75,9 +81,24 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 		}
 		texture = lightmapTexture;
 
-		VkDeviceSize dimension = std::pow(2, slot);
-		texture->width = dimension;
-		texture->height = dimension;
+		texture->width = (int)std::pow(2, slot0);
+		texture->height = (int)std::pow(2, slot1);
+
+		auto maxDimension = std::max(texture->width, texture->height);
+		uint32_t arrayLayers;
+		if (maxDimension <= 4)
+		{
+			arrayLayers = 256;
+		}
+		else if (maxDimension >= 1024)
+		{
+			arrayLayers = 1;
+		}
+		else
+		{
+			auto maxSlot = (int)std::max(slot0, slot1);
+			arrayLayers = (int)std::pow(2, 10 - maxSlot);
+		}
 
 		VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -86,7 +107,7 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 		imageCreateInfo.extent.height = texture->height;
 		imageCreateInfo.extent.depth = 1;
 		imageCreateInfo.mipLevels = 1;
-		imageCreateInfo.arrayLayers = Constants::lightmapTextureLayerCount;
+		imageCreateInfo.arrayLayers = arrayLayers;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCreateInfo.usage = usage;
 		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &texture->image));
@@ -99,7 +120,7 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 
 		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &texture->memory));
 
-		texture->allocated.resize(Constants::lightmapTextureLayerCount);
+		texture->allocated.resize(arrayLayers);
 
 		VkDescriptorPoolSize poolSizes { };
 		poolSizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -129,7 +150,7 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 		imageViewCreateInfo.format = imageCreateInfo.format;
 		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageViewCreateInfo.subresourceRange.levelCount = 1;
-		imageViewCreateInfo.subresourceRange.layerCount = Constants::lightmapTextureLayerCount;
+		imageViewCreateInfo.subresourceRange.layerCount = arrayLayers;
 		CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &texture->view));
 
 		VkDescriptorImageInfo textureInfo { };
@@ -144,7 +165,7 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		vkUpdateDescriptorSets(appState.Device, 1, &write, 0, nullptr);
 
-		texture->regions.resize(Constants::lightmapTextureLayerCount);
+		texture->regions.resize(arrayLayers);
 		for (auto& region : texture->regions)
 		{
 			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -174,8 +195,9 @@ void LightmapRGBA::Delete(AppState& appState) const
 		}
 		else
 		{
-			size_t slot = std::ceil(std::log2(std::max(width, height)));
-			appState.Scene.lightmapRGBATextures[slot] = texture->next;
+			size_t slot0 = std::ceil(std::log2(width));
+			size_t slot1 = std::ceil(std::log2(height));
+			appState.Scene.lightmapRGBATextures[slot0][slot1] = texture->next;
 		}
 		if (texture->next != nullptr)
 		{

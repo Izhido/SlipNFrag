@@ -430,9 +430,19 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 
     VkPipelineTessellationStateCreateInfo tessellationStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO };
 
-    VkPipelineViewportStateCreateInfo viewportStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
+	VkViewport viewport { };
+	viewport.x = (float)appState.SwapchainRect.offset.x;
+	viewport.y = (float)appState.SwapchainRect.offset.y;
+	viewport.width = (float)appState.SwapchainRect.extent.width;
+	viewport.height = (float)appState.SwapchainRect.extent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	VkPipelineViewportStateCreateInfo viewportStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO };
     viewportStateCreateInfo.viewportCount = 1;
+	viewportStateCreateInfo.pViewports = &viewport;
     viewportStateCreateInfo.scissorCount = 1;
+	viewportStateCreateInfo.pScissors = &appState.SwapchainRect;
 
     VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO };
 	rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
@@ -463,12 +473,6 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     colorBlendStateCreateInfo.attachmentCount = 1;
     colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;
 
-    VkDynamicState dynamicStateEnables[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-
-    VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO };
-    pipelineDynamicStateCreateInfo.dynamicStateCount = 2;
-    pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
-
     std::vector<VkPipelineShaderStageCreateInfo> stages(2);
     stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -484,7 +488,6 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     graphicsPipelineCreateInfo.pMultisampleState = &multisampleStateCreateInfo;
     graphicsPipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
     graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
-    graphicsPipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
     graphicsPipelineCreateInfo.renderPass = appState.RenderPass;
     graphicsPipelineCreateInfo.stageCount = stages.size();
     graphicsPipelineCreateInfo.pStages = stages.data();

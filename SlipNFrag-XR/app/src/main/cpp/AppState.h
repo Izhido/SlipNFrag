@@ -36,8 +36,7 @@ struct AppState
     float SkyHorizontal;
     float SkyTop;
     float SkyVertical;
-	uint32_t SwapchainWidth;
-	uint32_t SwapchainHeight;
+	VkRect2D SwapchainRect;
 	uint32_t SwapchainSampleCount;
 	std::vector<XrSwapchainImageVulkan2KHR> SwapchainImages;
 	Screen Screen;
