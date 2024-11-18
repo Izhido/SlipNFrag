@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.heribertodelgado.slipnfrag_xr"
         minSdk = 29
-        //noinspection ExpiredTargetSdk Version
+        //noinspection ExpiredTargetSdkVersion
         targetSdk = 32
         versionCode = 28
         versionName = "1.0.28"

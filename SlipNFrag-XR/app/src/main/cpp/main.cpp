@@ -1138,6 +1138,15 @@ void android_main(struct android_app* app)
 
 		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
 
+		VkClearValue clearValues[2] { };
+		clearValues[1].depthStencil.depth = 1.0f;
+
+		VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+		renderPassBeginInfo.clearValueCount = 2;
+		renderPassBeginInfo.pClearValues = clearValues;
+		renderPassBeginInfo.renderPass = appState.RenderPass;
+		renderPassBeginInfo.renderArea.extent = appState.SwapchainRect.extent;
+
 		std::vector<XrCompositionLayerBaseHeader*> layers;
 
 		XrCompositionLayerProjection worldLayer { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
@@ -1794,12 +1803,10 @@ void android_main(struct android_app* app)
 
                     perFrame.FillFromStagingBuffer(appState, stagingBuffer, commandBuffer, swapchainImageIndex);
 
-					VkClearValue clearValues[2] { };
 					clearValues[0].color.float32[0] = clearR;
 					clearValues[0].color.float32[1] = clearG;
 					clearValues[0].color.float32[2] = clearB;
 					clearValues[0].color.float32[3] = clearA;
-					clearValues[1].depthStencil.depth = 1.0f;
 
 					if (perFrame.framebuffer == VK_NULL_HANDLE)
 					{
@@ -1897,13 +1904,7 @@ void android_main(struct android_app* app)
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
 
-					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-					renderPassBeginInfo.clearValueCount = 2;
-					renderPassBeginInfo.pClearValues = clearValues;
-					
-					renderPassBeginInfo.renderPass = appState.RenderPass;
 					renderPassBeginInfo.framebuffer = perFrame.framebuffer;
-					renderPassBeginInfo.renderArea.extent = appState.SwapchainRect.extent;
 					vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 					perFrame.Render(appState, commandBuffer, swapchainImageIndex);
