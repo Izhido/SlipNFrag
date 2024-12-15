@@ -62,12 +62,15 @@ void D_Init (void)
 
     Draw_ResizeScanTables();
 
-    r_skydirect = 1;
+	r_skydirect = 1;
 
 	Cvar_RegisterVariable (&d_subdiv16);
 	Cvar_RegisterVariable (&d_mipcap);
 	Cvar_RegisterVariable (&d_mipscale);
 
+	r_drawpolys = false;
+	r_worldpolysbacktofront = false;
+	r_recursiveaffinetriangles = true;
 	r_pixbytes = 1;
 	r_aliasuvscale = 1.0;
 }

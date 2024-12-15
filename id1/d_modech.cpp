@@ -24,17 +24,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int	d_vrectx, d_vrecty, d_vrectright_particle, d_vrectbottom_particle;
 
-int	d_pix_min, d_pix_max;
+int	d_y_aspect_shift, d_pix_min, d_pix_max, d_pix_shift;
 
-float d_pix_scale;
+float	d_pix_scale;
 
-std::vector<int> d_scantable;
-std::vector<short*> zspantable; 
+std::vector<int>		d_scantable;
+std::vector<short*>	zspantable; 
 
 void Draw_ResizeScanTables()
 {
-    d_scantable.resize(vid.height);
-    zspantable.resize(vid.height);
+	d_scantable.resize(vid.height);
+	zspantable.resize(vid.height);
 }
 
 /*
@@ -84,17 +84,21 @@ void D_ViewChanged (void)
 	if (d_pix_min < 1)
 		d_pix_min = 1;
 
-	d_pix_max = r_refdef.vrect.width / 80;
+	d_pix_max = (int)((float)r_refdef.vrect.width / (320.0 / 4.0) + 0.5);
+	d_pix_shift = 8 - (int)((float)r_refdef.vrect.width / 320.0 + 0.5);
 	if (d_pix_max < 1)
 		d_pix_max = 1;
-    
-    d_pix_scale = r_refdef.vrect.width * 0x8000 / (320 * 128);
+
+	if (pixelAspect > 1.4)
+		d_y_aspect_shift = 1;
+	else
+		d_y_aspect_shift = 0;
 
 	d_vrectx = r_refdef.vrect.x;
 	d_vrecty = r_refdef.vrect.y;
 	d_vrectright_particle = r_refdef.vrectright - d_pix_max;
 	d_vrectbottom_particle =
-			r_refdef.vrectbottom - d_pix_max;
+			r_refdef.vrectbottom - (d_pix_max << d_y_aspect_shift);
 
 	{
 		int		i;

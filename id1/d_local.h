@@ -44,7 +44,7 @@ typedef struct surfcache_s
 	unsigned			width;
 	unsigned			height;		// DEBUG only needed for debug
 	float				mipscale;
-	void*				texture;	// checked for animating textures
+	struct texture_s	*texture;	// checked for animating textures
 	int 				created;	// frame at which it was created
 	byte				data[4];	// width*height elements
 } surfcache_t;
@@ -111,13 +111,11 @@ extern std::vector<int>	d_scantable;
 
 extern int	d_vrectx, d_vrecty, d_vrectright_particle, d_vrectbottom_particle;
 
-extern int	d_pix_min, d_pix_max;
-
-extern float d_pix_scale;
+extern int	d_y_aspect_shift, d_pix_min, d_pix_max, d_pix_shift;
 
 extern pixel_t	*d_viewbuffer;
 
-extern std::vector<short*> zspantable;
+extern std::vector<short*>	zspantable;
 
 extern int		d_minmip;
 extern float	d_scalemip[3];

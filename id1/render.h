@@ -98,7 +98,7 @@ typedef struct
 extern	refdef_t	r_refdef;
 extern vec3_t	r_origin, vpn, vright, vup;
 
-extern	struct texture_t	*r_notexture_mip;
+extern	struct texture_s	*r_notexture_mip;
 
 extern qboolean increasebverts;
 extern qboolean increasebedges;
@@ -112,7 +112,7 @@ void R_InitTextures (void);
 void R_RenderView (void);		// must set r_refdef first
 void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect);
 								// called whenever r_refdef or vid change
-void R_InitSky (struct texture_t *mt);	// called at level load
+void R_InitSky (struct texture_s *mt);	// called at level load
 void R_InitSkyRGBA (miptex_t *mt);	// called at level load
 void R_InitSkyBox (void);
 

@@ -88,7 +88,7 @@ void D_DrawParticle (particle_t *pparticle)
 	pdest = d_viewbuffer + d_scantable[v] + u;
 	izi = (int)(zi * 0x8000);
 
-    pix = (int)(zi * d_pix_scale);
+	pix = izi >> d_pix_shift;
 
 	if (pix < d_pix_min)
 		pix = d_pix_min;
@@ -98,7 +98,7 @@ void D_DrawParticle (particle_t *pparticle)
 	switch (pix)
 	{
 	case 1:
-		count = 1;
+		count = 1 << d_y_aspect_shift;
 
 		for ( ; count ; count--, pz += d_zwidth, pdest += screenwidth)
 		{
@@ -111,7 +111,7 @@ void D_DrawParticle (particle_t *pparticle)
 		break;
 
 	case 2:
-		count = 2;
+		count = 2 << d_y_aspect_shift;
 
 		for ( ; count ; count--, pz += d_zwidth, pdest += screenwidth)
 		{
@@ -130,7 +130,7 @@ void D_DrawParticle (particle_t *pparticle)
 		break;
 
 	case 3:
-		count = 3;
+		count = 3 << d_y_aspect_shift;
 
 		for ( ; count ; count--, pz += d_zwidth, pdest += screenwidth)
 		{
@@ -155,7 +155,7 @@ void D_DrawParticle (particle_t *pparticle)
 		break;
 
 	case 4:
-		count = 4;
+		count = 4 << d_y_aspect_shift;
 
 		for ( ; count ; count--, pz += d_zwidth, pdest += screenwidth)
 		{
@@ -186,7 +186,7 @@ void D_DrawParticle (particle_t *pparticle)
 		break;
 
 	default:
-		count = pix;
+		count = pix << d_y_aspect_shift;
 
 		for ( ; count ; count--, pz += d_zwidth, pdest += screenwidth)
 		{
