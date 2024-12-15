@@ -139,8 +139,8 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	if (size <= 0)
 		Sys_Error ("D_SCAlloc: bad cache size %d\n", size);
 	
-    auto size_ptr = (size_t)&((surfcache_t *)0)->data[size];
-    size = (int)size_ptr;
+	auto size_ptr = (size_t)&((surfcache_t *)0)->data[size];
+	size = (int)size_ptr;
 	size = (size + 7) & ~7;
 	if (size > sc_size)
 		Sys_Error ("D_SCAlloc: %i > cache size",size);
@@ -156,12 +156,12 @@ surfcache_t     *D_SCAlloc (int width, int size)
 		}
 		sc_rover = sc_base;
 	}
-
+		
 // colect and free surfcache_t blocks until the rover block is large enough
 	new_surf = sc_rover;
 	if (sc_rover->owner)
 		*sc_rover->owner = NULL;
-
+	
 	while (new_surf->size < size)
 	{
 	// free another
@@ -170,7 +170,7 @@ surfcache_t     *D_SCAlloc (int width, int size)
 			Sys_Error ("D_SCAlloc: hit the end of memory");
 		if (sc_rover->owner)
 			*sc_rover->owner = NULL;
-
+			
 		new_surf->size += sc_rover->size;
 		new_surf->next = sc_rover->next;
 	}
@@ -188,7 +188,7 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	}
 	else
 		sc_rover = new_surf->next;
-
+	
 	new_surf->width = width;
 // DEBUG
 	if (width > 0)
@@ -295,7 +295,7 @@ surfcache_t *D_CacheSurface (msurface_t *surface, int miplevel)
 	r_drawsurf.lightadj[2] = d_lightstylevalue[surface->styles[2]];
 	r_drawsurf.lightadj[3] = d_lightstylevalue[surface->styles[3]];
 	r_drawsurf.surfwidth = surface->extents[0] >> miplevel;
-
+	
 //
 // see if the cache holds apropriate data
 //

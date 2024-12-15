@@ -24,14 +24,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "d_local.h"
 
+// TODO: put in span spilling to shrink list size
+// !!! if this is changed, it must be changed in d_polysa.s too !!!
+#define DPS_MAXSPANS			MAXHEIGHT+1	
+									// 1 extra for spanpackage that marks end
+
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {
 	void			*pdest;
 	short			*pz;
 	int				count;
 	byte			*ptex;
-    int				sfrac, tfrac, light;
-    long long       zi;
+	int				sfrac, tfrac, light;
+	long long       zi;
 } spanpackage_t;
 
 typedef struct {
@@ -82,7 +87,7 @@ static int				ystart;
 byte					*d_pdest, *d_ptex;
 short					*d_pz;
 int						d_sfrac, d_tfrac, d_light;
-long long               d_zi;
+long long				d_zi;
 int						d_ptexextrastep, d_sfracextrastep;
 int						d_tfracextrastep, d_lightextrastep, d_pdestextrastep;
 int						d_lightbasestep, d_pdestbasestep, d_ptexbasestep;
@@ -99,7 +104,7 @@ static adivtab_t	adivtab[32*32] = {
 #include "adivtab.h"
 };
 
-std::vector<byte*> skintable_backingstore;
+std::vector<byte*>	skintable_backingstore;
 byte	**skintable;
 int		skinwidth;
 byte	*skinstart;
@@ -407,12 +412,12 @@ void D_PolysetUpdateTables (void)
 		r_affinetridesc.pskin != skinstart)
 	{
 		skinwidth = r_affinetridesc.skinwidth;
-        auto skinheight = r_affinetridesc.skinheight;
-        if (skinheight > skintable_backingstore.size())
-        {
-            skintable_backingstore.resize(skinheight);
-            skintable = skintable_backingstore.data();
-        }
+		auto skinheight = r_affinetridesc.skinheight;
+		if (skinheight > skintable_backingstore.size())
+		{
+			skintable_backingstore.resize(skinheight);
+			skintable = skintable_backingstore.data();
+		}
 		skinstart = (byte*)r_affinetridesc.pskin;
 		s = skinstart;
 		for (i=0 ; i<skinheight ; i++, s+=skinwidth)
@@ -628,7 +633,7 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 	byte	*lptex;
 	int		lsfrac, ltfrac;
 	int		llight;
-	long long lzi;
+	long long		lzi;
 	short	*lpz;
 
 	do
