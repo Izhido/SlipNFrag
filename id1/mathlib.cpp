@@ -347,7 +347,7 @@ vec_t LengthSquared(const vec3_t v)
 {
 	int		i;
 	float	length;
-
+	
 	length = 0;
 	for (i=0 ; i< 3 ; i++)
 		length += v[i]*v[i];

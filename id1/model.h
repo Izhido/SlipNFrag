@@ -85,7 +85,7 @@ typedef struct texture_s
 #define SURF_DRAWTURB		0x10
 #define SURF_DRAWTILED		0x20
 #define SURF_DRAWBACKGROUND	0x40
-#define SURF_DRAWSKYBOX     0x80
+#define SURF_DRAWSKYBOX		0x80
 #define SURF_DRAWFENCE		0x200
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
@@ -108,7 +108,7 @@ typedef struct msurface_s
 	int			visframe;		// should be drawn when node is crossed
 
 	int			dlightframe;
-    std::vector<bool> dlightbits;
+	std::vector<bool>			dlightbits;
 
 	mplane_t	*plane;
 	int			flags;
@@ -119,8 +119,8 @@ typedef struct msurface_s
 // surface generation data
 	struct surfcache_s	*cachespots[MIPLEVELS];
 
-	int			texturemins[2];
-	int			extents[2];
+	int		texturemins[2];
+	int		extents[2];
 
 	mtexinfo_t	*texinfo;
 	
@@ -150,8 +150,8 @@ typedef struct mnode_s
 
 typedef struct mclipnode_s
 {
-    int         planenum;
-    int         children[2];    // negative numbers are contents
+	int		planenum;
+	int		children[2];	// negative numbers are contents
 } mclipnode_t;
 
 
@@ -311,7 +311,7 @@ typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
 typedef struct model_s
 {
 	string_t		name;
-	int			needload;		// bmodels and sprites don't cache normally
+	int	needload;		// bmodels and sprites don't cache normally
 
 	modtype_t	type;
 	int			numframes;

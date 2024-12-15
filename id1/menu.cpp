@@ -443,7 +443,7 @@ void M_ScanSaves (void)
 {
 	int		i;
 	std::string	name;
-	int	    f;
+	int		f;
 	int		version;
 
 	for (i=0 ; i<MAX_SAVEGAMES ; i++)
@@ -451,35 +451,35 @@ void M_ScanSaves (void)
 		strcpy (m_filenames[i], "--- UNUSED SLOT ---");
 		loadable[i] = false;
 		name = com_gamedir + "/s" + std::to_string(i) + ".sav";
-        Sys_FileOpenRead (name.c_str(), &f);
+		Sys_FileOpenRead (name.c_str(), &f);
 		if (f < 0)
 			continue;
-        std::string to_read;
-        char onechar;
-        auto len = Sys_FileRead (f, &onechar, 1);
-        while (len == 1 && onechar != '\n')
-        {
-            to_read.push_back(onechar);
-            len = Sys_FileRead (f, &onechar, 1);
-        }
+		std::string to_read;
+		char onechar;
+		auto len = Sys_FileRead (f, &onechar, 1);
+		while (len == 1 && onechar != '\n')
+		{
+			to_read.push_back(onechar);
+			len = Sys_FileRead (f, &onechar, 1);
+		}
 		sscanf (to_read.c_str(), "%i\n", &version);
-        to_read.clear();
-        len = Sys_FileRead (f, &onechar, 1);
-        while (len == 1 && onechar != '\n')
-        {
-            // change _ back to space
-            if (onechar == '_')
-            {
-                onechar = ' ';
-            }
-            to_read.push_back(onechar);
-            len = Sys_FileRead (f, &onechar, 1);
-        }
-        while (to_read.length() < 79)
-        {
-            to_read.push_back(' ');
-        }
-        to_read.push_back('\n');
+		to_read.clear();
+		len = Sys_FileRead (f, &onechar, 1);
+		while (len == 1 && onechar != '\n')
+		{
+			// change _ back to space
+			if (onechar == '_')
+			{
+				onechar = ' ';
+			}
+			to_read.push_back(onechar);
+			len = Sys_FileRead (f, &onechar, 1);
+		}
+		while (to_read.length() < 79)
+		{
+			to_read.push_back(' ');
+		}
+		to_read.push_back('\n');
 		strncpy (m_filenames[i], to_read.c_str(), sizeof(m_filenames[i])-1);
 		loadable[i] = true;
 		Sys_FileClose (f);
@@ -647,7 +647,7 @@ void M_MultiPlayer_Draw (void)
 
 	if (serialAvailable || ipxAvailable || tcpipAvailable)
 		return;
-	M_PrintWhite ((320/2) - ((27*8)/2), 152, "No Communications Available");
+	M_PrintWhite ((320/2) - ((27*8)/2), 144, "No Communications Available");
 }
 
 
@@ -1815,7 +1815,7 @@ void M_SerialConfig_Draw (void)
 		M_DrawCharacter (168 + 8*strlen(serialConfig_phone), serialConfig_cursor_table [serialConfig_cursor], 10+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
-		M_PrintWhite (basex, 152, m_return_reason);
+		M_PrintWhite (basex, 144, m_return_reason);
 }
 
 
@@ -2243,7 +2243,7 @@ void M_LanConfig_Draw (void)
 		M_DrawCharacter (basex+16 + 8*strlen(lanConfig_joinname), lanConfig_cursor_table [2], 10+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
-		M_PrintWhite (basex, 152, m_return_reason);
+		M_PrintWhite (basex, 144, m_return_reason);
 }
 
 
@@ -2927,7 +2927,7 @@ void M_ServerList_Draw (void)
 	M_DrawCharacter (0, 32 + slist_cursor*8, 12+((int)(realtime*4)&1));
 
 	if (*m_return_reason)
-		M_PrintWhite (16, 152, m_return_reason);
+		M_PrintWhite (16, 144, m_return_reason);
 }
 
 

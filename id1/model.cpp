@@ -39,27 +39,27 @@ std::list<model_t> mod_known;
 
 struct mpool_t
 {
-    std::vector<std::vector<mvertex_t>> vertexes;
-    std::vector<std::vector<medge_t>> edges;
-    std::vector<std::vector<int>> surfedges;
-    std::vector<std::vector<texture_t*>> texturelists;
-    std::vector<std::vector<byte>> textures;
-    std::vector<std::vector<byte>> lightdata;
+	std::vector<std::vector<mvertex_t>> vertexes;
+	std::vector<std::vector<medge_t>> edges;
+	std::vector<std::vector<int>> surfedges;
+	std::vector<std::vector<texture_t*>> texturelists;
+	std::vector<std::vector<byte>> textures;
+	std::vector<std::vector<byte>> lightdata;
 	std::vector<std::vector<byte>> lightRGBdata;
-    std::vector<std::vector<mplane_t>> planes;
-    std::vector<std::vector<mtexinfo_t>> texinfo;
-    std::vector<std::vector<msurface_t>> surfaces;
-    std::vector<std::vector<msurface_t*>> marksurfaces;
-    std::vector<std::vector<byte>> visdata;
-    std::vector<std::vector<mleaf_t>> leafs;
-    std::vector<std::vector<mnode_t>> nodes;
-    std::vector<std::vector<mclipnode_t>> clipnodes;
-    std::vector<std::vector<char>> entities;
-    std::vector<std::vector<dmodel_t>> submodels;
-    std::vector<std::vector<byte>> sprites;
+	std::vector<std::vector<mplane_t>> planes;
+	std::vector<std::vector<mtexinfo_t>> texinfo;
+	std::vector<std::vector<msurface_t>> surfaces;
+	std::vector<std::vector<msurface_t*>> marksurfaces;
+	std::vector<std::vector<byte>> visdata;
+	std::vector<std::vector<mleaf_t>> leafs;
+	std::vector<std::vector<mnode_t>> nodes;
+	std::vector<std::vector<mclipnode_t>> clipnodes;
+	std::vector<std::vector<char>> entities;
+	std::vector<std::vector<dmodel_t>> submodels;
+	std::vector<std::vector<byte>> sprites;
 
-    void Clear()
-    {
+	void Clear()
+	{
 		for (auto& list : texturelists)
 		{
 			for (auto texture : list)
@@ -71,25 +71,25 @@ struct mpool_t
 				}
 			}
 		}
-        sprites.clear();
-        submodels.clear();
-        entities.clear();
-        clipnodes.clear();
-        nodes.clear();
-        leafs.clear();
-        visdata.clear();
-        marksurfaces.clear();
-        surfaces.clear();
-        texinfo.clear();
-        planes.clear();
+		sprites.clear();
+		submodels.clear();
+		entities.clear();
+		clipnodes.clear();
+		nodes.clear();
+		leafs.clear();
+		visdata.clear();
+		marksurfaces.clear();
+		surfaces.clear();
+		texinfo.clear();
+		planes.clear();
 		lightRGBdata.clear();
-        lightdata.clear();
-        textures.clear();
-        texturelists.clear();
-        surfedges.clear();
-        edges.clear();
-        vertexes.clear();
-    }
+		lightdata.clear();
+		textures.clear();
+		texturelists.clear();
+		surfedges.clear();
+		edges.clear();
+		vertexes.clear();
+	}
 };
 
 mpool_t mod_pool;
@@ -108,8 +108,8 @@ Mod_Init
 */
 void Mod_Init (void)
 {
-    memset (mod_novis.data(), 0xff, mod_novis.size());
-    pr_strings = pr_string_block.data();
+	memset (mod_novis.data(), 0xff, mod_novis.size());
+	pr_strings = pr_string_block.data();
 }
 
 /*
@@ -121,7 +121,7 @@ Caches the data if needed
 */
 void *Mod_Extradata (model_t *mod)
 {
-    return mod->extradata;
+	return mod->extradata;
 }
 
 /*
@@ -162,19 +162,19 @@ Mod_DecompressVis
 */
 byte *Mod_DecompressVis (byte *in, model_t *model)
 {
-    static std::vector<byte> decompressed(MAX_MAP_LEAFS/8);
+	static std::vector<byte> decompressed(MAX_MAP_LEAFS/8);
 	int		c;
 	byte	*out;
 	int		row;
 
 	row = (model->numleafs+7)>>3;	
-    size_t size = (model->numleafs+31)>>3;
-    if (decompressed.size() < size)
-    {
-        decompressed.resize(size);
-    }
+	size_t size = (model->numleafs+31)>>3;
+	if (decompressed.size() < size)
+	{
+		decompressed.resize(size);
+	}
 	auto start = decompressed.data();
-    out = start;
+	out = start;
 
 	if (!in)
 	{	// no vis info, so make all visible
@@ -208,17 +208,17 @@ byte *Mod_DecompressVis (byte *in, model_t *model)
 
 byte *Mod_LeafPVS (mleaf_t *leaf, model_t *model)
 {
-    if (leaf == model->leafs)
-    {
-    	size_t newsize = (model->numleafs+7)>>3;
-        if (mod_novis.size() < newsize)
-        {
-            auto oldsize = mod_novis.size();
-            mod_novis.resize(newsize);
-            memset(mod_novis.data() + oldsize, 0xff, newsize - oldsize);
-        }
-        return mod_novis.data();
-    }
+	if (leaf == model->leafs)
+	{
+		size_t newsize = (model->numleafs+7)>>3;
+		if (mod_novis.size() < newsize)
+		{
+			auto oldsize = mod_novis.size();
+			mod_novis.resize(newsize);
+			memset(mod_novis.data() + oldsize, 0xff, newsize - oldsize);
+		}
+		return mod_novis.data();
+	}
 	return Mod_DecompressVis (leaf->compressed_vis, model);
 }
 
@@ -229,8 +229,8 @@ Mod_ClearAll
 */
 void Mod_ClearAll (void)
 {
-    mod_pool.Clear();
-    for (auto& mod : mod_known) {
+	mod_pool.Clear();
+	for (auto& mod : mod_known) {
 		mod.needload = NL_UNREFERENCED;
 		if (mod.type == mod_sprite) mod.extradata = NULL;
 	}
@@ -270,16 +270,16 @@ model_t *Mod_FindName (const char *name)
 //
 // search the currently loaded models
 //
-    i = 0;
-    for (auto& entry : mod_known)
-    {
-        mod = &entry;
+	i = 0;
+	for (auto& entry : mod_known)
+	{
+		mod = &entry;
 		if (!strcmp (pr_strings + mod->name, name) )
 			break;
 		if (mod->needload == NL_UNREFERENCED)
 			if (!avail || mod->type != mod_alias)
 				avail = mod;
-        i++;
+		i++;
 	}
 			
 	if (i == mod_known.size())
@@ -288,19 +288,19 @@ model_t *Mod_FindName (const char *name)
 			{
 				mod = avail;
 				if (mod->type == mod_alias)
-                {
-                    delete[] mod->extradata;
-                }
-                mod->extradata = nullptr;
+				{
+					delete[] mod->extradata;
+				}
+				mod->extradata = nullptr;
 			}
-            else
-            {
-                mod_known.emplace_back();
-                mod = &mod_known.back();
-            }
-        auto name_len = (int)strlen(name);
-        mod->name = ED_NewString(name_len + 1);
-        Q_strncpy(pr_strings + mod->name, name, name_len);
+			else
+			{
+				mod_known.emplace_back();
+				mod = &mod_known.back();
+			}
+		auto name_len = (int)strlen(name);
+		mod->name = ED_NewString(name_len + 1);
+		Q_strncpy(pr_strings + mod->name, name, name_len);
 		mod->needload = NL_NEEDS_LOADED;
 	}
 
@@ -350,7 +350,7 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash)
 // load the file
 //
 	std::vector<byte> contents;
-    buf = (unsigned *)COM_LoadFile (pr_strings + mod->name, contents);
+	buf = (unsigned *)COM_LoadFile (pr_strings + mod->name, contents);
 	if (!buf)
 	{
 		if (crash)
@@ -425,75 +425,75 @@ Mod_AveragePixels
 */
 byte Mod_AveragePixels (std::vector<byte>& pixdata)
 {
-    int        r,g,b;
-    int        i;
-    int        vis;
-    int        pix;
-    int        dr, dg, db;
-    int        bestdistortion, distortion;
-    int        bestcolor;
-    byte    *pal;
-    int        e;
-    
-    vis = 0;
-    r = g = b = 0;
-    for (i=0 ; i<pixdata.size() ; i++)
-    {
-        pix = pixdata[i];
-        if (pix == 255)
+	int		r,g,b;
+	int		i;
+	int		vis;
+	int		pix;
+	int		dr, dg, db;
+	int		bestdistortion, distortion;
+	int		bestcolor;
+	byte	*pal;
+	int		e;
+	
+	vis = 0;
+	r = g = b = 0;
+	for (i=0 ; i<pixdata.size() ; i++)
+	{
+		pix = pixdata[i];
+		if (pix == 255)
 		{
 			continue;
 		}
-        else if (pix >= 224)
-        {
-            return pix;
-        }
+		else if (pix >= 224)
+		{
+			return pix;
+		}
 
-        r += host_basepal[pix*3];
-        g += host_basepal[pix*3+1];
-        b += host_basepal[pix*3+2];
-        vis++;
-    }
-    
-    if (vis == 0)
-        return 255;
-        
-    r /= vis;
-    g /= vis;
-    b /= vis;
-    
+		r += host_basepal[pix*3];
+		g += host_basepal[pix*3+1];
+		b += host_basepal[pix*3+2];
+		vis++;
+	}
+	
+	if (vis == 0)
+		return 255;
+		
+	r /= vis;
+	g /= vis;
+	b /= vis;
+	
 //
 // find the best color
 //
-    bestdistortion = r*r + g*g + b*b;
-    bestcolor = 0;
+	bestdistortion = r*r + g*g + b*b;
+	bestcolor = 0;
 	i = 0;
 	e = 224;
 
-    for ( ; i< e ; i++)
-    {
-        pix = i;    //pixdata[i];
+	for ( ; i< e ; i++)
+	{
+		pix = i;	//pixdata[i];
 
-        pal = host_basepal.data() + pix*3;
+		pal = host_basepal.data() + pix*3;
 
-        dr = r - (int)pal[0];
-        dg = g - (int)pal[1];
-        db = b - (int)pal[2];
+		dr = r - (int)pal[0];
+		dg = g - (int)pal[1];
+		db = b - (int)pal[2];
 
-        distortion = dr*dr + dg*dg + db*db;
-        if (distortion < bestdistortion)
-        {
-            if (!distortion)
-            {
-                return pix;        // perfect match
-            }
+		distortion = dr*dr + dg*dg + db*db;
+		if (distortion < bestdistortion)
+		{
+			if (!distortion)
+			{
+				return pix;		// perfect match
+			}
 
-            bestdistortion = distortion;
-            bestcolor = pix;
-        }
-    }
+			bestdistortion = distortion;
+			bestcolor = pix;
+		}
+	}
 
-    return bestcolor;
+	return bestcolor;
 }
 
 /*
@@ -503,27 +503,27 @@ Mod_GenerateMipmaps
 */
 void Mod_GenerateMipmaps (byte* data, int w, int h)
 {
-    auto source = data;
-    auto lump_p = data + w * h;
+	auto source = data;
+	auto lump_p = data + w * h;
 	std::vector<byte> pixdata;
-    for (auto miplevel = 1 ; miplevel<MIPLEVELS ; miplevel++)
-    {
-        auto mipstep = 1<<miplevel;
+	for (auto miplevel = 1 ; miplevel<MIPLEVELS ; miplevel++)
+	{
+		auto mipstep = 1<<miplevel;
 		pixdata.resize(mipstep * mipstep);
-        for (auto y=0 ; y<h ; y+=mipstep)
-        {
-            for (auto x = 0 ; x<w ; x+= mipstep)
-            {
+		for (auto y=0 ; y<h ; y+=mipstep)
+		{
+			for (auto x = 0 ; x<w ; x+= mipstep)
+			{
 				size_t count = 0;
-                for (auto yy=0 ; yy<mipstep ; yy++)
-                    for (auto xx=0 ; xx<mipstep ; xx++)
-                    {
-                        pixdata[count++] = source[ (y+yy)*w + x + xx ];
-                    }
-                *lump_p++ = Mod_AveragePixels (pixdata);
-            }
-        }
-    }
+				for (auto yy=0 ; yy<mipstep ; yy++)
+					for (auto xx=0 ; xx<mipstep ; xx++)
+					{
+						pixdata[count++] = source[ (y+yy)*w + x + xx ];
+					}
+				*lump_p++ = Mod_AveragePixels (pixdata);
+			}
+		}
+	}
 }
 
 /*
@@ -597,7 +597,7 @@ void Mod_LoadTextures (lump_t *l)
 	m->nummiptex = LittleLong (m->nummiptex);
 	
 	loadmodel->numtextures = m->nummiptex;
-    mod_pool.texturelists.emplace_back(m->nummiptex);
+	mod_pool.texturelists.emplace_back(m->nummiptex);
 	loadmodel->textures = mod_pool.texturelists.back().data();
 
 	modelname.resize(strlen(pr_strings + loadmodel->name + 5) + 1); // +5 to skip "maps/" during copy...
@@ -617,8 +617,8 @@ void Mod_LoadTextures (lump_t *l)
 		if ( (mt->width & 15) || (mt->height & 15) )
 			Sys_Error ("Texture %s is not 16 aligned", mt->name);
 		pixels = mt->width*mt->height/64*85;
-        mod_pool.textures.emplace_back(sizeof(texture_t) + pixels);
-        tx = (texture_t*)mod_pool.textures.back().data();
+		mod_pool.textures.emplace_back(sizeof(texture_t) + pixels);
+		tx = (texture_t*)mod_pool.textures.back().data();
 		loadmodel->textures[i] = tx;
 
 		memcpy (tx->name, mt->name, sizeof(tx->name));
@@ -627,35 +627,35 @@ void Mod_LoadTextures (lump_t *l)
 		for (j=0 ; j<MIPLEVELS ; j++)
 			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
 		// the pixels immediately follow the structures
-        auto remaining = (mod_base + l->fileofs + l->filelen) - ((byte*)(mt+1));
-        if (remaining < pixels)
-        {
-            Con_Printf("Mod_LoadTextures: %s extends past the end of the lump\n", mt->name);
+		auto remaining = (mod_base + l->fileofs + l->filelen) - ((byte*)(mt+1));
+		if (remaining < pixels)
+		{
+			Con_Printf("Mod_LoadTextures: %s extends past the end of the lump\n", mt->name);
 			if (remaining >= mt->width*mt->height)
 			{
 				memcpy ( tx+1, mt+1, mt->width*mt->height);
 				Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
 			}
-            else if (remaining > 0)
-            {
-                memcpy ( tx+1, mt+1, remaining);
+			else if (remaining > 0)
+			{
+				memcpy ( tx+1, mt+1, remaining);
 				memset ( tx+1+remaining, 0, mt->width*mt->height-remaining);
 				Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
-            }
+			}
 			else
 			{
 				memset ( tx+1, 0, pixels);
 			}
-        }
-        else if (tx->name[0] == '{')
-        {
-            memcpy ( tx+1, mt+1, mt->width*mt->height);
-            Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
-        }
-        else
-        {
-            memcpy ( tx+1, mt+1, pixels);
-        }
+		}
+		else if (tx->name[0] == '{')
+		{
+			memcpy ( tx+1, mt+1, mt->width*mt->height);
+			Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
+		}
+		else
+		{
+			memcpy ( tx+1, mt+1, pixels);
+		}
 		if (!Q_strncmp(mt->name,"sky",3))
 			R_InitSky (tx);
 
@@ -955,8 +955,8 @@ void Mod_LoadLighting (lump_t *l)
 		loadmodel->lightdata = NULL;
 		return;
 	}
-    mod_pool.lightdata.emplace_back(l->filelen);
-    loadmodel->lightdata = mod_pool.lightdata.back().data();
+	mod_pool.lightdata.emplace_back(l->filelen);
+	loadmodel->lightdata = mod_pool.lightdata.back().data();
 	memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
 
 	std::vector<char> litfilename(strlen(pr_strings + loadmodel->name) + 5); // Extra space for the new extension just in case...
@@ -1011,7 +1011,7 @@ void Mod_LoadVisibility (lump_t *l)
 		loadmodel->visdata = NULL;
 		return;
 	}
-    mod_pool.visdata.emplace_back(l->filelen);
+	mod_pool.visdata.emplace_back(l->filelen);
 	loadmodel->visdata = mod_pool.visdata.back().data();
 	memcpy (loadmodel->visdata, mod_base + l->fileofs, l->filelen);
 }
@@ -1029,7 +1029,7 @@ void Mod_LoadEntities (lump_t *l)
 		loadmodel->entities = NULL;
 		return;
 	}
-    mod_pool.entities.emplace_back(l->filelen);
+	mod_pool.entities.emplace_back(l->filelen);
 	loadmodel->entities = mod_pool.entities.back().data();
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
 }
@@ -1050,8 +1050,8 @@ void Mod_LoadVertexes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.vertexes.emplace_back(count + 8); // Extra in case a skybox is loaded
-    out = mod_pool.vertexes.back().data();
+	mod_pool.vertexes.emplace_back(count + 8); // Extra in case a skybox is loaded
+	out = mod_pool.vertexes.back().data();
 
 	loadmodel->vertexes = out;
 	loadmodel->numvertexes = count;
@@ -1079,7 +1079,7 @@ void Mod_LoadSubmodels (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.submodels.emplace_back(count);
+	mod_pool.submodels.emplace_back(count);
 	out = mod_pool.submodels.back().data();
 
 	loadmodel->submodels = out;
@@ -1116,7 +1116,7 @@ void Mod_LoadEdges (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.edges.emplace_back(count + 1 + 12); // Extra in case a skybox is loaded
+	mod_pool.edges.emplace_back(count + 1 + 12); // Extra in case a skybox is loaded
 	out = mod_pool.edges.back().data();
 
 	loadmodel->edges = out;
@@ -1136,25 +1136,25 @@ Mod_LoadBSP2Edges
 */
 void Mod_LoadBSP2Edges (lump_t *l)
 {
-    dbsp2edge_t *in;
-    medge_t *out;
-    int     i, count;
+	dbsp2edge_t *in;
+	medge_t *out;
+	int	 i, count;
 
-    in = (dbsp2edge_t*)(void *)(mod_base + l->fileofs);
-    if (l->filelen % sizeof(*in))
-        Sys_Error ("Mod_LoadBSP2Edges: funny lump size in %s",pr_strings + loadmodel->name);
-    count = l->filelen / sizeof(*in);
-    mod_pool.edges.emplace_back(count + 1 + 12); // Extra in case a skybox is loaded
-    out = mod_pool.edges.back().data();
+	in = (dbsp2edge_t*)(void *)(mod_base + l->fileofs);
+	if (l->filelen % sizeof(*in))
+		Sys_Error ("Mod_LoadBSP2Edges: funny lump size in %s",pr_strings + loadmodel->name);
+	count = l->filelen / sizeof(*in);
+	mod_pool.edges.emplace_back(count + 1 + 12); // Extra in case a skybox is loaded
+	out = mod_pool.edges.back().data();
 
-    loadmodel->edges = out;
-    loadmodel->numedges = count;
+	loadmodel->edges = out;
+	loadmodel->numedges = count;
 
-    for ( i=0 ; i<count ; i++, in++, out++)
-    {
-        out->v[0] = (unsigned int)LittleLong(in->v[0]);
-        out->v[1] = (unsigned int)LittleLong(in->v[1]);
-    }
+	for ( i=0 ; i<count ; i++, in++, out++)
+	{
+		out->v[0] = (unsigned int)LittleLong(in->v[0]);
+		out->v[1] = (unsigned int)LittleLong(in->v[1]);
+	}
 }
 
 /*
@@ -1174,7 +1174,7 @@ void Mod_LoadTexinfo (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.texinfo.emplace_back(count);
+	mod_pool.texinfo.emplace_back(count);
 	out = mod_pool.texinfo.back().data();
 
 	loadmodel->texinfo = out;
@@ -1183,8 +1183,8 @@ void Mod_LoadTexinfo (lump_t *l)
 	for ( i=0 ; i<count ; i++, in++, out++)
 	{
 		for (j=0 ; j<2 ; j++)
-            for (k=0 ; k<4 ; k++)
-                out->vecs[j][k] = LittleFloat (in->vecs[j][k]);
+			for (k=0 ; k<4 ; k++)
+				out->vecs[j][k] = LittleFloat (in->vecs[j][k]);
 		len1 = Length (out->vecs[0]);
 		len2 = Length (out->vecs[1]);
 		len1 = (len1 + len2)/2;
@@ -1293,8 +1293,8 @@ void Mod_LoadFaces (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.surfaces.emplace_back(count + 6); // Extra in case a skybox is loaded
-    out = mod_pool.surfaces.back().data();
+	mod_pool.surfaces.emplace_back(count + 6); // Extra in case a skybox is loaded
+	out = mod_pool.surfaces.back().data();
 
 	loadmodel->surfaces = out;
 	loadmodel->numsurfaces = count;
@@ -1362,43 +1362,43 @@ Mod_LoadBSP2Faces
 */
 void Mod_LoadBSP2Faces (lump_t *l)
 {
-    dbsp2face_t    *in;
-    msurface_t     *out;
-    int            i, count, surfnum;
-    int            planenum, side;
+	dbsp2face_t	*in;
+	msurface_t	 *out;
+	int			i, count, surfnum;
+	int			planenum, side;
 
-    in = (dbsp2face_t*)(void *)(mod_base + l->fileofs);
-    if (l->filelen % sizeof(*in))
-        Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
-    count = l->filelen / sizeof(*in);
-    mod_pool.surfaces.emplace_back(count + 6); // Extra in case a skybox is loaded
-    out = mod_pool.surfaces.back().data();
+	in = (dbsp2face_t*)(void *)(mod_base + l->fileofs);
+	if (l->filelen % sizeof(*in))
+		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
+	count = l->filelen / sizeof(*in);
+	mod_pool.surfaces.emplace_back(count + 6); // Extra in case a skybox is loaded
+	out = mod_pool.surfaces.back().data();
 
-    loadmodel->surfaces = out;
-    loadmodel->numsurfaces = count;
+	loadmodel->surfaces = out;
+	loadmodel->numsurfaces = count;
 
-    for ( surfnum=0 ; surfnum<count ; surfnum++, in++, out++)
-    {
-        out->firstedge = LittleLong(in->firstedge);
-        out->numedges = LittleLong(in->numedges);
-        out->flags = 0;
+	for ( surfnum=0 ; surfnum<count ; surfnum++, in++, out++)
+	{
+		out->firstedge = LittleLong(in->firstedge);
+		out->numedges = LittleLong(in->numedges);
+		out->flags = 0;
 
-        planenum = LittleLong(in->planenum);
-        side = LittleLong(in->side);
-        if (side)
-            out->flags |= SURF_PLANEBACK;
+		planenum = LittleLong(in->planenum);
+		side = LittleLong(in->side);
+		if (side)
+			out->flags |= SURF_PLANEBACK;
 
-        out->plane = loadmodel->planes + planenum;
+		out->plane = loadmodel->planes + planenum;
 
-        out->texinfo = loadmodel->texinfo + LittleLong (in->texinfo);
+		out->texinfo = loadmodel->texinfo + LittleLong (in->texinfo);
 
-        CalcSurfaceExtents (out);
-                
-    // lighting info
+		CalcSurfaceExtents (out);
+				
+	// lighting info
 
-        for (i=0 ; i<MAXLIGHTMAPS ; i++)
-            out->styles[i] = in->styles[i];
-        i = LittleLong(in->lightofs);
+		for (i=0 ; i<MAXLIGHTMAPS ; i++)
+			out->styles[i] = in->styles[i];
+		i = LittleLong(in->lightofs);
 		if (i == -1)
 		{
 			out->samples = NULL;
@@ -1413,23 +1413,23 @@ void Mod_LoadBSP2Faces (lump_t *l)
 			}
 		}
 
-    // set the drawing flags flag
-        
-        if (!Q_strncmp(out->texinfo->texture->name,"sky",3))    // sky
-        {
-            out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
-            continue;
-        }
-        
-        if (!Q_strncmp(out->texinfo->texture->name,"*",1))        // turbulent
-        {
-            out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
-            continue;
-        }
+	// set the drawing flags flag
+		
+		if (!Q_strncmp(out->texinfo->texture->name,"sky",3))	// sky
+		{
+			out->flags |= (SURF_DRAWSKY | SURF_DRAWTILED);
+			continue;
+		}
+		
+		if (!Q_strncmp(out->texinfo->texture->name,"*",1))		// turbulent
+		{
+			out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
+			continue;
+		}
 
 		if (out->texinfo->texture->name[0] == '{')
 			out->flags |= SURF_DRAWFENCE;
-    }
+	}
 }
 
 
@@ -1462,7 +1462,7 @@ void Mod_LoadNodes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.nodes.emplace_back(count);
+	mod_pool.nodes.emplace_back(count);
 	out = mod_pool.nodes.back().data();
 
 	loadmodel->nodes = out;
@@ -1482,28 +1482,28 @@ void Mod_LoadNodes (lump_t *l)
 		out->firstsurface = (unsigned short)LittleShort (in->firstface);
 		out->numsurfaces = (unsigned short)LittleShort (in->numfaces);
 		
-        if (count > 32767)
-        {
-            for (j=0 ; j<2 ; j++)
-            {
-                p = (unsigned short)LittleShort (in->children[j]);
-                if (p < count)
-                    out->children[j] = loadmodel->nodes + p;
-                else
-                    out->children[j] = (mnode_t *)(loadmodel->leafs + 65535 - p);
-            }
-        }
-        else
-        {
-            for (j=0 ; j<2 ; j++)
-            {
-                p = LittleShort (in->children[j]);
-                if (p >= 0)
-                    out->children[j] = loadmodel->nodes + p;
-                else
-                    out->children[j] = (mnode_t *)(loadmodel->leafs + (-1 - p));
-            }
-        }
+		if (count > 32767)
+		{
+			for (j=0 ; j<2 ; j++)
+			{
+				p = (unsigned short)LittleShort (in->children[j]);
+				if (p < count)
+					out->children[j] = loadmodel->nodes + p;
+				else
+					out->children[j] = (mnode_t *)(loadmodel->leafs + 65535 - p);
+			}
+		}
+		else
+		{
+			for (j=0 ; j<2 ; j++)
+			{
+				p = LittleShort (in->children[j]);
+				if (p >= 0)
+					out->children[j] = loadmodel->nodes + p;
+				else
+					out->children[j] = (mnode_t *)(loadmodel->leafs + (-1 - p));
+			}
+		}
 	}
 	
 	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
@@ -1516,45 +1516,45 @@ Mod_LoadBSP2Nodes
 */
 void Mod_LoadBSP2Nodes (lump_t *l)
 {
-    int         i, j, count, p;
-    dbsp2node_t *in;
-    mnode_t     *out;
+	int		 i, j, count, p;
+	dbsp2node_t *in;
+	mnode_t	 *out;
 
-    in = (dbsp2node_t*)(void *)(mod_base + l->fileofs);
-    if (l->filelen % sizeof(*in))
-        Sys_Error ("Mod_LoadBSP2Nodes: funny lump size in %s",pr_strings + loadmodel->name);
-    count = l->filelen / sizeof(*in);
-    mod_pool.nodes.emplace_back(count);
-    out = mod_pool.nodes.back().data();
+	in = (dbsp2node_t*)(void *)(mod_base + l->fileofs);
+	if (l->filelen % sizeof(*in))
+		Sys_Error ("Mod_LoadBSP2Nodes: funny lump size in %s",pr_strings + loadmodel->name);
+	count = l->filelen / sizeof(*in);
+	mod_pool.nodes.emplace_back(count);
+	out = mod_pool.nodes.back().data();
 
-    loadmodel->nodes = out;
-    loadmodel->numnodes = count;
+	loadmodel->nodes = out;
+	loadmodel->numnodes = count;
 
-    for ( i=0 ; i<count ; i++, in++, out++)
-    {
-        for (j=0 ; j<3 ; j++)
-        {
-            out->minmaxs[j] = LittleFloat (in->mins[j]);
-            out->minmaxs[3+j] = LittleFloat (in->maxs[j]);
-        }
-    
-        p = LittleLong(in->planenum);
-        out->plane = loadmodel->planes + p;
+	for ( i=0 ; i<count ; i++, in++, out++)
+	{
+		for (j=0 ; j<3 ; j++)
+		{
+			out->minmaxs[j] = LittleFloat (in->mins[j]);
+			out->minmaxs[3+j] = LittleFloat (in->maxs[j]);
+		}
+	
+		p = LittleLong(in->planenum);
+		out->plane = loadmodel->planes + p;
 
-        out->firstsurface = (unsigned int)LittleLong (in->firstface);
-        out->numsurfaces = (unsigned int)LittleLong (in->numfaces);
-        
-        for (j=0 ; j<2 ; j++)
-        {
-            p = LittleLong (in->children[j]);
-            if (p >= 0)
-                out->children[j] = loadmodel->nodes + p;
-            else
-                out->children[j] = (mnode_t *)(loadmodel->leafs + (-1 - p));
-        }
-    }
-    
-    Mod_SetParent (loadmodel->nodes, NULL);    // sets nodes and leafs
+		out->firstsurface = (unsigned int)LittleLong (in->firstface);
+		out->numsurfaces = (unsigned int)LittleLong (in->numfaces);
+		
+		for (j=0 ; j<2 ; j++)
+		{
+			p = LittleLong (in->children[j]);
+			if (p >= 0)
+				out->children[j] = loadmodel->nodes + p;
+			else
+				out->children[j] = (mnode_t *)(loadmodel->leafs + (-1 - p));
+		}
+	}
+	
+	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
 }
 
 /*
@@ -1572,7 +1572,7 @@ void Mod_LoadLeafs (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.leafs.emplace_back(count);
+	mod_pool.leafs.emplace_back(count);
 	out = mod_pool.leafs.back().data();
 
 	loadmodel->leafs = out;
@@ -1612,45 +1612,45 @@ Mod_LoadBSP2Leafs
 */
 void Mod_LoadBSP2Leafs (lump_t *l)
 {
-    dbsp2leaf_t *in;
-    mleaf_t     *out;
-    int         i, j, count, p;
+	dbsp2leaf_t *in;
+	mleaf_t	 *out;
+	int		 i, j, count, p;
 
-    in = (dbsp2leaf_t*)(void *)(mod_base + l->fileofs);
-    if (l->filelen % sizeof(*in))
-        Sys_Error ("Mod_LoadBSP2Leafs: funny lump size in %s",pr_strings + loadmodel->name);
-    count = l->filelen / sizeof(*in);
-    mod_pool.leafs.emplace_back(count);
-    out = mod_pool.leafs.back().data();
+	in = (dbsp2leaf_t*)(void *)(mod_base + l->fileofs);
+	if (l->filelen % sizeof(*in))
+		Sys_Error ("Mod_LoadBSP2Leafs: funny lump size in %s",pr_strings + loadmodel->name);
+	count = l->filelen / sizeof(*in);
+	mod_pool.leafs.emplace_back(count);
+	out = mod_pool.leafs.back().data();
 
-    loadmodel->leafs = out;
-    loadmodel->numleafs = count;
+	loadmodel->leafs = out;
+	loadmodel->numleafs = count;
 
-    for ( i=0 ; i<count ; i++, in++, out++)
-    {
-        for (j=0 ; j<3 ; j++)
-        {
-            out->minmaxs[j] = LittleFloat (in->mins[j]);
-            out->minmaxs[3+j] = LittleFloat (in->maxs[j]);
-        }
+	for ( i=0 ; i<count ; i++, in++, out++)
+	{
+		for (j=0 ; j<3 ; j++)
+		{
+			out->minmaxs[j] = LittleFloat (in->mins[j]);
+			out->minmaxs[3+j] = LittleFloat (in->maxs[j]);
+		}
 
-        p = LittleLong(in->contents);
-        out->contents = p;
+		p = LittleLong(in->contents);
+		out->contents = p;
 
-        out->firstmarksurface = loadmodel->marksurfaces +
-            LittleLong(in->firstmarksurface);
-        out->nummarksurfaces = LittleLong(in->nummarksurfaces);
-        
-        p = LittleLong(in->visofs);
-        if (p == -1)
-            out->compressed_vis = NULL;
-        else
-            out->compressed_vis = loadmodel->visdata + p;
-        out->efrags = NULL;
-        
-        for (j=0 ; j<4 ; j++)
-            out->ambient_sound_level[j] = in->ambient_level[j];
-    }
+		out->firstmarksurface = loadmodel->marksurfaces +
+			LittleLong(in->firstmarksurface);
+		out->nummarksurfaces = LittleLong(in->nummarksurfaces);
+		
+		p = LittleLong(in->visofs);
+		if (p == -1)
+			out->compressed_vis = NULL;
+		else
+			out->compressed_vis = loadmodel->visdata + p;
+		out->efrags = NULL;
+		
+		for (j=0 ; j<4 ; j++)
+			out->ambient_sound_level[j] = in->ambient_level[j];
+	}
 }
 
 /*
@@ -1661,7 +1661,7 @@ Mod_LoadClipnodes
 void Mod_LoadClipnodes (lump_t *l)
 {
 	dclipnode_t *in;
-    mclipnode_t *out;
+	mclipnode_t *out;
 	int			i, count;
 	hull_t		*hull;
 
@@ -1669,7 +1669,7 @@ void Mod_LoadClipnodes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.clipnodes.emplace_back(count);
+	mod_pool.clipnodes.emplace_back(count);
 	out = mod_pool.clipnodes.back().data();
 
 	loadmodel->clipnodes = out;
@@ -1699,32 +1699,32 @@ void Mod_LoadClipnodes (lump_t *l)
 	hull->clip_maxs[1] = 32;
 	hull->clip_maxs[2] = 64;
 
-    if (count > 32767)
-    {
-        for (i=0 ; i<count ; i++, out++, in++)
-        {
-            out->planenum = LittleLong(in->planenum);
-            out->children[0] = (unsigned short)LittleShort(in->children[0]);
-            if (out->children[0] >= count)
-            {
-                out->children[0] -= 65536;
-            }
-            out->children[1] = (unsigned short)LittleShort(in->children[1]);
-            if (out->children[1] >= count)
-            {
-                out->children[1] -= 65536;
-            }
-        }
-    }
-    else
-    {
-        for (i=0 ; i<count ; i++, out++, in++)
-        {
-            out->planenum = LittleLong(in->planenum);
-            out->children[0] = LittleShort(in->children[0]);
-            out->children[1] = LittleShort(in->children[1]);
-        }
-    }
+	if (count > 32767)
+	{
+		for (i=0 ; i<count ; i++, out++, in++)
+		{
+			out->planenum = LittleLong(in->planenum);
+			out->children[0] = (unsigned short)LittleShort(in->children[0]);
+			if (out->children[0] >= count)
+			{
+				out->children[0] -= 65536;
+			}
+			out->children[1] = (unsigned short)LittleShort(in->children[1]);
+			if (out->children[1] >= count)
+			{
+				out->children[1] -= 65536;
+			}
+		}
+	}
+	else
+	{
+		for (i=0 ; i<count ; i++, out++, in++)
+		{
+			out->planenum = LittleLong(in->planenum);
+			out->children[0] = LittleShort(in->children[0]);
+			out->children[1] = LittleShort(in->children[1]);
+		}
+	}
 }
 
 /*
@@ -1734,51 +1734,51 @@ Mod_LoadBSP2Clipnodes
 */
 void Mod_LoadBSP2Clipnodes (lump_t *l)
 {
-    dbsp2clipnode_t *in;
-    mclipnode_t *out;
-    int            i, count;
-    hull_t        *hull;
+	dbsp2clipnode_t *in;
+	mclipnode_t *out;
+	int			i, count;
+	hull_t		*hull;
 
-    in = (dbsp2clipnode_t*)(void *)(mod_base + l->fileofs);
-    if (l->filelen % sizeof(*in))
-        Sys_Error ("Mod_LoadBSP2Clipnodes: funny lump size in %s",pr_strings + loadmodel->name);
-    count = l->filelen / sizeof(*in);
-    mod_pool.clipnodes.emplace_back(count);
-    out = mod_pool.clipnodes.back().data();
+	in = (dbsp2clipnode_t*)(void *)(mod_base + l->fileofs);
+	if (l->filelen % sizeof(*in))
+		Sys_Error ("Mod_LoadBSP2Clipnodes: funny lump size in %s",pr_strings + loadmodel->name);
+	count = l->filelen / sizeof(*in);
+	mod_pool.clipnodes.emplace_back(count);
+	out = mod_pool.clipnodes.back().data();
 
-    loadmodel->clipnodes = out;
-    loadmodel->numclipnodes = count;
+	loadmodel->clipnodes = out;
+	loadmodel->numclipnodes = count;
 
-    hull = &loadmodel->hulls[1];
-    hull->clipnodes = out;
-    hull->firstclipnode = 0;
-    hull->lastclipnode = count-1;
-    hull->planes = loadmodel->planes;
-    hull->clip_mins[0] = -16;
-    hull->clip_mins[1] = -16;
-    hull->clip_mins[2] = -24;
-    hull->clip_maxs[0] = 16;
-    hull->clip_maxs[1] = 16;
-    hull->clip_maxs[2] = 32;
+	hull = &loadmodel->hulls[1];
+	hull->clipnodes = out;
+	hull->firstclipnode = 0;
+	hull->lastclipnode = count-1;
+	hull->planes = loadmodel->planes;
+	hull->clip_mins[0] = -16;
+	hull->clip_mins[1] = -16;
+	hull->clip_mins[2] = -24;
+	hull->clip_maxs[0] = 16;
+	hull->clip_maxs[1] = 16;
+	hull->clip_maxs[2] = 32;
 
-    hull = &loadmodel->hulls[2];
-    hull->clipnodes = out;
-    hull->firstclipnode = 0;
-    hull->lastclipnode = count-1;
-    hull->planes = loadmodel->planes;
-    hull->clip_mins[0] = -32;
-    hull->clip_mins[1] = -32;
-    hull->clip_mins[2] = -24;
-    hull->clip_maxs[0] = 32;
-    hull->clip_maxs[1] = 32;
-    hull->clip_maxs[2] = 64;
+	hull = &loadmodel->hulls[2];
+	hull->clipnodes = out;
+	hull->firstclipnode = 0;
+	hull->lastclipnode = count-1;
+	hull->planes = loadmodel->planes;
+	hull->clip_mins[0] = -32;
+	hull->clip_mins[1] = -32;
+	hull->clip_mins[2] = -24;
+	hull->clip_maxs[0] = 32;
+	hull->clip_maxs[1] = 32;
+	hull->clip_maxs[2] = 64;
 
-    for (i=0 ; i<count ; i++, out++, in++)
-    {
-        out->planenum = LittleLong(in->planenum);
-        out->children[0] = LittleLong(in->children[0]);
-        out->children[1] = LittleLong(in->children[1]);
-    }
+	for (i=0 ; i<count ; i++, out++, in++)
+	{
+		out->planenum = LittleLong(in->planenum);
+		out->children[0] = LittleLong(in->children[0]);
+		out->children[1] = LittleLong(in->children[1]);
+	}
 }
 
 /*
@@ -1799,7 +1799,7 @@ void Mod_MakeHull0 (void)
 	
 	in = loadmodel->nodes;
 	count = loadmodel->numnodes;
-    mod_pool.clipnodes.emplace_back(count);
+	mod_pool.clipnodes.emplace_back(count);
 	out = mod_pool.clipnodes.back().data();
 
 	hull->clipnodes = out;
@@ -1836,7 +1836,7 @@ void Mod_LoadMarksurfaces (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.marksurfaces.emplace_back(count);
+	mod_pool.marksurfaces.emplace_back(count);
 	out = mod_pool.marksurfaces.back().data();
 
 	loadmodel->marksurfaces = out;
@@ -1858,27 +1858,27 @@ Mod_LoadBSP2Marksurfaces
 */
 void Mod_LoadBSP2Marksurfaces (lump_t *l)
 {
-    int     i, j, count;
-    int        *in;
-    msurface_t **out;
-    
-    in = (int*)(void *)(mod_base + l->fileofs);
-    if (l->filelen % sizeof(*in))
-        Sys_Error ("Mod_LoadBSP2Marksurfaces: funny lump size in %s",pr_strings + loadmodel->name);
-    count = l->filelen / sizeof(*in);
-    mod_pool.marksurfaces.emplace_back(count);
-    out = mod_pool.marksurfaces.back().data();
+	int	 i, j, count;
+	int		*in;
+	msurface_t **out;
+	
+	in = (int*)(void *)(mod_base + l->fileofs);
+	if (l->filelen % sizeof(*in))
+		Sys_Error ("Mod_LoadBSP2Marksurfaces: funny lump size in %s",pr_strings + loadmodel->name);
+	count = l->filelen / sizeof(*in);
+	mod_pool.marksurfaces.emplace_back(count);
+	out = mod_pool.marksurfaces.back().data();
 
-    loadmodel->marksurfaces = out;
-    loadmodel->nummarksurfaces = count;
+	loadmodel->marksurfaces = out;
+	loadmodel->nummarksurfaces = count;
 
-    for ( i=0 ; i<count ; i++)
-    {
-        j = LittleLong(in[i]);
-        if (j >= loadmodel->numsurfaces)
-            Sys_Error ("Mod_LoadBSP2Marksurfaces: bad surface number");
-        out[i] = loadmodel->surfaces + j;
-    }
+	for ( i=0 ; i<count ; i++)
+	{
+		j = LittleLong(in[i]);
+		if (j >= loadmodel->numsurfaces)
+			Sys_Error ("Mod_LoadBSP2Marksurfaces: bad surface number");
+		out[i] = loadmodel->surfaces + j;
+	}
 }
 
 /*
@@ -1895,7 +1895,7 @@ void Mod_LoadSurfedges (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.surfedges.emplace_back(count + 24); // Extra in case a skybox is loaded
+	mod_pool.surfedges.emplace_back(count + 24); // Extra in case a skybox is loaded
 	out = mod_pool.surfedges.back().data();
 
 	loadmodel->surfedges = out;
@@ -1922,7 +1922,7 @@ void Mod_LoadPlanes (lump_t *l)
 	if (l->filelen % sizeof(*in))
 		Sys_Error ("MOD_LoadBmodel: funny lump size in %s",pr_strings + loadmodel->name);
 	count = l->filelen / sizeof(*in);
-    mod_pool.planes.emplace_back(count * 2);
+	mod_pool.planes.emplace_back(count * 2);
 	out = mod_pool.planes.back().data();
 	
 	loadmodel->planes = out;
@@ -1978,10 +1978,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	header = (dheader_t *)buffer;
 
 	i = LittleLong (header->version);
-    auto isbsp2 = (i == BSP2VERSION);
+	auto isbsp2 = (i == BSP2VERSION);
 	if (i != BSPVERSION && !isbsp2)
 		Sys_Error ("Mod_LoadBrushModel: %s has wrong version number (%i should be %i or '2PSB')", pr_strings + mod->name, i, BSPVERSION);
-    
+	
 // swap all the lumps
 	mod_base = (byte *)header;
 
@@ -1991,42 +1991,42 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 // load into heap
 	
 	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
-    if (isbsp2)
-    {
-        Mod_LoadBSP2Edges (&header->lumps[LUMP_EDGES]);
-    }
-    else
-    {
-        Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
-    }
+	if (isbsp2)
+	{
+		Mod_LoadBSP2Edges (&header->lumps[LUMP_EDGES]);
+	}
+	else
+	{
+		Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
+	}
 	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
 	Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
 	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);
 	Mod_LoadTexinfo (&header->lumps[LUMP_TEXINFO]);
-    if (isbsp2)
-    {
-        Mod_LoadBSP2Faces (&header->lumps[LUMP_FACES]);
-        Mod_LoadBSP2Marksurfaces (&header->lumps[LUMP_MARKSURFACES]);
-    }
-    else
-    {
-        Mod_LoadFaces (&header->lumps[LUMP_FACES]);
-        Mod_LoadMarksurfaces (&header->lumps[LUMP_MARKSURFACES]);
-    }
+	if (isbsp2)
+	{
+		Mod_LoadBSP2Faces (&header->lumps[LUMP_FACES]);
+		Mod_LoadBSP2Marksurfaces (&header->lumps[LUMP_MARKSURFACES]);
+	}
+	else
+	{
+		Mod_LoadFaces (&header->lumps[LUMP_FACES]);
+		Mod_LoadMarksurfaces (&header->lumps[LUMP_MARKSURFACES]);
+	}
 	Mod_LoadVisibility (&header->lumps[LUMP_VISIBILITY]);
-    if (isbsp2)
-    {
-        Mod_LoadBSP2Leafs (&header->lumps[LUMP_LEAFS]);
-        Mod_LoadBSP2Nodes (&header->lumps[LUMP_NODES]);
-        Mod_LoadBSP2Clipnodes (&header->lumps[LUMP_CLIPNODES]);
-    }
-    else
-    {
-        Mod_LoadLeafs (&header->lumps[LUMP_LEAFS]);
-        Mod_LoadNodes (&header->lumps[LUMP_NODES]);
-        Mod_LoadClipnodes (&header->lumps[LUMP_CLIPNODES]);
-    }
+	if (isbsp2)
+	{
+		Mod_LoadBSP2Leafs (&header->lumps[LUMP_LEAFS]);
+		Mod_LoadBSP2Nodes (&header->lumps[LUMP_NODES]);
+		Mod_LoadBSP2Clipnodes (&header->lumps[LUMP_CLIPNODES]);
+	}
+	else
+	{
+		Mod_LoadLeafs (&header->lumps[LUMP_LEAFS]);
+		Mod_LoadNodes (&header->lumps[LUMP_NODES]);
+		Mod_LoadClipnodes (&header->lumps[LUMP_CLIPNODES]);
+	}
 	Mod_LoadEntities (&header->lumps[LUMP_ENTITIES]);
 	Mod_LoadSubmodels (&header->lumps[LUMP_MODELS]);
 
@@ -2065,9 +2065,9 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 			sprintf (name, "*%i", i+1);
 			loadmodel = Mod_FindName (name);
 			*loadmodel = *mod;
-            auto name_len = (int)strlen(name);
-            loadmodel->name = ED_NewString(name_len + 1);
-            Q_strncpy(pr_strings + loadmodel->name, name, name_len);
+			auto name_len = (int)strlen(name);
+			loadmodel->name = ED_NewString(name_len + 1);
+			Q_strncpy(pr_strings + loadmodel->name, name, name_len);
 			mod = loadmodel;
 		}
 	}
@@ -2096,7 +2096,7 @@ void * Mod_LoadAliasFrame (void * pin, int *pframeindex, int numv,
 	pdaliasframe = (daliasframe_t *)pin;
 
 	Q_memcpy (name, pdaliasframe->name, 16);
-    Q_memset (name + 16, 0, 4);
+	Q_memset (name + 16, 0, 4);
 
 	for (i=0 ; i<3 ; i++)
 	{
@@ -2107,14 +2107,14 @@ void * Mod_LoadAliasFrame (void * pin, int *pframeindex, int numv,
 	}
 
 	pinframe = (trivertx_t *)(pdaliasframe + 1);
-    
-    int pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
-    int pooltop = mod_aliaspool.size();
-    mod_aliaspool.resize(pooltop + numv * sizeof(*pframe));
-    pheader = (aliashdr_t*)mod_aliaspool.data();
+	
+	int pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
+	int pooltop = mod_aliaspool.size();
+	mod_aliaspool.resize(pooltop + numv * sizeof(*pframe));
+	pheader = (aliashdr_t*)mod_aliaspool.data();
 	pframe = (trivertx_t*)(mod_aliaspool.data() + pooltop);
 
-    pframeindex = (int*)(mod_aliaspool.data() + pframeindexoffset);
+	pframeindex = (int*)(mod_aliaspool.data() + pframeindexoffset);
 	*pframeindex = (byte *)pframe - (byte *)pheader;
 
 	for (j=0 ; j<numv ; j++)
@@ -2155,18 +2155,18 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 
 	numframes = LittleLong (pingroup->numframes);
 
-    int pbboxminoffset = (byte*)pbboxmin - mod_aliaspool.data();
-    int pbboxmaxoffset = (byte*)pbboxmax - mod_aliaspool.data();
-    int pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
-    int pooltop = mod_aliaspool.size();
-    mod_aliaspool.resize(pooltop + sizeof(maliasgroup_t) + (numframes - 1) * sizeof(paliasgroup->frames[0]) + numframes * sizeof(float));
-    pheader = (aliashdr_t*)mod_aliaspool.data();
+	int pbboxminoffset = (byte*)pbboxmin - mod_aliaspool.data();
+	int pbboxmaxoffset = (byte*)pbboxmax - mod_aliaspool.data();
+	int pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
+	int pooltop = mod_aliaspool.size();
+	mod_aliaspool.resize(pooltop + sizeof(maliasgroup_t) + (numframes - 1) * sizeof(paliasgroup->frames[0]) + numframes * sizeof(float));
+	pheader = (aliashdr_t*)mod_aliaspool.data();
 	paliasgroup = (maliasgroup_t*)(mod_aliaspool.data() + pooltop);
 
 	paliasgroup->numframes = numframes;
 
-    pbboxmin = (trivertx_t*)(mod_aliaspool.data() + pbboxminoffset);
-    pbboxmax = (trivertx_t*)(mod_aliaspool.data() + pbboxmaxoffset);
+	pbboxmin = (trivertx_t*)(mod_aliaspool.data() + pbboxminoffset);
+	pbboxmax = (trivertx_t*)(mod_aliaspool.data() + pbboxmaxoffset);
 	for (i=0 ; i<3 ; i++)
 	{
 	// these are byte values, so we don't have to worry about endianness
@@ -2174,7 +2174,7 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 		pbboxmax->v[i] = pingroup->bboxmax.v[i];
 	}
 
-    pframeindex = (int*)(mod_aliaspool.data() + pframeindexoffset);
+	pframeindex = (int*)(mod_aliaspool.data() + pframeindexoffset);
 	*pframeindex = (byte *)paliasgroup - (byte *)pheader;
 
 	pin_intervals = (daliasinterval_t *)(pingroup + 1);
@@ -2221,13 +2221,13 @@ void * Mod_LoadAliasSkin (void * pin, int *pskinindex, int skinsize,
 	byte	*pskin, *pinskin;
 	unsigned short	*pusskin;
 
-    int pskinindexoffset = (byte*)pskinindex - mod_aliaspool.data();
-    int pooltop = mod_aliaspool.size();
-    mod_aliaspool.resize(pooltop + skinsize * r_pixbytes);
-    pheader = (aliashdr_t*)mod_aliaspool.data();
-    pskin = mod_aliaspool.data() + pooltop;
+	int pskinindexoffset = (byte*)pskinindex - mod_aliaspool.data();
+	int pooltop = mod_aliaspool.size();
+	mod_aliaspool.resize(pooltop + skinsize * r_pixbytes);
+	pheader = (aliashdr_t*)mod_aliaspool.data();
+	pskin = mod_aliaspool.data() + pooltop;
 	pinskin = (byte *)pin;
-    pskinindex = (int*)(mod_aliaspool.data() + pskinindexoffset);
+	pskinindex = (int*)(mod_aliaspool.data() + pskinindexoffset);
 	*pskinindex = (byte *)pskin - (byte *)pheader;
 
 	if (r_pixbytes == 1)
@@ -2271,15 +2271,15 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 	pinskingroup = (daliasskingroup_t *)pin;
 
 	numskins = LittleLong (pinskingroup->numskins);
-    int pskinindexoffset = (byte*)pskinindex - mod_aliaspool.data();
-    int pooltop = mod_aliaspool.size();
-    mod_aliaspool.resize(pooltop + sizeof(maliasskingroup_t) + (numskins - 1) * sizeof(paliasskingroup->skindescs[0]) + numskins * sizeof(float));
-    pheader = (aliashdr_t*)mod_aliaspool.data();
+	int pskinindexoffset = (byte*)pskinindex - mod_aliaspool.data();
+	int pooltop = mod_aliaspool.size();
+	mod_aliaspool.resize(pooltop + sizeof(maliasskingroup_t) + (numskins - 1) * sizeof(paliasskingroup->skindescs[0]) + numskins * sizeof(float));
+	pheader = (aliashdr_t*)mod_aliaspool.data();
 	paliasskingroup = (maliasskingroup_t*)(mod_aliaspool.data() + pooltop);
 
 	paliasskingroup->numskins = numskins;
 
-    pskinindex = (int*)(mod_aliaspool.data() + pskinindexoffset);
+	pskinindex = (int*)(mod_aliaspool.data() + pskinindexoffset);
 	*pskinindex = (byte *)paliasskingroup - (byte *)pheader;
 
 	pinskinintervals = (daliasskininterval_t *)(pinskingroup + 1);
@@ -2304,7 +2304,7 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 	{
 		ptemp = Mod_LoadAliasSkin (ptemp,
 				&paliasskingroup->skindescs[i].skin, skinsize, pheader);
-        paliasskingroup = (maliasskingroup_t*)(mod_aliaspool.data() + pooltop);
+		paliasskingroup = (maliasskingroup_t*)(mod_aliaspool.data() + pooltop);
 	}
 
 	return ptemp;
@@ -2349,12 +2349,12 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 			LittleLong (pinmodel->numverts) * sizeof (stvert_t) +
 			LittleLong (pinmodel->numtris) * sizeof (mtriangle_t);
 
-    mod_aliaspool.resize(size);
-    pheader = (aliashdr_t*)mod_aliaspool.data();
+	mod_aliaspool.resize(size);
+	pheader = (aliashdr_t*)mod_aliaspool.data();
 	pmodel = (mdl_t *) ((byte *)&pheader[1] +
 			(LittleLong (pinmodel->numframes) - 1) *
 			 sizeof (pheader->frames[0]));
-    auto pmodeloffset = (byte*)pmodel - (byte*)pheader;
+	auto pmodeloffset = (byte*)pmodel - (byte*)pheader;
 	
 //	mod->cache.data = pheader;
 	mod->flags = LittleLong (pinmodel->flags);
@@ -2407,9 +2407,9 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 
 	pskintype = (daliasskintype_t *)&pinmodel[1];
 
-    int pooltop = mod_aliaspool.size();
-    mod_aliaspool.resize(pooltop + numskins * sizeof(maliasskindesc_t));
-    pheader = (aliashdr_t*)mod_aliaspool.data();
+	int pooltop = mod_aliaspool.size();
+	mod_aliaspool.resize(pooltop + numskins * sizeof(maliasskindesc_t));
+	pheader = (aliashdr_t*)mod_aliaspool.data();
 	pskindesc = (maliasskindesc_t*)(mod_aliaspool.data() + pooltop);
 
 	pheader->skindesc = (byte *)pskindesc - (byte *)pheader;
@@ -2435,15 +2435,15 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 											&pskindesc[i].skin,
 											skinsize, pheader);
 		}
-        pheader = (aliashdr_t*)mod_aliaspool.data();
-        pskindesc = (maliasskindesc_t*)(mod_aliaspool.data() + pooltop);
+		pheader = (aliashdr_t*)mod_aliaspool.data();
+		pskindesc = (maliasskindesc_t*)(mod_aliaspool.data() + pooltop);
 	}
 
 //
 // set base s and t vertices
 //
-    pmodel = (mdl_t *)(mod_aliaspool.data() + pmodeloffset);
-    pstverts = (stvert_t *)&pmodel[1];
+	pmodel = (mdl_t *)(mod_aliaspool.data() + pmodeloffset);
+	pstverts = (stvert_t *)&pmodel[1];
 	pinstverts = (stvert_t *)pskintype;
 
 	pheader->stverts = (byte *)pstverts - (byte *)pheader;
@@ -2512,8 +2512,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 										&pheader->frames[i].bboxmax,
 										pheader, pheader->frames[i].name);
 		}
-        pheader = (aliashdr_t*)mod_aliaspool.data();
-        pmodel = (mdl_t *)(mod_aliaspool.data() + pmodeloffset);
+		pheader = (aliashdr_t*)mod_aliaspool.data();
+		pmodel = (mdl_t *)(mod_aliaspool.data() + pmodeloffset);
 	}
 
 	mod->type = mod_alias;
@@ -2527,10 +2527,10 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 //	
 	total = mod_aliaspool.size();
 	
-    mod->extradata = new byte[total];
+	mod->extradata = new byte[total];
 	memcpy (mod->extradata, pheader, total);
 
-    mod_aliaspool.clear();
+	mod_aliaspool.clear();
 }
 
 //=============================================================================
@@ -2553,14 +2553,14 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe)
 	width = LittleLong (pinframe->width);
 	height = LittleLong (pinframe->height);
 	size = width * height;
-    
-    int ppframeoffset = (byte*)ppframe - mod_pool.sprites.back().data();
-    int pooltop = mod_pool.sprites.back().size();
-    mod_pool.sprites.back().resize(pooltop + sizeof (mspriteframe_t) + size*r_pixbytes);
+	
+	int ppframeoffset = (byte*)ppframe - mod_pool.sprites.back().data();
+	int pooltop = mod_pool.sprites.back().size();
+	mod_pool.sprites.back().resize(pooltop + sizeof (mspriteframe_t) + size*r_pixbytes);
 	pspriteframe = (mspriteframe_t*)(mod_pool.sprites.back().data() + pooltop);
-    ppframe = (mspriteframe_t**)(mod_pool.sprites.back().data() + ppframeoffset);
+	ppframe = (mspriteframe_t**)(mod_pool.sprites.back().data() + ppframeoffset);
 
-    Q_memset (pspriteframe, 0, sizeof (mspriteframe_t) + size);
+	Q_memset (pspriteframe, 0, sizeof (mspriteframe_t) + size);
 	*ppframe = pspriteframe;
 
 	pspriteframe->width = width;
@@ -2613,11 +2613,11 @@ void * Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe)
 
 	numframes = LittleLong (pingroup->numframes);
 
-    int ppframeoffset = (byte*)ppframe - mod_pool.sprites.back().data();
-    int pooltop = mod_pool.sprites.back().size();
-    mod_pool.sprites.back().resize(pooltop + sizeof(mspritegroup_t) + (numframes - 1) * sizeof(pspritegroup->frames[0]) + numframes * sizeof (float));
+	int ppframeoffset = (byte*)ppframe - mod_pool.sprites.back().data();
+	int pooltop = mod_pool.sprites.back().size();
+	mod_pool.sprites.back().resize(pooltop + sizeof(mspritegroup_t) + (numframes - 1) * sizeof(pspritegroup->frames[0]) + numframes * sizeof (float));
 	pspritegroup = (mspritegroup_t*)(mod_pool.sprites.back().data() + pooltop);
-    ppframe = (mspriteframe_t**)(mod_pool.sprites.back().data() + ppframeoffset);
+	ppframe = (mspriteframe_t**)(mod_pool.sprites.back().data() + ppframeoffset);
 
 	pspritegroup->numframes = numframes;
 
@@ -2644,7 +2644,7 @@ void * Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe)
 	for (i=0 ; i<numframes ; i++)
 	{
 		ptemp = Mod_LoadSpriteFrame (ptemp, &pspritegroup->frames[i]);
-        pspritegroup = (mspritegroup_t*)(mod_pool.sprites.back().data() + pooltop);
+		pspritegroup = (mspritegroup_t*)(mod_pool.sprites.back().data() + pooltop);
 	}
 
 	return ptemp;
@@ -2676,7 +2676,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 	numframes = LittleLong (pin->numframes);
 
 	size = sizeof (msprite_t) +	(numframes - 1) * sizeof (psprite->frames);
-    mod_pool.sprites.emplace_back(size);
+	mod_pool.sprites.emplace_back(size);
 	psprite = (msprite_t*)(mod_pool.sprites.back().data());
 
 	psprite->type = LittleLong (pin->type);
@@ -2702,7 +2702,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 
 	pframetype = (dspriteframetype_t *)(pin + 1);
 
-    std::vector<int> frameptroffsets;
+	std::vector<int> frameptroffsets;
 	for (i=0 ; i<numframes ; i++)
 	{
 		spriteframetype_t	frametype;
@@ -2722,17 +2722,17 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 					Mod_LoadSpriteGroup (pframetype + 1,
 										 &psprite->frames[i].frameptr);
 		}
-        psprite = (msprite_t*)(mod_pool.sprites.back().data());
-        frameptroffsets.push_back((byte*)psprite->frames[i].frameptr - mod_pool.sprites.back().data());
+		psprite = (msprite_t*)(mod_pool.sprites.back().data());
+		frameptroffsets.push_back((byte*)psprite->frames[i].frameptr - mod_pool.sprites.back().data());
 	}
-    
-    for (i = 0; i < frameptroffsets.size(); i++)
-    {
-        psprite->frames[i].frameptr = (mspriteframe_t*)(mod_pool.sprites.back().data() + frameptroffsets[i]);
-    }
+	
+	for (i = 0; i < frameptroffsets.size(); i++)
+	{
+		psprite->frames[i].frameptr = (mspriteframe_t*)(mod_pool.sprites.back().data() + frameptroffsets[i]);
+	}
 
-    mod->extradata = (byte*)psprite;
-    
+	mod->extradata = (byte*)psprite;
+	
 	mod->type = mod_sprite;
 }
 
@@ -2746,7 +2746,7 @@ Mod_Print
 void Mod_Print (void)
 {
 	Con_Printf ("Cached models:\n");
-    for (auto& mod : mod_known)
+	for (auto& mod : mod_known)
 	{
 		Con_Printf ("%8p : %s",mod.extradata, pr_strings + mod.name);
 		if (mod.needload & NL_UNREFERENCED)

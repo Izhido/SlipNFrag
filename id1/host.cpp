@@ -51,8 +51,8 @@ client_t	*host_client;			// current client
 jmp_buf 	host_abortserver;
 #endif
 
-std::vector<byte>	host_basepal;
-std::vector<byte>	host_colormap;
+std::vector<byte>		host_basepal;
+std::vector<byte>		host_colormap;
 std::vector<unsigned>	host_basepalcoverage;
 
 cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
@@ -68,7 +68,11 @@ cvar_t	teamplay = {"teamplay","0",false,true};
 cvar_t	samelevel = {"samelevel","0"};
 cvar_t	noexit = {"noexit","0",false,true};
 
+#ifdef QUAKE2
+cvar_t	developer = {"developer","1"};	// should be 0 for release!
+#else
 cvar_t	developer = {"developer","0"};
+#endif
 
 cvar_t	skill = {"skill","1"};						// 0 - 3
 cvar_t	deathmatch = {"deathmatch","0"};			// 0, 1, or 2
@@ -87,19 +91,19 @@ Host_EndGame
 void Host_EndGame (const char *message, ...)
 {
 	va_list		argptr;
-    std::vector<char> string(1024);
-    
-    while (true)
-    {
-        va_start (argptr, message);
-        auto needed = vsnprintf(string.data(), string.size(), message, argptr);
-        va_end (argptr);
-        if (needed < string.size())
-        {
-            break;
-        }
-        string.resize(needed + 1);
-    }
+	std::vector<char> string(1024);
+	
+	while (true)
+	{
+		va_start (argptr, message);
+		auto needed = vsnprintf(string.data(), string.size(), message, argptr);
+		va_end (argptr);
+		if (needed < string.size())
+		{
+			break;
+		}
+		string.resize(needed + 1);
+	}
 	Con_DPrintf ("Host_EndGame: %s\n",string.data());
 	
 	if (sv.active)
@@ -130,7 +134,7 @@ This shuts down both the client and server
 void Host_Error (const char *error, ...)
 {
 	va_list		argptr;
-    std::vector<char> string(1024);
+	std::vector<char>		string(1024);
 	static	qboolean inerror = false;
 	
 	if (inerror)
@@ -139,17 +143,17 @@ void Host_Error (const char *error, ...)
 	
 	SCR_EndLoadingPlaque ();		// reenable screen updates
 
-    while (true)
-    {
-        va_start (argptr, error);
-        auto needed = vsnprintf(string.data(), string.size(), error, argptr);
-        va_end (argptr);
-        if (needed < string.size())
-        {
-            break;
-        }
-        string.resize(needed + 1);
-    }
+	while (true)
+	{
+		va_start (argptr, error);
+		auto needed = vsnprintf(string.data(), string.size(), error, argptr);
+		va_end (argptr);
+		if (needed < string.size())
+		{
+			break;
+		}
+		string.resize(needed + 1);
+	}
 	Con_Printf ("Host_Error: %s\n",string.data());
 	
 	if (sv.active)
@@ -210,10 +214,10 @@ void	Host_FindMaxClients (void)
 	else if (svs.maxclients > MAX_SCOREBOARD)
 		svs.maxclients = MAX_SCOREBOARD;
 
-	auto limit = svs.maxclients;
-	if (limit < 4)
-		limit = 4;
-	svs.clients.resize(limit);
+	svs.maxclientslimit = svs.maxclients;
+	if (svs.maxclientslimit < 4)
+		svs.maxclientslimit = 4;
+	svs.clients.resize(svs.maxclientslimit);
 	for (auto& client : svs.clients)
 	{
 		client.Clear();
@@ -299,20 +303,20 @@ FIXME: make this just a stuffed echo?
 void SV_ClientPrintf (const char *fmt, ...)
 {
 	va_list		argptr;
-    std::vector<char> string(1024);
-    
-    while (true)
-    {
-        va_start (argptr, fmt);
-        auto needed = vsnprintf(string.data(), string.size(), fmt, argptr);
-        va_end (argptr);
-        if (needed < string.size())
-        {
-            break;
-        }
-        string.resize(needed + 1);
-    }
-
+	std::vector<char>		string(1024);
+	
+	while (true)
+	{
+		va_start (argptr,fmt);
+		auto needed = vsnprintf(string.data(), string.size(), fmt, argptr);
+		va_end (argptr);
+		if (needed < string.size())
+		{
+			break;
+		}
+		string.resize(needed + 1);
+	}
+	
 	MSG_WriteByte (&host_client->message, svc_print);
 	MSG_WriteString (&host_client->message, string.data());
 }
@@ -327,21 +331,21 @@ Sends text to all active clients
 void SV_BroadcastPrintf (const char *fmt, ...)
 {
 	va_list		argptr;
-    std::vector<char> string(1024);
+	std::vector<char>		string(1024);
 	int			i;
 	
-    while (true)
-    {
-        va_start (argptr, fmt);
-        auto needed = vsnprintf(string.data(), string.size(), fmt, argptr);
-        va_end (argptr);
-        if (needed < string.size())
-        {
-            break;
-        }
-        string.resize(needed + 1);
-    }
-
+	while (true)
+	{
+		va_start (argptr,fmt);
+		auto needed = vsnprintf(string.data(), string.size(), fmt,argptr);
+		va_end (argptr);
+		if (needed < string.size())
+		{
+			break;
+		}
+		string.resize(needed + 1);
+	}
+	
 	for (i=0 ; i<svs.maxclients ; i++)
 		if (svs.clients[i].active && svs.clients[i].spawned)
 		{
@@ -360,12 +364,12 @@ Send text over to the client to be executed
 void Host_ClientCommands (const char *fmt, ...)
 {
 	va_list		argptr;
-	static std::vector<char> string(1024);
+	static std::vector<char>		string(1024);
 	
     while (true)
     {
-        va_start (argptr, fmt);
-        auto needed = vsnprintf(string.data(), string.size(), fmt, argptr);
+        va_start (argptr,fmt);
+        auto needed = vsnprintf(string.data(), string.size(), fmt,argptr);
         va_end (argptr);
         if (needed < string.size())
         {
@@ -504,7 +508,7 @@ void Host_ShutdownServer(qboolean crash)
 //
 // clear structures
 //
-    sv.Clear();
+	sv.Clear();
 	for (auto& client : svs.clients)
 	{
 		client.Clear();
@@ -531,13 +535,13 @@ void Host_ClearMemory (void)
 	r_skyinitialized = false;
 	r_skyRGBAinitialized = false;
 	r_skyboxinitialized = false;
-    r_skyboxprefix = "";
+	r_skyboxprefix = "";
 
-    cls.signon = 0;
+	cls.signon = 0;
 	sv.Clear();
-    cl.Clear();
-    cl_static_entities.clear();
-    host_clearcount++;
+	cl.Clear();
+	cl_static_entities.clear();
+	host_clearcount++;
 
 	Sys_EndClearMemory();
 }
@@ -680,24 +684,23 @@ void Host_ServerFrame (void)
 
 /*
 ==================
-Host_Frame****
+Host_Frame
 
 Runs all active servers
 ==================
 */
-
 void _Host_FrameReset()
 {
 	sv_touchstackindex = -1;
-    r_increaseledges = false;
-    r_increaselsurfs = false;
-    sv_bump_protocol_version = false;
-    sv_request_protocol_version_upgrade = false;
-    sv_static_entity_count = 0;
-    increasebverts = false;
-    increasebedges = false;
-    increasebasespans = 0;
-    warp_stack_index = -1;
+	r_increaseledges = false;
+	r_increaselsurfs = false;
+	sv_bump_protocol_version = false;
+	sv_request_protocol_version_upgrade = false;
+	sv_static_entity_count = 0;
+	increasebverts = false;
+	increasebedges = false;
+	increasebasespans = 0;
+	warp_stack_index = -1;
 }
 
 double _host_frame_time1 = 0;
@@ -708,34 +711,34 @@ qboolean _Host_FrameUpdate (float time)
 	if (setjmp (host_abortserver) )
 	{
 		_Host_FrameReset();
-		return false;
+		return false;			// something bad happened, or the server disconnected
 	}
-	else
+
 #else
 	try
-#endif
 	{
+#endif
 // keep the random time dependent
-        Sys_Random ();
+	Sys_Random ();
 	
 // decide the simulation time
-        if (!Host_FilterTime (time))
-            return false;			// don't run too fast, or packets will flood out
+	if (!Host_FilterTime (time))
+		return false;			// don't run too fast, or packets will flood out
 		
 // get new key events
-        Sys_SendKeyEvents ();
+	Sys_SendKeyEvents ();
 
 // allow mice or other external controllers to add commands
-        IN_Commands ();
+	IN_Commands ();
 
 // process console commands
-        Cbuf_Execute ();
+	Cbuf_Execute ();
 
-        NET_Poll();
+	NET_Poll();
 
 // if running the server locally, make intentions now
-        if (sv.active)
-            CL_SendCmd ();
+	if (sv.active)
+		CL_SendCmd ();
 	
 //-------------------
 //
@@ -744,10 +747,10 @@ qboolean _Host_FrameUpdate (float time)
 //-------------------
 
 // check for commands typed to the host
-        Host_GetConsoleCommands ();
+	Host_GetConsoleCommands ();
 	
-        if (sv.active)
-            Host_ServerFrame ();
+	if (sv.active)
+		Host_ServerFrame ();
 
 //-------------------
 //
@@ -757,29 +760,29 @@ qboolean _Host_FrameUpdate (float time)
 
 // if running the server remotely, send intentions now after
 // the incoming messages have been read
-        if (!sv.active)
-            CL_SendCmd ();
+	if (!sv.active)
+		CL_SendCmd ();
 
-        host_time += host_frametime;
+	host_time += host_frametime;
 
 // fetch results from server
-        if (cls.state == ca_connected)
-        {
-            CL_ReadFromServer ();
-        }
+	if (cls.state == ca_connected)
+	{
+		CL_ReadFromServer ();
+	}
 
 // update video
-        if (host_speeds.value)
-            _host_frame_time1 = Sys_FloatTime ();
-        
-        return true;
-    }
+	if (host_speeds.value)
+		_host_frame_time1 = Sys_FloatTime ();
+		
+	return true;
 #ifndef USE_LONGJMP
-    catch (...)
-    {
-        _Host_FrameReset ();
-        return false;
-    }
+	}
+	catch (...)
+	{
+		_Host_FrameReset ();
+		return false;
+	}
 #endif
 }
 
@@ -790,53 +793,54 @@ void _Host_FrameRender (void)
 
 void _Host_FrameFinish (void)
 {
-    static double        time2 = 0;
-    static double        time3 = 0;
-    int            pass1, pass2, pass3;
+	static double		time2 = 0;
+	static double		time3 = 0;
+	int			pass1, pass2, pass3;
     
 #ifdef USE_LONGJMP
 	if (setjmp (host_abortserver) )
 	{
 		_Host_FrameReset();
+		return;
 	}
-	else
+
 #else
 	try
-#endif
     {
-        if (host_speeds.value)
-            time2 = Sys_FloatTime ();
+#endif
+	if (host_speeds.value)
+		time2 = Sys_FloatTime ();
 		
 // update particles
-        R_MoveParticles ();
+	R_MoveParticles ();
 
 // update audio
-        if (cls.signon == SIGNONS)
-        {
-            S_Update (r_origin, vpn, vright, vup);
-            CL_DecayLights ();
-        }
-        else
-            S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
-	
-        CDAudio_Update();
-
-        if (host_speeds.value)
-        {
-            pass1 = (_host_frame_time1 - time3)*1000;
-            time3 = Sys_FloatTime ();
-            pass2 = (time2 - _host_frame_time1)*1000;
-            pass3 = (time3 - time2)*1000;
-            Con_Printf ("%3i tot %3i server %3i gfx %3i snd\n",
-                        pass1+pass2+pass3, pass1, pass2, pass3);
-        }
-	
-        host_framecount++;
+	if (cls.signon == SIGNONS)
+	{
+		S_Update (r_origin, vpn, vright, vup);
+		CL_DecayLights ();
 	}
+	else
+		S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
+	
+	CDAudio_Update();
+
+	if (host_speeds.value)
+	{
+		pass1 = (_host_frame_time1 - time3)*1000;
+		time3 = Sys_FloatTime ();
+		pass2 = (time2 - _host_frame_time1)*1000;
+		pass3 = (time3 - time2)*1000;
+		Con_Printf ("%3i tot %3i server %3i gfx %3i snd\n",
+					pass1+pass2+pass3, pass1, pass2, pass3);
+	}
+	
+	host_framecount++;
 #ifndef USE_LONGJMP
+	}
 	catch (...)
 	{
-        _Host_FrameReset();
+		_Host_FrameReset();
 	}
 #endif
 }
@@ -845,16 +849,16 @@ double host_frame_time1;
 
 bool Host_FrameUpdate (float time)
 {
-    if (serverprofile.value)
-    {
-        host_frame_time1 = Sys_FloatTime ();
-    }
-    return _Host_FrameUpdate (time);
+	if (serverprofile.value)
+	{
+		host_frame_time1 = Sys_FloatTime ();
+	}
+	return _Host_FrameUpdate (time);
 }
 
 void Host_FrameRender (void)
 {
-    _Host_FrameRender ();
+	_Host_FrameRender ();
 }
 
 void Host_FrameFinish (qboolean updated)
@@ -864,31 +868,33 @@ void Host_FrameFinish (qboolean updated)
 	static int		timecount;
 	int		i, c, m;
 
-    if (updated)
-        _Host_FrameFinish ();
-    
-	if (serverprofile.value)
-	{
-        time2 = Sys_FloatTime ();
+	if (updated)
+		_Host_FrameFinish ();
 	
-        timetotal += time2 - host_frame_time1;
-        timecount++;
-        
-        if (timecount < 1000)
-            return;
+	if (!serverprofile.value)
+	{
+		return;
+	}
+	
+	time2 = Sys_FloatTime ();
+	
+	timetotal += time2 - host_frame_time1;
+	timecount++;
+	
+	if (timecount < 1000)
+		return;
 
-        m = timetotal*1000/timecount;
-        timecount = 0;
-        timetotal = 0;
-        c = 0;
-        for (i=0 ; i<svs.maxclients ; i++)
-        {
-            if (svs.clients[i].active)
-                c++;
-        }
+	m = timetotal*1000/timecount;
+	timecount = 0;
+	timetotal = 0;
+	c = 0;
+	for (i=0 ; i<svs.maxclients ; i++)
+	{
+		if (svs.clients[i].active)
+			c++;
+	}
 
-        Con_Printf ("serverprofile: %2i clients %2i msec\n",  c,  m);
-    }
+	Con_Printf ("serverprofile: %2i clients %2i msec\n",  c,  m);
 }
 
 //============================================================================
@@ -966,14 +972,13 @@ void Host_Init (quakeparms_t *parms)
 #ifdef USE_LONGJMP
 	if (setjmp (host_abortserver) )
 	{
-		// Do nothing - error messages (and Sys_Error) will already be handled before getting here
+		return; // Do nothing else - error messages (and Sys_Error) will already be handled before getting here
 	}
-	else
 #else
 	try
-#endif
 	{
-    
+#endif
+
 	host_parms = *parms;
 
 	com_argc = parms->argc;
@@ -1032,8 +1037,8 @@ void Host_Init (quakeparms_t *parms)
 	host_initialized = true;
 	
 	Sys_Printf ("========Quake Initialized=========\n");	
-	}
 #ifndef USE_LONGJMP
+	}
 	catch (...)
 	{
 		// Do nothing - error messages (and Sys_Error) will already be handled before getting here

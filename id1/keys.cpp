@@ -399,7 +399,7 @@ void Key_SetBinding (int keynum, const char *binding)
 		return;
 
 // free old bindings
-    delete[] keybindings[keynum];
+	delete[] keybindings[keynum];
 			
 // allocate memory for new binding
 	l = Q_strlen (binding);
@@ -477,7 +477,7 @@ void Key_Bind_f (void)
 	}
 	
 // copy the rest of the command line
-    std::string cmd;		// start out with a null string
+	std::string cmd;		// start out with a null string
 	for (i=2 ; i< c ; i++)
 	{
 		if (i > 2)
@@ -502,10 +502,10 @@ void Key_WriteBindings (int f)
 	for (i=0 ; i<256 ; i++)
 		if (keybindings[i])
 			if (*keybindings[i])
-            {
-                auto to_write = std::string("bind \"") + Key_KeynumToString(i) + "\" \"" + keybindings[i] + "\"\n";
-                Sys_FileWrite(f, (void*)to_write.c_str(), (int)to_write.length());
-            }
+			{
+				auto to_write = std::string("bind \"") + Key_KeynumToString(i) + "\" \"" + keybindings[i] + "\"\n";
+				Sys_FileWrite(f, (void*)to_write.c_str(), (int)to_write.length());
+			}
 }
 
 
@@ -662,16 +662,16 @@ void Key_Event (int key, qboolean down)
 		kb = keybindings[key];
 		if (kb && kb[0] == '+')
 		{
-            auto cmd = std::string("-") + (kb + 1) + " " + std::to_string(key) + "\n";
-            Cbuf_AddText (cmd.c_str());
+			auto cmd = std::string("-") + (kb + 1) + " " + std::to_string(key) + "\n";
+			Cbuf_AddText (cmd.c_str());
 		}
 		if (keyshift[key] != key)
 		{
 			kb = keybindings[keyshift[key]];
 			if (kb && kb[0] == '+')
 			{
-                auto cmd = std::string("-") + (kb + 1) + " " + std::to_string(key) + "\n";
-                Cbuf_AddText (cmd.c_str());
+				auto cmd = std::string("-") + (kb + 1) + " " + std::to_string(key) + "\n";
+				Cbuf_AddText (cmd.c_str());
 			}
 		}
 		return;
@@ -698,7 +698,7 @@ void Key_Event (int key, qboolean down)
 		{
 			if (kb[0] == '+')
 			{	// button commands add keynum as a parm
-                auto cmd = std::string(kb) + " " + std::to_string(key) + "\n";
+				auto cmd = std::string(kb) + " " + std::to_string(key) + "\n";
 				Cbuf_AddText (cmd.c_str());
 			}
 			else
