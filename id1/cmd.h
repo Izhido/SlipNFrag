@@ -92,11 +92,15 @@ char 	*Cmd_CompleteCommand (char *partial);
 // returns NULL if nothing fits
 
 int		Cmd_Argc (void);
-const char *Cmd_Argv (int arg);
-const char *Cmd_Args (void);
+const char	*Cmd_Argv (int arg);
+const char	*Cmd_Args (void);
 // The functions that execute commands get their parameters with these
 // functions. Cmd_Argv () will return an empty string, not a NULL
 // if arg > argc, so string operations are allways safe.
+
+int Cmd_CheckParm (char *parm);
+// Returns the position (1 to argc-1) in the command's argument list
+// where the given parameter apears, or 0 if not present
 
 void Cmd_TokenizeString (const char *text);
 // Takes a null terminated string.  Does not need to be /n terminated.
@@ -110,4 +114,8 @@ void	Cmd_ForwardToServer (void);
 // adds the current command line as a clc_stringcmd to the client message.
 // things like godmode, noclip, etc, are commands directed to the server,
 // so when they are typed in at the console, they will need to be forwarded.
+
+void	Cmd_Print (char *text);
+// used by command functions to send output to either the graphics console or
+// passed as a print message to the client
 

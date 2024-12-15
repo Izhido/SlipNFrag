@@ -232,7 +232,7 @@ void CL_ParseExpandedStartSoundPacket(void)
 		pos[i] = MSG_ReadFloat ();
  
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
-}
+}       
 
 /*
 ==================
@@ -426,6 +426,7 @@ void CL_ParseUpdate (int bits)
 	qboolean	forcelink;
 	entity_t	*ent;
 	int			num;
+	int			skin;
 
 	if (cls.signon == SIGNONS - 1)
 	{	// first update is the final signon stage
@@ -579,7 +580,7 @@ void CL_ParseExpandedUpdate (int bits)
 	qboolean	forcelink;
 	entity_t	*ent;
 	int			num;
-    
+
 	if (cls.signon == SIGNONS - 1)
 	{	// first update is the final signon stage
 		cls.signon = SIGNONS;
@@ -1195,7 +1196,7 @@ void CL_ParseServerMessage (void)
 			i = MSG_ReadLongFromString();
 			CL_ParseExpandedClientdata(i);
 			break;
-
+		
 		case svc_version:
 			i = MSG_ReadLong ();
 			if (i != PROTOCOL_VERSION && i != EXPANDED_PROTOCOL_VERSION)
@@ -1225,7 +1226,7 @@ void CL_ParseServerMessage (void)
 		case svc_expandeddamage:
 			V_ParseDamage (true);
 			break;
-
+			
 		case svc_serverinfo:
 			CL_ParseServerInfo ();
 			vid.recalc_refdef = true;	// leave intermission full screen
@@ -1255,7 +1256,7 @@ void CL_ParseServerMessage (void)
 		case svc_expandedsound:
 			CL_ParseExpandedStartSoundPacket();
 			break;
-
+			
 		case svc_stopsound:
 			i = MSG_ReadShort();
 			S_StopSound(i>>3, i&7);
@@ -1358,7 +1359,7 @@ void CL_ParseServerMessage (void)
 		case svc_spawnstaticsound:
 			CL_ParseStaticSound ();
 			break;
-
+			
 		case svc_expandedspawnstaticsound:
 			CL_ParseExpandedStaticSound ();
 			break;

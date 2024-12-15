@@ -27,6 +27,9 @@ typedef struct
 	float	forwardmove;
 	float	sidemove;
 	float	upmove;
+#ifdef QUAKE2
+	byte	lightlevel;
+#endif
 } usercmd_t;
 
 typedef struct
@@ -74,6 +77,9 @@ typedef struct
 	float	decay;				// drop this each second
 	float	minlight;			// don't add when contributing less
 	int		key;
+#ifdef QUAKE2
+	qboolean	dark;			// subtracts light instead of adding
+#endif
 } dlight_t;
 
 
@@ -200,8 +206,8 @@ struct client_state_t
 //
 // information that is static for the entire time connected to a server
 //
-    std::vector<struct model_s*> model_precache;
-	std::vector<struct sfx_s*> sound_precache;
+	std::vector<struct model_s*>		model_precache;
+	std::vector<struct sfx_s*>		sound_precache;
 
 	char		levelname[40];	// for display on solo scoreboard
 	int			viewentity;		// cl_entitites[cl.viewentity] = player
@@ -217,9 +223,16 @@ struct client_state_t
 	int			cdtrack, looptrack;	// cd audio
 
 // frag scoreboard
-    std::vector<scoreboard_t> scores;		// [cl.maxclients]
-    
-    void Clear();
+	std::vector<scoreboard_t>	scores;		// [cl.maxclients]
+
+#ifdef QUAKE2
+// light level at player's position including dlights
+// this is sent back to the server each frame
+// architectually ugly but it works
+	int			light_level;
+#endif
+
+	void Clear();
 };
 
 
@@ -241,9 +254,12 @@ extern	cvar_t	cl_pitchspeed;
 
 extern	cvar_t	cl_anglespeedkey;
 
+extern	cvar_t	cl_autofire;
+
 extern	cvar_t	cl_shownet;
 extern	cvar_t	cl_nolerp;
 
+extern	cvar_t	cl_pitchdriftspeed;
 extern	cvar_t	lookspring;
 extern	cvar_t	lookstrafe;
 extern	cvar_t	sensitivity;
@@ -260,13 +276,13 @@ extern	cvar_t	m_side;
 extern	client_state_t	cl;
 
 // FIXME, allocate dynamically
-extern	std::list<efrag_t>	cl_efrags;
-extern	std::vector<entity_t>	cl_entities;
-extern	std::list<entity_t>	cl_static_entities;
+extern	std::list<efrag_t>			cl_efrags;
+extern	std::vector<entity_t>		cl_entities;
+extern	std::list<entity_t>		cl_static_entities;
 extern	lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
-extern	std::vector<dlight_t>	cl_dlights;
-extern	std::vector<entity_t>	cl_temp_entities;
-extern	std::vector<beam_t>	cl_beams;
+extern	std::vector<dlight_t>		cl_dlights;
+extern	std::vector<entity_t>		cl_temp_entities;
+extern	std::vector<beam_t>			cl_beams;
 
 extern int cl_protocol_version_from_server;
 extern int cl_protocol_version_upgrade_requested;
@@ -282,6 +298,10 @@ void	CL_DecayLights (void);
 void CL_Init (void);
 
 void CL_EstablishConnection (const char *host);
+void CL_Signon1 (void);
+void CL_Signon2 (void);
+void CL_Signon3 (void);
+void CL_Signon4 (void);
 
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
@@ -289,7 +309,7 @@ void CL_NextDemo (void);
 
 #define			MAX_VISEDICTS	256
 extern	int				cl_numvisedicts;
-extern	std::vector<entity_t*>	cl_visedicts;
+extern	std::vector<entity_t*>		cl_visedicts;
 
 //
 // cl_input
@@ -317,6 +337,7 @@ void CL_ClearState (void);
 
 
 int  CL_ReadFromServer (void);
+void CL_WriteToServer (usercmd_t *cmd);
 void CL_BaseMove (usercmd_t *cmd);
 
 
@@ -348,6 +369,7 @@ void V_StopPitchDrift (void);
 
 void V_RenderView (void);
 void V_UpdatePalette (void);
+void V_Register (void);
 void V_ParseDamage (qboolean expanded);
 void V_SetContentsColor (int contents);
 

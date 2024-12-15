@@ -40,7 +40,7 @@ int			con_totallines;		// total lines in console scrollback
 int			con_backscroll;		// lines up from bottom to display
 int			con_current;		// where next message will be printed
 int			con_x;				// offset in current line for next print
-std::vector<byte> con_text(CON_TEXTSIZE);
+std::vector<byte>		con_text(CON_TEXTSIZE);
 
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
 
@@ -180,7 +180,7 @@ void Con_CheckResize (void)
 	
 		if (con_linewidth < numchars)
 			numchars = con_linewidth;
-        std::vector<byte> tbuf(CON_TEXTSIZE);
+		std::vector<byte> tbuf(CON_TEXTSIZE);
 		Q_memcpy (tbuf.data(), con_text.data(), CON_TEXTSIZE);
 		Q_memset (con_text.data(), ' ', CON_TEXTSIZE);
 
@@ -209,14 +209,15 @@ Con_Init
 */
 void Con_Init (void)
 {
-    std::string temp;
+#define MAXGAMEDIRLEN	1000
+	std::string	temp;
 	const char	*t2 = "/qconsole.log";
 
 	con_debuglog = COM_CheckParm("-condebug");
 
 	if (con_debuglog)
 	{
-            temp = com_gamedir + t2;
+			temp = com_gamedir + t2;
 #ifdef _WIN32
 			_unlink (temp.c_str());
 #else
@@ -384,27 +385,25 @@ Con_Printf
 Handles cursor positioning, line wrapping, etc
 ================
 */
-
-#define    MAXPRINTMSG    4096
-
+#define	MAXPRINTMSG	4096
 void Con_Printf (const char *fmt, ...)
 {
 	va_list		argptr;
-    std::vector<char> msg(MAXPRINTMSG);
+	std::vector<char>		msg(MAXPRINTMSG);
 	static qboolean	inupdate;
 	
-    while (true)
-    {
-        va_start (argptr, fmt);
-        auto needed = vsnprintf(msg.data(), msg.size(), fmt, argptr);
-        va_end (argptr);
-        if (needed < msg.size())
-        {
-            break;
-        }
-        msg.resize(needed + 1);
-    }
-
+	while (true)
+	{
+		va_start (argptr, fmt);
+		auto needed = vsnprintf(msg.data(), msg.size(), fmt, argptr);
+		va_end (argptr);
+		if (needed < msg.size())
+		{
+			break;
+		}
+		msg.resize(needed + 1);
+	}
+	
 // also echo to debugging console
 	Sys_Printf ("%s", msg.data());	// also echo to debugging console
 
@@ -449,18 +448,19 @@ void Con_DPrintf (const char *fmt, ...)
 	if (!developer.value)
 		return;			// don't confuse non-developers with techie stuff...
 
-    std::vector<char> msg(MAXPRINTMSG);
-    while (true)
-    {
-        va_start (argptr, fmt);
-        auto needed = vsnprintf(msg.data(), msg.size(), fmt, argptr);
-        va_end (argptr);
-        if (needed < msg.size())
-        {
-            break;
-        }
-        msg.resize(needed + 1);
-    }
+	std::vector<char> msg(MAXPRINTMSG);
+	while (true)
+	{
+		va_start (argptr, fmt);
+		auto needed = vsnprintf(msg.data(), msg.size(), fmt, argptr);
+		va_end (argptr);
+	
+		if (needed < msg.size())
+		{
+			break;
+		}
+		msg.resize(needed + 1);
+	}
 
 	Con_Printf ("%s", msg.data());
 }
@@ -476,20 +476,21 @@ Okay to call even when the screen can't be updated
 void Con_SafePrintf (const char *fmt, ...)
 {
 	va_list		argptr;
-    std::vector<char> msg(1024);
+	std::vector<char>		msg(1024);
 	int			temp;
 		
-    while (true)
-    {
-        va_start (argptr, fmt);
-        auto needed = vsnprintf(msg.data(), msg.size(), fmt, argptr);
-        va_end (argptr);
-        if (needed < msg.size())
-        {
-            break;
-        }
-        msg.resize(needed + 1);
-    }
+	while (true)
+	{
+		va_start (argptr, fmt);
+		auto needed = vsnprintf(msg.data(), msg.size(), fmt, argptr);
+		va_end (argptr);
+
+		if (needed < msg.size())
+		{
+			break;
+		}
+		msg.resize(needed + 1);
+	}
 
 	temp = scr_disabled_for_loading;
 	scr_disabled_for_loading = true;
@@ -630,8 +631,8 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 // draw the text
 	con_vislines = lines;
 
-	rows = (lines-16)/8;		// rows of text to draw
-	y = lines - 16 - (rows*8);	// may start slightly negative
+	rows = (lines-16)>>3;		// rows of text to draw
+	y = lines - 16 - (rows<<3);	// may start slightly negative
 
 	for (i= con_current - rows + 1 ; i<=con_current ; i++, y+=8 )
 	{

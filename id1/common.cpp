@@ -23,10 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define NUM_SAFE_ARGVS  7
 
-static const char *argvdummy = " ";
-static std::vector<const char*> largv;
+static std::vector<const char*>     largv;
+static const char     *argvdummy = " ";
 
-static const char *safeargvs[NUM_SAFE_ARGVS] =
+static const char     *safeargvs[NUM_SAFE_ARGVS] =
 	{"-stdvid", "-nolan", "-nosound", "-nocdaudio", "-nojoy", "-nomouse", "-dibonly"};
 
 cvar_t  registered = {"registered","0"};
@@ -46,11 +46,12 @@ void COM_InitFilesystem (void);
 #define PAK0_COUNT              339
 #define PAK0_CRC                32981
 
-std::string com_token;
+std::string	com_token;
 int		com_argc;
-const char **com_argv;
+const char	**com_argv;
 
-std::string com_cmdline;
+#define CMDLINE_LENGTH	256
+std::string	com_cmdline;
 
 qboolean		standard_quake = true, rogue, hipnotic;
 
@@ -163,6 +164,17 @@ void Q_memcpy (void *dest, const void *src, int count)
 	else
 		for (i=0 ; i<count ; i++)
 			((byte *)dest)[i] = ((byte *)src)[i];
+}
+
+int Q_memcmp (void *m1, void *m2, int count)
+{
+	while(count)
+	{
+		count--;
+		if (((byte *)m1)[count] != ((byte *)m2)[count])
+			return -1;
+	}
+	return 0;
 }
 
 void Q_strcpy (char *dest, const char *src)
@@ -720,13 +732,13 @@ int MSG_ReadLong (void)
 
 float MSG_ReadFloat (void)
 {
-    if (msg_readcount + 4 > net_message.cursize)
-    {
-        msg_badread = true;
-        return -1;
-    }
+	if (msg_readcount + 4 > net_message.cursize)
+	{
+		msg_badread = true;
+		return -1;
+	}
 
-    union
+	union
 	{
 		byte    b[4];
 		float   f;
@@ -746,7 +758,7 @@ float MSG_ReadFloat (void)
 
 char *MSG_ReadString (void)
 {
-    static std::vector<char> string(2048);
+    static std::vector<char>     string(2048);
 	int             c;
 	
     string.clear();
@@ -815,10 +827,10 @@ float MSG_ReadAngle (void)
 
 void sizebuf_t::Clear()
 {
-    allowoverflow = false;
-    overflowed = false;
-    maxsize = 0;
-    cursize = 0;
+	allowoverflow = false;
+	overflowed = false;
+	maxsize = 0;
+	cursize = 0;
 }
 
 void SZ_Alloc (sizebuf_t *buf, int startsize)
@@ -836,6 +848,9 @@ void SZ_Alloc (sizebuf_t *buf, int startsize)
 
 void SZ_Free (sizebuf_t *buf)
 {
+//      Z_Free (buf->data);
+//      buf->data = NULL;
+//      buf->maxsize = 0;
 	buf->cursize = 0;
 }
 
@@ -874,7 +889,7 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 
 void SZ_Write (sizebuf_t *buf, const void *data, int length)
 {
-	memcpy (SZ_GetSpace(buf,length),data,length);
+	Q_memcpy (SZ_GetSpace(buf,length),data,length);         
 }
 
 void SZ_Print (sizebuf_t *buf, const char *data)
@@ -885,9 +900,9 @@ void SZ_Print (sizebuf_t *buf, const char *data)
 
 // byte * cast to keep VC++ happy
 	if (buf->data[buf->cursize-1])
-		memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
+		Q_memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
 	else
-		memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
+		Q_memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
 }
 
 
@@ -932,7 +947,7 @@ COM_FileExtension
 */
 const char *COM_FileExtension (const char *in)
 {
-    static std::string exten;
+	static std::string exten;
 	const char* pos = nullptr;
 
 	while (*in)
@@ -946,7 +961,7 @@ const char *COM_FileExtension (const char *in)
 	if (!pos)
 		return "";
 	pos++;
-    exten.clear();
+	exten.clear();
 	for (; *pos ; pos++)
 		exten.push_back(*pos);
 	return exten.c_str();
@@ -987,21 +1002,23 @@ COM_DefaultExtension
 */
 void COM_DefaultExtension (std::string& path, const char *extension)
 {
-    char    *src;
-    //
-    // if path doesn't have a .EXT, append extension
-    // (extension should include the .)
-    //
-    src = (char*)path.data() + path.length() - 1;
-    
-    while (*src != '/' && src != path.data())
-    {
-        if (*src == '.')
-            return;                 // it has an extension
-        src--;
-    }
-    path.append(extension);
+	char    *src;
+//
+// if path doesn't have a .EXT, append extension
+// (extension should include the .)
+//
+	src = (char*)path.data() + path.length() - 1;
+
+	while (*src != '/' && src != path.data())
+	{
+		if (*src == '.')
+			return;                 // it has an extension
+		src--;
+	}
+
+	path.append(extension);
 }
+
 
 /*
 ==============
@@ -1014,7 +1031,7 @@ const char *COM_Parse (const char *data)
 {
 	int             c;
 	
-    com_token.clear();
+	com_token.clear();
 	
 	if (!data)
 		return NULL;
@@ -1156,8 +1173,8 @@ void COM_InitArgv (int argc, char **argv)
 // reconstitute the command line for the cmdline externally visible cvar
 	for (j=0 ; j< argc ; j++)
 	{
-        com_cmdline += argv[j];
-        com_cmdline += ' ';
+		com_cmdline += argv[j];
+		com_cmdline += ' ';
 	}
 
 	safe = false;
@@ -1296,13 +1313,13 @@ int     com_filesize;
 
 typedef struct
 {
-    std::string name;
+	std::string    name;
 	int             filepos, filelen;
 } packfile_t;
 
 typedef struct pack_s
 {
-    std::string filename;
+	std::string    filename;
 	int             handle;
 	int             numfiles;
 	packfile_t      *files;
@@ -1324,12 +1341,14 @@ typedef struct
 	int             dirlen;
 } dpackheader_t;
 
-std::string com_cachedir;
-std::string com_gamedir;
+#define MAX_FILES_IN_PACK       2048
+
+std::string    com_cachedir;
+std::string    com_gamedir;
 
 typedef struct searchpath_s
 {
-    std::string filename;
+	std::string filename;
 	pack_t  *pack;          // only one of filename / pack will be used
 	struct searchpath_s *next;
 } searchpath_t;
@@ -1368,9 +1387,9 @@ The filename will be prefixed by the current game directory
 void COM_WriteFile (char *filename, void *data, int len)
 {
 	int             handle;
-    std::string name;
+	std::string    name;
 	
-    name = com_gamedir + "/" + filename;
+	name = com_gamedir + "/" + filename;
 
 	handle = Sys_FileOpenWrite ((char*)name.c_str(), false);
 	if (handle < 0)
@@ -1514,8 +1533,8 @@ Sets com_filesize and one of handle or file
 int COM_FindFile (const char *filename, qboolean log_failure, int *handle, int* file)
 {
 	searchpath_t    *search;
-    std::string netpath;
-	std::string cachepath;
+	std::string            netpath;
+	std::string            cachepath;
 	pack_t          *pak;
 	int                     i;
 	int                     findtime, cachetime;
@@ -1570,7 +1589,7 @@ int COM_FindFile (const char *filename, qboolean log_failure, int *handle, int* 
 					continue;
 			}
 			
-            netpath = search->filename + "/" + filename;
+			netpath = search->filename + "/" + filename;
 			
 			findtime = Sys_FileTime ((char*)netpath.c_str());
 			if (findtime == -1)
@@ -1578,7 +1597,7 @@ int COM_FindFile (const char *filename, qboolean log_failure, int *handle, int* 
 				
 		// see if the file needs to be updated in the cache
 			if (com_cachedir.length() == 0)
-                cachepath = netpath;
+				cachepath = netpath;
 			else
 			{	
 #if defined(_WIN32)
@@ -1587,14 +1606,14 @@ int COM_FindFile (const char *filename, qboolean log_failure, int *handle, int* 
 				else
 					cachepath = com_cachedir + (netpath.c_str() + 2);
 #else
-                cachepath = com_cachedir + netpath;
+				cachepath = com_cachedir + netpath;
 #endif
 
 				cachetime = Sys_FileTime ((char*)cachepath.c_str());
 			
 				if (cachetime < findtime)
 					COM_CopyFile ((char*)netpath.c_str(), (char*)cachepath.c_str());
-                netpath = cachepath;
+				netpath = cachepath;
 			}	
 
 			Sys_Printf ("FindFile: %s\n",netpath.c_str());
@@ -1604,13 +1623,13 @@ int COM_FindFile (const char *filename, qboolean log_failure, int *handle, int* 
 			else
 			{
 				Sys_FileClose (i);
-                Sys_FileOpenRead (netpath.c_str(), file);
+				Sys_FileOpenRead (netpath.c_str(), file);
 			}
 			return com_filesize;
 		}
 		
 	}
-
+	
 	if (log_failure)
 	{
 		Sys_Printf ("FindFile: can't find %s\n", filename);
@@ -1747,8 +1766,8 @@ pack_t *COM_LoadPackFile (const char *packfile)
 	if (numpackfiles != PAK0_COUNT)
 		com_modified = true;    // not the original file
 
-    std::vector<dpackfile_t> info(numpackfiles);
-    newfiles = new packfile_t[numpackfiles];
+	std::vector<dpackfile_t> info(numpackfiles);
+	newfiles = new packfile_t[numpackfiles];
 
 	Sys_FileSeek (packhandle, header.dirofs);
 	Sys_FileRead (packhandle, info.data(), header.dirlen);
@@ -1763,13 +1782,13 @@ pack_t *COM_LoadPackFile (const char *packfile)
 // parse the directory
 	for (i=0 ; i<numpackfiles ; i++)
 	{
-        newfiles[i].name = info[i].name;
+		newfiles[i].name = info[i].name;
 		newfiles[i].filepos = LittleLong(info[i].filepos);
 		newfiles[i].filelen = LittleLong(info[i].filelen);
 	}
 
-    pack = new pack_t;
-    pack->filename = packfile;
+	pack = new pack_t;
+	pack->filename = packfile;
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
@@ -1793,13 +1812,13 @@ void COM_AddGameDirectory (char *dir)
 	searchpath_t    *search;
 	pack_t                  *pak;
 
-    com_gamedir = dir;
+	com_gamedir = dir;
 
 //
 // add the directory to the search path
 //
-    search = new searchpath_t;
-    search->filename = dir; search->pack = nullptr;
+	search = new searchpath_t;
+	search->filename = dir; search->pack = nullptr;
 	search->next = com_searchpaths;
 	com_searchpaths = search;
 
@@ -1808,11 +1827,11 @@ void COM_AddGameDirectory (char *dir)
 //
 	for (i=0 ; ; i++)
 	{
-        auto pakfile = std::string(dir) + "/pak" + std::to_string(i) + ".pak";
+		auto pakfile = std::string(dir) + "/pak" + std::to_string(i) + ".pak";
 		pak = COM_LoadPackFile (pakfile.c_str());
 		if (!pak)
 			break;
-        search = new searchpath_t;
+		search = new searchpath_t;
 		search->pack = pak;
 		search->next = com_searchpaths;
 		com_searchpaths = search;               
@@ -1832,7 +1851,7 @@ COM_InitFilesystem
 void COM_InitFilesystem (void)
 {
 	int             i, j;
-    std::string basedir;
+	std::string basedir;
 	searchpath_t    *search;
 
 //
@@ -1841,20 +1860,20 @@ void COM_InitFilesystem (void)
 //
 	i = COM_CheckParm ("-basedir");
 	if (i && i < com_argc-1)
-    {
-        basedir = com_argv[i + 1];
-    }
+	{
+		basedir = com_argv[i + 1];
+	}
 	else
-    {
-        basedir = host_parms.basedir;
-    }
-    
+	{
+		basedir = host_parms.basedir;
+	}
+
 	j = (int)basedir.length();
 
 	if (j > 0)
 	{
 		if ((basedir[j-1] == '\\') || (basedir[j-1] == '/'))
-            basedir.pop_back();
+			basedir.pop_back();
 	}
 
 //
@@ -1866,14 +1885,14 @@ void COM_InitFilesystem (void)
 	if (i && i < com_argc-1)
 	{
 		if (com_argv[i+1][0] == '-')
-            com_cachedir.clear();
+			com_cachedir.clear();
 		else
-            com_cachedir = com_argv[i + 1];
+			com_cachedir = com_argv[i+1];
 	}
 	else if (host_parms.cachedir)
-        com_cachedir = host_parms.cachedir;
+		com_cachedir = host_parms.cachedir;
 	else
-        com_cachedir.clear();
+		com_cachedir.clear();
 
 //
 // start up with GAMENAME by default (id1)
@@ -1904,24 +1923,24 @@ void COM_InitFilesystem (void)
 	if (i)
 	{
 		com_modified = true;
-        search = com_searchpaths;
-        while (search != nullptr)
-        {
-            auto nextsearch = search->next;
+		search = com_searchpaths;
+		while (search != nullptr)
+		{
+			auto nextsearch = search->next;
 			if (search->pack != nullptr)
 			{
 				delete[] search->pack->files;
 			}
-            delete search;
-            search = nextsearch;
-        }
-        com_searchpaths = NULL;
+			delete search;
+			search = nextsearch;
+		}
+		com_searchpaths = NULL;
 		while (++i < com_argc)
 		{
 			if (!com_argv[i] || com_argv[i][0] == '+' || com_argv[i][0] == '-')
 				break;
 			
-            search = new searchpath_t;
+			search = new searchpath_t;
 			if ( !strcmp(COM_FileExtension(com_argv[i]), "pak") )
 			{
 				search->pack = COM_LoadPackFile (com_argv[i]);
@@ -1929,10 +1948,10 @@ void COM_InitFilesystem (void)
 					Sys_Error ("Couldn't load packfile: %s", com_argv[i]);
 			}
 			else
-            {
-                search->filename = com_argv[i];
-                search->pack = nullptr;
-            }
+			{
+				search->filename = com_argv[i];
+				search->pack = nullptr;
+			}
 			search->next = com_searchpaths;
 			com_searchpaths = search;
 		}

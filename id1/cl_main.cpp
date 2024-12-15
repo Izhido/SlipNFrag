@@ -44,63 +44,63 @@ cvar_t	m_side = {"m_side","0.8", true};
 client_static_t	cls;
 client_state_t	cl;
 // FIXME: put these on hunk?
-std::list<efrag_t>	cl_efrags;
-std::vector<entity_t>	cl_entities(MAX_EDICTS);
-std::list<entity_t>	cl_static_entities;
+std::list<efrag_t>			cl_efrags;
+std::vector<entity_t>		cl_entities(MAX_EDICTS);
+std::list<entity_t>		cl_static_entities;
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
-std::vector<dlight_t>	cl_dlights;
+std::vector<dlight_t>		cl_dlights;
 std::unordered_map<int, int>	cl_dlight_index;
 
 int				cl_numvisedicts;
-std::vector<entity_t*>	cl_visedicts(MAX_VISEDICTS);
+std::vector<entity_t*>		cl_visedicts(MAX_VISEDICTS);
 
-int cl_protocol_version_from_server;
-int cl_protocol_version_upgrade_requested;
+int	cl_protocol_version_from_server;
+int	cl_protocol_version_upgrade_requested;
 
 void client_state_t::Clear()
 {
-    movemessages = 0;
-    memset(&cmd, 0, sizeof(cmd));
-    memset(stats, 0, sizeof(stats));
-    items = 0;
-    memset(item_gettime, 0, sizeof(item_gettime));
-    faceanimtime = 0;
-    memset(cshifts, 0, sizeof(cshifts));
-    //No longer clearing this, as it causes some issues when updating specific cshift values after a server restart:
-    //memset(prev_cshifts, 0, sizeof(prev_cshifts));
-    memset(mviewangles, 0, sizeof(mviewangles));
-    memset(viewangles, 0, sizeof(viewangles));
-    memset(mvelocity, 0, sizeof(mvelocity));
-    memset(velocity, 0, sizeof(velocity));
-    memset(punchangle, 0, sizeof(punchangle));
-    idealpitch = 0;
-    pitchvel = 0;
-    nodrift = false;
-    driftmove = false;
-    laststop = 0;
-    viewheight = 0;
-    crouch = 0;
-    paused = false;
-    onground = false;
-    inwater = false;
-    intermission = 0;
-    completed_time = 0;
-    memset(mtime, 0, sizeof(mtime));
-    time = 0;
-    oldtime = 0;
-    last_received_message = 0;
-    model_precache.clear();
-    sound_precache.clear();
-    memset(levelname, 0, sizeof(levelname));
-    viewentity = 0;
-    maxclients = 0;
-    gametype = 0;
-    worldmodel = nullptr;
-    free_efrags = nullptr;
+	movemessages = 0;
+	memset(&cmd, 0, sizeof(cmd));
+	memset(stats, 0, sizeof(stats));
+	items = 0;
+	memset(item_gettime, 0, sizeof(item_gettime));
+	faceanimtime = 0;
+	memset(cshifts, 0, sizeof(cshifts));
+	//No longer clearing this, as it causes some issues when updating specific cshift values after a server restart:
+	//memset(prev_cshifts, 0, sizeof(prev_cshifts));
+	memset(mviewangles, 0, sizeof(mviewangles));
+	memset(viewangles, 0, sizeof(viewangles));
+	memset(mvelocity, 0, sizeof(mvelocity));
+	memset(velocity, 0, sizeof(velocity));
+	memset(punchangle, 0, sizeof(punchangle));
+	idealpitch = 0;
+	pitchvel = 0;
+	nodrift = false;
+	driftmove = false;
+	laststop = 0;
+	viewheight = 0;
+	crouch = 0;
+	paused = false;
+	onground = false;
+	inwater = false;
+	intermission = 0;
+	completed_time = 0;
+	memset(mtime, 0, sizeof(mtime));
+	time = 0;
+	oldtime = 0;
+	last_received_message = 0;
+	model_precache.clear();
+	sound_precache.clear();
+	memset(levelname, 0, sizeof(levelname));
+	viewentity = 0;
+	maxclients = 0;
+	gametype = 0;
+	worldmodel = nullptr;
+	free_efrags = nullptr;
 	memset(&viewent, 0, sizeof(viewent));
-    cdtrack = 0;
-    looptrack = 0;
-    scores.clear();
+	cdtrack = 0;
+	looptrack = 0;
+	scores.clear();
 }
 
 /*
@@ -115,16 +115,16 @@ void CL_ClearState (void)
 		Host_ClearMemory ();
 
 // wipe the entire cl structure
-    cl.Clear();
+	cl.Clear();
 
 	SZ_Clear (&cls.message);
 
 // clear other arrays	
-    if (cl_efrags.empty()) cl_efrags.resize(MAX_EFRAGS);
-    memset (cl_entities.data(), 0, cl_entities.size() * sizeof(entity_t));
-    cl_static_entities.clear();
-    cl_dlights.clear();
-    cl_dlight_index.clear();
+	if (cl_efrags.empty()) cl_efrags.resize(MAX_EFRAGS);
+	memset (cl_entities.data(), 0, cl_entities.size() * sizeof(entity_t));
+	cl_static_entities.clear();
+	cl_dlights.clear();
+	cl_dlight_index.clear();
 	memset (cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset (cl_temp_entities.data(), 0, cl_temp_entities.size() * sizeof(entity_t));
 	memset (cl_beams.data(), 0, cl_beams.size() * sizeof(beam_t));
@@ -132,17 +132,17 @@ void CL_ClearState (void)
 //
 // allocate the efrags and chain together into a free list
 //
-    auto entry = cl_efrags.begin();
-    efrag_t* efrag = &*entry;
-    memset(efrag, 0, sizeof(efrag_t));
-    cl.free_efrags = efrag;
-    for (entry++; entry != cl_efrags.end(); entry++)
-    {
-        efrag->entnext = &*entry;
-        efrag = &*entry;
-        memset(efrag, 0, sizeof(efrag_t));
-    }
-    efrag->entnext = nullptr;
+	auto entry = cl_efrags.begin();
+	efrag_t* efrag = &*entry;
+	memset(efrag, 0, sizeof(efrag_t));
+	cl.free_efrags = efrag;
+	for (entry++; entry != cl_efrags.end(); entry++)
+	{
+		efrag->entnext = &*entry;
+		efrag = &*entry;
+		memset(efrag, 0, sizeof(efrag_t));
+	}
+	efrag->entnext = nullptr;
 }
 
 /*
@@ -233,8 +233,8 @@ An svc_signonnum has been received, perform a client side setup
 */
 void CL_SignonReply (void)
 {
-    std::string str;
-    
+	std::string str;
+
 Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 
 	switch (cls.signon)
@@ -242,7 +242,7 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 	case 1:
 		MSG_WriteByte (&cls.message, clc_stringcmd);
 		MSG_WriteString (&cls.message, "prespawn");
-        cl_protocol_version_upgrade_requested = false;
+		cl_protocol_version_upgrade_requested = false;
 		break;
 		
 	case 2:		
@@ -253,7 +253,7 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 		MSG_WriteString (&cls.message, va("color %i %i\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
 	
 		MSG_WriteByte (&cls.message, clc_stringcmd);
-        str = std::string("spawn ") + cls.spawnparms;
+		str = std::string("spawn ") + cls.spawnparms;
 		MSG_WriteString (&cls.message, str.c_str());
 		break;
 		
@@ -293,7 +293,7 @@ void CL_NextDemo (void)
 		}
 	}
 
-    auto str = std::string("playdemo ") + cls.demos[cls.demonum] + "\n";
+	auto str = std::string("playdemo ") + cls.demos[cls.demonum] + "\n";
 	Cbuf_InsertText (str.c_str());
 	cls.demonum++;
 }
@@ -379,10 +379,10 @@ dlight_t *CL_AllocDlight (int key)
 // first look for an exact key match
 	if (key)
 	{
-        auto entry = cl_dlight_index.find(key);
-        if (entry != cl_dlight_index.end())
-        {
-            dl = &cl_dlights[entry->second];
+		auto entry = cl_dlight_index.find(key);
+		if (entry != cl_dlight_index.end())
+		{
+			dl = &cl_dlights[entry->second];
 				memset (dl, 0, sizeof(*dl));
 				dl->key = key;
 				return dl;
@@ -396,17 +396,17 @@ dlight_t *CL_AllocDlight (int key)
 		if (dl->die < cl.time)
 		{
 			memset (dl, 0, sizeof(*dl));
-            dl->key = key;
-            cl_dlight_index[key] = i;
+			dl->key = key;
+			cl_dlight_index[key] = i;
 			return dl;
 		}
 	}
 
-    cl_dlights.emplace_back();
-    dl = &cl_dlights.back();
+	cl_dlights.emplace_back();
+	dl = &cl_dlights.back();
 	memset (dl, 0, sizeof(*dl));
 	dl->key = key;
-    cl_dlight_index[key] = cl_dlights.size() - 1;
+	cl_dlight_index[key] = cl_dlights.size() - 1;
 	return dl;
 }
 
@@ -591,6 +591,10 @@ void CL_RelinkEntities (void)
 
 		if (ent->effects & EF_BRIGHTFIELD)
 			R_EntityParticles (ent);
+#ifdef QUAKE2
+		if (ent->effects & EF_DARKFIELD)
+			R_DarkFieldParticles (ent);
+#endif
 		if (ent->effects & EF_MUZZLEFLASH)
 		{
 			vec3_t		fv, rv, uv;
@@ -620,6 +624,23 @@ void CL_RelinkEntities (void)
 			dl->radius = 200 + (Sys_Random()&31);
 			dl->die = cl.time + 0.001;
 		}
+#ifdef QUAKE2
+		if (ent->effects & EF_DARKLIGHT)
+		{			
+			dl = CL_AllocDlight (i);
+			VectorCopy (ent->origin,  dl->origin);
+			dl->radius = 200.0 + (rand()&31);
+			dl->die = cl.time + 0.001;
+			dl->dark = true;
+		}
+		if (ent->effects & EF_LIGHT)
+		{			
+			dl = CL_AllocDlight (i);
+			VectorCopy (ent->origin,  dl->origin);
+			dl->radius = 200;
+			dl->die = cl.time + 0.001;
+		}
+#endif
 
 		if (ent->model->flags & EF_GIB)
 			R_RocketTrail (oldorg, ent->origin, 2);
@@ -647,6 +668,10 @@ void CL_RelinkEntities (void)
 		if (i == cl.viewentity && !chase_active.value)
 			continue;
 
+#ifdef QUAKE2
+		if ( ent->effects & EF_NODRAW )
+			continue;
+#endif
 		if (cl_numvisedicts >= (int)cl_visedicts.size())
 		{
 			cl_visedicts.resize(cl_visedicts.size() + MAX_VISEDICTS);
@@ -718,14 +743,15 @@ void CL_SendCmd (void)
 	
 	// send the unreliable message
 		CL_SendMove (&cmd);
+	
 	}
-    
-    if (cl_protocol_version_upgrade_requested && cl_protocol_version_from_server != EXPANDED_PROTOCOL_VERSION)
-    {
-        cl_protocol_version_from_server = EXPANDED_PROTOCOL_VERSION;
-        CL_SendAckExpandedProtocol (&cmd);
-        cl_protocol_version_upgrade_requested = false;
-    }
+
+	if (cl_protocol_version_upgrade_requested && cl_protocol_version_from_server != EXPANDED_PROTOCOL_VERSION)
+	{
+		cl_protocol_version_from_server = EXPANDED_PROTOCOL_VERSION;
+		CL_SendAckExpandedProtocol (&cmd);
+		cl_protocol_version_upgrade_requested = false;
+	}
 
 	if (cls.demoplayback)
 	{
@@ -751,26 +777,26 @@ void CL_SendCmd (void)
 
 void CL_SendAckExpandedProtocol(usercmd_t* cmd)
 {
-    static sizebuf_t buf;
-    
-    buf.maxsize = 4;
-    buf.cursize = 0;
+	static sizebuf_t buf;
 
-    cl.cmd = *cmd;
+	buf.maxsize = 4;
+	buf.cursize = 0;
 
-    MSG_WriteByte (&buf, clc_ackexpproto);
+	cl.cmd = *cmd;
 
-    //
-    // deliver the message
-    //
-    if (cls.demoplayback)
-        return;
-    
-    if (NET_SendUnreliableMessage (cls.netcon, &buf) == -1)
-    {
-        Con_Printf ("CL_SendAckExpandedProtocol: lost server connection\n");
-        CL_Disconnect ();
-    }
+	MSG_WriteByte (&buf, clc_ackexpproto);
+
+	//
+	// deliver the message
+	//
+	if (cls.demoplayback)
+		return;
+
+	if (NET_SendUnreliableMessage (cls.netcon, &buf) == -1)
+	{
+		Con_Printf ("CL_SendAckExpandedProtocol: lost server connection\n");
+		CL_Disconnect ();
+	}
 }
 
 /*
@@ -784,7 +810,7 @@ void CL_Init (void)
 
 	CL_InitInput ();
 	CL_InitTEnts ();
-
+	
 //
 // register our commands
 //
@@ -809,13 +835,15 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&m_forward);
 	Cvar_RegisterVariable (&m_side);
 
+//	Cvar_RegisterVariable (&cl_autofire);
+	
 	Cmd_AddCommand ("entities", CL_PrintEntities_f);
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("record", CL_Record_f);
 	Cmd_AddCommand ("stop", CL_Stop_f);
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
-    
-    cls.demofile = -1;
+	
+	cls.demofile = -1;
 }
 

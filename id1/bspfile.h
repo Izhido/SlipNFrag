@@ -166,12 +166,12 @@ typedef struct
 
 typedef struct
 {
-    int         planenum;
-    int         children[2];    // negative numbers are -(leafs+1), not nodes
-    float       mins[3];        // for sphere culling
-    float       maxs[3];
-    unsigned int    firstface;
-    unsigned int    numfaces;    // counting both sides
+	int			planenum;
+	int			children[2];	// negative numbers are -(leafs+1), not nodes
+	float		mins[3];		// for sphere culling
+	float		maxs[3];
+	unsigned int	firstface;
+	unsigned int	numfaces;	// counting both sides
 } dbsp2node_t;
 
 typedef struct
@@ -182,8 +182,8 @@ typedef struct
 
 typedef struct
 {
-    int         planenum;
-    int         children[2];    // negative numbers are contents
+	int			planenum;
+	int			children[2];	// negative numbers are contents
 } dbsp2clipnode_t;
 
 
@@ -204,7 +204,7 @@ typedef struct
 
 typedef struct
 {
-    unsigned int    v[2];        // vertex numbers
+	unsigned int	v[2];		// vertex numbers
 } dbsp2edge_t;
 
 #define	MAXLIGHTMAPS	4
@@ -224,16 +224,16 @@ typedef struct
 
 typedef struct
 {
-    int         planenum;
-    int         side;
+	int			planenum;
+	int			side;
 
-    int         firstedge;        // we must support > 64k edges
-    int         numedges;
-    int         texinfo;
+	int			firstedge;		// we must support > 64k edges
+	int			numedges;
+	int			texinfo;
 
 // lighting info
-    byte        styles[MAXLIGHTMAPS];
-    int         lightofs;        // start of [numstyles*surfsize] samples
+	byte		styles[MAXLIGHTMAPS];
+	int			lightofs;		// start of [numstyles*surfsize] samples
 } dbsp2face_t;
 
 
@@ -263,16 +263,16 @@ typedef struct
 
 typedef struct
 {
-    int         contents;
-    int         visofs;                // -1 = no visibility info
+	int			contents;
+	int			visofs;				// -1 = no visibility info
 
-    float       mins[3];            // for frustum culling
-    float       maxs[3];
+	float		mins[3];			// for frustum culling
+	float		maxs[3];
 
-    unsigned int        firstmarksurface;
-    unsigned int        nummarksurfaces;
+	unsigned int		firstmarksurface;
+	unsigned int		nummarksurfaces;
 
-    byte        ambient_level[NUM_AMBIENTS];
+	byte		ambient_level[NUM_AMBIENTS];
 } dbsp2leaf_t;
 
 

@@ -58,7 +58,7 @@ int			in_impulse;
 void KeyDown (kbutton_t *b)
 {
 	int		k;
-	const char *c;
+	const char	*c;
 
 	c = Cmd_Argv(1);
 	if (c[0])
@@ -87,7 +87,7 @@ void KeyDown (kbutton_t *b)
 void KeyUp (kbutton_t *b)
 {
 	int		k;
-	const char *c;
+	const char	*c;
 	
 	c = Cmd_Argv(1);
 	if (c[0])
@@ -317,6 +317,9 @@ void CL_BaseMove (usercmd_t *cmd)
 		cmd->upmove *= cl_movespeedkey.value;
 	}
 
+#ifdef QUAKE2
+	cmd->lightlevel = cl.light_level;
+#endif
 }
 
 
@@ -334,6 +337,7 @@ void CL_SendMove (usercmd_t *cmd)
 	
 	buf.maxsize = 128;
 	buf.cursize = 0;
+	
 	cl.cmd = *cmd;
 
 //
@@ -368,6 +372,12 @@ void CL_SendMove (usercmd_t *cmd)
     MSG_WriteByte (&buf, in_impulse);
 	in_impulse = 0;
 
+#ifdef QUAKE2
+//
+// light level
+//
+	MSG_WriteByte (&buf, cmd->lightlevel);
+#endif
 
 //
 // deliver the message

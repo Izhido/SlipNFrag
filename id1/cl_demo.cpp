@@ -70,18 +70,18 @@ void CL_WriteDemoMessage (void)
 	float	f;
 
 	len = LittleLong (net_message.cursize);
-    std::vector<byte> to_write(net_message.cursize + 16);
-    auto to_write_ptr = to_write.data();
+	std::vector<byte> to_write(net_message.cursize + 16);
+	auto to_write_ptr = to_write.data();
 	memcpy(to_write_ptr, &len, 4);
-    to_write_ptr += 4;
+	to_write_ptr += 4;
 	for (i=0 ; i<3 ; i++)
 	{
 		f = LittleFloat (cl.viewangles[i]);
-        memcpy(to_write_ptr, &f, 4);
-        to_write_ptr += 4;
+		memcpy(to_write_ptr, &f, 4);
+		to_write_ptr += 4;
 	}
-    memcpy(to_write_ptr, net_message.data.data(), net_message.cursize);
-    Sys_FileWrite (cls.demofile, to_write.data(), to_write.size());
+	memcpy(to_write_ptr, net_message.data.data(), net_message.cursize);
+	Sys_FileWrite (cls.demofile, to_write.data(), to_write.size());
 }
 
 /*
@@ -115,24 +115,24 @@ int CL_GetMessage (void)
 			{
 					return 0;		// don't need another message yet
 			}
-        }
-        
-        std::vector<byte> to_read(16);
-        Sys_FileRead (cls.demofile, to_read.data(), to_read.size());
-        auto to_read_ptr = to_read.data();
-        
+		}
+		
+		std::vector<byte> to_read(16);
+		Sys_FileRead (cls.demofile, to_read.data(), to_read.size());
+		auto to_read_ptr = to_read.data();
+		
 	// get the next message
-        int size = *(int*)to_read_ptr;
-        to_read_ptr += 4;
+		int size = *(int*)to_read_ptr;
+		to_read_ptr += 4;
 		VectorCopy (cl.mviewangles[0], cl.mviewangles[1]);
 		for (i=0 ; i<3 ; i++)
 		{
 			f = *(float*)to_read_ptr;
-            to_read_ptr += 4;
+			to_read_ptr += 4;
 			cl.mviewangles[0][i] = LittleFloat (f);
 		}
 		
-        net_message.cursize = LittleLong(size);
+		net_message.cursize = LittleLong(size);
 		if (net_message.data.size() < net_message.cursize)
 		{
 			net_message.data.resize(net_message.cursize);
@@ -208,7 +208,7 @@ record <demoname> <map> [cd track]
 void CL_Record_f (void)
 {
 	int		c;
-    std::string name;
+	std::string name;
 	int		track;
 
 	if (cmd_source != src_command)
@@ -242,7 +242,7 @@ void CL_Record_f (void)
 	else
 		track = -1;	
 
-    name = com_gamedir + "/" + Cmd_Argv(1);
+	name = com_gamedir + "/" + Cmd_Argv(1);
 	
 //
 // start the map up
@@ -264,8 +264,8 @@ void CL_Record_f (void)
 	}
 
 	cls.forcetrack = track;
-    std::string to_write = std::to_string(cls.forcetrack) + "\n";
-    Sys_FileWrite(cls.demofile, (void*)to_write.c_str(), to_write.length());
+	std::string to_write = std::to_string(cls.forcetrack) + "\n";
+	Sys_FileWrite(cls.demofile, (void*)to_write.c_str(), to_write.length());
 	
 	cls.demorecording = true;
 }
@@ -280,7 +280,7 @@ play [demoname]
 */
 void CL_PlayDemo_f (void)
 {
-    std::string name;
+	std::string name;
 	qboolean neg = false;
 
 	if (cmd_source != src_command)
@@ -316,8 +316,8 @@ void CL_PlayDemo_f (void)
 	cls.state = ca_connected;
 	cls.forcetrack = 0;
 
-    char onechar;
-    auto len = Sys_FileRead (cls.demofile, &onechar, 1);
+	char onechar;
+	auto len = Sys_FileRead (cls.demofile, &onechar, 1);
 	while (len == 1 && onechar == ' ')
 	{
 		len = Sys_FileRead (cls.demofile, &onechar, 1);
@@ -328,12 +328,12 @@ void CL_PlayDemo_f (void)
 		len = Sys_FileRead (cls.demofile, &onechar, 1);
 	}
 	while (len == 1 && onechar != '\n')
-    {
+	{
 		if (onechar < '0' || onechar > '9')
 			break;
 		cls.forcetrack = cls.forcetrack * 10 + (onechar - '0');
-        len = Sys_FileRead (cls.demofile, &onechar, 1);
-    }
+		len = Sys_FileRead (cls.demofile, &onechar, 1);
+	}
 	while (len == 1 && onechar != '\n')
 	{
 		len = Sys_FileRead (cls.demofile, &onechar, 1);
@@ -341,6 +341,8 @@ void CL_PlayDemo_f (void)
 
 	if (neg)
 		cls.forcetrack = -cls.forcetrack;
+// ZOID, fscanf is evil
+//	fscanf (cls.demofile, "%i\n", &cls.forcetrack);
 }
 
 /*

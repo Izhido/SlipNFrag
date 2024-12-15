@@ -35,11 +35,11 @@ struct sizebuf_t
 {
 	qboolean	allowoverflow;	// if false, do a Sys_Error
 	qboolean	overflowed;		// set to true if the buffer size failed
-    std::vector<byte> data;
+	std::vector<byte>	data;
 	int		maxsize;
 	int		cursize;
 
-    void Clear();
+	void Clear();
 };
 
 void SZ_Alloc (sizebuf_t *buf, int startsize);
@@ -61,6 +61,11 @@ void ClearLink (link_t *l);
 void RemoveLink (link_t *l);
 void InsertLinkBefore (link_t *l, link_t *before);
 void InsertLinkAfter (link_t *l, link_t *after);
+
+// (type *)STRUCT_FROM_LINK(link_t *link, type, member)
+// ent = STRUCT_FROM_LINK(link,entity_t,order)
+// FIXME: remove this mess!
+#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
 
 //============================================================================
 
@@ -122,6 +127,7 @@ float MSG_ReadAngle (void);
 
 void Q_memset (void *dest, int fill, int count);
 void Q_memcpy (void *dest, const void *src, int count);
+int Q_memcmp (void *m1, void *m2, int count);
 void Q_strcpy (char *dest, const char *src);
 void Q_strncpy (char *dest, const char *src, int count);
 int Q_strlen (const char *str);
@@ -136,14 +142,14 @@ float Q_atof (const char *str);
 
 //============================================================================
 
-extern std::string com_token;
+extern	std::string		com_token;
 extern	qboolean	com_eof;
 
 const char *COM_Parse (const char *data);
 
 
 extern	int		com_argc;
-extern	const char **com_argv;
+extern	const char	**com_argv;
 
 int COM_CheckParm (const char *parm);
 void COM_Init (const char *path);
@@ -163,7 +169,7 @@ char	*va(const char *format, ...);
 extern int com_filesize;
 struct cache_user_s;
 
-extern std::string com_gamedir;
+extern	std::string	com_gamedir;
 
 int COM_FindAllFiles (const char *directory, const char *prefix, const char *extension, void (find_in_path)(const char *path, const char *directory, const char *prefix, const char *extension, std::vector<std::string>& result), std::vector<std::string>& result);
 

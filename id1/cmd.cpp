@@ -23,12 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void Cmd_ForwardToServer (void);
 
-struct cmdalias_t
+#define	MAX_ALIAS_NAME	32
+
+typedef struct cmdalias_s
 {
-	cmdalias_t	*next;
-    std::string name;
-	std::string value;
-};
+	struct cmdalias_s	*next;
+	std::string	name;
+	std::string	value;
+} cmdalias_t;
 
 cmdalias_t	*cmd_alias;
 
@@ -61,7 +63,7 @@ void Cmd_Wait_f (void)
 =============================================================================
 */
 
-std::string cmd_text;
+std::string	cmd_text;
 
 /*
 ============
@@ -70,6 +72,7 @@ Cbuf_Init
 */
 void Cbuf_Init (void)
 {
+	// SZ_Alloc (&cmd_text, 8192);		// space for commands and script files
 }
 
 
@@ -82,7 +85,7 @@ Adds command text at the end of the buffer
 */
 void Cbuf_AddText (const char *text)
 {
-    cmd_text += text;
+	cmd_text += text;
 }
 
 
@@ -97,7 +100,7 @@ FIXME: actually change the command buffer to do less copying
 */
 void Cbuf_InsertText (const char *text)
 {
-    cmd_text = std::string(text) + cmd_text;
+	cmd_text = std::string(text) + cmd_text;
 }
 
 /*
@@ -109,11 +112,11 @@ void Cbuf_Execute (void)
 {
 	int		i;
 	const char	*text;
-    std::string line;
+	std::string	line;
 	int		quotes;
 	int		comment;
 	int		commentpos;
-
+	
 	while (cmd_text.length() > 0)
 	{
 // find a \n or ; line break
@@ -145,13 +148,14 @@ void Cbuf_Execute (void)
 				break;
 		}
 			
-        line = cmd_text.substr(0, (commentpos < 0 ? i : commentpos));
+				
+		line = cmd_text.substr(0, (commentpos < 0 ? i : commentpos));
 		
 // delete the text from the command buffer and move remaining commands down
 // this is necessary because commands (exec, alias) can insert data at the
 // beginning of the text buffer
 
-        cmd_text.erase(0, i + 1);
+		cmd_text.erase(0, i + 1);
 
 // execute the command line
 		Cmd_ExecuteString ((char*)line.c_str(), src_command);
@@ -206,7 +210,7 @@ void Cmd_StuffCmds_f (void)
 	if (!s)
 		return;
 		
-    std::string text;
+	std::string text;
 	for (i=1 ; i<com_argc ; i++)
 	{
 		if (!com_argv[i])
@@ -217,7 +221,7 @@ void Cmd_StuffCmds_f (void)
 	}
 	
 // pull out the commands
-    std::string build;
+	std::string build;
 	
 	for (i=0 ; i<s-1 ; i++)
 	{
@@ -258,8 +262,8 @@ void Cmd_Exec_f (void)
 		return;
 	}
 
-    std::vector<byte> contents;
-    f = (char *)COM_LoadFile (Cmd_Argv(1), contents);
+	std::vector<byte> contents;
+	f = (char *)COM_LoadFile (Cmd_Argv(1), contents);
 	if (!f)
 	{
 		Con_Printf ("couldn't exec %s\n",Cmd_Argv(1));
@@ -299,7 +303,7 @@ void Cmd_Alias_f (void)
 {
 	cmdalias_t	*a;
 	int			i, c;
-	const char	*s;
+	const char		*s;
 
 	if (Cmd_Argc() == 1)
 	{
@@ -347,16 +351,24 @@ void Cmd_Alias_f (void)
 =============================================================================
 */
 
+typedef struct cmd_function_s
+{
+	struct cmd_function_s	*next;
+	char					*name;
+	xcommand_t				function;
+} cmd_function_t;
 
 
-static	std::vector<std::string> cmd_argv;
-static	const char	*cmd_null_string = "";
-static	const char	*cmd_args = NULL;
+#define	MAX_ARGS		80
+
+static	std::vector<std::string>		cmd_argv;
+static	const char		*cmd_null_string = "";
+static	const char		*cmd_args = NULL;
 
 cmd_source_t	cmd_source;
 
 
-std::unordered_map<std::string, xcommand_t> cmd_functions;		// possible commands to execute
+std::unordered_map<std::string, xcommand_t>	cmd_functions;		// possible commands to execute
 
 /*
 ============
@@ -403,7 +415,7 @@ const char	*Cmd_Argv (int arg)
 Cmd_Args
 ============
 */
-const char	*Cmd_Args (void)
+const char		*Cmd_Args (void)
 {
 	return cmd_args;
 }
@@ -446,7 +458,7 @@ void Cmd_TokenizeString (const char *text)
 		if (!text)
 			return;
 
-        cmd_argv.emplace_back(com_token.c_str());
+		cmd_argv.emplace_back(com_token.c_str());
 	}
 	
 }
@@ -467,15 +479,15 @@ void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 	}
 	
 // fail if the command already exists
-    std::string name(cmd_name);
-    auto entry = cmd_functions.find(name);
-    if (entry != cmd_functions.end())
+	std::string name(cmd_name);
+	auto entry = cmd_functions.find(name);
+	if (entry != cmd_functions.end())
 	{
 			Con_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
 			return;
 	}
 
-    cmd_functions.insert({ name, function });
+	cmd_functions.insert({ name, function });
 }
 
 /*
@@ -486,9 +498,11 @@ Cmd_Exists
 qboolean	Cmd_Exists (const char *cmd_name)
 {
 	std::string name(cmd_name);
-    auto entry = cmd_functions.find(name);
-    if (entry != cmd_functions.end())
+	auto entry = cmd_functions.find(name);
+	if (entry != cmd_functions.end())
+	{
 			return true;
+	}
 
 	return false;
 }
@@ -510,7 +524,7 @@ char *Cmd_CompleteCommand (char *partial)
 		return NULL;
 		
 // check functions
-    for (auto& entry : cmd_functions)
+	for (auto& entry : cmd_functions)
 		if (!Q_strncmp (partial,entry.first.c_str(), len))
 			return (char*)entry.first.c_str();
 
@@ -537,13 +551,13 @@ void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 		return;		// no tokens
 
 // check functions
-    std::string name(cmd_argv[0]);
-    auto entry = cmd_functions.find(name);
-    if (entry != cmd_functions.end())
-    {
-        entry->second();
-        return;
-    }
+	std::string name(cmd_argv[0]);
+	auto entry = cmd_functions.find(name);
+	if (entry != cmd_functions.end())
+	{
+		entry->second();
+		return;
+	}
 
 // check alias
 	for (a=cmd_alias ; a ; a=a->next)
@@ -590,4 +604,28 @@ void Cmd_ForwardToServer (void)
 		SZ_Print (&cls.message, Cmd_Args());
 	else
 		SZ_Print (&cls.message, "\n");
+}
+
+
+/*
+================
+Cmd_CheckParm
+
+Returns the position (1 to argc-1) in the command's argument list
+where the given parameter apears, or 0 if not present
+================
+*/
+
+int Cmd_CheckParm (char *parm)
+{
+	int i;
+	
+	if (!parm)
+		Sys_Error ("Cmd_CheckParm: NULL");
+
+	for (i = 1; i < Cmd_Argc (); i++)
+		if (! Q_strcasecmp (parm, Cmd_Argv (i)))
+			return i;
+			
+	return 0;
 }

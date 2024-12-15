@@ -34,12 +34,12 @@ cvar_t *Cvar_FindVar (const char *var_name)
 {
 	static std::string key;
 	key = var_name;
-    auto entry = cvar_index.find(key);
-    if (entry != cvar_index.end())
-    {
-        return entry->second;
-    }
-    return nullptr;
+	auto entry = cvar_index.find(key);
+	if (entry != cvar_index.end())
+	{
+		return entry->second;
+	}
+	return nullptr;
 }
 
 /*
@@ -117,7 +117,7 @@ void Cvar_Set (const char *var_name, const char *value)
 
 	changed = Q_strcmp(var->string.c_str(), value);
 
-    var->string = value;
+	var->string = value;
 	var->value = Q_atof (value);
 	if (var->server && changed)
 	{
@@ -214,9 +214,9 @@ void Cvar_WriteVariables (int f)
 	
 	for (var = cvar_vars ; var ; var = var->next)
 		if (var->archive)
-        {
-            auto to_write = std::string(var->name) + " \"" + var->string + "\"\n";
-            Sys_FileWrite(f, (void*)to_write.c_str(), (int)to_write.length());
-        }
+		{
+			auto to_write = std::string(var->name) + " \"" + var->string + "\"\n";
+			Sys_FileWrite(f, (void*)to_write.c_str(), (int)to_write.length());
+		}
 }
 

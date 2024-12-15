@@ -36,10 +36,22 @@ extern void			R_TransformFrustum (void);
 
 vec3_t		transformed_modelorg;
 
-extern qboolean r_skyinitialized;
-extern qboolean r_skyRGBAinitialized;
-extern qboolean r_skyboxinitialized;
-extern mtexinfo_t r_skytexinfo[6];
+extern qboolean	r_skyinitialized;
+extern qboolean	r_skyRGBAinitialized;
+extern qboolean	r_skyboxinitialized;
+extern mtexinfo_t	r_skytexinfo[6];
+
+/*
+==============
+D_DrawPoly
+
+==============
+*/
+void D_DrawPoly (void)
+{
+// this driver takes spans, not polygons
+}
+
 
 /*
 =============
@@ -116,10 +128,13 @@ D_CalcGradients
 */
 void D_CalcGradients (msurface_t *pface)
 {
+	mplane_t	*pplane;
 	float		mipscale;
 	vec3_t		p_temp1;
 	vec3_t		p_saxis, p_taxis;
 	float		t;
+
+	pplane = pface->plane;
 
 	mipscale = 1.0 / (float)(1 << miplevel);
 
@@ -143,10 +158,10 @@ void D_CalcGradients (msurface_t *pface)
 
 	t = 0x10000*mipscale;
 	sadjust = ((fixed16_t)(DotProduct (p_temp1, p_saxis) * 0x10000 + 0.5)) -
-			((pface->texturemins[0] * 0x10000) >> miplevel)
+			((pface->texturemins[0] << 16) >> miplevel)
 			+ pface->texinfo->vecs[0][3]*t;
 	tadjust = ((fixed16_t)(DotProduct (p_temp1, p_taxis) * 0x10000 + 0.5)) -
-			((pface->texturemins[1] * 0x10000) >> miplevel)
+			((pface->texturemins[1] << 16) >> miplevel)
 			+ pface->texinfo->vecs[1][3]*t;
 
 //
@@ -235,7 +250,7 @@ void D_DrawSurfaces (void)
 
 			d_zistepu = s->d_zistepu;
 			d_zistepv = s->d_zistepv;
-            d_ziorigin = s->d_ziorigin;
+			d_ziorigin = s->d_ziorigin;
 
 			D_DrawSolidSurface (s, (int)((size_t)s->data) & 0xFF);
 			(*d_drawzspans) (s->spans);
