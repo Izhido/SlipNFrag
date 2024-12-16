@@ -78,7 +78,7 @@ qsocket_t *Loop_Connect (const char *host)
 		}
 		loop_client->address = "localhost";
 	}
-    loop_client->receiveMessageLength = 0;
+	loop_client->receiveMessageLength = 0;
 	loop_client->sendMessageLength = 0;
 	loop_client->canSend = true;
 
@@ -175,8 +175,8 @@ int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	// length
 	*buffer++ = data->cursize & 0xff;
 	*buffer++ = (data->cursize >> 8) & 0xff;
-    *buffer++ = (data->cursize >> 16) & 0xff;
-    *buffer++ = (data->cursize >> 24) & 0xff;
+	*buffer++ = (data->cursize >> 16) & 0xff;
+	*buffer++ = (data->cursize >> 24) & 0xff;
 
 	// align
 	buffer += 3;
@@ -193,7 +193,7 @@ int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 int Loop_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 {
 	byte *buffer;
-    int  *bufferLength;
+	int  *bufferLength;
 
 	if (!sock->driverdata)
 		return -1;
@@ -206,19 +206,19 @@ int Loop_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 		((qsocket_t *)sock->driverdata)->receiveMessage.resize(alignedBufferLength);
 	}
 
-    buffer = ((qsocket_t *)sock->driverdata)->receiveMessage.data() + *bufferLength;
+	buffer = ((qsocket_t *)sock->driverdata)->receiveMessage.data() + *bufferLength;
 
 	// message type
 	*buffer++ = 2;
 
 	// length
-    *buffer++ = data->cursize & 0xff;
-    *buffer++ = (data->cursize >> 8) & 0xff;
-    *buffer++ = (data->cursize >> 16) & 0xff;
-    *buffer++ = (data->cursize >> 24) & 0xff;
+	*buffer++ = data->cursize & 0xff;
+	*buffer++ = (data->cursize >> 8) & 0xff;
+	*buffer++ = (data->cursize >> 16) & 0xff;
+	*buffer++ = (data->cursize >> 24) & 0xff;
 
 	// align
-    buffer += 3;
+	buffer += 3;
 
 	// message
 	memcpy(buffer, data->data.data(), data->cursize);
@@ -242,12 +242,12 @@ qboolean Loop_CanSendUnreliableMessage (qsocket_t *sock)
 
 int Loop_MaxMessageSize (qsocket_t *sock)
 {
-    return 0;
+	return 0;
 }
 
 int Loop_MaxUnreliableMessageSize (qsocket_t *sock)
 {
-    return 0;
+	return 0;
 }
 
 void Loop_Close (qsocket_t *sock)

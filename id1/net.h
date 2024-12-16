@@ -135,15 +135,15 @@ typedef struct qsocket_s
 	unsigned int	sendSequence;
 	unsigned int	unreliableSendSequence;
 	int				sendMessageLength;
-    std::vector<byte> sendMessage;
+	std::vector<byte>			sendMessage;
 
 	unsigned int	receiveSequence;
 	unsigned int	unreliableReceiveSequence;
 	int				receiveMessageLength;
-	std::vector<byte> receiveMessage;
+	std::vector<byte>			receiveMessage;
 
 	struct qsockaddr	addr;
-    std::string				address;
+	std::string				address;
 
 } qsocket_t;
 
@@ -163,19 +163,19 @@ typedef struct
 	int 		(*CloseSocket) (int socket);
 	int 		(*Connect) (int socket, struct qsockaddr *addr);
 	int 		(*CheckNewConnections) (void);
-    int 		(*Read) (int socket, std::vector<byte>& buf, struct qsockaddr *addr);
+	int 		(*Read) (int socket, std::vector<byte>& buf, struct qsockaddr *addr);
 	int 		(*Write) (int socket, byte *buf, int len, struct qsockaddr *addr);
 	int 		(*Broadcast) (int socket, byte *buf, int len);
 	char *		(*AddrToString) (struct qsockaddr *addr);
 	int 		(*StringToAddr) (char *string, struct qsockaddr *addr);
 	int 		(*GetSocketAddr) (int socket, struct qsockaddr *addr);
-    int 		(*GetNameFromAddr) (struct qsockaddr *addr, std::string& name);
+	int 		(*GetNameFromAddr) (struct qsockaddr *addr, std::string& name);
 	int 		(*GetAddrFromName) (const char *name, struct qsockaddr *addr);
 	int			(*AddrCompare) (struct qsockaddr *addr1, struct qsockaddr *addr2);
 	int			(*GetSocketPort) (struct qsockaddr *addr);
 	int			(*SetSocketPort) (struct qsockaddr *addr, int port);
-    int         (*MaxMessageSize) (struct qsockaddr *addr);
-    int         (*MaxUnreliableMessageSize) (struct qsockaddr *addr);
+	int			(*MaxMessageSize) (struct qsockaddr *addr);
+	int			(*MaxUnreliableMessageSize) (struct qsockaddr *addr);
 } net_landriver_t;
 
 #define	MAX_NET_DRIVERS		8
@@ -196,8 +196,8 @@ typedef struct
 	int			(*SendUnreliableMessage) (qsocket_t *sock, sizebuf_t *data);
 	qboolean	(*CanSendMessage) (qsocket_t *sock);
 	qboolean	(*CanSendUnreliableMessage) (qsocket_t *sock);
-    int         (*MaxMessageSize) (qsocket_t *sock);
-    int         (*MaxUnreliableMessageSize) (qsocket_t *sock);
+	int			(*MaxMessageSize) (qsocket_t *sock);
+	int			(*MaxUnreliableMessageSize) (qsocket_t *sock);
 	void		(*Close) (qsocket_t *sock);
 	void		(*Shutdown) (void);
 	int			controlSock;
@@ -254,6 +254,10 @@ extern unsigned long ntohl (unsigned long netlong);
 #ifndef ntohs
 extern unsigned short ntohs (unsigned short netshort);
 #endif
+#endif
+
+#ifdef IDGODS
+qboolean IsID(struct qsockaddr *addr);
 #endif
 
 //============================================================================

@@ -89,10 +89,10 @@ int VCR_GetMessage (qsocket_t *sock)
 		return ret;
 	}
 
-    int size;
-    Sys_FileRead(vcrFile, &size, sizeof(int));
-    net_message.cursize = size;
-    if (net_message.data.size() < net_message.cursize)
+	int size;
+	Sys_FileRead(vcrFile, &size, sizeof(int));
+	net_message.cursize = size;
+	if (net_message.data.size() < net_message.cursize)
 	{
 		net_message.data.resize(net_message.cursize);
 	}
@@ -153,8 +153,8 @@ qsocket_t *VCR_Connect (const char *host)
 qsocket_t *VCR_CheckNewConnections (void)
 {
 	qsocket_t	*sock;
-    char address[NET_NAMELEN];
-    
+	char address[NET_NAMELEN];
+
 	if (host_time != next.time || next.op != VCR_OP_CONNECT)
 		Sys_Error ("VCR missmatch");
 
@@ -168,7 +168,7 @@ qsocket_t *VCR_CheckNewConnections (void)
 	*(long *)(&sock->driverdata) = next.session;
 
 	Sys_FileRead (vcrFile, address, NET_NAMELEN);
-    sock->address = address;
+	sock->address = address;
 	VCR_ReadNext ();
 
 	return sock;

@@ -171,7 +171,7 @@ int Datagram_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	if (data->cursize == 0)
 		Sys_Error("Datagram_SendMessage: zero length message\n");
 
-    if (maxsize > 0 && data->cursize > maxsize)
+	if (maxsize > 0 && data->cursize > maxsize)
 		Sys_Error("Datagram_SendMessage: message too big %u\n", data->cursize);
 
 	if (sock->canSend == false)
@@ -199,9 +199,9 @@ int Datagram_SendMessage (qsocket_t *sock, sizebuf_t *data)
 
 	packetHeader.length = BigLong(packetLen | (NETFLAG_DATA | eom));
 	packetHeader.sequence = BigLong(sock->sendSequence++);
-    packetBuffer.resize(sizeof(packetHeader) + dataLen);
+	packetBuffer.resize(sizeof(packetHeader) + dataLen);
 	memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
-    memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
+	memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
 
 	sock->canSend = false;
 
@@ -234,9 +234,9 @@ int SendMessageNext (qsocket_t *sock)
 
 	packetHeader.length = BigLong(packetLen | (NETFLAG_DATA | eom));
 	packetHeader.sequence = BigLong(sock->sendSequence++);
-    packetBuffer.resize(sizeof(packetHeader) + dataLen);
-    memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
-    memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
+	packetBuffer.resize(sizeof(packetHeader) + dataLen);
+	memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
+	memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
 
 	sock->sendNext = false;
 
@@ -269,9 +269,9 @@ int ReSendMessage (qsocket_t *sock)
 
 	packetHeader.length = BigLong(packetLen | (NETFLAG_DATA | eom));
 	packetHeader.sequence = BigLong(sock->sendSequence - 1);
-    packetBuffer.resize(sizeof(packetHeader) + dataLen);
-    memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
-    memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
+	packetBuffer.resize(sizeof(packetHeader) + dataLen);
+	memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
+	memcpy (packetBuffer.data() + sizeof(packetHeader), sock->sendMessage.data(), dataLen);
 
 	sock->sendNext = false;
 
@@ -317,9 +317,9 @@ int Datagram_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 
 	packetHeader.length = BigLong(packetLen | NETFLAG_UNRELIABLE);
 	packetHeader.sequence = BigLong(sock->unreliableSendSequence++);
-    packetBuffer.resize(sizeof(packetHeader) + data->cursize);
-    memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
-    memcpy (packetBuffer.data() + sizeof(packetHeader), data->data.data(), data->cursize);
+	packetBuffer.resize(sizeof(packetHeader) + data->cursize);
+	memcpy (packetBuffer.data(), &packetHeader, sizeof(packetHeader));
+	memcpy (packetBuffer.data() + sizeof(packetHeader), data->data.data(), data->cursize);
 
 	if (sfunc.Write (sock->socket, packetBuffer.data(), packetLen, &sock->addr) == -1)
 		return -1;
@@ -374,7 +374,7 @@ int	Datagram_GetMessage (qsocket_t *sock)
 			continue;
 		}
 
-        memcpy(&packetHeader, packetBuffer.data(), sizeof(packetHeader));
+		memcpy(&packetHeader, packetBuffer.data(), sizeof(packetHeader));
 		length = BigLong(packetHeader.length);
 		flags = length & (~NETFLAG_LENGTH_MASK);
 		length &= NETFLAG_LENGTH_MASK;
@@ -436,7 +436,7 @@ int	Datagram_GetMessage (qsocket_t *sock)
 			}
 			else
 			{
-                sock->sendMessageLength = 0;
+				sock->sendMessageLength = 0;
 				sock->canSend = true;
 			}
 			continue;
@@ -552,6 +552,7 @@ static void Test_Poll(void*)
 	int		colors;
 	int		frags;
 	int		connectTime;
+	byte	playerNumber;
 
 	net_landriverlevel = testDriver;
 
@@ -576,7 +577,7 @@ static void Test_Poll(void*)
 		if (MSG_ReadByte() != CCREP_PLAYER_INFO)
 			Sys_Error("Unexpected repsonse to Player Info request\n");
 
-		/*playerNumber = */MSG_ReadByte();
+		playerNumber = MSG_ReadByte();
 		Q_strcpy(name, MSG_ReadString());
 		colors = MSG_ReadLong();
 		frags = MSG_ReadLong();
@@ -600,7 +601,7 @@ static void Test_Poll(void*)
 
 static void Test_f (void)
 {
-	const char *host;
+	const char	*host;
 	int		n;
 	int		max = MAX_SCOREBOARD;
 	struct qsockaddr sendaddr;
@@ -729,7 +730,7 @@ Done:
 
 static void Test2_f (void)
 {
-	const char *host;
+	const char	*host;
 	int		n;
 	struct qsockaddr sendaddr;
 
@@ -1413,10 +1414,10 @@ qsocket_t *Datagram_Connect (const char *host)
 
 int Datagram_MaxMessageSize (qsocket_t *sock)
 {
-    return net_landrivers[sock->landriver].MaxMessageSize(&sock->addr);
+	return net_landrivers[sock->landriver].MaxMessageSize(&sock->addr);
 }
 
 int Datagram_MaxUnreliableMessageSize (qsocket_t *sock)
 {
-    return net_landrivers[sock->landriver].MaxUnreliableMessageSize(&sock->addr);
+	return net_landrivers[sock->landriver].MaxUnreliableMessageSize(&sock->addr);
 }

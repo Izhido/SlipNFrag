@@ -36,7 +36,7 @@ typedef struct edict_s
 {
 	qboolean	free;
 	link_t		area;				// linked to a division node or leaf
-
+	
 	int			num_leafs;
 	int*		leafnums;
 	int 		leaf_size;
@@ -47,6 +47,7 @@ typedef struct edict_s
 	entvars_t	v;					// C exported fields from progs
 // other fields from progs come immediately after
 } edict_t;
+#define	EDICT_FROM_AREA(l) STRUCT_FROM_LINK(l,edict_t,area)
 
 //============================================================================
 

@@ -261,19 +261,19 @@ Aborts the currently executing function
 void PR_RunError (const char *error, ...)
 {
 	va_list		argptr;
-    std::vector<char> string(1024);
-    
-    while (true)
-    {
-        va_start (argptr, error);
-        auto needed = vsnprintf(string.data(), string.size(), error, argptr);
-        va_end (argptr);
-        if (needed < string.size())
-        {
-            break;
-        }
-        string.resize(needed + 1);
-    }
+	std::vector<char> string(1024);
+
+	while (true)
+	{
+		va_start (argptr, error);
+		auto needed = vsnprintf(string.data(), string.size(), error, argptr);
+		va_end (argptr);
+		if (needed < string.size())
+		{
+			break;
+		}
+		string.resize(needed + 1);
+	}
 
 	PR_PrintStatement (pr_statements + pr_xstatement);
 	PR_StackTrace ();

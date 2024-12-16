@@ -32,8 +32,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //define	PARANOID			// speed sapping error checking
 
+#ifdef QUAKE2
+#define	GAMENAME	"id1"		// directory to look in by default
+#else
 #define	GAMENAME	"id1"
+#endif
 
+#include <string>
+#include <vector>
+#include <list>
+#include <unordered_map>
+#include <unordered_set>
+#include <algorithm>
+#include <stdexcept>
 #include <math.h>
 #include <string.h>
 #include <stdarg.h>
@@ -42,13 +53,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef USE_LONGJMP
 #include <setjmp.h>
 #endif
-#include <string>
-#include <vector>
-#include <list>
-#include <unordered_map>
-#include <unordered_set>
-#include <algorithm>
-#include <stdexcept>
 
 #define	VID_LockBuffer()
 #define	VID_UnlockBuffer()
@@ -70,6 +74,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define UNUSED(x)	(x = x)	// for pesky compiler / lint warnings
 
+#define	MINIMUM_MEMORY			0x550000
+#define	MINIMUM_MEMORY_LEVELPAK	(MINIMUM_MEMORY + 0x100000)
+
+#define MAX_NUM_ARGVS	50
+
 // up / down
 #define	PITCH	0
 
@@ -81,7 +90,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #define	MAX_QPATH		64			// max length of a quake game pathname
-#define	MAX_OSPATH      128         // max length of a filesystem pathname
+#define	MAX_OSPATH		128			// max length of a filesystem pathname
 
 #define	ON_EPSILON		0.1			// point on plane side epsilon
 
@@ -192,6 +201,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	SOUND_CHANNELS		8
 
+// This makes anyone on id's net privileged
+// Use for multiplayer testing only - VERY dangerous!!!
+// #define IDGODS
+
 #include "common.h"
 #include "bspfile.h"
 #include "vid.h"
@@ -252,10 +265,10 @@ typedef struct
 
 typedef struct
 {
-    std::string basedir;
+	std::string	basedir;
 	char	*cachedir;		// for development over ISDN lines
 	int		argc;
-	const char **argv;
+	const char	**argv;
 } quakeparms_t;
 
 
@@ -277,8 +290,8 @@ extern	cvar_t		developer;
 
 extern	qboolean	host_initialized;		// true if into command execution
 extern	double		host_frametime;
-extern	std::vector<byte>	host_basepal;
-extern	std::vector<byte>	host_colormap;
+extern	std::vector<byte>		host_basepal;
+extern	std::vector<byte>		host_colormap;
 extern	std::vector<unsigned>	host_basepalcoverage;
 extern	int 		host_clearcount;
 extern	int			host_framecount;	// incremented every frame, never reset

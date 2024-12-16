@@ -88,7 +88,7 @@ edict_t *ED_Alloc (void)
 {
 	int			i,j,k;
 	edict_t		*e;
-    client_t* c;
+	client_t* c;
 
 	for ( i=svs.maxclients+1 ; i<sv.num_edicts ; i++)
 	{
@@ -102,9 +102,9 @@ edict_t *ED_Alloc (void)
 		}
 	}
 	
-	sv.num_edicts++;
-    if (sv.num_edicts * pr_edict_size >= sv.edicts.size())
-    {
+		sv.num_edicts++;
+	if (sv.num_edicts * pr_edict_size >= sv.edicts.size())
+	{
 		auto sv_playerindex = 0;
 		for (j = 0, c = svs.clients.data(); j < svs.maxclients; j++, c++)
 		{
@@ -114,28 +114,28 @@ edict_t *ED_Alloc (void)
 			}
 		}
 		for (j = 0, k = 0; j < sv.num_edicts; j++, k += pr_edict_size)
-        {
-            e = (edict_t*)(sv.edicts.data() + k);
-            SV_UnlinkEdict(e);
-        }
+		{
+			e = (edict_t*)(sv.edicts.data() + k);
+			SV_UnlinkEdict(e);
+		}
 		SV_ResizeEdicts(sv.edicts.size() + MAX_EDICTS * pr_edict_size);
-        sv.edicts_reallocation_sequence++;
-        for (j = 0, k = 0; j < sv.num_edicts; j++, k += pr_edict_size)
-        {
-            e = (edict_t*)(sv.edicts.data() + k);
-            SV_LinkEdict(e, true);
-        }
-        for (j = 0, c = svs.clients.data(); j < svs.maxclients ; j++, c++)
-        {
-            c->edict = EDICT_NUM(j + 1);
-        }
+		sv.edicts_reallocation_sequence++;
+		for (j = 0, k = 0; j < sv.num_edicts; j++, k += pr_edict_size)
+		{
+			e = (edict_t*)(sv.edicts.data() + k);
+			SV_LinkEdict(e, true);
+		}
+		for (j = 0, c = svs.clients.data(); j < svs.maxclients ; j++, c++)
+		{
+			c->edict = EDICT_NUM(j + 1);
+		}
 		if (sv_playerindex > 0)
 		{
 			sv_player = EDICT_NUM(sv_playerindex);
 		}
-    }
-    
-    e = EDICT_NUM(i);
+	}
+	
+	e = EDICT_NUM(i);
 	ED_ClearEdict (e);
 
 	return e;
@@ -314,7 +314,7 @@ const char *PR_ValueString (etype_t type, eval_t *val)
 	ddef_t		*def;
 	dfunction_t	*f;
 	
-    type = (etype_t)((int)type & ~DEF_SAVEGLOBAL);
+	type = (etype_t)((int)type & ~DEF_SAVEGLOBAL);
 
 	switch (type)
 	{
@@ -419,38 +419,38 @@ const char *PR_GlobalString (int ofs)
 {
 	ddef_t	*def;
 	void	*val;
-    static std::string line;
+	static std::string line;
 	
 	val = (void *)&pr_globals[ofs];
 	def = ED_GlobalAtOfs(ofs);
 	if (!def)
-        line = std::to_string(ofs) + "(???)";
+		line = std::to_string(ofs) + "(???)";
 	else
 	{
 		auto s = PR_ValueString ((etype_t)def->type, (eval_t*)val);
 		line = std::to_string(ofs) + "(" + (pr_strings + def->s_name) + ")" + s;
 	}
 	
-    while (line.length() < 20)
-        line += ' ';
-    line += ' ';
-
+	while (line.length() < 20)
+		line += ' ';
+	line += ' ';
+		
 	return line.c_str();
 }
 
 const char *PR_GlobalStringNoContents (int ofs)
 {
 	ddef_t	*def;
-    static std::string line;
+	static std::string line;
 	
 	def = ED_GlobalAtOfs(ofs);
 	if (!def)
-        line = std::to_string(ofs) + "(???)";
+		line = std::to_string(ofs) + "(???)";
 	else
 		line = std::to_string(ofs) + "(" + (pr_strings + def->s_name) + ")";
 	
 	while (line.length() < 20)
-        line += ' ';
+		line += ' ';
 	line += ' ';
 		
 	return line.c_str();
@@ -503,7 +503,7 @@ void ED_Print (edict_t *ed)
 		while (l++ < 15)
 			Con_Printf (" ");
 
-		Con_Printf ("%s\n", PR_ValueString((etype_t)d->type, (eval_t *)v));
+		Con_Printf ("%s\n", PR_ValueString((etype_t)d->type, (eval_t *)v));		
 	}
 }
 
@@ -522,12 +522,12 @@ void ED_Write (int f, edict_t *ed)
 	char	*name;
 	int		type;
 
-    std::string to_write = "{\n";
+	std::string to_write = "{\n";
 
 	if (ed->free)
 	{
 		to_write += "}\n";
-        Sys_FileWrite(f, (void*)to_write.c_str(), (int)to_write.length());
+		Sys_FileWrite(f, (void*)to_write.c_str(), (int)to_write.length());
 		return;
 	}
 	
@@ -548,12 +548,12 @@ void ED_Write (int f, edict_t *ed)
 		if (j == type_size[type])
 			continue;
 	
-        to_write += std::string("\"") + name + "\" ";
-        to_write += std::string("\"") + PR_UglyValueString((etype_t)d->type, (eval_t *)v) + "\"\n";
+		to_write += std::string("\"") + name + "\" ";
+		to_write += std::string("\"") + PR_UglyValueString((etype_t)d->type, (eval_t *)v) + "\"\n";
 	}
 
 	to_write += "}\n";
-    Sys_FileWrite(f, (void*)to_write.c_str(), (int)to_write.length());
+	Sys_FileWrite(f, (void*)to_write.c_str(), (int)to_write.length());
 }
 
 void ED_PrintNum (int ent)
@@ -654,7 +654,7 @@ void ED_WriteGlobals (int f)
 	char		*name;
 	int			type;
 
-    std::string to_write = "{\n";
+	std::string to_write = "{\n";
 	for (i=0 ; i<progs->numglobaldefs ; i++)
 	{
 		def = &pr_globaldefs[i];
@@ -669,11 +669,11 @@ void ED_WriteGlobals (int f)
 			continue;
 
 		name = pr_strings + def->s_name;		
-        to_write += std::string("\"") + name + "\" ";
-        to_write += std::string("\"") + PR_UglyValueString((etype_t)type, (eval_t *)&pr_globals[def->ofs]) + "\"\n";
+		to_write += std::string("\"") + name + "\" ";
+		to_write += std::string("\"") + PR_UglyValueString((etype_t)type, (eval_t *)&pr_globals[def->ofs]) + "\"\n";
 	}
-    to_write += "}\n";
-    Sys_FileWrite (f, (void*)to_write.c_str(), (int)to_write.length());
+	to_write += "}\n";
+	Sys_FileWrite (f, (void*)to_write.c_str(), (int)to_write.length());
 }
 
 /*
@@ -683,7 +683,7 @@ ED_ParseGlobals
 */
 void ED_ParseGlobals (const char *data)
 {
-    std::string keyname;
+	std::string keyname;
 	ddef_t	*key;
 
 	while (1)
@@ -695,7 +695,7 @@ void ED_ParseGlobals (const char *data)
 		if (!data)
 			Sys_Error ("ED_ParseEntity: EOF without closing brace");
 
-        keyname = com_token;
+		keyname = com_token;
 
 	// parse value	
 		data = COM_Parse (data);
@@ -733,8 +733,8 @@ char *ED_NewString (const char *string)
 	int		i,l;
 	
 	l = (int)strlen(string) + 1;
-    i = ED_NewString(l);
-    new_string = pr_string_block.data() + i;
+	i = ED_NewString(l);
+	new_string = pr_string_block.data() + i;
 	new_p = new_string;
 
 	for (i=0 ; i< l ; i++)
@@ -756,33 +756,33 @@ char *ED_NewString (const char *string)
 
 int ED_NewString(int size)
 {
-    size = (size + 15) & ~15;
-    if (pr_string_block_used + size > pr_string_block.size())
-    {
-        int additional = size;
-        if (progs != nullptr && progs->numstrings > size)
-        {
-            additional = (progs->numstrings + 15) & ~15;
-        }
-        pr_string_block.resize(pr_string_block.size() + additional);
-        pr_strings = pr_string_block.data();
-    }
-    auto offset = pr_string_block_used;
-    pr_string_block_used += size;
-    return offset;
+	size = (size + 15) & ~15;
+	if (pr_string_block_used + size > pr_string_block.size())
+	{
+		int additional = size;
+		if (progs != nullptr && progs->numstrings > size)
+		{
+			additional = (progs->numstrings + 15) & ~15;
+		}
+		pr_string_block.resize(pr_string_block.size() + additional);
+		pr_strings = pr_string_block.data();
+	}
+	auto offset = pr_string_block_used;
+	pr_string_block_used += size;
+	return offset;
 }
 
 void PR_LoadStrings(char* source, int size)
 {
-    auto to_use = (size + 15) & ~15;
-    auto to_allocate = to_use;
-    if (pr_string_block_used + to_allocate > pr_string_block.size())
-    {
-        pr_string_block.resize(pr_string_block.size() + to_allocate);
-        pr_strings = pr_string_block.data();
-    }
-    pr_string_block_used += to_use;
-    Q_memcpy(pr_strings, source, size);
+	auto to_use = (size + 15) & ~15;
+	auto to_allocate = to_use;
+	if (pr_string_block_used + to_allocate > pr_string_block.size())
+	{
+		pr_string_block.resize(pr_string_block.size() + to_allocate);
+		pr_strings = pr_string_block.data();
+	}
+	pr_string_block_used += to_use;
+	Q_memcpy(pr_strings, source, size);
 }
 
 /*
@@ -796,7 +796,7 @@ returns false if error
 qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s)
 {
 	int		i;
-	std::vector<char> string(128);
+	std::vector<char>	string(128);
 	ddef_t	*def;
 	char	*v, *w;
 	void	*d;
@@ -888,7 +888,7 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 	ddef_t		*key;
 	qboolean	anglehack;
 	qboolean	init;
-    std::string keyname;
+	std::string		keyname;
 
 	init = false;
 
@@ -923,10 +923,10 @@ if (com_token == "light")
 		keyname = com_token;
 
 		// another hack to fix heynames with trailing spaces
-        while (keyname.length() > 0 && keyname.back() == ' ')
-        {
-            keyname.pop_back();
-        }
+		while (keyname.length() > 0 && keyname.back() == ' ')
+		{
+			keyname.pop_back();
+		}
 
 	// parse value	
 		data = COM_Parse (data);
@@ -957,7 +957,7 @@ com_token = std::string("0 ") + com_token + " 0";
 
 		if (!ED_ParseEpair ((void *)&ent->v, key, com_token.c_str()))
 			Host_Error ("ED_ParseEdict: parse error");
-    }
+	}
 
 	if (!init)
 		ent->free = true;
@@ -1072,7 +1072,7 @@ void PR_LoadProgs (void)
 	CRC_Init (&pr_crc);
 
 	static std::vector<byte> progs_block;
-    progs = (dprograms_t *)COM_LoadFile ("progs.dat", progs_block);
+	progs = (dprograms_t *)COM_LoadFile ("progs.dat", progs_block);
 	if (!progs)
 		Sys_Error ("PR_LoadProgs: couldn't load progs.dat");
 	Con_DPrintf ("Programs occupy %iK.\n", com_filesize/1024);
@@ -1090,7 +1090,7 @@ void PR_LoadProgs (void)
 		Sys_Error ("progs.dat system vars have been modified, progdefs.h is out of date");
 
 	pr_functions = (dfunction_t *)((byte *)progs + progs->ofs_functions);
-    PR_LoadStrings((char*)progs + progs->ofs_strings, progs->numstrings);
+	PR_LoadStrings((char*)progs + progs->ofs_strings, progs->numstrings);
 	pr_globaldefs = (ddef_t *)((byte *)progs + progs->ofs_globaldefs);
 	pr_fielddefs = (ddef_t *)((byte *)progs + progs->ofs_fielddefs);
 	pr_statements = (dstatement_t *)((byte *)progs + progs->ofs_statements);

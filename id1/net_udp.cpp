@@ -164,65 +164,65 @@ int UDP_Init (void)
 	if (COM_CheckParm ("-noudp"))
 		return -1;
 
-    // determine my name & address
-    gethostname(buff, MAXHOSTNAMELEN);
-    
-    addrinfo hints { };
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    
-    addrinfo* results = nullptr;
-    auto err = getaddrinfo(buff, "0", &hints, &results);
-    if (err < 0)
-    {
-        return -1;
-    }
-    
-    addrinfo* result;
-    for (result = results; result != nullptr; result = result->ai_next)
-    {
-        if (result->ai_family == AF_INET6)
-        {
-            auto is_local = true;
-            for (auto i = 0; i < 16; i++)
-            {
-                if (((sockaddr_in6*)result->ai_addr)->sin6_addr.s6_addr[i] != in6addr_loopback.s6_addr[i])
-                {
-                    is_local = false;
-                    break;
-                }
-            }
-            if (!is_local)
-            {
-                myAddr = ((sockaddr_in6*)result->ai_addr)->sin6_addr;
-                inet_ntop(AF_INET6, &myAddr, my_tcpip_address, NET_NAMELEN);
-                break;
-            }
-        }
-    }
-    
-    if (result == nullptr)
-    {
-        for (result = results; result != nullptr; result = result->ai_next)
-        {
-            if (result->ai_family == AF_INET)
-            {
-                auto address = ((sockaddr_in*)result->ai_addr)->sin_addr;
-                auto addressnumber = htonl(address.s_addr);
-                myAddr.s6_addr[10] = 255;
-                myAddr.s6_addr[11] = 255;
-                myAddr.s6_addr[12] = addressnumber >> 24;
-                myAddr.s6_addr[13] = (addressnumber >> 16) & 255;
-                myAddr.s6_addr[14] = (addressnumber >> 8) & 255;
-                myAddr.s6_addr[15] = addressnumber & 255;
-                inet_ntop(AF_INET, &address, my_tcpip_address, NET_NAMELEN);
-                break;
-            }
-        }
-    }
-    
-    freeaddrinfo(results);
+	// determine my name & address
+	gethostname(buff, MAXHOSTNAMELEN);
+	
+	addrinfo hints { };
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
+
+	addrinfo* results = nullptr;
+	auto err = getaddrinfo(buff, "0", &hints, &results);
+	if (err < 0)
+		{
+		return -1;
+	}
+
+	addrinfo* result;
+	for (result = results; result != nullptr; result = result->ai_next)
+	{
+		if (result->ai_family == AF_INET6)
+		{
+			auto is_local = true;
+			for (auto i = 0; i < 16; i++)
+			{
+				if (((sockaddr_in6*)result->ai_addr)->sin6_addr.s6_addr[i] != in6addr_loopback.s6_addr[i])
+				{
+					is_local = false;
+					break;
+				}
+			}
+			if (!is_local)
+			{
+				myAddr = ((sockaddr_in6*)result->ai_addr)->sin6_addr;
+				inet_ntop(AF_INET6, &myAddr, my_tcpip_address, NET_NAMELEN);
+				break;
+			}
+		}
+	}
+
+	if (result == nullptr)
+	{
+		for (result = results; result != nullptr; result = result->ai_next)
+		{
+			if (result->ai_family == AF_INET)
+			{
+				auto address = ((sockaddr_in*)result->ai_addr)->sin_addr;
+				auto addressnumber = htonl(address.s_addr);
+				myAddr.s6_addr[10] = 255;
+				myAddr.s6_addr[11] = 255;
+				myAddr.s6_addr[12] = addressnumber >> 24;
+				myAddr.s6_addr[13] = (addressnumber >> 16) & 255;
+				myAddr.s6_addr[14] = (addressnumber >> 8) & 255;
+				myAddr.s6_addr[15] = addressnumber & 255;
+				inet_ntop(AF_INET, &address, my_tcpip_address, NET_NAMELEN);
+				break;
+			}
+		}
+	}
+
+	freeaddrinfo(results);
 
 	// if the quake hostname isn't set, set it to the machine name
 	if (Q_strcmp(hostname.string.c_str(), "UNNAMED") == 0)
@@ -233,11 +233,11 @@ int UDP_Init (void)
 	if ((net_controlsocket = UDP_OpenIPV4Socket (0)) == -1)
 		Sys_Error("UDP_Init: Unable to open control socket\n");
 
-    broadcastaddr.data.resize(sizeof(sockaddr_in));
-    auto address = (sockaddr_in*)broadcastaddr.data.data();
-    address->sin_family = AF_INET;
-    address->sin_addr.s_addr = INADDR_BROADCAST;
-    address->sin_port = htons((unsigned short)net_hostport);
+	broadcastaddr.data.resize(sizeof(sockaddr_in));
+	auto address = (sockaddr_in*)broadcastaddr.data.data();
+	address->sin_family = AF_INET;
+	address->sin_addr.s_addr = INADDR_BROADCAST;
+	address->sin_port = htons((unsigned short)net_hostport);
 
 	Con_Printf("UDP Initialized\n");
 	tcpipAvailable = true;
@@ -279,31 +279,31 @@ void UDP_Listen (qboolean state)
 
 int UDP_OpenSocket (int port)
 {
-    int newsocket;
-    struct sockaddr_in6 address { };
-    qboolean _true = true;
-    int off = 0;
+	int newsocket;
+	struct sockaddr_in6 address { };
+	qboolean _true = true;
+	int off = 0;
 
-    if ((newsocket = socket (PF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-        return -1;
-    
-    if (setsockopt(newsocket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&off, sizeof(off)) == -1)
-        goto ErrorReturn;
-    
-    if (ioctl (newsocket, FIONBIO, (char *)&_true) == -1)
-        goto ErrorReturn;
-    
-    address.sin6_family = AF_INET6;
-    address.sin6_addr = in6addr_any;
-    address.sin6_port = htons((unsigned short)port);
-    if( bind (newsocket, (struct sockaddr*)&address, sizeof(address)) == -1)
-        goto ErrorReturn;
-    
-    return newsocket;
-    
+	if ((newsocket = socket (PF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+		return -1;
+	
+	if (setsockopt(newsocket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&off, sizeof(off)) == -1)
+		goto ErrorReturn;
+	
+	if (ioctl (newsocket, FIONBIO, (char *)&_true) == -1)
+		goto ErrorReturn;
+	
+	address.sin6_family = AF_INET6;
+	address.sin6_addr = in6addr_any;
+	address.sin6_port = htons((unsigned short)port);
+	if( bind (newsocket, (struct sockaddr*)&address, sizeof(address)) == -1)
+		goto ErrorReturn;
+	
+	return newsocket;
+	
 ErrorReturn:
-    close (newsocket);
-    return -1;
+	close (newsocket);
+	return -1;
 }
 
 //=============================================================================
@@ -363,34 +363,34 @@ int UDP_CheckNewConnections (void)
 
 int UDP_Read (int socket, std::vector<byte>& buf, struct qsockaddr *addr)
 {
-    u_long available = 0;
-    auto err = ioctl(socket, FIONREAD, &available);
-    if (err < 0)
-    {
-        return err;
-    }
-    if (available == 0)
-    {
-        return 0;
-    }
-    auto len = (int)available;
-    buf.resize(len);
-    socklen_t addrlen;
-    if (socket == net_controlsocket)
-    {
-        addrlen = (socklen_t)sizeof(sockaddr_in);
-    }
-    else
-    {
-        addrlen = (socklen_t)sizeof(sockaddr_in6);
-    }
-    addr->data.resize(addrlen);
-    auto read = recvfrom(socket, (char*)buf.data(), len, 0, (sockaddr*)addr->data.data(), &addrlen);
-    if (read > 0 && read < len)
-    {
-        buf.resize(read);
-    }
-    return (int)read;
+	u_long available = 0;
+	auto err = ioctl(socket, FIONREAD, &available);
+	if (err < 0)
+	{
+		return err;
+	}
+	if (available == 0)
+	{
+		return 0;
+	}
+	auto len = (int)available;
+	buf.resize(len);
+	socklen_t addrlen;
+	if (socket == net_controlsocket)
+	{
+		addrlen = (socklen_t)sizeof(sockaddr_in);
+	}
+	else
+	{
+		addrlen = (socklen_t)sizeof(sockaddr_in6);
+	}
+	addr->data.resize(addrlen);
+	auto read = recvfrom(socket, (char*)buf.data(), len, 0, (sockaddr*)addr->data.data(), &addrlen);
+	if (read > 0 && read < len)
+	{
+		buf.resize(read);
+	}
+	return (int)read;
 }
 
 //=============================================================================
@@ -444,12 +444,12 @@ int UDP_Write (int socket, byte *buf, int len, struct qsockaddr *addr)
 
 int UDP_GetSocketAddr (int socket, struct qsockaddr *addr)
 {
-    return SOCK_GetSocketAddr (socket, net_controlsocket, myAddr, addr);
+	return SOCK_GetSocketAddr (socket, net_controlsocket, myAddr, addr);
 }
 
 //=============================================================================
 
 int UDP_GetAddrFromName(const char *name, struct qsockaddr *addr)
 {
-    return SOCK_GetAddrFromName(name, myAddr, addr);
+	return SOCK_GetAddrFromName(name, myAddr, addr);
 }

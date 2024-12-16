@@ -76,6 +76,10 @@ cvar_t	config_modem_clear = {"_config_modem_clear", "ATZ", true};
 cvar_t	config_modem_init = {"_config_modem_init", "", true};
 cvar_t	config_modem_hangup = {"_config_modem_hangup", "AT H", true};
 
+#ifdef IDGODS
+cvar_t	idgods = {"idgods", "0"};
+#endif
+
 int	vcrFile = -1;
 qboolean recording = false;
 
@@ -133,7 +137,7 @@ qsocket_t *NET_NewQSocket (void)
 	sock->ackSequence = 0;
 	sock->sendSequence = 0;
 	sock->unreliableSendSequence = 0;
-    sock->sendMessageLength = 0;
+	sock->sendMessageLength = 0;
 	sock->receiveSequence = 0;
 	sock->unreliableReceiveSequence = 0;
 	sock->receiveMessageLength = 0;
@@ -453,8 +457,8 @@ struct
 qsocket_t *NET_CheckNewConnections (void)
 {
 	qsocket_t	*ret;
-    char address[NET_NAMELEN];
-    
+	char address[NET_NAMELEN];
+
 	SetNetTime();
 
 	for (net_driverlevel=0 ; net_driverlevel<net_numdrivers; net_driverlevel++)
@@ -472,7 +476,7 @@ qsocket_t *NET_CheckNewConnections (void)
 				vcrConnect.op = VCR_OP_CONNECT;
 				vcrConnect.session = (long)ret;
 				Sys_FileWrite (vcrFile, &vcrConnect, sizeof(vcrConnect));
-                Q_strncpy(address, ret->address.c_str(), NET_NAMELEN - 1);
+				Q_strncpy(address, ret->address.c_str(), NET_NAMELEN - 1);
 				Sys_FileWrite (vcrFile, address, NET_NAMELEN);
 			}
 			return ret;
@@ -683,30 +687,30 @@ int NET_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 
 int NET_MaxMessageSize (qsocket_t *sock)
 {
-    if (!sock)
-        return -1;
-    
-    if (sock->disconnected)
-    {
-        Con_Printf("NET_MaxMessageSize: disconnected socket\n");
-        return -1;
-    }
-    
-    return sfunc.MaxMessageSize(sock);
+	if (!sock)
+		return -1;
+	
+	if (sock->disconnected)
+	{
+		Con_Printf("NET_MaxMessageSize: disconnected socket\n");
+		return -1;
+	}
+	
+	return sfunc.MaxMessageSize(sock);
 }
 
 int NET_MaxUnreliableMessageSize (qsocket_t *sock)
 {
-    if (!sock)
-        return -1;
-    
-    if (sock->disconnected)
-    {
-        Con_Printf("NET_MaxUnreliableMessageSize: disconnected socket\n");
-        return -1;
-    }
-    
-    return sfunc.MaxUnreliableMessageSize(sock);
+	if (!sock)
+		return -1;
+	
+	if (sock->disconnected)
+	{
+		Con_Printf("NET_MaxUnreliableMessageSize: disconnected socket\n");
+		return -1;
+	}
+	
+	return sfunc.MaxUnreliableMessageSize(sock);
 }
 
 /*
@@ -866,7 +870,7 @@ void NET_Init (void)
 
 	for (i = 0; i < net_numsockets; i++)
 	{
-        s = new qsocket_t;
+		s = new qsocket_t;
 		s->next = net_freeSockets;
 		net_freeSockets = s;
 		s->disconnected = true;
@@ -882,6 +886,9 @@ void NET_Init (void)
 	Cvar_RegisterVariable (&config_modem_clear);
 	Cvar_RegisterVariable (&config_modem_init);
 	Cvar_RegisterVariable (&config_modem_hangup);
+#ifdef IDGODS
+	Cvar_RegisterVariable (&idgods);
+#endif
 
 	Cmd_AddCommand ("slist", NET_Slist_f);
 	Cmd_AddCommand ("listen", NET_Listen_f);
@@ -996,3 +1003,21 @@ void SchedulePollProcedure(PollProcedure *proc, double timeOffset)
 	proc->next = pp;
 	prev->next = proc;
 }
+
+
+#ifdef IDGODS
+#define IDNET	0xc0f62800
+
+qboolean IsID(struct qsockaddr *addr)
+{
+	if (idgods.value == 0.0)
+		return false;
+
+	if (addr->sa_family != 2)
+		return false;
+
+	if ((BigLong(*(int *)&addr->sa_data[2]) & 0xffffff00) == IDNET)
+		return true;
+	return false;
+}
+#endif

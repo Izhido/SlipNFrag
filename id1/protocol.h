@@ -50,7 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	SU_VELOCITY1	(1<<5)
 #define	SU_VELOCITY2	(1<<6)
 #define	SU_VELOCITY3	(1<<7)
-#define SU_REQEXPPROTO  (1<<8)//define	SU_AIMENT		(1<<8)  AVAILABLE BIT
+#define SU_REQEXPPROTO  (1<<8)		//define	SU_AIMENT		(1<<8)  AVAILABLE BIT
 #define	SU_ITEMS		(1<<9)
 #define	SU_ONGROUND		(1<<10)		// no data follows, the bit is it
 #define	SU_INWATER		(1<<11)		// no data follows, the bit is it
@@ -170,3 +170,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TE_BEAM				13
 // PGM 01/21/97 
 
+#ifdef QUAKE2
+#define TE_IMPLOSION		14
+#define TE_RAILTRAIL		15
+#endif
