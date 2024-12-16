@@ -47,9 +47,9 @@ int		r_skyleft, r_skytop, r_skyright, r_skybottom;
 // pointer is greater than another one, it should be drawn in front
 // surfaces[1] is the background, and is used as the active surface stack
 
-std::vector<edge_t*> newedges;
-std::vector<edge_t*> newedges_lastadded;
-std::vector<edge_t*> removeedges;
+std::vector<edge_t*>	newedges;
+std::vector<edge_t*>	newedges_lastadded;
+std::vector<edge_t*>	removeedges;
 
 espan_t	*span_p, *max_span_p;
 
@@ -63,10 +63,10 @@ int	edge_head_u_shift20, edge_tail_u_shift20;
 
 static void (*pdrawfunc)(void);
 
-edge_t*	r_edge_head;
-edge_t*	r_edge_tail;
-edge_t*	r_edge_aftertail;
-edge_t*	r_edge_sentinel;
+edge_t*	edge_head;
+edge_t*	edge_tail;
+edge_t*	edge_aftertail;
+edge_t*	edge_sentinel;
 
 float	fv;
 
@@ -82,6 +82,49 @@ void R_TrailingEdge_Mark (surf_t *surf, edge_t *edge);
 
 
 //=============================================================================
+
+
+/*
+==============
+R_DrawCulledPolys
+==============
+*/
+void R_DrawCulledPolys (void)
+{
+	surf_t			*s;
+	msurface_t		*pface;
+
+	currententity = &cl_entities[0];
+
+	if (r_worldpolysbacktofront)
+	{
+		for (s=surface_p-1 ; s>&surfaces[1] ; s--)
+		{
+			if (!s->spans)
+				continue;
+
+			if (!(s->flags & SURF_DRAWBACKGROUND))
+			{
+				pface = (msurface_t *)s->data;
+				R_RenderPoly (pface, 15);
+			}
+		}
+	}
+	else
+	{
+		for (s = &surfaces[1] ; s<surface_p ; s++)
+		{
+			if (!s->spans)
+				continue;
+
+			if (!(s->flags & SURF_DRAWBACKGROUND))
+			{
+				pface = (msurface_t *)s->data;
+				R_RenderPoly (pface, 15);
+			}
+		}
+	}
+}
 
 
 /*
@@ -228,7 +271,7 @@ nextedge:
 		goto nextedge;		
 		
 pushback:
-		if (pedge == r_edge_aftertail)
+		if (pedge == edge_aftertail)
 			return;
 			
 	// push it back to keep it sorted		
@@ -258,7 +301,7 @@ pushback:
 		plastset = pedge;
 
 		pedge = pnext_edge;
-		if (pedge == r_edge_tail)
+		if (pedge == edge_tail)
 			return;
 	}
 }
@@ -800,7 +843,7 @@ void R_GenerateSpans (void)
 	surfaces[1].last_u = edge_head_u_shift20;
 
 // generate spans
-	for (edge=r_edge_head->next ; edge != r_edge_tail; edge=edge->next)
+	for (edge=edge_head->next ; edge != edge_tail; edge=edge->next)
 	{			
 		if (edge->surfs[0])
 		{
@@ -850,7 +893,7 @@ void R_MarkSurfaces (void)
 	surfaces[1].last_u = edge_head_u_shift20;
 
 // mark desired surfaces as drawable
-	for (edge=r_edge_head->next ; edge != r_edge_tail; edge=edge->next)
+	for (edge=edge_head->next ; edge != edge_tail; edge=edge->next)
 	{			
 		if (edge->surfs[0])
 		{
@@ -893,7 +936,7 @@ void R_GenerateSpansBackward (void)
 	surfaces[1].last_u = edge_head_u_shift20;
 
 // generate spans
-	for (edge=r_edge_head->next ; edge != r_edge_tail; edge=edge->next)
+	for (edge=edge_head->next ; edge != edge_tail; edge=edge->next)
 	{			
 		if (edge->surfs[0])
 			R_TrailingEdge (&surfaces[edge->surfs[0]], edge);
@@ -926,7 +969,7 @@ void R_ScanEdges (void)
 {
 	int		iv, bottom;
 	espan_t	*basespan_p;
-    surf_t	*s;
+	surf_t	*s;
 
 	if (increasebasespans > 0)
 	{
@@ -953,35 +996,35 @@ void R_ScanEdges (void)
 
 // clear active edges to just the background edges around the whole screen
 // FIXME: most of this only needs to be set up once
-	r_edge_head = &r_edges[0];
-	r_edge_tail = &r_edges[1];
-	r_edge_aftertail = &r_edges[2];
-	r_edge_sentinel = &r_edges[3];
+	edge_head = &r_edges[0];
+	edge_tail = &r_edges[1];
+	edge_aftertail = &r_edges[2];
+	edge_sentinel = &r_edges[3];
 
-	r_edge_head->u = ((fixed44p20_t)r_refdef.vrect.x) << 20;
-	edge_head_u_shift20 = (int)(r_edge_head->u >> 20);
-	r_edge_head->u_step = 0;
-	r_edge_head->prev = NULL;
-	r_edge_head->next = r_edge_tail;
-	r_edge_head->surfs[0] = 0;
-	r_edge_head->surfs[1] = 1;
+	edge_head->u = ((fixed44p20_t)r_refdef.vrect.x) << 20;
+	edge_head_u_shift20 = (int)(edge_head->u >> 20);
+	edge_head->u_step = 0;
+	edge_head->prev = NULL;
+	edge_head->next = edge_tail;
+	edge_head->surfs[0] = 0;
+	edge_head->surfs[1] = 1;
 	
-	r_edge_tail->u = (((fixed44p20_t)r_refdef.vrectright) << 20) + 0xFFFFF;
-	edge_tail_u_shift20 = (int)(r_edge_tail->u >> 20);
-	r_edge_tail->u_step = 0;
-	r_edge_tail->prev = r_edge_head;
-	r_edge_tail->next = r_edge_aftertail;
-	r_edge_tail->surfs[0] = 1;
-	r_edge_tail->surfs[1] = 0;
+	edge_tail->u = (((fixed44p20_t)r_refdef.vrectright) << 20) + 0xFFFFF;
+	edge_tail_u_shift20 = (int)(edge_tail->u >> 20);
+	edge_tail->u_step = 0;
+	edge_tail->prev = edge_head;
+	edge_tail->next = edge_aftertail;
+	edge_tail->surfs[0] = 1;
+	edge_tail->surfs[1] = 0;
 	
-	r_edge_aftertail->u = -1;		// force a move
-	r_edge_aftertail->u_step = 0;
-	r_edge_aftertail->next = r_edge_sentinel;
-	r_edge_aftertail->prev = r_edge_tail;
+	edge_aftertail->u = -1;		// force a move
+	edge_aftertail->u_step = 0;
+	edge_aftertail->next = edge_sentinel;
+	edge_aftertail->prev = edge_tail;
 
 // FIXME: do we need this now that we clamp x in r_draw.c?
-	r_edge_sentinel->u = ((fixed44p20_t)r_refdef.vrect.width + 1) << 24;		// make sure nothing sorts past this
-	r_edge_sentinel->prev = r_edge_aftertail;
+	edge_sentinel->u = ((fixed44p20_t)r_refdef.vrect.width + 1) << 24;		// make sure nothing sorts past this
+	edge_sentinel->prev = edge_aftertail;
 
 	r_skyleft = INT_MAX;
 	r_skytop = INT_MAX;
@@ -1003,7 +1046,7 @@ void R_ScanEdges (void)
 
 		if (newedges[iv])
 		{
-			R_InsertNewEdges (newedges[iv], r_edge_head->next);
+			R_InsertNewEdges (newedges[iv], edge_head->next);
 		}
 
 		(*pdrawfunc) ();
@@ -1015,8 +1058,15 @@ void R_ScanEdges (void)
 			VID_UnlockBuffer ();
 			S_ExtraUpdate ();	// don't let sound get messed up if going slow
 			VID_LockBuffer ();
-
+		
+			if (r_drawculledpolys)
+			{
+				R_DrawCulledPolys ();
+			}
+			else
+			{
 				D_DrawSurfaces ();
+			}
 
 		// clear the surface span pointers
 			for (s = &surfaces[1] ; s<surface_p ; s++)
@@ -1029,8 +1079,8 @@ void R_ScanEdges (void)
 		if (removeedges[iv])
 			R_RemoveEdges (removeedges[iv]);
 
-		if (r_edge_head->next != r_edge_tail)
-			R_StepActiveU (r_edge_head->next);
+		if (edge_head->next != edge_tail)
+			R_StepActiveU (edge_head->next);
 	}
 
 // do the last scan (no need to step or sort or remove on the last scan)
@@ -1042,19 +1092,17 @@ void R_ScanEdges (void)
 	surfaces[1].spanstate = 1;
 
 	if (newedges[iv])
-		R_InsertNewEdges (newedges[iv], r_edge_head->next);
+		R_InsertNewEdges (newedges[iv], edge_head->next);
 
 	(*pdrawfunc) ();
 
 // draw whatever's left in the span list
-	if (d_uselists)
-	{
+	if (r_drawculledpolys)
+		R_DrawCulledPolys ();
+	else if (d_uselists)
 		D_DrawSurfacesToLists();
-	}
 	else
-	{
 		D_DrawSurfaces ();
-	}
 }
 
 

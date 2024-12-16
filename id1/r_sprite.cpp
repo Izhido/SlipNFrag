@@ -88,7 +88,7 @@ int R_ClipSpriteFace (int nump, clipplane_t *pclipplane)
 	
 // handle wraparound case
 	dists[nump] = dists[0];
-	memcpy (instep, in, sizeof (vec5_t));
+	Q_memcpy (instep, in, sizeof (vec5_t));
 
 
 // clip the winding
@@ -99,7 +99,7 @@ int R_ClipSpriteFace (int nump, clipplane_t *pclipplane)
 	{
 		if (dists[i] >= 0)
 		{
-			memcpy (outstep, instep, sizeof (vec5_t));
+			Q_memcpy (outstep, instep, sizeof (vec5_t));
 			outstep += sizeof (vec5_t) / sizeof (float);
 			outcount++;
 		}
@@ -183,56 +183,55 @@ void R_SetupAndDrawSprite ()
 	if (d_uselists)
 	{
 		D_AddSpriteToLists (pverts, &r_spritedesc);
+		return;
 	}
-	else
-	{
-// clip to the frustum in worldspace
-		nump = 4;
-		clip_current = 0;
 
-		for (i=0 ; i<4 ; i++)
-		{
-			nump = R_ClipSpriteFace (nump, &view_clipplanes[i]);
-			if (nump < 3)
-				return;
-			if (nump >= MAXWORKINGVERTS)
-				Sys_Error("R_SetupAndDrawSprite: too many points");
-		}
+// clip to the frustum in worldspace
+	nump = 4;
+	clip_current = 0;
+
+	for (i=0 ; i<4 ; i++)
+	{
+		nump = R_ClipSpriteFace (nump, &view_clipplanes[i]);
+		if (nump < 3)
+			return;
+		if (nump >= MAXWORKINGVERTS)
+			Sys_Error("R_SetupAndDrawSprite: too many points");
+	}
 
 // transform vertices into viewspace and project
-		pv = &clip_verts[clip_current][0][0];
-		r_spritedesc.nearzi = -999999;
+	pv = &clip_verts[clip_current][0][0];
+	r_spritedesc.nearzi = -999999;
 
-		for (i=0 ; i<nump ; i++)
-		{
-			VectorSubtract (pv, r_origin, local);
-			TransformVector (local, transformed);
+	for (i=0 ; i<nump ; i++)
+	{
+		VectorSubtract (pv, r_origin, local);
+		TransformVector (local, transformed);
 
-			if (transformed[2] < NEAR_CLIP)
-				transformed[2] = NEAR_CLIP;
+		if (transformed[2] < NEAR_CLIP)
+			transformed[2] = NEAR_CLIP;
 
-			pout = &outverts[i];
-			pout->zi = 1.0 / transformed[2];
-			if (pout->zi > r_spritedesc.nearzi)
-				r_spritedesc.nearzi = pout->zi;
+		pout = &outverts[i];
+		pout->zi = 1.0 / transformed[2];
+		if (pout->zi > r_spritedesc.nearzi)
+			r_spritedesc.nearzi = pout->zi;
 
-			pout->s = pv[3];
-			pout->t = pv[4];
+		pout->s = pv[3];
+		pout->t = pv[4];
+		
+		scale = xscale * pout->zi;
+		pout->u = (xcenter + scale * transformed[0]);
 
-			scale = xscale * pout->zi;
-			pout->u = (xcenter + scale * transformed[0]);
+		scale = yscale * pout->zi;
+		pout->v = (ycenter - scale * transformed[1]);
 
-			scale = yscale * pout->zi;
-			pout->v = (ycenter - scale * transformed[1]);
-
-			pv += sizeof (vec5_t) / sizeof (*pv);
-		}
+		pv += sizeof (vec5_t) / sizeof (*pv);
+	}
 
 // draw it
-		r_spritedesc.nump = nump;
-		r_spritedesc.pverts = outverts;
-		D_DrawSprite ();
-	}
+	r_spritedesc.nump = nump;
+	r_spritedesc.pverts = outverts;
+	D_DrawSprite ();
 }
 
 

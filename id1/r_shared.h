@@ -29,8 +29,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	MAXVERTS	16					// max points in a surface polygon
 #define MAXWORKINGVERTS	(MAXVERTS+4)	// max points in an intermediate
 										//  polygon (while processing)
+// !!! if this is changed, it must be changed in d_ifacea.h too !!!
+#define	MAXHEIGHT		1024
+#define	MAXWIDTH		1280
+#define MAXDIMENSION	((MAXHEIGHT > MAXWIDTH) ? MAXHEIGHT : MAXWIDTH)
+
+#define SIN_BUFFER_SIZE	(MAXDIMENSION+CYCLE)
+
+#define INFINITE_DISTANCE	0x10000		// distance that's always guaranteed to
+										//  be farther away than anything in
+										//  the scene
 
 //===================================================================
+
+extern void	R_DrawLine (polyvert_t *polyvert0, polyvert_t *polyvert1);
 
 extern int		cachewidth;
 extern int		r_turb_cacheheight;
@@ -48,8 +60,8 @@ extern int		r_drawnpolycount;
 
 extern cvar_t	r_clearcolor;
 
-extern std::vector<int> sintable;
-extern std::vector<int> intsintable;
+extern std::vector<int>	sintable;
+extern std::vector<int>	intsintable;
 
 extern	vec3_t	vup, base_vup;
 extern	vec3_t	vpn, base_vpn;
@@ -86,10 +98,11 @@ typedef struct surf_s
 	void		*data;				// associated data like msurface_t
 	entity_t	*entity;
 	float		nearzi;				// nearest 1/z on surface, for mipmapping
-	int			insubmodel;
+	int	insubmodel;
+	float		d_ziorigin, d_zistepu, d_zistepv;
 	uint16_t	isfence;			// related texture contains "holes" (texels with value 255)
 	uint16_t 	draw;				// surface can be drawn - used instead of spans if d_uselists is enabled
-	float		d_ziorigin, d_zistepu, d_zistepv;	// this should total 80 bytes in 64-bit platforms
+	// this should total 80 bytes in 64-bit platforms
 } surf_t;
 
 extern	surf_t	*surfaces, *surface_p, *surf_max;
@@ -141,10 +154,10 @@ extern int	ubasestep, errorterm, erroradjustup, erroradjustdown;
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct edge_s
 {
-	fixed44p20_t	u;
-	fixed44p20_t	u_step;
+	fixed44p20_t		u;
+	fixed44p20_t		u_step;
 	struct edge_s	*prev, *next;
-	int				surfs[2];
+	int	surfs[2];
 	struct edge_s	*nextremove;
 	float			nearzi;
 	medge_t			*owner;

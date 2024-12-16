@@ -33,7 +33,7 @@ int		ramp3[8] = {0x6d, 0x6b, 6, 5, 4, 3};
 
 particle_t	*active_particles, *free_particles;
 
-std::vector<particle_t> particles;
+std::vector<particle_t>	particles;
 int			r_numparticles;
 
 vec3_t			r_pright, r_pup, r_ppn;
@@ -58,6 +58,47 @@ void R_InitParticles (void)
 	}
 }
 
+#ifdef QUAKE2
+void R_DarkFieldParticles (entity_t *ent)
+{
+	int			i, j, k;
+	particle_t	*p;
+	float		vel;
+	vec3_t		dir;
+	vec3_t		org;
+
+	org[0] = ent->origin[0];
+	org[1] = ent->origin[1];
+	org[2] = ent->origin[2];
+	for (i=-16 ; i<16 ; i+=8)
+		for (j=-16 ; j<16 ; j+=8)
+			for (k=0 ; k<32 ; k+=8)
+			{
+				if (!free_particles)
+					return;
+				p = free_particles;
+				free_particles = p->next;
+				p->next = active_particles;
+				active_particles = p;
+		
+				p->die = cl.time + 0.2 + (rand()&7) * 0.02;
+				p->color = 150 + rand()%6;
+				p->type = pt_slowgrav;
+				
+				dir[0] = j*8;
+				dir[1] = i*8;
+				dir[2] = k*8;
+	
+				p->org[0] = org[0] + i + (rand()&3);
+				p->org[1] = org[1] + j + (rand()&3);
+				p->org[2] = org[2] + k + (rand()&3);
+	
+				VectorNormalize (dir);						
+				vel = 50 + (rand()&63);
+				VectorScale (dir, vel, p->vel);
+			}
+}
+#endif
 
 
 /*
@@ -76,14 +117,16 @@ float	timescale = 0.01;
 
 void R_EntityParticles (entity_t *ent)
 {
+	int			count;
 	int			i;
 	particle_t	*p;
 	float		angle;
-	float		sp, sy, cp, cy;
+	float		sr, sp, sy, cr, cp, cy;
 	vec3_t		forward;
 	float		dist;
 	
 	dist = 64;
+	count = 50;
 
 if (!avelocities[0][0])
 {
@@ -100,17 +143,20 @@ avelocities[0][i] = (Sys_Random()&255) * 0.01;
 		angle = cl.time * avelocities[i][1];
 		sp = sin(angle);
 		cp = cos(angle);
+		angle = cl.time * avelocities[i][2];
+		sr = sin(angle);
+		cr = cos(angle);
 	
 		forward[0] = cp*cy;
 		forward[1] = cp*sy;
 		forward[2] = -sp;
 
-        if (!free_particles)
-        {
-            if (r_numparticles == 0)
-                r_increaseparticles = true;
-            return;
-        }
+		if (!free_particles)
+		{
+			if (r_numparticles == 0)
+				r_increaseparticles = true;
+			return;
+		}
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
@@ -135,13 +181,14 @@ R_ClearParticles
 void R_ClearParticles (void)
 {
 	int		i;
-    if (particles.empty())
-    {
-        if (r_numparticles == 0)
-            particles.resize(MAX_PARTICLES);
-        else
-            particles.resize(r_numparticles);
-    }
+	
+	if (particles.empty())
+	{
+		if (r_numparticles == 0)
+			particles.resize(MAX_PARTICLES);
+		else
+			particles.resize(r_numparticles);
+	}
 	free_particles = &particles[0];
 	active_particles = NULL;
 
@@ -152,69 +199,69 @@ void R_ClearParticles (void)
 
 void R_IncreaseParticles()
 {
-    auto activeindex = -1;
-    if (active_particles != nullptr)
-    {
-        activeindex = active_particles - particles.data();
-    }
-    auto freeindex = -1;
-    if (free_particles != nullptr)
-    {
-        freeindex = free_particles - particles.data();
-    }
-    std::vector<int> nextindices(particles.size());
-    for (size_t i = 0; i < particles.size(); i++)
-    {
-        if (particles[i].next == nullptr)
-        {
-            nextindices[i] = -1;
-            continue;
-        }
-        nextindices[i] = particles[i].next - particles.data();
-    }
-    particles.resize(particles.size() + MAX_PARTICLES);
-    auto lastparticle = -1;
-    for (size_t i = 0; i < nextindices.size(); i++)
-    {
-        if (nextindices[i] < 0)
-        {
-            lastparticle = i;
-            continue;
-        }
-        particles[i].next = &particles[nextindices[i]];
-    }
-    if (lastparticle < 0)
-    {
-        Sys_Error("lastparticle < 0");
-    }
-    particles[lastparticle].next = &particles[nextindices.size()];
-    for (size_t i = nextindices.size(); i < particles.size() - 1; i++)
-    {
-        particles[i].next = &particles[i + 1];
-    }
-    particles[particles.size() - 1].next = nullptr;
-    if (activeindex >= 0)
-    {
-        active_particles = &particles[activeindex];
-    }
-    if (freeindex >= 0)
-    {
-        free_particles = &particles[freeindex];
-    }
+	auto activeindex = -1;
+	if (active_particles != nullptr)
+	{
+		activeindex = active_particles - particles.data();
+	}
+	auto freeindex = -1;
+	if (free_particles != nullptr)
+	{
+		freeindex = free_particles - particles.data();
+	}
+	std::vector<int> nextindices(particles.size());
+	for (size_t i = 0; i < particles.size(); i++)
+	{
+		if (particles[i].next == nullptr)
+		{
+			nextindices[i] = -1;
+			continue;
+		}
+		nextindices[i] = particles[i].next - particles.data();
+	}
+	particles.resize(particles.size() + MAX_PARTICLES);
+	auto lastparticle = -1;
+	for (size_t i = 0; i < nextindices.size(); i++)
+	{
+		if (nextindices[i] < 0)
+		{
+			lastparticle = i;
+			continue;
+		}
+		particles[i].next = &particles[nextindices[i]];
+	}
+	if (lastparticle < 0)
+	{
+		Sys_Error("lastparticle < 0");
+	}
+	particles[lastparticle].next = &particles[nextindices.size()];
+	for (size_t i = nextindices.size(); i < particles.size() - 1; i++)
+	{
+		particles[i].next = &particles[i + 1];
+	}
+	particles[particles.size() - 1].next = nullptr;
+	if (activeindex >= 0)
+	{
+		active_particles = &particles[activeindex];
+	}
+	if (freeindex >= 0)
+	{
+		free_particles = &particles[freeindex];
+	}
 }
 
 void R_ReadPointFile_f (void)
 {
-	int	    f;
+	int	f;
 	vec3_t	org;
 	int		r;
 	int		c;
 	particle_t	*p;
-    std::string name;
+	std::string	name;
 	
-    name = std::string("maps/") + (pr_strings + sv.name) + ".pts";
+	name = std::string("maps/") + (pr_strings + sv.name) + ".pts";
 
-    COM_FOpenFile (name.c_str(), &f);
+	COM_FOpenFile (name.c_str(), &f);
 	if (f < 0)
 	{
 		Con_Printf ("couldn't open %s\n", name.c_str());
@@ -225,17 +272,17 @@ void R_ReadPointFile_f (void)
 	c = 0;
 	for ( ;; )
 	{
-        std::string to_read;
-        char onechar;
-        auto len = Sys_FileRead (cls.demofile, &onechar, 1);
-        while (len == 1 && onechar != '\n')
-        {
-            to_read.push_back(onechar);
-            len = Sys_FileRead (cls.demofile, &onechar, 1);
-        }
-        to_read.push_back('\n');
-        
-        r = sscanf (to_read.c_str(), "%f %f %f\n", &org[0], &org[1], &org[2]);
+		std::string to_read;
+		char onechar;
+		auto len = Sys_FileRead (cls.demofile, &onechar, 1);
+		while (len == 1 && onechar != '\n')
+		{
+			to_read.push_back(onechar);
+			len = Sys_FileRead (cls.demofile, &onechar, 1);
+		}
+		to_read.push_back('\n');
+		
+		r = sscanf (to_read.c_str(), "%f %f %f\n", &org[0], &org[1], &org[2]);
 		if (r != 3)
 			break;
 		c++;
@@ -287,7 +334,7 @@ else
 	
 	R_RunParticleEffect (org, dir, color, count);
 }
-
+	
 /*
 ===============
 R_ParseExpandedParticleEffect
@@ -329,12 +376,12 @@ void R_ParticleExplosion (const vec3_t org)
 	
 	for (i=0 ; i<1024 ; i++)
 	{
-        if (!free_particles)
-        {
-            if (r_numparticles == 0)
-                r_increaseparticles = true;
-            return;
-        }
+		if (!free_particles)
+		{
+			if (r_numparticles == 0)
+				r_increaseparticles = true;
+			return;
+		}
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
@@ -378,12 +425,12 @@ void R_ParticleExplosion2 (const vec3_t org, int colorStart, int colorLength)
 
 	for (i=0; i<512; i++)
 	{
-        if (!free_particles)
-        {
-            if (r_numparticles == 0)
-                r_increaseparticles = true;
-            return;
-        }
+		if (!free_particles)
+		{
+			if (r_numparticles == 0)
+				r_increaseparticles = true;
+			return;
+		}
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
@@ -415,12 +462,12 @@ void R_BlobExplosion (const vec3_t org)
 	
 	for (i=0 ; i<1024 ; i++)
 	{
-        if (!free_particles)
-        {
-            if (r_numparticles == 0)
-                r_increaseparticles = true;
-            return;
-        }
+		if (!free_particles)
+		{
+			if (r_numparticles == 0)
+				r_increaseparticles = true;
+			return;
+		}
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
@@ -464,12 +511,12 @@ void R_RunParticleEffect (const vec3_t org, const vec3_t dir, int color, int cou
 	
 	for (i=0 ; i<count ; i++)
 	{
-        if (!free_particles)
-        {
-            if (r_numparticles == 0)
-                r_increaseparticles = true;
-            return;
-        }
+		if (!free_particles)
+		{
+			if (r_numparticles == 0)
+				r_increaseparticles = true;
+			return;
+		}
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
@@ -531,12 +578,12 @@ void R_LavaSplash (const vec3_t org)
 		for (j=-16 ; j<16 ; j++)
 			for (k=0 ; k<1 ; k++)
 			{
-                if (!free_particles)
-                {
-                    if (r_numparticles == 0)
-                        r_increaseparticles = true;
-                    return;
-                }
+				if (!free_particles)
+				{
+					if (r_numparticles == 0)
+						r_increaseparticles = true;
+					return;
+				}
 				p = free_particles;
 				free_particles = p->next;
 				p->next = active_particles;
@@ -577,12 +624,12 @@ void R_TeleportSplash (const vec3_t org)
 		for (j=-16 ; j<16 ; j+=4)
 			for (k=-24 ; k<32 ; k+=4)
 			{
-                if (!free_particles)
-                {
-                    if (r_numparticles == 0)
-                        r_increaseparticles = true;
-                    return;
-                }
+				if (!free_particles)
+				{
+					if (r_numparticles == 0)
+						r_increaseparticles = true;
+					return;
+				}
 				p = free_particles;
 				free_particles = p->next;
 				p->next = active_particles;
@@ -629,12 +676,12 @@ void R_RocketTrail (vec3_t start, const vec3_t end, int type)
 	{
 		len -= dec;
 
-        if (!free_particles)
-        {
-            if (r_numparticles == 0)
-                r_increaseparticles = true;
-            return;
-        }
+		if (!free_particles)
+		{
+			if (r_numparticles == 0)
+				r_increaseparticles = true;
+			return;
+		}
 		p = free_particles;
 		free_particles = p->next;
 		p->next = active_particles;
@@ -731,12 +778,12 @@ void R_MoveParticles (void)
 	float			time1;
 	float			dvel;
 	float			frametime;
-    
-    if (r_increaseparticles)
-    {
-        R_IncreaseParticles();
-        r_increaseparticles = false;
-    }
+	
+	if (r_increaseparticles)
+	{
+		R_IncreaseParticles();
+		r_increaseparticles = false;
+	}
 
 	frametime = cl.time - cl.oldtime;
 	time3 = frametime * 15;
@@ -825,6 +872,10 @@ void R_MoveParticles (void)
 			break;
 
 		case pt_grav:
+#ifdef QUAKE2
+			p->vel[2] -= grav * 20;
+			break;
+#endif
 		case pt_slowgrav:
 			p->vel[2] -= grav;
 			break;
@@ -840,21 +891,21 @@ R_DrawParticles
 void R_DrawParticles (void)
 {
 	particle_t		*p;
-    
+
 	D_StartParticles ();
 
-    if (d_uselists)
-    {
-        for (p=active_particles ; p ; p=p->next)
-        {
-            D_AddParticleToLists(p);
-        }
-    }
-    else
-    {
-        VectorScale (vright, xscaleshrink, r_pright);
-        VectorScale (vup, yscaleshrink, r_pup);
-        VectorCopy (vpn, r_ppn);
+	if (d_uselists)
+	{
+		for (p=active_particles ; p ; p=p->next)
+		{
+			D_AddParticleToLists(p);
+		}
+	}
+	else
+	{
+		VectorScale (vright, xscaleshrink, r_pright);
+		VectorScale (vup, yscaleshrink, r_pup);
+		VectorCopy (vpn, r_ppn);
 
 		for (p=active_particles ; p ; p=p->next)
 		{

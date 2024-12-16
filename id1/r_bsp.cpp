@@ -210,12 +210,12 @@ void R_RecursiveClipBPoly (bedge_t *pedges, mnode_t *pnode, msurface_t *psurf)
 		if (side != lastside)
 		{
 		// clipped
-            if (numbverts >= bverts.size())
-            {
-                increasebverts = true;
-                Con_Printf ("Out of verts for bmodel\n");
-                return;
-            }
+			if (numbverts >= bverts.size())
+			{
+				increasebverts = true;
+				Con_Printf ("Out of verts for bmodel\n");
+				return;
+			}
 
 		// generate the clipped vertex
 			frac = lastdist / (lastdist - dist);
@@ -234,8 +234,8 @@ void R_RecursiveClipBPoly (bedge_t *pedges, mnode_t *pnode, msurface_t *psurf)
 		// and exiting points
 		// FIXME: share the clip edge by having a winding direction flag?
 			if (numbedges >= (bedges.size() - 1))
-            {
-                increasebedges = true;
+			{
+				increasebedges = true;
 				Con_Printf ("Out of edges for bmodel\n");
 				return;
 			}
@@ -279,8 +279,8 @@ void R_RecursiveClipBPoly (bedge_t *pedges, mnode_t *pnode, msurface_t *psurf)
 	if (makeclippededge)
 	{
 		if (numbedges >= (bedges.size() - 2))
-        {
-            increasebedges = true;
+		{
+			increasebedges = true;
 			Con_Printf ("Out of edges for bmodel\n");
 			return;
 		}
@@ -369,18 +369,18 @@ void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel)
 		// clockwise winding
 		// FIXME: if edges and vertices get caches, these assignments must move
 		// outside the loop, and overflow checking must be done here
-            if (increasebverts)
-            {
-                bverts.resize(bverts.size() + MAX_BMODEL_VERTS);
-                increasebverts = false;
-            }
-            pbverts = bverts.data();
-            if (increasebedges)
-            {
-                bedges.resize(bedges.size() + MAX_BMODEL_EDGES);
-                increasebedges = false;
-            }
-            pbedges = bedges.data();
+			if (increasebverts)
+			{
+				bverts.resize(bverts.size() + MAX_BMODEL_VERTS);
+				increasebverts = false;
+			}
+			pbverts = bverts.data();
+			if (increasebedges)
+			{
+				bedges.resize(bedges.size() + MAX_BMODEL_EDGES);
+				increasebedges = false;
+			}
+			pbedges = bedges.data();
 			numbverts = numbedges = 0;
 
 			if (psurf->numedges > 0)
@@ -589,7 +589,27 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 					if ((surf->flags & SURF_PLANEBACK) &&
 						(surf->visframe == r_framecount))
 					{
+						if (r_drawpolys)
+						{
+							if (r_worldpolysbacktofront)
+							{
+								if (numbtofpolys < MAX_BTOFPOLYS)
+								{
+									pbtofpolys[numbtofpolys].clipflags =
+											clipflags;
+									pbtofpolys[numbtofpolys].psurf = surf;
+									numbtofpolys++;
+								}
+							}
+							else
+							{
+								R_RenderPoly (surf, clipflags);
+							}
+						}
+						else
+						{
 							R_RenderFace (surf, clipflags);
+						}
 					}
 
 					surf++;
@@ -602,7 +622,27 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 					if (!(surf->flags & SURF_PLANEBACK) &&
 						(surf->visframe == r_framecount))
 					{
+						if (r_drawpolys)
+						{
+							if (r_worldpolysbacktofront)
+							{
+								if (numbtofpolys < MAX_BTOFPOLYS)
+								{
+									pbtofpolys[numbtofpolys].clipflags =
+											clipflags;
+									pbtofpolys[numbtofpolys].psurf = surf;
+									numbtofpolys++;
+								}
+							}
+							else
+							{
+								R_RenderPoly (surf, clipflags);
+							}
+						}
+						else
+						{
 							R_RenderFace (surf, clipflags);
+						}
 					}
 
 					surf++;
@@ -618,6 +658,8 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 	}
 }
 
+
+
 /*
 ================
 R_RenderWorld
@@ -625,7 +667,11 @@ R_RenderWorld
 */
 void R_RenderWorld (void)
 {
+	// int			i;
 	model_t		*clmodel;
+	// btofpoly_t	btofpolys[MAX_BTOFPOLYS];
+
+	// pbtofpolys = btofpolys;
 
 	currententity = &cl_entities[0];
 	VectorCopy (r_origin, modelorg);
@@ -633,6 +679,16 @@ void R_RenderWorld (void)
 	r_pcurrentvertbase = clmodel->vertexes;
 
 	R_RecursiveWorldNode (clmodel->nodes, 15);
+
+// if the driver wants the polygons back to front, play the visible ones back
+// in that order
+	/*if (r_worldpolysbacktofront)
+	{
+		for (i=numbtofpolys-1 ; i>=0 ; i--)
+		{
+			R_RenderPoly (btofpolys[i].psurf, btofpolys[i].clipflags);
+		}
+	}*/
 }
 
 

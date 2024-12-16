@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // refresh.h -- public interface to refresh functions
 
+#define	MAXCLIPPLANES	11
+
 #define	TOP_RANGE		16			// soldier uniform colors
 #define	BOTTOM_RANGE	96
 
@@ -29,14 +31,16 @@ typedef struct efrag_s
 {
 	struct mleaf_s		*leaf;
 	struct efrag_s		*leafnext;
-	struct entity_t		*entity;
+	struct entity_s		*entity;
 	struct efrag_s		*entnext;
 } efrag_t;
 
 
-struct entity_t
+typedef struct entity_s
 {
 	qboolean				forcelink;		// model changed
+
+	int						update_type;
 
 	entity_state_t			baseline;		// to fill in defaults in updates
 
@@ -55,12 +59,15 @@ struct entity_t
 	int						visframe;		// last frame this entity was
 											//  found in an active leaf
 											
+	int						dlightframe;	// dynamic lighting
+	int						dlightbits;
+	
 // FIXME: could turn these into a union
 	int						trivial_accept;
 	struct mnode_s			*topnode;		// for bmodels, first world node
 											//  that splits bmodel, or NULL if
 											//  not split
-};
+} entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct
@@ -95,6 +102,12 @@ typedef struct
 } refdef_t;
 
 
+//
+// refresh
+//
+extern	int		reinit_surfcache;
+
+
 extern	refdef_t	r_refdef;
 extern vec3_t	r_origin, vpn, vright, vup;
 
@@ -109,6 +122,7 @@ extern int warp_stack_index;
 
 void R_Init (void);
 void R_InitTextures (void);
+void R_InitEfrags (void);
 void R_RenderView (void);		// must set r_refdef first
 void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect);
 								// called whenever r_refdef or vid change
@@ -127,6 +141,9 @@ void R_ParseExpandedParticleEffect (void);
 void R_RunParticleEffect (const vec3_t org, const vec3_t dir, int color, int count);
 void R_RocketTrail (vec3_t start, const vec3_t end, int type);
 
+#ifdef QUAKE2
+void R_DarkFieldParticles (entity_t *ent);
+#endif
 void R_EntityParticles (entity_t *ent);
 void R_BlobExplosion (const vec3_t org);
 void R_ParticleExplosion (const vec3_t org);
@@ -142,10 +159,12 @@ void R_ResizeEdges();
 //
 // surface cache related
 //
+extern	int		reinit_surfcache;	// if 1, surface cache is currently empty and
 extern qboolean	r_cache_thrash;	// set if thrashing the surface cache
 
 int	D_SurfaceCacheForRes (int width, int height);
 void D_FlushCaches (void);
+void D_DeleteSurfaceCache (void);
 void D_InitCaches (void *buffer, int size);
 void R_SetVrect (vrect_t *pvrect, vrect_t *pvrectin, int lineadj);
 

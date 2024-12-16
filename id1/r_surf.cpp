@@ -67,7 +67,7 @@ static void	(*surfmiptablecolored[4])(void) = {
 
 
 
-std::vector<unsigned>	r_blocklights_base(18*18);
+std::vector<unsigned>		r_blocklights_base(18*18);
 unsigned*				blocklights;
 int 					r_blocklights_smax;
 int 					r_blocklights_tmax;
@@ -120,7 +120,7 @@ void R_AddDynamicLights (void)
 
 		local[0] -= surf->texturemins[0];
 		local[1] -= surf->texturemins[1];
-
+		
 		auto target = blocklights;
 		for (t = 0 ; t<tmax ; t += 16)
 		{
@@ -137,7 +137,24 @@ void R_AddDynamicLights (void)
 				else
 					dist = td + (sd>>1);
 				if (dist < minlight)
+#ifdef QUAKE2
+				{
+					unsigned temp;
+					temp = (rad - dist)*256;
+					i = t*smax + s;
+					if (!cl_dlights[lnum].dark)
+						blocklights[i] += temp;
+					else
+					{
+						if (blocklights[i] > temp)
+							blocklights[i] -= temp;
+						else
+							blocklights[i] = 0;
+					}
+				}
+#else
 					*target += (rad - dist)*256;
+#endif
 				target++;
 			}
 		}
@@ -1330,14 +1347,14 @@ void R_GenTile (msurface_t *psurf, void *pdest)
 	}
 	else if (psurf->flags & SURF_DRAWSKY)
 	{
-        if (r_pixbytes == 1)
-        {
-            R_GenSkyTile (pdest);
-        }
-        else
-        {
-            R_GenSkyTile16 (pdest);
-        }
+		if (r_pixbytes == 1)
+		{
+			R_GenSkyTile (pdest);
+		}
+		else
+		{
+			R_GenSkyTile16 (pdest);
+		}
 	}
 	else
 	{

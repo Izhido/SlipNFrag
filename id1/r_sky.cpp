@@ -106,8 +106,8 @@ void R_InitSky (texture_t *mt)
 	int			i, j;
 	byte		*src;
 
-    r_skyinitialized = true;
-    
+	r_skyinitialized = true;
+
 	if (mt->width < 2 || mt->height < 1)
 	{
 		memset(newsky, 0, 128*256);
@@ -122,7 +122,7 @@ void R_InitSky (texture_t *mt)
 	}
 
 	if (mt->width != 256 || mt->height != 128)
-    {
+	{
 		unsigned width = mt->width;
 		unsigned halfwidth = width / 2;
 		unsigned height = mt->height;
@@ -165,11 +165,11 @@ void R_InitSky (texture_t *mt)
 		r_skysource = newsky;
 
 		Con_Printf ("R_InitSky: %ix%i instead of 256x128\n", mt->width, mt->height);
-        
-		return;
-    }
 
-    src = (byte *)mt + mt->offsets[0];
+		return;
+	}
+
+	src = (byte *)mt + mt->offsets[0];
 
 	for (i=0 ; i<128 ; i++)
 	{
@@ -231,8 +231,8 @@ void R_InitSkyBox (void)
 	int		i;
 	model_t* loadmodel = cl.worldmodel;
 
-    // Using the extra space previously allocated in the various Mod_Load****() calls:
-    r_skyfaces = loadmodel->surfaces + loadmodel->numsurfaces;
+// Using the extra space previously allocated in the various Mod_Load****() calls:
+	r_skyfaces = loadmodel->surfaces + loadmodel->numsurfaces;
 	loadmodel->numsurfaces += 6;
 	r_skyverts = loadmodel->vertexes + loadmodel->numvertexes;
 	loadmodel->numvertexes += 8;
@@ -486,17 +486,17 @@ qboolean R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*
 	if (pic != nullptr)
 	{
 		Draw_BeginDisc ();
-        auto pixels = width * height;
-        if (r_load_as_rgba)
-        {
+		auto pixels = width * height;
+		if (r_load_as_rgba)
+		{
 			texture = (texture_t*)pic;
-        }
+		}
 		else
 		{
 			texture = (texture_t*)new byte[sizeof(texture_t) + pixels];
 		}
 		memset(texture, 0, sizeof(texture_t));
-        strcpy(texture->name, prefix.c_str());
+		strcpy(texture->name, prefix.c_str());
 		texture->width = width;
 		texture->height = height;
 		texture->offsets[0] = sizeof(texture_t);
@@ -521,23 +521,23 @@ qboolean R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*
 			auto b = *source++;
 			source++;
 			qboolean search = true;
-            if (lastCoverageR == r && lastCoverageG == g && lastCoverageB == b)
-            {
-                *target++ = lastCoverageEntry;
+			if (lastCoverageR == r && lastCoverageG == g && lastCoverageB == b)
+			{
+				*target++ = lastCoverageEntry;
 				search = false;
-            }
-            else if (lastCoverageEntry > 0)
-            {
-                auto deltaR = r - lastCoverageR;
+			}
+			else if (lastCoverageEntry > 0)
+			{
+				auto deltaR = r - lastCoverageR;
 				auto deltaG = g - lastCoverageG;
 				auto deltaB = b - lastCoverageB;
 				auto distance = deltaR * deltaR + deltaG * deltaG + deltaB * deltaB;
 				if (distance <= lastCoverage)
-                {
-                    *target++ = lastCoverageEntry;
+				{
+					*target++ = lastCoverageEntry;
 					search = false;
-                }
-            }
+				}
+			}
 			if (search)
 			{
 				auto entry = 0;
@@ -628,11 +628,11 @@ void R_EmitSkyBox (void)
 
 	// set the six fake planes
 	for (i=0 ; i<6 ; i++)
-        if (r_skyfaces[i].texinfo->texture != nullptr)
-            if (skybox_planes[i*2+1] > 0)
-                r_skyplanes[i].dist = r_origin[skybox_planes[i*2]]+r_skyfaces[i].texinfo->texture->width / 2;
-            else
-                r_skyplanes[i].dist = r_origin[skybox_planes[i*2]]-r_skyfaces[i].texinfo->texture->height / 2;
+		if (r_skyfaces[i].texinfo->texture != nullptr)
+			if (skybox_planes[i*2+1] > 0)
+				r_skyplanes[i].dist = r_origin[skybox_planes[i*2]]+r_skyfaces[i].texinfo->texture->width / 2;
+			else
+				r_skyplanes[i].dist = r_origin[skybox_planes[i*2]]-r_skyfaces[i].texinfo->texture->height / 2;
 
 	// fix texture offseets
 	for (i=0 ; i<6 ; i++)
@@ -646,11 +646,11 @@ void R_EmitSkyBox (void)
 	r_currentkey = 0x7ffffff0;
 	for (i=0 ; i<6 ; i++)
 	{
-        auto face = r_skyfaces + i;
-        if (face->texinfo->texture == nullptr)
-        {
-            continue;
-        }
+		auto face = r_skyfaces + i;
+		if (face->texinfo->texture == nullptr)
+		{
+			continue;
+		}
 		R_RenderFace (face, 15);
 	}
 	r_currentkey = oldkey;		// bsp sorting order

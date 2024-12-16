@@ -103,7 +103,7 @@ void R_MarkLights (dlight_t *light, int index, mnode_t *node)
 		{
 			surf->dlightbits.resize(surf->dlightbits.size() + MAX_DLIGHTS);
 		}
-        surf->dlightbits[index] = true;
+		surf->dlightbits[index] = true;
 	}
 
 	R_MarkLights (light, index, node->children[0]);

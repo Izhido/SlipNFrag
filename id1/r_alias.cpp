@@ -550,19 +550,19 @@ void R_AliasPrepareUnclippedPoints (void)
 // FIXME: just use pfinalverts directly?
 	fv = pfinalverts;
 
-	if (R_AliasTransformAndProjectFinalVerts (fv, pstverts))
-	{
-		if (r_affinetridesc.drawtype)
-			D_PolysetDrawFinalVerts (fv, r_anumverts);
+	if (!R_AliasTransformAndProjectFinalVerts (fv, pstverts))
+		return;
 
-		r_affinetridesc.pfinalverts = pfinalverts;
-		r_affinetridesc.pfinalcoloredverts = NULL;
-		r_affinetridesc.ptriangles = (mtriangle_t *)
-				((byte *)paliashdr + paliashdr->triangles);
-		r_affinetridesc.numtriangles = pmdl->numtris;
+	if (r_affinetridesc.drawtype)
+		D_PolysetDrawFinalVerts (fv, r_anumverts);
 
-		D_PolysetDraw ();
-	}
+	r_affinetridesc.pfinalverts = pfinalverts;
+	r_affinetridesc.pfinalcoloredverts = NULL;
+	r_affinetridesc.ptriangles = (mtriangle_t *)
+			((byte *)paliashdr + paliashdr->triangles);
+	r_affinetridesc.numtriangles = pmdl->numtris;
+
+	D_PolysetDraw ();
 }
 
 /*
@@ -753,33 +753,32 @@ void R_AliasDrawModel (alight_t *plighting)
 		{
 			D_AddAliasToLists (paliashdr, pskindesc, currententity->colormap, r_apverts);
 		}
+		return;
+	}
+	r_affinetridesc.drawtype = (currententity->trivial_accept == 3) &&
+			r_recursiveaffinetriangles;
+
+	if (r_affinetridesc.drawtype)
+	{
+		D_PolysetUpdateTables ();		// FIXME: precalc...
 	}
 	else
 	{
-		r_affinetridesc.drawtype = (currententity->trivial_accept == 3);
-
-		if (r_affinetridesc.drawtype)
-		{
-			D_PolysetUpdateTables ();		// FIXME: precalc...
-		}
-		else
-		{
 #if	id386
-			D_Aff8Patch (currententity->colormap);
+		D_Aff8Patch (currententity->colormap);
 #endif
-		}
-
-		acolormap = currententity->colormap;
-
-		if (currententity != &cl.viewent)
-			ziscale = (float)0x8000 * (float)0x10000;
-		else
-			ziscale = (float)0x8000 * (float)0x10000 * 3.0;
-
-		if (currententity->trivial_accept)
-			R_AliasPrepareUnclippedPoints ();
-		else
-			R_AliasPreparePoints ();
 	}
+
+	acolormap = currententity->colormap;
+
+	if (currententity != &cl.viewent)
+		ziscale = (float)0x8000 * (float)0x10000;
+	else
+		ziscale = (float)0x8000 * (float)0x10000 * 3.0;
+
+	if (currententity->trivial_accept)
+		R_AliasPrepareUnclippedPoints ();
+	else
+		R_AliasPreparePoints ();
 }
 

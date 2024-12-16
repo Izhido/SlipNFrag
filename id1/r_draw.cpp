@@ -50,8 +50,8 @@ qboolean		r_leftclipped, r_rightclipped;
 static qboolean	makeleftedge, makerightedge;
 qboolean		r_nearzionly;
 
-std::vector<int> sintable;
-std::vector<int> intsintable;
+std::vector<int>		sintable;
+std::vector<int>		intsintable;
 
 mvertex_t	r_leftenter, r_leftexit;
 mvertex_t	r_rightenter, r_rightexit;
@@ -75,9 +75,9 @@ qboolean	r_lastvertvalid;
 
 void R_ResizeEdges()
 {
-    newedges.resize(vid.height);
+	newedges.resize(vid.height);
 	newedges_lastadded.resize(vid.height);
-    removeedges.resize(vid.height);
+	removeedges.resize(vid.height);
 }
 
 /*
@@ -183,7 +183,7 @@ void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1)
 					(r_framecount & FRAMECOUNT_MASK);
 		}
 
-        r_horizontal = 1;
+		r_horizontal = 1;
 
 		return;		// horizontal edge
 	}
@@ -391,7 +391,7 @@ void R_EmitCachedEdge (void)
 	r_pedge->cachededgeoffset = 0;
 
 	r_emitted = 1;
-    r_horizontal = 0;
+	r_horizontal = 0;
 }
 
 
@@ -421,8 +421,8 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 // skip out if no more surfs
 	if ((surface_p) >= surf_max)
 	{
-        r_outofsurfaces++;
-        r_increaselsurfs = true;
+		r_outofsurfaces++;
+		r_increaselsurfs = true;
 		return;
 	}
 
@@ -430,7 +430,7 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 	if ((edge_p + fa->numedges + 4) >= edge_max)
 	{
 		r_outofedges += fa->numedges;
-        r_increaseledges = true;
+		r_increaseledges = true;
 		return;
 	}
 
@@ -450,7 +450,7 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 
 // push the edges through
 	r_emitted = 0;
-    r_horizontal = 0;
+	r_horizontal = 0;
 	r_nearzi = 0;
 	r_nearzionly = false;
 	makeleftedge = makerightedge = false;
@@ -634,7 +634,7 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 	if (surface_p >= surf_max)
 	{
 		r_outofsurfaces++;
-        r_increaselsurfs = true;
+		r_increaselsurfs = true;
 		return;
 	}
 
@@ -642,7 +642,7 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 	if ((edge_p + psurf->numedges + 4) >= edge_max)
 	{
 		r_outofedges += psurf->numedges;
-        r_increaseledges = true;
+		r_increaseledges = true;
 		return;
 	}
 
@@ -738,5 +738,221 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 	}
 
 	surface_p++;
+}
+
+
+/*
+================
+R_RenderPoly
+================
+*/
+void R_RenderPoly (msurface_t *fa, int clipflags)
+{
+	int			i, lindex, lnumverts, s_axis, t_axis;
+	float		dist, lastdist, lzi, scale, u, v, frac;
+	unsigned	mask;
+	vec3_t		local, transformed;
+	clipplane_t	*pclip;
+	medge_t		*pedges;
+	mplane_t	*pplane;
+	mvertex_t	verts[2][100];	//FIXME: do real number
+	polyvert_t	pverts[100];	//FIXME: do real number, safely
+	int			vertpage, newverts, newpage, lastvert;
+	qboolean	visible;
+
+// FIXME: clean this up and make it faster
+// FIXME: guard against running out of vertices
+
+	s_axis = t_axis = 0;	// keep compiler happy
+
+// set up clip planes
+	pclip = NULL;
+
+	for (i=3, mask = 0x08 ; i>=0 ; i--, mask >>= 1)
+	{
+		if (clipflags & mask)
+		{
+			view_clipplanes[i].next = pclip;
+			pclip = &view_clipplanes[i];
+		}
+	}
+
+// reconstruct the polygon
+// FIXME: these should be precalculated and loaded off disk
+	pedges = currententity->model->edges;
+	lnumverts = fa->numedges;
+	vertpage = 0;
+
+	for (i=0 ; i<lnumverts ; i++)
+	{
+		lindex = currententity->model->surfedges[fa->firstedge + i];
+
+		if (lindex > 0)
+		{
+			r_pedge = &pedges[lindex];
+			verts[0][i] = r_pcurrentvertbase[r_pedge->v[0]];
+		}
+		else
+		{
+			r_pedge = &pedges[-lindex];
+			verts[0][i] = r_pcurrentvertbase[r_pedge->v[1]];
+		}
+	}
+
+// clip the polygon, done if not visible
+	while (pclip)
+	{
+		lastvert = lnumverts - 1;
+		lastdist = DotProduct (verts[vertpage][lastvert].position,
+							   pclip->normal) - pclip->dist;
+
+		visible = false;
+		newverts = 0;
+		newpage = vertpage ^ 1;
+
+		for (i=0 ; i<lnumverts ; i++)
+		{
+			dist = DotProduct (verts[vertpage][i].position, pclip->normal) -
+					pclip->dist;
+
+			if ((lastdist > 0) != (dist > 0))
+			{
+				frac = dist / (dist - lastdist);
+				verts[newpage][newverts].position[0] =
+						verts[vertpage][i].position[0] +
+						((verts[vertpage][lastvert].position[0] -
+						  verts[vertpage][i].position[0]) * frac);
+				verts[newpage][newverts].position[1] =
+						verts[vertpage][i].position[1] +
+						((verts[vertpage][lastvert].position[1] -
+						  verts[vertpage][i].position[1]) * frac);
+				verts[newpage][newverts].position[2] =
+						verts[vertpage][i].position[2] +
+						((verts[vertpage][lastvert].position[2] -
+						  verts[vertpage][i].position[2]) * frac);
+				newverts++;
+			}
+
+			if (dist >= 0)
+			{
+				verts[newpage][newverts] = verts[vertpage][i];
+				newverts++;
+				visible = true;
+			}
+
+			lastvert = i;
+			lastdist = dist;
+		}
+
+		if (!visible || (newverts < 3))
+			return;
+
+		lnumverts = newverts;
+		vertpage ^= 1;
+		pclip = pclip->next;
+	}
+
+// transform and project, remembering the z values at the vertices and
+// r_nearzi, and extract the s and t coordinates at the vertices
+	pplane = fa->plane;
+	switch (pplane->type)
+	{
+	case PLANE_X:
+	case PLANE_ANYX:
+		s_axis = 1;
+		t_axis = 2;
+		break;
+	case PLANE_Y:
+	case PLANE_ANYY:
+		s_axis = 0;
+		t_axis = 2;
+		break;
+	case PLANE_Z:
+	case PLANE_ANYZ:
+		s_axis = 0;
+		t_axis = 1;
+		break;
+	}
+
+	r_nearzi = 0;
+
+	for (i=0 ; i<lnumverts ; i++)
+	{
+	// transform and project
+		VectorSubtract (verts[vertpage][i].position, modelorg, local);
+		TransformVector (local, transformed);
+
+		if (transformed[2] < NEAR_CLIP)
+			transformed[2] = NEAR_CLIP;
+
+		lzi = 1.0 / transformed[2];
+
+		if (lzi > r_nearzi)	// for mipmap finding
+			r_nearzi = lzi;
+
+	// FIXME: build x/yscale into transform?
+		scale = xscale * lzi;
+		u = (xcenter + scale*transformed[0]);
+		if (u < r_refdef.fvrectx_adj)
+			u = r_refdef.fvrectx_adj;
+		if (u > r_refdef.fvrectright_adj)
+			u = r_refdef.fvrectright_adj;
+
+		scale = yscale * lzi;
+		v = (ycenter - scale*transformed[1]);
+		if (v < r_refdef.fvrecty_adj)
+			v = r_refdef.fvrecty_adj;
+		if (v > r_refdef.fvrectbottom_adj)
+			v = r_refdef.fvrectbottom_adj;
+
+		pverts[i].u = u;
+		pverts[i].v = v;
+		pverts[i].zi = lzi;
+		pverts[i].s = verts[vertpage][i].position[s_axis];
+		pverts[i].t = verts[vertpage][i].position[t_axis];
+	}
+
+// build the polygon descriptor, including fa, r_nearzi, and u, v, s, t, and z
+// for each vertex
+	r_polydesc.numverts = lnumverts;
+	r_polydesc.nearzi = r_nearzi;
+	r_polydesc.pcurrentface = fa;
+	r_polydesc.pverts = pverts;
+
+// draw the polygon
+	D_DrawPoly ();
+}
+
+
+/*
+================
+R_ZDrawSubmodelPolys
+================
+*/
+void R_ZDrawSubmodelPolys (model_t *pmodel)
+{
+	int			i, numsurfaces;
+	msurface_t	*psurf;
+	float		dot;
+	mplane_t	*pplane;
+
+	psurf = &pmodel->surfaces[pmodel->firstmodelsurface];
+	numsurfaces = pmodel->nummodelsurfaces;
+
+	for (i=0 ; i<numsurfaces ; i++, psurf++)
+	{
+	// find which side of the node we are on
+		pplane = psurf->plane;
+
+		dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
+
+	// draw the polygon
+		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
+			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
+		{
+		// FIXME: use bounding-box-based frustum clipping info?
+			R_RenderPoly (psurf, 15);
+		}
+	}
 }
 

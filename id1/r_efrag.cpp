@@ -111,31 +111,31 @@ void R_SplitEntityOnNode (mnode_t *node)
 
 // grab an efrag off the free list
 		ef = cl.free_efrags;
-        if (ef->entnext == nullptr)
-        {
-            auto start = cl_efrags.size();
-            cl_efrags.resize(cl_efrags.size() + MAX_EFRAGS);
-            efrag_t* efrag = nullptr;
-            int i = 0;
-            for (auto entry = cl_efrags.begin(); entry != cl_efrags.end(); i++, entry++)
-            {
-                if (i == start)
-                {
-                    efrag = &*entry;
-                    ef->entnext = efrag;
-                }
-                else if (i > start)
-                {
-                    efrag->entnext = &*entry;
-                    efrag = &*entry;
-                }
-                else if (i == cl_efrags.size() - 1)
-                {
-                    efrag->entnext = nullptr;
-                }
-            }
-        }
-        
+		if (ef->entnext == nullptr)
+		{
+			auto start = cl_efrags.size();
+			cl_efrags.resize(cl_efrags.size() + MAX_EFRAGS);
+			efrag_t* efrag = nullptr;
+			int i = 0;
+			for (auto entry = cl_efrags.begin(); entry != cl_efrags.end(); i++, entry++)
+			{
+				if (i == start)
+				{
+					efrag = &*entry;
+					ef->entnext = efrag;
+				}
+				else if (i > start)
+				{
+					efrag->entnext = &*entry;
+					efrag = &*entry;
+				}
+				else if (i == cl_efrags.size() - 1)
+				{
+					efrag->entnext = nullptr;
+				}
+			}
+		}
+		
 		cl.free_efrags = cl.free_efrags->entnext;
 
 		ef->entity = r_addent;
@@ -281,7 +281,7 @@ void R_StoreEfrags (efrag_t **ppefrag)
 				{
 					cl_visedicts.resize(cl_visedicts.size() + MAX_VISEDICTS);
 				}
-                cl_visedicts[cl_numvisedicts++] = pent;
+				cl_visedicts[cl_numvisedicts++] = pent;
 
 			// mark that we've recorded this entity for this frame
 				pent->visframe = r_framecount;

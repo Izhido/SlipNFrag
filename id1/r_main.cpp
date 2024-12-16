@@ -37,19 +37,24 @@ qboolean	r_recursiveaffinetriangles = true;
 int			r_pixbytes = 1;
 float		r_aliasuvscale = 1.0;
 int			r_outofsurfaces;
-qboolean r_increaselsurfs = false;
+qboolean	r_increaselsurfs = false;
 int			r_outofedges;
-qboolean r_increaseledges = false;
+qboolean	r_increaseledges = false;
 
 qboolean	r_dowarp, r_dowarpold, r_viewchanged;
 
+int			numbtofpolys;
+btofpoly_t	*pbtofpolys;
 mvertex_t	*r_pcurrentvertbase;
 
 int			c_surf;
 int			r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
+qboolean	r_surfsonstack;
 int			r_clipflags;
 
 byte		*r_warpbuffer;
+
+byte		*r_stack_start;
 
 qboolean	r_skip_fov_check;
 qboolean	r_fov_greater_than_90;
@@ -88,11 +93,20 @@ mplane_t	screenedge[4];
 //
 int		r_framecount = 1;	// so frame counts initialized to 0 don't match
 int		r_visframecount;
+int		d_spanpixcount;
 int		r_polycount;
 int		r_drawnpolycount;
+int		r_wholepolycount;
+
+#define		VIEWMODNAME_LENGTH	256
+char		viewmodname[VIEWMODNAME_LENGTH+1];
+int			modcount;
 
 int			*pfrustum_indexes[4];
 int			r_frustum_indexes[4*6];
+
+int		reinit_surfcache = 1;	// if 1, surface cache is currently empty and
+								// must be reinitialized for current cache size
 
 mleaf_t		*r_viewleaf, *r_oldviewleaf;
 
@@ -176,6 +190,11 @@ R_Init
 */
 void R_Init (void)
 {
+	int		dummy;
+	
+// get stack position so we can guess if we are going to overflow
+	r_stack_start = (byte *)&dummy;
+	
 	R_InitTurb ();
 	R_ResizeEdges();
 	
@@ -633,43 +652,43 @@ void R_DrawEntitiesOnList (void)
 
 					R_AliasColoredDrawModel (&lighting);
 				}
+
+				break;
 			}
-			else
+		// see if the bounding box lets us trivially reject, also sets
+		// trivial accept status
+			if (R_AliasCheckBBox ())
 			{
-			// see if the bounding box lets us trivially reject, also sets
-			// trivial accept status
-				if (R_AliasCheckBBox ())
+				j = R_LightPoint (currententity->origin);
+	
+				lighting.ambientlight = j;
+				lighting.shadelight = j;
+
+				lighting.plightvec = lightvec;
+
+				for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
 				{
-					j = R_LightPoint (currententity->origin);
-		
-					lighting.ambientlight = j;
-					lighting.shadelight = j;
-
-					lighting.plightvec = lightvec;
-
-					for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
+					if (cl_dlights[lnum].die >= cl.time)
 					{
-						if (cl_dlights[lnum].die >= cl.time)
-						{
-							VectorSubtract (currententity->origin,
-											cl_dlights[lnum].origin,
-											dist);
-							add = cl_dlights[lnum].radius - Length(dist);
-		
-							if (add > 0)
-								lighting.ambientlight += add;
-						}
+						VectorSubtract (currententity->origin,
+										cl_dlights[lnum].origin,
+										dist);
+						add = cl_dlights[lnum].radius - Length(dist);
+	
+						if (add > 0)
+							lighting.ambientlight += add;
 					}
-		
-				// clamp lighting so it doesn't overbright as much
-					if (lighting.ambientlight > 128)
-						lighting.ambientlight = 128;
-					if (lighting.ambientlight + lighting.shadelight > 192)
-						lighting.shadelight = 192 - lighting.ambientlight;
-
-					R_AliasDrawModel (&lighting);
 				}
+	
+			// clamp lighting so it doesn't overbright as much
+				if (lighting.ambientlight > 128)
+					lighting.ambientlight = 128;
+				if (lighting.ambientlight + lighting.shadelight > 192)
+					lighting.shadelight = 192 - lighting.ambientlight;
+
+				R_AliasDrawModel (&lighting);
 			}
+
 			break;
 
 		default:
@@ -763,43 +782,47 @@ void R_DrawViewModel (void)
 		r_viewcoloredlighting.plightvec = lightvec;
 
 		R_AliasColoredDrawModel (&r_viewcoloredlighting);
+
+		return;
 	}
-	else
+
+	j = R_LightPoint (currententity->origin);
+
+	if (j < 24)
+		j = 24;		// allways give some light on gun
+	r_viewlighting.ambientlight = j;
+	r_viewlighting.shadelight = j;
+
+// add dynamic lights		
+	for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
 	{
-		j = R_LightPoint (currententity->origin);
+		dl = &cl_dlights[lnum];
+		if (!dl->radius)
+			continue;
+		if (!dl->radius)
+			continue;
+		if (dl->die < cl.time)
+			continue;
 
-		if (j < 24)
-			j = 24;		// allways give some light on gun
-		r_viewlighting.ambientlight = j;
-		r_viewlighting.shadelight = j;
-
-	// add dynamic lights
-		for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
-		{
-			dl = &cl_dlights[lnum];
-			if (!dl->radius)
-				continue;
-			if (!dl->radius)
-				continue;
-			if (dl->die < cl.time)
-				continue;
-
-			VectorSubtract (currententity->origin, dl->origin, dist);
-			add = dl->radius - Length(dist);
-			if (add > 0)
-				r_viewlighting.ambientlight += add;
-		}
-
-	// clamp lighting so it doesn't overbright as much
-		if (r_viewlighting.ambientlight > 128)
-			r_viewlighting.ambientlight = 128;
-		if (r_viewlighting.ambientlight + r_viewlighting.shadelight > 192)
-			r_viewlighting.shadelight = 192 - r_viewlighting.ambientlight;
-
-		r_viewlighting.plightvec = lightvec;
-
-		R_AliasDrawModel (&r_viewlighting);
+		VectorSubtract (currententity->origin, dl->origin, dist);
+		add = dl->radius - Length(dist);
+		if (add > 0)
+			r_viewlighting.ambientlight += add;
 	}
+
+// clamp lighting so it doesn't overbright as much
+	if (r_viewlighting.ambientlight > 128)
+		r_viewlighting.ambientlight = 128;
+	if (r_viewlighting.ambientlight + r_viewlighting.shadelight > 192)
+		r_viewlighting.shadelight = 192 - r_viewlighting.ambientlight;
+
+	r_viewlighting.plightvec = lightvec;
+
+#ifdef QUAKE2
+	cl.light_level = r_viewlighting.ambientlight;
+#endif
+
+	R_AliasDrawModel (&r_viewlighting);
 }
 
 
@@ -937,6 +960,15 @@ void R_DrawBEntitiesOnList (void)
 					}
 				}
 
+			// if the driver wants polygons, deliver those. Z-buffering is on
+			// at this point, so no clipping to the world tree is needed, just
+			// frustum clipping
+				if (r_drawpolys | r_drawculledpolys)
+				{
+					R_ZDrawSubmodelPolys (clmodel);
+				}
+				else
+				{
 					r_pefragtopnode = NULL;
 
 					for (j=0 ; j<3 ; j++)
@@ -967,6 +999,7 @@ void R_DrawBEntitiesOnList (void)
 	
 						currententity->topnode = NULL;
 					}
+				}
 
 			// put back world rotation and frustum clipping		
 			// FIXME: R_RotateBmodel should just work off base_vxx
@@ -1037,6 +1070,9 @@ void R_EdgeDrawing (void)
 
 	R_RenderWorld ();
 
+	if (r_drawculledpolys)
+		R_ScanEdges ();
+
 // only the world can be drawn back to front with no z reads or compares, just
 // z writes, so have the driver turn z compares on now
 	D_TurnZOn ();
@@ -1062,6 +1098,7 @@ void R_EdgeDrawing (void)
 		VID_LockBuffer ();
 	}
 	
+	if (!(r_drawpolys | r_drawculledpolys))
 		R_ScanEdges ();
 }
 
@@ -1188,17 +1225,17 @@ R_InitTurb
 */
 void R_InitTurb (void)
 {
-    R_ResizeTurb();
+	R_ResizeTurb();
 }
 
 void R_ResizeTurb()
 {
-    auto size = std::max(vid.width, vid.height) + CYCLE;
-    sintable.resize(size);
-    intsintable.resize(size);
-    for (auto i = 0; i < size; i++)
-    {
-        sintable[i] = AMP + sin(i*3.14159*2/CYCLE)*AMP;
-        intsintable[i] = AMP2 + sin(i*3.14159*2/CYCLE)*AMP2;    // AMP2, not 20
-    }
+	auto size = std::max(vid.width, vid.height) + CYCLE;
+	sintable.resize(size);
+	intsintable.resize(size);
+	for (auto i = 0; i < size; i++)
+	{	
+		sintable[i] = AMP + sin(i*3.14159*2/CYCLE)*AMP;
+		intsintable[i] = AMP2 + sin(i*3.14159*2/CYCLE)*AMP2;	// AMP2, not 20
+	}
 }

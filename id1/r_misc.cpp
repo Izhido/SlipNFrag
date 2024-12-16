@@ -362,6 +362,22 @@ void TransformVector (const vec3_t in, vec3_t out)
 
 
 /*
+================
+R_TransformPlane
+================
+*/
+void R_TransformPlane (mplane_t *p, float *normal, float *dist)
+{
+	float	d;
+	
+	d = DotProduct (r_origin, p->normal);
+	*dist = p->dist - d;
+// TODO: when we have rotating entities, this will need to use the view matrix
+	TransformVector (p->normal, normal);
+}
+
+
+/*
 ===============
 R_SetUpFrustumIndexes
 ===============
@@ -449,6 +465,8 @@ void R_SetupFrame (void)
 	R_AnimateLight ();
 
 	r_framecount++;
+
+	numbtofpolys = 0;
 
 // debugging
 #if 0
@@ -555,8 +573,10 @@ r_refdef.viewangles[2]=    0;
 
 // clear frame counts
 	c_faceclip = 0;
+	d_spanpixcount = 0;
 	r_polycount = 0;
 	r_drawnpolycount = 0;
+	r_wholepolycount = 0;
 	r_amodels_drawn = 0;
 	r_outofsurfaces = 0;
 	r_outofedges = 0;
