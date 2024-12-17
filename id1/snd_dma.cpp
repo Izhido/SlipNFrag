@@ -32,7 +32,7 @@ void S_StopAllSoundsC(void);
 // Internal sound data & structures
 // =======================================================================
 
-std::vector<channel_t> channels(NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS);
+std::vector<channel_t>   channels(NUM_AMBIENTS + MAX_DYNAMIC_CHANNELS);
 int			total_channels;
 std::vector<channel_t> s_static_channels(MAX_CHANNELS);
 int			s_total_static_channels;
@@ -55,7 +55,8 @@ int			soundtime;		// sample PAIRS
 int   		paintedtime; 	// sample PAIRS
 
 
-std::list<sfx_t> known_sfx;
+#define	MAX_SFX		512
+std::list<sfx_t>		known_sfx;
 std::unordered_map<std::string, std::list<sfx_t>::iterator> known_sfx_index;
 
 sfx_t		*ambient_sfx[NUM_AMBIENTS];
@@ -199,7 +200,7 @@ void S_Init (void)
 
 	if (fakedma)
 	{
-        shm = new dma_t;
+		shm = new dma_t;
 		shm->splitbuffer = 0;
 		shm->samplebits = 16;
 		shm->speed = 22050;
@@ -276,7 +277,7 @@ sfx_t *S_FindName (const char *name)
 		return &*entry->second;
 	}
 
-    known_sfx.emplace_back();
+	known_sfx.emplace_back();
 	auto last = std::prev(known_sfx.end());
 	known_sfx_index.insert({ std::string(name), last });
 	sfx = &*last;
@@ -367,8 +368,8 @@ channel_t *SND_PickChannel(int entnum, int entchannel)
 
 	channels[total_channels-1].sfx = NULL;
 
-	return &channels[total_channels-1];
-}
+    return &channels[total_channels-1];    
+}       
 
 /*
 =================
@@ -475,7 +476,7 @@ void S_StartSound(int entnum, int entchannel, sfx_t *sfx, const vec3_t origin, f
 // if an identical sound has also been started this frame, offset the pos
 // a bit to keep it from just making the first one louder
 	check = &channels[NUM_AMBIENTS];
-	for (ch_idx=NUM_AMBIENTS ; ch_idx < total_channels ; ch_idx++, check++)
+    for (ch_idx=NUM_AMBIENTS ; ch_idx < total_channels ; ch_idx++, check++)
     {
 		if (check == target_chan)
 			continue;
@@ -541,7 +542,7 @@ void S_ClearBuffer (void)
 		clear = 0;
 
 	{
-		memset(shm->buffer.data(), clear, shm->samples * shm->samplebits/8);
+		Q_memset(shm->buffer.data(), clear, shm->samples * shm->samplebits/8);
 	}
 }
 
@@ -561,9 +562,9 @@ void S_StaticSound (sfx_t *sfx, const vec3_t origin, float vol, float attenuatio
 
 	s_total_static_channels++;
 	if (s_total_static_channels >= s_static_channels.size())
-    {
+	{
 		s_static_channels.resize(s_static_channels.size() + MAX_CHANNELS);
-    }
+	}
 	ss = &s_static_channels[s_total_static_channels - 1];
 
 	sc = S_LoadSound (sfx);
@@ -670,7 +671,7 @@ void S_Update(const vec3_t origin, const vec3_t forward, const vec3_t right, con
 
 	combine = NULL;
 
-	// update spatialization for dynamic sounds
+// update spatialization for dynamic sounds
 	ch = channels.data()+NUM_AMBIENTS;
 	for (i=NUM_AMBIENTS ; i<total_channels; i++, ch++)
 	{
@@ -840,7 +841,7 @@ void S_Play(void)
 {
 	static int hash=345;
 	int 	i;
-    std::string name;
+	std::string name;
 	sfx_t	*sfx;
 	
 	i = 1;
@@ -849,7 +850,7 @@ void S_Play(void)
 		if (!Q_strrchr(Cmd_Argv(i), '.'))
 		{
 			name = Cmd_Argv(i);
-            name += ".wav";
+			name += ".wav";
 		}
 		else
 			name = Cmd_Argv(i);
@@ -864,7 +865,7 @@ void S_PlayVol(void)
 	static int hash=543;
 	int i;
 	float vol;
-    std::string name;
+	std::string name;
 	sfx_t	*sfx;
 	
 	i = 1;
@@ -891,9 +892,9 @@ void S_SoundList(void)
 	int		size, total;
 
 	total = 0;
-    for (auto& entry : known_sfx)
+	for (auto& entry : known_sfx)
 	{
-        sfx = &entry;
+		sfx = &entry;
 		sc = (sfxcache_t*)sfx->data;
 		if (!sc)
 			continue;

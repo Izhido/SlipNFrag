@@ -30,8 +30,8 @@ int			scr_copyeverything;
 float		scr_con_current;
 float		scr_conlines;		// lines of console to display
 
-float       con_con_current;
-float       con_conlines;
+float		con_con_current;
+float		con_conlines;
 
 float		oldscreensize, oldfov;
 cvar_t		scr_viewsize = {"viewsize","100", true};
@@ -76,7 +76,7 @@ CENTER PRINTING
 ===============================================================================
 */
 
-std::string scr_centerstring;
+std::string		scr_centerstring;
 float		scr_centertime_start;	// for slow victory printing
 float		scr_centertime_off;
 int			scr_center_lines;
@@ -167,7 +167,7 @@ void SCR_EraseCenterString (void)
 
 void SCR_DrawCenterString (void)
 {
-	const char* start;
+	const char	*start;
 	int		l;
 	int		j;
 	int		x, y;
@@ -323,8 +323,8 @@ static void SCR_CalcRefdef (void)
 // vertical resolution
 	if (scr_con_current > vid.height)
 		scr_con_current = vid.height;
-    if (con_con_current > vid.conheight)
-        con_con_current = vid.conheight;
+	if (con_con_current > vid.conheight)
+		con_con_current = vid.conheight;
 
 // notify the refresh of the change
 	R_ViewChanged (&vrect, sb_lines, vid.aspect);
@@ -516,20 +516,20 @@ void SCR_SetUpToDrawConsole (void)
 	{
 		scr_conlines = vid.height;		// full screen
 		scr_con_current = scr_conlines;
-        con_conlines = vid.conheight;
-        con_con_current = con_conlines;
+		con_conlines = vid.conheight;
+		con_con_current = con_conlines;
 	}
 	else if (key_dest == key_console)
-    {
+	{
 		scr_conlines = vid.height/2;	// half screen
-        con_conlines = vid.conheight/2;
-    }
+		con_conlines = vid.conheight/2;
+	}
 	else
-    {
+	{
 		scr_conlines = 0;				// none visible
-        con_conlines = 0;
-    }
-    
+		con_conlines = 0;
+	}
+	
 	if (scr_conlines < scr_con_current)
 	{
 		scr_con_current -= scr_conspeed.value*(320.0/240.0)*host_frametime;
@@ -544,20 +544,20 @@ void SCR_SetUpToDrawConsole (void)
 			scr_con_current = scr_conlines;
 	}
 
-    if (con_conlines < con_con_current)
-    {
-        con_con_current -= scr_conspeed.value*host_frametime;
-        if (con_conlines > con_con_current)
-            con_con_current = con_conlines;
-        
-    }
-    else if (con_conlines > con_con_current)
-    {
-        con_con_current += scr_conspeed.value*host_frametime;
-        if (con_conlines < con_con_current)
-            con_con_current = con_conlines;
-    }
-    
+	if (con_conlines < con_con_current)
+	{
+		con_con_current -= scr_conspeed.value*host_frametime;
+		if (con_conlines > con_con_current)
+			con_con_current = con_conlines;
+		
+	}
+	else if (con_conlines > con_con_current)
+	{
+		con_con_current += scr_conspeed.value*host_frametime;
+		if (con_conlines < con_con_current)
+			con_con_current = con_conlines;
+	}
+
 	if (clearconsole++ < vid.numpages)
 	{
 		scr_copytop = 1;
@@ -632,9 +632,9 @@ void WritePCXfile (char *filename, byte *data, int width, int height,
 	pcx_t	*pcx;
 	byte		*pack;
 	  
-    std::vector<byte> contents(width*height*2+1000);
-    pcx = (pcx_t*)contents.data();
-    
+	std::vector<byte> contents(width*height*2+1000);
+	pcx = (pcx_t*)contents.data();
+ 
 	pcx->manufacturer = 0x0a;	// PCX id
 	pcx->version = 5;			// 256 color
  	pcx->encoding = 1;		// uncompressed
@@ -691,7 +691,7 @@ void SCR_ScreenShot_f (void)
 { 
 	int     i; 
 	char		pcxname[80]; 
-    std::string checkname;
+	std::string		checkname;
 
 // 
 // find a file name to save it to 
@@ -702,7 +702,7 @@ void SCR_ScreenShot_f (void)
 	{ 
 		pcxname[5] = i/10 + '0'; 
 		pcxname[6] = i%10 + '0'; 
-        checkname = com_gamedir + "/" + pcxname;
+		checkname = com_gamedir + "/" + pcxname;
 		if (Sys_FileTime((char*)checkname.c_str()) == -1)
 			break;	// file doesn't exist
 	} 
@@ -783,7 +783,7 @@ qboolean	scr_drawdialog;
 
 void SCR_DrawNotifyString (void)
 {
-	const char *start;
+	const char	*start;
 	int		l;
 	int		j;
 	int		x, y;
@@ -825,8 +825,8 @@ int SCR_ModalMessage (const char *text)
 {
 	// Since this code loops forever waiting for a keypress that won't ever come, just pretend the message was already displayed,
 	// that the user already pressed 'y', and return immediately:
-    return true;
-    
+	return true;
+
 	/*if (cls.state == ca_dedicated)
 		return true;
 

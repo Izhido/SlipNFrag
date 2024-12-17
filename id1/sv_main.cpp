@@ -31,28 +31,28 @@ qboolean sv_request_protocol_version_upgrade;
 
 void server_t::Clear()
 {
-    active = false;
-    paused = false;
-    loadgame = false;
-    time = 0;
-    lastcheck = 0;
-    lastchecktime = 0;
-    name = 0;
-    memset(modelname, 0, sizeof(modelname));
-    worldmodel = nullptr;
-    model_precache.clear();
-    model_index.clear();
-    models.clear();
-    sound_precache.clear();
-    lightstyles.clear();
-    lightstyles.resize(MAX_LIGHTSTYLES);
-    num_edicts = 0;
+	active = false;
+	paused = false;
+	loadgame = false;
+	time = 0;
+	lastcheck = 0;
+	lastchecktime = 0;
+	name = 0;
+	memset(modelname, 0, sizeof(modelname));
+	worldmodel = nullptr;
+	model_precache.clear();
+	model_index.clear();
+	models.clear();
+	sound_precache.clear();
+	lightstyles.clear();
+	lightstyles.resize(MAX_LIGHTSTYLES);
+	num_edicts = 0;
 	SV_DeleteEdictLeafs(0, edicts.size());
-    memset(edicts.data(), 0, edicts.size());
-    state = ss_loading;
-    datagram.Clear();
-    reliable_datagram.Clear();
-    signon.Clear();
+	memset(edicts.data(), 0, edicts.size());
+	state = ss_loading;
+	datagram.Clear();
+	reliable_datagram.Clear();
+	signon.Clear();
 }
 
 void client_t::Clear()
@@ -106,7 +106,7 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_aim);
 	Cvar_RegisterVariable (&sv_nostep);
 
-    sv.lightstyles.resize(MAX_LIGHTSTYLES);
+	sv.lightstyles.resize(MAX_LIGHTSTYLES);
 }
 
 /*
@@ -214,37 +214,36 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 		field_mask |= SND_ATTENUATION;
 
 // directed messages go only to the entity the are targeted on
-    if (channel > 65535 || sound_num > 255)
-    {
-        sv_bump_protocol_version = true;
-    }
-    if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-    {
-        MSG_WriteByte (&sv.datagram, svc_expandedsound);
-    }
-    else
-    {
-        MSG_WriteByte (&sv.datagram, svc_sound);
-    }
+	if (channel > 65535 || sound_num > 255)
+	{
+		sv_bump_protocol_version = true;
+	}
+	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	{
+		MSG_WriteByte (&sv.datagram, svc_expandedsound);
+	}
+	else
+	{
+		MSG_WriteByte (&sv.datagram, svc_sound);
+	}
 	MSG_WriteByte (&sv.datagram, field_mask);
 	if (field_mask & SND_VOLUME)
 		MSG_WriteByte (&sv.datagram, volume);
 	if (field_mask & SND_ATTENUATION)
 		MSG_WriteByte (&sv.datagram, attenuation*64);
-    if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-    {
-        MSG_WriteLongAsString (&sv.datagram, channel);
-        MSG_WriteLongAsString (&sv.datagram, sound_num);
+	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	{
+		MSG_WriteLongAsString (&sv.datagram, channel);
+		MSG_WriteLongAsString (&sv.datagram, sound_num);
 		for (i=0 ; i<3 ; i++)
 			MSG_WriteFloat (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
-    }
-    else
-    {
-        MSG_WriteShort (&sv.datagram, channel);
-        MSG_WriteByte (&sv.datagram, sound_num);
-		for (i=0 ; i<3 ; i++)
-			MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
-    }
+
+		return;
+	}
+	MSG_WriteShort (&sv.datagram, channel);
+	MSG_WriteByte (&sv.datagram, sound_num);
+	for (i=0 ; i<3 ; i++)
+		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
 }           
 
 /*
@@ -267,13 +266,13 @@ void SV_SendServerinfo (client_t *client)
 {
 	client->message.maxsize = 0;
 	MSG_WriteByte (&client->message, svc_print);
-    char version_message[64];
+	char version_message[64];
 	sprintf (version_message, "%c\nVERSION %4.2f SERVER (%i CRC)", 2, VERSION, pr_crc);
 	MSG_WriteString (&client->message,version_message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
 	auto protocol_offset = client->message.cursize;
-    MSG_WriteLong (&client->message, sv_protocol_version);
+	MSG_WriteLong (&client->message, sv_protocol_version);
 	MSG_WriteByte (&client->message, svs.maxclients);
 
 	if (!coop.value && deathmatch.value)
@@ -281,11 +280,11 @@ void SV_SendServerinfo (client_t *client)
 	else
 		MSG_WriteByte (&client->message, GAME_COOP);
 
-    std::string message = pr_strings+((edict_t*)sv.edicts.data())->v.message;
+	std::string message = pr_strings+((edict_t*)sv.edicts.data())->v.message;
 
 	MSG_WriteString (&client->message,message.c_str());
 
-    for (size_t i = 1; i < sv.model_precache.size(); i++)
+	for (size_t i = 1; i < sv.model_precache.size(); i++)
 		MSG_WriteString (&client->message, sv.model_precache[i].c_str());
 	MSG_WriteByte (&client->message, 0);
 
@@ -353,13 +352,19 @@ void SV_ConnectClient (int clientnum)
 	client->Clear();
 	client->netconnection = netconnection;
 
-    client->name = ED_NewString(12);
+	client->name = ED_NewString(12);
 	strcpy (pr_strings + client->name, "unconnected");
 	client->active = true;
 	client->spawned = false;
 	client->edict = ent;
-    client->message.maxsize = (sv_protocol_version == EXPANDED_PROTOCOL_VERSION ? 0 : MAX_MSGLEN);
+	client->message.maxsize = (sv_protocol_version == EXPANDED_PROTOCOL_VERSION ? 0 : MAX_MSGLEN);
 	client->message.allowoverflow = true;		// we can catch it
+
+#ifdef IDGODS
+	client->privileged = IsID(&client->netconnection->addr);
+#else	
+	client->privileged = false;				
+#endif
 
 	if (sv.loadgame)
 		memcpy (client->spawn_parms, spawn_parms, sizeof(spawn_parms));
@@ -532,6 +537,11 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 	ent = NEXT_EDICT(sv.edicts.data());
 	for (e=1 ; e<sv.num_edicts ; e++, ent = NEXT_EDICT(ent))
 	{
+#ifdef QUAKE2
+		// don't send if flagged for NODRAW and there are no lighting effects
+		if (ent->v.effects == EF_NODRAW)
+			continue;
+#endif
 
 // ignore if not touching a PV leaf
 		if (ent != clent)	// clent is ALLWAYS sent
@@ -548,10 +558,10 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 				continue;		// not visible
 		}
 
-        if (msg->maxsize > 0 && sv_protocol_version == PROTOCOL_VERSION && msg->maxsize - msg->cursize < 16)
+		if (msg->maxsize > 0 && sv_protocol_version == PROTOCOL_VERSION && msg->maxsize - msg->cursize < 16)
 		{
 			Con_Printf ("packet overflow\n");
-            sv_request_protocol_version_upgrade = true;
+			sv_request_protocol_version_upgrade = true;
 			return;
 		}
 
@@ -601,50 +611,50 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 	//
 	// write the message
 	//
-        if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-        {
-            auto oldsize = msg->cursize;
-            auto oldmaxsize = msg->maxsize;
-            msg->maxsize = 0;
-            
-            MSG_WriteByte (msg,bits | U_SIGNAL);
-            
-            if (bits & U_MOREBITS)
-                MSG_WriteByte (msg, bits>>8);
-            MSG_WriteLongAsString(msg, e);
-            
-            if (bits & U_MODEL)
-                MSG_WriteLongAsString(msg, ent->v.modelindex);
-            if (bits & U_FRAME)
-                MSG_WriteByte (msg, ent->v.frame);
-            if (bits & U_COLORMAP)
-                MSG_WriteByte (msg, ent->v.colormap);
-            if (bits & U_SKIN)
-                MSG_WriteByte (msg, ent->v.skin);
-            if (bits & U_EFFECTS)
-                MSG_WriteByte (msg, ent->v.effects);
-            if (bits & U_ORIGIN1)
-                MSG_WriteFloat (msg, ent->v.origin[0]);
-            if (bits & U_ANGLE1)
-                MSG_WriteFloat(msg, ent->v.angles[0]);
-            if (bits & U_ORIGIN2)
-                MSG_WriteFloat (msg, ent->v.origin[1]);
-            if (bits & U_ANGLE2)
-                MSG_WriteFloat(msg, ent->v.angles[1]);
-            if (bits & U_ORIGIN3)
-                MSG_WriteFloat (msg, ent->v.origin[2]);
-            if (bits & U_ANGLE3)
-                MSG_WriteFloat(msg, ent->v.angles[2]);
+		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+		{
+			auto oldsize = msg->cursize;
+			auto oldmaxsize = msg->maxsize;
+			msg->maxsize = 0;
+			
+			MSG_WriteByte (msg,bits | U_SIGNAL);
+			
+			if (bits & U_MOREBITS)
+				MSG_WriteByte (msg, bits>>8);
+			MSG_WriteLongAsString(msg, e);
+			
+			if (bits & U_MODEL)
+				MSG_WriteLongAsString(msg, ent->v.modelindex);
+			if (bits & U_FRAME)
+				MSG_WriteByte (msg, ent->v.frame);
+			if (bits & U_COLORMAP)
+				MSG_WriteByte (msg, ent->v.colormap);
+			if (bits & U_SKIN)
+				MSG_WriteByte (msg, ent->v.skin);
+			if (bits & U_EFFECTS)
+				MSG_WriteByte (msg, ent->v.effects);
+			if (bits & U_ORIGIN1)
+				MSG_WriteFloat (msg, ent->v.origin[0]);
+			if (bits & U_ANGLE1)
+				MSG_WriteFloat(msg, ent->v.angles[0]);
+			if (bits & U_ORIGIN2)
+				MSG_WriteFloat (msg, ent->v.origin[1]);
+			if (bits & U_ANGLE2)
+				MSG_WriteFloat(msg, ent->v.angles[1]);
+			if (bits & U_ORIGIN3)
+				MSG_WriteFloat (msg, ent->v.origin[2]);
+			if (bits & U_ANGLE3)
+				MSG_WriteFloat(msg, ent->v.angles[2]);
 
-            msg->maxsize = oldmaxsize;
-            if (oldmaxsize > 0 && msg->cursize > oldmaxsize)
-            {
-                msg->data.resize(oldsize);
-                Con_Printf ("packet overflow\n");
-                return;
-            }
-            continue;
-        }
+			msg->maxsize = oldmaxsize;
+			if (oldmaxsize > 0 && msg->cursize > oldmaxsize)
+			{
+				msg->data.resize(oldsize);
+				Con_Printf ("packet overflow\n");
+				return;
+			}
+			continue;
+		}
 		MSG_WriteByte (msg,bits | U_SIGNAL);
 		
 		if (bits & U_MOREBITS)
@@ -710,7 +720,9 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 	int		i;
 	edict_t	*other;
 	int		items;
+#ifndef QUAKE2
 	eval_t	*val;
+#endif
 
 //
 // send a damage message
@@ -767,12 +779,16 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 
 // stuff the sigil bits into the high bits of items for sbar, or else
 // mix in items2
+#ifdef QUAKE2
+	items = (int)ent->v.items | ((int)ent->v.items2 << 23);
+#else
 	val = GetEdictFieldValue(ent, "items2");
 
 	if (val)
 		items = (int)ent->v.items | ((int)val->_float << 23);
 	else
 		items = (int)ent->v.items | ((int)pr_global_struct->serverflags << 28);
+#endif
 
 	bits |= SU_ITEMS;
 	
@@ -800,59 +816,58 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 		bits |= SU_WEAPON;
 
 // send the data
-    if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-    {
-        MSG_WriteByte (msg, svc_expandedclientdata);
-        MSG_WriteLongAsString (msg, bits);
-        
-        if (bits & SU_VIEWHEIGHT)
-            MSG_WriteChar (msg, ent->v.view_ofs[2]);
-        
-        if (bits & SU_IDEALPITCH)
-            MSG_WriteChar (msg, ent->v.idealpitch);
-        
-        for (i=0 ; i<3 ; i++)
-        {
-            if (bits & (SU_PUNCH1<<i))
-                MSG_WriteChar (msg, ent->v.punchangle[i]);
-            if (bits & (SU_VELOCITY1<<i))
-                MSG_WriteChar (msg, ent->v.velocity[i]/16);
-        }
-        
-        // [always sent]    if (bits & SU_ITEMS)
-        MSG_WriteLong (msg, items);
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	{
+		MSG_WriteByte (msg, svc_expandedclientdata);
+		MSG_WriteLongAsString (msg, bits);
+		
+		if (bits & SU_VIEWHEIGHT)
+			MSG_WriteChar (msg, ent->v.view_ofs[2]);
+		
+		if (bits & SU_IDEALPITCH)
+			MSG_WriteChar (msg, ent->v.idealpitch);
+		
+		for (i=0 ; i<3 ; i++)
+		{
+			if (bits & (SU_PUNCH1<<i))
+				MSG_WriteChar (msg, ent->v.punchangle[i]);
+			if (bits & (SU_VELOCITY1<<i))
+				MSG_WriteChar (msg, ent->v.velocity[i]/16);
+		}
+		
+		MSG_WriteLong (msg, items);
 
-        if (bits & SU_WEAPONFRAME)
-            MSG_WriteLongAsString (msg, ent->v.weaponframe);
-        if (bits & SU_ARMOR)
-            MSG_WriteLongAsString (msg, ent->v.armorvalue);
-        if (bits & SU_WEAPON)
-            MSG_WriteLongAsString (msg, SV_ModelIndex(pr_strings+ent->v.weaponmodel));
-        
-        MSG_WriteLongAsString (msg, ent->v.health);
-        MSG_WriteLongAsString (msg, ent->v.currentammo);
-        MSG_WriteLongAsString (msg, ent->v.ammo_shells);
-        MSG_WriteLongAsString (msg, ent->v.ammo_nails);
-        MSG_WriteLongAsString (msg, ent->v.ammo_rockets);
-        MSG_WriteLongAsString (msg, ent->v.ammo_cells);
-        
-        if (standard_quake)
-        {
-            MSG_WriteLongAsString (msg, ent->v.weapon);
-        }
-        else
-        {
-            for(i=0;i<32;i++)
-            {
-                if ( ((int)ent->v.weapon) & (1<<i) )
-                {
-                    MSG_WriteLongAsString (msg, i);
-                    break;
-                }
-            }
-        }
-        return;
-    }
+		if (bits & SU_WEAPONFRAME)
+			MSG_WriteLongAsString (msg, ent->v.weaponframe);
+		if (bits & SU_ARMOR)
+			MSG_WriteLongAsString (msg, ent->v.armorvalue);
+		if (bits & SU_WEAPON)
+			MSG_WriteLongAsString (msg, SV_ModelIndex(pr_strings+ent->v.weaponmodel));
+		
+		MSG_WriteLongAsString (msg, ent->v.health);
+		MSG_WriteLongAsString (msg, ent->v.currentammo);
+		MSG_WriteLongAsString (msg, ent->v.ammo_shells);
+		MSG_WriteLongAsString (msg, ent->v.ammo_nails);
+		MSG_WriteLongAsString (msg, ent->v.ammo_rockets);
+		MSG_WriteLongAsString (msg, ent->v.ammo_cells);
+		
+		if (standard_quake)
+		{
+			MSG_WriteLongAsString (msg, ent->v.weapon);
+		}
+		else
+		{
+			for(i=0;i<32;i++)
+			{
+				if ( ((int)ent->v.weapon) & (1<<i) )
+				{
+					MSG_WriteLongAsString (msg, i);
+					break;
+				}
+			}
+		}
+		return;
+	}
 
 	if (sv_request_protocol_version_upgrade)
 		bits |= SU_REQEXPPROTO;
@@ -917,14 +932,14 @@ qboolean SV_SendClientDatagram (client_t *client)
 {
 	static sizebuf_t	msg;
 	
-    msg.maxsize = MAX_DATAGRAM;
-    msg.cursize = 0;
-    if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-    {
-        int size = NET_MaxUnreliableMessageSize(client->netconnection);
-        if (size >= 0)
-            msg.maxsize = size;
-    }
+	msg.maxsize = MAX_DATAGRAM;
+	msg.cursize = 0;
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	{
+		int size = NET_MaxUnreliableMessageSize(client->netconnection);
+		if (size >= 0)
+			msg.maxsize = size;
+	}
 
 	MSG_WriteByte (&msg, svc_time);
 	MSG_WriteFloat (&msg, sv.time);
@@ -1106,11 +1121,11 @@ int SV_ModelIndex (const char *name)
 	if (!name || !name[0])
 		return 0;
 
-    i = -1;
-    auto entry = sv.model_index.find(std::string(name));
-    if (entry != sv.model_index.end())
-        i = entry->second;
-    else
+	i = -1;
+	auto entry = sv.model_index.find(std::string(name));
+	if (entry != sv.model_index.end())
+		i = entry->second;
+	else
 		Sys_Error ("SV_ModelIndex: model %s not precached", name);
 	return i;
 }
@@ -1158,20 +1173,20 @@ void SV_CreateBaseline (void)
 	//
 	// add to the message
 	//
-        if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-        {
-            MSG_WriteByte (&sv.signon,svc_expandedspawnbaseline);
-            MSG_WriteLongAsString (&sv.signon,entnum);
-            
-            MSG_WriteLongAsString (&sv.signon, svent->baseline.modelindex);
-        }
-        else
-        {
-            MSG_WriteByte (&sv.signon,svc_spawnbaseline);
-            MSG_WriteShort (&sv.signon,entnum);
+		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+		{
+			MSG_WriteByte (&sv.signon,svc_expandedspawnbaseline);
+			MSG_WriteLongAsString (&sv.signon,entnum);
+			
+			MSG_WriteLongAsString (&sv.signon, svent->baseline.modelindex);
+		}
+		else
+		{
+			MSG_WriteByte (&sv.signon,svc_spawnbaseline);
+			MSG_WriteShort (&sv.signon,entnum);
 
-            MSG_WriteByte (&sv.signon, svent->baseline.modelindex);
-        }
+			MSG_WriteByte (&sv.signon, svent->baseline.modelindex);
+		}
 		MSG_WriteByte (&sv.signon, svent->baseline.frame);
 		MSG_WriteByte (&sv.signon, svent->baseline.colormap);
 		MSG_WriteByte (&sv.signon, svent->baseline.skin);
@@ -1214,7 +1229,11 @@ void SV_SendReconnect (void)
 	NET_SendToAll (&msg, 5);
 	
 	if (cls.state != ca_dedicated)
+#ifdef QUAKE2
+		Cbuf_InsertText ("reconnect\n");
+#else
 		Cmd_ExecuteString ("reconnect\n", src_command);
+#endif
 }
 
 
@@ -1256,7 +1275,11 @@ This is called at the start of each level
 extern float		scr_centertime_off;
 extern qboolean		snd_forceclear;
 
+#ifdef QUAKE2
+void SV_SpawnServer (char *server, char *startspot)
+#else
 void SV_SpawnServer (char *server)
+#endif
 {
 	edict_t		*ent;
 	int			i;
@@ -1298,21 +1321,25 @@ void SV_SpawnServer (char *server)
 
 	sv.Clear();
 
-    auto name_len = (int)strlen(server);
-    sv.name = ED_NewString(name_len + 1);
-    Q_strncpy(pr_strings + sv.name, server, name_len);
+	auto name_len = (int)strlen(server);
+	sv.name = ED_NewString(name_len + 1);
+	Q_strncpy(pr_strings + sv.name, server, name_len);
+#ifdef QUAKE2
+	if (startspot)
+		strcpy(sv.startspot, startspot);
+#endif
 
 // load progs to get entity field count
 	PR_LoadProgs ();
 
 // allocate server memory
-    auto tocreate = MAX_EDICTS;
-    while (tocreate < svs.maxclients + 1)
-    {
-        tocreate += MAX_EDICTS;
-    }
+	auto tocreate = MAX_EDICTS;
+	while (tocreate < svs.maxclients + 1)
+	{
+		tocreate += MAX_EDICTS;
+	}
 	SV_ResizeEdicts(tocreate * pr_edict_size);
-    sv.edicts_reallocation_sequence++;
+	sv.edicts_reallocation_sequence++;
 
 	sv.datagram.maxsize = 0;
 	sv.datagram.cursize = 0;
@@ -1323,8 +1350,8 @@ void SV_SpawnServer (char *server)
 	sv.signon.maxsize = 0;
 	sv.signon.cursize = 0;
 	
-    pr_string_temp = ED_NewString(128);
-    
+	pr_string_temp = ED_NewString(128);
+	
 // leave slots at start for clients only
 	sv.num_edicts = svs.maxclients+1;
 	for (i=0 ; i<svs.maxclients ; i++)
@@ -1338,9 +1365,9 @@ void SV_SpawnServer (char *server)
 
 	sv.time = 1.0;
 	
-    name_len = (int)strlen(server);
-    sv.name = ED_NewString(name_len + 1);
-    Q_strncpy(pr_strings + sv.name, server, name_len);
+	name_len = (int)strlen(server);
+	sv.name = ED_NewString(name_len + 1);
+	Q_strncpy(pr_strings + sv.name, server, name_len);
 	sprintf (sv.modelname,"maps/%s.bsp", server);
 	sv.worldmodel = Mod_ForName (sv.modelname, false);
 	if (!sv.worldmodel)
@@ -1349,30 +1376,30 @@ void SV_SpawnServer (char *server)
 		sv.active = false;
 		return;
 	}
-    if (sv.models.empty())
-    {
-        sv.models.push_back(nullptr);
-    }
-    sv.models.push_back(sv.worldmodel);
+	if (sv.models.empty())
+	{
+		sv.models.push_back(nullptr);
+	}
+	sv.models.push_back(sv.worldmodel);
 	
 //
 // clear world interaction links
 //
 	SV_ClearWorld ();
 	
-    sv.sound_precache.emplace_back(pr_strings);
+	sv.sound_precache.emplace_back(pr_strings);
 
-    sv.model_precache.emplace_back(pr_strings);
-    sv.model_index.insert({ std::string(pr_strings), 0 });
+	sv.model_precache.emplace_back(pr_strings);
+	sv.model_index.insert({ std::string(pr_strings), 0 });
 	sv.model_precache.emplace_back(sv.modelname);
-    sv.model_index.insert({ std::string(sv.modelname), 1 });
+	sv.model_index.insert({ std::string(sv.modelname), 1 });
 	for (i=1 ; i<sv.worldmodel->numsubmodels ; i++)
 	{
-        std::string name("*");
-        name += std::to_string(i);
-        sv.model_precache.push_back(name);
-        sv.model_index.insert({ name, 1+i});
-        sv.models.push_back(Mod_ForName(name.c_str(), false));
+		std::string name("*");
+		name += std::to_string(i);
+		sv.model_precache.push_back(name);
+		sv.model_index.insert({ name, 1+i});
+		sv.models.push_back(Mod_ForName(name.c_str(), false));
 	}
 
 //
@@ -1392,14 +1419,17 @@ void SV_SpawnServer (char *server)
 		pr_global_struct->deathmatch = deathmatch.value;
 
 	pr_global_struct->mapname = sv.name;
+#ifdef QUAKE2
+	pr_global_struct->startspot = sv.startspot - pr_strings;
+#endif
 
 // serverflags are for cross level information (sigils)
 	pr_global_struct->serverflags = svs.serverflags;
-    sv_static_entity_count = 0;
-    sv_bump_protocol_version = false;
-    sv_request_protocol_version_upgrade = false;
-    
-    ED_LoadFromFile (sv.worldmodel->entities);
+	sv_static_entity_count = 0;
+	sv_bump_protocol_version = false;
+	sv_request_protocol_version_upgrade = false;
+	
+	ED_LoadFromFile (sv.worldmodel->entities);
 
 	sv.active = true;
 
@@ -1416,10 +1446,10 @@ void SV_SpawnServer (char *server)
 	sv_bump_protocol_version = false;
 
 // create a baseline for more efficient communications
-    SV_CreateBaseline ();
+	SV_CreateBaseline ();
 
 // use signon message for second protocol version adjustment
-    if (sv_protocol_version == PROTOCOL_VERSION && sv.signon.cursize > NET_MAXMESSAGE)
+	if (sv_protocol_version == PROTOCOL_VERSION && sv.signon.cursize > NET_MAXMESSAGE)
 	{
 		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
 	}
@@ -1428,16 +1458,16 @@ void SV_SpawnServer (char *server)
 	if (sv_protocol_version == PROTOCOL_VERSION)
 	{
 		sv.signon.maxsize = NET_MAXMESSAGE;
-        sv.datagram.maxsize = MAX_DATAGRAM;
-        sv.reliable_datagram.maxsize = MAX_DATAGRAM;
-    }
+		sv.datagram.maxsize = MAX_DATAGRAM;
+		sv.reliable_datagram.maxsize = MAX_DATAGRAM;
+	}
 
 // send serverinfo to all connected clients
 	for (i=0,host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
 		if (host_client->active)
-        {
+		{
 			SV_SendServerinfo (host_client);
-        }
+		}
 	
 	Con_DPrintf ("Server spawned.\n");
 }

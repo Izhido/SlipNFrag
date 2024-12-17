@@ -34,7 +34,7 @@ typedef struct
 
 typedef struct sfx_s
 {
-    std::string name;
+	std::string 	name;
 	byte* data;
 } sfx_t;
 
@@ -60,7 +60,7 @@ typedef struct
 	int				samplepos;				// in mono samples
 	int				samplebits;
 	int				speed;
-    std::vector<unsigned char> buffer;
+	std::vector<unsigned char>	buffer;
 } dma_t;
 
 // !!! if this is changed, it much be changed in asm_i386.h too !!!
@@ -131,8 +131,8 @@ void SNDDMA_Shutdown(void);
 #define	MAX_DYNAMIC_CHANNELS	8
 
 
-extern	std::vector<channel_t> channels; // normal entity sounds + water, etc
-extern	std::vector<channel_t> s_static_channels; // static sounds
+extern	std::vector<channel_t>   channels; // normal entity sounds + water, etc
+extern	std::vector<channel_t>   s_static_channels; // static sounds
 
 extern	int			total_channels;
 extern	int			s_total_static_channels;

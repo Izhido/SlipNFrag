@@ -33,11 +33,11 @@ ResampleSfx
 void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
-    float	srcsamplefrac;
+	float	srcsamplefrac;
 	float	stepscale;
 	int		i;
 	int		y0, y1, y2, y3, fracstep, sample;
-    float	a0, a1, a2, a3, mu, mu2;
+	float	a0, a1, a2, a3, mu, mu2;
 	sfxcache_t	*sc;
 	
 	sc = (sfxcache_t*)sfx->data;
@@ -45,7 +45,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 		return;
 
 	stepscale = (float)inrate / shm->speed;	// this is usually 0.5, 1, or 2
-    auto srclength = sc->length;
+	auto srclength = sc->length;
 	outcount = srclength / stepscale;
 	sc->length = outcount;
 	if (sc->loopstart != -1)
@@ -72,60 +72,60 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 // general case
 		uint64_t samplefrac = 0;
 		fracstep = stepscale*256;
-        for (i=0 ; i<outcount ; i++)
-        {
-            uint64_t srcsample = samplefrac >> 8;
-            srcsamplefrac = samplefrac - (srcsample << 8);
-            samplefrac += fracstep;
-            if (inwidth == 2)
-                y1 = LittleShort ( ((short *)data)[srcsample] );
-            else
-                y1 = (int)( (unsigned char)(data[srcsample]) - 128) * 256;
-            if (srcsample == 0)
-            {
-                y0 = y1;
-            }
-            else
-            {
-                if (inwidth == 2)
-                    y0 = LittleShort ( ((short *)data)[srcsample - 1] );
-                else
-                    y0 = (int)( (unsigned char)(data[srcsample - 1]) - 128) * 256;
-            }
-            if (srcsample >= srclength - 1)
-            {
-                y2 = y1;
-            }
-            else
-            {
-                if (inwidth == 2)
-                    y2 = LittleShort ( ((short *)data)[srcsample + 1] );
-                else
-                    y2 = (int)( (unsigned char)(data[srcsample + 1]) - 128) * 256;
-            }
-            if (srcsample >= srclength - 2)
-            {
-                y3 = y2;
-            }
-            else
-            {
-                if (inwidth == 2)
-                    y3 = LittleShort ( ((short *)data)[srcsample + 2] );
-                else
-                    y3 = (int)( (unsigned char)(data[srcsample + 2]) - 128) * 256;
-            }
-            a0 = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
-            a1 = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
-            a2 = -0.5 * y0 + 0.5 * y2;
-            a3 = y1;
-            mu = srcsamplefrac / 256;
-            mu2 = mu * mu;
+		for (i=0 ; i<outcount ; i++)
+		{
+			uint64_t srcsample = samplefrac >> 8;
+			srcsamplefrac = samplefrac - (srcsample << 8);
+			samplefrac += fracstep;
+			if (inwidth == 2)
+				y1 = LittleShort ( ((short *)data)[srcsample] );
+			else
+				y1 = (int)( (unsigned char)(data[srcsample]) - 128) * 256;
+			if (srcsample == 0)
+			{
+				y0 = y1;
+			}
+			else
+			{
+				if (inwidth == 2)
+					y0 = LittleShort ( ((short *)data)[srcsample - 1] );
+				else
+					y0 = (int)( (unsigned char)(data[srcsample - 1]) - 128) * 256;
+			}
+			if (srcsample >= srclength - 1)
+			{
+				y2 = y1;
+			}
+			else
+			{
+				if (inwidth == 2)
+					y2 = LittleShort ( ((short *)data)[srcsample + 1] );
+				else
+					y2 = (int)( (unsigned char)(data[srcsample + 1]) - 128) * 256;
+			}
+			if (srcsample >= srclength - 2)
+			{
+				y3 = y2;
+			}
+			else
+			{
+				if (inwidth == 2)
+					y3 = LittleShort ( ((short *)data)[srcsample + 2] );
+				else
+					y3 = (int)( (unsigned char)(data[srcsample + 2]) - 128) * 256;
+			}
+			a0 = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
+			a1 = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
+			a2 = -0.5 * y0 + 0.5 * y2;
+			a3 = y1;
+			mu = srcsamplefrac / 256;
+			mu2 = mu * mu;
 			sample = std::min(std::max((int)(a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3), -32768), 32767);
-            if (sc->width == 2)
-                ((short *)sc->data)[i] = sample;
-            else
-                ((signed char *)sc->data)[i] = sample >> 8;
-        }
+			if (sc->width == 2)
+				((short *)sc->data)[i] = sample;
+			else
+				((signed char *)sc->data)[i] = sample >> 8;
+		}
 	}
 }
 
@@ -156,7 +156,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 //	Con_Printf ("loading %s\n",namebuffer);
 
-    std::vector<byte> contents;
+	std::vector<byte> contents;
 	data = COM_LoadFile (namebuffer.c_str(), contents);
 
 	if (!data)
@@ -182,8 +182,8 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	len = len * info.width * info.channels;
 
-    s->data = new byte[len + sizeof(sfxcache_t)];
-    sc = (sfxcache_t*)s->data;
+	s->data = new byte[len + sizeof(sfxcache_t)];
+	sc = (sfxcache_t*)s->data;
 	if (!sc)
 		return NULL;
 	
@@ -193,7 +193,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	sc->width = info.width;
 	sc->stereo = info.channels;
 
-    ResampleSfx (s, sc->speed, sc->width, data + info.dataofs);
+	ResampleSfx (s, sc->speed, sc->width, data + info.dataofs);
 
 	return sc;
 }
@@ -381,12 +381,12 @@ wavinfo_t GetWavinfo (const char *name, byte *wav, int wavlength)
 	else
 		info.samples = samples;
 
-    if (info.loopstart >= info.samples)
-    {
-        Con_Printf ("%s has loop start >= end\n", name);
-        info.loopstart = -1;
-        info.samples = samples;
-    }
+	if (info.loopstart >= info.samples)
+	{
+		Con_Printf ("%s has loop start >= end\n", name);
+		info.loopstart = -1;
+		info.samples = samples;
+	}
 
 	info.dataofs = data_p - wav;
 	

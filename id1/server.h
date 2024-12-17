@@ -45,18 +45,21 @@ struct server_t
 	double		lastchecktime;
 	
 	string_t		name;			// map name
+#ifdef QUAKE2
+	char		startspot[64];
+#endif
 	char		modelname[64];		// maps/<name>.bsp, for model_precache[0]
 	struct model_s 	*worldmodel;
-    std::vector<std::string> model_precache;
-    std::unordered_map<std::string, int> model_index;
-    std::vector<struct model_s*> models;
-    std::vector<std::string> sound_precache;
-    std::vector<std::string> lightstyles;
+	std::vector<std::string>		model_precache;
+	std::unordered_map<std::string, int> model_index;
+	std::vector<struct model_s*>	models;
+	std::vector<std::string>		sound_precache;
+	std::vector<std::string>		lightstyles;
 	int			num_edicts;
-    std::vector<byte> edicts;		// can NOT be array indexed, because
+	std::vector<byte>		edicts;			// can NOT be array indexed, because
 									// edict_t is variable sized, but can
 									// be used to reference the world ent
-    int edicts_reallocation_sequence;
+	int edicts_reallocation_sequence;
 	server_state_t	state;			// some actions are only valid during load
 
 	sizebuf_t	datagram;
@@ -65,7 +68,7 @@ struct server_t
 
 	sizebuf_t	signon;
 
-    void Clear();
+	void Clear();
 };
 
 
@@ -77,6 +80,7 @@ struct client_t
 	qboolean		active;				// false = client is free
 	qboolean		spawned;			// false = don't send datagrams
 	qboolean		dropasap;			// has been told to go to another level
+	qboolean		privileged;			// can execute any host command
 	qboolean		sendsignon;			// only valid before spawned
 
 	double			last_message;		// reliable messages must be sent
@@ -90,7 +94,7 @@ struct client_t
 	sizebuf_t		message;			// can be added to at any time,
 										// copied and clear once per frame
 
-    edict_t			*edict;				// EDICT_NUM(clientnum+1)
+	edict_t			*edict;				// EDICT_NUM(clientnum+1)
 	string_t			name;			// for printing to other people
 	int				colors;
 		
@@ -121,6 +125,10 @@ struct client_t
 #define	MOVETYPE_NOCLIP			8
 #define	MOVETYPE_FLYMISSILE		9		// extra size to monsters
 #define	MOVETYPE_BOUNCE			10
+#ifdef QUAKE2
+#define MOVETYPE_BOUNCEMISSILE	11		// bounce w/o gravity
+#define MOVETYPE_FOLLOW			12		// track movement of aiment
+#endif
 
 // edict->solid values
 #define	SOLID_NOT				0		// no interaction with other objects
@@ -153,6 +161,10 @@ struct client_t
 #define	FL_PARTIALGROUND		1024	// not all corners are valid
 #define	FL_WATERJUMP			2048	// player jumping out of water
 #define	FL_JUMPRELEASED			4096	// for jump debouncing
+#ifdef QUAKE2
+#define FL_FLASHLIGHT			8192
+#define FL_ARCHIVE_OVERRIDE		1048576
+#endif
 
 // entity effects
 
@@ -160,12 +172,28 @@ struct client_t
 #define	EF_MUZZLEFLASH 			2
 #define	EF_BRIGHTLIGHT 			4
 #define	EF_DIMLIGHT 			8
+#ifdef QUAKE2
+#define EF_DARKLIGHT			16
+#define EF_DARKFIELD			32
+#define EF_LIGHT				64
+#define EF_NODRAW				128
+#endif
 
 #define	SPAWNFLAG_NOT_EASY			256
 #define	SPAWNFLAG_NOT_MEDIUM		512
 #define	SPAWNFLAG_NOT_HARD			1024
 #define	SPAWNFLAG_NOT_DEATHMATCH	2048
 
+#ifdef QUAKE2
+// server flags
+#define	SFL_EPISODE_1		1
+#define	SFL_EPISODE_2		2
+#define	SFL_EPISODE_3		4
+#define	SFL_EPISODE_4		8
+#define	SFL_NEW_UNIT		16
+#define	SFL_NEW_EPISODE		32
+#define	SFL_CROSS_TRIGGERS	65280
+#endif
 
 //============================================================================
 
@@ -230,6 +258,10 @@ void SV_MoveToGoal (void);
 void SV_CheckForNewClients (void);
 void SV_RunClients (void);
 void SV_SaveSpawnparms ();
+#ifdef QUAKE2
+void SV_SpawnServer (char *server, char *startspot);
+#else
 void SV_SpawnServer (char *server);
+#endif
 void SV_DeleteEdictLeafs(size_t start, size_t end);
 void SV_ResizeEdicts(size_t newsize);

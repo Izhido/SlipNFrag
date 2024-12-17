@@ -39,8 +39,8 @@ int SCR_ModalMessage (const char *text);
 extern	float		scr_con_current;
 extern	float		scr_conlines;		// lines of console to display
 
-extern  float       con_con_current;
-extern  float       con_conlines;       // lines of console to display, in console coordinate system
+extern  float		con_con_current;
+extern  float		con_conlines;		// lines of console to display, in console coordinate system
 
 extern	int			scr_fullupdate;	// set to 0 to force full redraw
 extern	int			sb_lines;

@@ -77,10 +77,10 @@ void W_LoadWadFile (const char *filename)
 
 	wad_base = COM_LoadFile (filename, wad_contents);
 	if (!wad_base)
-    {
-        sys_nogamedata = 1;
+	{
+		sys_nogamedata = 1;
 		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
-    }
+	}
 
 	header = (wadinfo_t *)wad_base;
 	
