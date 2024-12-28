@@ -61,7 +61,7 @@ qpic_t	*Draw_CachePic (const char *path)
 	std::vector<byte> pic;
 	qpic_t		*dat;
 
-	auto entry = menu_cachepics.find(std::string(path));
+	auto entry = menu_cachepics.find(path);
 	if (entry != menu_cachepics.end())
 	{
 		return entry->second;
@@ -80,7 +80,7 @@ qpic_t	*Draw_CachePic (const char *path)
 
 	auto cached = new byte[pic.size()];
 	memcpy(cached, pic.data(), pic.size());
-	menu_cachepics.insert({ std::string(path), (qpic_t*)cached });
+	menu_cachepics.insert({ path, (qpic_t*)cached });
 
 	return (qpic_t*)cached;
 }

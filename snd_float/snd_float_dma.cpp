@@ -245,7 +245,7 @@ sfx_t *S_FindName (const char *name)
 		Sys_Error ("Sound name too long: %s", name);
 
 // see if already loaded
-	auto entry = known_sfx_index.find(std::string(name));
+	auto entry = known_sfx_index.find(name);
 	if (entry != known_sfx_index.end())
 	{
 		return &*entry->second;
@@ -253,7 +253,7 @@ sfx_t *S_FindName (const char *name)
 
     known_sfx.emplace_back();
 	auto last = std::prev(known_sfx.end());
-	known_sfx_index.insert({ std::string(name), last });
+	known_sfx_index.insert({ name, last });
 	sfx = &*last;
 	sfx->name = name;
 	

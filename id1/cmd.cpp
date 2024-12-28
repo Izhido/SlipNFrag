@@ -368,7 +368,7 @@ static	const char		*cmd_args = NULL;
 cmd_source_t	cmd_source;
 
 
-std::unordered_map<std::string, xcommand_t>	cmd_functions;		// possible commands to execute
+std::unordered_map<std::string_view, xcommand_t>	cmd_functions;		// possible commands to execute
 
 /*
 ============
@@ -479,15 +479,14 @@ void	Cmd_AddCommand (const char *cmd_name, xcommand_t function)
 	}
 	
 // fail if the command already exists
-	std::string name(cmd_name);
-	auto entry = cmd_functions.find(name);
+	auto entry = cmd_functions.find(cmd_name);
 	if (entry != cmd_functions.end())
 	{
 			Con_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
 			return;
 	}
 
-	cmd_functions.insert({ name, function });
+	cmd_functions.insert({ cmd_name, function });
 }
 
 /*
@@ -497,8 +496,7 @@ Cmd_Exists
 */
 qboolean	Cmd_Exists (const char *cmd_name)
 {
-	std::string name(cmd_name);
-	auto entry = cmd_functions.find(name);
+	auto entry = cmd_functions.find(cmd_name);
 	if (entry != cmd_functions.end())
 	{
 			return true;
@@ -525,8 +523,8 @@ char *Cmd_CompleteCommand (char *partial)
 		
 // check functions
 	for (auto& entry : cmd_functions)
-		if (!Q_strncmp (partial,entry.first.c_str(), len))
-			return (char*)entry.first.c_str();
+		if (!Q_strncmp (partial,entry.first.data(), len))
+			return (char*)entry.first.data();
 
 	return NULL;
 }
@@ -551,8 +549,7 @@ void	Cmd_ExecuteString (const char *text, cmd_source_t src)
 		return;		// no tokens
 
 // check functions
-	std::string name(cmd_argv[0]);
-	auto entry = cmd_functions.find(name);
+	auto entry = cmd_functions.find(cmd_argv[0]);
 	if (entry != cmd_functions.end())
 	{
 		entry->second();
