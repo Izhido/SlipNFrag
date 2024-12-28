@@ -244,7 +244,7 @@ void PF_setmodel (void)
 
 // check to see if model was properly precached
 	i = -1;
-	auto entry = sv.model_index.find(std::string(m));
+	auto entry = sv.model_index.find(m);
 	if (entry != sv.model_index.end())
 		i = entry->second;
 	else
@@ -1128,14 +1128,13 @@ void PF_precache_model (void)
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
 	PR_CheckEmptyString (s);
 
-	std::string name(s);
-	auto entry = sv.model_index.find(name);
+	auto entry = sv.model_index.find(s);
 	if (entry == sv.model_index.end())
 	{
 		auto index = (int)sv.model_precache.size();
-		sv.model_precache.push_back(name);
-		sv.model_index.insert({ name, index });
-		sv.models.push_back(Mod_ForName (name.c_str(), true));
+		sv.model_precache.push_back(s);
+		sv.model_index.insert({ s, index });
+		sv.models.push_back(Mod_ForName (s, true));
 	}
 }
 

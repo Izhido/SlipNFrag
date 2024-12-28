@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_local.h"
+#include "d_lists.h"
+#include "d_local.h"
 
 //define	PASSAGES
 
@@ -118,6 +120,10 @@ int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 float	dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
 float	se_time1, se_time2, de_time1, de_time2, dv_time1, dv_time2;
+
+extern mtexinfo_t	r_skytexinfo[6];
+
+extern qboolean R_CullBox (vec3_t mins, vec3_t maxs);
 
 void R_MarkLeaves (void);
 
@@ -892,6 +898,163 @@ int R_BmodelCheckBBox (model_t *clmodel, const float *minmaxs)
 
 /*
 =============
+R_DrawBEntitiesForLists
+=============
+*/
+void R_DrawBEntitiesForLists (void)
+{
+	int			i, j, k, clipflags;
+	vec3_t		oldorigin;
+	model_t		*clmodel;
+	float		minmaxs[6];
+	msurface_t	*psurf;
+	float		dot;
+	mplane_t	*pplane;
+
+	if (!r_drawentities.value)
+		return;
+
+	VectorCopy (modelorg, oldorigin);
+	insubmodel = true;
+	r_dlightframecount = r_framecount;
+
+	for (i=0 ; i<cl_numvisedicts ; i++)
+	{
+		currententity = cl_visedicts[i];
+
+		switch (currententity->model->type)
+		{
+		case mod_brush:
+
+			clmodel = currententity->model;
+
+		// see if the bounding box lets us trivially reject, also sets
+		// trivial accept status
+			for (j=0 ; j<3 ; j++)
+			{
+				minmaxs[j] = currententity->origin[j] +
+						clmodel->mins[j];
+				minmaxs[3+j] = currententity->origin[j] +
+						clmodel->maxs[j];
+			}
+
+			clipflags = R_BmodelCheckBBox (clmodel, minmaxs);
+
+			if (clipflags != BMODEL_FULLY_CLIPPED)
+			{
+				VectorCopy (currententity->origin, r_entorigin);
+				VectorSubtract (r_origin, r_entorigin, modelorg);
+			// FIXME: is this needed?
+				VectorCopy (modelorg, r_worldmodelorg);
+
+				r_pcurrentvertbase = clmodel->vertexes;
+
+			// FIXME: stop transforming twice
+				R_RotateBmodel ();
+
+			// calculate dynamic lighting for bmodel if it's not an
+			// instanced model
+				if (clmodel->firstmodelsurface != 0)
+				{
+					for (k=0 ; k<cl_dlights.size() ; k++)
+					{
+						if ((cl_dlights[k].die < cl.time) ||
+							(!cl_dlights[k].radius))
+						{
+							continue;
+						}
+
+						R_MarkLights (&cl_dlights[k], k,
+							clmodel->nodes + clmodel->hulls[0].firstclipnode);
+					}
+				}
+
+				psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
+
+				for (j=0 ; j<clmodel->nummodelsurfaces ; j++, psurf++)
+				{
+				// find which side of the node we are on
+					pplane = psurf->plane;
+
+					dot = DotProduct (modelorg, pplane->normal) - pplane->dist;
+
+				// draw the polygon
+					if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
+						(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
+					{
+						if (r_drawflat.value)
+						{
+							if (psurf->flags & SURF_DRAWSKYBOX)
+								continue;
+
+							auto data_ptr = (size_t)psurf;
+							int data = (int)data_ptr & 0xFF;
+
+							D_AddColoredSurfaceToLists (psurf, currententity, data);
+						}
+						else
+						{
+							r_drawnpolycount++;
+
+							if (psurf->flags & SURF_DRAWSKY)
+							{
+								if (r_skyboxinitialized)
+								{
+									D_AddSkyboxToLists(r_skytexinfo);
+								}
+								else if (r_skyRGBAinitialized)
+								{
+									D_AddSkyRGBAToLists(true);
+								}
+								else if (r_skyinitialized)
+								{
+									if (!r_skymade)
+									{
+										R_MakeSky ();
+									}
+
+									D_AddSkyToLists(true);
+								}
+							}
+							else if (psurf->flags & SURF_DRAWBACKGROUND)
+							{
+								d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+							}
+							else if (psurf->flags & SURF_DRAWTURB)
+							{
+								D_DrawTurbulentToLists(psurf);
+							}
+							else
+							{
+								D_DrawSurfaceToLists(psurf);
+							}
+						}
+					}
+				}
+
+			// put back world rotation and frustum clipping
+			// FIXME: R_RotateBmodel should just work off base_vxx
+				VectorCopy (base_vpn, vpn);
+				VectorCopy (base_vup, vup);
+				VectorCopy (base_vright, vright);
+				VectorCopy (base_modelorg, modelorg);
+				VectorCopy (oldorigin, modelorg);
+				R_TransformFrustum ();
+			}
+
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	insubmodel = false;
+}
+
+
+/*
+=============
 R_DrawBEntitiesOnList
 =============
 */
@@ -1083,7 +1246,10 @@ void R_EdgeDrawing (void)
 		db_time1 = rw_time2;
 	}
 
-	R_DrawBEntitiesOnList ();
+	if (d_uselists)
+		R_DrawBEntitiesForLists ();
+	else
+		R_DrawBEntitiesOnList ();
 
 	if (r_dspeeds.value)
 	{
@@ -1119,6 +1285,8 @@ void R_RenderView_ (void)
 		r_time1 = Sys_FloatTime ();
 
 	R_SetupFrame ();
+
+	R_SetFrustum ();
 
 #ifdef PASSAGES
 SetVisibilityByPassages ();

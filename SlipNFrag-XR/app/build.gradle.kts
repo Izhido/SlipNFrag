@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.heribertodelgado.slipnfrag_xr"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.heribertodelgado.slipnfrag_xr"

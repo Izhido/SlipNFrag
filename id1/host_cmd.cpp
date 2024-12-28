@@ -731,6 +731,10 @@ void Host_Loadgame_f (void)
 	}
 
 	auto tocreate = MAX_EDICTS;
+	if (max_edicts.value > 0)
+	{
+		tocreate = (int)max_edicts.value;
+	}
 	while (tocreate < entnum)
 	{
 		tocreate += MAX_EDICTS;
@@ -743,6 +747,7 @@ void Host_Loadgame_f (void)
 			ED_Free(e);
 		}
 		SV_ResizeEdicts(tocreate * pr_edict_size);
+		sv.max_edicts = tocreate;
 		sv.edicts_reallocation_sequence++;
 	}
 	else

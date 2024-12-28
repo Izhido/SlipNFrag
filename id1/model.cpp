@@ -109,7 +109,6 @@ Mod_Init
 void Mod_Init (void)
 {
 	memset (mod_novis.data(), 0xff, mod_novis.size());
-	pr_strings = pr_string_block.data();
 }
 
 /*

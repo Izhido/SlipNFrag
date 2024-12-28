@@ -56,6 +56,7 @@ struct server_t
 	std::vector<std::string>		sound_precache;
 	std::vector<std::string>		lightstyles;
 	int			num_edicts;
+	int			max_edicts;
 	std::vector<byte>		edicts;			// can NOT be array indexed, because
 									// edict_t is variable sized, but can
 									// be used to reference the world ent

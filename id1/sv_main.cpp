@@ -1122,7 +1122,7 @@ int SV_ModelIndex (const char *name)
 		return 0;
 
 	i = -1;
-	auto entry = sv.model_index.find(std::string(name));
+	auto entry = sv.model_index.find(name);
 	if (entry != sv.model_index.end())
 		i = entry->second;
 	else
@@ -1333,12 +1333,13 @@ void SV_SpawnServer (char *server)
 	PR_LoadProgs ();
 
 // allocate server memory
-	auto tocreate = MAX_EDICTS;
-	while (tocreate < svs.maxclients + 1)
+	sv.max_edicts = MAX_EDICTS;
+	if (max_edicts.value > 0)
 	{
-		tocreate += MAX_EDICTS;
+		sv.max_edicts = (int)max_edicts.value;
 	}
-	SV_ResizeEdicts(tocreate * pr_edict_size);
+
+	SV_ResizeEdicts(sv.max_edicts * pr_edict_size);
 	sv.edicts_reallocation_sequence++;
 
 	sv.datagram.maxsize = 0;
@@ -1390,9 +1391,9 @@ void SV_SpawnServer (char *server)
 	sv.sound_precache.emplace_back(pr_strings);
 
 	sv.model_precache.emplace_back(pr_strings);
-	sv.model_index.insert({ std::string(pr_strings), 0 });
+	sv.model_index.insert({ pr_strings, 0 });
 	sv.model_precache.emplace_back(sv.modelname);
-	sv.model_index.insert({ std::string(sv.modelname), 1 });
+	sv.model_index.insert({ sv.modelname, 1 });
 	for (i=1 ; i<sv.worldmodel->numsubmodels ; i++)
 	{
 		std::string name("*");

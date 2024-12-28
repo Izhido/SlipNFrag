@@ -62,9 +62,6 @@ extern	float			*pr_globals;			// same as pr_global_struct
 
 extern	int				pr_edict_size;	// in bytes
 
-extern std::vector<char> pr_string_block;
-extern int pr_string_block_used;
-
 extern string_t pr_string_temp;
 
 //============================================================================

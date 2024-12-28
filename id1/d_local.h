@@ -98,6 +98,9 @@ surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture);
 
 extern int D_MipLevelForScale (float scale);
 
+extern void D_DrawTurbulentToLists (msurface_t* pface);
+extern void D_DrawSurfaceToLists (msurface_t* pface);
+
 #if id386
 extern void D_PolysetAff8Start (void);
 extern void D_PolysetAff8End (void);

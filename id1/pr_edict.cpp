@@ -33,6 +33,8 @@ int				pr_edict_size;	// in bytes
 
 unsigned short		pr_crc;
 
+std::unordered_map<std::string_view, int> pr_fielddefs_index;
+
 int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
 
 ddef_t *ED_FieldAtOfs (int ofs);
@@ -119,6 +121,7 @@ edict_t *ED_Alloc (void)
 			SV_UnlinkEdict(e);
 		}
 		SV_ResizeEdicts(sv.edicts.size() + MAX_EDICTS * pr_edict_size);
+		sv.max_edicts += MAX_EDICTS;
 		sv.edicts_reallocation_sequence++;
 		for (j = 0, k = 0; j < sv.num_edicts; j++, k += pr_edict_size)
 		{
@@ -215,14 +218,10 @@ ED_FindField
 */
 ddef_t *ED_FindField (const char *name)
 {
-	ddef_t		*def;
-	int			i;
-	
-	for (i=0 ; i<progs->numfielddefs ; i++)
+	auto entry = pr_fielddefs_index.find(name);
+	if (entry != pr_fielddefs_index.end())
 	{
-		def = &pr_fielddefs[i];
-		if (!strcmp(pr_strings + def->s_name,name) )
-			return def;
+		return &pr_fielddefs[entry->second];
 	}
 	return NULL;
 }
@@ -766,6 +765,14 @@ int ED_NewString(int size)
 		}
 		pr_string_block.resize(pr_string_block.size() + additional);
 		pr_strings = pr_string_block.data();
+		if (pr_fielddefs != nullptr)
+		{
+			pr_fielddefs_index.clear();
+			for (auto i = 0; i < progs->numfielddefs; i++)
+			{
+				pr_fielddefs_index.insert({ pr_strings + pr_fielddefs[i].s_name, i });
+			}
+		}
 	}
 	auto offset = pr_string_block_used;
 	pr_string_block_used += size;
@@ -780,6 +787,14 @@ void PR_LoadStrings(char* source, int size)
 	{
 		pr_string_block.resize(pr_string_block.size() + to_allocate);
 		pr_strings = pr_string_block.data();
+		if (pr_fielddefs != nullptr)
+		{
+			pr_fielddefs_index.clear();
+			for (auto i = 0; i < progs->numfielddefs; i++)
+			{
+				pr_fielddefs_index.insert({ pr_strings + pr_fielddefs[i].s_name, i });
+			}
+		}
 	}
 	pr_string_block_used += to_use;
 	Q_memcpy(pr_strings, source, size);
@@ -1126,6 +1141,7 @@ void PR_LoadProgs (void)
 		pr_globaldefs[i].s_name = LittleLong (pr_globaldefs[i].s_name);
 	}
 
+	pr_fielddefs_index.clear();
 	for (i=0 ; i<progs->numfielddefs ; i++)
 	{
 		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
@@ -1133,6 +1149,7 @@ void PR_LoadProgs (void)
 			Sys_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
 		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
+		pr_fielddefs_index.insert({ pr_strings + pr_fielddefs[i].s_name, i });
 	}
 
 	for (i=0 ; i<progs->numglobals ; i++)
@@ -1168,7 +1185,7 @@ void PR_Init (void)
 
 edict_t *EDICT_NUM(int n)
 {
-	if (n < 0 || n >= sv.num_edicts)
+	if (n < 0 || n >= sv.max_edicts)
 		Sys_Error ("EDICT_NUM: bad number %i", n);
 	return (edict_t *)((byte *)sv.edicts.data()+ (n)*pr_edict_size);
 }

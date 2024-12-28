@@ -58,6 +58,8 @@ std::vector<unsigned>	host_basepalcoverage;
 cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
 cvar_t	host_speeds = {"host_speeds","0"};			// set for running times
 
+cvar_t	max_edicts = {"max_edicts","0"};
+
 cvar_t	sys_ticrate = {"sys_ticrate","0.05"};
 cvar_t	serverprofile = {"serverprofile","0"};
 
@@ -240,6 +242,8 @@ void Host_InitLocal (void)
 	
 	Cvar_RegisterVariable (&host_framerate);
 	Cvar_RegisterVariable (&host_speeds);
+
+	Cvar_RegisterVariable (&max_edicts);
 
 	Cvar_RegisterVariable (&sys_ticrate);
 	Cvar_RegisterVariable (&serverprofile);
@@ -701,6 +705,7 @@ void _Host_FrameReset()
 	increasebedges = false;
 	increasebasespans = 0;
 	warp_stack_index = -1;
+	insubmodel = false;
 }
 
 double _host_frame_time1 = 0;

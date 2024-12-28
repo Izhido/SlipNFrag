@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	*cvar_vars;
 
-std::unordered_map<std::string, cvar_t*> cvar_index;
+std::unordered_map<std::string_view, cvar_t*> cvar_index;
 
 /*
 ============
@@ -32,9 +32,7 @@ Cvar_FindVar
 */
 cvar_t *Cvar_FindVar (const char *var_name)
 {
-	static std::string key;
-	key = var_name;
-	auto entry = cvar_index.find(key);
+	auto entry = cvar_index.find(var_name);
 	if (entry != cvar_index.end())
 	{
 		return entry->second;
@@ -169,7 +167,7 @@ void Cvar_RegisterVariable (cvar_t *variable)
 // link the variable in
 	variable->next = cvar_vars;
 	cvar_vars = variable;
-    cvar_index.insert({ std::string(variable->name), variable });
+    cvar_index.insert({ variable->name, variable });
 }
 
 /*

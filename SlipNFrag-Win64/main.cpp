@@ -458,14 +458,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             if (sys_errormessage.length() > 0)
             {
-                std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
                 if (sys_nogamedata)
                 {
                     MessageBox(NULL, L"Ensure that the game data files are in the same folder as the app, or check your command line.", L"Slip & Frag - Game data not found", MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY | MB_OK);
                 }
                 else
                 {
-                    MessageBox(NULL, converter.from_bytes(sys_errormessage).c_str(), L"Slip & Frag - Sys_Error:", MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY | MB_OK);
+                    std::wstring message = L"(The error message could not be converted.)";
+                    auto size = MultiByteToWideChar(CP_UTF8, 0, sys_errormessage.c_str(), sys_errormessage.length(), NULL, 0);
+                    if (size > 0)
+                    {
+                        message.resize(size + 16);
+                        MultiByteToWideChar(CP_UTF8, 0, sys_errormessage.c_str(), sys_errormessage.length(), message.data(), (int)message.size());
+                    }
+
+                    MessageBox(NULL, message.c_str(), L"Slip & Frag - Sys_Error:", MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY | MB_OK);
                 }
             }
             PostQuitMessage(0);
@@ -898,9 +905,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     appState.windowTitle = L"Slip & Frag";
     appState.instance = hInstance;
 
-    using convert_type = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_type, wchar_t> converter;
-    appState.commandLine = std::string("slipnfrag.exe ") + converter.to_bytes(lpCmdLine);
+    std::string converted_cmdline;
+    auto size = WideCharToMultiByte(CP_UTF8, 0, lpCmdLine, -1, NULL, 0, NULL, NULL);
+    if (size > 0)
+    {
+        converted_cmdline.resize(size + 16);
+        WideCharToMultiByte(CP_UTF8, 0, lpCmdLine, -1, converted_cmdline.data(), converted_cmdline.size(), NULL, NULL);
+    }
+
+    appState.commandLine = std::string("slipnfrag.exe ") + converted_cmdline;
 
     appState.usesDarkMode = TRUE;
 

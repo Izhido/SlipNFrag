@@ -128,6 +128,8 @@ extern	float	xOrigin, yOrigin;
 
 extern	int		r_visframecount;
 
+extern	mplane_t	frustum[4];
+
 //=============================================================================
 
 extern int	vstartscan;
@@ -352,6 +354,7 @@ void R_AnimateLight (void);
 int R_LightPoint (const vec3_t p);
 argbcolor_t R_ColoredLightPoint (const vec3_t p);
 void R_SetupFrame (void);
+void R_SetFrustum (void);
 void R_cshift_f (void);
 void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1);
 void R_ClipEdge (const mvertex_t *pv0, const mvertex_t *pv1, clipplane_t *clip);

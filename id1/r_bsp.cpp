@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_local.h"
+#include "d_lists.h"
+#include "d_local.h"
 
 //
 // current entity info
@@ -52,8 +54,28 @@ static mvertex_t	*pfrontenter, *pfrontexit;
 
 static qboolean		makeclippededge;
 
+extern mtexinfo_t	r_skytexinfo[6];
+
 
 //===========================================================================
+
+/*
+=================
+R_CullBox
+
+Returns true if the box is completely outside the frustom
+=================
+*/
+qboolean R_CullBox (vec3_t mins, vec3_t maxs)
+{
+	int		i;
+
+	for (i=0 ; i<4 ; i++)
+		if (BoxOnPlaneSide (mins, maxs, &frustum[i]) == 2)
+			return true;
+	return false;
+}
+
 
 /*
 ================
@@ -659,6 +681,157 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 }
 
 
+/*
+================
+R_RecursiveWorldNodeForLists
+================
+*/
+void R_RecursiveWorldNodeForLists (mnode_t *node)
+{
+	int			i, c, side, *pindex;
+	vec3_t		acceptpt, rejectpt;
+	mplane_t	*plane;
+	msurface_t	*surf, **mark;
+	mleaf_t		*pleaf;
+	double		d, dot;
+	vec3_t		mins, maxs;
+
+	if (node->contents == CONTENTS_SOLID)
+		return;		// solid
+
+	if (node->visframe != r_visframecount)
+		return;
+	if (R_CullBox (node->minmaxs, node->minmaxs+3))
+		return;
+
+// if a leaf node, draw stuff
+	if (node->contents < 0)
+	{
+		pleaf = (mleaf_t *)node;
+
+		mark = pleaf->firstmarksurface;
+		c = pleaf->nummarksurfaces;
+
+		if (c)
+		{
+			do
+			{
+				(*mark)->visframe = r_framecount;
+				mark++;
+			} while (--c);
+		}
+
+		// deal with model fragments in this leaf
+		if (pleaf->efrags)
+			R_StoreEfrags (&pleaf->efrags);
+
+		return;
+	}
+
+// node is just a decision point, so go down the apropriate sides
+
+// find which side of the node we are on
+	plane = node->plane;
+
+	switch (plane->type)
+	{
+		case PLANE_X:
+			dot = modelorg[0] - plane->dist;
+			break;
+		case PLANE_Y:
+			dot = modelorg[1] - plane->dist;
+			break;
+		case PLANE_Z:
+			dot = modelorg[2] - plane->dist;
+			break;
+		default:
+			dot = DotProduct (modelorg, plane->normal) - plane->dist;
+			break;
+	}
+
+	if (dot >= 0)
+		side = 0;
+	else
+		side = 1;
+
+// recurse down the children, front side first
+	R_RecursiveWorldNodeForLists (node->children[side]);
+
+// draw stuff
+	c = node->numsurfaces;
+
+	if (c)
+	{
+		surf = cl.worldmodel->surfaces + node->firstsurface;
+
+		if (dot < 0 -BACKFACE_EPSILON)
+			side = SURF_PLANEBACK;
+		else if (dot > BACKFACE_EPSILON)
+			side = 0;
+		{
+			for ( ; c ; c--, surf++)
+			{
+				if (surf->visframe != r_framecount)
+					continue;
+
+				if (r_drawflat.value)
+				{
+					if (surf->flags & SURF_DRAWSKYBOX)
+						continue;
+
+					auto data_ptr = (size_t)surf;
+					int data = (int)data_ptr & 0xFF;
+
+					D_AddColoredSurfaceToLists (surf, currententity, data);
+				}
+				else
+				{
+					r_drawnpolycount++;
+
+					if (surf->flags & SURF_DRAWSKY)
+					{
+						if (r_skyboxinitialized)
+						{
+							D_AddSkyboxToLists(r_skytexinfo);
+						}
+						else if (r_skyRGBAinitialized)
+						{
+							D_AddSkyRGBAToLists(true);
+						}
+						else if (r_skyinitialized)
+						{
+							if (!r_skymade)
+							{
+								R_MakeSky ();
+							}
+
+							D_AddSkyToLists(true);
+						}
+					}
+					else if (surf->flags & SURF_DRAWBACKGROUND)
+					{
+						d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+					}
+					else if (surf->flags & SURF_DRAWTURB)
+					{
+						D_DrawTurbulentToLists(surf);
+					}
+					else
+					{
+						D_DrawSurfaceToLists(surf);
+					}
+				}
+
+			}
+		}
+
+	}
+
+// recurse down the back side
+	R_RecursiveWorldNodeForLists (node->children[!side]);
+}
+
+
 
 /*
 ================
@@ -678,7 +851,10 @@ void R_RenderWorld (void)
 	clmodel = currententity->model;
 	r_pcurrentvertbase = clmodel->vertexes;
 
-	R_RecursiveWorldNode (clmodel->nodes, 15);
+	if (d_uselists)
+		R_RecursiveWorldNodeForLists (clmodel->nodes);
+	else
+		R_RecursiveWorldNode (clmodel->nodes, 15);
 
 // if the driver wants the polygons back to front, play the visible ones back
 // in that order

@@ -522,9 +522,8 @@ void D_DrawSurfaces (void)
 D_DrawTurbulentToLists
 ==============
 */
-void D_DrawTurbulentToLists (surf_s* s)
+void D_DrawTurbulentToLists (msurface_t* pface)
 {
-	auto pface = (msurface_t*)s->data;
 	auto texture = R_TextureAnimation (pface->texinfo->texture);
 	if (pface->samplesRGB != nullptr)
 	{
@@ -596,9 +595,8 @@ void D_DrawTurbulentToLists (surf_s* s)
 D_DrawSurfaceToLists
 ==============
 */
-void D_DrawSurfaceToLists (surf_s* s)
+void D_DrawSurfaceToLists (msurface_t* pface)
 {
-	auto pface = (msurface_t*)s->data;
 	auto texture = R_TextureAnimation (pface->texinfo->texture);
 	if (pface->samplesRGB != NULL)
 	{
@@ -612,7 +610,7 @@ void D_DrawSurfaceToLists (surf_s* s)
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0)
 			{
-				if (s->isfence)
+				if (pface->flags & SURF_DRAWFENCE)
 				{
 					if (texture->external_color != nullptr && texture->external_glow != nullptr)
 						D_AddFenceRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
@@ -628,7 +626,7 @@ void D_DrawSurfaceToLists (surf_s* s)
 				else
 					D_AddSurfaceColoredLightsToLists (pface, pcurrentcache, currententity);
 			}
-			else if (s->isfence)
+			else if (pface->flags & SURF_DRAWFENCE)
 			{
 				if (texture->external_color != nullptr && texture->external_glow != nullptr)
 					D_AddFenceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
@@ -657,7 +655,7 @@ void D_DrawSurfaceToLists (surf_s* s)
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0)
 			{
-				if (s->isfence)
+				if (pface->flags & SURF_DRAWFENCE)
 				{
 					if (texture->external_color != nullptr && texture->external_glow != nullptr)
 						D_AddFenceRGBAToLists (pface, pcurrentcache, currententity);
@@ -673,7 +671,7 @@ void D_DrawSurfaceToLists (surf_s* s)
 				else
 					D_AddSurfaceToLists (pface, pcurrentcache, currententity);
 			}
-			else if (s->isfence)
+			else if (pface->flags & SURF_DRAWFENCE)
 			{
 				if (texture->external_color != nullptr && texture->external_glow != nullptr)
 					D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
@@ -776,7 +774,8 @@ void D_DrawSurfacesToLists (void)
 										// make entity passed in
 				}
 
-				D_DrawTurbulentToLists(s);
+				auto pface = (msurface_t*)s->data;
+				D_DrawTurbulentToLists(pface);
 
 				if (s->insubmodel)
 				{
@@ -810,7 +809,8 @@ void D_DrawSurfacesToLists (void)
 										// make entity passed in
 				}
 
-				D_DrawSurfaceToLists(s);
+				auto pface = (msurface_t*)s->data;
+				D_DrawSurfaceToLists(pface);
 
 				if (s->insubmodel)
 				{
