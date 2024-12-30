@@ -1676,7 +1676,7 @@ void android_main(struct android_app* app)
 							}
 						}
 
-						auto playerHeight = 32;
+						float playerHeight = 32;
 						if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
 						{
 							auto player = &cl_entities[cl.viewentity];
