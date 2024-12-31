@@ -1171,7 +1171,9 @@ void android_main(struct android_app* app)
 
         appState.FileLoader = new FileLoader(app);
 
-		auto sessionState = XR_SESSION_STATE_UNKNOWN;
+        appState.VertexTransform.m[15] = 1;
+
+        auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
 
 		while (app->destroyRequested == 0)

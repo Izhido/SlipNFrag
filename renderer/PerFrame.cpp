@@ -145,24 +145,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 {
     auto matrices = (float*)stagingBuffer->mapped;
     memcpy(matrices, appState.ViewMatrices.data(), 2 * sizeof(XrMatrix4x4f));
-    memcpy(matrices + 2 * 16, appState.ProjectionMatrices.data(), 2 * sizeof(XrMatrix4x4f));
-    matrices += 2 * 2 * 16;
-    *matrices++ = appState.Scale;
-    *matrices++ = 0;
-    *matrices++ = 0;
-    *matrices++ = 0;
-    *matrices++ = 0;
-    *matrices++ = 0;
-    *matrices++ = -appState.Scale;
-    *matrices++ = 0;
-    *matrices++ = 0;
-    *matrices++ = appState.Scale;
-    *matrices++ = 0;
-    *matrices++ = 0;
-    *matrices++ = -appState.FromEngine.vieworg0 * appState.Scale;
-    *matrices++ = -appState.FromEngine.vieworg2 * appState.Scale;
-    *matrices++ = appState.FromEngine.vieworg1 * appState.Scale;
-    *matrices++ = 1;
+    matrices += 2 * 16;
+    memcpy(matrices, appState.ProjectionMatrices.data(), 2 * sizeof(XrMatrix4x4f));
+    matrices += 2 * 16;
+    memcpy(matrices, &appState.VertexTransform, sizeof(XrMatrix4x4f));
+    matrices += 16;
     VkDeviceSize offset = appState.Scene.matricesBufferSize;
 	auto loadedAliasIndexBuffer = appState.Scene.indexBuffers.firstAliasIndices8;
 	while (loadedAliasIndexBuffer != nullptr)

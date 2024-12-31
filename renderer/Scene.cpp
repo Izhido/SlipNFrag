@@ -2224,6 +2224,13 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     appState.FromEngine.vup1 = d_lists.vup1;
     appState.FromEngine.vup2 = d_lists.vup2;
 
+    appState.VertexTransform.m[0] = appState.Scale;
+    appState.VertexTransform.m[6] = -appState.Scale;
+    appState.VertexTransform.m[9] = appState.Scale;
+    appState.VertexTransform.m[12] = -appState.FromEngine.vieworg0 * appState.Scale;
+    appState.VertexTransform.m[13] = -appState.FromEngine.vieworg2 * appState.Scale;
+    appState.VertexTransform.m[14] = appState.FromEngine.vieworg1 * appState.Scale;
+
     VkDeviceSize size = appState.Scene.matricesBufferSize;
 
     if (perFrame.paletteChangedFrame != pal_changed)

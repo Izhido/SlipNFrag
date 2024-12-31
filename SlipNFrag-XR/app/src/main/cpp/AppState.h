@@ -63,6 +63,7 @@ struct AppState
 	float Roll;
 	float DistanceToFloor;
 	float Scale;
+    XrMatrix4x4f VertexTransform;
 	int ScreenWidth;
 	int ScreenHeight;
 	int ConsoleWidth;
