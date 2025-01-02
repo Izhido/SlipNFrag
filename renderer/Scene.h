@@ -90,6 +90,7 @@ struct Scene
 	int hostClearCount;
 	CachedSharedMemoryBuffers buffers;
 	CachedIndexBuffers indexBuffers;
+    std::unordered_map<void*, std::vector<float>> surfaceVertexCache;
 	std::unordered_map<void*, AliasVertices> aliasVertexCache;
 	std::unordered_map<void*, IndexBuffer> aliasIndexCache;
 	int lastParticle;
@@ -182,6 +183,7 @@ struct Scene
 	void AddToVertexInputBarriers(VkBuffer buffer, VkAccessFlags flags);
     void AddToVertexShaderBarriers(VkBuffer buffer, VkAccessFlags flags);
 	static VkDeviceSize GetAllocatedFor(int width, int height);
+    void CacheVertices(LoadedTurbulent& loaded);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmap& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmapRGBA& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);

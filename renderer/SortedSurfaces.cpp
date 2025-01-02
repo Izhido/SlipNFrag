@@ -257,28 +257,13 @@ void SortedSurfaces::Cleanup(std::list<SortedSurfaceTexture>& sorted)
 
 float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float attributeIndex, float* target)
 {
-    auto face = (msurface_t*)loaded.face;
-    auto model = (model_t*)loaded.model;
-	auto p = face->firstedge;
-    for (auto i = 0; i < face->numedges; i++)
+    auto source = loaded.vertices;
+    for (auto i = 0; i < loaded.numedges; i++)
     {
-	    auto edge = model->surfedges[p];
-	    unsigned int index;
-	    if (edge >= 0)
-	    {
-		    index = model->edges[edge].v[0];
-	    }
-	    else
-	    {
-		    index = model->edges[-edge].v[1];
-	    }
-	    auto vertexes = model->vertexes;
-	    auto vertex = vertexes[index].position;
-	    *target++ = vertex[0];
-	    *target++ = vertex[1];
-	    *target++ = vertex[2];
+	    *target++ = *source++;
+	    *target++ = *source++;
+	    *target++ = *source++;
 	    *target++ = attributeIndex;
-		p++;
     }
     return target;
 }

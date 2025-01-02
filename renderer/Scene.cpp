@@ -1204,6 +1204,45 @@ VkDeviceSize Scene::GetAllocatedFor(int width, int height)
     return allocated;
 }
 
+void Scene::CacheVertices(LoadedTurbulent& loaded)
+{
+    auto face = (msurface_t*)loaded.face;
+    auto model = (model_t*)loaded.model;
+    loaded.numedges = face->numedges;
+    auto entry = surfaceVertexCache.find(face);
+    if (entry == surfaceVertexCache.end())
+    {
+        surfaceVertexCache.emplace(face, loaded.numedges * 3);
+        auto& vertices = surfaceVertexCache.at(face);
+        auto p = face->firstedge;
+        auto v = 0;
+        for (auto i = 0; i < face->numedges; i++)
+        {
+            auto edge = model->surfedges[p];
+            unsigned int index;
+            if (edge >= 0)
+            {
+                index = model->edges[edge].v[0];
+            }
+            else
+            {
+                index = model->edges[-edge].v[1];
+            }
+            auto vertexes = model->vertexes;
+            auto vertex = vertexes[index].position;
+            vertices[v++] = vertex[0];
+            vertices[v++] = vertex[1];
+            vertices[v++] = vertex[2];
+            p++;
+        }
+        loaded.vertices = vertices.data();
+    }
+    else
+    {
+        loaded.vertices = entry->second.data();
+    }
+}
+
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmap& loaded, VkDeviceSize& size)
 {
     auto lightmapEntry = lightmaps.lightmaps.find(surface.face);
@@ -1287,6 +1326,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
     loaded.face = turbulent.face;
     loaded.model = turbulent.model;
     loaded.count = turbulent.count;
+    CacheVertices(loaded);
     if (previousTexture != turbulent.data)
     {
         auto entry = surfaceTextureCache.find(turbulent.data);
@@ -1359,6 +1399,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
     loaded.face = turbulent.face;
     loaded.model = turbulent.model;
     loaded.count = turbulent.count;
+    CacheVertices(loaded);
     if (previousTexture != turbulent.data)
     {
         auto entry = surfaceTextureCache.find(turbulent.data);
@@ -1443,6 +1484,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
     loaded.face = surface.face;
     loaded.model = surface.model;
     loaded.count = surface.count;
+    CacheVertices(loaded);
     if (previousTexture != surface.data)
     {
         auto entry = surfaceTextureCache.find(surface.data);
@@ -1584,6 +1626,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
     loaded.face = surface.face;
     loaded.model = surface.model;
     loaded.count = surface.count;
+    CacheVertices(loaded);
     if (previousTexture != surface.data)
     {
         auto entry = surfaceTextureCache.find(surface.data);
@@ -1725,6 +1768,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
     loaded.face = surface.face;
     loaded.model = surface.model;
     loaded.count = surface.count;
+    CacheVertices(loaded);
     if (previousTexture != surface.data)
     {
         auto entry = surfaceTextureCache.find(surface.data);
@@ -1798,6 +1842,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
     loaded.face = surface.face;
     loaded.model = surface.model;
     loaded.count = surface.count;
+    CacheVertices(loaded);
     if (previousTexture != surface.data)
     {
         auto entry = surfaceTextureCache.find(surface.data);
@@ -3056,4 +3101,5 @@ void Scene::Reset()
     Skybox::MoveToPrevious(*this);
     aliasIndexCache.clear();
     aliasVertexCache.clear();
+    surfaceVertexCache.clear();
 }
