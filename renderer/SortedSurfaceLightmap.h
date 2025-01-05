@@ -5,5 +5,6 @@
 struct SortedSurfaceLightmap
 {
 	VkDescriptorSet lightmap;
-	std::list<SortedSurfaceTexture> textures;
+    int count;
+	std::vector<SortedSurfaceTexture> textures;
 };
