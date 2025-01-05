@@ -4,6 +4,7 @@
 
 struct SortedSurfaceTextures
 {
-    std::list<SortedSurfaceTexture> textures;
-    std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceTexture>::iterator> added;
+    int count;
+    std::vector<SortedSurfaceTexture> textures;
+    std::unordered_map<VkDescriptorSet, int> added;
 };

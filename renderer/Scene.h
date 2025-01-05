@@ -19,9 +19,6 @@
 #include "SurfaceTexture.h"
 #include "Skybox.h"
 #include <common/xr_linear.h>
-#include "SortedSurfaceLightmapsWithTextures.h"
-#include "SortedSurfaceLightmapsWith2Textures.h"
-#include "SortedSurfaceTextures.h"
 #include "UsedInSharedMemory.h"
 #include "PerFrame.h"
 #include "SortedSurfaces.h"
@@ -171,7 +168,6 @@ struct Scene
 	SharedMemoryTexture* previousGlowSharedMemoryTexture;
 	int previousGlowSharedMemoryTextureIndex;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-	SortedSurfaces sorted;
 	unsigned int paletteData[256];
 	std::vector<unsigned char> screenData;
 	std::vector<unsigned char> consoleData;

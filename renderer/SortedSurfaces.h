@@ -24,8 +24,6 @@ struct SortedSurfaces
     static void Sort(AppState& appState, LoadedSurface2Textures& loaded, int index, SortedSurfaceLightmapsWith2Textures& sorted);
     static void Sort(AppState& appState, LoadedSurface2TexturesColoredLights& loaded, int index, SortedSurfaceLightmapsWith2Textures& sorted);
     static void Sort(AppState& appState, LoadedTurbulent& loaded, int index, SortedSurfaceTextures& sorted);
-	static void Cleanup(SortedSurfaceLightmapsWith2Textures& sorted);
-	static void Cleanup(SortedSurfaceTextures& sorted);
     static float* CopyVertices(LoadedTurbulent& loaded, float attribute, float* target);
 	static void LoadVertices(SortedSurfaceLightmapsWithTextures& sorted, std::vector<LoadedSurface>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadVertices(SortedSurfaceLightmapsWithTextures& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset);
