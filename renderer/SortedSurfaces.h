@@ -16,19 +16,14 @@ struct AppState;
 
 struct SortedSurfaces
 {
-	std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceLightmap>::iterator> addedLightmaps;
-	std::unordered_map<VkDescriptorSet, std::list<SortedSurface2TexturesLightmap>::iterator> added2TexturesLightmaps;
-	std::unordered_map<VkDescriptorSet, std::list<SortedSurfaceTexture>::iterator> addedTextures;
-
-	void Initialize(SortedSurfaceLightmapsWithTextures& sorted);
-	void Initialize(SortedSurfaceLightmapsWith2Textures& sorted);
-	void Initialize(SortedSurfaceTextures& sorted);
-	void Sort(AppState& appState, LoadedSurface& loaded, int index, SortedSurfaceLightmapsWithTextures& sorted);
-	void Sort(AppState& appState, LoadedSurfaceColoredLights& loaded, int index, SortedSurfaceLightmapsWithTextures& sorted);
-	void Sort(AppState& appState, LoadedSurface2Textures& loaded, int index, SortedSurfaceLightmapsWith2Textures& sorted);
-	void Sort(AppState& appState, LoadedSurface2TexturesColoredLights& loaded, int index, SortedSurfaceLightmapsWith2Textures& sorted);
-	void Sort(AppState& appState, LoadedTurbulent& loaded, int index, SortedSurfaceTextures& sorted);
-	static void Cleanup(SortedSurfaceLightmapsWithTextures& sorted);
+    static void Initialize(SortedSurfaceLightmapsWithTextures& sorted);
+    static void Initialize(SortedSurfaceLightmapsWith2Textures& sorted);
+    static void Initialize(SortedSurfaceTextures& sorted);
+    static void Sort(AppState& appState, LoadedSurface& loaded, int index, SortedSurfaceLightmapsWithTextures& sorted);
+    static void Sort(AppState& appState, LoadedSurfaceColoredLights& loaded, int index, SortedSurfaceLightmapsWithTextures& sorted);
+    static void Sort(AppState& appState, LoadedSurface2Textures& loaded, int index, SortedSurfaceLightmapsWith2Textures& sorted);
+    static void Sort(AppState& appState, LoadedSurface2TexturesColoredLights& loaded, int index, SortedSurfaceLightmapsWith2Textures& sorted);
+    static void Sort(AppState& appState, LoadedTurbulent& loaded, int index, SortedSurfaceTextures& sorted);
 	static void Cleanup(SortedSurfaceLightmapsWith2Textures& sorted);
 	static void Cleanup(SortedSurfaceTextures& sorted);
     static float* CopyVertices(LoadedTurbulent& loaded, float attribute, float* target);

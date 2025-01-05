@@ -2303,7 +2303,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(surfaces.sorted);
     surfacesColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(surfacesColoredLights.sorted);
@@ -2317,7 +2316,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(surfacesColoredLights.sorted);
     surfacesRGBA.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     previousGlowTexture = nullptr;
@@ -2361,7 +2359,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(surfacesRGBANoGlow.sorted);
     surfacesRGBANoGlowColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(surfacesRGBANoGlowColoredLights.sorted);
@@ -2375,7 +2372,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(surfacesRGBANoGlowColoredLights.sorted);
     surfacesRotated.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(surfacesRotated.sorted);
@@ -2389,7 +2385,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (24 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(surfacesRotated.sorted);
     surfacesRotatedColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(surfacesRotatedColoredLights.sorted);
@@ -2403,7 +2398,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (24 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(surfacesRotatedColoredLights.sorted);
     surfacesRotatedRGBA.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     previousGlowTexture = nullptr;
@@ -2447,7 +2441,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (24 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(surfacesRotatedRGBANoGlow.sorted);
     surfacesRotatedRGBANoGlowColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(surfacesRotatedRGBANoGlowColoredLights.sorted);
@@ -2461,7 +2454,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (24 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(surfacesRotatedRGBANoGlowColoredLights.sorted);
     fences.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(fences.sorted);
@@ -2475,7 +2467,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(fences.sorted);
     fencesColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(fencesColoredLights.sorted);
@@ -2489,7 +2480,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(fencesColoredLights.sorted);
     fencesRGBA.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     previousGlowTexture = nullptr;
@@ -2533,7 +2523,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(fencesRGBANoGlow.sorted);
     fencesRGBANoGlowColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(fencesRGBANoGlowColoredLights.sorted);
@@ -2547,7 +2536,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(fencesRGBANoGlowColoredLights.sorted);
     fencesRotated.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(fencesRotated.sorted);
@@ -2561,7 +2549,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (24 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(fencesRotated.sorted);
     fencesRotatedColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(fencesRotatedColoredLights.sorted);
@@ -2575,7 +2562,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (24 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(fencesRotatedColoredLights.sorted);
     fencesRotatedRGBA.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     previousGlowTexture = nullptr;
@@ -2619,7 +2605,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (24 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(fencesRotatedRGBANoGlow.sorted);
     fencesRotatedRGBANoGlowColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(fencesRotatedRGBANoGlowColoredLights.sorted);
@@ -2633,7 +2618,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (24 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(fencesRotatedRGBANoGlowColoredLights.sorted);
     turbulent.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(turbulent.sorted);
@@ -2675,7 +2659,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(turbulentLit.sorted);
     turbulentColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(turbulentColoredLights.sorted);
@@ -2689,7 +2672,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(turbulentColoredLights.sorted);
     turbulentRGBALit.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(turbulentRGBALit.sorted);
@@ -2703,7 +2685,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(turbulentRGBALit.sorted);
     turbulentRGBAColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(turbulentRGBAColoredLights.sorted);
@@ -2717,7 +2698,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(turbulentRGBAColoredLights.sorted);
     turbulentRotated.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(turbulentRotated.sorted);
@@ -2759,7 +2739,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(turbulentRotatedLit.sorted);
     turbulentRotatedColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(turbulentRotatedColoredLights.sorted);
@@ -2773,7 +2752,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(turbulentRotatedColoredLights.sorted);
     turbulentRotatedRGBALit.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(turbulentRotatedRGBALit.sorted);
@@ -2787,7 +2765,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(turbulentRotatedRGBALit.sorted);
     turbulentRotatedRGBAColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
     previousTexture = nullptr;
     sorted.Initialize(turbulentRotatedRGBAColoredLights.sorted);
@@ -2801,7 +2778,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
-    SortedSurfaces::Cleanup(turbulentRotatedRGBAColoredLights.sorted);
     previousTexture = nullptr;
     for (auto i = 0; i <= sprites.last; i++)
     {
