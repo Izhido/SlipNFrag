@@ -10,7 +10,7 @@ struct PipelineWithSorted : Pipeline
 {
 	int last;
 	std::vector<Loaded> loaded;
-	std::list<Sorted> sorted;
+	Sorted sorted;
 	VkDeviceSize vertexBase;
 	VkDeviceSize indexBase;
 
