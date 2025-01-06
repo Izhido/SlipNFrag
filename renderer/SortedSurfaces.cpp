@@ -146,28 +146,45 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurface2Textures& loaded, in
         }
         auto& sortedLightmap = sorted.lightmaps[sorted.count];
         sortedLightmap.lightmap = lightmap;
-        sortedLightmap.textures.push_back({ texture, loaded.glowTexture.texture->descriptorSet });
-        sortedLightmap.textures.back().entries.push_back(index);
+        if (sortedLightmap.textures.empty())
+        {
+            sortedLightmap.textures.resize(Constants::sortedSurfaceElementIncrement);
+        }
+        auto& sortedTexture = sortedLightmap.textures[0];
+        sortedTexture.texture = texture;
+        sortedTexture.glowTexture = loaded.glowTexture.texture->descriptorSet;
+        sortedTexture.entries.clear();
+        sortedTexture.entries.push_back(index);
+        sortedLightmap.count = 1;
         sorted.added.insert({ lightmap, sorted.count });
         sorted.count++;
     }
     else
     {
-        auto subEntryFound = false;
+        auto found = false;
         auto& sortedLightmap = sorted.lightmaps[entry->second];
-        for (auto& subEntry : sortedLightmap.textures)
+        for (auto t = 0; t < sortedLightmap.count; t++)
         {
-            if (subEntry.texture == texture)
+            auto& sortedTexture = sortedLightmap.textures[t];
+            if (sortedTexture.texture == texture)
             {
-                subEntryFound = true;
-                subEntry.entries.push_back(index);
+                found = true;
+                sortedTexture.entries.push_back(index);
                 break;
             }
         }
-        if (!subEntryFound)
+        if (!found)
         {
-            sortedLightmap.textures.push_back({ texture, loaded.glowTexture.texture->descriptorSet });
-            sortedLightmap.textures.back().entries.push_back(index);
+            if (sortedLightmap.count >= sortedLightmap.textures.size())
+            {
+                sortedLightmap.textures.resize(sortedLightmap.textures.size() + Constants::sortedSurfaceElementIncrement);
+            }
+            auto& sortedTexture = sortedLightmap.textures[sortedLightmap.count];
+            sortedTexture.texture = texture;
+            sortedTexture.glowTexture = loaded.glowTexture.texture->descriptorSet;
+            sortedTexture.entries.clear();
+            sortedTexture.entries.push_back(index);
+            sortedLightmap.count++;
         }
     }
 }
@@ -185,28 +202,45 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurface2TexturesColoredLight
         }
         auto& sortedLightmap = sorted.lightmaps[sorted.count];
         sortedLightmap.lightmap = lightmap;
-        sortedLightmap.textures.push_back({ texture, loaded.glowTexture.texture->descriptorSet });
-        sortedLightmap.textures.back().entries.push_back(index);
+        if (sortedLightmap.textures.empty())
+        {
+            sortedLightmap.textures.resize(Constants::sortedSurfaceElementIncrement);
+        }
+        auto& sortedTexture = sortedLightmap.textures[0];
+        sortedTexture.texture = texture;
+        sortedTexture.glowTexture = loaded.glowTexture.texture->descriptorSet;
+        sortedTexture.entries.clear();
+        sortedTexture.entries.push_back(index);
+        sortedLightmap.count = 1;
         sorted.added.insert({ lightmap, sorted.count });
         sorted.count++;
     }
     else
     {
-        auto subEntryFound = false;
+        auto found = false;
         auto& sortedLightmap = sorted.lightmaps[entry->second];
-        for (auto& subEntry : sortedLightmap.textures)
+        for (auto t = 0; t < sortedLightmap.count; t++)
         {
-            if (subEntry.texture == texture)
+            auto& sortedTexture = sortedLightmap.textures[t];
+            if (sortedTexture.texture == texture)
             {
-                subEntryFound = true;
-                subEntry.entries.push_back(index);
+                found = true;
+                sortedTexture.entries.push_back(index);
                 break;
             }
         }
-        if (!subEntryFound)
+        if (!found)
         {
-            sortedLightmap.textures.push_back({ texture, loaded.glowTexture.texture->descriptorSet });
-            sortedLightmap.textures.back().entries.push_back(index);
+            if (sortedLightmap.count >= sortedLightmap.textures.size())
+            {
+                sortedLightmap.textures.resize(sortedLightmap.textures.size() + Constants::sortedSurfaceElementIncrement);
+            }
+            auto& sortedTexture = sortedLightmap.textures[sortedLightmap.count];
+            sortedTexture.texture = texture;
+            sortedTexture.glowTexture = loaded.glowTexture.texture->descriptorSet;
+            sortedTexture.entries.clear();
+            sortedTexture.entries.push_back(index);
+            sortedLightmap.count++;
         }
     }
 }
@@ -297,9 +331,10 @@ void SortedSurfaces::LoadVertices(SortedSurfaceLightmapsWith2Textures& sorted, s
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            for (auto i : texture.entries)
 			{
                 target = CopyVertices(loaded[i], attributeIndexAsFloat, target);
                 attributeIndexAsFloat += 5;
@@ -317,9 +352,10 @@ void SortedSurfaces::LoadVertices(SortedSurfaceLightmapsWith2Textures& sorted, s
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            for (auto i : texture.entries)
 			{
                 target = CopyVertices(loaded[i], attributeIndexAsFloat, target);
                 attributeIndexAsFloat += 5;
@@ -379,9 +415,10 @@ void SortedSurfaces::LoadVertices(SortedSurfaceLightmapsWith2Textures& sorted, s
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            for (auto i : texture.entries)
 			{
                 target = CopyVertices(loaded[i], attributeIndexAsFloat, target);
                 attributeIndexAsFloat += 6;
@@ -399,9 +436,10 @@ void SortedSurfaces::LoadVertices(SortedSurfaceLightmapsWith2Textures& sorted, s
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            for (auto i : texture.entries)
 			{
                 target = CopyVertices(loaded[i], attributeIndexAsFloat, target);
                 attributeIndexAsFloat += 6;
@@ -541,9 +579,10 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceLightmapsWith2Textures&
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
@@ -581,9 +620,10 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceLightmapsWith2Textures&
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
@@ -711,9 +751,10 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceLightmapsWith2Textures&
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
@@ -755,9 +796,10 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceLightmapsWith2Textures&
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto face = (msurface_t*)surface.face;
@@ -1005,10 +1047,11 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceLightmapsWith2Textures& 
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			VkDeviceSize indexCount = 0;
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            VkDeviceSize indexCount = 0;
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
@@ -1026,7 +1069,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceLightmapsWith2Textures& 
 				count *= 3;
 				indexCount += count;
 			}
-			subEntry.indexCount = indexCount;
+			texture.indexCount = indexCount;
 		}
 	}
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
@@ -1039,10 +1082,11 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceLightmapsWith2Textures& 
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			VkDeviceSize indexCount = 0;
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            VkDeviceSize indexCount = 0;
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
@@ -1060,7 +1104,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceLightmapsWith2Textures& 
 				count *= 3;
 				indexCount += count;
 			}
-			subEntry.indexCount = indexCount;
+			texture.indexCount = indexCount;
 		}
 	}
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
@@ -1073,10 +1117,11 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceLightmapsWith2Textures& 
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			VkDeviceSize indexCount = 0;
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            VkDeviceSize indexCount = 0;
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
@@ -1094,7 +1139,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceLightmapsWith2Textures& 
 				count *= 3;
 				indexCount += count;
 			}
-			subEntry.indexCount = indexCount;
+			texture.indexCount = indexCount;
 		}
 	}
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
@@ -1107,10 +1152,11 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceLightmapsWith2Textures& 
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			VkDeviceSize indexCount = 0;
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            VkDeviceSize indexCount = 0;
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
@@ -1128,7 +1174,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceLightmapsWith2Textures& 
 				count *= 3;
 				indexCount += count;
 			}
-			subEntry.indexCount = indexCount;
+			texture.indexCount = indexCount;
 		}
 	}
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
@@ -1273,10 +1319,11 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceLightmapsWith2Textures& 
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			VkDeviceSize indexCount = 0;
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            VkDeviceSize indexCount = 0;
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
@@ -1294,7 +1341,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceLightmapsWith2Textures& 
 				count *= 3;
 				indexCount += count;
 			}
-			subEntry.indexCount = indexCount;
+			texture.indexCount = indexCount;
 		}
 	}
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
@@ -1307,10 +1354,11 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceLightmapsWith2Textures& 
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			VkDeviceSize indexCount = 0;
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            VkDeviceSize indexCount = 0;
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
@@ -1328,7 +1376,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceLightmapsWith2Textures& 
 				count *= 3;
 				indexCount += count;
 			}
-			subEntry.indexCount = indexCount;
+			texture.indexCount = indexCount;
 		}
 	}
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
@@ -1411,10 +1459,11 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceLightmapsWith2Textures& 
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			VkDeviceSize indexCount = 0;
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            VkDeviceSize indexCount = 0;
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
@@ -1432,7 +1481,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceLightmapsWith2Textures& 
 				count *= 3;
 				indexCount += count;
 			}
-			subEntry.indexCount = indexCount;
+			texture.indexCount = indexCount;
 		}
 	}
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
@@ -1445,10 +1494,11 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceLightmapsWith2Textures& 
     for (auto l = 0; l < sorted.count; l++)
     {
         auto& lightmap = sorted.lightmaps[l];
-		for (auto& subEntry : lightmap.textures)
-		{
-			VkDeviceSize indexCount = 0;
-			for (auto i : subEntry.entries)
+        for (auto t = 0; t < lightmap.count; t++)
+        {
+            auto& texture = lightmap.textures[t];
+            VkDeviceSize indexCount = 0;
+            for (auto i : texture.entries)
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
@@ -1466,7 +1516,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceLightmapsWith2Textures& 
 				count *= 3;
 				indexCount += count;
 			}
-			subEntry.indexCount = indexCount;
+			texture.indexCount = indexCount;
 		}
 	}
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
