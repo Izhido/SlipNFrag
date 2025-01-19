@@ -58,7 +58,6 @@ byte		*r_warpbuffer;
 
 byte		*r_stack_start;
 
-qboolean	r_skip_fov_check;
 qboolean	r_fov_greater_than_90;
 vec3_t 		r_modelorg_delta;
 qboolean	r_load_as_rgba;
@@ -718,7 +717,7 @@ void R_DrawViewModel (void)
 	float		add;
 	dlight_t	*dl;
 	
-	if (!r_drawviewmodel.value || (r_fov_greater_than_90 && !r_skip_fov_check))
+	if (!r_drawviewmodel.value || (r_fov_greater_than_90 && !d_uselists))
 		return;
 
 	if (cl.items & IT_INVISIBILITY)

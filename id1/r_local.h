@@ -326,6 +326,12 @@ extern vec3_t	r_emins, r_emaxs;
 extern mnode_t	*r_pefragtopnode;
 extern int		r_clipflags;
 extern int		r_dlightframecount;
+extern qboolean	r_fov_greater_than_90;
+
+extern vec3_t	r_modelorg_delta;
+extern qboolean	r_load_as_rgba;
+
+extern qboolean	d_uselists;
 
 extern std::vector<unsigned>	r_blocklights_base;
 extern unsigned*				blocklights;
@@ -335,13 +341,6 @@ extern int 						r_blocklights_size;
 
 void R_BuildLightMap (void);
 void R_BuildColoredLightMap (void);
-
-extern qboolean r_skip_fov_check;
-extern qboolean	r_fov_greater_than_90;
-extern vec3_t 	r_modelorg_delta;
-extern qboolean	r_load_as_rgba;
-
-extern qboolean	d_uselists;
 
 void R_StoreEfrags (efrag_t **ppefrag);
 void R_TimeRefresh_f (void);

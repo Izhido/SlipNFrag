@@ -1478,7 +1478,6 @@ void android_main(struct android_app* app)
 						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = false;
-						r_skip_fov_check = false;
 						sb_onconsole = false;
 						Cvar_SetValue("joyadvanced", 1);
 						Cvar_SetValue("joyadvaxisx", AxisSide);
@@ -1498,7 +1497,6 @@ void android_main(struct android_app* app)
 						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = true;
-						r_skip_fov_check = true;
 						sb_onconsole = true;
 						Cvar_SetValue("joyadvanced", 1);
 						Cvar_SetValue("joyadvaxisx", AxisSide);
@@ -1525,7 +1523,6 @@ void android_main(struct android_app* app)
 						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = false;
-						r_skip_fov_check = false;
 						sb_onconsole = false;
 						appState.CallExitFunction = true;
 					}
