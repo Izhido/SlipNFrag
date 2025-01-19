@@ -1004,7 +1004,7 @@ void R_DrawBEntitiesForLists (void)
 								}
 								else if (r_skyRGBAinitialized)
 								{
-									D_AddSkyRGBAToLists(true);
+									D_AddSkyRGBAToLists();
 								}
 								else if (r_skyinitialized)
 								{
@@ -1013,7 +1013,7 @@ void R_DrawBEntitiesForLists (void)
 										R_MakeSky ();
 									}
 
-									D_AddSkyToLists(true);
+									D_AddSkyToLists();
 								}
 							}
 							else if (psurf->flags & SURF_DRAWBACKGROUND)

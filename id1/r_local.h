@@ -185,7 +185,6 @@ void R_AliasColoredDrawModel (acoloredlight_t *plighting);
 void R_BeginEdgeFrame (void);
 void R_ScanEdges (void);
 void D_DrawSurfaces (void);
-void D_DrawSurfacesToLists (void);
 void R_InsertNewEdges (edge_t *edgestoadd, edge_t *edgelist);
 void R_StepActiveU (edge_t *pedge);
 void R_RemoveEdges (edge_t *pedge);

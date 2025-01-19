@@ -1150,25 +1150,12 @@ void D_AddParticleToLists (particle_t* part)
 	d_lists.particle_colors[d_lists.last_particle_color] = part->color;
 }
 
-void D_FillSkyData (dsky_t& sky, qboolean full_area)
+void D_FillSkyData (dsky_t& sky)
 {
-    float top, left, right, bottom;
-	if (full_area)
-	{
-		left = 0;
-		right = 1;
-		top = 0;
-		bottom = 1;
-	}
-	else
-	{
-		int extra_horizontal = vid.width / 20;
-		int extra_vertical = vid.height / 20;
-		left = (float)(r_skyleft - extra_horizontal) / (float)vid.width;
-		right = (float)(r_skyright + extra_horizontal) / (float)vid.width;
-		top = (float)(r_skytop - extra_vertical) / (float)vid.height;
-		bottom = (float)(r_skybottom + extra_vertical) / (float)vid.height;
-	}
+    constexpr float left = 0;
+    constexpr float right = 1;
+    constexpr float top = 0;
+    constexpr float bottom = 1;
 	sky.first_vertex = (d_lists.last_textured_vertex + 1) / 3;
 	sky.count = 4;
 	auto new_size = d_lists.last_textured_vertex + 1 + 3 * 4;
@@ -1223,7 +1210,7 @@ void D_FillSkyData (dsky_t& sky, qboolean full_area)
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = bottom;
 }
 
-void D_AddSkyToLists (qboolean full_area)
+void D_AddSkyToLists ()
 {
 	if (d_lists.last_sky >= 0)
 	{
@@ -1239,10 +1226,10 @@ void D_AddSkyToLists (qboolean full_area)
 	sky.height = 128;
 	sky.size = sky.width * sky.height;
 	sky.data = r_skysource;
-	D_FillSkyData(sky, full_area);
+	D_FillSkyData(sky);
 }
 
-void D_AddSkyRGBAToLists (qboolean full_area)
+void D_AddSkyRGBAToLists ()
 {
 	if (d_lists.last_sky_rgba >= 0)
 	{
@@ -1258,7 +1245,7 @@ void D_AddSkyRGBAToLists (qboolean full_area)
 	sky.height = r_skyRGBAheight;
 	sky.size = sky.width * 2 * sky.height * sizeof(unsigned);
 	sky.data = (byte*)r_skysourceRGBA;
-	D_FillSkyData(sky, full_area);
+	D_FillSkyData(sky);
 }
 
 void D_AddSkyboxToLists (mtexinfo_t* textures)

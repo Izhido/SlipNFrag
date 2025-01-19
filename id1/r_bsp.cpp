@@ -796,7 +796,7 @@ void R_RecursiveWorldNodeForLists (mnode_t *node)
 						}
 						else if (r_skyRGBAinitialized)
 						{
-							D_AddSkyRGBAToLists(true);
+							D_AddSkyRGBAToLists();
 						}
 						else if (r_skyinitialized)
 						{
@@ -805,12 +805,8 @@ void R_RecursiveWorldNodeForLists (mnode_t *node)
 								R_MakeSky ();
 							}
 
-							D_AddSkyToLists(true);
+							D_AddSkyToLists();
 						}
-					}
-					else if (surf->flags & SURF_DRAWBACKGROUND)
-					{
-						d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
 					}
 					else if (surf->flags & SURF_DRAWTURB)
 					{
@@ -852,7 +848,10 @@ void R_RenderWorld (void)
 	r_pcurrentvertbase = clmodel->vertexes;
 
 	if (d_uselists)
+	{
+		d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
 		R_RecursiveWorldNodeForLists (clmodel->nodes);
+	}
 	else
 		R_RecursiveWorldNode (clmodel->nodes, 15);
 

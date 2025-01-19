@@ -63,7 +63,6 @@ typedef struct
 } evert_t;
 
 int				r_emitted;
-int				r_horizontal;
 float			r_nearzi;
 float			r_u1, r_v1, r_lzi1;
 int				r_ceilv1;
@@ -182,8 +181,6 @@ void R_EmitEdge (const mvertex_t *pv0, const mvertex_t *pv1)
 			cacheoffset = FULLY_CLIPPED_CACHED |
 					(r_framecount & FRAMECOUNT_MASK);
 		}
-
-		r_horizontal = 1;
 
 		return;		// horizontal edge
 	}
@@ -391,7 +388,6 @@ void R_EmitCachedEdge (void)
 	r_pedge->cachededgeoffset = 0;
 
 	r_emitted = 1;
-	r_horizontal = 0;
 }
 
 
@@ -450,7 +446,6 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 
 // push the edges through
 	r_emitted = 0;
-	r_horizontal = 0;
 	r_nearzi = 0;
 	r_nearzionly = false;
 	makeleftedge = makerightedge = false;
@@ -585,7 +580,6 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 	surface_p->flags = fa->flags;
 	surface_p->insubmodel = insubmodel;
 	surface_p->isfence = (fa->flags & SURF_DRAWFENCE);
-	surface_p->draw = (d_uselists && r_horizontal != 0 ? 1 : 0);
 	surface_p->spanstate = 0;
 	surface_p->entity = currententity;
 	surface_p->key = r_currentkey++;
@@ -711,7 +705,6 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 	surface_p->flags = psurf->flags;
 	surface_p->insubmodel = true;
 	surface_p->isfence = (psurf->flags & SURF_DRAWFENCE);
-	surface_p->draw = (d_uselists && r_horizontal != 0 ? 1 : 0);
 	surface_p->spanstate = 0;
 	surface_p->entity = currententity;
 	surface_p->key = r_currentbkey;

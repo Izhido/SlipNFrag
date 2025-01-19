@@ -161,7 +161,6 @@ void D_DrawParticle (particle_t *pparticle);
 void D_DrawPoly (void);
 void D_DrawSprite (void);
 void D_DrawSurfaces (void);
-void D_DrawSurfacesToLists (void);
 void D_DrawZPoint (void);
 void D_EnableBackBufferAccess (void);
 void D_EndParticles (void);
