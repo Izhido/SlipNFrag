@@ -2833,12 +2833,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     particlePositionsSize = (d_lists.last_particle_position + 1) * sizeof(float);
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
     verticesSize = floorVerticesSize + controllerVerticesSize + texturedVerticesSize + particlePositionsSize + coloredVerticesSize;
-    if (verticesSize + sortedVerticesSize > 0)
+    if (verticesSize > 0)
     {
-        perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize + sortedVerticesSize);
+        perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
     }
     size += verticesSize;
-    size += sortedVerticesSize;
     floorAttributesSize = 0;
     if (appState.Mode != AppWorldMode)
     {

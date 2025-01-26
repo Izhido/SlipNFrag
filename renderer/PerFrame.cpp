@@ -517,46 +517,6 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices32.data(), appState.Scene.indices32Size);
 	offset += appState.Scene.indices32Size;
 
-	if (appState.Scene.sortedVerticesSize > 0)
-	{
-        uint32_t attributeIndex = 0;
-        SortedSurfaces::LoadVertices(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fences.sorted, appState.Scene.fences.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, attributeIndex, stagingBuffer, offset);
-        SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, attributeIndex, stagingBuffer, offset);
-	}
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
         offset = SortedSurfaces::LoadAttributes(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, stagingBuffer, offset);
@@ -821,6 +781,56 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 }
 
+void PerFrame::LoadNonStagedResources(AppState &appState)
+{
+	if (appState.Scene.sortedVerticesSize > 0)
+	{
+		sortedVertices = cachedVertices.GetHostVisibleVertexBuffer(appState, appState.Scene.sortedVerticesSize);
+		if (sortedVertices->mapped == nullptr)
+		{
+			CHECK_VKCMD(vkMapMemory(appState.Device, sortedVertices->memory, 0, VK_WHOLE_SIZE, 0, &sortedVertices->mapped));
+		}
+		uint32_t attributeIndex = 0;
+		VkDeviceSize offset = 0;
+		SortedSurfaces::LoadVertices(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fences.sorted, appState.Scene.fences.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+	}
+}
+
 void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 {
 	if (loaded.isHostColormap)
@@ -991,22 +1001,9 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		appState.Scene.AddToVertexInputBarriers(indices32->buffer, VK_ACCESS_INDEX_READ_BIT);
 	}
 
-	if (appState.Scene.sortedVerticesSize > 0)
-	{
-		bufferCopy.size = appState.Scene.sortedVerticesSize;
-		bufferCopy.dstOffset = appState.Scene.verticesSize;
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, vertices->buffer, 1, &bufferCopy);
-		bufferCopy.dstOffset = 0;
-		bufferCopy.srcOffset += bufferCopy.size;
-		if (appState.Scene.verticesSize == 0)
-		{
-			appState.Scene.AddToVertexInputBarriers(vertices->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
-		}
-	}
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
 		bufferCopy.size = appState.Scene.sortedAttributesSize;
-		bufferCopy.dstOffset = 0;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, storageAttributes->buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
         appState.Scene.AddToVertexShaderBarriers(storageAttributes->buffer, VK_ACCESS_SHADER_READ_BIT);
@@ -1292,6 +1289,7 @@ void PerFrame::Reset(AppState& appState)
     cachedIndices8.Reset(appState);
     cachedStorageAttributes.Reset(appState);
     cachedAttributes.Reset(appState);
+	cachedSortedVertices.Reset(appState);
     cachedVertices.Reset(appState);
 }
 
@@ -1556,8 +1554,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfaces.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfaces.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1585,8 +1583,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1616,8 +1614,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBA.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRGBA.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRGBA.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBA.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1648,8 +1646,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBAColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRGBAColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRGBAColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBAColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1680,8 +1678,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlow.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlow.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRGBANoGlow.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRGBANoGlow.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlow.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1711,8 +1709,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlowColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlowColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRGBANoGlowColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRGBANoGlowColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlowColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1742,8 +1740,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRotated.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRotated.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1771,8 +1769,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRotatedColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRotatedColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1802,8 +1800,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRotatedRGBA.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRotatedRGBA.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1834,8 +1832,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRotatedRGBAColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRotatedRGBAColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1866,8 +1864,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRotatedRGBANoGlow.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRotatedRGBANoGlow.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1897,8 +1895,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.surfacesRotatedRGBANoGlowColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.surfacesRotatedRGBANoGlowColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1928,8 +1926,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulent.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulent.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulent.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1954,8 +1952,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBA.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRGBA.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRGBA.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBA.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -1981,8 +1979,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentLit.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentLit.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2012,8 +2010,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2044,8 +2042,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBALit.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBALit.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRGBALit.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRGBALit.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBALit.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2076,8 +2074,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBAColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRGBAColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRGBAColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBAColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2108,8 +2106,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRotated.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRotated.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2134,8 +2132,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRotatedRGBA.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRotatedRGBA.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2161,8 +2159,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRotatedLit.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRotatedLit.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2192,8 +2190,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRotatedColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRotatedColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2224,8 +2222,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRotatedRGBALit.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRotatedRGBALit.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2256,8 +2254,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.verticesSize + appState.Scene.turbulentRotatedRGBAColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+			auto vertexBase = appState.Scene.turbulentRotatedRGBAColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
 			if (appState.Scene.sortedIndices16Size > 0)
 			{
@@ -2462,8 +2460,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fences.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fences.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2491,8 +2489,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesColoredLights.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesColoredLights.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesColoredLights.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2522,8 +2520,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBA.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRGBA.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRGBA.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBA.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2554,8 +2552,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBAColoredLights.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRGBAColoredLights.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRGBAColoredLights.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBAColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2586,8 +2584,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRGBANoGlow.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRGBANoGlow.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2617,8 +2615,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlowColoredLights.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlowColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRGBANoGlowColoredLights.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRGBANoGlowColoredLights.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlowColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2648,8 +2646,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRotated.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRotated.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2677,8 +2675,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedColoredLights.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRotatedColoredLights.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRotatedColoredLights.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2708,8 +2706,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBA.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRotatedRGBA.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRotatedRGBA.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBA.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2740,8 +2738,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBAColoredLights.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRotatedRGBAColoredLights.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRotatedRGBAColoredLights.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBAColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2772,8 +2770,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRotatedRGBANoGlow.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRotatedRGBANoGlow.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {
@@ -2803,8 +2801,8 @@ void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlowColoredLights.pipeline);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlowColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-            auto vertexBase = appState.Scene.verticesSize + appState.Scene.fencesRotatedRGBANoGlowColoredLights.vertexBase;
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &vertexBase);
+            auto vertexBase = appState.Scene.fencesRotatedRGBANoGlowColoredLights.vertexBase;
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlowColoredLights.pipelineLayout, 1, 1, &storageAttributesResources.descriptorSet, 0, nullptr);
             if (appState.Scene.sortedIndices16Size > 0)
             {

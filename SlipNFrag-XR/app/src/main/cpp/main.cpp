@@ -1774,6 +1774,8 @@ void android_main(struct android_app* app)
                         }
                         perFrame.LoadStagingBuffer(appState, stagingBuffer);
 
+						perFrame.LoadNonStagedResources(appState);
+
 						if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 						{
 							memcpy(appState.Scene.paletteData, d_8to24table, 256 * sizeof(unsigned int));
@@ -2585,6 +2587,7 @@ void android_main(struct android_app* app)
 				perFrame.second.cachedIndices8.Delete(appState);
                 perFrame.second.cachedStorageAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
+				perFrame.second.cachedSortedVertices.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
 			}
 

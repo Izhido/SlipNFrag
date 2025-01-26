@@ -39,6 +39,18 @@ Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 	return buffer;
 }
 
+Buffer* CachedBuffers::GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(appState, size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer();
+		buffer->CreateHostVisibleVertexBuffer(appState, MinimumAllocationFor(size));
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
 Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(appState, size);

@@ -17,6 +17,7 @@ struct PerFrame
 	VkImageView resolveView;
 	VkFramebuffer framebuffer;
 	CachedBuffers cachedVertices;
+	CachedBuffers cachedSortedVertices;
 	CachedBuffers cachedAttributes;
     CachedBuffers cachedStorageAttributes;
 	CachedBuffers cachedIndices8;
@@ -28,6 +29,7 @@ struct PerFrame
 	int colormapCount;
     int paletteChangedFrame;
 	Buffer* vertices;
+	Buffer* sortedVertices;
 	Buffer* attributes;
     Buffer* storageAttributes;
 	Buffer* indices8;
@@ -64,6 +66,7 @@ struct PerFrame
 	static byte AveragePixels(std::vector<byte>& pixdata);
 	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
+	void LoadNonStagedResources(AppState& appState);
 	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex);
