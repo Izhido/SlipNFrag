@@ -1279,6 +1279,7 @@ void PerFrame::Reset(AppState& appState)
     indices8 = nullptr;
     storageAttributes = nullptr;
     attributes = nullptr;
+	sortedVertices = nullptr;
     vertices = nullptr;
     colormapCount = 0;
     colormaps.Reset(appState);
