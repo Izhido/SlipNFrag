@@ -1,6 +1,6 @@
 # Build instructions
 
-Slip & Frag is provided as a C++ project, itself a modification of the original C code of the Quake engine, with added constructs from other languages such as Objective C, Java (or Kotlin) used in the platforms that are supported. 
+Slip & Frag is provided as a C++ project, itself a modification of the original C code of the Quake engine, with added constructs from other languages such as Objective C or Kotlin, used in the platforms that are supported. 
 
 Source code for the project is provided [here](https://github.com/Izhido/SlipNFrag.git). Details for each supported platform are provided below.
 
@@ -52,27 +52,29 @@ The OXR version is an Android Studio project that can be found at `SlipNFrag-XR`
 
 The following is the list of components, and their version numbers, required to build the Android project, as of this writing:
 
-* Android SDK Platform **14.0** (R) API level **34**
+* Android SDK Platform **15.0** (R) API level **35**
 
-* NDK (Side by Side) **27.0.12077973**
+* NDK (Side by Side) **28.0.13004108**
 
-* Android SDK Build-Tools **35.0.1**
+* Android SDK Build-Tools **35.0.2**
 
-* OpenXR SDK **1.1.38**
+* OpenXR SDK **1.1.45**
 
 * stb (latest version gathered from https://github.com/nothings/stb )
 
+* CMake **3.31.5** (or later)
+
+> (Versions for other components can be checked in *Project Structure* in the Android Studio project.)
+
 To set up the environment to build, debug and test the project for the first time:
+> (There used to be a dependency on the Oculus OpenXR Mobile SDK for building. This dependency was removed, and now all it is needed is Khronos OpenXR SDK.)
 
 * Ensure that your VR headset is in Developer mode, and that it can run applications from Unknown sources. (See the [Readme](README.md) for details).
 
 * Download the latest release of the OpenXR SDK (as stated above). Copy the contents of the *OpenXR-SDK-release-xxx* from the .zip file at the root source folder.
 >(If the name of the folder from the OpenXR SDK references a newer version than the specified above, modify the path to the SDK specified in `SlipNFrag-XR/app/src/main/cpp/CMakeLists.txt` file and change it so it points to the new version.)
  
-* Download the latest version of the Oculus OpenXR Mobile SDK (as stated above). Copy the *ovr_openxr_mobile_sdk_xxx* folder from the SDK at the root source folder, next to the *OpenXR-SDK-release-xxx* folder (thus, they will now be at the same level in the folder structure).
->(Similar to above, if the name of the folder from the Oculus OpenXR Mobile SDK references a newer version, modify the path to the SDK specified in `CMakeLists.txt` file and change it so it points to the new version.)
-
-* Clone or download the latest version of stb (as stated above). Create a *stb* folder at the root source folder, next to the *OpenXR-SDK-release-xxx* and *ovr_openxr_mobile_sdk_xxx* folders. Ensure that the "stb_xxx.h" files are located at the root of the *stb* folder to ensure proper compilation.
+* Clone or download the latest version of stb (as stated above). Create a *stb* folder at the root source folder, next to the *OpenXR-SDK-release-xxx* folder. Ensure that the "stb_xxx.h" files are located at the root of the *stb* folder to ensure proper compilation.
 
 * Open Android Studio 2024.1.1 (or newer), then open the project in the `SlipNFrag-XR` folder. Wait for Gradle to finish configuring the environment for the project, and follow the prompts if instructed to do so.
 >(Check that your environment has the components described above, with their respective versions.)
@@ -85,13 +87,11 @@ To set up the environment to build, debug and test the project for the first tim
 * Ensure that your device is connected and visible in Android Studio (look for mentions of the device name in the top bar of the IDE), and then press the Play button to run & test the project, or the Debug button to debug it.
 >IMPORTANT: Be sure to follow the instructions in the [Readme](README.md) to copy the game assets to your device to be able to play the game as expected.
 
-If you need to enable the Vulkan validation layers for this project:
-
-* Grab a copy of the Vulkan validation layers (version specified above) and copy it into the root source folder of the project.
-
-* Ensure that, in the file `SlipNFrag-XR/app/src/main/cpp/CMakeLists.txt`, the reference to the validation layers folder matches the name of the recently copied layers.
+If you need to enable the Vulkan Validation Layers for this project, grab the latest version of them from [the official source](https://github.com/KhronosGroup/Vulkan-ValidationLayers) and copy them into a new `SlipNFrag-XR/app/src/main/jniLibs` folder. **Do not** attempt to link the libs in `CMakeLists.txt` - this will simply make the executable to refuse to start.
 
 To generate a Release build of the project, in .apk form, do the following:
+
+* Unless you absolutely need them, remove the Vulkan Validation Layers from the project, by removing the `SlipNFrag-XR/app/src/main/jniLibs` folder specified above.
 
 * If you haven't done so, create an *android.debug.keystore* file to sign your app. The file can be generated from the Oculus OpenXR Mobile SDK folder, by doing the following:
     - Windows: from a command prompt, run `ovr_openxr_mobile_sdk_xxx\bin\scripts\build\ovrbuild_keystore.py.bat`. NOTE: You will need Python properly configured in your system to do this.

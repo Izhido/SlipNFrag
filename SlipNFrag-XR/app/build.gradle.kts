@@ -47,7 +47,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.31.4"
+            version = "3.31.5+"
         }
     }
     sourceSets {
@@ -55,7 +55,7 @@ android {
             shaders.srcDir("../../shaders/")
         }
     }
-    ndkVersion = "27.2.12479018"
+    ndkVersion = "28.0.13004108"
     buildToolsVersion = "35.0.0"
 }
 
@@ -66,7 +66,4 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.games.activity)
     implementation(libs.openxr.loader.android)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }
