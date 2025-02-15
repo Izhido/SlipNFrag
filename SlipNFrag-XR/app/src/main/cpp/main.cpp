@@ -454,13 +454,16 @@ void android_main(struct android_app* app)
 		std::vector<VkLayerProperties> availableLayers(layerCount);
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-		std::vector<const char*> validationLayerNames 
-		{ 
-			"VK_LAYER_KHRONOS_validation",
+		const char* vulkanValidationLayerName = "VK_LAYER_KHRONOS_validation";
+
+		std::vector<const char*> validationLayerNames
+		{
+			vulkanValidationLayerName,
 			"VK_LAYER_ADRENO_debug"
 		};
 
-		auto validationLayerFound = false;
+		auto validationLayersFound = false;
+		auto vulkanValidationLayerFound = false;
 		for (auto& validationLayerName : validationLayerNames)
 		{
 			for (const auto& layerProperties : availableLayers)
@@ -468,11 +471,15 @@ void android_main(struct android_app* app)
 				if (0 == strcmp(validationLayerName, layerProperties.layerName))
 				{
 					instanceLayerNames.push_back(validationLayerName);
-					validationLayerFound = true;
+					validationLayersFound = true;
+					if (0 == strcmp(validationLayerName, vulkanValidationLayerName))
+					{
+						vulkanValidationLayerFound = true;
+					}
 				}
 			}
 		}
-		if (!validationLayerFound)
+		if (!validationLayersFound)
 		{
 			__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "No validation layers found in the system, skipping");
 		}
@@ -496,6 +503,30 @@ void android_main(struct android_app* app)
 			instInfo.ppEnabledLayerNames = (instanceLayerNames.empty() ? nullptr : instanceLayerNames.data());
 			instInfo.enabledExtensionCount = (uint32_t)vulkanExtensions.size();
 			instInfo.ppEnabledExtensionNames = (vulkanExtensions.empty() ? nullptr : vulkanExtensions.data());
+
+#if !defined(NDEBUG)
+			VkBool32 vvlValidateSync = VK_TRUE;
+			VkBool32 vvlThreadSafety = VK_TRUE;
+			VkBool32 vvlBestPractices = VK_TRUE;
+			VkBool32 vvlBestPracticesARM = VK_TRUE;
+
+			VkLayerSettingEXT settings[] =
+			{
+				{ vulkanValidationLayerName, "validate_sync", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlValidateSync },
+				{ vulkanValidationLayerName, "thread_safety", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlThreadSafety },
+				{ vulkanValidationLayerName, "validate_best_practices", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlBestPractices },
+				{ vulkanValidationLayerName, "validate_best_practices_arm", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlBestPracticesARM }
+			};
+
+			VkLayerSettingsCreateInfoEXT layerSettingsCreate { VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT };
+			layerSettingsCreate.settingCount = std::size(settings);
+			layerSettingsCreate.pSettings = settings;
+
+			if (vulkanValidationLayerFound)
+			{
+				instInfo.pNext = &layerSettingsCreate;
+			}
+#endif
 
 			XrVulkanInstanceCreateInfoKHR vulkanCreateInfo { XR_TYPE_VULKAN_INSTANCE_CREATE_INFO_KHR };
 			vulkanCreateInfo.systemId = systemId;
@@ -2001,10 +2032,12 @@ void android_main(struct android_app* app)
 						imageMemoryBarrier.image = statusBarTexture.image;
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
-						region.bufferOffset = region.imageExtent.width * sizeof(uint32_t) * region.imageExtent.height; 
+						region.bufferOffset = region.imageExtent.width * sizeof(uint32_t) * region.imageExtent.height;
+						region.imageOffset.y = (SBAR_HEIGHT + 24) * (Constants::screenToConsoleMultiplier - 1);
 						region.imageExtent.height = SBAR_HEIGHT + 24;
 						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.stagingBuffer.buffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						statusBarTexture.filled = true;
+						region.imageOffset.y = 0;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -2014,10 +2047,10 @@ void android_main(struct android_app* app)
 
 						VkImageBlit blit { };
 						blit.srcOffsets[1].x = appState.ConsoleWidth;
-						blit.srcOffsets[1].y = appState.ConsoleHeight;
+						blit.srcOffsets[1].y = appState.ConsoleHeight - (SBAR_HEIGHT + 24);
 						blit.srcOffsets[1].z = 1;
 						blit.dstOffsets[1].x = appState.ScreenWidth;
-						blit.dstOffsets[1].y = appState.ScreenHeight;
+						blit.dstOffsets[1].y = appState.ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
 						blit.dstOffsets[1].z = 1;
 						blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						blit.srcSubresource.layerCount = 1;
@@ -2025,11 +2058,14 @@ void android_main(struct android_app* app)
 						blit.dstSubresource.layerCount = 1;
 						vkCmdBlitImage(commandBuffer, consoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
-						blit.srcOffsets[1].y = SBAR_HEIGHT + 24;
-						blit.dstOffsets[0].y = appState.ScreenHeight - (SBAR_HEIGHT + 24);
-						blit.dstOffsets[1].x = appState.ConsoleWidth;
-						blit.dstOffsets[1].y = appState.ScreenHeight;
-						vkCmdBlitImage(commandBuffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						VkImageCopy copy { };
+						copy.dstOffset.y = appState.ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
+						copy.extent.width = appState.ScreenWidth;
+						copy.extent.height = (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
+						copy.extent.depth = 1;
+						copy.srcSubresource = blit.srcSubresource;
+						copy.dstSubresource = blit.dstSubresource;
+						vkCmdCopyImage(commandBuffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 
 						imageMemoryBarrier.image = screenPerFrame.image;
 					}

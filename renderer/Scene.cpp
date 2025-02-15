@@ -135,8 +135,8 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
         CHECK_VKCMD(vkBindImageMemory(appState.Device, consoleTexture.image, consoleTexture.memory, 0));
 
         auto& statusBarTexture = appState.StatusBarTextures[i];
-        statusBarTexture.width = appState.ConsoleWidth;
-        statusBarTexture.height = SBAR_HEIGHT + 24;
+        statusBarTexture.width = appState.ScreenWidth;
+        statusBarTexture.height = (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
         statusBarTexture.mipCount = 1;
         statusBarTexture.layerCount = 1;
         imageCreateInfo.extent.width = statusBarTexture.width;
