@@ -7,7 +7,9 @@ Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
 {
 	for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
 	{
-		if ((*b)->size >= size && (*b)->size < size * 2)
+		if ((((*b)->size == Constants::minimumBufferAllocation &&
+			size <= Constants::minimumBufferAllocation)) ||
+			((*b)->size >= size && (*b)->size < size * 2))
 		{
 			auto buffer = *b;
 			(*b) = (*b)->next;
