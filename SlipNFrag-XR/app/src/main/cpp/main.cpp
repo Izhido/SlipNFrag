@@ -670,18 +670,9 @@ void android_main(struct android_app* app)
 		CHECK(instance != XR_NULL_HANDLE);
 
 		VkCommandPoolCreateInfo commandPoolCreateInfo { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
-		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 		commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
-		CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &appState.CommandPool));
-
-		VkCommandBufferBeginInfo commandBufferBeginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		
-		VkCommandBuffer setupCommandBuffer;
-		
-		VkSubmitInfo setupSubmitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-		setupSubmitInfo.commandBufferCount = 1;
-		setupSubmitInfo.pCommandBuffers = &setupCommandBuffer;
+		CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &appState.SetupCommandPool));
 
 		VkPipelineCacheCreateInfo pipelineCacheCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO };
 		CHECK_VKCMD(vkCreatePipelineCache(appState.Device, &pipelineCacheCreateInfo, nullptr, &appState.PipelineCache));
@@ -1113,8 +1104,6 @@ void android_main(struct android_app* app)
 		appState.SwapchainImages.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.SwapchainImages.data()));
 
-		appState.CommandBuffers.resize(imageCount);
-
 		VkAttachmentReference colorReference { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 		VkAttachmentReference depthReference { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 		VkAttachmentReference resolveReference { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
@@ -1197,6 +1186,12 @@ void android_main(struct android_app* app)
 
 		VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 		submitInfo.commandBufferCount = 1;
+
+		VkCommandBufferAllocateInfo commandBufferAllocateInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+		commandBufferAllocateInfo.commandBufferCount = 1;
+
+		VkCommandBufferBeginInfo commandBufferBeginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 		XrEventDataBuffer eventDataBuffer { };
 
@@ -1394,7 +1389,7 @@ void android_main(struct android_app* app)
 
 			if (!appState.Scene.created)
 			{
-				appState.Scene.Create(appState, setupCommandBuffer, commandBufferBeginInfo, setupSubmitInfo);
+				appState.Scene.Create(appState);
 			}
 
 			if (appState.EngineThreadCreated && !appState.EngineThreadStarted) // That is, if a previous call to android_main() already created an instance of EngineThread, but had to be closed:
@@ -1591,6 +1586,7 @@ void android_main(struct android_app* app)
 			auto keyboardRendered = false;
 
 			VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+			VkFence fence = VK_NULL_HANDLE;
 
 			if (frameState.shouldRender)
 			{
@@ -1828,12 +1824,36 @@ void android_main(struct android_app* app)
 						}
 					}
 
-					commandBuffer = appState.CommandBuffers[swapchainImageIndex];
+					if (perFrame.commandBuffer == VK_NULL_HANDLE)
+					{
+						CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &perFrame.commandPool));
 
-					CHECK_VKCMD(vkResetCommandBuffer(commandBuffer, 0));
+						commandBufferAllocateInfo.commandPool = perFrame.commandPool;
+						CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perFrame.commandBuffer));
+					}
+
+					commandBuffer = perFrame.commandBuffer;
+
+					if (perFrame.fence == VK_NULL_HANDLE)
+					{
+						VkFenceCreateInfo fenceCreate {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+						CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreate, nullptr, &perFrame.fence));
+					}
+					else
+					{
+						uint64_t timeout = UINT64_MAX;
+						CHECK_VKCMD(vkWaitForFences(appState.Device, 1, &perFrame.fence, VK_TRUE, timeout));
+					}
+
+					fence = perFrame.fence;
+
+					CHECK_VKCMD(vkResetFences(appState.Device, 1, &fence));
+
+					CHECK_VKCMD(vkResetCommandPool(appState.Device, perFrame.commandPool, 0));
+
 					CHECK_VKCMD(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 
-                    perFrame.FillFromStagingBuffer(appState, stagingBuffer, commandBuffer, swapchainImageIndex);
+                    perFrame.FillFromStagingBuffer(appState, stagingBuffer, swapchainImageIndex);
 
 					clearValues[0].color.float32[0] = clearR;
 					clearValues[0].color.float32[1] = clearG;
@@ -1939,7 +1959,7 @@ void android_main(struct android_app* app)
 					renderPassBeginInfo.framebuffer = perFrame.framebuffer;
 					vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-					perFrame.Render(appState, commandBuffer, swapchainImageIndex);
+					perFrame.Render(appState, swapchainImageIndex);
 
 					vkCmdEndRenderPass(commandBuffer);
 
@@ -2360,9 +2380,9 @@ void android_main(struct android_app* app)
 
 								CHECK_XRCMD(xrWaitSwapchainImage(appState.Scene.skybox->swapchain, &waitInfo));
 
-								VkCommandBufferAllocateInfo commandBufferAllocateInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
-								commandBufferAllocateInfo.commandPool = appState.CommandPool;
-								commandBufferAllocateInfo.commandBufferCount = 1;
+								VkCommandBuffer setupCommandBuffer;
+
+								commandBufferAllocateInfo.commandPool = appState.SetupCommandPool;
 								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 								
@@ -2437,13 +2457,17 @@ void android_main(struct android_app* app)
 								appState.submitBarrier.subresourceRange.baseArrayLayer = 0;
 
 								CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
+
+								VkSubmitInfo setupSubmitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+								setupSubmitInfo.commandBufferCount = 1;
+								setupSubmitInfo.pCommandBuffers = &setupCommandBuffer;
 								CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
 
 								CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 
 								CHECK_XRCMD(xrReleaseSwapchainImage(appState.Scene.skybox->swapchain, &releaseInfo));
 
-								vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
+								vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
 								for (auto i = 0; i < 6; i++)
 								{
 									vkDestroyBuffer(appState.Device, buffers[i], nullptr);
@@ -2483,10 +2507,10 @@ void android_main(struct android_app* app)
 				CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.swapchain, &waitInfo));
 			}
 
-			if (commandBuffer != VK_NULL_HANDLE)
+			if (commandBuffer != VK_NULL_HANDLE && fence != VK_NULL_HANDLE)
 			{
 				submitInfo.pCommandBuffers = &commandBuffer;
-				CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, VK_NULL_HANDLE));
+				CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, fence));
 			}
 
 			if (worldRendered)
@@ -2625,6 +2649,16 @@ void android_main(struct android_app* app)
 				perFrame.second.cachedAttributes.Delete(appState);
 				perFrame.second.cachedSortedVertices.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
+
+				if (perFrame.second.fence != VK_NULL_HANDLE)
+				{
+					vkDestroyFence(appState.Device, perFrame.second.fence, nullptr);
+				}
+
+				if (perFrame.second.commandPool != VK_NULL_HANDLE)
+				{
+					vkDestroyCommandPool(appState.Device, perFrame.second.commandPool, nullptr);
+				}
 			}
 
 			appState.PerFrame.clear();
@@ -2761,8 +2795,11 @@ void android_main(struct android_app* app)
             vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleStorageBufferLayout, nullptr);
             appState.Scene.singleStorageBufferLayout = VK_NULL_HANDLE;
 
-			vkDestroyCommandPool(appState.Device, appState.CommandPool, nullptr);
-			appState.CommandPool = VK_NULL_HANDLE;
+			if (appState.SetupCommandPool != VK_NULL_HANDLE)
+			{
+				vkDestroyCommandPool(appState.Device, appState.SetupCommandPool, nullptr);
+				appState.SetupCommandPool = VK_NULL_HANDLE;
+			}
 		}
 
 		appState.Scene.created = false;

@@ -26,8 +26,7 @@ struct AppState
 	VkDevice Device;
 	bool IndexTypeUInt8Enabled;
 	XrSession Session;
-	VkCommandPool CommandPool;
-	std::vector<VkCommandBuffer> CommandBuffers;
+	VkCommandPool SetupCommandPool;
 	VkQueue Queue;
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
 	int DefaultFOV;

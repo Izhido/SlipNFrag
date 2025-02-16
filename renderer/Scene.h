@@ -174,7 +174,7 @@ struct Scene
 
 	static void CopyImage(AppState& appState, unsigned char* source, uint32_t* target, int width, int height);
 	static void AddBorder(AppState& appState, std::vector<uint32_t>& target);
-	void Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo);
+	void Create(AppState& appState);
 	static void CreateShader(AppState& appState, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
 	void AddSampler(AppState& appState, uint32_t mipCount);

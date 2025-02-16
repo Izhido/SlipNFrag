@@ -53,7 +53,7 @@ void Scene::AddBorder(AppState& appState, std::vector<uint32_t>& target)
     }
 }
 
-void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCommandBufferBeginInfo& commandBufferBeginInfo, VkSubmitInfo& setupSubmitInfo)
+void Scene::Create(AppState& appState)
 {
     appState.ConsoleWidth = 320;
     appState.ConsoleHeight = 200;
@@ -92,11 +92,6 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 
     appState.Screen.swapchainImages.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
     CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Screen.swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.Screen.swapchainImages.data()));
-
-    if (imageCount > appState.CommandBuffers.size())
-    {
-        appState.CommandBuffers.resize(imageCount);
-    }
 
     appState.ScreenData.assign(swapchainCreateInfo.width * swapchainCreateInfo.height, 255 << 24);
     ImageAsset play;
@@ -159,18 +154,21 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     appState.Keyboard.Screen.swapchainImages.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
     CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Keyboard.Screen.swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.Keyboard.Screen.swapchainImages.data()));
 
-    if (imageCount > appState.CommandBuffers.size())
-    {
-        appState.CommandBuffers.resize(imageCount);
-    }
-
     VkCommandBufferAllocateInfo commandBufferAllocateInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
-    commandBufferAllocateInfo.commandPool = appState.CommandPool;
-    commandBufferAllocateInfo.commandBufferCount = appState.CommandBuffers.size();
-    CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, appState.CommandBuffers.data()));
-
+    commandBufferAllocateInfo.commandPool = appState.SetupCommandPool;
     commandBufferAllocateInfo.commandBufferCount = 1;
-    CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
+
+	VkCommandBuffer setupCommandBuffer;
+
+	CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
+
+	VkSubmitInfo setupSubmitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+	setupSubmitInfo.commandBufferCount = 1;
+	setupSubmitInfo.pCommandBuffers = &setupCommandBuffer;
+
+	VkCommandBufferBeginInfo commandBufferBeginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
     CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 
     ImageAsset floorImage;
@@ -194,7 +192,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
     CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
     CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
-    vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
+    vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
     stagingBuffer.Delete(appState);
     appState.NoGameDataData.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
     ImageAsset noGameData;
@@ -268,7 +266,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
     XrSwapchainImageReleaseInfo releaseInfo { XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
     CHECK_XRCMD(xrReleaseSwapchainImage(appState.LeftArrowsSwapchain, &releaseInfo));
 
-    vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
+    vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
     vkDestroyBuffer(appState.Device, buffer, nullptr);
     vkFreeMemory(appState.Device, memoryBlock, nullptr);
 
@@ -320,7 +318,7 @@ void Scene::Create(AppState& appState, VkCommandBuffer& setupCommandBuffer, VkCo
 
     CHECK_XRCMD(xrReleaseSwapchainImage(appState.RightArrowsSwapchain, &releaseInfo));
 
-    vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
+    vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
     vkDestroyBuffer(appState.Device, buffer, nullptr);
     vkFreeMemory(appState.Device, memoryBlock, nullptr);
 

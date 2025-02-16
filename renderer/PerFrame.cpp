@@ -855,7 +855,7 @@ void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 	colormapCount++;
 }
 
-void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
+void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
 {
 	auto loaded = first;
 	auto delayed = false;
@@ -894,7 +894,7 @@ void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuf
 	}
 }
 
-void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex)
+void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, uint32_t swapchainImageIndex)
 {
 	appState.Scene.stagingBuffer.lastStartBarrier = -1;
 	appState.Scene.stagingBuffer.lastEndBarrier = -1;
@@ -909,21 +909,21 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
     appState.Scene.AddToVertexShaderBarriers(appState.Scene.matricesBuffers[swapchainImageIndex], VK_ACCESS_SHADER_READ_BIT);
 
 	SharedMemoryBuffer* previousBuffer = nullptr;
-	FillAliasFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
+	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
 
 	while (bufferCopy.srcOffset % 2 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
 
-	FillAliasFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.indexBuffers.firstAliasIndices16, bufferCopy, previousBuffer);
+	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices16, bufferCopy, previousBuffer);
 
 	while (bufferCopy.srcOffset % 4 != 0)
 	{
 		bufferCopy.srcOffset++;
 	}
 
-	FillAliasFromStagingBuffer(appState, stagingBuffer, commandBuffer, appState.Scene.indexBuffers.firstAliasIndices32, bufferCopy, previousBuffer);
+	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices32, bufferCopy, previousBuffer);
 
 	bufferCopy.dstOffset = 0;
 
@@ -1319,7 +1319,7 @@ void PerFrame::SetTintPushConstants(float* pushConstants)
 	pushConstants[4] = v_gamma.value;
 }
 
-void PerFrame::Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex)
+void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 {
 	VkDescriptorPoolSize poolSizes[3] { };
 

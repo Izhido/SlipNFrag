@@ -7,6 +7,9 @@
 
 struct PerFrame
 {
+	VkCommandPool commandPool;
+	VkCommandBuffer commandBuffer;
+	VkFence fence;
 	VkImage colorImage;
 	VkImage depthImage;
 	VkImage resolveImage;
@@ -68,10 +71,10 @@ struct PerFrame
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void LoadNonStagedResources(AppState& appState);
 	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
-	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
-	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex);
+	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
+	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
 	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
 	static void SetTintPushConstants(float pushConstants[]);
-	void Render(AppState& appState, VkCommandBuffer commandBuffer, uint32_t swapchainImageIndex);
+	void Render(AppState& appState, uint32_t swapchainImageIndex);
 };
