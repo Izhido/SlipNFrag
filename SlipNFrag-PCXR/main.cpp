@@ -381,7 +381,7 @@ int main(int argc, char* argv[])
 		createInfo.enabledApiLayerNames = xrInstanceApiLayers.data();
 
 		strcpy(createInfo.applicationInfo.applicationName, "SlipNFrag-PCXR");
-		createInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
+		createInfo.applicationInfo.apiVersion = USE_OPENXR_VERSION;
 
 		CHECK_XRCMD(xrCreateInstance(&createInfo, &instance));
 
@@ -397,7 +397,7 @@ int main(int argc, char* argv[])
 		systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 		CHECK_XRCMD(xrGetSystem(instance, &systemInfo, &systemId));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %d for form factor %s", systemId, to_string(systemInfo.formFactor));
+		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %lu for form factor %s", systemId, to_string(systemInfo.formFactor));
 
 		CHECK(systemId != XR_NULL_SYSTEM_ID);
 
@@ -473,12 +473,15 @@ int main(int argc, char* argv[])
 		std::vector<VkLayerProperties> availableLayers(layerCount);
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-		std::vector<const char*> validationLayerNames 
-		{ 
-			"VK_LAYER_KHRONOS_validation"
+		const char* vulkanValidationLayerName = "VK_LAYER_KHRONOS_validation";
+
+		std::vector<const char*> validationLayerNames
+		{
+			vulkanValidationLayerName
 		};
 
-		auto validationLayerFound = false;
+		auto validationLayersFound = false;
+		auto vulkanValidationLayerFound = false;
 		for (auto& validationLayerName : validationLayerNames)
 		{
 			for (const auto& layerProperties : availableLayers)
@@ -486,11 +489,15 @@ int main(int argc, char* argv[])
 				if (0 == strcmp(validationLayerName, layerProperties.layerName))
 				{
 					instanceLayerNames.push_back(validationLayerName);
-					validationLayerFound = true;
+					validationLayersFound = true;
+					if (0 == strcmp(validationLayerName, vulkanValidationLayerName))
+					{
+						vulkanValidationLayerFound = true;
+					}
 				}
 			}
 		}
-		if (!validationLayerFound)
+		if (!validationLayersFound)
 		{
 			__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "No validation layers found in the system, skipping");
 		}
@@ -514,6 +521,30 @@ int main(int argc, char* argv[])
 			instInfo.ppEnabledLayerNames = (instanceLayerNames.empty() ? nullptr : instanceLayerNames.data());
 			instInfo.enabledExtensionCount = (uint32_t)vulkanExtensions.size();
 			instInfo.ppEnabledExtensionNames = (vulkanExtensions.empty() ? nullptr : vulkanExtensions.data());
+
+#if !defined(NDEBUG)
+			VkBool32 vvlValidateSync = VK_TRUE;
+			VkBool32 vvlThreadSafety = VK_TRUE;
+			VkBool32 vvlBestPractices = VK_TRUE;
+			VkBool32 vvlBestPracticesNVIDIA = VK_TRUE;
+
+			VkLayerSettingEXT settings[] =
+			{
+				{ vulkanValidationLayerName, "validate_sync", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlValidateSync },
+				{ vulkanValidationLayerName, "thread_safety", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlThreadSafety },
+				{ vulkanValidationLayerName, "validate_best_practices", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlBestPractices },
+				{ vulkanValidationLayerName, "validate_best_practices_nvidia", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlBestPracticesNVIDIA }
+			};
+
+			VkLayerSettingsCreateInfoEXT layerSettingsCreate { VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT };
+			layerSettingsCreate.settingCount = std::size(settings);
+			layerSettingsCreate.pSettings = settings;
+
+			if (vulkanValidationLayerFound)
+			{
+				instInfo.pNext = &layerSettingsCreate;
+			}
+#endif
 
 			XrVulkanInstanceCreateInfoKHR vulkanCreateInfo { XR_TYPE_VULKAN_INSTANCE_CREATE_INFO_KHR };
 			vulkanCreateInfo.systemId = systemId;
@@ -657,18 +688,9 @@ int main(int argc, char* argv[])
 		CHECK(instance != XR_NULL_HANDLE);
 
 		VkCommandPoolCreateInfo commandPoolCreateInfo { VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO };
-		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 		commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
-		CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &appState.CommandPool));
-
-		VkCommandBufferBeginInfo commandBufferBeginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-		
-		VkCommandBuffer setupCommandBuffer;
-		
-		VkSubmitInfo setupSubmitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-		setupSubmitInfo.commandBufferCount = 1;
-		setupSubmitInfo.pCommandBuffers = &setupCommandBuffer;
+		CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &appState.SetupCommandPool));
 
 		VkPipelineCacheCreateInfo pipelineCacheCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO };
 		CHECK_VKCMD(vkCreatePipelineCache(appState.Device, &pipelineCacheCreateInfo, nullptr, &appState.PipelineCache));
@@ -1076,18 +1098,18 @@ int main(int argc, char* argv[])
 			THROW(Fmt("No runtime swapchain format supported for color swapchain %i", Constants::colorFormat));
 		}
 
-		appState.SwapchainWidth = configViews[0].recommendedImageRectWidth;
-		appState.SwapchainHeight = configViews[0].recommendedImageRectHeight;
+		appState.SwapchainRect.extent.width = configViews[0].recommendedImageRectWidth;
+		appState.SwapchainRect.extent.height = configViews[0].recommendedImageRectHeight;
 		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;
 		
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainWidth, appState.SwapchainHeight);
+		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
 
 		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
 		swapchainCreateInfo.format = Constants::colorFormat;
 		swapchainCreateInfo.sampleCount = VK_SAMPLE_COUNT_1_BIT;
-		swapchainCreateInfo.width = appState.SwapchainWidth;
-		swapchainCreateInfo.height = appState.SwapchainHeight;
+		swapchainCreateInfo.width = appState.SwapchainRect.extent.width;
+		swapchainCreateInfo.height = appState.SwapchainRect.extent.height;
 		swapchainCreateInfo.faceCount = 1;
 		swapchainCreateInfo.arraySize = viewCount;
 		swapchainCreateInfo.mipCount = 1;
@@ -1099,8 +1121,6 @@ int main(int argc, char* argv[])
 
 		appState.SwapchainImages.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.SwapchainImages.data()));
-
-		appState.CommandBuffers.resize(imageCount);
 
 		VkAttachmentReference colorReference { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 		VkAttachmentReference depthReference { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
@@ -1156,6 +1176,15 @@ int main(int argc, char* argv[])
 
 		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
 
+		VkClearValue clearValues[2] { };
+		clearValues[1].depthStencil.depth = 1.0f;
+
+		VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+		renderPassBeginInfo.clearValueCount = 2;
+		renderPassBeginInfo.pClearValues = clearValues;
+		renderPassBeginInfo.renderPass = appState.RenderPass;
+		renderPassBeginInfo.renderArea.extent = appState.SwapchainRect.extent;
+
 		std::vector<XrCompositionLayerBaseHeader*> layers;
 
 		XrCompositionLayerProjection worldLayer { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
@@ -1176,9 +1205,17 @@ int main(int argc, char* argv[])
 		VkSubmitInfo submitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
 		submitInfo.commandBufferCount = 1;
 
+		VkCommandBufferAllocateInfo commandBufferAllocateInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
+		commandBufferAllocateInfo.commandBufferCount = 1;
+
+		VkCommandBufferBeginInfo commandBufferBeginInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
 		XrEventDataBuffer eventDataBuffer { };
 
         appState.FileLoader = new FileLoader();
+
+        appState.VertexTransform.m[15] = 1;
 
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
@@ -1195,7 +1232,7 @@ int main(int argc, char* argv[])
 					case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
 					{
 						const auto& instanceLossPending = *reinterpret_cast<const XrEventDataInstanceLossPending*>(event);
-						__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "XrEventDataInstanceLossPending by %lld", instanceLossPending.lossTime);
+						__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "XrEventDataInstanceLossPending by %ld", instanceLossPending.lossTime);
 						exitRenderLoop = true;
 						requestRestart = true;
 						break;
@@ -1305,7 +1342,7 @@ int main(int argc, char* argv[])
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
 					{
 						const auto& referenceSpaceChangeEvent = *reinterpret_cast<const XrEventDataReferenceSpaceChangePending*>(event);
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %lld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
+						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %ld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
 						break;
 					}
 					default:
@@ -1348,7 +1385,7 @@ int main(int argc, char* argv[])
 
 			if (!appState.Scene.created)
 			{
-				appState.Scene.Create(appState, setupCommandBuffer, commandBufferBeginInfo, setupSubmitInfo);
+				appState.Scene.Create(appState);
 			}
 
 			if (appState.EngineThreadCreated && !appState.EngineThreadStarted) // That is, if a previous call to android_main() already created an instance of EngineThread, but had to be closed:
@@ -1379,7 +1416,7 @@ int main(int argc, char* argv[])
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "OXR 1.0.24";
+						sys_version = "PCXR 1.0.28";
 						sys_argc = argc;
 						sys_argv = argv;
 						Sys_Init(sys_argc, sys_argv);
@@ -1406,7 +1443,6 @@ int main(int argc, char* argv[])
 						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = false;
-						r_skip_fov_check = false;
 						sb_onconsole = false;
 						Cvar_SetValue("joyadvanced", 1);
 						Cvar_SetValue("joyadvaxisx", AxisSide);
@@ -1426,7 +1462,6 @@ int main(int argc, char* argv[])
 						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = true;
-						r_skip_fov_check = true;
 						sb_onconsole = true;
 						Cvar_SetValue("joyadvanced", 1);
 						Cvar_SetValue("joyadvaxisx", AxisSide);
@@ -1453,7 +1488,6 @@ int main(int argc, char* argv[])
 						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 						D_ResetLists();
 						d_uselists = false;
-						r_skip_fov_check = false;
 						sb_onconsole = false;
 					}
 					appState.PreviousMode = appState.Mode;
@@ -1490,6 +1524,7 @@ int main(int argc, char* argv[])
 			auto keyboardRendered = false;
 
 			VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+			VkFence fence = VK_NULL_HANDLE;
 
 			if (frameState.shouldRender)
 			{
@@ -1605,7 +1640,7 @@ int main(int argc, char* argv[])
 							}
 						}
 
-						auto playerHeight = 32;
+						float playerHeight = 32;
 						if (host_initialized && cl.viewentity >= 0 && cl.viewentity < cl_entities.size())
 						{
 							auto player = &cl_entities[cl.viewentity];
@@ -1625,14 +1660,21 @@ int main(int argc, char* argv[])
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
 
-						auto minHorizontal = FLT_MAX;
-						auto maxHorizontal = FLT_MIN;
+                        float angleHorizontal = FLT_MIN;
+                        float angleUp = 0;
+                        float angleDown = 0;
 						for (size_t i = 0; i < viewCountOutput; i++)
 						{
-							minHorizontal = std::min(minHorizontal, views[i].fov.angleLeft);
-							maxHorizontal = std::max(maxHorizontal, views[i].fov.angleRight);
+                            angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleLeft));
+                            angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleRight));
+                            angleUp += fabs(views[i].fov.angleUp);
+                            angleDown += fabs(views[i].fov.angleDown);
 						}
-						appState.FOV = (maxHorizontal - minHorizontal) * 180 / M_PI;
+						appState.FOV = 2 * (int)floor(angleHorizontal * 180 / M_PI);
+                        appState.SkyLeft = tan(angleHorizontal);
+                        appState.SkyHorizontal = 2 * appState.SkyLeft;
+                        appState.SkyTop = tan(angleUp / (float)viewCountOutput);
+                        appState.SkyVertical = appState.SkyTop + tan(angleDown / (float)viewCountOutput);
 					}
 					
 					projectionLayerViews.resize(viewCountOutput);
@@ -1648,8 +1690,8 @@ int main(int argc, char* argv[])
 						projectionLayerViews[i].pose = views[i].pose;
 						projectionLayerViews[i].fov = views[i].fov;
 						projectionLayerViews[i].subImage.swapchain = swapchain;
-						projectionLayerViews[i].subImage.imageRect.extent.width = appState.SwapchainWidth;
-						projectionLayerViews[i].subImage.imageRect.extent.height = appState.SwapchainHeight;
+						projectionLayerViews[i].subImage.imageRect.extent.width = appState.SwapchainRect.extent.width;
+						projectionLayerViews[i].subImage.imageRect.extent.height = appState.SwapchainRect.extent.height;
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
 					}
 
@@ -1697,6 +1739,8 @@ int main(int argc, char* argv[])
                         }
                         perFrame.LoadStagingBuffer(appState, stagingBuffer);
 
+						perFrame.LoadNonStagedResources(appState);
+
 						if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 						{
 							memcpy(appState.Scene.paletteData, d_8to24table, 256 * sizeof(unsigned int));
@@ -1718,26 +1762,48 @@ int main(int argc, char* argv[])
 						}
 					}
 
-					commandBuffer = appState.CommandBuffers[swapchainImageIndex];
+					if (perFrame.commandBuffer == VK_NULL_HANDLE)
+					{
+						CHECK_VKCMD(vkCreateCommandPool(appState.Device, &commandPoolCreateInfo, nullptr, &perFrame.commandPool));
 
-					CHECK_VKCMD(vkResetCommandBuffer(commandBuffer, 0));
+						commandBufferAllocateInfo.commandPool = perFrame.commandPool;
+						CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &perFrame.commandBuffer));
+					}
+
+					commandBuffer = perFrame.commandBuffer;
+
+					if (perFrame.fence == VK_NULL_HANDLE)
+					{
+						VkFenceCreateInfo fenceCreate {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+						CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreate, nullptr, &perFrame.fence));
+					}
+					else
+					{
+						uint64_t timeout = UINT64_MAX;
+						CHECK_VKCMD(vkWaitForFences(appState.Device, 1, &perFrame.fence, VK_TRUE, timeout));
+					}
+
+					fence = perFrame.fence;
+
+					CHECK_VKCMD(vkResetFences(appState.Device, 1, &fence));
+
+					CHECK_VKCMD(vkResetCommandPool(appState.Device, perFrame.commandPool, 0));
+
 					CHECK_VKCMD(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 
-                    perFrame.FillFromStagingBuffer(appState, stagingBuffer, commandBuffer, swapchainImageIndex);
+                    perFrame.FillFromStagingBuffer(appState, stagingBuffer, swapchainImageIndex);
 
-					VkClearValue clearValues[2] { };
 					clearValues[0].color.float32[0] = clearR;
 					clearValues[0].color.float32[1] = clearG;
 					clearValues[0].color.float32[2] = clearB;
 					clearValues[0].color.float32[3] = clearA;
-					clearValues[1].depthStencil.depth = 1.0f;
 
 					if (perFrame.framebuffer == VK_NULL_HANDLE)
 					{
 						VkImageCreateInfo imageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 						imageInfo.imageType = VK_IMAGE_TYPE_2D;
-						imageInfo.extent.width = appState.SwapchainWidth;
-						imageInfo.extent.height = appState.SwapchainHeight;
+						imageInfo.extent.width = appState.SwapchainRect.extent.width;
+						imageInfo.extent.height = appState.SwapchainRect.extent.height;
 						imageInfo.extent.depth = 1;
 						imageInfo.mipLevels = 1;
 						imageInfo.arrayLayers = 2;
@@ -1805,8 +1871,8 @@ int main(int argc, char* argv[])
 						framebufferInfo.renderPass = appState.RenderPass;
 						framebufferInfo.attachmentCount = 3;
 						framebufferInfo.pAttachments = attachments;
-						framebufferInfo.width = appState.SwapchainWidth;
-						framebufferInfo.height = appState.SwapchainHeight;
+						framebufferInfo.width = appState.SwapchainRect.extent.width;
+						framebufferInfo.height = appState.SwapchainRect.extent.height;
 						framebufferInfo.layers = 1;
 						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &framebufferInfo, nullptr, &perFrame.framebuffer));
 
@@ -1828,32 +1894,10 @@ int main(int argc, char* argv[])
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
 
-					VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-					renderPassBeginInfo.clearValueCount = 2;
-					renderPassBeginInfo.pClearValues = clearValues;
-					
-					renderPassBeginInfo.renderPass = appState.RenderPass;
 					renderPassBeginInfo.framebuffer = perFrame.framebuffer;
-					renderPassBeginInfo.renderArea.offset = {0, 0};
-					renderPassBeginInfo.renderArea.extent.width = appState.SwapchainWidth;
-					renderPassBeginInfo.renderArea.extent.height = appState.SwapchainHeight;
 					vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-					VkRect2D screenRect { };
-					screenRect.extent.width = appState.SwapchainWidth;
-					screenRect.extent.height = appState.SwapchainHeight;
-					
-					VkViewport viewport;
-					viewport.x = (float)screenRect.offset.x;
-					viewport.y = (float)screenRect.offset.y;
-					viewport.width = (float)screenRect.extent.width;
-					viewport.height = (float)screenRect.extent.height;
-					viewport.minDepth = 0.0f;
-					viewport.maxDepth = 1.0f;
-					vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-					vkCmdSetScissor(commandBuffer, 0, 1, &screenRect);
-
-					perFrame.Render(appState, commandBuffer, swapchainImageIndex);
+					perFrame.Render(appState, swapchainImageIndex);
 
 					vkCmdEndRenderPass(commandBuffer);
 
@@ -1946,10 +1990,12 @@ int main(int argc, char* argv[])
 						imageMemoryBarrier.image = statusBarTexture.image;
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
-						region.bufferOffset = region.imageExtent.width * sizeof(uint32_t) * region.imageExtent.height; 
+						region.bufferOffset = region.imageExtent.width * sizeof(uint32_t) * region.imageExtent.height;
+						region.imageOffset.y = (SBAR_HEIGHT + 24) * (Constants::screenToConsoleMultiplier - 1);
 						region.imageExtent.height = SBAR_HEIGHT + 24;
 						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.stagingBuffer.buffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						statusBarTexture.filled = true;
+						region.imageOffset.y = 0;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -1959,10 +2005,10 @@ int main(int argc, char* argv[])
 
 						VkImageBlit blit { };
 						blit.srcOffsets[1].x = appState.ConsoleWidth;
-						blit.srcOffsets[1].y = appState.ConsoleHeight;
+						blit.srcOffsets[1].y = appState.ConsoleHeight - (SBAR_HEIGHT + 24);
 						blit.srcOffsets[1].z = 1;
 						blit.dstOffsets[1].x = appState.ScreenWidth;
-						blit.dstOffsets[1].y = appState.ScreenHeight;
+						blit.dstOffsets[1].y = appState.ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
 						blit.dstOffsets[1].z = 1;
 						blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						blit.srcSubresource.layerCount = 1;
@@ -1970,11 +2016,14 @@ int main(int argc, char* argv[])
 						blit.dstSubresource.layerCount = 1;
 						vkCmdBlitImage(commandBuffer, consoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
-						blit.srcOffsets[1].y = SBAR_HEIGHT + 24;
-						blit.dstOffsets[0].y = appState.ScreenHeight - (SBAR_HEIGHT + 24);
-						blit.dstOffsets[1].x = appState.ConsoleWidth;
-						blit.dstOffsets[1].y = appState.ScreenHeight;
-						vkCmdBlitImage(commandBuffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
+						VkImageCopy copy { };
+						copy.dstOffset.y = appState.ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
+						copy.extent.width = appState.ScreenWidth;
+						copy.extent.height = (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
+						copy.extent.depth = 1;
+						copy.srcSubresource = blit.srcSubresource;
+						copy.dstSubresource = blit.dstSubresource;
+						vkCmdCopyImage(commandBuffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 
 						imageMemoryBarrier.image = screenPerFrame.image;
 					}
@@ -2269,9 +2318,9 @@ int main(int argc, char* argv[])
 
 								CHECK_XRCMD(xrWaitSwapchainImage(appState.Scene.skybox->swapchain, &waitInfo));
 
-								VkCommandBufferAllocateInfo commandBufferAllocateInfo { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
-								commandBufferAllocateInfo.commandPool = appState.CommandPool;
-								commandBufferAllocateInfo.commandBufferCount = 1;
+								VkCommandBuffer setupCommandBuffer;
+
+								commandBufferAllocateInfo.commandPool = appState.SetupCommandPool;
 								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 								
@@ -2346,13 +2395,17 @@ int main(int argc, char* argv[])
 								appState.submitBarrier.subresourceRange.baseArrayLayer = 0;
 
 								CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
+
+								VkSubmitInfo setupSubmitInfo { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+								setupSubmitInfo.commandBufferCount = 1;
+								setupSubmitInfo.pCommandBuffers = &setupCommandBuffer;
 								CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
 
 								CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 
 								CHECK_XRCMD(xrReleaseSwapchainImage(appState.Scene.skybox->swapchain, &releaseInfo));
 
-								vkFreeCommandBuffers(appState.Device, appState.CommandPool, 1, &setupCommandBuffer);
+								vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
 								for (auto i = 0; i < 6; i++)
 								{
 									vkDestroyBuffer(appState.Device, buffers[i], nullptr);
@@ -2392,10 +2445,10 @@ int main(int argc, char* argv[])
 				CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.swapchain, &waitInfo));
 			}
 
-			if (commandBuffer != VK_NULL_HANDLE)
+			if (commandBuffer != VK_NULL_HANDLE && fence != VK_NULL_HANDLE)
 			{
 				submitInfo.pCommandBuffers = &commandBuffer;
-				CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, VK_NULL_HANDLE));
+				CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, fence));
 			}
 
 			if (worldRendered)
@@ -2532,7 +2585,18 @@ int main(int argc, char* argv[])
 				perFrame.second.cachedIndices8.Delete(appState);
                 perFrame.second.cachedStorageAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
+				perFrame.second.cachedSortedVertices.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
+
+				if (perFrame.second.fence != VK_NULL_HANDLE)
+				{
+					vkDestroyFence(appState.Device, perFrame.second.fence, nullptr);
+				}
+
+				if (perFrame.second.commandPool != VK_NULL_HANDLE)
+				{
+					vkDestroyCommandPool(appState.Device, perFrame.second.commandPool, nullptr);
+				}
 			}
 
 			appState.PerFrame.clear();
@@ -2669,8 +2733,11 @@ int main(int argc, char* argv[])
             vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleStorageBufferLayout, nullptr);
             appState.Scene.singleStorageBufferLayout = VK_NULL_HANDLE;
 
-			vkDestroyCommandPool(appState.Device, appState.CommandPool, nullptr);
-			appState.CommandPool = VK_NULL_HANDLE;
+			if (appState.SetupCommandPool != VK_NULL_HANDLE)
+			{
+				vkDestroyCommandPool(appState.Device, appState.SetupCommandPool, nullptr);
+				appState.SetupCommandPool = VK_NULL_HANDLE;
+			}
 		}
 
 		appState.Scene.created = false;

@@ -1199,7 +1199,7 @@ void android_main(struct android_app* app)
 
         appState.VertexTransform.m[15] = 1;
 
-        auto sessionState = XR_SESSION_STATE_UNKNOWN;
+		auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
 
 		while (app->destroyRequested == 0)

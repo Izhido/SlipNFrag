@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
+
 project(SlipNFrag-PCXR)
 
 set(ROOT_DIR "${PROJECT_SOURCE_DIR}/..")
@@ -8,7 +9,7 @@ set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SHADERS_DIR "${ROOT_DIR}/shaders")
 set(NULL_DIR "${ROOT_DIR}/SlipNFrag")
 set(STB_DIR "${ROOT_DIR}/stb")
-set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.0.30")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.45")
 
 file(GLOB LOCAL_HEADERS "${LOCAL_DIR}/*.h")
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
@@ -32,6 +33,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_definitions(
         -DXR_USE_PLATFORM_WIN32=1
         -DXR_USE_GRAPHICS_API_VULKAN=1
+        "-DUSE_OPENXR_VERSION=XR_MAKE_VERSION(1, 0, 34)"
 )
 
 add_executable(slipnfrag_pcxr
@@ -43,9 +45,16 @@ add_executable(slipnfrag_pcxr
     ${SHADERS_SOURCE})
 
 add_library(openxr_loader STATIC IMPORTED)
-set_property(TARGET openxr_loader PROPERTY IMPORTED_LOCATION 
-        ${OPENXR_DIR}/out/install/x64-Debug/lib/openxr_loaderd.lib
-)
+
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    set_property(TARGET openxr_loader PROPERTY IMPORTED_LOCATION 
+            ${OPENXR_DIR}/out/install/x64-Debug/lib/openxr_loaderd.lib
+    )
+else()
+    set_property(TARGET openxr_loader PROPERTY IMPORTED_LOCATION 
+            ${OPENXR_DIR}/out/install/x64-Release/lib/openxr_loader.lib
+    )
+endif()
 
 source_group("Headers" FILES ${LOCAL_HEADERS})
 source_group("Shaders" FILES ${SHADERS_SOURCE})
@@ -119,8 +128,12 @@ target_link_libraries(slipnfrag_pcxr openxr_loader)
 if(TARGET openxr-gfxwrapper)
     target_link_libraries(slipnfrag_pcxr openxr-gfxwrapper)
 endif()
+target_compile_features(slipnfrag_pcxr PUBLIC cxx_std_17)
 target_compile_definitions(slipnfrag_pcxr PRIVATE _CRT_SECURE_NO_WARNINGS)
-target_compile_options(slipnfrag_pcxr PRIVATE /Zc:wchar_t /Zc:forScope)
+target_compile_options(slipnfrag_pcxr PRIVATE 
+    /Zc:wchar_t 
+    /Zc:forScope
+)
 
 target_link_libraries(slipnfrag_pcxr ${Vulkan_LIBRARY})
 

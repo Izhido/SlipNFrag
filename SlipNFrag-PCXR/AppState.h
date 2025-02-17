@@ -3,7 +3,6 @@
 #include "vid_pcxr.h"
 #include "d_lists.h"
 #include "AppMode.h"
-#include <vulkan/vulkan.h>
 #include <common/xr_dependencies.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
@@ -27,14 +26,16 @@ struct AppState
 	VkDevice Device;
 	bool IndexTypeUInt8Enabled;
 	XrSession Session;
-	VkCommandPool CommandPool;
-	std::vector<VkCommandBuffer> CommandBuffers;
+	VkCommandPool SetupCommandPool;
 	VkQueue Queue;
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
 	int DefaultFOV;
 	int FOV;
-	uint32_t SwapchainWidth;
-	uint32_t SwapchainHeight;
+    float SkyLeft;
+    float SkyHorizontal;
+    float SkyTop;
+    float SkyVertical;
+	VkRect2D SwapchainRect;
 	uint32_t SwapchainSampleCount;
 	std::vector<XrSwapchainImageVulkan2KHR> SwapchainImages;
 	Screen Screen;
@@ -61,6 +62,7 @@ struct AppState
 	float Roll;
 	float DistanceToFloor;
 	float Scale;
+    XrMatrix4x4f VertexTransform;
 	int ScreenWidth;
 	int ScreenHeight;
 	int ConsoleWidth;
