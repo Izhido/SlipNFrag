@@ -999,6 +999,9 @@ void Scene::Create(AppState& appState)
     vkDestroyShaderModule(appState.Device, surfaceVertex, nullptr);
 
     VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+	samplerCreateInfo.maxLod = VK_LOD_CLAMP_NONE;
+	CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &sampler));
+
     samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -1134,20 +1137,6 @@ void Scene::Initialize()
     }
     textures.first = nullptr;
     textures.current = nullptr;
-}
-
-void Scene::AddSampler(AppState& appState, uint32_t mipCount)
-{
-    if (samplers.size() <= mipCount)
-    {
-        samplers.resize(mipCount + 1);
-    }
-    if (samplers[mipCount] == VK_NULL_HANDLE)
-    {
-        VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-        samplerCreateInfo.maxLod = mipCount - 1;
-        CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &samplers[mipCount]));
-    }
 }
 
 void Scene::AddToVertexInputBarriers(VkBuffer buffer, VkAccessFlags flags)

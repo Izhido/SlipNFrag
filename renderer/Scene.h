@@ -116,7 +116,7 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> aliasTextureCache;
 	Texture floorTexture;
 	Texture controllerTexture;
-	std::vector<VkSampler> samplers;
+	VkSampler sampler;
 	VkSampler lightmapSampler;
 	std::unordered_map<uint32_t, std::list<UsedInSharedMemory>> latestMemory;
 	SharedMemoryBuffer* latestIndexBuffer8;
@@ -177,7 +177,6 @@ struct Scene
 	void Create(AppState& appState);
 	static void CreateShader(AppState& appState, const char* filename, VkShaderModule* shaderModule);
 	void Initialize();
-	void AddSampler(AppState& appState, uint32_t mipCount);
 	void AddToVertexInputBarriers(VkBuffer buffer, VkAccessFlags flags);
     void AddToVertexShaderBarriers(VkBuffer buffer, VkAccessFlags flags);
 	static VkDeviceSize GetAllocatedFor(int width, int height);

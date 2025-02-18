@@ -2670,11 +2670,11 @@ void android_main(struct android_app* app)
 			}
 
 			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
-			for (auto sampler : appState.Scene.samplers)
+			if (appState.Scene.sampler != VK_NULL_HANDLE)
 			{
-				vkDestroySampler(appState.Device, sampler, nullptr);
+				vkDestroySampler(appState.Device, appState.Scene.sampler, nullptr);
+				appState.Scene.sampler = VK_NULL_HANDLE;
 			}
-			appState.Scene.samplers.clear();
 
 			appState.Scene.controllerTexture.Delete(appState);
 			appState.Scene.floorTexture.Delete(appState);

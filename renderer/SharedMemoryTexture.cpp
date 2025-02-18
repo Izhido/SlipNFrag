@@ -85,8 +85,6 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	imageViewCreateInfo.subresourceRange.layerCount = layerCount;
 	CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &view));
 
-	appState.Scene.AddSampler(appState, mipCount);
-
 	if (appState.Scene.latestTextureDescriptorSets == nullptr || appState.Scene.latestTextureDescriptorSets->used >= appState.Scene.latestTextureDescriptorSets->descriptorSets.size())
 	{
 		appState.Scene.latestTextureDescriptorSets = new DescriptorSets { };
@@ -124,7 +122,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 
 	VkDescriptorImageInfo textureInfo { };
 	textureInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	textureInfo.sampler = appState.Scene.samplers[mipCount];
+	textureInfo.sampler = appState.Scene.sampler;
 	textureInfo.imageView = view;
 
 	VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };

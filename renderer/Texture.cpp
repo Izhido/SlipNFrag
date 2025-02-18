@@ -39,8 +39,6 @@ void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkForm
 	imageViewCreateInfo.subresourceRange.levelCount = mipCount;
 	imageViewCreateInfo.subresourceRange.layerCount = layerCount;
 	CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &view));
-
-	appState.Scene.AddSampler(appState, mipCount);
 }
 
 void Texture::Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)

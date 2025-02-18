@@ -1349,7 +1349,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 	{
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		poolSizes[0].descriptorCount = 1;
-		textureInfo.sampler = appState.Scene.samplers[appState.Scene.colormap.mipCount];
+		textureInfo.sampler = appState.Scene.sampler;
 		textureInfo.imageView = appState.Scene.colormap.view;
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		writes[0].pImageInfo = &textureInfo;
@@ -1421,7 +1421,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				bufferInfo[1].range = appState.Scene.paletteBufferSize;
 				poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				poolSizes[2].descriptorCount = 1;
-				textureInfo.sampler = appState.Scene.samplers[appState.Scene.colormap.mipCount];
+				textureInfo.sampler = appState.Scene.sampler;
 				textureInfo.imageView = appState.Scene.colormap.view;
 				writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				writes[2].pImageInfo = &textureInfo;
@@ -1476,7 +1476,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				descriptorSetAllocateInfo.descriptorSetCount = 1;
 				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &skyResources.descriptorSet));
-				textureInfo.sampler = appState.Scene.samplers[sky->mipCount];
+				textureInfo.sampler = appState.Scene.sampler;
 				textureInfo.imageView = sky->view;
 				writes[0].dstSet = skyResources.descriptorSet;
 				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
@@ -1518,7 +1518,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				descriptorSetAllocateInfo.descriptorSetCount = 1;
 				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &skyRGBAResources.descriptorSet));
-				textureInfo.sampler = appState.Scene.samplers[skyRGBA->mipCount];
+				textureInfo.sampler = appState.Scene.sampler;
 				textureInfo.imageView = skyRGBA->view;
 				writes[0].dstSet = skyRGBAResources.descriptorSet;
 				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
@@ -2382,7 +2382,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					auto colormap = loaded.colormap.texture;
 					if (colormapResources.bound[descriptorSetIndex] != colormap)
 					{
-						textureInfo.sampler = appState.Scene.samplers[colormap->mipCount];
+						textureInfo.sampler = appState.Scene.sampler;
 						textureInfo.imageView = colormap->view;
 						writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
 						vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
@@ -2874,7 +2874,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					auto colormap = loaded.colormap.texture;
 					if (colormapResources.bound[descriptorSetIndex] != colormap)
 					{
-						textureInfo.sampler = appState.Scene.samplers[colormap->mipCount];
+						textureInfo.sampler = appState.Scene.sampler;
 						textureInfo.imageView = colormap->view;
 						writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
 						vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
@@ -2915,7 +2915,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			descriptorSetAllocateInfo.descriptorSetCount = 1;
 			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 			CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &floorResources.descriptorSet));
-			textureInfo.sampler = appState.Scene.samplers[appState.Scene.floorTexture.mipCount];
+			textureInfo.sampler = appState.Scene.sampler;
 			textureInfo.imageView = appState.Scene.floorTexture.view;
 			writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[0].pImageInfo = &textureInfo;
@@ -2952,7 +2952,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			descriptorSetAllocateInfo.descriptorSetCount = 1;
 			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
 			CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &controllerResources.descriptorSet));
-			textureInfo.sampler = appState.Scene.samplers[appState.Scene.controllerTexture.mipCount];
+			textureInfo.sampler = appState.Scene.sampler;
 			textureInfo.imageView = appState.Scene.controllerTexture.view;
 			writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			writes[0].pImageInfo = &textureInfo;
