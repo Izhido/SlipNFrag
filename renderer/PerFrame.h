@@ -20,6 +20,7 @@ struct PerFrame
 	VkImageView resolveView;
 	VkFramebuffer framebuffer;
 	CachedBuffers cachedVertices;
+	CachedBuffers cachedHostVisibleVertices;
 	CachedBuffers cachedSortedVertices;
 	CachedBuffers cachedAttributes;
     CachedBuffers cachedStorageAttributes;

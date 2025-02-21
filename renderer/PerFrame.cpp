@@ -785,7 +785,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 {
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
-		sortedVertices = cachedVertices.GetHostVisibleVertexBuffer(appState, appState.Scene.sortedVerticesSize);
+		sortedVertices = cachedHostVisibleVertices.GetHostVisibleVertexBuffer(appState, appState.Scene.sortedVerticesSize);
 		if (sortedVertices->mapped == nullptr)
 		{
 			CHECK_VKCMD(vkMapMemory(appState.Device, sortedVertices->memory, 0, VK_WHOLE_SIZE, 0, &sortedVertices->mapped));
@@ -1291,6 +1291,7 @@ void PerFrame::Reset(AppState& appState)
     cachedStorageAttributes.Reset(appState);
     cachedAttributes.Reset(appState);
 	cachedSortedVertices.Reset(appState);
+	cachedHostVisibleVertices.Reset(appState);
     cachedVertices.Reset(appState);
 }
 

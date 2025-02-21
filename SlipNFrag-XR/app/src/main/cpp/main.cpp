@@ -2648,6 +2648,7 @@ void android_main(struct android_app* app)
                 perFrame.second.cachedStorageAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
 				perFrame.second.cachedSortedVertices.Delete(appState);
+				perFrame.second.cachedHostVisibleVertices.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
 
 				if (perFrame.second.fence != VK_NULL_HANDLE)
