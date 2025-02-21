@@ -1119,7 +1119,7 @@ void Scene::Initialize()
     paletteSize = 0;
     colormapSize = 0;
     controllerVerticesSize = 0;
-    buffers.Initialize();
+	aliasBuffers.Initialize();
     indexBuffers.Initialize();
     lightmaps.first = nullptr;
     lightmaps.current = nullptr;
@@ -2022,19 +2022,19 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
             loaded.vertices.size = alias.vertex_count * 2 * vertexSize;
             loaded.vertices.buffer = new SharedMemoryBuffer { };
             loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
-            buffers.MoveToFront(loaded.vertices.buffer);
+			aliasBuffers.MoveToFront(loaded.vertices.buffer);
             size += loaded.vertices.size;
             loaded.vertices.source = alias.apverts;
-            buffers.SetupAliasVertices(loaded.vertices);
+			aliasBuffers.SetupAliasVertices(loaded.vertices);
             loaded.texCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
             loaded.texCoords.buffer = new SharedMemoryBuffer { };
             loaded.texCoords.buffer->CreateVertexBuffer(appState, loaded.texCoords.size);
-            buffers.MoveToFront(loaded.texCoords.buffer);
+			aliasBuffers.MoveToFront(loaded.texCoords.buffer);
             size += loaded.texCoords.size;
             loaded.texCoords.source = alias.texture_coordinates;
             loaded.texCoords.width = alias.width;
             loaded.texCoords.height = alias.height;
-            buffers.SetupAliasTexCoords(loaded.texCoords);
+			aliasBuffers.SetupAliasTexCoords(loaded.texCoords);
             aliasVertexCache.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
         }
         else
@@ -3039,7 +3039,7 @@ void Scene::Reset()
     }
     lightmaps.DisposeFront();
     indexBuffers.DisposeFront();
-    buffers.DisposeFront();
+	aliasBuffers.DisposeFront();
     latestTextureDescriptorSets = nullptr;
     latestIndexBuffer32 = nullptr;
     usedInLatestIndexBuffer32 = 0;

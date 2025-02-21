@@ -1,7 +1,7 @@
-#include "CachedSharedMemoryBuffers.h"
+#include "CachedAliasBuffers.h"
 #include "Constants.h"
 
-void CachedSharedMemoryBuffers::Initialize()
+void CachedAliasBuffers::Initialize()
 {
 	firstAliasVertices = nullptr;
 	currentAliasVertices = nullptr;
@@ -9,7 +9,7 @@ void CachedSharedMemoryBuffers::Initialize()
 	currentAliasTexCoords = nullptr;
 }
 
-void CachedSharedMemoryBuffers::SetupAliasVertices(LoadedSharedMemoryBuffer& loaded)
+void CachedAliasBuffers::SetupAliasVertices(LoadedSharedMemoryBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasVertices == nullptr)
@@ -23,7 +23,7 @@ void CachedSharedMemoryBuffers::SetupAliasVertices(LoadedSharedMemoryBuffer& loa
 	currentAliasVertices = &loaded;
 }
 
-void CachedSharedMemoryBuffers::SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer &loaded)
+void CachedAliasBuffers::SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer &loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasTexCoords == nullptr)
@@ -37,7 +37,7 @@ void CachedSharedMemoryBuffers::SetupAliasTexCoords(LoadedSharedMemoryTexCoordsB
 	currentAliasTexCoords = &loaded;
 }
 
-void CachedSharedMemoryBuffers::DisposeFront()
+void CachedAliasBuffers::DisposeFront()
 {
 	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
 	{
@@ -48,14 +48,14 @@ void CachedSharedMemoryBuffers::DisposeFront()
 	buffers = nullptr;
 }
 
-void CachedSharedMemoryBuffers::MoveToFront(SharedMemoryBuffer* buffer)
+void CachedAliasBuffers::MoveToFront(SharedMemoryBuffer* buffer)
 {
 	buffer->unusedCount = 0;
 	buffer->next = buffers;
 	buffers = buffer;
 }
 
-void CachedSharedMemoryBuffers::Delete(AppState& appState)
+void CachedAliasBuffers::Delete(AppState& appState)
 {
 	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
 	{
@@ -73,7 +73,7 @@ void CachedSharedMemoryBuffers::Delete(AppState& appState)
 	oldBuffers = nullptr;
 }
 
-void CachedSharedMemoryBuffers::DeleteOld(AppState& appState)
+void CachedAliasBuffers::DeleteOld(AppState& appState)
 {
 	if (oldBuffers != nullptr)
 	{

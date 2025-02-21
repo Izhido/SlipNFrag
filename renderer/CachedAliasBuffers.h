@@ -3,7 +3,7 @@
 #include "LoadedSharedMemoryBuffer.h"
 #include "LoadedSharedMemoryTexCoordsBuffer.h"
 
-struct CachedSharedMemoryBuffers
+struct CachedAliasBuffers
 {
 	SharedMemoryBuffer* buffers;
 	SharedMemoryBuffer* oldBuffers;

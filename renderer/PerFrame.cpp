@@ -231,7 +231,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += loadedAliasIndexBuffer->size;
 		loadedAliasIndexBuffer = loadedAliasIndexBuffer->next;
 	}
-	auto loadedBuffer = appState.Scene.buffers.firstAliasVertices;
+	auto loadedBuffer = appState.Scene.aliasBuffers.firstAliasVertices;
 	while (loadedBuffer != nullptr)
 	{
 		auto target = (byte*)(((unsigned char*)stagingBuffer->mapped) + offset);
@@ -254,7 +254,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
 	}
-	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
+	auto loadedTexCoordsBuffer = appState.Scene.aliasBuffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
 		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
@@ -927,7 +927,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 
 	bufferCopy.dstOffset = 0;
 
-    auto loaded = appState.Scene.buffers.firstAliasVertices;
+    auto loaded = appState.Scene.aliasBuffers.firstAliasVertices;
     while (loaded != nullptr)
     {
         bufferCopy.size = loaded->size;
@@ -937,7 +937,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
         loaded = loaded->next;
     }
 
-	auto loadedTexCoordsBuffer = appState.Scene.buffers.firstAliasTexCoords;
+	auto loadedTexCoordsBuffer = appState.Scene.aliasBuffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
 		bufferCopy.size = loadedTexCoordsBuffer->size;

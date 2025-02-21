@@ -1568,7 +1568,7 @@ void android_main(struct android_app* app)
 			appState.Scene.lightmapsRGBA.DeleteOld(appState);
 			appState.Scene.lightmaps.DeleteOld(appState);
 			appState.Scene.indexBuffers.DeleteOld(appState);
-			appState.Scene.buffers.DeleteOld(appState);
+			appState.Scene.aliasBuffers.DeleteOld(appState);
 
 			Skybox::DeleteOld(appState);
 
@@ -2701,7 +2701,7 @@ void android_main(struct android_app* app)
 			appState.Scene.lightmapTextures.clear();
 
 			appState.Scene.indexBuffers.Delete(appState);
-			appState.Scene.buffers.Delete(appState);
+			appState.Scene.aliasBuffers.Delete(appState);
 
             if (appState.Scene.colormap.image != VK_NULL_HANDLE)
             {

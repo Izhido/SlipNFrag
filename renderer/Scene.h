@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "PipelineWithSorted.h"
 #include "PipelineWithLoaded.h"
-#include "CachedSharedMemoryBuffers.h"
+#include "CachedAliasBuffers.h"
 #include "CachedIndexBuffers.h"
 #include "AliasVertices.h"
 #include "LoadedSurfaceRotatedColoredLights.h"
@@ -87,7 +87,7 @@ struct Scene
     VkDeviceMemory paletteMemory;
     Texture colormap;
 	int hostClearCount;
-	CachedSharedMemoryBuffers buffers;
+	CachedAliasBuffers aliasBuffers;
 	CachedIndexBuffers indexBuffers;
     std::unordered_map<void*, std::vector<float>> surfaceVertexCache;
 	std::unordered_map<void*, AliasVertices> aliasVertexCache;
