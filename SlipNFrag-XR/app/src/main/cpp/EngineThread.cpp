@@ -77,7 +77,7 @@ void runEngine(AppState* appState, struct android_app* app)
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				if (appState->Scene.hostClearCount != host_clearcount)
 				{
-					appState->Scene.Reset();
+					appState->Scene.Reset(*appState);
 					appState->Scene.hostClearCount = host_clearcount;
 				}
 				r_modelorg_delta[0] = 0;
@@ -149,7 +149,7 @@ void runEngine(AppState* appState, struct android_app* app)
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 				if (appState->Scene.hostClearCount != host_clearcount)
 				{
-					appState->Scene.Reset();
+					appState->Scene.Reset(*appState);
 					appState->Scene.hostClearCount = host_clearcount;
 				}
 				r_modelorg_delta[0] = positionX / scale;

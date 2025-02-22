@@ -2586,7 +2586,7 @@ void android_main(struct android_app* app)
 				}
 			}
 
-			appState.Scene.Reset();
+			appState.Scene.Reset(appState);
 
 			for (auto& texture : appState.KeyboardTextures)
 			{
@@ -2647,7 +2647,6 @@ void android_main(struct android_app* app)
 				perFrame.second.cachedIndices8.Delete(appState);
                 perFrame.second.cachedStorageAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
-				perFrame.second.cachedSortedVertices.Delete(appState);
 				perFrame.second.cachedHostVisibleVertices.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
 

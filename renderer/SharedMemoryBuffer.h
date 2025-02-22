@@ -16,6 +16,6 @@ struct SharedMemoryBuffer
 	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 	void CreateVertexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateIndexBuffer(AppState& appState, VkDeviceSize size);
-	void CreateUniformBuffer(AppState& appState, VkDeviceSize size);
+	void CreateStorageBuffer(AppState& appState, VkDeviceSize size);
 	void Delete(AppState& appState) const;
 };

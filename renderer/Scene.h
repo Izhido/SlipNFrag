@@ -118,7 +118,7 @@ struct Scene
 	Texture controllerTexture;
 	VkSampler sampler;
 	VkSampler lightmapSampler;
-	std::unordered_map<uint32_t, std::list<UsedInSharedMemory>> latestMemory;
+	std::vector<std::list<UsedInSharedMemory>> latestMemory;
 	SharedMemoryBuffer* latestIndexBuffer8;
 	VkDeviceSize usedInLatestIndexBuffer8;
 	SharedMemoryBuffer* latestIndexBuffer16;
@@ -201,5 +201,5 @@ struct Scene
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);
-	void Reset();
+	void Reset(AppState& appState);
 };

@@ -29,18 +29,6 @@ VkDeviceSize CachedBuffers::MinimumAllocationFor(VkDeviceSize size)
 	return result;
 }
 
-Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
-{
-	auto buffer = Get(appState, size);
-	if (buffer == nullptr)
-	{
-		buffer = new Buffer();
-		buffer->CreateVertexBuffer(appState, MinimumAllocationFor(size));
-	}
-	MoveToFront(buffer);
-	return buffer;
-}
-
 Buffer* CachedBuffers::GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(appState, size);
@@ -48,18 +36,6 @@ Buffer* CachedBuffers::GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSi
 	{
 		buffer = new Buffer();
 		buffer->CreateHostVisibleVertexBuffer(appState, MinimumAllocationFor(size));
-	}
-	MoveToFront(buffer);
-	return buffer;
-}
-
-Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
-{
-	auto buffer = Get(appState, size);
-	if (buffer == nullptr)
-	{
-		buffer = new Buffer();
-		buffer->CreateIndexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
 	return buffer;
@@ -75,18 +51,6 @@ Buffer* CachedBuffers::GetHostVisibleStorageBuffer(AppState& appState, VkDeviceS
 	}
 	MoveToFront(buffer);
 	return buffer;
-}
-
-Buffer* CachedBuffers::GetStorageBuffer(AppState& appState, VkDeviceSize size)
-{
-    auto buffer = Get(appState, size);
-    if (buffer == nullptr)
-    {
-        buffer = new Buffer();
-        buffer->CreateStorageBuffer(appState, MinimumAllocationFor(size));
-    }
-    MoveToFront(buffer);
-    return buffer;
 }
 
 void CachedBuffers::DeleteOld(AppState& appState)

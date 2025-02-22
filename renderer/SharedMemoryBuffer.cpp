@@ -37,6 +37,7 @@ void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferU
 			entry->used += (alignmentCorrection + memoryAllocateInfo.allocationSize);
 			if (entry->used >= entry->memory->size)
 			{
+				sharedMemory->referenceCount--;
 				latestMemory.erase(entry);
 			}
 			break;
@@ -59,6 +60,7 @@ void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferU
 		if (add)
 		{
 			latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
+			sharedMemory->referenceCount++;
 		}
 		CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, sharedMemory->memory, 0));
 	}
@@ -76,9 +78,9 @@ void SharedMemoryBuffer::CreateIndexBuffer(AppState& appState, VkDeviceSize size
 	Create(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }
 
-void SharedMemoryBuffer::CreateUniformBuffer(AppState& appState, VkDeviceSize size)
+void SharedMemoryBuffer::CreateStorageBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }
 
 void SharedMemoryBuffer::Delete(AppState& appState) const

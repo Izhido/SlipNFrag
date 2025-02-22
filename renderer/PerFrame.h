@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CachedBuffers.h"
+#include "CachedSharedMemoryBuffers.h"
 #include "CachedTextures.h"
 #include "DescriptorResources.h"
 #include "DescriptorResourcesLists.h"
@@ -19,27 +20,26 @@ struct PerFrame
 	VkImageView depthView;
 	VkImageView resolveView;
 	VkFramebuffer framebuffer;
-	CachedBuffers cachedVertices;
+	CachedSharedMemoryBuffers cachedVertices;
 	CachedBuffers cachedHostVisibleVertices;
-	CachedBuffers cachedSortedVertices;
-	CachedBuffers cachedAttributes;
-    CachedBuffers cachedStorageAttributes;
-	CachedBuffers cachedIndices8;
-	CachedBuffers cachedIndices16;
-	CachedBuffers cachedIndices32;
-	CachedBuffers cachedColors;
+	CachedSharedMemoryBuffers cachedAttributes;
+    CachedSharedMemoryBuffers cachedStorageAttributes;
+	CachedSharedMemoryBuffers cachedIndices8;
+	CachedSharedMemoryBuffers cachedIndices16;
+	CachedSharedMemoryBuffers cachedIndices32;
+	CachedSharedMemoryBuffers cachedColors;
 	CachedBuffers stagingBuffers;
 	CachedTextures colormaps;
 	int colormapCount;
     int paletteChangedFrame;
-	Buffer* vertices;
+	SharedMemoryBuffer* vertices;
 	Buffer* sortedVertices;
-	Buffer* attributes;
-    Buffer* storageAttributes;
-	Buffer* indices8;
-	Buffer* indices16;
-	Buffer* indices32;
-	Buffer* colors;
+	SharedMemoryBuffer* attributes;
+	SharedMemoryBuffer* storageAttributes;
+	SharedMemoryBuffer* indices8;
+	SharedMemoryBuffer* indices16;
+	SharedMemoryBuffer* indices32;
+	SharedMemoryBuffer* colors;
 	Texture* sky;
 	Texture* skyRGBA;
 	DescriptorResources skyResources;
@@ -64,7 +64,7 @@ struct PerFrame
 	VkDeviceSize controllerIndexBase;
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
-    Buffer* previousStorageAttributes;
+    SharedMemoryBuffer* previousStorageAttributes;
 
 	static float GammaCorrect(float component);
 	static byte AveragePixels(std::vector<byte>& pixdata);

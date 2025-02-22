@@ -23,19 +23,9 @@ void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags us
 	CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, memory, 0));
 }
 
-void Buffer::CreateVertexBuffer(AppState& appState, VkDeviceSize size)
-{
-	Create(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-}
-
 void Buffer::CreateHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size)
 {
 	Create(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-}
-
-void Buffer::CreateIndexBuffer(AppState& appState, VkDeviceSize size)
-{
-	Create(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }
 
 void Buffer::CreateHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size)
@@ -43,14 +33,9 @@ void Buffer::CreateHostVisibleStorageBuffer(AppState& appState, VkDeviceSize siz
 	Create(appState, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
-void Buffer::CreateStorageBuffer(AppState& appState, VkDeviceSize size)
+void Buffer::CreateSourceBuffer(AppState& appState, VkDeviceSize size)
 {
-    Create(appState, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-}
-
-void Buffer::CreateUniformBuffer(AppState& appState, VkDeviceSize size)
-{
-    Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 }
 
 void Buffer::Delete(AppState& appState) const

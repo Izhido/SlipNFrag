@@ -48,6 +48,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 			entry->used += (alignmentCorrection + memoryAllocateInfo.allocationSize);
 			if (entry->used >= entry->memory->size)
 			{
+				sharedMemory->referenceCount--;
 				latestMemory.erase(entry);
 			}
 			break;
@@ -70,6 +71,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 		if (add)
 		{
 			latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
+			sharedMemory->referenceCount++;
 		}
 		CHECK_VKCMD(vkBindImageMemory(appState.Device, image, sharedMemory->memory, 0));
 	}
@@ -87,6 +89,16 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 
 	if (appState.Scene.latestTextureDescriptorSets == nullptr || appState.Scene.latestTextureDescriptorSets->used >= appState.Scene.latestTextureDescriptorSets->descriptorSets.size())
 	{
+		if (appState.Scene.latestTextureDescriptorSets != nullptr)
+		{
+			appState.Scene.latestTextureDescriptorSets->referenceCount--;
+			if (appState.Scene.latestTextureDescriptorSets->referenceCount == 0)
+			{
+				vkDestroyDescriptorPool(appState.Device, appState.Scene.latestTextureDescriptorSets->descriptorPool, nullptr);
+				delete appState.Scene.latestTextureDescriptorSets;
+			}
+		}
+
 		appState.Scene.latestTextureDescriptorSets = new DescriptorSets { };
 
 		VkDescriptorPoolSize poolSizes { };
@@ -318,6 +330,7 @@ void SharedMemoryTexture::Delete(AppState& appState) const
 	if (descriptorSets->referenceCount == 0)
 	{
 		vkDestroyDescriptorPool(appState.Device, descriptorSets->descriptorPool, nullptr);
+		delete descriptorSets;
 	}
 	if (view != VK_NULL_HANDLE)
 	{

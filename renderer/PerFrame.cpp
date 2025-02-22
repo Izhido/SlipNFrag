@@ -1290,7 +1290,6 @@ void PerFrame::Reset(AppState& appState)
     cachedIndices8.Reset(appState);
     cachedStorageAttributes.Reset(appState);
     cachedAttributes.Reset(appState);
-	cachedSortedVertices.Reset(appState);
 	cachedHostVisibleVertices.Reset(appState);
     cachedVertices.Reset(appState);
 }
