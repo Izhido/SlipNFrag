@@ -1147,7 +1147,7 @@ int main(int argc, char* argv[])
 		attachments[2].format = Constants::colorFormat;
 		attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[2].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -1506,7 +1506,7 @@ int main(int argc, char* argv[])
 			appState.Scene.lightmapsRGBA.DeleteOld(appState);
 			appState.Scene.lightmaps.DeleteOld(appState);
 			appState.Scene.indexBuffers.DeleteOld(appState);
-			appState.Scene.buffers.DeleteOld(appState);
+			appState.Scene.aliasBuffers.DeleteOld(appState);
 
 			Skybox::DeleteOld(appState);
 
@@ -2524,7 +2524,7 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			appState.Scene.Reset();
+			appState.Scene.Reset(appState);
 
 			for (auto& texture : appState.KeyboardTextures)
 			{
@@ -2585,7 +2585,7 @@ int main(int argc, char* argv[])
 				perFrame.second.cachedIndices8.Delete(appState);
                 perFrame.second.cachedStorageAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
-				perFrame.second.cachedSortedVertices.Delete(appState);
+				perFrame.second.cachedHostVisibleVertices.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
 
 				if (perFrame.second.fence != VK_NULL_HANDLE)
@@ -2608,11 +2608,11 @@ int main(int argc, char* argv[])
 			}
 
 			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
-			for (auto sampler : appState.Scene.samplers)
+			if (appState.Scene.sampler != VK_NULL_HANDLE)
 			{
-				vkDestroySampler(appState.Device, sampler, nullptr);
+				vkDestroySampler(appState.Device, appState.Scene.sampler, nullptr);
+				appState.Scene.sampler = VK_NULL_HANDLE;
 			}
-			appState.Scene.samplers.clear();
 
 			appState.Scene.controllerTexture.Delete(appState);
 			appState.Scene.floorTexture.Delete(appState);
@@ -2638,7 +2638,7 @@ int main(int argc, char* argv[])
 			appState.Scene.lightmapTextures.clear();
 
 			appState.Scene.indexBuffers.Delete(appState);
-			appState.Scene.buffers.Delete(appState);
+			appState.Scene.aliasBuffers.Delete(appState);
 
             if (appState.Scene.colormap.image != VK_NULL_HANDLE)
             {
