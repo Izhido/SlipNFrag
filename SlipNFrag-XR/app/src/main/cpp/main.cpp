@@ -590,6 +590,7 @@ void android_main(struct android_app* app)
 			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
 
 			auto indexTypeUInt8Enabled = false;
+			auto externalMemoryFdEnabled = false;
 			
 			const std::string indentStr(4, ' ');
 			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
@@ -601,13 +602,25 @@ void android_main(struct android_app* app)
 				{
 					indexTypeUInt8Enabled = true;
 				}
+
+				if (strcmp(availableExtensions[i].extensionName, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME) == 0)
+				{
+					externalMemoryFdEnabled = true;
+				}
 			}
 
 			std::vector<const char*> deviceExtensions;
+
 			if (indexTypeUInt8Enabled)
 			{
 				deviceExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
 				appState.IndexTypeUInt8Enabled = true;
+			}
+
+			if (externalMemoryFdEnabled)
+			{
+				// UGLY HACK. Meta Quest devices require this extension, but the validation layers report that the OpenXR runtime does not enable it for you.
+				deviceExtensions.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 			}
 
 			VkPhysicalDeviceFeatures features { };
