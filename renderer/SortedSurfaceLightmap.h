@@ -1,10 +1,10 @@
 #pragma once
 
-#include "SortedSurfaceTexture.h"
+#include <vector>
 
 struct SortedSurfaceLightmap
 {
 	VkDescriptorSet lightmap;
-    int count;
-	std::vector<SortedSurfaceTexture> textures;
+	std::vector<int> entries;
+	VkDeviceSize indexCount;
 };

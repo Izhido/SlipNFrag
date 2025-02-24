@@ -8,8 +8,8 @@ layout(set = 0, binding = 1) uniform Palette
 	layout(offset = 0) vec4 palette[256];
 };
 
-layout(set = 2, binding = 0) uniform usampler2DArray fragmentLightmap;
-layout(set = 3, binding = 0) uniform usampler2DArray fragmentTexture;
+layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
+layout(set = 3, binding = 0) uniform usampler2DArray fragmentLightmap;
 
 layout(push_constant) uniform Tint
 {

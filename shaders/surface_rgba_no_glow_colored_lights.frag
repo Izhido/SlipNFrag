@@ -3,8 +3,8 @@
 precision highp float;
 precision highp int;
 
-layout(set = 2, binding = 0) uniform usampler2DArray fragmentLightmap;
-layout(set = 3, binding = 0) uniform usampler2DArray fragmentTexture;
+layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
+layout(set = 3, binding = 0) uniform usampler2DArray fragmentLightmap;
 
 layout(push_constant) uniform Tint
 {
