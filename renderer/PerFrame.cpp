@@ -1566,19 +1566,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.surfaces.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			VkDeviceSize indexBase = 0;
-			for (auto l = 0; l < appState.Scene.surfaces.sorted.count; l++)
-			{
-                const auto& lightmap = appState.Scene.surfaces.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-				for (auto t = 0; t < lightmap.count; t++)
-				{
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfaces.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.surfaces.Render(commandBuffer);
 		}
 		if (appState.Scene.surfacesColoredLights.last >= 0)
 		{
@@ -1597,19 +1585,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.surfacesColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.surfacesColoredLights.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.surfacesColoredLights.Render(commandBuffer);
 		}
 		if (appState.Scene.surfacesRGBA.last >= 0)
 		{
@@ -1692,19 +1668,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.surfacesRGBANoGlow.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.surfacesRGBANoGlow.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlow.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlow.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.surfacesRGBANoGlow.Render(commandBuffer);
 		}
 		if (appState.Scene.surfacesRGBANoGlowColoredLights.last >= 0)
 		{
@@ -1723,19 +1687,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRGBANoGlowColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.surfacesRGBANoGlowColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.surfacesRGBANoGlowColoredLights.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlowColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRGBANoGlowColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.surfacesRGBANoGlowColoredLights.Render(commandBuffer);
 		}
 		if (appState.Scene.surfacesRotated.last >= 0)
 		{
@@ -1752,19 +1704,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.surfacesRotated.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.surfacesRotated.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.surfacesRotated.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.surfacesRotated.Render(commandBuffer);
 		}
 		if (appState.Scene.surfacesRotatedColoredLights.last >= 0)
 		{
@@ -1783,19 +1723,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.surfacesRotatedColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.surfacesRotatedColoredLights.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.surfacesRotatedColoredLights.Render(commandBuffer);
 		}
 		if (appState.Scene.surfacesRotatedRGBA.last >= 0)
 		{
@@ -1878,19 +1806,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.surfacesRotatedRGBANoGlow.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.surfacesRotatedRGBANoGlow.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.surfacesRotatedRGBANoGlow.Render(commandBuffer);
 		}
 		if (appState.Scene.surfacesRotatedRGBANoGlowColoredLights.last >= 0)
 		{
@@ -1909,19 +1825,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			SetTintPushConstants(pushConstants);
 			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.surfacesRotatedRGBANoGlowColoredLights.Render(commandBuffer);
 		}
 		if (appState.Scene.turbulent.last >= 0)
 		{
@@ -1993,19 +1897,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			auto time = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentLit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.turbulentLit.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.turbulentLit.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentLit.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.turbulentLit.Render(commandBuffer);
 		}
 		if (appState.Scene.turbulentColoredLights.last >= 0)
 		{
@@ -2025,19 +1917,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			SetTintPushConstants(pushConstants);
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.turbulentColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.turbulentColoredLights.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.turbulentColoredLights.Render(commandBuffer);
 		}
 		if (appState.Scene.turbulentRGBALit.last >= 0)
 		{
@@ -2057,19 +1937,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			SetTintPushConstants(pushConstants);
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRGBALit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.turbulentRGBALit.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.turbulentRGBALit.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBALit.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBALit.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.turbulentRGBALit.Render(commandBuffer);
 		}
 		if (appState.Scene.turbulentRGBAColoredLights.last >= 0)
 		{
@@ -2089,19 +1957,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			SetTintPushConstants(pushConstants);
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.turbulentRGBAColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.turbulentRGBAColoredLights.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBAColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRGBAColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.turbulentRGBAColoredLights.Render(commandBuffer);
 		}
 		if (appState.Scene.turbulentRotated.last >= 0)
 		{
@@ -2173,19 +2029,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			auto time = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedLit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.turbulentRotatedLit.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.turbulentRotatedLit.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.turbulentRotatedLit.Render(commandBuffer);
 		}
 		if (appState.Scene.turbulentRotatedColoredLights.last >= 0)
 		{
@@ -2205,19 +2049,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			SetTintPushConstants(pushConstants);
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.turbulentRotatedColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.turbulentRotatedColoredLights.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.turbulentRotatedColoredLights.Render(commandBuffer);
 		}
 		if (appState.Scene.turbulentRotatedRGBALit.last >= 0)
 		{
@@ -2237,19 +2069,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			SetTintPushConstants(pushConstants);
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.turbulentRotatedRGBALit.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.turbulentRotatedRGBALit.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.turbulentRotatedRGBALit.Render(commandBuffer);
 		}
 		if (appState.Scene.turbulentRotatedRGBAColoredLights.last >= 0)
 		{
@@ -2269,19 +2089,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			SetTintPushConstants(pushConstants);
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.turbulentRotatedRGBAColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.turbulentRotatedRGBAColoredLights.sorted.lightmaps[l];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-					vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-					indexBase += texture.indexCount;
-				}
-			}
+			appState.Scene.turbulentRotatedRGBAColoredLights.Render(commandBuffer);
 		}
 		if (appState.Scene.sprites.last >= 0)
 		{
@@ -2472,19 +2280,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             {
                 vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.fences.indexBase, VK_INDEX_TYPE_UINT32);
             }
-            VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.fences.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.fences.sorted.lightmaps[l];
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fences.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-                    vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-                    indexBase += texture.indexCount;
-                }
-            }
+			appState.Scene.fences.Render(commandBuffer);
         }
         if (appState.Scene.fencesColoredLights.last >= 0)
         {
@@ -2503,19 +2299,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             }
             SetTintPushConstants(pushConstants);
             vkCmdPushConstants(commandBuffer, appState.Scene.fencesColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-            VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.fencesColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.fencesColoredLights.sorted.lightmaps[l];
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-                    vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-                    indexBase += texture.indexCount;
-                }
-            }
+			appState.Scene.fencesColoredLights.Render(commandBuffer);
         }
         if (appState.Scene.fencesRGBA.last >= 0)
         {
@@ -2598,19 +2382,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             }
             SetTintPushConstants(pushConstants);
             vkCmdPushConstants(commandBuffer, appState.Scene.fencesRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-            VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.fencesRGBANoGlow.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.fencesRGBANoGlow.sorted.lightmaps[l];
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlow.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-                    vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-                    indexBase += texture.indexCount;
-                }
-            }
+			appState.Scene.fencesRGBANoGlow.Render(commandBuffer);
         }
         if (appState.Scene.fencesRGBANoGlowColoredLights.last >= 0)
         {
@@ -2629,19 +2401,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             }
             SetTintPushConstants(pushConstants);
             vkCmdPushConstants(commandBuffer, appState.Scene.fencesRGBANoGlowColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-            VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.fencesRGBANoGlowColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.fencesRGBANoGlowColoredLights.sorted.lightmaps[l];
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlowColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRGBANoGlowColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-                    vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-                    indexBase += texture.indexCount;
-                }
-            }
+			appState.Scene.fencesRGBANoGlowColoredLights.Render(commandBuffer);
         }
         if (appState.Scene.fencesRotated.last >= 0)
         {
@@ -2658,19 +2418,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             {
                 vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, appState.Scene.indices32Size + appState.Scene.fencesRotated.indexBase, VK_INDEX_TYPE_UINT32);
             }
-            VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.fencesRotated.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.fencesRotated.sorted.lightmaps[l];
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotated.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-                    vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-                    indexBase += texture.indexCount;
-                }
-            }
+			appState.Scene.fencesRotated.Render(commandBuffer);
         }
         if (appState.Scene.fencesRotatedColoredLights.last >= 0)
         {
@@ -2689,19 +2437,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             }
             SetTintPushConstants(pushConstants);
             vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotatedColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-            VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.fencesRotatedColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.fencesRotatedColoredLights.sorted.lightmaps[l];
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-                    vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-                    indexBase += texture.indexCount;
-                }
-            }
+			appState.Scene.fencesRotatedColoredLights.Render(commandBuffer);
         }
         if (appState.Scene.fencesRotatedRGBA.last >= 0)
         {
@@ -2784,19 +2520,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             }
             SetTintPushConstants(pushConstants);
             vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-            VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.fencesRotatedRGBANoGlow.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.fencesRotatedRGBANoGlow.sorted.lightmaps[l];
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlow.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-                    vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-                    indexBase += texture.indexCount;
-                }
-            }
+			appState.Scene.fencesRotatedRGBANoGlow.Render(commandBuffer);
         }
         if (appState.Scene.fencesRotatedRGBANoGlowColoredLights.last >= 0)
         {
@@ -2815,19 +2539,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             }
             SetTintPushConstants(pushConstants);
             vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotatedRGBANoGlowColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-            VkDeviceSize indexBase = 0;
-            for (auto l = 0; l < appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted.count; l++)
-            {
-                const auto& lightmap = appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted.lightmaps[l];
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlowColoredLights.pipelineLayout, 2, 1, &lightmap.lightmap, 0, nullptr);
-                for (auto t = 0; t < lightmap.count; t++)
-                {
-                    const auto& texture = lightmap.textures[t];
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.fencesRotatedRGBANoGlowColoredLights.pipelineLayout, 3, 1, &texture.texture, 0, nullptr);
-                    vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-                    indexBase += texture.indexCount;
-                }
-            }
+			appState.Scene.fencesRotatedRGBANoGlowColoredLights.Render(commandBuffer);
         }
 		if (appState.Scene.viewmodels.last >= 0)
 		{
