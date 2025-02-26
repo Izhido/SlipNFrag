@@ -2369,48 +2369,16 @@ void android_main(struct android_app* app)
 
 								appState.Scene.skybox->images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
-								
-								VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-								bufferCreateInfo.size = width * height * 4;
-								bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-								std::vector<VkBuffer> buffers(6);
+								Buffer buffer;
+								buffer.CreateSourceBuffer(appState, 6 * width * height * 4);
 
-								VkMemoryRequirements memoryRequirements;
+								CHECK_VKCMD(vkMapMemory(appState.Device, buffer.memory, 0, VK_WHOLE_SIZE, 0, &buffer.mapped));
 
-								VkMemoryAllocateInfo memoryAllocateInfo { };
-
-								std::vector<VkDeviceMemory> memoryBlocks(6);
-
-								VkBufferImageCopy region { };
-								region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-								region.imageSubresource.layerCount = 1;
-								region.imageExtent.width = width;
-								region.imageExtent.height = height;
-								region.imageExtent.depth = 1;
-
-								CHECK_XRCMD(xrAcquireSwapchainImage(appState.Scene.skybox->swapchain, nullptr, &swapchainImageIndex));
-
-								CHECK_XRCMD(xrWaitSwapchainImage(appState.Scene.skybox->swapchain, &waitInfo));
-
-								VkCommandBuffer setupCommandBuffer;
-
-								commandBufferAllocateInfo.commandPool = appState.SetupCommandPool;
-								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
-								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
-								
-								appState.copyBarrier.image = appState.Scene.skybox->images[swapchainImageIndex].image;
-								appState.submitBarrier.image = appState.copyBarrier.image;
+								auto target = (uint32_t*)buffer.mapped;
 
 								for (auto i = 0; i < 6; i++)
 								{
-									CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffers[i]));
-									vkGetBufferMemoryRequirements(appState.Device, buffers[i], &memoryRequirements);
-									createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, memoryAllocateInfo, true);
-									CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memoryBlocks[i]));
-									CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffers[i], memoryBlocks[i], 0));
-									void* mapped;
-									CHECK_VKCMD(vkMapMemory(appState.Device, memoryBlocks[i], 0, memoryRequirements.size, 0, &mapped));
 									std::string name;
 									switch (i)
 									{
@@ -2443,7 +2411,6 @@ void android_main(struct android_app* app)
 										index++;
 									}
 									auto source = (uint32_t*)(((byte*)skybox.textures[index].texture) + sizeof(texture_t) + width * height) + width - 1;
-									auto target = (uint32_t*)mapped;
 									auto y = 0;
 									while (y < height)
 									{
@@ -2457,11 +2424,35 @@ void android_main(struct android_app* app)
 										source += width;
 										source += width;
 									}
-									vkUnmapMemory(appState.Device, memoryBlocks[i]);
+								}
+
+								VkBufferImageCopy region { };
+								region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+								region.imageSubresource.layerCount = 1;
+								region.imageExtent.width = width;
+								region.imageExtent.height = height;
+								region.imageExtent.depth = 1;
+
+								CHECK_XRCMD(xrAcquireSwapchainImage(appState.Scene.skybox->swapchain, nullptr, &swapchainImageIndex));
+
+								CHECK_XRCMD(xrWaitSwapchainImage(appState.Scene.skybox->swapchain, &waitInfo));
+
+								VkCommandBuffer setupCommandBuffer;
+
+								commandBufferAllocateInfo.commandPool = appState.SetupCommandPool;
+								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
+								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
+								
+								appState.copyBarrier.image = appState.Scene.skybox->images[swapchainImageIndex].image;
+								appState.submitBarrier.image = appState.copyBarrier.image;
+
+								for (auto i = 0; i < 6; i++)
+								{
 									appState.copyBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
 									region.imageSubresource.baseArrayLayer = i;
-									vkCmdCopyBufferToImage(setupCommandBuffer, buffers[i], appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+									vkCmdCopyBufferToImage(setupCommandBuffer, buffer.buffer, appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+									region.bufferOffset += width * height * 4;
 									appState.submitBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 								}
@@ -2481,11 +2472,8 @@ void android_main(struct android_app* app)
 								CHECK_XRCMD(xrReleaseSwapchainImage(appState.Scene.skybox->swapchain, &releaseInfo));
 
 								vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
-								for (auto i = 0; i < 6; i++)
-								{
-									vkDestroyBuffer(appState.Device, buffers[i], nullptr);
-									vkFreeMemory(appState.Device, memoryBlocks[i], nullptr);
-								}
+
+								buffer.Delete(appState);
 							}
 						}
 						if (appState.Scene.skybox != VK_NULL_HANDLE)
