@@ -34,7 +34,7 @@ SharedMemoryBuffer* CachedSharedMemoryBuffers::GetVertexBuffer(AppState& appStat
 	auto buffer = Get(appState, size);
 	if (buffer == nullptr)
 	{
-		buffer = new SharedMemoryBuffer();
+		buffer = new SharedMemoryBuffer { };
 		buffer->CreateVertexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
@@ -46,7 +46,7 @@ SharedMemoryBuffer* CachedSharedMemoryBuffers::GetIndexBuffer(AppState& appState
 	auto buffer = Get(appState, size);
 	if (buffer == nullptr)
 	{
-		buffer = new SharedMemoryBuffer();
+		buffer = new SharedMemoryBuffer { };
 		buffer->CreateIndexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
@@ -58,7 +58,7 @@ SharedMemoryBuffer* CachedSharedMemoryBuffers::GetStorageBuffer(AppState& appSta
 	auto buffer = Get(appState, size);
 	if (buffer == nullptr)
 	{
-		buffer = new SharedMemoryBuffer();
+		buffer = new SharedMemoryBuffer { };
 		buffer->CreateStorageBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);

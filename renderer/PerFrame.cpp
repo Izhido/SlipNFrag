@@ -845,7 +845,7 @@ void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 	}
 	else
 	{
-		texture = new Texture();
+		texture = new Texture { };
 		texture->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	}
 	texture->Fill(appState, appState.Scene.stagingBuffer);

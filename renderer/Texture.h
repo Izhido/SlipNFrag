@@ -5,17 +5,17 @@
 
 struct Texture
 {
-	Texture* next = nullptr;
-	void* key = nullptr;
-	int unusedCount = 0;
-	int width = 0;
-	int height = 0;
-	int mipCount = 0;
-	int layerCount = 0;
-	VkImage image = VK_NULL_HANDLE;
-	VkDeviceMemory memory = VK_NULL_HANDLE;
-	VkImageView view = VK_NULL_HANDLE;
-	bool filled = false;
+	Texture* next;
+	void* key;
+	int unusedCount;
+	int width;
+	int height;
+	int mipCount;
+	int layerCount;
+	VkImage image;
+	VkDeviceMemory memory;
+	VkImageView view;
+	bool filled;
 
 	void Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);
 	void Fill(AppState& appState, Buffer* buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer);

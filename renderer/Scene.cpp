@@ -2755,7 +2755,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         loadedSky.count = d_lists.sky[0].count;
         if (perFrame.sky == nullptr)
         {
-            perFrame.sky = new Texture();
+            perFrame.sky = new Texture { };
             perFrame.sky->Create(appState, loadedSky.width, loadedSky.height, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
         }
         size += loadedSky.size;
@@ -2770,7 +2770,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         loadedSkyRGBA.count = d_lists.sky_rgba[0].count;
         if (perFrame.skyRGBA == nullptr)
         {
-            perFrame.skyRGBA = new Texture();
+            perFrame.skyRGBA = new Texture { };
             perFrame.skyRGBA->Create(appState, loadedSkyRGBA.width * 2, loadedSkyRGBA.height, VK_FORMAT_R8G8B8A8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
         }
         size += loadedSkyRGBA.size;

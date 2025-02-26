@@ -6,12 +6,12 @@ struct AppState;
 
 struct Buffer
 {
-	Buffer* next = nullptr;
-	int unusedCount = 0;
-	VkDeviceSize size = 0;
-	VkBuffer buffer = VK_NULL_HANDLE;
-	VkDeviceMemory memory = VK_NULL_HANDLE;
-	void* mapped = nullptr;
+	Buffer* next;
+	int unusedCount;
+	VkDeviceSize size;
+	VkBuffer buffer;
+	VkDeviceMemory memory;
+	void* mapped;
 
 	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 	void CreateHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size);
