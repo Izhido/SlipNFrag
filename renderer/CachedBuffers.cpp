@@ -53,7 +53,7 @@ Buffer* CachedBuffers::GetHostVisibleStorageBuffer(AppState& appState, VkDeviceS
 	return buffer;
 }
 
-void CachedBuffers::DeleteOld(AppState& appState)
+void CachedBuffers::Reset(AppState& appState)
 {
 	for (Buffer** b = &oldBuffers; *b != nullptr; )
 	{
@@ -70,10 +70,6 @@ void CachedBuffers::DeleteOld(AppState& appState)
 			b = &(*b)->next;
 		}
 	}
-}
-
-void CachedBuffers::DisposeFront()
-{
 	for (Buffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
@@ -81,12 +77,6 @@ void CachedBuffers::DisposeFront()
 		oldBuffers = b;
 	}
 	buffers = nullptr;
-}
-
-void CachedBuffers::Reset(AppState& appState)
-{
-	DeleteOld(appState);
-	DisposeFront();
 }
 
 void CachedBuffers::MoveToFront(Buffer* buffer)

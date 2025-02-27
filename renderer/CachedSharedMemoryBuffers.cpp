@@ -65,7 +65,7 @@ SharedMemoryBuffer* CachedSharedMemoryBuffers::GetStorageBuffer(AppState& appSta
 	return buffer;
 }
 
-void CachedSharedMemoryBuffers::DeleteOld(AppState& appState)
+void CachedSharedMemoryBuffers::Reset(AppState& appState)
 {
 	for (SharedMemoryBuffer** b = &oldBuffers; *b != nullptr; )
 	{
@@ -82,10 +82,6 @@ void CachedSharedMemoryBuffers::DeleteOld(AppState& appState)
 			b = &(*b)->next;
 		}
 	}
-}
-
-void CachedSharedMemoryBuffers::DisposeFront()
-{
 	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
@@ -93,12 +89,6 @@ void CachedSharedMemoryBuffers::DisposeFront()
 		oldBuffers = b;
 	}
 	buffers = nullptr;
-}
-
-void CachedSharedMemoryBuffers::Reset(AppState& appState)
-{
-	DeleteOld(appState);
-	DisposeFront();
 }
 
 void CachedSharedMemoryBuffers::MoveToFront(SharedMemoryBuffer* buffer)

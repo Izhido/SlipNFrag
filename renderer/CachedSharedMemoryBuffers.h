@@ -12,8 +12,6 @@ struct CachedSharedMemoryBuffers
 	SharedMemoryBuffer* GetVertexBuffer(AppState& appState, VkDeviceSize size);
 	SharedMemoryBuffer* GetIndexBuffer(AppState& appState, VkDeviceSize size);
 	SharedMemoryBuffer* GetStorageBuffer(AppState& appState, VkDeviceSize size);
-	void DeleteOld(AppState& appState);
-	void DisposeFront();
 	void Reset(AppState& appState);
 	void MoveToFront(SharedMemoryBuffer* buffer);
 	void Delete(AppState& appState) const;

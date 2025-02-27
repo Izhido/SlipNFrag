@@ -3,22 +3,19 @@
 
 void CachedTextures::Reset(AppState& appState)
 {
-	if (oldTextures != nullptr)
+	for (auto t = &oldTextures; *t != nullptr; )
 	{
-		for (auto t = &oldTextures; *t != nullptr; )
+		(*t)->unusedCount++;
+		if ((*t)->unusedCount >= Constants::maxUnusedCount)
 		{
-			(*t)->unusedCount++;
-			if ((*t)->unusedCount >= Constants::maxUnusedCount)
-			{
-				auto next = (*t)->next;
-				(*t)->Delete(appState);
-				delete *t;
-				(*t) = next;
-			}
-			else
-			{
-				t = &(*t)->next;
-			}
+			auto next = (*t)->next;
+			(*t)->Delete(appState);
+			delete *t;
+			(*t) = next;
+		}
+		else
+		{
+			t = &(*t)->next;
 		}
 	}
 	for (Texture* t = textures, *next; t != nullptr; t = next)
