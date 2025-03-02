@@ -4,7 +4,7 @@
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage)
+void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height)
 {
 	this->width = width;
 	this->height = height;
@@ -33,6 +33,7 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 					lightmapTexture->allocated[i] = true;
 					texture = lightmapTexture;
 					allocatedIndex = i;
+					offset = allocatedIndex * lightmapTexture->size;
 					lightmapTexture->allocatedCount++;
 					lightmapTexture->firstFreeCandidate = i + 1;
 					found = true;
@@ -100,20 +101,15 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 			arrayLayers = (int)std::pow(2, 10 - maxSlot);
 		}
 
-		VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageCreateInfo.format = format;
-		imageCreateInfo.extent.width = texture->width;
-		imageCreateInfo.extent.height = texture->height;
-		imageCreateInfo.extent.depth = 1;
-		imageCreateInfo.mipLevels = 1;
-		imageCreateInfo.arrayLayers = arrayLayers;
-		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageCreateInfo.usage = usage;
-		CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &texture->image));
+		texture->size = texture->width * texture->height * 3;
+
+		VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+		bufferCreateInfo.size = texture->size * arrayLayers * sizeof(uint32_t);
+		bufferCreateInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &texture->buffer));
 
 		VkMemoryRequirements memoryRequirements;
-		vkGetImageMemoryRequirements(appState.Device, texture->image, &memoryRequirements);
+		vkGetBufferMemoryRequirements(appState.Device, texture->buffer, &memoryRequirements);
 
 		VkMemoryAllocateInfo memoryAllocateInfo { };
 		createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
@@ -123,7 +119,7 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 		texture->allocated.resize(arrayLayers);
 
 		VkDescriptorPoolSize poolSizes { };
-		poolSizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		poolSizes.descriptorCount = 1;
 
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
@@ -135,43 +131,25 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height, V
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO };
 		descriptorSetAllocateInfo.descriptorPool = texture->descriptorPool;
 		descriptorSetAllocateInfo.descriptorSetCount = 1;
-		descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+		descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleFragmentStorageBufferLayout;
 		CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &texture->descriptorSet));
 
 		texture->allocated[0] = true;
 
-		CHECK_VKCMD(vkBindImageMemory(appState.Device, texture->image, texture->memory, 0));
+		CHECK_VKCMD(vkBindBufferMemory(appState.Device, texture->buffer, texture->memory, 0));
 
 		texture->allocatedCount++;
 
-		VkImageViewCreateInfo imageViewCreateInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-		imageViewCreateInfo.image = texture->image;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-		imageViewCreateInfo.format = imageCreateInfo.format;
-		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageViewCreateInfo.subresourceRange.levelCount = 1;
-		imageViewCreateInfo.subresourceRange.layerCount = arrayLayers;
-		CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &texture->view));
-
-		VkDescriptorImageInfo textureInfo { };
-		textureInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		textureInfo.sampler = appState.Scene.lightmapSampler;
-		textureInfo.imageView = texture->view;
+		VkDescriptorBufferInfo bufferInfo { };
+		bufferInfo.range = VK_WHOLE_SIZE;
+		bufferInfo.buffer = texture->buffer;
 
 		VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
 		write.descriptorCount = 1;
 		write.dstSet = texture->descriptorSet;
-		write.pImageInfo = &textureInfo;
-		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		write.pBufferInfo = &bufferInfo;
+		write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		vkUpdateDescriptorSets(appState.Device, 1, &write, 0, nullptr);
-
-		texture->regions.resize(arrayLayers);
-		for (auto& region : texture->regions)
-		{
-			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			region.imageSubresource.layerCount = 1;
-			region.imageExtent.depth = 1;
-		}
 	}
 }
 
@@ -186,8 +164,7 @@ void LightmapRGBA::Delete(AppState& appState) const
 	if (texture->allocatedCount == 0)
 	{
 		vkDestroyDescriptorPool(appState.Device, texture->descriptorPool, nullptr);
-		vkDestroyImageView(appState.Device, texture->view, nullptr);
-		vkDestroyImage(appState.Device, texture->image, nullptr);
+		vkDestroyBuffer(appState.Device, texture->buffer, nullptr);
 		vkFreeMemory(appState.Device, texture->memory, nullptr);
 		if (texture->previous != nullptr)
 		{

@@ -4,7 +4,11 @@ precision highp float;
 precision highp int;
 
 layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
-layout(set = 3, binding = 0) uniform usampler2DArray fragmentLightmap;
+
+layout(set = 3, binding = 0) readonly buffer FragmentLightmap
+{
+	uint lightmap[];
+};
 
 layout(push_constant) uniform Turbulent
 {
@@ -20,11 +24,13 @@ layout(location = 0) out lowp vec4 outColor;
 void main()
 {
 	vec2 lightmapClamped = floor(clamp(fragmentCoords.xy, ivec2(0, 0), fragmentFlat.zw));
-	ivec3 lightmapCoords = ivec3(lightmapClamped, fragmentFlat.x);
-	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, lightmapCoords, 0);
-	vec4 lightmapTopRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 0));
-	vec4 lightmapBottomRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 1));
-	vec4 lightmapBottomLeftEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(0, 1));
+	uint lightmapWidth = fragmentFlat.z + 2;
+	uint lightmapTopIndex = fragmentFlat.x + 3 * (int(lightmapClamped.y) * lightmapWidth + int(lightmapClamped.x));
+	uint lightmapBottomIndex = lightmapTopIndex + 3 * lightmapWidth;
+	vec4 lightmapTopLeftEntry = vec4(lightmap[lightmapTopIndex], lightmap[lightmapTopIndex + 1], lightmap[lightmapTopIndex + 2], 0);
+	vec4 lightmapTopRightEntry = vec4(lightmap[lightmapTopIndex + 3], lightmap[lightmapTopIndex + 4], lightmap[lightmapTopIndex + 5], 0);
+	vec4 lightmapBottomRightEntry = vec4(lightmap[lightmapBottomIndex + 3], lightmap[lightmapBottomIndex + 4], lightmap[lightmapBottomIndex + 5], 0);
+	vec4 lightmapBottomLeftEntry = vec4(lightmap[lightmapBottomIndex], lightmap[lightmapBottomIndex + 1], lightmap[lightmapBottomIndex + 2], 0);
 	vec2 lightmapCoordsDelta = fragmentCoords.xy - lightmapClamped;
 	vec4 lightmapTopEntry = mix(lightmapTopLeftEntry, lightmapTopRightEntry, lightmapCoordsDelta.x);
 	vec4 lightmapBottomEntry = mix(lightmapBottomLeftEntry, lightmapBottomRightEntry, lightmapCoordsDelta.x);

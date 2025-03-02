@@ -29,6 +29,7 @@ struct Scene
 {
 	bool created;
     VkDescriptorSetLayout singleStorageBufferLayout;
+	VkDescriptorSetLayout singleFragmentStorageBufferLayout;
 	VkDescriptorSetLayout singleBufferLayout;
 	VkDescriptorSetLayout doubleBufferLayout;
 	VkDescriptorSetLayout twoBuffersAndImageLayout;

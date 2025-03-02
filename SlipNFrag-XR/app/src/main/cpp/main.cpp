@@ -2793,6 +2793,8 @@ void android_main(struct android_app* app)
 			appState.Scene.doubleBufferLayout = VK_NULL_HANDLE;
 			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
 			appState.Scene.singleBufferLayout = VK_NULL_HANDLE;
+			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleFragmentStorageBufferLayout, nullptr);
+			appState.Scene.singleFragmentStorageBufferLayout = VK_NULL_HANDLE;
             vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleStorageBufferLayout, nullptr);
             appState.Scene.singleStorageBufferLayout = VK_NULL_HANDLE;
 

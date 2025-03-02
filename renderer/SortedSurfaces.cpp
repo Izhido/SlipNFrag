@@ -562,7 +562,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
 					attributes.m[13] = face->texinfo->texture->height;
 					previousFace = face;
 				}
-				attributes.m[14] = surface.lightmap.lightmap->allocatedIndex;
+				attributes.m[14] = surface.lightmap.lightmap->offset;
 				attributes.m[15] = surface.texture.index;
                 *target++ = attributes;
 				attributeCount++;
@@ -641,7 +641,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceLightmapsWith2Textures&
                 *target++ = face->extents[1];
                 *target++ = face->texinfo->texture->width;
                 *target++ = face->texinfo->texture->height;
-                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.lightmap.lightmap->offset;
                 *target++ = surface.texture.index;
                 *target++ = surface.glowTexture.index;
                 *target++ = 0;
@@ -735,7 +735,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
                 *target++ = face->extents[1];
                 *target++ = face->texinfo->texture->width;
                 *target++ = face->texinfo->texture->height;
-                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.lightmap.lightmap->offset;
                 *target++ = surface.texture.index;
 				attributeCount++;
 			}
@@ -825,7 +825,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceLightmapsWith2Textures&
                 *target++ = face->extents[1];
                 *target++ = face->texinfo->texture->width;
                 *target++ = face->texinfo->texture->height;
-                *target++ = surface.lightmap.lightmap->allocatedIndex;
+                *target++ = surface.lightmap.lightmap->offset;
                 *target++ = surface.texture.index;
 				attributeCount++;
 			}

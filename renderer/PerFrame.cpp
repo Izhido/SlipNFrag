@@ -642,6 +642,14 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 	}
 
+	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
+	while (loadedLightmapRGBA != nullptr)
+	{
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmapRGBA->source, loadedLightmapRGBA->size);
+		offset += loadedLightmapRGBA->size;
+		loadedLightmapRGBA = loadedLightmapRGBA->next;
+	}
+
 	if (appState.Scene.paletteSize > 0)
 	{
 		auto source = d_8to24table;
@@ -690,24 +698,6 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	while (offset % 8 != 0)
 	{
 		offset++;
-	}
-	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
-	if (loadedLightmapRGBA != nullptr)
-	{
-		auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		while (loadedLightmapRGBA != nullptr)
-		{
-			auto source = (uint32_t*)loadedLightmapRGBA->source;
-			for (auto i = 0; i < loadedLightmapRGBA->size; i += 8)
-			{
-				*target++ = *source++;
-				*target++ = *source++;
-				*target++ = *source++;
-				*target++ = 65535;
-			}
-			offset += loadedLightmapRGBA->size;
-			loadedLightmapRGBA = loadedLightmapRGBA->next;
-		}
 	}
 	for (auto& entry : appState.Scene.surfaceTextures)
 	{
@@ -1040,6 +1030,24 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		}
 	}
 
+	appState.Scene.lightmapRGBATexturesInUse.clear();
+	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
+	while (loadedLightmapRGBA != nullptr)
+	{
+		auto lightmapTexture = &*loadedLightmapRGBA->lightmap->texture;
+		if (appState.Scene.lightmapRGBATexturesInUse.insert(lightmapTexture).second)
+		{
+			appState.Scene.AddToVertexShaderBarriers(lightmapTexture->buffer, VK_ACCESS_SHADER_READ_BIT);
+		}
+		bufferCopy.size = loadedLightmapRGBA->size;
+		bufferCopy.dstOffset = loadedLightmapRGBA->lightmap->offset * sizeof(uint32_t);
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapTexture->buffer, 1, &bufferCopy);
+		bufferCopy.dstOffset = 0;
+		bufferCopy.srcOffset += bufferCopy.size;
+		appState.Scene.stagingBuffer.offset += loadedLightmapRGBA->size;
+		loadedLightmapRGBA = loadedLightmapRGBA->next;
+	}
+
 	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)
 	{
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastEndBarrier + 1, appState.Scene.stagingBuffer.vertexInputEndBarriers.data(), 0, nullptr);
@@ -1106,61 +1114,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		appState.Scene.stagingBuffer.offset++;
 	}
 
-	appState.Scene.lightmapRGBATexturesInUse.clear();
-	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
-	while (loadedLightmapRGBA != nullptr)
-	{
-		auto lightmapTexture = &*loadedLightmapRGBA->lightmap->texture;
-		if (appState.Scene.lightmapRGBATexturesInUse.insert(lightmapTexture).second)
-		{
-			lightmapTexture->regionCount = 0;
-		}
-		auto& region = lightmapTexture->regions[lightmapTexture->regionCount];
-		region.bufferOffset = appState.Scene.stagingBuffer.offset;
-		region.imageSubresource.baseArrayLayer = loadedLightmapRGBA->lightmap->allocatedIndex;
-		region.imageExtent.width = loadedLightmapRGBA->lightmap->width;
-		region.imageExtent.height = loadedLightmapRGBA->lightmap->height;
-		lightmapTexture->regionCount++;
-		appState.Scene.stagingBuffer.offset += loadedLightmapRGBA->size;
-		loadedLightmapRGBA = loadedLightmapRGBA->next;
-	}
-
 	for (auto lightmapTexture : appState.Scene.lightmapTexturesInUse)
-	{
-		appState.Scene.stagingBuffer.lastStartBarrier++;
-		if (appState.Scene.stagingBuffer.imageStartBarriers.size() <= appState.Scene.stagingBuffer.lastStartBarrier)
-		{
-			appState.Scene.stagingBuffer.imageStartBarriers.emplace_back();
-		}
-
-		auto& startBarrier = appState.Scene.stagingBuffer.imageStartBarriers[appState.Scene.stagingBuffer.lastStartBarrier];
-		startBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		startBarrier.srcAccessMask = 0;
-		startBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		startBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		startBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		startBarrier.image = lightmapTexture->image;
-		startBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		startBarrier.subresourceRange.baseMipLevel = 0;
-		startBarrier.subresourceRange.levelCount = 1;
-		startBarrier.subresourceRange.baseArrayLayer = 0;
-		startBarrier.subresourceRange.layerCount = lightmapTexture->allocated.size();
-
-		appState.Scene.stagingBuffer.lastEndBarrier++;
-		if (appState.Scene.stagingBuffer.imageEndBarriers.size() <= appState.Scene.stagingBuffer.lastEndBarrier)
-		{
-			appState.Scene.stagingBuffer.imageEndBarriers.emplace_back();
-		}
-
-		auto& endBarrier = appState.Scene.stagingBuffer.imageEndBarriers[appState.Scene.stagingBuffer.lastEndBarrier];
-		endBarrier = startBarrier;
-		endBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		endBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		endBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		endBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	}
-
-	for (auto lightmapTexture : appState.Scene.lightmapRGBATexturesInUse)
 	{
 		appState.Scene.stagingBuffer.lastStartBarrier++;
 		if (appState.Scene.stagingBuffer.imageStartBarriers.size() <= appState.Scene.stagingBuffer.lastStartBarrier)
@@ -1201,11 +1155,6 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 
 	for (auto lightmapTexture : appState.Scene.lightmapTexturesInUse)
-	{
-		vkCmdCopyBufferToImage(appState.Scene.stagingBuffer.commandBuffer, appState.Scene.stagingBuffer.buffer->buffer, lightmapTexture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, lightmapTexture->regionCount, lightmapTexture->regions.data());
-	}
-
-	for (auto lightmapTexture : appState.Scene.lightmapRGBATexturesInUse)
 	{
 		vkCmdCopyBufferToImage(appState.Scene.stagingBuffer.commandBuffer, appState.Scene.stagingBuffer.buffer->buffer, lightmapTexture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, lightmapTexture->regionCount, lightmapTexture->regions.data());
 	}
