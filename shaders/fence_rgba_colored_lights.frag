@@ -25,7 +25,7 @@ layout(location = 0) out lowp vec4 outColor;
 void main()
 {
 	vec2 lightmapClamped = floor(clamp(fragmentCoords.xy, ivec2(0, 0), fragmentSizes));
-	uint lightmapWidth = fragmentSizes.x + 2;
+	uint lightmapWidth = fragmentSizes.x + 1;
 	uint lightmapTopIndex = fragmentIndices.x + 3 * (int(lightmapClamped.y) * lightmapWidth + int(lightmapClamped.x));
 	uint lightmapBottomIndex = lightmapTopIndex + 3 * lightmapWidth;
 	vec4 lightmapTopLeftEntry = vec4(lightmap[lightmapTopIndex], lightmap[lightmapTopIndex + 1], lightmap[lightmapTopIndex + 2], 0);

@@ -44,5 +44,5 @@ void main(void)
 	vec2 lightmapCoords = (texCoords - minsAndExtents.xy) * lightmapSizeMinusOne / minsAndExtents.zw;
 	fragmentCoords = vec4(lightmapCoords, texCoords / sizesAndIndices.xy);
 	fragmentIndices = ivec3(sizesAndIndices.zw, angles.w);
-	fragmentSizes = ivec2(lightmapSizeMinusOne - 1);
+	fragmentSizes = ivec2(lightmapSizeMinusOne);
 }
