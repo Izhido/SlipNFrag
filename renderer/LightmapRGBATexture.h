@@ -2,13 +2,13 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <SharedMemoryBuffer.h>
 
 struct LightmapRGBATexture
 {
 	int width;
 	int height;
-	VkBuffer buffer;
-	VkDeviceMemory memory;
+	SharedMemoryBuffer buffer;
 	std::vector<bool> allocated;
 	int allocatedCount;
 	int firstFreeCandidate;

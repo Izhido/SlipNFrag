@@ -4,8 +4,7 @@ void LightmapRGBATexture::Initialize()
 {
 	width = 0;
 	height = 0;
-	buffer = VK_NULL_HANDLE;
-	memory = VK_NULL_HANDLE;
+	buffer = { };
 	allocated.clear();
 	allocatedCount = 0;
 	firstFreeCandidate = 0;

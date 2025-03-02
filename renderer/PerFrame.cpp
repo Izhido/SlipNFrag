@@ -1037,11 +1037,11 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		auto lightmapTexture = &*loadedLightmapRGBA->lightmap->texture;
 		if (appState.Scene.lightmapRGBATexturesInUse.insert(lightmapTexture).second)
 		{
-			appState.Scene.AddToVertexShaderBarriers(lightmapTexture->buffer, VK_ACCESS_SHADER_READ_BIT);
+			appState.Scene.AddToVertexShaderBarriers(lightmapTexture->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
 		}
 		bufferCopy.size = loadedLightmapRGBA->size;
 		bufferCopy.dstOffset = loadedLightmapRGBA->lightmap->offset * sizeof(uint32_t);
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapTexture->buffer, 1, &bufferCopy);
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapTexture->buffer.buffer, 1, &bufferCopy);
 		bufferCopy.dstOffset = 0;
 		bufferCopy.srcOffset += bufferCopy.size;
 		appState.Scene.stagingBuffer.offset += loadedLightmapRGBA->size;
