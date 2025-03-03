@@ -3,7 +3,11 @@
 precision highp float;
 precision highp int;
 
-layout(set = 2, binding = 0) uniform usampler2DArray fragmentLightmap;
+layout(set = 2, binding = 0) readonly buffer FragmentLightmap
+{
+	uint lightmap[];
+};
+
 layout(set = 3, binding = 0) uniform usampler2DArray fragmentTexture;
 layout(set = 4, binding = 0) uniform usampler2DArray fragmentGlowTexture;
 
@@ -21,14 +25,16 @@ layout(location = 0) out lowp vec4 outColor;
 void main()
 {
 	vec2 lightmapClamped = floor(clamp(fragmentCoords.xy, ivec2(0, 0), fragmentSizes));
-	ivec3 lightmapCoords = ivec3(lightmapClamped, fragmentIndices.x);
-	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, lightmapCoords, 0);
-	vec4 lightmapTopRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 0));
-	vec4 lightmapBottomRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 1));
-	vec4 lightmapBottomLeftEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(0, 1));
+	uint lightmapWidth = fragmentSizes.x + 1;
+	uint lightmapTopIndex = fragmentIndices.x + int(lightmapClamped.y) * lightmapWidth + int(lightmapClamped.x);
+	uint lightmapBottomIndex = lightmapTopIndex + lightmapWidth;
+	float lightmapTopLeftEntry = float(lightmap[lightmapTopIndex]);
+	float lightmapTopRightEntry = float(lightmap[lightmapTopIndex + 1]);
+	float lightmapBottomRightEntry = float(lightmap[lightmapBottomIndex + 1]);
+	float lightmapBottomLeftEntry = float(lightmap[lightmapBottomIndex]);
 	vec2 lightmapCoordsDelta = fragmentCoords.xy - lightmapClamped;
-	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
-	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
+	float lightmapTopEntry = mix(lightmapTopLeftEntry, lightmapTopRightEntry, lightmapCoordsDelta.x);
+	float lightmapBottomEntry = mix(lightmapBottomLeftEntry, lightmapBottomRightEntry, lightmapCoordsDelta.x);
 	float lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);
 	float light = 2 - lightmapEntry / (32 * 256);
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentCoords.zw);

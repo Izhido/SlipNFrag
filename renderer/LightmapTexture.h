@@ -1,22 +1,19 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include <vector>
+#include <SharedMemoryBuffer.h>
 
 struct LightmapTexture
 {
 	int width;
 	int height;
-	VkImage image;
-	VkDeviceMemory memory;
-	VkImageView view;
+	SharedMemoryBuffer buffer;
 	std::vector<bool> allocated;
 	int allocatedCount;
 	int firstFreeCandidate;
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet descriptorSet;
-	std::vector<VkBufferImageCopy> regions;
-	uint32_t regionCount;
+	VkDeviceSize size;
 	LightmapTexture* previous;
 	LightmapTexture* next;
 

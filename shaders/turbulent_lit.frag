@@ -10,7 +10,11 @@ layout(set = 0, binding = 1) uniform Palette
 
 layout(set = 0, binding = 2) uniform usampler2D fragmentColormap;
 layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
-layout(set = 3, binding = 0) uniform usampler2DArray fragmentLightmap;
+
+layout(set = 3, binding = 0) readonly buffer FragmentLightmap
+{
+	uint lightmap[];
+};
 
 layout(push_constant) uniform Time
 {
@@ -24,14 +28,16 @@ layout(location = 0) out lowp vec4 outColor;
 void main()
 {
 	vec2 lightmapClamped = floor(clamp(fragmentCoords.xy, ivec2(0, 0), fragmentFlat.zw));
-	ivec3 lightmapCoords = ivec3(lightmapClamped, fragmentFlat.x);
-	vec4 lightmapTopLeftEntry = texelFetch(fragmentLightmap, lightmapCoords, 0);
-	vec4 lightmapTopRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 0));
-	vec4 lightmapBottomRightEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(1, 1));
-	vec4 lightmapBottomLeftEntry = texelFetchOffset(fragmentLightmap, lightmapCoords, 0, ivec2(0, 1));
+	uint lightmapWidth = fragmentFlat.z + 1;
+	uint lightmapTopIndex = fragmentFlat.x + int(lightmapClamped.y) * lightmapWidth + int(lightmapClamped.x);
+	uint lightmapBottomIndex = lightmapTopIndex + lightmapWidth;
+	float lightmapTopLeftEntry = float(lightmap[lightmapTopIndex]);
+	float lightmapTopRightEntry = float(lightmap[lightmapTopIndex + 1]);
+	float lightmapBottomRightEntry = float(lightmap[lightmapBottomIndex + 1]);
+	float lightmapBottomLeftEntry = float(lightmap[lightmapBottomIndex]);
 	vec2 lightmapCoordsDelta = floor((fragmentCoords.xy - lightmapClamped) * 16) / 16;
-	float lightmapTopEntry = mix(lightmapTopLeftEntry.x, lightmapTopRightEntry.x, lightmapCoordsDelta.x);
-	float lightmapBottomEntry = mix(lightmapBottomLeftEntry.x, lightmapBottomRightEntry.x, lightmapCoordsDelta.x);
+	float lightmapTopEntry = mix(lightmapTopLeftEntry, lightmapTopRightEntry, lightmapCoordsDelta.x);
+	float lightmapBottomEntry = mix(lightmapBottomLeftEntry, lightmapBottomRightEntry, lightmapCoordsDelta.x);
 	float lightmapEntry = mix(lightmapTopEntry, lightmapBottomEntry, lightmapCoordsDelta.y);
 	float light = lightmapEntry / 256;
 	float lightBase = floor(light);
