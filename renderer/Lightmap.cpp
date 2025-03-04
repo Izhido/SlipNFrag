@@ -9,18 +9,14 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
 	this->width = width;
 	this->height = height;
 
-	size_t slot0 = std::ceil(std::log2(width));
-	size_t slot1 = std::ceil(std::log2(height));
-	if (appState.Scene.lightmapTextures.size() <= slot0)
+	auto slot0 = std::ceil(std::log2(width));
+	auto slot1 = std::ceil(std::log2(height));
+	auto slot = (size_t)std::log2(std::pow(2, slot0) * std::pow(2, slot1));
+	if (appState.Scene.lightmapTextures.size() <= slot)
 	{
-		appState.Scene.lightmapTextures.resize(slot0 + 1);
+		appState.Scene.lightmapTextures.resize(slot + 1);
 	}
-	auto& lightmapTextures = appState.Scene.lightmapTextures[slot0];
-	if (lightmapTextures.size() <= slot1)
-	{
-		lightmapTextures.resize(slot1 + 1);
-	}
-	auto lightmapTexture = lightmapTextures[slot1];
+	auto lightmapTexture = appState.Scene.lightmapTextures[slot];
 	bool found = false;
 	while (lightmapTexture != nullptr)
 	{
@@ -63,7 +59,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
 			{
 				lightmapTexture = new LightmapTexture { };
 			}
-			lightmapTextures[slot1] = lightmapTexture;
+			appState.Scene.lightmapTextures[slot] = lightmapTexture;
 		}
 		else
 		{
@@ -85,20 +81,19 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
 		texture->width = (int)std::pow(2, slot0);
 		texture->height = (int)std::pow(2, slot1);
 
-		auto maxDimension = std::max(texture->width, texture->height);
-		uint32_t arrayLayers;
-		if (maxDimension <= 4)
+		auto maxSlot = std::max(slot0, slot1);
+		size_t arrayLayers;
+		if (maxSlot <= 3)
 		{
 			arrayLayers = 256;
 		}
-		else if (maxDimension >= 1024)
+		else if (maxSlot >= 11)
 		{
 			arrayLayers = 1;
 		}
 		else
 		{
-			auto maxSlot = (int)std::max(slot0, slot1);
-			arrayLayers = (int)std::pow(2, 10 - maxSlot);
+			arrayLayers = (size_t)std::pow(2, 11 - maxSlot);
 		}
 
 		texture->size = texture->width * texture->height;
@@ -158,9 +153,10 @@ void Lightmap::Delete(AppState& appState) const
 		}
 		else
 		{
-			size_t slot0 = std::ceil(std::log2(width));
-			size_t slot1 = std::ceil(std::log2(height));
-			appState.Scene.lightmapTextures[slot0][slot1] = texture->next;
+			auto slot0 = std::ceil(std::log2(width));
+			auto slot1 = std::ceil(std::log2(height));
+			auto slot = (size_t)std::log2(std::pow(2, slot0) * std::pow(2, slot1));
+			appState.Scene.lightmapTextures[slot] = texture->next;
 		}
 		if (texture->next != nullptr)
 		{
