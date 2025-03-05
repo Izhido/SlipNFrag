@@ -11,6 +11,7 @@ struct Buffer
 	VkDeviceSize size;
 	VkBuffer buffer;
 	VkDeviceMemory memory;
+	VkMemoryPropertyFlags properties;
 	void* mapped;
 
 	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);

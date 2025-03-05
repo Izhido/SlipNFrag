@@ -4,4 +4,4 @@
 
 struct AppState;
 
-bool createMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties, VkMemoryAllocateInfo& memoryAllocateInfo, bool throwOnNotFound);
+bool updateMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags& properties, VkMemoryAllocateInfo& memoryAllocateInfo, bool throwOnNotFound);

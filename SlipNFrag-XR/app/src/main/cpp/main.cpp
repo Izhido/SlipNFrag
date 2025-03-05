@@ -1820,6 +1820,13 @@ void android_main(struct android_app* app)
                             CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
                         }
                         perFrame.LoadStagingBuffer(appState, stagingBuffer);
+						if ((stagingBuffer->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+						{
+							VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
+							range.memory = stagingBuffer->memory;
+							range.size = VK_WHOLE_SIZE;
+							CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
+						}
 
 						perFrame.LoadNonStagedResources(appState);
 
@@ -1905,17 +1912,21 @@ void android_main(struct android_app* app)
 						VkMemoryAllocateInfo memoryAllocateInfo { };
 
 						vkGetImageMemoryRequirements(appState.Device, perFrame.colorImage, &memRequirements);
-						if (!createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo, false))
+						VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+						if (!updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, false))
 						{
-							createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
+							properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+							updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, true);
 						}
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.colorMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.colorImage, perFrame.colorMemory, 0));
 						
 						vkGetImageMemoryRequirements(appState.Device, perFrame.depthImage, &memRequirements);
-						if (!createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT, memoryAllocateInfo, false))
+						properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+						if (!updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, false))
 						{
-							createMemoryAllocateInfo(appState, memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
+							properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+							updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, true);
 						}
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.depthMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.depthImage, perFrame.depthMemory, 0));
@@ -2190,7 +2201,8 @@ void android_main(struct android_app* app)
 							vkGetImageMemoryRequirements(appState.Device, keyboardTexture.image, &memoryRequirements);
 
 							VkMemoryAllocateInfo memoryAllocateInfo { };
-							createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
+							VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+							updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
 
 							CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &keyboardTexture.memory));
 							CHECK_VKCMD(vkBindImageMemory(appState.Device, keyboardTexture.image, keyboardTexture.memory, 0));

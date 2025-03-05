@@ -12,6 +12,7 @@ struct SharedMemoryBuffer
 	VkDeviceSize size;
 	VkBuffer buffer;
 	SharedMemory* sharedMemory;
+	VkMemoryPropertyFlags properties;
 
 	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 	void CreateVertexBuffer(AppState& appState, VkDeviceSize size);

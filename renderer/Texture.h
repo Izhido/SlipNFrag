@@ -15,6 +15,7 @@ struct Texture
 	VkImage image;
 	VkDeviceMemory memory;
 	VkImageView view;
+	VkMemoryPropertyFlags properties;
 	bool filled;
 
 	void Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage);

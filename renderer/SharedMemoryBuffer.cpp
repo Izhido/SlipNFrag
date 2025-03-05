@@ -7,6 +7,7 @@
 void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
 	this->size = size;
+	this->properties = properties;
 
 	VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 	bufferCreateInfo.size = size;
@@ -17,7 +18,7 @@ void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferU
 	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
 
 	VkMemoryAllocateInfo memoryAllocateInfo { };
-	createMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
+	updateMemoryAllocateInfo(appState, memoryRequirements, this->properties, memoryAllocateInfo, true);
 
 	auto create = true;
 	auto& latestMemory = appState.Scene.latestMemory[memoryAllocateInfo.memoryTypeIndex];

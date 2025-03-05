@@ -28,7 +28,8 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 	vkGetImageMemoryRequirements(appState.Device, image, &memoryRequirements);
 
 	VkMemoryAllocateInfo memoryAllocateInfo { };
-	createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
+	properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+	updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
 
 	auto create = true;
 	auto& latestMemory = appState.Scene.latestMemory[memoryAllocateInfo.memoryTypeIndex];

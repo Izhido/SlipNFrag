@@ -127,7 +127,8 @@ void Scene::Create(AppState& appState)
         imageCreateInfo.arrayLayers = consoleTexture.layerCount;
         CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &consoleTexture.image));
         vkGetImageMemoryRequirements(appState.Device, consoleTexture.image, &memoryRequirements);
-        createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
+		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
         CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &consoleTexture.memory));
         CHECK_VKCMD(vkBindImageMemory(appState.Device, consoleTexture.image, consoleTexture.memory, 0));
 
@@ -142,7 +143,8 @@ void Scene::Create(AppState& appState)
         imageCreateInfo.arrayLayers = statusBarTexture.layerCount;
         CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &statusBarTexture.image));
         vkGetImageMemoryRequirements(appState.Device, statusBarTexture.image, &memoryRequirements);
-        createMemoryAllocateInfo(appState, memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryAllocateInfo, true);
+		properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+        updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
         CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &statusBarTexture.memory));
         CHECK_VKCMD(vkBindImageMemory(appState.Device, statusBarTexture.image, statusBarTexture.memory, 0));
     }

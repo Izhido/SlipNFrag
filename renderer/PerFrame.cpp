@@ -761,6 +761,13 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 	memcpy(mapped, appState.ProjectionMatrices.data(), 2 * sizeof(XrMatrix4x4f));
 	mapped += 2 * 16;
 	memcpy(mapped, &appState.VertexTransform, sizeof(XrMatrix4x4f));
+	if ((matrices->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+	{
+		VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
+		range.memory = matrices->memory;
+		range.size = VK_WHOLE_SIZE;
+		CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
+	}
 
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
@@ -807,6 +814,13 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, attributeIndex, sortedVertices, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		if ((sortedVertices->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+		{
+			VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
+			range.memory = sortedVertices->memory;
+			range.size = VK_WHOLE_SIZE;
+			CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
+		}
 	}
 }
 
