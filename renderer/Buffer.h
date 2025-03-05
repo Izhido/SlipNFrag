@@ -16,6 +16,7 @@ struct Buffer
 	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 	void CreateHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size);
+	void CreateHostVisibleUniformBuffer(AppState& appState, VkDeviceSize size);
 	void CreateSourceBuffer(AppState& appState, VkDeviceSize size);
 	void Delete(AppState& appState) const;
 };

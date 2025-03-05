@@ -1759,6 +1759,13 @@ void android_main(struct android_app* app)
 
 					auto& perFrame = appState.PerFrame[swapchainImageIndex];
 
+					if (perFrame.matrices == nullptr)
+					{
+						perFrame.matrices = new Buffer();
+						perFrame.matrices->CreateHostVisibleUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
+						CHECK_VKCMD(vkMapMemory(appState.Device, perFrame.matrices->memory, 0, VK_WHOLE_SIZE, 0, &perFrame.matrices->mapped));
+					}
+
 					for (auto i = 0; i < viewCountOutput; i++)
 					{
 						projectionLayerViews[i] = { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW };
@@ -2660,6 +2667,10 @@ void android_main(struct android_app* app)
 				{
 					vkDestroyCommandPool(appState.Device, perFrame.second.commandPool, nullptr);
 				}
+				if (perFrame.second.matrices != nullptr)
+				{
+					perFrame.second.matrices->Delete(appState);
+				}
 			}
 
 			appState.PerFrame.clear();
@@ -2725,18 +2736,6 @@ void android_main(struct android_app* app)
             if (appState.Scene.paletteMemory != VK_NULL_HANDLE)
             {
                 vkFreeMemory(appState.Device, appState.Scene.paletteMemory, nullptr);
-            }
-
-            for (auto& buffer : appState.Scene.matricesBuffers)
-            {
-                if (buffer != VK_NULL_HANDLE)
-                {
-                    vkDestroyBuffer(appState.Device, buffer, nullptr);
-                }
-            }
-            if (appState.Scene.matricesMemory != VK_NULL_HANDLE)
-            {
-                vkFreeMemory(appState.Device, appState.Scene.matricesMemory, nullptr);
             }
 
 			appState.Scene.floorStrip.Delete(appState);

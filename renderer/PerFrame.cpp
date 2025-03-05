@@ -143,14 +143,7 @@ void PerFrame::GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, Loade
 
 void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 {
-    auto matrices = (float*)stagingBuffer->mapped;
-    memcpy(matrices, appState.ViewMatrices.data(), 2 * sizeof(XrMatrix4x4f));
-    matrices += 2 * 16;
-    memcpy(matrices, appState.ProjectionMatrices.data(), 2 * sizeof(XrMatrix4x4f));
-    matrices += 2 * 16;
-    memcpy(matrices, &appState.VertexTransform, sizeof(XrMatrix4x4f));
-    matrices += 16;
-    VkDeviceSize offset = appState.Scene.matricesBufferSize;
+    VkDeviceSize offset = 0;
 	auto loadedAliasIndexBuffer = appState.Scene.indexBuffers.firstAliasIndices8;
 	while (loadedAliasIndexBuffer != nullptr)
 	{
@@ -762,6 +755,13 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 
 void PerFrame::LoadNonStagedResources(AppState &appState)
 {
+	auto mapped = (float*)matrices->mapped;
+	memcpy(mapped, appState.ViewMatrices.data(), 2 * sizeof(XrMatrix4x4f));
+	mapped += 2 * 16;
+	memcpy(mapped, appState.ProjectionMatrices.data(), 2 * sizeof(XrMatrix4x4f));
+	mapped += 2 * 16;
+	memcpy(mapped, &appState.VertexTransform, sizeof(XrMatrix4x4f));
+
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
 		sortedVertices = cachedHostVisibleVertices.GetHostVisibleVertexBuffer(appState, appState.Scene.sortedVerticesSize);
@@ -881,11 +881,6 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	appState.Scene.stagingBuffer.descriptorSetsInUse.clear();
 
 	VkBufferCopy bufferCopy { };
-
-    bufferCopy.size = appState.Scene.matricesBufferSize;
-    vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.matricesBuffers[swapchainImageIndex], 1, &bufferCopy);
-    bufferCopy.srcOffset += bufferCopy.size;
-    appState.Scene.AddToVertexShaderBarriers(appState.Scene.matricesBuffers[swapchainImageIndex], VK_ACCESS_SHADER_READ_BIT);
 
 	SharedMemoryBuffer* previousBuffer = nullptr;
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
@@ -1258,8 +1253,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 	{
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[0].descriptorCount = 1;
-		bufferInfo[0].buffer = appState.Scene.matricesBuffers[swapchainImageIndex];
-		bufferInfo[0].range = appState.Scene.matricesBufferSize;
+		bufferInfo[0].buffer = matrices->buffer;
+		bufferInfo[0].range = VK_WHOLE_SIZE;
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		writes[0].pBufferInfo = bufferInfo;
 		if (!sceneMatricesResources.created)

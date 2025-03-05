@@ -79,9 +79,6 @@ struct Scene
 	Pipeline skyRGBA;
 	Pipeline floor;
 	Pipeline floorStrip;
-    std::vector<VkBuffer> matricesBuffers;
-    VkDeviceSize matricesBufferSize;
-    VkDeviceMemory matricesMemory;
     std::vector<VkBuffer> paletteBuffers;
     std::vector<VkBuffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;

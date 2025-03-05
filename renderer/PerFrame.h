@@ -20,6 +20,7 @@ struct PerFrame
 	VkImageView depthView;
 	VkImageView resolveView;
 	VkFramebuffer framebuffer;
+	Buffer* matrices;
 	CachedSharedMemoryBuffers cachedVertices;
 	CachedBuffers cachedHostVisibleVertices;
 	CachedSharedMemoryBuffers cachedAttributes;
