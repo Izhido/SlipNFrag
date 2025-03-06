@@ -20,6 +20,8 @@
 #include "CylinderProjection.h"
 #include "Locks.h"
 
+wchar_t snd_audio_output_device_id[XR_MAX_AUDIO_DEVICE_STR_SIZE_OCULUS];
+
 std::string GetXrVersionString(XrVersion ver)
 {
 	return Fmt("%d.%d.%d", XR_VERSION_MAJOR(ver), XR_VERSION_MINOR(ver), XR_VERSION_PATCH(ver));
@@ -1217,6 +1219,11 @@ int main(int argc, char* argv[])
         appState.FileLoader = new FileLoader();
 
         appState.VertexTransform.m[15] = 1;
+
+		PFN_xrGetAudioOutputDeviceGuidOculus xrGetAudioOutputDeviceGuidOculus = nullptr;
+		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetAudioOutputDeviceGuidOculus", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetAudioOutputDeviceGuidOculus)));
+
+		CHECK_XRCMD(xrGetAudioOutputDeviceGuidOculus(instance, snd_audio_output_device_id));
 
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
@@ -2834,10 +2841,14 @@ int main(int argc, char* argv[])
 	{
 		std::string message = "The following error ocurred:\n\n";
 		message += ex.what();
-		if (message.find("XR_ERROR_FORM_FACTOR_UNAVAILABLE"))
+		if (message.find("XR_ERROR_FORM_FACTOR_UNAVAILABLE") != std::string::npos)
 		{
 			message += "\n\nThis usually indicates that the VR headset is not connected. ";
-			message += "Verify that the headset is connected to begin playing.";
+			message += "\nVerify that the headset is connected to begin playing.";
+		}
+		else
+		{
+			message += "\n\nCheck the logs above for hints on what could have happened.";
 		}
 		message += "\n\nThe application will now exit.";
 		PrintErrorMessage(message);

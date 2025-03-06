@@ -6,6 +6,7 @@ set(ROOT_DIR "${PROJECT_SOURCE_DIR}/..")
 set(LOCAL_DIR ".")
 set(ID1_DIR "${ROOT_DIR}/id1")
 set(RENDERER_DIR "${ROOT_DIR}/renderer")
+set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(SHADERS_DIR "${ROOT_DIR}/shaders")
 set(NULL_DIR "${ROOT_DIR}/SlipNFrag")
 set(STB_DIR "${ROOT_DIR}/stb")
@@ -15,6 +16,7 @@ file(GLOB LOCAL_HEADERS "${LOCAL_DIR}/*.h")
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
 file(GLOB RENDERER_SOURCE "${RENDERER_DIR}/*.cpp")
+file(GLOB SND_FLOAT_SOURCE "${SND_FLOAT_DIR}/*.cpp")
 file(GLOB NULL_SOURCE "${NULL_DIR}/*.cpp")
 file(GLOB SHADERS_SOURCE "${SHADERS_DIR}/*.vert" "${SHADERS_DIR}/*.frag")
 file(GLOB SLIPNFRAG_XR_ASSETS "${ROOT_DIR}/SlipNFrag-XR/app/src/main/assets/*")
@@ -22,7 +24,9 @@ file(GLOB SLIPNFRAG_XR_ASSETS "${ROOT_DIR}/SlipNFrag-XR/app/src/main/assets/*")
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_sock")
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_udp")
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_win")
+list(FILTER ID1_SOURCE EXCLUDE REGEX "snd_")
 
+list(FILTER NULL_SOURCE EXCLUDE REGEX "cd_null")
 list(FILTER NULL_SOURCE EXCLUDE REGEX "snd_null")
 list(FILTER NULL_SOURCE EXCLUDE REGEX "in_null")
 list(FILTER NULL_SOURCE EXCLUDE REGEX "sys_null")
@@ -30,19 +34,22 @@ list(FILTER NULL_SOURCE EXCLUDE REGEX "vid_null")
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_definitions(
+add_executable(slipnfrag_pcxr
+        ${LOCAL_SOURCE}
+        ${ID1_SOURCE}
+        ${RENDERER_SOURCE}
+        ${SND_FLOAT_SOURCE}
+        ${NULL_SOURCE}
+        ${LOCAL_HEADERS}
+        ${SHADERS_SOURCE})
+
+target_compile_options(slipnfrag_pcxr PRIVATE
+        /Zc:wchar_t 
+        /Zc:forScope
         -DXR_USE_PLATFORM_WIN32=1
         -DXR_USE_GRAPHICS_API_VULKAN=1
         "-DUSE_OPENXR_VERSION=XR_MAKE_VERSION(1, 0, 34)"
 )
-
-add_executable(slipnfrag_pcxr
-    ${LOCAL_SOURCE}
-    ${ID1_SOURCE}
-    ${RENDERER_SOURCE}
-    ${NULL_SOURCE}
-    ${LOCAL_HEADERS}
-    ${SHADERS_SOURCE})
 
 add_library(openxr_loader STATIC IMPORTED)
 
@@ -124,18 +131,19 @@ target_include_directories(slipnfrag_pcxr PRIVATE
         ${STB_DIR}
 )
 
-target_link_libraries(slipnfrag_pcxr openxr_loader)
+target_link_libraries(slipnfrag_pcxr PRIVATE 
+        openxr_loader
+        winmm.lib
+        ${Vulkan_LIBRARY}
+)
+
 if(TARGET openxr-gfxwrapper)
     target_link_libraries(slipnfrag_pcxr openxr-gfxwrapper)
 endif()
-target_compile_features(slipnfrag_pcxr PUBLIC cxx_std_17)
-target_compile_definitions(slipnfrag_pcxr PRIVATE _CRT_SECURE_NO_WARNINGS)
-target_compile_options(slipnfrag_pcxr PRIVATE 
-    /Zc:wchar_t 
-    /Zc:forScope
-)
 
-target_link_libraries(slipnfrag_pcxr ${Vulkan_LIBRARY})
+target_compile_features(slipnfrag_pcxr PUBLIC cxx_std_17)
+
+target_compile_definitions(slipnfrag_pcxr PRIVATE _CRT_SECURE_NO_WARNINGS)
 
 add_custom_command(
     TARGET slipnfrag_pcxr POST_BUILD
