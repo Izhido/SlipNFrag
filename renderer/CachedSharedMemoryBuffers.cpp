@@ -3,16 +3,16 @@
 #include "AppState.h"
 #include "Utils.h"
 
-SharedMemoryBuffer* CachedSharedMemoryBuffers::Get(AppState& appState, VkDeviceSize size)
+SharedMemoryBuffer* CachedSharedMemoryBuffers::Get(VkDeviceSize size)
 {
-	for (SharedMemoryBuffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
+	for (auto b = oldBuffers.begin(); b != oldBuffers.end(); b++)
 	{
 		if ((((*b)->size == Constants::minimumBufferAllocation &&
 			  size <= Constants::minimumBufferAllocation)) ||
 			((*b)->size >= size && (*b)->size < size * 2))
 		{
 			auto buffer = *b;
-			(*b) = (*b)->next;
+			oldBuffers.erase(b);
 			return buffer;
 		}
 	}
@@ -31,7 +31,7 @@ VkDeviceSize CachedSharedMemoryBuffers::MinimumAllocationFor(VkDeviceSize size)
 
 SharedMemoryBuffer* CachedSharedMemoryBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 {
-	auto buffer = Get(appState, size);
+	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
 		buffer = new SharedMemoryBuffer { };
@@ -43,7 +43,7 @@ SharedMemoryBuffer* CachedSharedMemoryBuffers::GetVertexBuffer(AppState& appStat
 
 SharedMemoryBuffer* CachedSharedMemoryBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 {
-	auto buffer = Get(appState, size);
+	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
 		buffer = new SharedMemoryBuffer { };
@@ -55,7 +55,7 @@ SharedMemoryBuffer* CachedSharedMemoryBuffers::GetIndexBuffer(AppState& appState
 
 SharedMemoryBuffer* CachedSharedMemoryBuffers::GetStorageBuffer(AppState& appState, VkDeviceSize size)
 {
-	auto buffer = Get(appState, size);
+	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
 		buffer = new SharedMemoryBuffer { };
@@ -67,49 +67,40 @@ SharedMemoryBuffer* CachedSharedMemoryBuffers::GetStorageBuffer(AppState& appSta
 
 void CachedSharedMemoryBuffers::Reset(AppState& appState)
 {
-	for (SharedMemoryBuffer** b = &oldBuffers; *b != nullptr; )
+	for (auto b = oldBuffers.begin(); b != oldBuffers.end(); )
 	{
 		(*b)->unusedCount++;
 		if ((*b)->unusedCount >= Constants::maxUnusedCount)
 		{
-			auto next = (*b)->next;
-			(*b)->Delete(appState);
-			delete *b;
-			(*b) = next;
+			auto buffer = *b;
+			buffer->Delete(appState);
+			delete buffer;
+			b = oldBuffers.erase(b);
 		}
 		else
 		{
-			b = &(*b)->next;
+			b++;
 		}
 	}
-	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
-	{
-		next = b->next;
-		b->next = oldBuffers;
-		oldBuffers = b;
-	}
-	buffers = nullptr;
+	oldBuffers.splice(oldBuffers.begin(), buffers);
 }
 
 void CachedSharedMemoryBuffers::MoveToFront(SharedMemoryBuffer* buffer)
 {
 	buffer->unusedCount = 0;
-	buffer->next = buffers;
-	buffers = buffer;
+	buffers.push_back(buffer);
 }
 
-void CachedSharedMemoryBuffers::Delete(AppState& appState) const
+void CachedSharedMemoryBuffers::Delete(AppState& appState)
 {
-	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
+	for (auto b : oldBuffers)
 	{
-		next = b->next;
 		b->Delete(appState);
-		delete b;
 	}
-	for (SharedMemoryBuffer* b = oldBuffers, *next; b != nullptr; b = next)
+	oldBuffers.clear();
+	for (auto b : buffers)
 	{
-		next = b->next;
 		b->Delete(appState);
-		delete b;
 	}
+	buffers.clear();
 }

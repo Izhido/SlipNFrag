@@ -3,49 +3,40 @@
 
 void CachedTextures::Reset(AppState& appState)
 {
-	for (auto t = &oldTextures; *t != nullptr; )
+	for (auto t = oldTextures.begin(); t != oldTextures.end(); )
 	{
 		(*t)->unusedCount++;
 		if ((*t)->unusedCount >= Constants::maxUnusedCount)
 		{
-			auto next = (*t)->next;
-			(*t)->Delete(appState);
-			delete *t;
-			(*t) = next;
+			auto texture = *t;
+			texture->Delete(appState);
+			delete texture;
+			t = oldTextures.erase(t);
 		}
 		else
 		{
-			t = &(*t)->next;
+			t++;
 		}
 	}
-	for (Texture* t = textures, *next; t != nullptr; t = next)
-	{
-		next = t->next;
-		t->next = oldTextures;
-		oldTextures = t;
-	}
-	textures = nullptr;
+	oldTextures.splice(oldTextures.begin(), textures);
 }
 
 void CachedTextures::MoveToFront(Texture* texture)
 {
 	texture->unusedCount = 0;
-	texture->next = textures;
-	textures = texture;
+	textures.push_back(texture);
 }
 
-void CachedTextures::Delete(AppState& appState) const
+void CachedTextures::Delete(AppState& appState)
 {
-	for (Texture* t = textures, *next; t != nullptr; t = next)
+	for (auto b : oldTextures)
 	{
-		next = t->next;
-		t->Delete(appState);
-		delete t;
+		b->Delete(appState);
 	}
-	for (Texture* t = oldTextures, *next; t != nullptr; t = next)
+	oldTextures.clear();
+	for (auto b : textures)
 	{
-		next = t->next;
-		t->Delete(appState);
-		delete t;
+		b->Delete(appState);
 	}
+	textures.clear();
 }

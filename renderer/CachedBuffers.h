@@ -1,17 +1,18 @@
 #pragma once
 
 #include "Buffer.h"
+#include <list>
 
 struct CachedBuffers
 {
-	Buffer* buffers = nullptr;
-	Buffer* oldBuffers = nullptr;
+	std::list<Buffer*> buffers;
+	std::list<Buffer*> oldBuffers;
 
-	Buffer* Get(AppState& appState, VkDeviceSize size);
+	Buffer* Get(VkDeviceSize size);
 	static VkDeviceSize MinimumAllocationFor(VkDeviceSize size);
 	Buffer* GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size);
 	Buffer* GetHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size);
 	void Reset(AppState& appState);
 	void MoveToFront(Buffer* buffer);
-	void Delete(AppState& appState) const;
+	void Delete(AppState& appState);
 };

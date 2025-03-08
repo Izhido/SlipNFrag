@@ -831,10 +831,10 @@ void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 		return;
 	}
 	Texture* texture;
-	if (colormaps.oldTextures != nullptr)
+	if (!colormaps.oldTextures.empty())
 	{
-		texture = colormaps.oldTextures;
-		colormaps.oldTextures = texture->next;
+		texture = colormaps.oldTextures.front();
+		colormaps.oldTextures.pop_front();
 	}
 	else
 	{

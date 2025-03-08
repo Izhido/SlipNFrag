@@ -6,7 +6,6 @@ struct AppState;
 
 struct Buffer
 {
-	Buffer* next;
 	int unusedCount;
 	VkDeviceSize size;
 	VkBuffer buffer;

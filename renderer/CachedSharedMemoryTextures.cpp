@@ -15,60 +15,46 @@ void CachedSharedMemoryTextures::Setup(LoadedSharedMemoryTexture& loaded)
 	current = &loaded;
 }
 
+void CachedSharedMemoryTextures::DeleteOld(AppState& appState)
+{
+	for (auto t = oldTextures.begin(); t != oldTextures.end(); )
+	{
+		(*t)->unusedCount++;
+		if ((*t)->unusedCount >= Constants::maxUnusedCount)
+		{
+			auto texture = *t;
+			texture->Delete(appState);
+			delete texture;
+			t = oldTextures.erase(t);
+		}
+		else
+		{
+			t++;
+		}
+	}
+}
+
 void CachedSharedMemoryTextures::DisposeFront()
 {
-	for (SharedMemoryTexture* t = textures, *next; t != nullptr; t = next)
-	{
-		next = t->next;
-		t->next = oldTextures;
-		oldTextures = t;
-	}
-	textures = nullptr;
+	oldTextures.splice(oldTextures.begin(), textures);
 }
 
 void CachedSharedMemoryTextures::MoveToFront(SharedMemoryTexture* texture)
 {
 	texture->unusedCount = 0;
-	texture->next = textures;
-	textures = texture;
+	textures.push_back(texture);
 }
 
 void CachedSharedMemoryTextures::Delete(AppState& appState)
 {
-	for (SharedMemoryTexture* t = textures, *next; t != nullptr; t = next)
+	for (auto t : oldTextures)
 	{
-		next = t->next;
 		t->Delete(appState);
-		delete t;
 	}
-	textures = nullptr;
-	for (SharedMemoryTexture* t = oldTextures, *next; t != nullptr; t = next)
+	oldTextures.clear();
+	for (auto t : textures)
 	{
-		next = t->next;
 		t->Delete(appState);
-		delete t;
 	}
-	oldTextures = nullptr;
-}
-
-void CachedSharedMemoryTextures::DeleteOld(AppState& appState)
-{
-	if (oldTextures != nullptr)
-	{
-		for (auto t = &oldTextures; *t != nullptr; )
-		{
-			(*t)->unusedCount++;
-			if ((*t)->unusedCount >= Constants::maxUnusedCount)
-			{
-				auto next = (*t)->next;
-				(*t)->Delete(appState);
-				delete *t;
-				(*t) = next;
-			}
-			else
-			{
-				t = &(*t)->next;
-			}
-		}
-	}
+	textures.clear();
 }

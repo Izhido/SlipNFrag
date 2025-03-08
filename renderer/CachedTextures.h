@@ -1,13 +1,14 @@
 #pragma once
 
 #include "Texture.h"
+#include <list>
 
 struct CachedTextures
 {
-	Texture* textures = nullptr;
-	Texture* oldTextures = nullptr;
+	std::list<Texture*> textures;
+	std::list<Texture*> oldTextures;
 
 	void Reset(AppState& appState);
 	void MoveToFront(Texture* texture);
-	void Delete(AppState& appState) const;
+	void Delete(AppState& appState);
 };

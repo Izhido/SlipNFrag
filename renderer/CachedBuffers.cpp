@@ -3,16 +3,16 @@
 #include "AppState.h"
 #include "Utils.h"
 
-Buffer* CachedBuffers::Get(AppState& appState, VkDeviceSize size)
+Buffer* CachedBuffers::Get(VkDeviceSize size)
 {
-	for (Buffer** b = &oldBuffers; *b != nullptr; b = &(*b)->next)
+	for (auto b = oldBuffers.begin(); b != oldBuffers.end(); b++)
 	{
 		if ((((*b)->size == Constants::minimumBufferAllocation &&
 			size <= Constants::minimumBufferAllocation)) ||
 			((*b)->size >= size && (*b)->size < size * 2))
 		{
 			auto buffer = *b;
-			(*b) = (*b)->next;
+			oldBuffers.erase(b);
 			return buffer;
 		}
 	}
@@ -31,7 +31,7 @@ VkDeviceSize CachedBuffers::MinimumAllocationFor(VkDeviceSize size)
 
 Buffer* CachedBuffers::GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size)
 {
-	auto buffer = Get(appState, size);
+	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer { };
@@ -43,7 +43,7 @@ Buffer* CachedBuffers::GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSi
 
 Buffer* CachedBuffers::GetHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size)
 {
-	auto buffer = Get(appState, size);
+	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer { };
@@ -55,49 +55,40 @@ Buffer* CachedBuffers::GetHostVisibleStorageBuffer(AppState& appState, VkDeviceS
 
 void CachedBuffers::Reset(AppState& appState)
 {
-	for (Buffer** b = &oldBuffers; *b != nullptr; )
+	for (auto b = oldBuffers.begin(); b != oldBuffers.end(); )
 	{
 		(*b)->unusedCount++;
 		if ((*b)->unusedCount >= Constants::maxUnusedCount)
 		{
-			auto next = (*b)->next;
-			(*b)->Delete(appState);
-			delete *b;
-			(*b) = next;
+			auto buffer = *b;
+			buffer->Delete(appState);
+			delete buffer;
+			b = oldBuffers.erase(b);
 		}
 		else
 		{
-			b = &(*b)->next;
+			b++;
 		}
 	}
-	for (Buffer* b = buffers, *next; b != nullptr; b = next)
-	{
-		next = b->next;
-		b->next = oldBuffers;
-		oldBuffers = b;
-	}
-	buffers = nullptr;
+	oldBuffers.splice(oldBuffers.begin(), buffers);
 }
 
 void CachedBuffers::MoveToFront(Buffer* buffer)
 {
 	buffer->unusedCount = 0;
-	buffer->next = buffers;
-	buffers = buffer;
+	buffers.push_back(buffer);
 }
 
-void CachedBuffers::Delete(AppState& appState) const
+void CachedBuffers::Delete(AppState& appState)
 {
-	for (Buffer* b = buffers, *next; b != nullptr; b = next)
+	for (auto b : oldBuffers)
 	{
-		next = b->next;
 		b->Delete(appState);
-		delete b;
 	}
-	for (Buffer* b = oldBuffers, *next; b != nullptr; b = next)
+	oldBuffers.clear();
+	for (auto b : buffers)
 	{
-		next = b->next;
 		b->Delete(appState);
-		delete b;
 	}
+	buffers.clear();
 }

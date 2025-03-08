@@ -1294,10 +1294,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
                 surfaceTextures.push_back({ turbulent.width, turbulent.height });
                 cached = &surfaceTextures.back();
             }
-            if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
+            if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
                 uint32_t layerCount;
-                if (cached->textures == nullptr)
+                if (cached->textures.empty())
                 {
                     layerCount = 4;
                 }
@@ -1314,7 +1314,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
             }
             else
             {
-                loaded.texture.texture = cached->textures;
+                loaded.texture.texture = cached->textures.back();
             }
             cached->Setup(loaded.texture);
             loaded.texture.index = cached->currentIndex;
@@ -1367,10 +1367,10 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
                 surfaceRGBATextures.push_back({ turbulent.width, turbulent.height });
                 cached = &surfaceRGBATextures.back();
             }
-            if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
+            if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
                 uint32_t layerCount;
-                if (cached->textures == nullptr)
+                if (cached->textures.empty())
                 {
                     layerCount = 4;
                 }
@@ -1387,7 +1387,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
             }
             else
             {
-                loaded.texture.texture = cached->textures;
+                loaded.texture.texture = cached->textures.back();
             }
             cached->Setup(loaded.texture);
             loaded.texture.index = cached->currentIndex;
@@ -1455,10 +1455,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             // By doing this, we guarantee that the next texture allocations (color and glow) will be done
             // in the same texture array, which will allow the sorted surfaces algorithm to work as expected:
             auto extra = (surface.glow_data != nullptr ? 1 : 0);
-            if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount - extra)
+            if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount - extra)
             {
                 uint32_t layerCount;
-                if (cached->textures == nullptr)
+                if (cached->textures.empty())
                 {
                     layerCount = 4;
                 }
@@ -1475,7 +1475,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             }
             else
             {
-                loaded.texture.texture = cached->textures;
+                loaded.texture.texture = cached->textures.back();
             }
             cached->Setup(loaded.texture);
             loaded.texture.index = cached->currentIndex;
@@ -1520,10 +1520,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
                 surfaceRGBATextures.push_back({ surface.width, surface.height });
                 cached = &surfaceRGBATextures.back();
             }
-            if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
+            if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
                 uint32_t layerCount;
-                if (cached->textures == nullptr)
+                if (cached->textures.empty())
                 {
                     layerCount = 4;
                 }
@@ -1540,7 +1540,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             }
             else
             {
-                loaded.glowTexture.texture = cached->textures;
+                loaded.glowTexture.texture = cached->textures.back();
             }
             cached->Setup(loaded.glowTexture);
             loaded.glowTexture.index = cached->currentIndex;
@@ -1597,10 +1597,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             // By doing this, we guarantee that the next texture allocations (color and glow) will be done
             // in the same texture array, which will allow the sorted surfaces algorithm to work as expected:
             auto extra = (surface.glow_data != nullptr ? 1 : 0);
-            if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount - extra)
+            if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount - extra)
             {
                 uint32_t layerCount;
-                if (cached->textures == nullptr)
+                if (cached->textures.empty())
                 {
                     layerCount = 4;
                 }
@@ -1617,7 +1617,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             }
             else
             {
-                loaded.texture.texture = cached->textures;
+                loaded.texture.texture = cached->textures.back();
             }
             cached->Setup(loaded.texture);
             loaded.texture.index = cached->currentIndex;
@@ -1662,10 +1662,10 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
                 surfaceRGBATextures.push_back({ surface.width, surface.height });
                 cached = &surfaceRGBATextures.back();
             }
-            if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
+            if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
                 uint32_t layerCount;
-                if (cached->textures == nullptr)
+                if (cached->textures.empty())
                 {
                     layerCount = 4;
                 }
@@ -1682,7 +1682,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             }
             else
             {
-                loaded.glowTexture.texture = cached->textures;
+                loaded.glowTexture.texture = cached->textures.back();
             }
             cached->Setup(loaded.glowTexture);
             loaded.glowTexture.index = cached->currentIndex;
@@ -1736,10 +1736,10 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
                 surfaceRGBATextures.push_back({ surface.width, surface.height });
                 cached = &surfaceRGBATextures.back();
             }
-            if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
+            if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
                 uint32_t layerCount;
-                if (cached->textures == nullptr)
+                if (cached->textures.empty())
                 {
                     layerCount = 4;
                 }
@@ -1756,7 +1756,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
             }
             else
             {
-                loaded.texture.texture = cached->textures;
+                loaded.texture.texture = cached->textures.back();
             }
             cached->Setup(loaded.texture);
             loaded.texture.index = cached->currentIndex;
@@ -1810,10 +1810,10 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
                 surfaceRGBATextures.push_back({ surface.width, surface.height });
                 cached = &surfaceRGBATextures.back();
             }
-            if (cached->textures == nullptr || cached->currentIndex >= cached->textures->layerCount)
+            if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
                 uint32_t layerCount;
-                if (cached->textures == nullptr)
+                if (cached->textures.empty())
                 {
                     layerCount = 4;
                 }
@@ -1830,7 +1830,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
             }
             else
             {
-                loaded.texture.texture = cached->textures;
+                loaded.texture.texture = cached->textures.back();
             }
             cached->Setup(loaded.texture);
             loaded.texture.index = cached->currentIndex;

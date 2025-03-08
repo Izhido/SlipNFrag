@@ -5,7 +5,6 @@
 
 struct Texture
 {
-	Texture* next;
 	void* key;
 	int unusedCount;
 	int width;
