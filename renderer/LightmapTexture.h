@@ -16,6 +16,4 @@ struct LightmapTexture
 	VkDeviceSize size;
 	LightmapTexture* previous;
 	LightmapTexture* next;
-
-	void Initialize();
 };

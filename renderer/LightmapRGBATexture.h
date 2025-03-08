@@ -16,6 +16,4 @@ struct LightmapRGBATexture
 	VkDeviceSize size;
 	LightmapRGBATexture* previous;
 	LightmapRGBATexture* next;
-
-	void Initialize();
 };
