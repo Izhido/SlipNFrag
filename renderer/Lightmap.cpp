@@ -49,30 +49,12 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
 	{
 		if (lightmapTexture == nullptr)
 		{
-			if (appState.Scene.deletedLightmapTextures != nullptr)
-			{
-				lightmapTexture = appState.Scene.deletedLightmapTextures;
-				appState.Scene.deletedLightmapTextures = appState.Scene.deletedLightmapTextures->next;
-				lightmapTexture->Initialize();
-			}
-			else
-			{
-				lightmapTexture = new LightmapTexture { };
-			}
+			lightmapTexture = new LightmapTexture { };
 			appState.Scene.lightmapTextures[slot] = lightmapTexture;
 		}
 		else
 		{
-			if (appState.Scene.deletedLightmapTextures != nullptr)
-			{
-				lightmapTexture->next = appState.Scene.deletedLightmapTextures;
-				appState.Scene.deletedLightmapTextures = appState.Scene.deletedLightmapTextures->next;
-				lightmapTexture->next->Initialize();
-			}
-			else
-			{
-				lightmapTexture->next = new LightmapTexture { };
-			}
+			lightmapTexture->next = new LightmapTexture { };
 			lightmapTexture->next->previous = lightmapTexture;
 			lightmapTexture = lightmapTexture->next;
 		}
@@ -162,7 +144,6 @@ void Lightmap::Delete(AppState& appState) const
 		{
 			texture->next->previous = texture->previous;
 		}
-		texture->next = appState.Scene.deletedLightmapTextures;
-		appState.Scene.deletedLightmapTextures = texture;
+		delete texture;
 	}
 }

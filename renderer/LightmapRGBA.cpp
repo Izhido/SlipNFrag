@@ -49,30 +49,12 @@ void LightmapRGBA::Create(AppState& appState, uint32_t width, uint32_t height)
 	{
 		if (lightmapTexture == nullptr)
 		{
-			if (appState.Scene.deletedLightmapRGBATextures != nullptr)
-			{
-				lightmapTexture = appState.Scene.deletedLightmapRGBATextures;
-				appState.Scene.deletedLightmapRGBATextures = appState.Scene.deletedLightmapRGBATextures->next;
-				lightmapTexture->Initialize();
-			}
-			else
-			{
-				lightmapTexture = new LightmapRGBATexture { };
-			}
+			lightmapTexture = new LightmapRGBATexture { };
 			appState.Scene.lightmapRGBATextures[slot] = lightmapTexture;
 		}
 		else
 		{
-			if (appState.Scene.deletedLightmapRGBATextures != nullptr)
-			{
-				lightmapTexture->next = appState.Scene.deletedLightmapRGBATextures;
-				appState.Scene.deletedLightmapRGBATextures = appState.Scene.deletedLightmapRGBATextures->next;
-				lightmapTexture->next->Initialize();
-			}
-			else
-			{
-				lightmapTexture->next = new LightmapRGBATexture { };
-			}
+			lightmapTexture->next = new LightmapRGBATexture { };
 			lightmapTexture->next->previous = lightmapTexture;
 			lightmapTexture = lightmapTexture->next;
 		}
@@ -162,7 +144,6 @@ void LightmapRGBA::Delete(AppState& appState) const
 		{
 			texture->next->previous = texture->previous;
 		}
-		texture->next = appState.Scene.deletedLightmapRGBATextures;
-		appState.Scene.deletedLightmapRGBATextures = texture;
+		delete texture;
 	}
 }

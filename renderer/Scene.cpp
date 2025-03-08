@@ -2985,19 +2985,7 @@ void Scene::Reset(AppState& appState)
     {
         cached.DisposeFront();
     }
-    while (deletedLightmapRGBATextures != nullptr)
-    {
-        auto lightmapTexture = deletedLightmapRGBATextures;
-        deletedLightmapRGBATextures = deletedLightmapRGBATextures->next;
-        delete lightmapTexture;
-    }
     lightmapsRGBA.DisposeFront();
-    while (deletedLightmapTextures != nullptr)
-    {
-        auto lightmapTexture = deletedLightmapTextures;
-        deletedLightmapTextures = deletedLightmapTextures->next;
-        delete lightmapTexture;
-    }
     lightmaps.DisposeFront();
     indexBuffers.DisposeFront();
 	aliasBuffers.DisposeFront();

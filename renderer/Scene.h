@@ -100,11 +100,9 @@ struct Scene
 	LoadedSky loadedSkyRGBA;
 	std::unordered_set<LightmapTexture*> lightmapTexturesInUse;
 	std::vector<LightmapTexture*> lightmapTextures;
-	LightmapTexture* deletedLightmapTextures;
 	CachedLightmaps lightmaps;
 	std::unordered_set<LightmapRGBATexture*> lightmapRGBATexturesInUse;
 	std::vector<LightmapRGBATexture*> lightmapRGBATextures;
-	LightmapRGBATexture* deletedLightmapRGBATextures;
 	CachedLightmapsRGBA lightmapsRGBA;
 	std::vector<CachedSharedMemoryTextures> surfaceTextures;
 	std::vector<CachedSharedMemoryTextures> surfaceRGBATextures;
