@@ -7,7 +7,6 @@ struct AppState;
 
 struct Lightmap
 {
-	Lightmap* next;
 	int createdFrameCount;
 	int unusedCount;
 	int width;

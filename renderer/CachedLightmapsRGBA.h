@@ -6,7 +6,7 @@
 struct CachedLightmapsRGBA
 {
 	std::unordered_map<void*, LightmapRGBA*> lightmaps;
-	LightmapRGBA* oldLightmaps;
+	std::list<LightmapRGBA*> oldLightmaps;
 	LoadedLightmapRGBA* first;
 	LoadedLightmapRGBA* current;
 

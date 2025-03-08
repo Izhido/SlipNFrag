@@ -1211,8 +1211,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
         auto lightmap = lightmapEntry->second;
         if (lightmap->createdFrameCount != surface.created)
         {
-            lightmap->next = lightmaps.oldLightmaps;
-            lightmaps.oldLightmaps = lightmap;
+			lightmaps.oldLightmaps.push_back(lightmap);
             lightmap = new Lightmap { };
             lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height);
             lightmap->createdFrameCount = surface.created;
@@ -1250,8 +1249,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
         auto lightmap = lightmapEntry->second;
         if (lightmap->createdFrameCount != surface.created)
         {
-            lightmap->next = lightmapsRGBA.oldLightmaps;
-            lightmapsRGBA.oldLightmaps = lightmap;
+            lightmapsRGBA.oldLightmaps.push_back(lightmap);
             lightmap = new LightmapRGBA { };
             lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height);
             lightmap->createdFrameCount = surface.created;
@@ -2228,7 +2226,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 
     if (perFrame.paletteChangedFrame != pal_changed)
     {
-        paletteSize = appState.Scene.paletteBufferSize;
+        paletteSize = paletteBufferSize;
         size += paletteSize + paletteSize;
         perFrame.paletteChangedFrame = pal_changed;
     }

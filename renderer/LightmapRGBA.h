@@ -7,7 +7,6 @@ struct AppState;
 
 struct LightmapRGBA
 {
-	LightmapRGBA* next;
 	int createdFrameCount;
 	int unusedCount;
 	int width;

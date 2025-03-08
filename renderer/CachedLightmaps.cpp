@@ -19,56 +19,40 @@ void CachedLightmaps::DisposeFront()
 {
 	for (auto& entry : lightmaps)
 	{
-		for (auto l = &entry.second; *l != nullptr; )
-		{
-			auto next = (*l)->next;
-			(*l)->next = oldLightmaps;
-			oldLightmaps = *l;
-			*l = next;
-		}
+		oldLightmaps.push_back(entry.second);
 	}
 	lightmaps.clear();
 }
 
 void CachedLightmaps::Delete(AppState& appState)
 {
+	for (auto l : oldLightmaps)
+	{
+		l->Delete(appState);
+	}
+	oldLightmaps.clear();
 	for (auto& entry : lightmaps)
 	{
-		for (Lightmap* l = entry.second, *next; l != nullptr; l = next)
-		{
-			next = l->next;
-			l->Delete(appState);
-			delete l;
-		}
+		entry.second->Delete(appState);
 	}
 	lightmaps.clear();
-	for (Lightmap* l = oldLightmaps, *next; l != nullptr; l = next)
-	{
-		next = l->next;
-		l->Delete(appState);
-		delete l;
-	}
-	oldLightmaps = nullptr;
 }
 
 void CachedLightmaps::DeleteOld(AppState& appState)
 {
-	if (oldLightmaps != nullptr)
+	for (auto l = oldLightmaps.begin(); l != oldLightmaps.end(); )
 	{
-		for (auto l = &oldLightmaps; *l != nullptr; )
+		(*l)->unusedCount++;
+		if ((*l)->unusedCount >= Constants::maxUnusedCount)
 		{
-			(*l)->unusedCount++;
-			if ((*l)->unusedCount >= Constants::maxUnusedCount)
-			{
-				auto next = (*l)->next;
-				(*l)->Delete(appState);
-				delete *l;
-				*l = next;
-			}
-			else
-			{
-				l = &(*l)->next;
-			}
+			auto lightmap = *l;
+			lightmap->Delete(appState);
+			delete lightmap;
+			l = oldLightmaps.erase(l);
+		}
+		else
+		{
+			l++;
 		}
 	}
 }
