@@ -14,7 +14,7 @@
 #include "LoadedAlias.h"
 #include "LoadedSky.h"
 #include "CachedLightmaps.h"
-#include "CachedLightmapsRGBA.h"
+#include "CachedLightmapsRGB.h"
 #include "CachedSharedMemoryTextures.h"
 #include "SurfaceTexture.h"
 #include "Skybox.h"
@@ -98,12 +98,12 @@ struct Scene
 	int lastSkyRGBA;
 	LoadedSky loadedSky;
 	LoadedSky loadedSkyRGBA;
-	std::unordered_set<LightmapTexture*> lightmapTexturesInUse;
-	std::vector<LightmapTexture*> lightmapTextures;
+	std::unordered_set<LightmapBuffer*> lightmapBuffersInUse;
+	std::vector<LightmapBuffer*> lightmapBuffers;
 	CachedLightmaps lightmaps;
-	std::unordered_set<LightmapRGBATexture*> lightmapRGBATexturesInUse;
-	std::vector<LightmapRGBATexture*> lightmapRGBATextures;
-	CachedLightmapsRGBA lightmapsRGBA;
+	std::unordered_set<LightmapRGBBuffer*> lightmapRGBBuffersInUse;
+	std::vector<LightmapRGBBuffer*> lightmapRGBBuffers;
+	CachedLightmapsRGB lightmapsRGB;
 	std::vector<CachedSharedMemoryTextures> surfaceTextures;
 	std::vector<CachedSharedMemoryTextures> surfaceRGBATextures;
 	CachedSharedMemoryTextures textures;
@@ -178,7 +178,7 @@ struct Scene
 	static VkDeviceSize GetAllocatedFor(int width, int height);
     void CacheVertices(LoadedTurbulent& loaded);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmap& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmapRGBA& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmapRGB& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);

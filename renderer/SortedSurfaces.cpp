@@ -28,7 +28,7 @@ void SortedSurfaces::Initialize(SortedSurfaceTextures& sorted)
 void SortedSurfaces::Sort(AppState& appState, LoadedSurface& loaded, int index, SortedSurfaceTexturesWithLightmaps& sorted)
 {
 	auto texture = loaded.texture.texture->descriptorSet;
-	auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
+	auto lightmap = loaded.lightmap.lightmap->buffer->descriptorSet;
 	auto entry = sorted.added.find(texture);
 	if (entry == sorted.added.end())
 	{
@@ -82,7 +82,7 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurface& loaded, int index, 
 void SortedSurfaces::Sort(AppState& appState, LoadedSurfaceColoredLights& loaded, int index, SortedSurfaceTexturesWithLightmaps& sorted)
 {
     auto texture = loaded.texture.texture->descriptorSet;
-	auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
+	auto lightmap = loaded.lightmap.lightmap->buffer->descriptorSet;
     auto entry = sorted.added.find(texture);
     if (entry == sorted.added.end())
     {
@@ -135,7 +135,7 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurfaceColoredLights& loaded
 
 void SortedSurfaces::Sort(AppState& appState, LoadedSurface2Textures& loaded, int index, SortedSurfaceLightmapsWith2Textures& sorted)
 {
-    auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
+    auto lightmap = loaded.lightmap.lightmap->buffer->descriptorSet;
     auto texture = loaded.texture.texture->descriptorSet;
     auto entry = sorted.added.find(lightmap);
     if (entry == sorted.added.end())
@@ -191,7 +191,7 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSurface2Textures& loaded, in
 
 void SortedSurfaces::Sort(AppState& appState, LoadedSurface2TexturesColoredLights& loaded, int index, SortedSurfaceLightmapsWith2Textures& sorted)
 {
-    auto lightmap = loaded.lightmap.lightmap->texture->descriptorSet;
+    auto lightmap = loaded.lightmap.lightmap->buffer->descriptorSet;
     auto texture = loaded.texture.texture->descriptorSet;
     auto entry = sorted.added.find(lightmap);
     if (entry == sorted.added.end())

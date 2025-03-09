@@ -1,10 +1,10 @@
-#include "Lightmap.h"
+#include "LightmapRGB.h"
 #include "AppState.h"
 #include "Utils.h"
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
+void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height)
 {
 	this->width = width;
 	this->height = height;
@@ -12,11 +12,11 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
 	auto slot0 = std::ceil(std::log2(width));
 	auto slot1 = std::ceil(std::log2(height));
 	auto slot = (size_t)std::log2(std::pow(2, slot0) * std::pow(2, slot1));
-	if (appState.Scene.lightmapBuffers.size() <= slot)
+	if (appState.Scene.lightmapRGBBuffers.size() <= slot)
 	{
-		appState.Scene.lightmapBuffers.resize(slot + 1);
+		appState.Scene.lightmapRGBBuffers.resize(slot + 1);
 	}
-	auto lightmapBuffer = appState.Scene.lightmapBuffers[slot];
+	auto lightmapBuffer = appState.Scene.lightmapRGBBuffers[slot];
 	bool found = false;
 	while (lightmapBuffer != nullptr)
 	{
@@ -49,12 +49,12 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
 	{
 		if (lightmapBuffer == nullptr)
 		{
-			lightmapBuffer = new LightmapBuffer { };
-			appState.Scene.lightmapBuffers[slot] = lightmapBuffer;
+			lightmapBuffer = new LightmapRGBBuffer { };
+			appState.Scene.lightmapRGBBuffers[slot] = lightmapBuffer;
 		}
 		else
 		{
-			lightmapBuffer->next = new LightmapBuffer { };
+			lightmapBuffer->next = new LightmapRGBBuffer { };
 			lightmapBuffer->next->previous = lightmapBuffer;
 			lightmapBuffer = lightmapBuffer->next;
 		}
@@ -78,7 +78,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
 			arrayLayers = (size_t)std::pow(2, 11 - maxSlot);
 		}
 
-		buffer->size = buffer->width * buffer->height;
+		buffer->size = buffer->width * buffer->height * 3;
 
 		buffer->buffer.CreateStorageBuffer(appState, buffer->size * arrayLayers * sizeof(uint32_t));
 
@@ -117,7 +117,7 @@ void Lightmap::Create(AppState& appState, uint32_t width, uint32_t height)
 	}
 }
 
-void Lightmap::Delete(AppState& appState) const
+void LightmapRGB::Delete(AppState& appState) const
 {
 	buffer->allocated[allocatedIndex] = false;
 	buffer->allocatedCount--;
@@ -138,7 +138,7 @@ void Lightmap::Delete(AppState& appState) const
 			auto slot0 = std::ceil(std::log2(width));
 			auto slot1 = std::ceil(std::log2(height));
 			auto slot = (size_t)std::log2(std::pow(2, slot0) * std::pow(2, slot1));
-			appState.Scene.lightmapBuffers[slot] = buffer->next;
+			appState.Scene.lightmapRGBBuffers[slot] = buffer->next;
 		}
 		if (buffer->next != nullptr)
 		{

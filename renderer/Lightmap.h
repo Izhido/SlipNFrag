@@ -1,7 +1,7 @@
 #pragma once
 
 #include <list>
-#include "LightmapTexture.h"
+#include "LightmapBuffer.h"
 
 struct AppState;
 
@@ -11,7 +11,7 @@ struct Lightmap
 	int unusedCount;
 	int width;
 	int height;
-	LightmapTexture* texture;
+	LightmapBuffer* buffer;
 	int allocatedIndex;
 	VkDeviceSize offset;
 	bool filled;

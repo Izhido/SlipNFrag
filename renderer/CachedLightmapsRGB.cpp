@@ -1,7 +1,7 @@
-#include "CachedLightmapsRGBA.h"
+#include "CachedLightmapsRGB.h"
 #include "Constants.h"
 
-void CachedLightmapsRGBA::Setup(LoadedLightmapRGBA& lightmap)
+void CachedLightmapsRGB::Setup(LoadedLightmapRGB& lightmap)
 {
 	lightmap.next = nullptr;
 	if (current == nullptr)
@@ -15,7 +15,7 @@ void CachedLightmapsRGBA::Setup(LoadedLightmapRGBA& lightmap)
 	current = &lightmap;
 }
 
-void CachedLightmapsRGBA::DisposeFront()
+void CachedLightmapsRGB::DisposeFront()
 {
 	for (auto& entry : lightmaps)
 	{
@@ -24,7 +24,7 @@ void CachedLightmapsRGBA::DisposeFront()
 	lightmaps.clear();
 }
 
-void CachedLightmapsRGBA::Delete(AppState& appState)
+void CachedLightmapsRGB::Delete(AppState& appState)
 {
 	for (auto l : oldLightmaps)
 	{
@@ -38,7 +38,7 @@ void CachedLightmapsRGBA::Delete(AppState& appState)
 	lightmaps.clear();
 }
 
-void CachedLightmapsRGBA::DeleteOld(AppState& appState)
+void CachedLightmapsRGB::DeleteOld(AppState& appState)
 {
 	for (auto l = oldLightmaps.begin(); l != oldLightmaps.end(); )
 	{

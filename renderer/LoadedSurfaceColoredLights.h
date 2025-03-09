@@ -1,9 +1,9 @@
 #pragma once
 
 #include "LoadedTurbulent.h"
-#include "LoadedLightmapRGBA.h"
+#include "LoadedLightmapRGB.h"
 
 struct LoadedSurfaceColoredLights : LoadedTurbulent
 {
-	LoadedLightmapRGBA lightmap;
+	LoadedLightmapRGB lightmap;
 };

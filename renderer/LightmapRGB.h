@@ -1,17 +1,17 @@
 #pragma once
 
 #include <list>
-#include "LightmapRGBATexture.h"
+#include "LightmapRGBBuffer.h"
 
 struct AppState;
 
-struct LightmapRGBA
+struct LightmapRGB
 {
 	int createdFrameCount;
 	int unusedCount;
 	int width;
 	int height;
-	LightmapRGBATexture* texture;
+	LightmapRGBBuffer* buffer;
 	int allocatedIndex;
 	VkDeviceSize offset;
 	bool filled;

@@ -643,12 +643,12 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		loadedLightmap = loadedLightmap->next;
 	}
 
-	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
-	while (loadedLightmapRGBA != nullptr)
+	auto loadedLightmapRGB = appState.Scene.lightmapsRGB.first;
+	while (loadedLightmapRGB != nullptr)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmapRGBA->source, loadedLightmapRGBA->size);
-		offset += loadedLightmapRGBA->size;
-		loadedLightmapRGBA = loadedLightmapRGBA->next;
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmapRGB->source, loadedLightmapRGB->size);
+		offset += loadedLightmapRGB->size;
+		loadedLightmapRGB = loadedLightmapRGB->next;
 	}
 
 	if (appState.Scene.paletteSize > 0)
@@ -1028,40 +1028,40 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		}
 	}
 
-	appState.Scene.lightmapTexturesInUse.clear();
+	appState.Scene.lightmapBuffersInUse.clear();
 	auto loadedLightmap = appState.Scene.lightmaps.first;
 	while (loadedLightmap != nullptr)
 	{
-		auto lightmapTexture = &*loadedLightmap->lightmap->texture;
-		if (appState.Scene.lightmapTexturesInUse.insert(lightmapTexture).second)
+		auto lightmapBuffer = &*loadedLightmap->lightmap->buffer;
+		if (appState.Scene.lightmapBuffersInUse.insert(lightmapBuffer).second)
 		{
-			appState.Scene.AddToVertexShaderBarriers(lightmapTexture->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
+			appState.Scene.AddToVertexShaderBarriers(lightmapBuffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
 		}
 		bufferCopy.size = loadedLightmap->size;
 		bufferCopy.dstOffset = loadedLightmap->lightmap->offset * sizeof(uint32_t);
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapTexture->buffer.buffer, 1, &bufferCopy);
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapBuffer->buffer.buffer, 1, &bufferCopy);
 		bufferCopy.dstOffset = 0;
 		bufferCopy.srcOffset += bufferCopy.size;
 		appState.Scene.stagingBuffer.offset += loadedLightmap->size;
 		loadedLightmap = loadedLightmap->next;
 	}
 
-	appState.Scene.lightmapRGBATexturesInUse.clear();
-	auto loadedLightmapRGBA = appState.Scene.lightmapsRGBA.first;
-	while (loadedLightmapRGBA != nullptr)
+	appState.Scene.lightmapRGBBuffersInUse.clear();
+	auto loadedLightmapRGB = appState.Scene.lightmapsRGB.first;
+	while (loadedLightmapRGB != nullptr)
 	{
-		auto lightmapTexture = &*loadedLightmapRGBA->lightmap->texture;
-		if (appState.Scene.lightmapRGBATexturesInUse.insert(lightmapTexture).second)
+		auto lightmapBuffer = &*loadedLightmapRGB->lightmap->buffer;
+		if (appState.Scene.lightmapRGBBuffersInUse.insert(lightmapBuffer).second)
 		{
-			appState.Scene.AddToVertexShaderBarriers(lightmapTexture->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
+			appState.Scene.AddToVertexShaderBarriers(lightmapBuffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
 		}
-		bufferCopy.size = loadedLightmapRGBA->size;
-		bufferCopy.dstOffset = loadedLightmapRGBA->lightmap->offset * sizeof(uint32_t);
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapTexture->buffer.buffer, 1, &bufferCopy);
+		bufferCopy.size = loadedLightmapRGB->size;
+		bufferCopy.dstOffset = loadedLightmapRGB->lightmap->offset * sizeof(uint32_t);
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapBuffer->buffer.buffer, 1, &bufferCopy);
 		bufferCopy.dstOffset = 0;
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.stagingBuffer.offset += loadedLightmapRGBA->size;
-		loadedLightmapRGBA = loadedLightmapRGBA->next;
+		appState.Scene.stagingBuffer.offset += loadedLightmapRGB->size;
+		loadedLightmapRGB = loadedLightmapRGB->next;
 	}
 
 	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)

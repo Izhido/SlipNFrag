@@ -1084,8 +1084,8 @@ void Scene::Initialize()
     indexBuffers.Initialize();
     lightmaps.first = nullptr;
     lightmaps.current = nullptr;
-    lightmapsRGBA.first = nullptr;
-    lightmapsRGBA.current = nullptr;
+    lightmapsRGB.first = nullptr;
+    lightmapsRGB.current = nullptr;
     for (auto& cached : surfaceTextures)
     {
         cached.first = nullptr;
@@ -1229,28 +1229,28 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
     }
 }
 
-void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmapRGBA& loaded, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmapRGB& loaded, VkDeviceSize& size)
 {
-    auto lightmapEntry = lightmapsRGBA.lightmaps.find(surface.face);
-    if (lightmapEntry == lightmapsRGBA.lightmaps.end())
+    auto lightmapEntry = lightmapsRGB.lightmaps.find(surface.face);
+    if (lightmapEntry == lightmapsRGB.lightmaps.end())
     {
-        auto lightmap = new LightmapRGBA { };
+        auto lightmap = new LightmapRGB { };
         lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height);
         lightmap->createdFrameCount = surface.created;
         loaded.lightmap = lightmap;
         loaded.size = surface.lightmap_size * sizeof(uint32_t);
         size += loaded.size;
         loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
-        lightmapsRGBA.Setup(loaded);
-        lightmapsRGBA.lightmaps.insert({ surface.face, lightmap });
+        lightmapsRGB.Setup(loaded);
+        lightmapsRGB.lightmaps.insert({ surface.face, lightmap });
     }
     else
     {
         auto lightmap = lightmapEntry->second;
         if (lightmap->createdFrameCount != surface.created)
         {
-            lightmapsRGBA.oldLightmaps.push_back(lightmap);
-            lightmap = new LightmapRGBA { };
+            lightmapsRGB.oldLightmaps.push_back(lightmap);
+            lightmap = new LightmapRGB { };
             lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height);
             lightmap->createdFrameCount = surface.created;
             lightmapEntry->second = lightmap;
@@ -1258,7 +1258,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
             loaded.size = surface.lightmap_size * sizeof(uint32_t);
             size += loaded.size;
             loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
-            lightmapsRGBA.Setup(loaded);
+            lightmapsRGB.Setup(loaded);
         }
         else
         {
@@ -2983,7 +2983,7 @@ void Scene::Reset(AppState& appState)
     {
         cached.DisposeFront();
     }
-    lightmapsRGBA.DisposeFront();
+    lightmapsRGB.DisposeFront();
     lightmaps.DisposeFront();
     indexBuffers.DisposeFront();
 	aliasBuffers.DisposeFront();

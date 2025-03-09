@@ -3,7 +3,7 @@
 #include <vector>
 #include <SharedMemoryBuffer.h>
 
-struct LightmapRGBATexture
+struct LightmapRGBBuffer
 {
 	int width;
 	int height;
@@ -14,6 +14,6 @@ struct LightmapRGBATexture
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet descriptorSet;
 	VkDeviceSize size;
-	LightmapRGBATexture* previous;
-	LightmapRGBATexture* next;
+	LightmapRGBBuffer* previous;
+	LightmapRGBBuffer* next;
 };

@@ -3,7 +3,7 @@
 #include <vector>
 #include <SharedMemoryBuffer.h>
 
-struct LightmapTexture
+struct LightmapBuffer
 {
 	int width;
 	int height;
@@ -14,6 +14,6 @@ struct LightmapTexture
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet descriptorSet;
 	VkDeviceSize size;
-	LightmapTexture* previous;
-	LightmapTexture* next;
+	LightmapBuffer* previous;
+	LightmapBuffer* next;
 };

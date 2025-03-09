@@ -1578,7 +1578,7 @@ void android_main(struct android_app* app)
 			{
 				entry.DeleteOld(appState);
 			}
-			appState.Scene.lightmapsRGBA.DeleteOld(appState);
+			appState.Scene.lightmapsRGB.DeleteOld(appState);
 			appState.Scene.lightmaps.DeleteOld(appState);
 			appState.Scene.indexBuffers.DeleteOld(appState);
 			appState.Scene.aliasBuffers.DeleteOld(appState);
@@ -2717,11 +2717,11 @@ void android_main(struct android_app* app)
 			}
 			appState.Scene.surfaceTextures.clear();
 
-			appState.Scene.lightmapsRGBA.Delete(appState);
-			appState.Scene.lightmapRGBATextures.clear();
+			appState.Scene.lightmapsRGB.Delete(appState);
+			appState.Scene.lightmapRGBBuffers.clear();
 
 			appState.Scene.lightmaps.Delete(appState);
-			appState.Scene.lightmapTextures.clear();
+			appState.Scene.lightmapBuffers.clear();
 
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.aliasBuffers.Delete(appState);
