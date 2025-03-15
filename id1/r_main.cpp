@@ -1232,7 +1232,7 @@ void R_EdgeDrawing (void)
 
 	R_RenderWorld ();
 
-	if (r_drawculledpolys)
+	if (!d_uselists && r_drawculledpolys)
 		R_ScanEdges ();
 
 // only the world can be drawn back to front with no z reads or compares, just
@@ -1263,7 +1263,7 @@ void R_EdgeDrawing (void)
 		VID_LockBuffer ();
 	}
 	
-	if (!(r_drawpolys | r_drawculledpolys))
+	if (!d_uselists && !(r_drawpolys | r_drawculledpolys))
 		R_ScanEdges ();
 }
 
