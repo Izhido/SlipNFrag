@@ -176,6 +176,7 @@ struct Scene
 	void AddToVertexInputBarriers(VkBuffer buffer, VkAccessFlags flags);
     void AddToVertexShaderBarriers(VkBuffer buffer, VkAccessFlags flags);
 	static VkDeviceSize GetAllocatedFor(int width, int height);
+	static uint32_t GetLayerCountFor(int width, int height);
     void CacheVertices(LoadedTurbulent& loaded);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmap& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmapRGB& loaded, VkDeviceSize& size);

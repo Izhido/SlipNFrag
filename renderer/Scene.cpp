@@ -1152,6 +1152,27 @@ VkDeviceSize Scene::GetAllocatedFor(int width, int height)
     return allocated;
 }
 
+uint32_t Scene::GetLayerCountFor(int width, int height)
+{
+	auto slot0 = std::ceil(std::log2(width));
+	auto slot1 = std::ceil(std::log2(height));
+	auto slot = (uint32_t)std::log2(std::pow(2, slot0) * std::pow(2, slot1));
+	uint32_t layerCount;
+	if (slot <= 15)
+	{
+		layerCount = 128;
+	}
+	else if (slot >= 22)
+	{
+		layerCount = 1;
+	}
+	else
+	{
+		layerCount = (uint32_t)std::pow(2, 22 - slot);
+	}
+	return layerCount;
+}
+
 void Scene::CacheVertices(LoadedTurbulent& loaded)
 {
     auto face = (msurface_t*)loaded.face;
@@ -1294,15 +1315,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
             }
             if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
-                uint32_t layerCount;
-                if (cached->textures.empty())
-                {
-                    layerCount = 4;
-                }
-                else
-                {
-                    layerCount = 64;
-                }
+				auto layerCount = GetLayerCountFor(turbulent.width, turbulent.height);
                 auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
                 auto texture = new SharedMemoryTexture { };
                 texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1367,15 +1380,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
             }
             if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
-                uint32_t layerCount;
-                if (cached->textures.empty())
-                {
-                    layerCount = 4;
-                }
-                else
-                {
-                    layerCount = 64;
-                }
+				auto layerCount = GetLayerCountFor(turbulent.width, turbulent.height);
                 auto mipCount = (int)(std::floor(std::log2(std::max(turbulent.width, turbulent.height)))) + 1;
                 auto texture = new SharedMemoryTexture { };
                 texture->Create(appState, turbulent.width, turbulent.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1455,15 +1460,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             auto extra = (surface.glow_data != nullptr ? 1 : 0);
             if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount - extra)
             {
-                uint32_t layerCount;
-                if (cached->textures.empty())
-                {
-                    layerCount = 4;
-                }
-                else
-                {
-                    layerCount = 64;
-                }
+				auto layerCount = GetLayerCountFor(surface.width, surface.height);
                 auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
                 auto texture = new SharedMemoryTexture { };
                 texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1520,15 +1517,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             }
             if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
-                uint32_t layerCount;
-                if (cached->textures.empty())
-                {
-                    layerCount = 4;
-                }
-                else
-                {
-                    layerCount = 64;
-                }
+				auto layerCount = GetLayerCountFor(surface.width, surface.height);
                 auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
                 auto texture = new SharedMemoryTexture { };
                 texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1597,15 +1586,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             auto extra = (surface.glow_data != nullptr ? 1 : 0);
             if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount - extra)
             {
-                uint32_t layerCount;
-                if (cached->textures.empty())
-                {
-                    layerCount = 4;
-                }
-                else
-                {
-                    layerCount = 64;
-                }
+				auto layerCount = GetLayerCountFor(surface.width, surface.height);
                 auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
                 auto texture = new SharedMemoryTexture { };
                 texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1662,15 +1643,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
             }
             if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
-                uint32_t layerCount;
-                if (cached->textures.empty())
-                {
-                    layerCount = 4;
-                }
-                else
-                {
-                    layerCount = 64;
-                }
+				auto layerCount = GetLayerCountFor(surface.width, surface.height);
                 auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
                 auto texture = new SharedMemoryTexture { };
                 texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1736,15 +1709,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
             }
             if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
-                uint32_t layerCount;
-                if (cached->textures.empty())
-                {
-                    layerCount = 4;
-                }
-                else
-                {
-                    layerCount = 64;
-                }
+				auto layerCount = GetLayerCountFor(surface.width, surface.height);
                 auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
                 auto texture = new SharedMemoryTexture { };
                 texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -1810,15 +1775,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
             }
             if (cached->textures.empty() || cached->currentIndex >= cached->textures.back()->layerCount)
             {
-                uint32_t layerCount;
-                if (cached->textures.empty())
-                {
-                    layerCount = 4;
-                }
-                else
-                {
-                    layerCount = 64;
-                }
+				auto layerCount = GetLayerCountFor(surface.width, surface.height);
                 auto mipCount = (int)(std::floor(std::log2(std::max(surface.width, surface.height)))) + 1;
                 auto texture = new SharedMemoryTexture { };
                 texture->Create(appState, surface.width, surface.height, VK_FORMAT_R8G8B8A8_UINT, mipCount, layerCount, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
