@@ -15,15 +15,6 @@ void CachedLightmaps::Setup(LoadedLightmap& lightmap)
 	current = &lightmap;
 }
 
-void CachedLightmaps::DisposeFront()
-{
-	for (auto& entry : lightmaps)
-	{
-		oldLightmaps.push_back(entry.second);
-	}
-	lightmaps.clear();
-}
-
 void CachedLightmaps::Delete(AppState& appState)
 {
 	for (auto l : oldLightmaps)
@@ -31,11 +22,6 @@ void CachedLightmaps::Delete(AppState& appState)
 		l->Delete(appState);
 	}
 	oldLightmaps.clear();
-	for (auto& entry : lightmaps)
-	{
-		entry.second->Delete(appState);
-	}
-	lightmaps.clear();
 }
 
 void CachedLightmaps::DeleteOld(AppState& appState)

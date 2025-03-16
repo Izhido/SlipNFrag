@@ -5,6 +5,7 @@
 #include "PipelineWithLoaded.h"
 #include "CachedAliasBuffers.h"
 #include "CachedIndexBuffers.h"
+#include "PerSurfaceData.h"
 #include "AliasVertices.h"
 #include "LoadedSurfaceRotatedColoredLights.h"
 #include "LoadedSurfaceRotated2Textures.h"
@@ -87,7 +88,7 @@ struct Scene
 	int hostClearCount;
 	CachedAliasBuffers aliasBuffers;
 	CachedIndexBuffers indexBuffers;
-    std::unordered_map<void*, std::vector<float>> surfaceVertexCache;
+	std::unordered_map<void*, PerSurfaceData> perSurfaceCache;
 	std::unordered_map<void*, AliasVertices> aliasVertexCache;
 	std::unordered_map<void*, IndexBuffer> aliasIndexCache;
 	int lastParticle;
@@ -177,24 +178,24 @@ struct Scene
     void AddToVertexShaderBarriers(VkBuffer buffer, VkAccessFlags flags);
 	static VkDeviceSize GetAllocatedFor(int width, int height);
 	static uint32_t GetLayerCountFor(int width, int height);
-    void CacheVertices(LoadedTurbulent& loaded);
-	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmap& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedLightmapRGB& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
-	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, LoadedTurbulent& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2Textures& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, LoadedSurface2TexturesColoredLights& loaded, VkDeviceSize& size);
-	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurface& loaded, VkDeviceSize& size);
-	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotatedColoredLights& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, LoadedSurfaceRotated2Textures& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, LoadedSurfaceRotated2TexturesColoredLights& loaded, VkDeviceSize& size);
-	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
-	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, LoadedSurfaceRotatedColoredLights& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
+    static void CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded);
+	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmap& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmapRGB& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulent& loaded, VkDeviceSize& size);
+	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulent& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, PerSurfaceData& perSurface, LoadedSurface2Textures& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, PerSurfaceData& perSurface, LoadedSurface2TexturesColoredLights& loaded, VkDeviceSize& size);
+	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedSurface& loaded, VkDeviceSize& size);
+	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotatedColoredLights& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotated2Textures& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotated2TexturesColoredLights& loaded, VkDeviceSize& size);
+	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
+	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotatedColoredLights& loaded, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);

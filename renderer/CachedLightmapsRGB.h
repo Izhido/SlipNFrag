@@ -5,13 +5,11 @@
 
 struct CachedLightmapsRGB
 {
-	std::unordered_map<void*, LightmapRGB*> lightmaps;
 	std::list<LightmapRGB*> oldLightmaps;
 	LoadedLightmapRGB* first;
 	LoadedLightmapRGB* current;
 
 	void Setup(LoadedLightmapRGB& lightmap);
-	void DisposeFront();
 	void Delete(AppState& appState);
 	void DeleteOld(AppState& appState);
 };

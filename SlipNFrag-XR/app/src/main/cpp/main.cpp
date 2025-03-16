@@ -2723,6 +2723,19 @@ void android_main(struct android_app* app)
 			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.lightmapBuffers.clear();
 
+			for (auto& entry : appState.Scene.perSurfaceCache)
+			{
+				if (entry.second.lightmapRGB != nullptr)
+				{
+					entry.second.lightmapRGB->Delete(appState);
+				}
+				if (entry.second.lightmap != nullptr)
+				{
+					entry.second.lightmap->Delete(appState);
+				}
+			}
+			appState.Scene.perSurfaceCache.clear();
+
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.aliasBuffers.Delete(appState);
 
