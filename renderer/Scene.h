@@ -156,14 +156,10 @@ struct Scene
 	VkDeviceSize colormapSize;
 	StagingBuffer stagingBuffer;
 	void* previousTexture;
-	void* previousGlowTexture;
 	void* previousApverts;
 	SharedMemoryBuffer* previousVertexBuffer;
 	SharedMemoryBuffer* previousTexCoordsBuffer;
 	SharedMemoryTexture* previousSharedMemoryTexture;
-	int previousSharedMemoryTextureIndex;
-	SharedMemoryTexture* previousGlowSharedMemoryTexture;
-	int previousGlowSharedMemoryTextureIndex;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	unsigned int paletteData[256];
 	std::vector<unsigned char> screenData;

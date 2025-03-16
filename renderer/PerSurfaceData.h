@@ -8,7 +8,9 @@ struct PerSurfaceData
 {
 	std::vector<float> vertices;
 	SharedMemoryTexture* texture;
-	int index;
+	int textureIndex;
+	SharedMemoryTexture* glowTexture;
+	int glowTextureIndex;
 	Lightmap* lightmap;
 	LightmapRGB* lightmapRGB;
 };
