@@ -1274,7 +1274,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
     loaded.model = turbulent.model;
     loaded.count = turbulent.count;
     CacheVertices(perSurface, loaded);
-	if (perSurface.texture == nullptr)
+	if (perSurface.textureSource != turbulent.data)
     {
         auto entry = surfaceTextureCache.find(turbulent.data);
         if (entry == surfaceTextureCache.end())
@@ -1322,6 +1322,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 			perSurface.texture = entry->second.texture;
 			perSurface.textureIndex = entry->second.index;
         }
+		perSurface.textureSource = turbulent.data;
     }
 	loaded.texture.texture = perSurface.texture;
 	loaded.texture.index = perSurface.textureIndex;
@@ -1333,7 +1334,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
     loaded.model = turbulent.model;
     loaded.count = turbulent.count;
     CacheVertices(perSurface, loaded);
-	if (perSurface.texture == nullptr)
+	if (perSurface.textureSource != turbulent.data)
     {
 		auto entry = surfaceTextureCache.find(turbulent.data);
 		if (entry == surfaceTextureCache.end())
@@ -1381,6 +1382,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
 			perSurface.texture = entry->second.texture;
 			perSurface.textureIndex = entry->second.index;
 		}
+		perSurface.textureSource = turbulent.data;
 	}
 	loaded.texture.texture = perSurface.texture;
 	loaded.texture.index = perSurface.textureIndex;
@@ -1404,7 +1406,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
     loaded.model = surface.model;
     loaded.count = surface.count;
     CacheVertices(perSurface, loaded);
-	if (perSurface.texture == nullptr)
+	if (perSurface.textureSource != surface.data)
     {
 		auto entry = surfaceTextureCache.find(surface.data);
 		if (entry == surfaceTextureCache.end())
@@ -1455,10 +1457,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			perSurface.texture = entry->second.texture;
 			perSurface.textureIndex = entry->second.index;
 		}
+		perSurface.textureSource = surface.data;
 	}
 	loaded.texture.texture = perSurface.texture;
 	loaded.texture.index = perSurface.textureIndex;
-	if (perSurface.glowTexture == nullptr)
+	if (perSurface.glowTextureSource != surface.glow_data)
 	{
 		auto entry = surfaceTextureCache.find(surface.glow_data);
 		if (entry == surfaceTextureCache.end())
@@ -1506,6 +1509,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			perSurface.glowTexture = entry->second.texture;
 			perSurface.glowTextureIndex = entry->second.index;
 		}
+		perSurface.glowTextureSource = surface.glow_data;
 	}
 	loaded.glowTexture.texture = perSurface.glowTexture;
 	loaded.glowTexture.index = perSurface.glowTextureIndex;
@@ -1518,7 +1522,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 	loaded.model = surface.model;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
-	if (perSurface.texture == nullptr)
+	if (perSurface.textureSource != surface.data)
 	{
 		auto entry = surfaceTextureCache.find(surface.data);
 		if (entry == surfaceTextureCache.end())
@@ -1569,10 +1573,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			perSurface.texture = entry->second.texture;
 			perSurface.textureIndex = entry->second.index;
 		}
+		perSurface.textureSource = surface.data;
 	}
 	loaded.texture.texture = perSurface.texture;
 	loaded.texture.index = perSurface.textureIndex;
-	if (perSurface.glowTexture == nullptr)
+	if (perSurface.glowTextureSource != surface.glow_data)
 	{
 		auto entry = surfaceTextureCache.find(surface.glow_data);
 		if (entry == surfaceTextureCache.end())
@@ -1620,6 +1625,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			perSurface.glowTexture = entry->second.texture;
 			perSurface.glowTextureIndex = entry->second.index;
 		}
+		perSurface.glowTextureSource = surface.glow_data;
 	}
 	loaded.glowTexture.texture = perSurface.glowTexture;
 	loaded.glowTexture.index = perSurface.glowTextureIndex;
@@ -1632,7 +1638,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 	loaded.model = surface.model;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
-	if (perSurface.texture == nullptr)
+	if (perSurface.textureSource != surface.data)
 	{
 		auto entry = surfaceTextureCache.find(surface.data);
 		if (entry == surfaceTextureCache.end())
@@ -1680,6 +1686,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 			perSurface.texture = entry->second.texture;
 			perSurface.textureIndex = entry->second.index;
 		}
+		perSurface.textureSource = surface.data;
 	}
 	loaded.texture.texture = perSurface.texture;
 	loaded.texture.index = perSurface.textureIndex;
@@ -1692,7 +1699,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 	loaded.model = surface.model;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
-	if (perSurface.texture == nullptr)
+	if (perSurface.textureSource != surface.data)
 	{
 		auto entry = surfaceTextureCache.find(surface.data);
 		if (entry == surfaceTextureCache.end())
@@ -1740,6 +1747,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 			perSurface.texture = entry->second.texture;
 			perSurface.textureIndex = entry->second.index;
 		}
+		perSurface.textureSource = surface.data;
 	}
 	loaded.texture.texture = perSurface.texture;
 	loaded.texture.index = perSurface.textureIndex;
