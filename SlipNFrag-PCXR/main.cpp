@@ -1511,7 +1511,7 @@ int main(int argc, char* argv[])
 			{
 				entry.DeleteOld(appState);
 			}
-			appState.Scene.lightmapsRGBA.DeleteOld(appState);
+			appState.Scene.lightmapsRGB.DeleteOld(appState);
 			appState.Scene.lightmaps.DeleteOld(appState);
 			appState.Scene.indexBuffers.DeleteOld(appState);
 			appState.Scene.aliasBuffers.DeleteOld(appState);
@@ -2650,11 +2650,24 @@ int main(int argc, char* argv[])
 			}
 			appState.Scene.surfaceTextures.clear();
 
-			appState.Scene.lightmapsRGBA.Delete(appState);
-			appState.Scene.lightmapRGBATextures.clear();
+			appState.Scene.lightmapsRGB.Delete(appState);
+			appState.Scene.lightmapRGBBuffers.clear();
 
 			appState.Scene.lightmaps.Delete(appState);
-			appState.Scene.lightmapTextures.clear();
+			appState.Scene.lightmapBuffers.clear();
+
+			for (auto& entry : appState.Scene.perSurfaceCache)
+			{
+				if (entry.second.lightmapRGB != nullptr)
+				{
+					entry.second.lightmapRGB->Delete(appState);
+				}
+				if (entry.second.lightmap != nullptr)
+				{
+					entry.second.lightmap->Delete(appState);
+				}
+			}
+			appState.Scene.perSurfaceCache.clear();
 
 			appState.Scene.indexBuffers.Delete(appState);
 			appState.Scene.aliasBuffers.Delete(appState);

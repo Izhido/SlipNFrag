@@ -10,7 +10,7 @@ set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(SHADERS_DIR "${ROOT_DIR}/shaders")
 set(NULL_DIR "${ROOT_DIR}/SlipNFrag")
 set(STB_DIR "${ROOT_DIR}/stb")
-set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.45")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.46")
 
 file(GLOB LOCAL_HEADERS "${LOCAL_DIR}/*.h")
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
