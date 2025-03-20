@@ -183,7 +183,7 @@ void Scene::Create(AppState& appState)
     controllerTexture.Create(appState, controller.width, controller.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controller.width * controller.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
     Buffer stagingBuffer;
-    stagingBuffer.CreateHostVisibleStorageBuffer(appState, stagingBufferSize);
+    stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);
     CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer.mapped));
     memcpy(stagingBuffer.mapped, floorImage.image, floorImage.width * floorImage.height * sizeof(uint32_t));
     floorImage.Close();
@@ -2698,11 +2698,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
     }
     size += attributesSize;
-    if (sortedAttributesSize> 0)
-    {
-        perFrame.storageAttributes = perFrame.cachedStorageAttributes.GetStorageBuffer(appState, sortedAttributesSize);
-    }
-    size += sortedAttributesSize;
     particleColorsSize = (d_lists.last_particle_color + 1) * sizeof(float);
     coloredColorsSize = (d_lists.last_colored_color + 1) * sizeof(float);
     colorsSize = particleColorsSize + coloredColorsSize;
@@ -2833,20 +2828,18 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
     size += indices8Size;
 
-    if (indices16Size + sortedIndices16Size > 0)
+    if (indices16Size > 0)
     {
-        perFrame.indices16 = perFrame.cachedIndices16.GetIndexBuffer(appState, indices16Size + sortedIndices16Size);
+        perFrame.indices16 = perFrame.cachedIndices16.GetIndexBuffer(appState, indices16Size);
     }
     size += indices16Size;
-    size += sortedIndices16Size;
 
     indices32Size = (lastColoredIndex32 + 1) * sizeof(uint32_t);
-    if (indices32Size + sortedIndices32Size > 0)
+    if (indices32Size > 0)
     {
-        perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, indices32Size + sortedIndices32Size);
+        perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, indices32Size);
     }
     size += indices32Size;
-    size += sortedIndices32Size;
 
     // Add extra space (and also realign to a 8-byte boundary) to compensate for alignment among 8-, 16-, 32- and 64-bit data:
     size += 32;

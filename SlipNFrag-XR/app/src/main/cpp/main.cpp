@@ -1814,7 +1814,7 @@ void android_main(struct android_app* app)
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
 
                         stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
-                        stagingBuffer = perFrame.stagingBuffers.GetHostVisibleStorageBuffer(appState, stagingBufferSize);
+                        stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
                         if (stagingBuffer->mapped == nullptr)
                         {
                             CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
@@ -2023,7 +2023,7 @@ void android_main(struct android_app* app)
 
 					if (screenPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 					{
-						screenPerFrame.stagingBuffer.CreateHostVisibleStorageBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
+						screenPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
 						CHECK_VKCMD(vkMapMemory(appState.Device, screenPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &screenPerFrame.stagingBuffer.mapped));
 					}
 
@@ -2173,7 +2173,7 @@ void android_main(struct android_app* app)
 
 						if (keyboardPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 						{
-							keyboardPerFrame.stagingBuffer.CreateHostVisibleStorageBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
+							keyboardPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 							CHECK_VKCMD(vkMapMemory(appState.Device, keyboardPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &keyboardPerFrame.stagingBuffer.mapped));
 						}
 
@@ -2643,7 +2643,7 @@ void android_main(struct android_app* app)
 				perFrame.second.controllerResources.Delete(appState);
 				perFrame.second.floorResources.Delete(appState);
 				perFrame.second.colormapResources.Delete(appState);
-                perFrame.second.storageAttributesResources.Delete(appState);
+                perFrame.second.sortedAttributesResources.Delete(appState);
 				perFrame.second.sceneMatricesAndColormapResources.Delete(appState);
 				perFrame.second.sceneMatricesAndNeutralPaletteResources.Delete(appState);
 				perFrame.second.sceneMatricesAndPaletteResources.Delete(appState);
@@ -2662,12 +2662,14 @@ void android_main(struct android_app* app)
 				perFrame.second.colormaps.Delete(appState);
 				perFrame.second.stagingBuffers.Delete(appState);
 				perFrame.second.cachedColors.Delete(appState);
+				perFrame.second.cachedSortedIndices32.Delete(appState);
 				perFrame.second.cachedIndices32.Delete(appState);
+				perFrame.second.cachedSortedIndices16.Delete(appState);
 				perFrame.second.cachedIndices16.Delete(appState);
 				perFrame.second.cachedIndices8.Delete(appState);
-                perFrame.second.cachedStorageAttributes.Delete(appState);
+                perFrame.second.cachedSortedAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
-				perFrame.second.cachedHostVisibleVertices.Delete(appState);
+				perFrame.second.cachedSortedVertices.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
 
 				if (perFrame.second.fence != VK_NULL_HANDLE)

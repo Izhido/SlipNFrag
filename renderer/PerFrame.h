@@ -22,12 +22,14 @@ struct PerFrame
 	VkFramebuffer framebuffer;
 	Buffer* matrices;
 	CachedSharedMemoryBuffers cachedVertices;
-	CachedBuffers cachedHostVisibleVertices;
+	CachedBuffers cachedSortedVertices;
 	CachedSharedMemoryBuffers cachedAttributes;
-    CachedSharedMemoryBuffers cachedStorageAttributes;
+    CachedBuffers cachedSortedAttributes;
 	CachedSharedMemoryBuffers cachedIndices8;
 	CachedSharedMemoryBuffers cachedIndices16;
+	CachedBuffers cachedSortedIndices16;
 	CachedSharedMemoryBuffers cachedIndices32;
+	CachedBuffers cachedSortedIndices32;
 	CachedSharedMemoryBuffers cachedColors;
 	CachedBuffers stagingBuffers;
 	CachedTextures colormaps;
@@ -36,10 +38,12 @@ struct PerFrame
 	SharedMemoryBuffer* vertices;
 	Buffer* sortedVertices;
 	SharedMemoryBuffer* attributes;
-	SharedMemoryBuffer* storageAttributes;
+	Buffer* sortedAttributes;
 	SharedMemoryBuffer* indices8;
 	SharedMemoryBuffer* indices16;
+	Buffer* sortedIndices16;
 	SharedMemoryBuffer* indices32;
+	Buffer* sortedIndices32;
 	SharedMemoryBuffer* colors;
 	Texture* sky;
 	Texture* skyRGBA;
@@ -50,7 +54,7 @@ struct PerFrame
 	DescriptorResources sceneMatricesAndPaletteResources;
 	DescriptorResources sceneMatricesAndNeutralPaletteResources;
 	DescriptorResources sceneMatricesAndColormapResources;
-    DescriptorResources storageAttributesResources;
+    DescriptorResources sortedAttributesResources;
 	DescriptorResourcesLists colormapResources;
 	DescriptorResources floorResources;
 	DescriptorResources controllerResources;
@@ -65,7 +69,7 @@ struct PerFrame
 	VkDeviceSize controllerIndexBase;
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
-    SharedMemoryBuffer* previousStorageAttributes;
+    Buffer* previousSortedAttributes;
 
 	static float GammaCorrect(float component);
 	static byte AveragePixels(std::vector<byte>& pixdata);

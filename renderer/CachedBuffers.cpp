@@ -29,6 +29,18 @@ VkDeviceSize CachedBuffers::MinimumAllocationFor(VkDeviceSize size)
 	return result;
 }
 
+Buffer* CachedBuffers::GetStagingBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer { };
+		buffer->CreateStagingBuffer(appState, size);
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
 Buffer* CachedBuffers::GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(size);
@@ -48,6 +60,18 @@ Buffer* CachedBuffers::GetHostVisibleStorageBuffer(AppState& appState, VkDeviceS
 	{
 		buffer = new Buffer { };
 		buffer->CreateHostVisibleStorageBuffer(appState, size);
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
+Buffer* CachedBuffers::GetHostVisibleIndexBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer { };
+		buffer->CreateHostVisibleIndexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
 	return buffer;
