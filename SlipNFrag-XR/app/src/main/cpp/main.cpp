@@ -1591,12 +1591,14 @@ void android_main(struct android_app* app)
 				{
 					if (entry.second.lightmap != nullptr)
 					{
-						appState.Scene.lightmaps.oldLightmaps.push_back(entry.second.lightmap);
+						entry.second.lightmap->next = appState.Scene.lightmaps.oldLightmaps;
+						appState.Scene.lightmaps.oldLightmaps = entry.second.lightmap;
 						entry.second.lightmap = nullptr;
 					}
 					if (entry.second.lightmapRGB != nullptr)
 					{
-						appState.Scene.lightmapsRGB.oldLightmaps.push_back(entry.second.lightmapRGB);
+						entry.second.lightmapRGB->next = appState.Scene.lightmapsRGB.oldLightmaps;
+						appState.Scene.lightmapsRGB.oldLightmaps = entry.second.lightmapRGB;
 						entry.second.lightmapRGB = nullptr;
 					}
 				}
@@ -2740,7 +2742,7 @@ void android_main(struct android_app* app)
 			appState.Scene.lightmapRGBBuffers = nullptr;
 
 			appState.Scene.lightmaps.Delete(appState);
-			appState.Scene.lightmapBuffers.clear();
+			appState.Scene.lightmapBuffers = nullptr;
 
 			for (auto& entry : appState.Scene.perSurfaceCache)
 			{

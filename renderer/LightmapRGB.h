@@ -7,6 +7,7 @@ struct AppState;
 
 struct LightmapRGB
 {
+	LightmapRGB* next;
 	int createdFrameCount;
 	int unusedCount;
 	int width;

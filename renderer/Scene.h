@@ -101,7 +101,7 @@ struct Scene
 	LoadedSky loadedSky;
 	LoadedSky loadedSkyRGBA;
 	std::unordered_set<LightmapBuffer*> lightmapBuffersInUse;
-	std::vector<LightmapBuffer*> lightmapBuffers;
+	LightmapBuffer* lightmapBuffers;
 	CachedLightmaps lightmaps;
 	std::unordered_set<LightmapRGBBuffer*> lightmapRGBBuffersInUse;
 	LightmapRGBBuffer* lightmapRGBBuffers;

@@ -5,7 +5,7 @@
 
 struct CachedLightmaps
 {
-	std::list<Lightmap*> oldLightmaps;
+	Lightmap* oldLightmaps;
 	LoadedLightmap* first;
 	LoadedLightmap* current;
 

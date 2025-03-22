@@ -1221,7 +1221,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	}
 	else if (perSurface.lightmap->createdFrameCount != surface.created)
 	{
-		lightmaps.oldLightmaps.push_back(perSurface.lightmap);
+		perSurface.lightmap->next = lightmaps.oldLightmaps;
+		lightmaps.oldLightmaps = perSurface.lightmap;
 		perSurface.lightmap = new Lightmap { };
 		perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height);
 		perSurface.lightmap->createdFrameCount = surface.created;
@@ -1253,7 +1254,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
     }
 	else if (perSurface.lightmapRGB->createdFrameCount != surface.created)
 	{
-		lightmapsRGB.oldLightmaps.push_back(perSurface.lightmapRGB);
+		perSurface.lightmapRGB->next = lightmapsRGB.oldLightmaps;
+		lightmapsRGB.oldLightmaps = perSurface.lightmapRGB;
 		perSurface.lightmapRGB = new LightmapRGB { };
 		perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height);
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
@@ -2870,13 +2872,17 @@ void Scene::Reset(AppState& appState)
     }
 	for (auto& entry : perSurfaceCache)
 	{
-		if (entry.second.lightmapRGB != nullptr)
-		{
-			lightmapsRGB.oldLightmaps.push_back(entry.second.lightmapRGB);
-		}
 		if (entry.second.lightmap != nullptr)
 		{
-			lightmaps.oldLightmaps.push_back(entry.second.lightmap);
+			entry.second.lightmap->next = appState.Scene.lightmaps.oldLightmaps;
+			appState.Scene.lightmaps.oldLightmaps = entry.second.lightmap;
+			entry.second.lightmap = nullptr;
+		}
+		if (entry.second.lightmapRGB != nullptr)
+		{
+			entry.second.lightmapRGB->next = appState.Scene.lightmapsRGB.oldLightmaps;
+			appState.Scene.lightmapsRGB.oldLightmaps = entry.second.lightmapRGB;
+			entry.second.lightmapRGB = nullptr;
 		}
 	}
 	perSurfaceCache.clear();

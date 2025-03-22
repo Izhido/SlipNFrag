@@ -17,28 +17,33 @@ void CachedLightmapsRGB::Setup(LoadedLightmapRGB& lightmap)
 
 void CachedLightmapsRGB::Delete(AppState& appState)
 {
-	for (auto l : oldLightmaps)
+	for (LightmapRGB* l = oldLightmaps, *next; l != nullptr; l = next)
 	{
+		next = l->next;
 		l->Delete(appState);
+		delete l;
 	}
-	oldLightmaps.clear();
+	oldLightmaps = nullptr;
 }
 
 void CachedLightmapsRGB::DeleteOld(AppState& appState)
 {
-	for (auto l = oldLightmaps.begin(); l != oldLightmaps.end(); )
+	if (oldLightmaps != nullptr)
 	{
-		(*l)->unusedCount++;
-		if ((*l)->unusedCount >= Constants::maxUnusedCount)
+		for (auto l = &oldLightmaps; *l != nullptr; )
 		{
-			auto lightmap = *l;
-			lightmap->Delete(appState);
-			delete lightmap;
-			l = oldLightmaps.erase(l);
-		}
-		else
-		{
-			l++;
+			(*l)->unusedCount++;
+			if ((*l)->unusedCount >= Constants::maxUnusedCount)
+			{
+				auto next = (*l)->next;
+				(*l)->Delete(appState);
+				delete *l;
+				*l = next;
+			}
+			else
+			{
+				l = &(*l)->next;
+			}
 		}
 	}
 }
