@@ -35,6 +35,7 @@ struct Scene
 	VkDescriptorSetLayout doubleBufferLayout;
 	VkDescriptorSetLayout twoBuffersAndImageLayout;
 	VkDescriptorSetLayout singleImageLayout;
+	int frameCount;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceTexturesWithLightmaps> surfaces;
 	PipelineWithSorted<LoadedSurfaceColoredLights, SortedSurfaceTexturesWithLightmaps> surfacesColoredLights;
 	PipelineWithSorted<LoadedSurface2Textures, SortedSurfaceLightmapsWith2Textures> surfacesRGBA;
@@ -103,7 +104,7 @@ struct Scene
 	std::vector<LightmapBuffer*> lightmapBuffers;
 	CachedLightmaps lightmaps;
 	std::unordered_set<LightmapRGBBuffer*> lightmapRGBBuffersInUse;
-	std::vector<LightmapRGBBuffer*> lightmapRGBBuffers;
+	LightmapRGBBuffer* lightmapRGBBuffers;
 	CachedLightmapsRGB lightmapsRGB;
 	std::vector<CachedSharedMemoryTextures> surfaceTextures;
 	std::vector<CachedSharedMemoryTextures> surfaceRGBATextures;

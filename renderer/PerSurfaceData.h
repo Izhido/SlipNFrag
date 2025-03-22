@@ -15,4 +15,5 @@ struct PerSurfaceData
 	unsigned char* glowTextureSource;
 	Lightmap* lightmap;
 	LightmapRGB* lightmapRGB;
+	int frameCount;
 };

@@ -13,4 +13,5 @@ struct Constants
 	static const int descriptorSetCount = 256;
 	static const int minimumBufferAllocation = 4096;
     static const int sortedSurfaceElementIncrement = 32;
+	static const int lightmapBufferSize = 32 * 1024;
 };

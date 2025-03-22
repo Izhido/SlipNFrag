@@ -9,33 +9,19 @@ void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height)
 	this->width = width;
 	this->height = height;
 
-	auto slot0 = std::ceil(std::log2(width));
-	auto slot1 = std::ceil(std::log2(height));
-	auto slot = (size_t)std::log2(std::pow(2, slot0) * std::pow(2, slot1));
-	if (appState.Scene.lightmapRGBBuffers.size() <= slot)
-	{
-		appState.Scene.lightmapRGBBuffers.resize(slot + 1);
-	}
-	auto lightmapBuffer = appState.Scene.lightmapRGBBuffers[slot];
+	auto size = this->width * this->height * 3;
+
+	auto lightmapBuffer = appState.Scene.lightmapRGBBuffers;
 	bool found = false;
 	while (lightmapBuffer != nullptr)
 	{
-		if (lightmapBuffer->allocatedCount < lightmapBuffer->allocated.size())
+		if (lightmapBuffer->used + size < lightmapBuffer->size)
 		{
-			for (auto i = lightmapBuffer->firstFreeCandidate; i < lightmapBuffer->allocated.size(); i++)
-			{
-				if (!lightmapBuffer->allocated[i])
-				{
-					lightmapBuffer->allocated[i] = true;
-					buffer = lightmapBuffer;
-					allocatedIndex = i;
-					offset = allocatedIndex * lightmapBuffer->size;
-					lightmapBuffer->allocatedCount++;
-					lightmapBuffer->firstFreeCandidate = i + 1;
-					found = true;
-					break;
-				}
-			}
+			buffer = lightmapBuffer;
+			offset = lightmapBuffer->used;
+			lightmapBuffer->used += size;
+			lightmapBuffer->referenceCount++;
+			found = true;
 			break;
 		}
 		if (lightmapBuffer->next == nullptr)
@@ -50,7 +36,7 @@ void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height)
 		if (lightmapBuffer == nullptr)
 		{
 			lightmapBuffer = new LightmapRGBBuffer { };
-			appState.Scene.lightmapRGBBuffers[slot] = lightmapBuffer;
+			appState.Scene.lightmapRGBBuffers = lightmapBuffer;
 		}
 		else
 		{
@@ -60,29 +46,13 @@ void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height)
 		}
 		buffer = lightmapBuffer;
 
-		buffer->width = (int)std::pow(2, slot0);
-		buffer->height = (int)std::pow(2, slot1);
-
-		auto maxSlot = std::max(slot0, slot1);
-		size_t arrayLayers;
-		if (maxSlot <= 3)
+		buffer->size = Constants::lightmapBufferSize;
+		if (buffer->size < size)
 		{
-			arrayLayers = 256;
-		}
-		else if (maxSlot >= 11)
-		{
-			arrayLayers = 1;
-		}
-		else
-		{
-			arrayLayers = (size_t)std::pow(2, 11 - maxSlot);
+			buffer->size = size;
 		}
 
-		buffer->size = buffer->width * buffer->height * 3;
-
-		buffer->buffer.CreateStorageBuffer(appState, buffer->size * arrayLayers * sizeof(uint32_t));
-
-		buffer->allocated.resize(arrayLayers);
+		buffer->buffer.CreateStorageBuffer(appState, buffer->size * sizeof(uint32_t));
 
 		VkDescriptorPoolSize poolSizes { };
 		poolSizes.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -100,9 +70,9 @@ void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height)
 		descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleFragmentStorageBufferLayout;
 		CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &buffer->descriptorSet));
 
-		buffer->allocated[0] = true;
+		buffer->used = size;
 
-		buffer->allocatedCount++;
+		buffer->referenceCount++;
 
 		VkDescriptorBufferInfo bufferInfo { };
 		bufferInfo.range = VK_WHOLE_SIZE;
@@ -119,13 +89,8 @@ void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height)
 
 void LightmapRGB::Delete(AppState& appState) const
 {
-	buffer->allocated[allocatedIndex] = false;
-	buffer->allocatedCount--;
-	if (buffer->firstFreeCandidate > allocatedIndex)
-	{
-		buffer->firstFreeCandidate = allocatedIndex;
-	}
-	if (buffer->allocatedCount == 0)
+	buffer->referenceCount--;
+	if (buffer->referenceCount == 0)
 	{
 		vkDestroyDescriptorPool(appState.Device, buffer->descriptorPool, nullptr);
 		buffer->buffer.Delete(appState);
@@ -135,10 +100,7 @@ void LightmapRGB::Delete(AppState& appState) const
 		}
 		else
 		{
-			auto slot0 = std::ceil(std::log2(width));
-			auto slot1 = std::ceil(std::log2(height));
-			auto slot = (size_t)std::log2(std::pow(2, slot0) * std::pow(2, slot1));
-			appState.Scene.lightmapRGBBuffers[slot] = buffer->next;
+			appState.Scene.lightmapRGBBuffers = buffer->next;
 		}
 		if (buffer->next != nullptr)
 		{

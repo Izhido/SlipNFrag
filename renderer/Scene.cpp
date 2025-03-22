@@ -1235,6 +1235,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		loaded.lightmap = perSurface.lightmap;
 	}
+	perSurface.frameCount = frameCount;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmapRGB& loaded, VkDeviceSize& size)
@@ -1266,6 +1267,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		loaded.lightmap = perSurface.lightmapRGB;
 	}
+	perSurface.frameCount = frameCount;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulent& loaded, VkDeviceSize& size)
@@ -2057,6 +2059,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 
 VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 {
+	frameCount++;
     surfaces.Allocate(d_lists.last_surface);
     surfacesColoredLights.Allocate(d_lists.last_surface_colored_lights);
     surfacesRGBA.Allocate(d_lists.last_surface_rgba);

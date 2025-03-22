@@ -1585,6 +1585,23 @@ void android_main(struct android_app* app)
 
 			Skybox::DeleteOld(appState);
 
+			for (auto& entry : appState.Scene.perSurfaceCache)
+			{
+				if (entry.second.frameCount != appState.Scene.frameCount)
+				{
+					if (entry.second.lightmap != nullptr)
+					{
+						appState.Scene.lightmaps.oldLightmaps.push_back(entry.second.lightmap);
+						entry.second.lightmap = nullptr;
+					}
+					if (entry.second.lightmapRGB != nullptr)
+					{
+						appState.Scene.lightmapsRGB.oldLightmaps.push_back(entry.second.lightmapRGB);
+						entry.second.lightmapRGB = nullptr;
+					}
+				}
+			}
+
 			XrFrameWaitInfo frameWaitInfo { XR_TYPE_FRAME_WAIT_INFO };
 			XrFrameState frameState { XR_TYPE_FRAME_STATE };
 			CHECK_XRCMD(xrWaitFrame(appState.Session, &frameWaitInfo, &frameState));
@@ -2720,7 +2737,7 @@ void android_main(struct android_app* app)
 			appState.Scene.surfaceTextures.clear();
 
 			appState.Scene.lightmapsRGB.Delete(appState);
-			appState.Scene.lightmapRGBBuffers.clear();
+			appState.Scene.lightmapRGBBuffers = nullptr;
 
 			appState.Scene.lightmaps.Delete(appState);
 			appState.Scene.lightmapBuffers.clear();
