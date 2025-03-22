@@ -27,10 +27,10 @@ void main()
 	uint lightmapWidth = fragmentFlat.z + 1;
 	uint lightmapTopIndex = fragmentFlat.x + 3 * (int(lightmapClamped.y) * lightmapWidth + int(lightmapClamped.x));
 	uint lightmapBottomIndex = lightmapTopIndex + 3 * lightmapWidth;
-	vec4 lightmapTopLeftEntry = vec4(lightmap[lightmapTopIndex], lightmap[lightmapTopIndex + 1], lightmap[lightmapTopIndex + 2], 0);
-	vec4 lightmapTopRightEntry = vec4(lightmap[lightmapTopIndex + 3], lightmap[lightmapTopIndex + 4], lightmap[lightmapTopIndex + 5], 0);
-	vec4 lightmapBottomRightEntry = vec4(lightmap[lightmapBottomIndex + 3], lightmap[lightmapBottomIndex + 4], lightmap[lightmapBottomIndex + 5], 0);
-	vec4 lightmapBottomLeftEntry = vec4(lightmap[lightmapBottomIndex], lightmap[lightmapBottomIndex + 1], lightmap[lightmapBottomIndex + 2], 0);
+	vec4 lightmapTopLeftEntry = vec4(lightmap[lightmapTopIndex], lightmap[lightmapTopIndex + 1], lightmap[lightmapTopIndex + 2], 65536);
+	vec4 lightmapTopRightEntry = vec4(lightmap[lightmapTopIndex + 3], lightmap[lightmapTopIndex + 4], lightmap[lightmapTopIndex + 5], 65536);
+	vec4 lightmapBottomRightEntry = vec4(lightmap[lightmapBottomIndex + 3], lightmap[lightmapBottomIndex + 4], lightmap[lightmapBottomIndex + 5], 65536);
+	vec4 lightmapBottomLeftEntry = vec4(lightmap[lightmapBottomIndex], lightmap[lightmapBottomIndex + 1], lightmap[lightmapBottomIndex + 2], 65536);
 	vec2 lightmapCoordsDelta = fragmentCoords.xy - lightmapClamped;
 	vec4 lightmapTopEntry = mix(lightmapTopLeftEntry, lightmapTopRightEntry, lightmapCoordsDelta.x);
 	vec4 lightmapBottomEntry = mix(lightmapBottomLeftEntry, lightmapBottomRightEntry, lightmapCoordsDelta.x);
