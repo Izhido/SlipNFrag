@@ -90,7 +90,9 @@ void client_state_t::Clear()
 	oldtime = 0;
 	last_received_message = 0;
 	model_precache.clear();
+	model_precache.push_back(nullptr);
 	sound_precache.clear();
+	sound_precache.push_back(nullptr);
 	memset(levelname, 0, sizeof(levelname));
 	viewentity = 0;
 	maxclients = 0;
