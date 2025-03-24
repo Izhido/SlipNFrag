@@ -128,10 +128,10 @@ void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count)
 {
 	int		i, v;
 
-	if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
-		return;	
 	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
+		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-24)
+			return;
 		MSG_WriteByte (&sv.datagram, svc_expandedparticle);
 		MSG_WriteFloat (&sv.datagram, org[0]);
 		MSG_WriteFloat (&sv.datagram, org[1]);
@@ -139,6 +139,8 @@ void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count)
 	}
 	else
 	{
+		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
+			return;
 		MSG_WriteByte (&sv.datagram, svc_particle);
 		MSG_WriteCoord(&sv.datagram, org[0]);
 		MSG_WriteCoord(&sv.datagram, org[1]);
@@ -189,8 +191,16 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
 
-	if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
-		return;	
+	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	{
+		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-32)
+			return;
+    }
+	else
+	{
+		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
+			return;
+	}
 
 // find precache number for sound
     for (sound_num=1 ; sound_num<sv.sound_precache.size() ; sound_num++)
