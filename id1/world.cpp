@@ -403,7 +403,7 @@ void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node)
 	{
 		auto previous = ent->leafnums;
 		ent->leafnums = new int[ent->leaf_size + MAX_ENT_LEAFS];
-		memcpy(ent->leafnums, previous, ent->leaf_size * sizeof(int));
+		std::copy(previous, previous + ent->leaf_size, ent->leafnums);
 		delete[] previous;
 		ent->leaf_size += MAX_ENT_LEAFS;
 	}

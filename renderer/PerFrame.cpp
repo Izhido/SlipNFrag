@@ -304,41 +304,41 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
         if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
         {
             auto source = d_lists.textured_vertices.data();
-            auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+            auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
             auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
-            auto count = firstVertex * 3;
-            auto toCopy = count * sizeof(float);
-            memcpy(target, source, toCopy);
+            size_t count = firstVertex * 3;
+			std::copy(source, source + count, target);
             source += count;
-            target += toCopy;
-            auto skyTarget = (float*)target;
-            skyTarget[0] = -appState.SkyLeft + appState.SkyHorizontal * source[0];
-            skyTarget[1] = appState.SkyTop - appState.SkyVertical * source[1];
-            skyTarget[2] = -source[2];
-            skyTarget[3] = -appState.SkyLeft + appState.SkyHorizontal * source[3];
-            skyTarget[4] = appState.SkyTop - appState.SkyVertical * source[4];
-            skyTarget[5] = -source[5];
-            skyTarget[6] = -appState.SkyLeft + appState.SkyHorizontal * source[6];
-            skyTarget[7] = appState.SkyTop - appState.SkyVertical * source[7];
-            skyTarget[8] = -source[8];
-            skyTarget[9] = -appState.SkyLeft + appState.SkyHorizontal * source[9];
-            skyTarget[10] = appState.SkyTop - appState.SkyVertical * source[10];
-            skyTarget[11] = -source[11];
+            target += count;
+            *target++ = -appState.SkyLeft + appState.SkyHorizontal * source[0];
+			*target++ = appState.SkyTop - appState.SkyVertical * source[1];
+			*target++ = -source[2];
+			*target++ = -appState.SkyLeft + appState.SkyHorizontal * source[3];
+			*target++ = appState.SkyTop - appState.SkyVertical * source[4];
+			*target++ = -source[5];
+			*target++ = -appState.SkyLeft + appState.SkyHorizontal * source[6];
+			*target++ = appState.SkyTop - appState.SkyVertical * source[7];
+			*target++ = -source[8];
+			*target++ = -appState.SkyLeft + appState.SkyHorizontal * source[9];
+			*target++ = appState.SkyTop - appState.SkyVertical * source[10];
+			*target++ = -source[11];
             source += 12;
-            target += 12 * sizeof(float);
-            toCopy = appState.Scene.texturedVerticesSize - (count + 12) * sizeof(float);
-            memcpy(target, source, toCopy);
+            count = (size_t)appState.Scene.texturedVerticesSize / sizeof(float) - (count + 12);
+			std::copy(source, source + count, target);
         }
         else
         {
-            memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.textured_vertices.data(), appState.Scene.texturedVerticesSize);
+			auto count = (size_t)appState.Scene.texturedVerticesSize / sizeof(float);
+			std::copy(d_lists.textured_vertices.data(), d_lists.textured_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
         }
 		offset += appState.Scene.texturedVerticesSize;
 		particlePositionBase = texturedVertexBase + appState.Scene.texturedVerticesSize;
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.particle_positions.data(), appState.Scene.particlePositionsSize);
+		auto count = (size_t)appState.Scene.particlePositionsSize / sizeof(float);
+		std::copy(d_lists.particle_positions.data(), d_lists.particle_positions.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 		offset += appState.Scene.particlePositionsSize;
 		coloredVertexBase = particlePositionBase + appState.Scene.particlePositionsSize;
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_vertices.data(), appState.Scene.coloredVerticesSize);
+		count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
+		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 		offset += appState.Scene.coloredVerticesSize;
 	}
 	if (appState.Scene.floorAttributesSize > 0)
@@ -371,44 +371,46 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	texturedAttributeBase = controllerAttributeBase + appState.Scene.controllerAttributesSize;
     if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
     {
-        float skyTexCoordsLeft = 0.5 - appState.SkyLeft / 2;
+        float skyTexCoordsLeft = 0.5f - appState.SkyLeft / 2;
         float skyTexCoordsTop = 0.5f - appState.SkyTop / 2;
         float skyTexCoordsHorizontal = appState.SkyHorizontal / 2;
         float skyTexCoordsVertical = appState.SkyVertical / 2;
         auto source = d_lists.textured_attributes.data();
-        auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+        auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
         auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
-        auto count = firstVertex * 2;
-        auto toCopy = count * sizeof(float);
-        memcpy(target, source, toCopy);
+        size_t count = firstVertex * 2;
+		std::copy(source, source + count, target);
         source += count;
-        target += toCopy;
-        auto skyTarget = (float*)target;
-        skyTarget[0] = skyTexCoordsLeft + skyTexCoordsHorizontal * source[0];
-        skyTarget[1] = skyTexCoordsTop + skyTexCoordsVertical * source[1];
-        skyTarget[2] = skyTexCoordsLeft + skyTexCoordsHorizontal * source[2];
-        skyTarget[3] = skyTexCoordsTop + skyTexCoordsVertical * source[3];
-        skyTarget[4] = skyTexCoordsLeft + skyTexCoordsHorizontal * source[4];
-        skyTarget[5] = skyTexCoordsTop + skyTexCoordsVertical * source[5];
-        skyTarget[6] = skyTexCoordsLeft + skyTexCoordsHorizontal * source[6];
-        skyTarget[7] = skyTexCoordsTop + skyTexCoordsVertical * source[7];
+        target += count;
+        *target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[0];
+		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[1];
+		*target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[2];
+		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[3];
+		*target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[4];
+		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[5];
+		*target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[6];
+		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[7];
         source += 8;
-        target += 8 * sizeof(float);
-        toCopy = appState.Scene.texturedAttributesSize - (count + 8) * sizeof(float);
-        memcpy(target, source, toCopy);
+        target += 8;
+        count = (size_t)appState.Scene.texturedAttributesSize / sizeof(float) - (count + 8);
+		std::copy(source, source + count, target);
     }
     else
     {
-        memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.textured_attributes.data(), appState.Scene.texturedAttributesSize);
+		auto count = (size_t)appState.Scene.texturedAttributesSize / sizeof(float);
+		std::copy(d_lists.textured_attributes.data(), d_lists.textured_attributes.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
     }
 	offset += appState.Scene.texturedAttributesSize;
 	colormappedAttributeBase = texturedAttributeBase + appState.Scene.texturedAttributesSize;
-	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colormapped_attributes.data(), appState.Scene.colormappedLightsSize);
+	auto count = (size_t)appState.Scene.colormappedLightsSize / sizeof(float);
+	std::copy(d_lists.colormapped_attributes.data(), d_lists.colormapped_attributes.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.colormappedLightsSize;
-	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.particle_colors.data(), appState.Scene.particleColorsSize);
+	count = (size_t)appState.Scene.particleColorsSize / sizeof(float);
+	std::copy(d_lists.particle_colors.data(),d_lists.particle_colors.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.particleColorsSize;
 	coloredColorBase = appState.Scene.particleColorsSize;
-	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_colors.data(), appState.Scene.coloredColorsSize);
+	count = (size_t)appState.Scene.coloredColorsSize / sizeof(float);
+	std::copy(d_lists.colored_colors.data(), d_lists.colored_colors.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.coloredColorsSize;
 	if (appState.IndexTypeUInt8Enabled)
 	{
@@ -507,13 +509,15 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			offset++;
 		}
 	}
-	memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices32.data(), appState.Scene.indices32Size);
+	count = (size_t)appState.Scene.indices32Size / sizeof(uint32_t);
+	std::copy((uint32_t*)d_lists.colored_indices32.data(), (uint32_t*)d_lists.colored_indices32.data() + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.indices32Size;
 
 	auto loadedLightmap = appState.Scene.lightmaps.first;
 	while (loadedLightmap != nullptr)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmap->source, loadedLightmap->size);
+		count = (size_t)loadedLightmap->size / sizeof(uint32_t);
+		std::copy((uint32_t*)loadedLightmap->source, (uint32_t*)loadedLightmap->source + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
 		offset += loadedLightmap->size;
 		loadedLightmap = loadedLightmap->next;
 	}
@@ -521,7 +525,8 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	auto loadedLightmapRGB = appState.Scene.lightmapsRGB.first;
 	while (loadedLightmapRGB != nullptr)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedLightmapRGB->source, loadedLightmapRGB->size);
+		count = (size_t)loadedLightmapRGB->size / sizeof(uint32_t);
+		std::copy((uint32_t*)loadedLightmapRGB->source, (uint32_t*)loadedLightmapRGB->source + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
 		offset += loadedLightmapRGB->size;
 		loadedLightmapRGB = loadedLightmapRGB->next;
 	}

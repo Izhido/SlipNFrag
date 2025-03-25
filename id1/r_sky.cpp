@@ -212,7 +212,8 @@ void R_InitSkyRGBA (miptex_t *mt)
 	auto halfWidth = width / 2;
 
 	newskyRGBA.resize(width * height);
-	memcpy(newskyRGBA.data(), (byte *)mt + mt->offsets[0], newskyRGBA.size() * sizeof(unsigned));
+	auto source = (unsigned*)((byte *)mt + mt->offsets[0]);
+	std::copy(source, source + newskyRGBA.size(), newskyRGBA.data());
 
 	r_skysourceRGBA = newskyRGBA.data();
 	r_skyRGBAwidth = halfWidth;

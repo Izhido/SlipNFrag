@@ -83,7 +83,7 @@ void D_FillLightmap (dsurface_t& surface, surfcache_s* cache)
 	d_lists.last_lightmap_texel += surface.lightmap_size;
 	auto source = (unsigned*)&cache->data[0];
 	auto target = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
-	memcpy(target, source, surface.lightmap_size * sizeof(uint32_t));
+	std::copy(source, source + surface.lightmap_size, target);
 }
 
 void D_FillColoredLightmap (dsurface_t& surface, surfcache_s* cache)
@@ -99,7 +99,7 @@ void D_FillColoredLightmap (dsurface_t& surface, surfcache_s* cache)
 	d_lists.last_lightmap_texel += surface.lightmap_size;
 	auto source = (unsigned*)&cache->data[0];
 	auto target = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
-	memcpy(target, source, surface.lightmap_size * sizeof(uint32_t));
+	std::copy(source, source + surface.lightmap_size, target);
 }
 
 void D_FillSurfaceSize(dturbulent_t& turbulent, int component_size, int mips)

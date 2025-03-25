@@ -1851,7 +1851,7 @@ void android_main(struct android_app* app)
 
 						if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 						{
-							memcpy(appState.Scene.paletteData, d_8to24table, 256 * sizeof(unsigned int));
+							std::copy(d_8to24table, d_8to24table + 256, appState.Scene.paletteData);
 							if (appState.Mode == AppScreenMode)
 							{
 								size_t screenSize = vid_width * vid_height;
