@@ -1502,21 +1502,44 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			appState.Scene.textures.DeleteOld(appState);
-			for (auto& entry : appState.Scene.surfaceRGBATextures)
 			{
-				entry.DeleteOld(appState);
-			}
-			for (auto& entry : appState.Scene.surfaceTextures)
-			{
-				entry.DeleteOld(appState);
-			}
-			appState.Scene.lightmapsRGB.DeleteOld(appState);
-			appState.Scene.lightmaps.DeleteOld(appState);
-			appState.Scene.indexBuffers.DeleteOld(appState);
-			appState.Scene.aliasBuffers.DeleteOld(appState);
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 
-			Skybox::DeleteOld(appState);
+				appState.Scene.textures.DeleteOld(appState);
+				for (auto& entry : appState.Scene.surfaceRGBATextures)
+				{
+					entry.DeleteOld(appState);
+				}
+				for (auto& entry : appState.Scene.surfaceTextures)
+				{
+					entry.DeleteOld(appState);
+				}
+				appState.Scene.lightmapsRGB.DeleteOld(appState);
+				appState.Scene.lightmaps.DeleteOld(appState);
+				appState.Scene.indexBuffers.DeleteOld(appState);
+				appState.Scene.aliasBuffers.DeleteOld(appState);
+
+				Skybox::DeleteOld(appState);
+
+				for (auto& entry : appState.Scene.perSurfaceCache)
+				{
+					if (entry.second.frameCount != appState.Scene.frameCount)
+					{
+						if (entry.second.lightmap != nullptr)
+						{
+							entry.second.lightmap->next = appState.Scene.lightmaps.oldLightmaps;
+							appState.Scene.lightmaps.oldLightmaps = entry.second.lightmap;
+							entry.second.lightmap = nullptr;
+						}
+						if (entry.second.lightmapRGB != nullptr)
+						{
+							entry.second.lightmapRGB->next = appState.Scene.lightmapsRGB.oldLightmaps;
+							appState.Scene.lightmapsRGB.oldLightmaps = entry.second.lightmapRGB;
+							entry.second.lightmapRGB = nullptr;
+						}
+					}
+				}
+			}
 
 			XrFrameWaitInfo frameWaitInfo { XR_TYPE_FRAME_WAIT_INFO };
 			XrFrameState frameState { XR_TYPE_FRAME_STATE };
@@ -1747,7 +1770,7 @@ int main(int argc, char* argv[])
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
 
                         stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
-                        stagingBuffer = perFrame.stagingBuffers.GetHostVisibleStorageBuffer(appState, stagingBufferSize);
+                        stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
                         if (stagingBuffer->mapped == nullptr)
                         {
                             CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
@@ -1765,7 +1788,7 @@ int main(int argc, char* argv[])
 
 						if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 						{
-							memcpy(appState.Scene.paletteData, d_8to24table, 256 * sizeof(unsigned int));
+							std::copy(d_8to24table, d_8to24table + 256, appState.Scene.paletteData);
 							if (appState.Mode == AppScreenMode)
 							{
 								size_t screenSize = vid_width * vid_height;
@@ -1956,7 +1979,7 @@ int main(int argc, char* argv[])
 
 					if (screenPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 					{
-						screenPerFrame.stagingBuffer.CreateHostVisibleStorageBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
+						screenPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
 						CHECK_VKCMD(vkMapMemory(appState.Device, screenPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &screenPerFrame.stagingBuffer.mapped));
 					}
 
@@ -2106,7 +2129,7 @@ int main(int argc, char* argv[])
 
 						if (keyboardPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 						{
-							keyboardPerFrame.stagingBuffer.CreateHostVisibleStorageBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
+							keyboardPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 							CHECK_VKCMD(vkMapMemory(appState.Device, keyboardPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &keyboardPerFrame.stagingBuffer.mapped));
 						}
 
@@ -2576,7 +2599,7 @@ int main(int argc, char* argv[])
 				perFrame.second.controllerResources.Delete(appState);
 				perFrame.second.floorResources.Delete(appState);
 				perFrame.second.colormapResources.Delete(appState);
-                perFrame.second.storageAttributesResources.Delete(appState);
+                perFrame.second.sortedAttributesResources.Delete(appState);
 				perFrame.second.sceneMatricesAndColormapResources.Delete(appState);
 				perFrame.second.sceneMatricesAndNeutralPaletteResources.Delete(appState);
 				perFrame.second.sceneMatricesAndPaletteResources.Delete(appState);
@@ -2595,12 +2618,14 @@ int main(int argc, char* argv[])
 				perFrame.second.colormaps.Delete(appState);
 				perFrame.second.stagingBuffers.Delete(appState);
 				perFrame.second.cachedColors.Delete(appState);
+				perFrame.second.cachedSortedIndices32.Delete(appState);
 				perFrame.second.cachedIndices32.Delete(appState);
+				perFrame.second.cachedSortedIndices16.Delete(appState);
 				perFrame.second.cachedIndices16.Delete(appState);
 				perFrame.second.cachedIndices8.Delete(appState);
-                perFrame.second.cachedStorageAttributes.Delete(appState);
+                perFrame.second.cachedSortedAttributes.Delete(appState);
 				perFrame.second.cachedAttributes.Delete(appState);
-				perFrame.second.cachedHostVisibleVertices.Delete(appState);
+				perFrame.second.cachedSortedVertices.Delete(appState);
 				perFrame.second.cachedVertices.Delete(appState);
 
 				if (perFrame.second.fence != VK_NULL_HANDLE)

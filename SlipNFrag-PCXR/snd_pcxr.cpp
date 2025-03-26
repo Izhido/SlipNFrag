@@ -79,7 +79,7 @@ void SNDDMA_Callback(void* waveHeader)
 
     if (snd_forceclear)
     {
-        S_ClearBuffer();
+        std::fill(shm->buffer.begin(), shm->buffer.end(), 0);
         snd_forceclear = false;
     }
     memcpy(((LPWAVEHDR)waveHeader)->lpData, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
@@ -280,6 +280,13 @@ void SNDDMA_Submit(void)
 
         snd_delaytoobig = false;
     }
+}
+
+void SNDDMA_ClearBuffer(void)
+{
+    std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
+    std::fill(shm->buffer.begin(), shm->buffer.end(), 0);
 }
 
 void SNDDMA_Shutdown(void)
