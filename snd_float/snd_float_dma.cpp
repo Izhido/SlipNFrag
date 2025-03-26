@@ -508,9 +508,7 @@ void S_ClearBuffer (void)
 	if (!sound_started || !shm || shm->buffer.empty())
 		return;
 
-	{
-		std::fill(shm->buffer.begin(), shm->buffer.end(), 0);
-	}
+	SNDDMA_ClearBuffer ();
 }
 
 

@@ -4,14 +4,16 @@
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height)
+void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, void* texture)
 {
 	this->width = width;
 	this->height = height;
+	this->texture = texture;
 
 	auto size = this->width * this->height * 3;
 
-	auto lightmapBuffer = appState.Scene.lightmapRGBBuffers;
+	auto& perTexture = appState.Scene.lightmapRGBBuffers[this->texture];
+	auto lightmapBuffer = perTexture.buffers;
 	bool found = false;
 	while (lightmapBuffer != nullptr)
 	{
@@ -36,7 +38,7 @@ void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height)
 		if (lightmapBuffer == nullptr)
 		{
 			lightmapBuffer = new LightmapRGBBuffer { };
-			appState.Scene.lightmapRGBBuffers = lightmapBuffer;
+			perTexture.buffers = lightmapBuffer;
 		}
 		else
 		{
@@ -98,9 +100,13 @@ void LightmapRGB::Delete(AppState& appState) const
 		{
 			buffer->previous->next = buffer->next;
 		}
+		else if (buffer->next != nullptr)
+		{
+			appState.Scene.lightmapRGBBuffers[texture].buffers = buffer->next;
+		}
 		else
 		{
-			appState.Scene.lightmapRGBBuffers = buffer->next;
+			appState.Scene.lightmapRGBBuffers.erase(texture);
 		}
 		if (buffer->next != nullptr)
 		{

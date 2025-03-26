@@ -14,6 +14,8 @@
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
 #include "LoadedSky.h"
+#include "LightmapBuffersPerTexture.h"
+#include "LightmapRGBBuffersPerTexture.h"
 #include "CachedLightmaps.h"
 #include "CachedLightmapsRGB.h"
 #include "CachedSharedMemoryTextures.h"
@@ -101,10 +103,10 @@ struct Scene
 	LoadedSky loadedSky;
 	LoadedSky loadedSkyRGBA;
 	std::unordered_set<LightmapBuffer*> lightmapBuffersInUse;
-	LightmapBuffer* lightmapBuffers;
+	std::unordered_map<void*, LightmapBuffersPerTexture> lightmapBuffers;
 	CachedLightmaps lightmaps;
 	std::unordered_set<LightmapRGBBuffer*> lightmapRGBBuffersInUse;
-	LightmapRGBBuffer* lightmapRGBBuffers;
+	std::unordered_map<void*, LightmapRGBBuffersPerTexture> lightmapRGBBuffers;
 	CachedLightmapsRGB lightmapsRGB;
 	std::vector<CachedSharedMemoryTextures> surfaceTextures;
 	std::vector<CachedSharedMemoryTextures> surfaceRGBATextures;

@@ -120,6 +120,9 @@ qboolean SNDDMA_Init(void);
 // gets the current DMA position
 int SNDDMA_GetDMAPos(void);
 
+// clears any DMA buffers
+void SNDDMA_ClearBuffer(void);
+
 // shutdown the DMA xfer.
 void SNDDMA_Shutdown(void);
 

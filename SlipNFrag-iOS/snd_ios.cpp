@@ -25,7 +25,7 @@ void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef bu
     pthread_mutex_lock(&snd_lock);
     if (snd_forceclear)
     {
-        S_ClearBuffer();
+		std::fill(shm->buffer.begin(), shm->buffer.end(), 0);
         snd_forceclear = false;
     }
     memcpy(buffer->mAudioData, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
@@ -118,6 +118,13 @@ int SNDDMA_GetDMAPos(void)
 
 void SNDDMA_Submit(void)
 {
+}
+
+void SNDDMA_ClearBuffer(void)
+{
+	pthread_mutex_lock(&snd_lock);
+	std::fill(shm->buffer.begin(), shm->buffer.end(), 0);
+	pthread_mutex_unlock(&snd_lock);
 }
 
 void SNDDMA_Shutdown(void)

@@ -1211,7 +1211,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	if (perSurface.lightmap == nullptr)
 	{
 		perSurface.lightmap = new Lightmap { };
-		perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height);
+		perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
 		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
@@ -1224,7 +1224,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		perSurface.lightmap->next = lightmaps.oldLightmaps;
 		lightmaps.oldLightmaps = perSurface.lightmap;
 		perSurface.lightmap = new Lightmap { };
-		perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height);
+		perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
 		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
@@ -1244,7 +1244,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	if (perSurface.lightmapRGB == nullptr)
 	{
 		perSurface.lightmapRGB = new LightmapRGB { };
-		perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height);
+		perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
@@ -1257,7 +1257,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		perSurface.lightmapRGB->next = lightmapsRGB.oldLightmaps;
 		lightmapsRGB.oldLightmaps = perSurface.lightmapRGB;
 		perSurface.lightmapRGB = new LightmapRGB { };
-		perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height);
+		perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);

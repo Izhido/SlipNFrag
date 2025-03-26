@@ -12,9 +12,10 @@ struct Lightmap
 	int unusedCount;
 	int width;
 	int height;
+	void* texture;
 	LightmapBuffer* buffer;
 	VkDeviceSize offset;
 
-	void Create(AppState& appState, uint32_t width, uint32_t height);
+	void Create(AppState& appState, uint32_t width, uint32_t height, void* texture);
 	void Delete(AppState& appState) const;
 };

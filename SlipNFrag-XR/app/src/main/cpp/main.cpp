@@ -1569,37 +1569,41 @@ void android_main(struct android_app* app)
 				}
 			}
 
-			appState.Scene.textures.DeleteOld(appState);
-			for (auto& entry : appState.Scene.surfaceRGBATextures)
 			{
-				entry.DeleteOld(appState);
-			}
-			for (auto& entry : appState.Scene.surfaceTextures)
-			{
-				entry.DeleteOld(appState);
-			}
-			appState.Scene.lightmapsRGB.DeleteOld(appState);
-			appState.Scene.lightmaps.DeleteOld(appState);
-			appState.Scene.indexBuffers.DeleteOld(appState);
-			appState.Scene.aliasBuffers.DeleteOld(appState);
+				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 
-			Skybox::DeleteOld(appState);
-
-			for (auto& entry : appState.Scene.perSurfaceCache)
-			{
-				if (entry.second.frameCount != appState.Scene.frameCount)
+				appState.Scene.textures.DeleteOld(appState);
+				for (auto& entry : appState.Scene.surfaceRGBATextures)
 				{
-					if (entry.second.lightmap != nullptr)
+					entry.DeleteOld(appState);
+				}
+				for (auto& entry : appState.Scene.surfaceTextures)
+				{
+					entry.DeleteOld(appState);
+				}
+				appState.Scene.lightmapsRGB.DeleteOld(appState);
+				appState.Scene.lightmaps.DeleteOld(appState);
+				appState.Scene.indexBuffers.DeleteOld(appState);
+				appState.Scene.aliasBuffers.DeleteOld(appState);
+
+				Skybox::DeleteOld(appState);
+
+				for (auto& entry : appState.Scene.perSurfaceCache)
+				{
+					if (entry.second.frameCount != appState.Scene.frameCount)
 					{
-						entry.second.lightmap->next = appState.Scene.lightmaps.oldLightmaps;
-						appState.Scene.lightmaps.oldLightmaps = entry.second.lightmap;
-						entry.second.lightmap = nullptr;
-					}
-					if (entry.second.lightmapRGB != nullptr)
-					{
-						entry.second.lightmapRGB->next = appState.Scene.lightmapsRGB.oldLightmaps;
-						appState.Scene.lightmapsRGB.oldLightmaps = entry.second.lightmapRGB;
-						entry.second.lightmapRGB = nullptr;
+						if (entry.second.lightmap != nullptr)
+						{
+							entry.second.lightmap->next = appState.Scene.lightmaps.oldLightmaps;
+							appState.Scene.lightmaps.oldLightmaps = entry.second.lightmap;
+							entry.second.lightmap = nullptr;
+						}
+						if (entry.second.lightmapRGB != nullptr)
+						{
+							entry.second.lightmapRGB->next = appState.Scene.lightmapsRGB.oldLightmaps;
+							appState.Scene.lightmapsRGB.oldLightmaps = entry.second.lightmapRGB;
+							entry.second.lightmapRGB = nullptr;
+						}
 					}
 				}
 			}
@@ -2739,10 +2743,10 @@ void android_main(struct android_app* app)
 			appState.Scene.surfaceTextures.clear();
 
 			appState.Scene.lightmapsRGB.Delete(appState);
-			appState.Scene.lightmapRGBBuffers = nullptr;
+			appState.Scene.lightmapRGBBuffers.clear();
 
 			appState.Scene.lightmaps.Delete(appState);
-			appState.Scene.lightmapBuffers = nullptr;
+			appState.Scene.lightmapBuffers.clear();
 
 			for (auto& entry : appState.Scene.perSurfaceCache)
 			{

@@ -260,7 +260,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			t /= loadedTexCoordsBuffer->height;
 			*target++ = s;
 			*target++ = t;
-			*target++ = s + 0.5;
+			*target++ = s + 0.5f;
 			*target++ = t;
 			source++;
 		}

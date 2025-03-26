@@ -26,7 +26,7 @@ void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf /*bufferQueue*/, void* /*cont
     }
     if (snd_forceclear)
     {
-        S_ClearBuffer();
+		std::fill(shm->buffer.begin(), shm->buffer.end(), 0);
         snd_forceclear = false;
     }
     auto result = (*audioBufferQueue)->Enqueue(audioBufferQueue, shm->buffer.data() + (shm->samplepos << 2), shm->samples >> 1);
@@ -178,6 +178,13 @@ int SNDDMA_GetDMAPos(void)
 
 void SNDDMA_Submit(void)
 {
+}
+
+void SNDDMA_ClearBuffer(void)
+{
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
+	std::fill(shm->buffer.begin(), shm->buffer.end(), 0);
 }
 
 void SNDDMA_Shutdown(void)

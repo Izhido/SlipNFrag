@@ -531,19 +531,10 @@ void S_StopAllSoundsC (void)
 
 void S_ClearBuffer (void)
 {
-	int		clear;
-		
 	if (!sound_started || !shm || shm->buffer.empty())
 		return;
 
-	if (shm->samplebits == 8)
-		clear = 0x80;
-	else
-		clear = 0;
-
-	{
-		Q_memset(shm->buffer.data(), clear, shm->samples * shm->samplebits/8);
-	}
+	SNDDMA_ClearBuffer ();
 }
 
 
