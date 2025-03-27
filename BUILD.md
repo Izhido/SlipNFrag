@@ -10,13 +10,31 @@ A Visual Studio 2022 solution file is provided at the root of the source code fo
 
 To set up the environment to build, debug and test the project for the first time:
 
-* Clone or download the latest version of stb (as found in https://github.com/nothings/stb ). Create a stb folder at the root source folder, next to the `SlipNFrag-Win64 folder. Ensure that the "stb_xxx.h" files are located at the root of the stb folder to ensure proper compilation.
+* Clone or download the latest version of stb (as found in https://github.com/nothings/stb ). Create a stb folder at the root source folder, next to the `SlipNFrag-Win64` folder. Ensure that the "stb_xxx.h" files are located at the root of the stb folder to ensure proper compilation.
 
 * Open Visual Studio 2022 (or newer), then open the *SlipNFrag.sln* solution in the top folder.
 
 * Compile and run the project as usual for Visual Studio to debug or test it.
 
 To generate a Release build of the project, ensure that you selected the Release configuration in the IDE, then right-click on the project file - Publish - Create app packages, and follow the prompts.  
+
+### Windows PCXR
+
+The code is provided as a CMake project, residing at `SlipNFrag-PCXR` folder from the root of the source code folder. This project creates a console-based Windows executable that uses both OpenXR and Vulkan to perform the rendering of the game. The OpenXR runtime used is the one provided by Meta through their own Meta Quest Link application, that connects your VR device to the executable and plays the game through the runtime into your device.
+
+To set up the environment to build, debug and test the project for the first time:
+
+* Download the latest version of the [OpenXR SDK](https://github.com/KhronosGroup/OpenXR-SDK/releases/latest). Copy it to a folder at the root source folder, next to the `SlipNFrag-PCXR` folder.
+
+* Open the newly downloaded OpenXR SDK in Visual Studio (2022 or newer), configure the CMake project and run the `Install OPENXR` target (both Debug and Release mode). Close Visual Studio.
+
+* Open `SlipNFrag-PCXR` in Visual Studio, and configure CMake.
+
+* Go to Debug - Debug and Launch Settings for... to specify the command-line arguments for the project. (Standard command-line rules for the game apply; -basedir, -game, +map, the usual commands are in effect as expected.)
+
+* Locate and compile (or run) the `slipnfrag-pcxr.exe` target from within Visual Studio.
+
+Generating a Release build of the project is as simple as choosing the "Release" mode of the project, and compiling the project again. Make sure to copy also the PNG assets and the `shaders` folder created when compiling the project, and packaging them as part of the new release.
 
 ### MacOS
 

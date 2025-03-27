@@ -1,6 +1,19 @@
 # Changelog
 
-## Version **1.0.27**:
+## Version **1.0.28**:
+* Migrated repository to GitHub. Downloads are now exposed as Releases in the repository.
+* Reorganized README to explain more clearly what to do with the application(s).
+* Rebuilt OXR version as a GameActivity-based application, to make it easier to get SDK updates.
+* Official release of the PCXR version (a version that runs as a PCVR executable using OpenXR) to the general public.
+* Improved lightmap texture handling in the OXR and PCXR version, to increase performance a bit.
+* Removed almost all visual artifacts appearing in large mods / maps due to the OXR and PCXR renderer incorrectly skipping some surfaces, helped greatly by the reworked lightmap code above.
+* Fixed incorrect creation of the model and sound precache in the core engine, which in rare occasions prevented the Copper mod (and the UDOB episode) from starting correctly.
+* Fixed incorrect handling of data related to particle and sound-effect instancing using the expanded network protocol, which caused some large maps (as well as any modified maps from the original game) to crash under pressure.
+* Fixed race condition between sound data processing and the sound cleanup code after switching to another map, to avoid a potential crash just before loading the map.
+* Fixed race condition between the code that releases lightmaps no longer in use when rendering, and the code that disposes them after switching to another map, which caused a crash just after loading the map.
+* Other minor optimizations (and a few more bug corrections) to the OXR and PCXR renderer were applied as well, to improve performance a bit.
+
+### Version **1.0.27**:
 
 * Fix to sound code that mishandled .wav files with an invalid loop start value that crashed the core engine of the application.
 * Fixed storage of alias model names within the core engine, to allow names with exactly 16 characters to be handled properly.

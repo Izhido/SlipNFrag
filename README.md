@@ -1,71 +1,82 @@
 # Slip & Frag
 
+## What is it
+
 Slip & Frag is a sourceport of the Quake game engine, as created by [id Software](https://www.idsoftware.com/). 
 
 Slip & Frag aims to be two things:
 
 * An engine that allows you to play Quake, the game, as closely as it was when published in 1996 for the DOS platform. This means somewhat low resolution textures, low polygon count, colorful and high-contrast worlds, with sharp-edged, dangerous-looking creatures. That, and messages with large white (or brown) letters.
 
-* An engine that runs in modern operating systems (MacOS 10.14 and later, Windows 8 and later, Meta Quest/2/3 v62 and later, and others), removing the limitations that restricted the original engine to run in a limited, fixed amount of memory, thus allowing it to accept the content created during these years by the user community.
+* An engine that runs in modern operating systems (MacOS 10.14 and later, Windows 10 and later, Meta Quest/2/3 v62 and later, and others), removing the limitations that restricted the original engine to run in a limited, fixed amount of memory, thus allowing it to accept the content created during these years by the user community.
 
-## Downloads
->As of now, the download URLs point to the previous repository in Bitbucket - for the next release, the files will be available in this repository as a proper Release. 
+## What is available
 
-### Meta Quest/2/3 (the **OXR** version):
+Latest version: **1.0.28** - see [Changelog](CHANGELOG.md) for details.
 
-Latest version: **1.0.27** - see [Changelog](CHANGELOG.md) for details.
+Releases are available [here](https://github.com/Izhido/SlipNFrag/releases/latest). They are:
 
-* Android .apk file: [slipnfrag-release_1.0.27.apk](https://bitbucket.org/Izhido/slip-frag/downloads/slipnfrag-release_1.0.27.apk)
->*IMPORTANT*: Due to recent changes in the code, detailed in the Changelog for version 1.0.26, this version **requires** that your device is updated to the latest OS version (v62 or later in Quest 2 or later devices).
+* **Win64**: Desktop version for Windows. Uses the original software renderer to bring the game as closely as possible as when it was played in 1997. Playable with a keyboard, mouse, and optionally an Xbox One (or compatible) controller. (At least one user reported to me that this version can also be played in Linux machines through Wine.)
 
-### Windows:
+* **MacOS**: Desktop version for MacOS. Plays in both Intel and Apple Silicon machines. Also playable with keyboard, mouse, and Xbox One controller.
 
-Latest version: **1.0.27** - see [Changelog](CHANGELOG.md) for details.
+* **OXR**: VR version that runs as a standalone application in Meta Quest devices (1, 2, Pro, 3, 3s). Uses OpenXR / Vulkan to render the game. Playable with the controllers supplied with your VR device.
 
-* Win64 .exe file: [SlipNFrag-Win64_1.0.27.zip](https://bitbucket.org/Izhido/slip-frag/downloads/SlipNFrag-Win64_1.0.27.zip)
+* **PCXR**: VR version that runs in Windows as a PCVR application, that sends its output to a connected Meta Quest device (same as above). Uses the OpenXR runtime exposed by the Meta Quest Link app, and renders using Vulkan. Playable also using the controllers supplied with your VR device.
 
-### MacOS:
+## What do you need
 
-Latest version: **1.0.27** - see [Changelog](CHANGELOG.md) for details.
+First (and most important) of all, you need Quake, the game, installed in your computer. 
 
-* MacOS .dmg file: [SlipNFrag_1.0.27.dmg](https://bitbucket.org/Izhido/slip-frag/downloads/SlipNFrag_1.0.27.dmg)
->*IMPORTANT*: Following recommendations from Apple for the configuration in the Xcode project, the minimum version of MacOS required is now *10.14.6*.
-
-## Setup
-
-Slip & Frag does not currently come with the game assets required to play it. You will need, instead, to provide the engine with those assets yourself.
-
-Quake can be purchased from several venues (Steam, GOG, marketplaces within Amazon, and many others). There is also a shareware version of the game, hosted on many sites, which can also be used to play the game with Slip & Frag, if desired.
-
-Once you acquire a copy of the game, you will find in there a folder called ID1, containing one or more files called pak0.pak, pak1.pak, and so on. That folder is what you'll need to play the game using Slip & Frag.
+Quake can be purchased from several venues (Steam, GOG, marketplaces within Amazon, and many others). There is also a shareware version of the game, hosted on many sites, which can be used to play the game with Slip & Frag, if desired.
 
 *IMPORTANT*: Slip & Frag does not currently support the .pak files from the Quake re-release, issued for the 25th anniversary of the game. The original .pak files, however, can still be found in the folder where the new game is installed.
 
-### Windows
+For the **OXR** release, you'll need a Meta Quest device (1, 2, Pro, 3, 3s), updated to the latest available version.
 
-* Copy the ID1 folder, described above, anywhere you wish in your machine.
+Additionally, in order to play the **PCXR** release, you need:
 
-* Extract and copy the Win64 executable in that same folder - meaning, the executable and the ID1 folder should be now at the same level in that folder.
+* A fairly recent PC running Windows, with a video card no more than 5 years old;
+
+* Meta Quest Link installed and running;
+
+* A Meta Quest device connected to the PC in Link mode;
+
+* OpenXR runtime set up to be the one provided by Meta. (**This is important** - the OpenXR runtime provided by SteamVR is currently not compatible with Slip & Frag.)
+
+## What to do
+
+After getting what you need, do the following to play the game:
+
+### Win64
+
+* Extract and copy the `SlipNFrag-Win64.exe` executable into the same folder as your `ID1` folder.
 
 * Double click on the executable, and press the Play button to start.
 
+* Optionally, you can do the following from Powershell (or your favorite command-line prompt):
+
+```
+cd C:\Folder\Where\Everything\Is\Installed
+.\SlipNFrag-Win64.exe -basedir "C:\Program Files\Steam\steamapps\common\Quake" -game alkaline +map start
+```
+> (Standard command-line options and rules from the game still apply. Feel free to experiment as you wish with custom maps / mods.)
+
 ### MacOS
 
-* Copy the ID1 folder, described above, anywhere you wish in your machine.
+* Copy the `ID1` folder from the machine where you have Quake installed, anywhere you wish in your Mac.
 
 * Open the app, and click on the small Settings icon at the bottom right of the window (alternatively, you can also go to Preferences in the menu).
 
-* At the "Game directory (-basedir)" prompt, enter the path to the ID1 folder you just copied.
-
-* Configure the other options as you see fit (optional, as they're not required to play the original game).
+* At the "Game directory (-basedir)" prompt, enter the path to the `ID1` folder you just copied, and configure everything else as you wish.
 
 * Click on the Close button.
 
 * Click on the large Play button to start playing the game.
 
-### Meta Quest/2/3
+### Meta Quest/2/3/Pro/3s
 
-* Ensure that you have Developer mode enabled for your device. (This will take some extra steps through several places in your device AND the Oculus developer website. You'll only have to do this once, though. See  https://learn.adafruit.com/sideloading-on-oculus-quest/enable-developer-mode for details).
+* Ensure that you have Developer mode enabled for your device. (This will take some extra steps through several places in your device *and* the Meta developer website. You'll only have to do this once, though. Google for "enable developer mode meta quest" for more details).
 
 * Install the .apk file in your device, using either:
     * ADB (See https://www.vrtourviewer.com/docs/adb/ for details);
@@ -76,16 +87,43 @@ Once you acquire a copy of the game, you will find in there a folder called ID1,
 * Start Slip & Frag from your device *once*, from the Unknown sources screen or tab. When you do this, the following folder will be automatically created in your device:
 
 ```
-/sdcard/android/data/com.heribertodelgado.slipnfrag/files
+/sdcard/android/data/com.heribertodelgado.slipnfrag-xr/files
 ```
 
-* Use any file transfer app (Windows Explorer, or SideQuest if Explorer is unavailable) to copy the ID1 folder, described above, to that exact location.
+* Use any file transfer app (Windows Explorer, or SideQuest if Explorer is unavailable) to copy the `ID1` folder to that exact location.
 
-* Exit, and then restart, Slip & Frag in your device. Press A + X in your controllers (as indicated in the visor) to start playing.
+* Exit, and then restart, Slip & Frag in your device. Press A + X in your controllers (as indicated in the headset) to start playing.
+
+* Optionally, to load your favorite custom mods / maps, create the following file in the folder above in your device:
+
+```
+/sdcard/android/data/com.heribertodelgado.slipnfrag-xr/files/commandline.txt
+```
+
+* In that file, enter all command-line arguments your custom map / mod requires. For example:
+
+```
+-game alkaline +map start
+```
+> (Standard command-line options and rules from the game still apply. Feel free to experiment as you wish with custom maps / mods.)
+
+### PCXR
+
+* Extract and copy all files in the package anywhere you wish in your machine. (If desired, you can also copy them in your `ID1` folder - just be aware that there are several PNG files and an extra `shaders` folder which might overwrite stuff in your existing Quake folder.)
+
+* Connect your Meta Quest device to your computer via Meta Quest Link. Ensure that your boundaries and the ground level in your device fits the area you'll use to play the game.
+
+* Open Powershell (or your favorite command-line prompt), and type the following to start playing:
+
+```
+cd C:\Folder\Where\Everything\Is\Installed
+.\SlipNFrag-PXCR.exe -basedir "C:\Program Files\Steam\steamapps\common\Quake" -game alkaline +map start
+```
+> (Standard command-line options and rules from the game still apply. Feel free to experiment as you wish with custom maps / mods.)
 
 ## Game controller bindings
 
-Slip & Frag can be played, in addition to mouse and keyboard, by using an "extended profile" game controller, such as the Xbox 360 or Xbox One controllers (or other similar controllers).
+Thw Win64 and MacOS releases of Slip & Frag can be played, in addition to mouse and keyboard, by using an "extended profile" game controller, such as the Xbox One controller (or similar controllers).
 
 The (fixed) bindings of the game controller to play the game are the following:
 
@@ -104,81 +142,7 @@ The (fixed) bindings of the game controller to play the game are the following:
 
 When in the game menu, button [**B**] can also be used to move one menu back. Also, if it wasn't clear enough, in the Quit menu, button [**Y**] can be used to exit the game.
 
->(Please notice that this applies to the *desktop* versions of Slip & Frag - the OXR version uses its own controller schema.)
-
-## Customizations
-
-Slip & Frag also allows you to play custom game modifications (mods). These mods exist virtually since the game was released in 1996, and there is an user community still producing new and exciting content for the game, which are totally worth checking out.
-
-Slip & Frag will gladly accept new maps & mods intended to be run in the original ("vanilla") version of the game; there is also experimental (yet, fully functional) support for other mods that require more memory and resources from the game. (The only exception to this is maps / mods designed for the Quake re-release.)
-
-Once you get familiarized with custom mods, and have read the setup instructions for them, if you wish to play them in your computer (or VR headset), you'll need to do the following:
-
-### Windows
-
-* Copy the folder(s) containing your mods into the same folder you created to host the ID1 folder. (Slip & Frag automatically assigns the ```-basedir``` option to be precisely that folder). Be sure to follow the instructions provided by the creator of the mod to set up everything correctly.
-
-* Bring up either a Command Prompt or a PowerShell terminal, and type the command line that the custom mod / map specifies in its setup instructions, hit Enter, and then press the Play button.
-
-### MacOS
-
-* Copy the folder(s) containing your mods into the same folder you created to host the ID1 folder. (Slip & Frag automatically assigns the ```-basedir``` option to be precisely that folder). Be sure to follow the instructions provided by the creator of the mod to set up everything correctly.
-
-* Open the app, and click on the Settings button (alternatively, you can also go to Preferences in the menu).
-
-* At the "Additional command-line arguments" prompt, write down the command line with the options that your mod requires to run (most, if not all, mods *need* those additional options - consult the instructions of the mod to know how to proceed).
-
-* Click Close on the Settings screen, then click the Play button to start playing your new mod.
-
-### Meta Quest/2/3
-
-* Copy the folder(s) containing your mods into the same folder specified above in Setup, which now should contain the ID1 folder with the original game assets. (Slip & Frag automatically assigns the ```-basedir``` option to be precisely that folder). Be sure to follow the instructions provided by the creator of the mod to set up everything correctly.
-
-* Create a new text file in your computer, and give it the following name: 
-
-```
-commandline.txt
-```
-
-* In the new text file, write down the command line with the options that your mod requires to run (most, if not all, mods *need* those additional options - consult the instructions of the mod to know how to proceed).
-
-* Using your favorite file transfer app, copy the new file to the folder specified above in Setup. This means your folder will now contain: the ID1 folder, the text filename, and the folders with your custom mod(s).
-
-* Exit Slip & Frag (if it was opened), and restart it to start playing your new mod.
-
-## Network play (Multiplayer mode)
-
-Slip & Frag will also allow you to play with others, either through the Internet by using NetQuake servers (as opposed to QuakeWorld servers, which Slip & Frag does *not yet* support), or in your home WiFi (or LAN) network (again, as a NetQuake server / client).
-
-Slip & Frag will allow you to do this in exactly the same way as the original game did, by entering the data required in the game itself (Menu / Multiplayer / Join or New Game / enter the address).
-
-The Windows version will also allow you to specify connection parameters through the command line, if desired.
-
-The Meta Quest/2/3 version will allow you to do this from the game menu, with the provided on-screen keyboard (available since version 1.0.7). If, however, you prefer to specify the data outside of the game menu, you can do so by following these steps.
-
-To connect your device as a client (Join Game):
-
-* Create a new text file with the following name (or open it if it already exists):
-
-```
-commandline.txt
-```
-
-* Add the following option at the beginning of the file:
-
-```
--port 26000 -connect quake.spaceballcity.com
-```
-
-* (of course, replace the port number and the server name with the data from the server you wish to connect - also, the IP address of the local NetQuake server can be specified if you intend to play in your local WiFi or LAN network).
-
-* Using your favorite file transfer app, copy the text file to the folder specified above in Setup, replacing it if needed. This means your folder will now contain: the ID1 folder, the text filename, and any folders with your custom mod(s), if you added any.
-
-* Exit Slip & Frag (if it was opened), and restart it. Upon start, the engine will immediately attempt to connect to the server to begin playing.
-
-To host a server from within your device, you do not need to do anything special - proceed with the Menu options of the game as usual, and a new local NetQuake server will be ready for others to join in your local network.
-
-## Build instructions
+## What if I want to build the executables by myself
 
 As the process of compiling and running Slip & Frag in a development machine can be a bit complicated, instructions are provided in [Build instructions](BUILD.md) to that effect.
 
@@ -186,6 +150,6 @@ As the process of compiling and running Slip & Frag in a development machine can
 
 For details on how the engine handles user data, see [Privacy Policy](PRIVACY.md).
 
-## Support
+## What if I need to ask further questions
 
 Visit [Support](SUPPORT.md) if you need some help on how to run or compile Slip & Frag.
