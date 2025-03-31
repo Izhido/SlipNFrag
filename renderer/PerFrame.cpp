@@ -1031,6 +1031,9 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 
 	appState.Scene.lightmapBuffersInUse.clear();
+	VkBuffer delayedCopyBuffer = VK_NULL_HANDLE;
+	VkDeviceSize delayedCopyOffset = 0;
+	VkDeviceSize delayedCopySize = 0;
 	auto loadedLightmap = appState.Scene.lightmaps.first;
 	while (loadedLightmap != nullptr)
 	{
@@ -1039,16 +1042,42 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		{
 			appState.Scene.AddToVertexShaderBarriers(lightmapBuffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
 		}
-		bufferCopy.size = loadedLightmap->size;
-		bufferCopy.dstOffset = loadedLightmap->lightmap->offset * sizeof(uint32_t);
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapBuffer->buffer.buffer, 1, &bufferCopy);
+		if (delayedCopyBuffer == VK_NULL_HANDLE)
+		{
+			delayedCopyBuffer = lightmapBuffer->buffer.buffer;
+			delayedCopyOffset = loadedLightmap->lightmap->offset * sizeof(uint32_t);
+			delayedCopySize = loadedLightmap->size;
+		}
+		else if (delayedCopyBuffer == lightmapBuffer->buffer.buffer && delayedCopyOffset + delayedCopySize == loadedLightmap->lightmap->offset * sizeof(uint32_t))
+		{
+			delayedCopySize += loadedLightmap->size;
+		}
+		else
+		{
+			bufferCopy.size = delayedCopySize;
+			bufferCopy.dstOffset = delayedCopyOffset;
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
+			bufferCopy.dstOffset = 0;
+			bufferCopy.srcOffset += bufferCopy.size;
+			appState.Scene.stagingBuffer.offset += bufferCopy.size;
+			delayedCopyBuffer = lightmapBuffer->buffer.buffer;
+			delayedCopyOffset = loadedLightmap->lightmap->offset * sizeof(uint32_t);
+			delayedCopySize = loadedLightmap->size;
+		}
+		loadedLightmap = loadedLightmap->next;
+	}
+	if (delayedCopyBuffer != VK_NULL_HANDLE)
+	{
+		bufferCopy.size = delayedCopySize;
+		bufferCopy.dstOffset = delayedCopyOffset;
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
 		bufferCopy.dstOffset = 0;
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.stagingBuffer.offset += loadedLightmap->size;
-		loadedLightmap = loadedLightmap->next;
+		appState.Scene.stagingBuffer.offset += bufferCopy.size;
 	}
 
 	appState.Scene.lightmapRGBBuffersInUse.clear();
+	delayedCopyBuffer = VK_NULL_HANDLE;
 	auto loadedLightmapRGB = appState.Scene.lightmapsRGB.first;
 	while (loadedLightmapRGB != nullptr)
 	{
@@ -1057,13 +1086,38 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		{
 			appState.Scene.AddToVertexShaderBarriers(lightmapBuffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
 		}
-		bufferCopy.size = loadedLightmapRGB->size;
-		bufferCopy.dstOffset = loadedLightmapRGB->lightmap->offset * sizeof(uint32_t);
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, lightmapBuffer->buffer.buffer, 1, &bufferCopy);
+		if (delayedCopyBuffer == VK_NULL_HANDLE)
+		{
+			delayedCopyBuffer = lightmapBuffer->buffer.buffer;
+			delayedCopyOffset = loadedLightmapRGB->lightmap->offset * sizeof(uint32_t);
+			delayedCopySize = loadedLightmapRGB->size;
+		}
+		else if (delayedCopyBuffer == lightmapBuffer->buffer.buffer && delayedCopyOffset + delayedCopySize == loadedLightmapRGB->lightmap->offset * sizeof(uint32_t))
+		{
+			delayedCopySize += loadedLightmapRGB->size;
+		}
+		else
+		{
+			bufferCopy.size = delayedCopySize;
+			bufferCopy.dstOffset = delayedCopyOffset;
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
+			bufferCopy.dstOffset = 0;
+			bufferCopy.srcOffset += bufferCopy.size;
+			appState.Scene.stagingBuffer.offset += bufferCopy.size;
+			delayedCopyBuffer = lightmapBuffer->buffer.buffer;
+			delayedCopyOffset = loadedLightmapRGB->lightmap->offset * sizeof(uint32_t);
+			delayedCopySize = loadedLightmapRGB->size;
+		}
+		loadedLightmapRGB = loadedLightmapRGB->next;
+	}
+	if (delayedCopyBuffer != VK_NULL_HANDLE)
+	{
+		bufferCopy.size = delayedCopySize;
+		bufferCopy.dstOffset = delayedCopyOffset;
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
 		bufferCopy.dstOffset = 0;
 		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.stagingBuffer.offset += loadedLightmapRGB->size;
-		loadedLightmapRGB = loadedLightmapRGB->next;
+		appState.Scene.stagingBuffer.offset += bufferCopy.size;
 	}
 
 	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)
