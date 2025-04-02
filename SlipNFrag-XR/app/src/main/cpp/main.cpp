@@ -1581,8 +1581,8 @@ void android_main(struct android_app* app)
 				{
 					entry.DeleteOld(appState);
 				}
-				appState.Scene.lightmapsRGB.DeleteOld(appState);
-				appState.Scene.lightmaps.DeleteOld(appState);
+				appState.Scene.lightmapsRGBToDelete.DeleteOld(appState);
+				appState.Scene.lightmapsToDelete.DeleteOld(appState);
 				appState.Scene.indexBuffers.DeleteOld(appState);
 				appState.Scene.aliasBuffers.DeleteOld(appState);
 
@@ -1594,14 +1594,12 @@ void android_main(struct android_app* app)
 					{
 						if (entry.second.lightmap != nullptr)
 						{
-							entry.second.lightmap->next = appState.Scene.lightmaps.oldLightmaps;
-							appState.Scene.lightmaps.oldLightmaps = entry.second.lightmap;
+							appState.Scene.lightmapsToDelete.Dispose(entry.second.lightmap);
 							entry.second.lightmap = nullptr;
 						}
 						if (entry.second.lightmapRGB != nullptr)
 						{
-							entry.second.lightmapRGB->next = appState.Scene.lightmapsRGB.oldLightmaps;
-							appState.Scene.lightmapsRGB.oldLightmaps = entry.second.lightmapRGB;
+							appState.Scene.lightmapsRGBToDelete.Dispose(entry.second.lightmapRGB);
 							entry.second.lightmapRGB = nullptr;
 						}
 					}
@@ -2742,10 +2740,10 @@ void android_main(struct android_app* app)
 			}
 			appState.Scene.surfaceTextures.clear();
 
-			appState.Scene.lightmapsRGB.Delete(appState);
+			appState.Scene.lightmapsRGBToDelete.Delete(appState);
 			appState.Scene.lightmapRGBBuffers.clear();
 
-			appState.Scene.lightmaps.Delete(appState);
+			appState.Scene.lightmapsToDelete.Delete(appState);
 			appState.Scene.lightmapBuffers.clear();
 
 			for (auto& entry : appState.Scene.perSurfaceCache)

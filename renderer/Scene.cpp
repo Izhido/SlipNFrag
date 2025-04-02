@@ -1082,10 +1082,10 @@ void Scene::Initialize()
     controllerVerticesSize = 0;
 	aliasBuffers.Initialize();
     indexBuffers.Initialize();
-    lightmaps.first = nullptr;
-    lightmaps.current = nullptr;
-    lightmapsRGB.first = nullptr;
-    lightmapsRGB.current = nullptr;
+	lightmapChains.clear();
+	lightmapChainTexturesInUse.clear();
+	lightmapRGBChains.clear();
+	lightmapRGBChainTexturesInUse.clear();
     for (auto& cached : surfaceTextures)
     {
         cached.first = nullptr;
@@ -1217,12 +1217,25 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
 		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
-		lightmaps.Setup(loaded);
+		loaded.next = nullptr;
+		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
+		if (entry == lightmapChainTexturesInUse.end())
+		{
+			lightmapChainTexturesInUse.insert({ perSurface.texture, lightmapChains.size() });
+			lightmapChains.emplace_back();
+			lightmapChains.back().first = &loaded;
+			lightmapChains.back().current = &loaded;
+		}
+		else
+		{
+			auto& chain = lightmapChains[entry->second];
+			chain.current->next = &loaded;
+			chain.current = &loaded;
+		}
 	}
 	else if (perSurface.lightmap->createdFrameCount != surface.created)
 	{
-		perSurface.lightmap->next = lightmaps.oldLightmaps;
-		lightmaps.oldLightmaps = perSurface.lightmap;
+		lightmapsToDelete.Dispose(perSurface.lightmap);
 		perSurface.lightmap = new Lightmap { };
 		perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
 		perSurface.lightmap->createdFrameCount = surface.created;
@@ -1230,7 +1243,21 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
 		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
-		lightmaps.Setup(loaded);
+		loaded.next = nullptr;
+		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
+		if (entry == lightmapChainTexturesInUse.end())
+		{
+			lightmapChainTexturesInUse.insert({ perSurface.texture, lightmapChains.size() });
+			lightmapChains.emplace_back();
+			lightmapChains.back().first = &loaded;
+			lightmapChains.back().current = &loaded;
+		}
+		else
+		{
+			auto& chain = lightmapChains[entry->second];
+			chain.current->next = &loaded;
+			chain.current = &loaded;
+		}
 	}
 	else
 	{
@@ -1250,12 +1277,25 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
 		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
-		lightmapsRGB.Setup(loaded);
+		loaded.next = nullptr;
+		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);
+		if (entry == lightmapRGBChainTexturesInUse.end())
+		{
+			lightmapRGBChainTexturesInUse.insert({ perSurface.texture, lightmapRGBChains.size() });
+			lightmapRGBChains.emplace_back();
+			lightmapRGBChains.back().first = &loaded;
+			lightmapRGBChains.back().current = &loaded;
+		}
+		else
+		{
+			auto& chain = lightmapRGBChains[entry->second];
+			chain.current->next = &loaded;
+			chain.current = &loaded;
+		}
     }
 	else if (perSurface.lightmapRGB->createdFrameCount != surface.created)
 	{
-		perSurface.lightmapRGB->next = lightmapsRGB.oldLightmaps;
-		lightmapsRGB.oldLightmaps = perSurface.lightmapRGB;
+		lightmapsRGBToDelete.Dispose(perSurface.lightmapRGB);
 		perSurface.lightmapRGB = new LightmapRGB { };
 		perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
@@ -1263,7 +1303,21 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
 		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
-		lightmapsRGB.Setup(loaded);
+		loaded.next = nullptr;
+		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);
+		if (entry == lightmapRGBChainTexturesInUse.end())
+		{
+			lightmapRGBChainTexturesInUse.insert({ perSurface.texture, lightmapRGBChains.size() });
+			lightmapRGBChains.emplace_back();
+			lightmapRGBChains.back().first = &loaded;
+			lightmapRGBChains.back().current = &loaded;
+		}
+		else
+		{
+			auto& chain = lightmapRGBChains[entry->second];
+			chain.current->next = &loaded;
+			chain.current = &loaded;
+		}
 	}
 	else
 	{
@@ -2874,14 +2928,12 @@ void Scene::Reset(AppState& appState)
 	{
 		if (entry.second.lightmap != nullptr)
 		{
-			entry.second.lightmap->next = appState.Scene.lightmaps.oldLightmaps;
-			appState.Scene.lightmaps.oldLightmaps = entry.second.lightmap;
+			appState.Scene.lightmapsToDelete.Dispose(entry.second.lightmap);
 			entry.second.lightmap = nullptr;
 		}
 		if (entry.second.lightmapRGB != nullptr)
 		{
-			entry.second.lightmapRGB->next = appState.Scene.lightmapsRGB.oldLightmaps;
-			appState.Scene.lightmapsRGB.oldLightmaps = entry.second.lightmapRGB;
+			appState.Scene.lightmapsRGBToDelete.Dispose(entry.second.lightmapRGB);
 			entry.second.lightmapRGB = nullptr;
 		}
 	}

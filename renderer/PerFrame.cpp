@@ -513,22 +513,28 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	std::copy((uint32_t*)d_lists.colored_indices32.data(), (uint32_t*)d_lists.colored_indices32.data() + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.indices32Size;
 
-	auto loadedLightmap = appState.Scene.lightmaps.first;
-	while (loadedLightmap != nullptr)
+	for (auto& chain : appState.Scene.lightmapChains)
 	{
-		count = (size_t)loadedLightmap->size / sizeof(uint32_t);
-		std::copy((uint32_t*)loadedLightmap->source, (uint32_t*)loadedLightmap->source + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
-		offset += loadedLightmap->size;
-		loadedLightmap = loadedLightmap->next;
+		auto loaded = chain.first;
+		while (loaded != nullptr)
+		{
+			count = (size_t)loaded->size / sizeof(uint32_t);
+			std::copy((uint32_t*)loaded->source, (uint32_t*)loaded->source + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+			offset += loaded->size;
+			loaded = loaded->next;
+		}
 	}
 
-	auto loadedLightmapRGB = appState.Scene.lightmapsRGB.first;
-	while (loadedLightmapRGB != nullptr)
+	for (auto& chain : appState.Scene.lightmapRGBChains)
 	{
-		count = (size_t)loadedLightmapRGB->size / sizeof(uint32_t);
-		std::copy((uint32_t*)loadedLightmapRGB->source, (uint32_t*)loadedLightmapRGB->source + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
-		offset += loadedLightmapRGB->size;
-		loadedLightmapRGB = loadedLightmapRGB->next;
+		auto loaded = chain.first;
+		while (loaded != nullptr)
+		{
+			count = (size_t)loaded->size / sizeof(uint32_t);
+			std::copy((uint32_t*)loaded->source, (uint32_t*)loaded->source + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+			offset += loaded->size;
+			loaded = loaded->next;
+		}
 	}
 
 	if (appState.Scene.paletteSize > 0)
@@ -1030,29 +1036,45 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		appState.Scene.AddToVertexInputBarriers(indices32->buffer, VK_ACCESS_INDEX_READ_BIT);
 	}
 
-	appState.Scene.lightmapBuffersInUse.clear();
-	VkBuffer delayedCopyBuffer = VK_NULL_HANDLE;
-	VkDeviceSize delayedCopyOffset = 0;
-	VkDeviceSize delayedCopySize = 0;
-	auto loadedLightmap = appState.Scene.lightmaps.first;
-	while (loadedLightmap != nullptr)
+	for (auto& chain : appState.Scene.lightmapChains)
 	{
-		auto lightmapBuffer = &*loadedLightmap->lightmap->buffer;
-		if (appState.Scene.lightmapBuffersInUse.insert(lightmapBuffer).second)
+		std::unordered_set<LightmapBuffer*> inUse;
+		VkBuffer delayedCopyBuffer = VK_NULL_HANDLE;
+		VkDeviceSize delayedCopyOffset = 0;
+		VkDeviceSize delayedCopySize = 0;
+		auto loaded = chain.first;
+		while (loaded != nullptr)
 		{
-			appState.Scene.AddToVertexShaderBarriers(lightmapBuffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
+			auto buffer = loaded->lightmap->buffer;
+			if (inUse.insert(buffer).second)
+			{
+				appState.Scene.AddToVertexShaderBarriers(buffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
+			}
+			if (delayedCopyBuffer == VK_NULL_HANDLE)
+			{
+				delayedCopyBuffer = buffer->buffer.buffer;
+				delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+				delayedCopySize = loaded->size;
+			}
+			else if (delayedCopyBuffer == buffer->buffer.buffer && delayedCopyOffset + delayedCopySize == loaded->lightmap->offset * sizeof(uint32_t))
+			{
+				delayedCopySize += loaded->size;
+			}
+			else
+			{
+				bufferCopy.size = delayedCopySize;
+				bufferCopy.dstOffset = delayedCopyOffset;
+				vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
+				bufferCopy.dstOffset = 0;
+				bufferCopy.srcOffset += bufferCopy.size;
+				appState.Scene.stagingBuffer.offset += bufferCopy.size;
+				delayedCopyBuffer = buffer->buffer.buffer;
+				delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+				delayedCopySize = loaded->size;
+			}
+			loaded = loaded->next;
 		}
-		if (delayedCopyBuffer == VK_NULL_HANDLE)
-		{
-			delayedCopyBuffer = lightmapBuffer->buffer.buffer;
-			delayedCopyOffset = loadedLightmap->lightmap->offset * sizeof(uint32_t);
-			delayedCopySize = loadedLightmap->size;
-		}
-		else if (delayedCopyBuffer == lightmapBuffer->buffer.buffer && delayedCopyOffset + delayedCopySize == loadedLightmap->lightmap->offset * sizeof(uint32_t))
-		{
-			delayedCopySize += loadedLightmap->size;
-		}
-		else
+		if (delayedCopyBuffer != VK_NULL_HANDLE)
 		{
 			bufferCopy.size = delayedCopySize;
 			bufferCopy.dstOffset = delayedCopyOffset;
@@ -1060,43 +1082,48 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 			bufferCopy.dstOffset = 0;
 			bufferCopy.srcOffset += bufferCopy.size;
 			appState.Scene.stagingBuffer.offset += bufferCopy.size;
-			delayedCopyBuffer = lightmapBuffer->buffer.buffer;
-			delayedCopyOffset = loadedLightmap->lightmap->offset * sizeof(uint32_t);
-			delayedCopySize = loadedLightmap->size;
 		}
-		loadedLightmap = loadedLightmap->next;
-	}
-	if (delayedCopyBuffer != VK_NULL_HANDLE)
-	{
-		bufferCopy.size = delayedCopySize;
-		bufferCopy.dstOffset = delayedCopyOffset;
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
-		bufferCopy.dstOffset = 0;
-		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.stagingBuffer.offset += bufferCopy.size;
 	}
 
-	appState.Scene.lightmapRGBBuffersInUse.clear();
-	delayedCopyBuffer = VK_NULL_HANDLE;
-	auto loadedLightmapRGB = appState.Scene.lightmapsRGB.first;
-	while (loadedLightmapRGB != nullptr)
+	for (auto& chain : appState.Scene.lightmapRGBChains)
 	{
-		auto lightmapBuffer = &*loadedLightmapRGB->lightmap->buffer;
-		if (appState.Scene.lightmapRGBBuffersInUse.insert(lightmapBuffer).second)
+		std::unordered_set<LightmapRGBBuffer*> inUse;
+		VkBuffer delayedCopyBuffer = VK_NULL_HANDLE;
+		VkDeviceSize delayedCopyOffset = 0;
+		VkDeviceSize delayedCopySize = 0;
+		auto loaded = chain.first;
+		while (loaded != nullptr)
 		{
-			appState.Scene.AddToVertexShaderBarriers(lightmapBuffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
+			auto buffer = loaded->lightmap->buffer;
+			if (inUse.insert(buffer).second)
+			{
+				appState.Scene.AddToVertexShaderBarriers(buffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
+			}
+			if (delayedCopyBuffer == VK_NULL_HANDLE)
+			{
+				delayedCopyBuffer = buffer->buffer.buffer;
+				delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+				delayedCopySize = loaded->size;
+			}
+			else if (delayedCopyBuffer == buffer->buffer.buffer && delayedCopyOffset + delayedCopySize == loaded->lightmap->offset * sizeof(uint32_t))
+			{
+				delayedCopySize += loaded->size;
+			}
+			else
+			{
+				bufferCopy.size = delayedCopySize;
+				bufferCopy.dstOffset = delayedCopyOffset;
+				vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
+				bufferCopy.dstOffset = 0;
+				bufferCopy.srcOffset += bufferCopy.size;
+				appState.Scene.stagingBuffer.offset += bufferCopy.size;
+				delayedCopyBuffer = buffer->buffer.buffer;
+				delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+				delayedCopySize = loaded->size;
+			}
+			loaded = loaded->next;
 		}
-		if (delayedCopyBuffer == VK_NULL_HANDLE)
-		{
-			delayedCopyBuffer = lightmapBuffer->buffer.buffer;
-			delayedCopyOffset = loadedLightmapRGB->lightmap->offset * sizeof(uint32_t);
-			delayedCopySize = loadedLightmapRGB->size;
-		}
-		else if (delayedCopyBuffer == lightmapBuffer->buffer.buffer && delayedCopyOffset + delayedCopySize == loadedLightmapRGB->lightmap->offset * sizeof(uint32_t))
-		{
-			delayedCopySize += loadedLightmapRGB->size;
-		}
-		else
+		if (delayedCopyBuffer != VK_NULL_HANDLE)
 		{
 			bufferCopy.size = delayedCopySize;
 			bufferCopy.dstOffset = delayedCopyOffset;
@@ -1104,20 +1131,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 			bufferCopy.dstOffset = 0;
 			bufferCopy.srcOffset += bufferCopy.size;
 			appState.Scene.stagingBuffer.offset += bufferCopy.size;
-			delayedCopyBuffer = lightmapBuffer->buffer.buffer;
-			delayedCopyOffset = loadedLightmapRGB->lightmap->offset * sizeof(uint32_t);
-			delayedCopySize = loadedLightmapRGB->size;
 		}
-		loadedLightmapRGB = loadedLightmapRGB->next;
-	}
-	if (delayedCopyBuffer != VK_NULL_HANDLE)
-	{
-		bufferCopy.size = delayedCopySize;
-		bufferCopy.dstOffset = delayedCopyOffset;
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
-		bufferCopy.dstOffset = 0;
-		bufferCopy.srcOffset += bufferCopy.size;
-		appState.Scene.stagingBuffer.offset += bufferCopy.size;
 	}
 
 	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)

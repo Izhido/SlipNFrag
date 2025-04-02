@@ -16,8 +16,8 @@
 #include "LoadedSky.h"
 #include "LightmapBuffersPerTexture.h"
 #include "LightmapRGBBuffersPerTexture.h"
-#include "CachedLightmaps.h"
-#include "CachedLightmapsRGB.h"
+#include "LightmapsToDelete.h"
+#include "LightmapsRGBToDelete.h"
 #include "CachedSharedMemoryTextures.h"
 #include "SurfaceTexture.h"
 #include "Skybox.h"
@@ -25,6 +25,8 @@
 #include "UsedInSharedMemory.h"
 #include "PerFrame.h"
 #include "SortedSurfaces.h"
+#include "LightmapChain.h"
+#include "LightmapRGBChain.h"
 
 struct AppState;
 
@@ -102,12 +104,14 @@ struct Scene
 	int lastSkyRGBA;
 	LoadedSky loadedSky;
 	LoadedSky loadedSkyRGBA;
-	std::unordered_set<LightmapBuffer*> lightmapBuffersInUse;
 	std::unordered_map<void*, LightmapBuffersPerTexture> lightmapBuffers;
-	CachedLightmaps lightmaps;
-	std::unordered_set<LightmapRGBBuffer*> lightmapRGBBuffersInUse;
+	LightmapsToDelete lightmapsToDelete;
+	std::vector<LightmapChain> lightmapChains;
+	std::unordered_map<void*, size_t> lightmapChainTexturesInUse;
 	std::unordered_map<void*, LightmapRGBBuffersPerTexture> lightmapRGBBuffers;
-	CachedLightmapsRGB lightmapsRGB;
+	LightmapsRGBToDelete lightmapsRGBToDelete;
+	std::vector<LightmapRGBChain> lightmapRGBChains;
+	std::unordered_map<void*, size_t> lightmapRGBChainTexturesInUse;
 	std::vector<CachedSharedMemoryTextures> surfaceTextures;
 	std::vector<CachedSharedMemoryTextures> surfaceRGBATextures;
 	CachedSharedMemoryTextures textures;
