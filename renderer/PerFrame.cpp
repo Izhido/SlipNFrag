@@ -515,25 +515,67 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 
 	for (auto& chain : appState.Scene.lightmapChains)
 	{
+		uint32_t* delayedCopyBuffer = nullptr;
+		size_t delayedCopySize = 0;
 		auto loaded = chain.first;
 		while (loaded != nullptr)
 		{
 			count = (size_t)loaded->size / sizeof(uint32_t);
-			std::copy((uint32_t*)loaded->source, (uint32_t*)loaded->source + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
-			offset += loaded->size;
+			if (delayedCopyBuffer == nullptr)
+			{
+				delayedCopyBuffer = (uint32_t*)loaded->source;
+				delayedCopySize = count;
+			}
+			else if (delayedCopyBuffer + delayedCopySize == (uint32_t*)loaded->source)
+			{
+				delayedCopySize += count;
+			}
+			else
+			{
+				std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+				offset += delayedCopySize * sizeof(uint32_t);
+				delayedCopyBuffer = (uint32_t*)loaded->source;
+				delayedCopySize = count;
+			}
 			loaded = loaded->next;
+		}
+		if (delayedCopyBuffer != nullptr)
+		{
+			std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+			offset += delayedCopySize * sizeof(uint32_t);
 		}
 	}
 
 	for (auto& chain : appState.Scene.lightmapRGBChains)
 	{
+		uint32_t* delayedCopyBuffer = nullptr;
+		size_t delayedCopySize = 0;
 		auto loaded = chain.first;
 		while (loaded != nullptr)
 		{
 			count = (size_t)loaded->size / sizeof(uint32_t);
-			std::copy((uint32_t*)loaded->source, (uint32_t*)loaded->source + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
-			offset += loaded->size;
+			if (delayedCopyBuffer == nullptr)
+			{
+				delayedCopyBuffer = (uint32_t*)loaded->source;
+				delayedCopySize = count;
+			}
+			else if (delayedCopyBuffer + delayedCopySize == (uint32_t*)loaded->source)
+			{
+				delayedCopySize += count;
+			}
+			else
+			{
+				std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+				offset += delayedCopySize * sizeof(uint32_t);
+				delayedCopyBuffer = (uint32_t*)loaded->source;
+				delayedCopySize = count;
+			}
 			loaded = loaded->next;
+		}
+		if (delayedCopyBuffer != nullptr)
+		{
+			std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+			offset += delayedCopySize * sizeof(uint32_t);
 		}
 	}
 
