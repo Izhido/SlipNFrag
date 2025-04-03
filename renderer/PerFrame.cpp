@@ -2108,25 +2108,6 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			appState.Scene.turbulentRotatedRGBAColoredLights.Render(commandBuffer);
 		}
-		if (appState.Scene.sprites.last >= 0)
-		{
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipeline);
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
-			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
-			SharedMemoryTexture* previousTexture = nullptr;
-			for (auto i = 0; i <= appState.Scene.sprites.last; i++)
-			{
-				auto& loaded = appState.Scene.sprites.loaded[i];
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
-				vkCmdDraw(commandBuffer, loaded.count, 1, loaded.firstVertex, 0);
-			}
-		}
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		poolSizes[0].descriptorCount = 1;
 		descriptorPoolCreateInfo.poolSizeCount = 1;
@@ -2558,6 +2539,25 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             vkCmdPushConstants(commandBuffer, appState.Scene.fencesRotatedRGBANoGlowColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
 			appState.Scene.fencesRotatedRGBANoGlowColoredLights.Render(commandBuffer);
         }
+		if (appState.Scene.sprites.last >= 0)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipeline);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
+			SharedMemoryTexture* previousTexture = nullptr;
+			for (auto i = 0; i <= appState.Scene.sprites.last; i++)
+			{
+				auto& loaded = appState.Scene.sprites.loaded[i];
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
+				}
+				vkCmdDraw(commandBuffer, loaded.count, 1, loaded.firstVertex, 0);
+			}
+		}
 		if (appState.Scene.viewmodels.last >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipeline);
