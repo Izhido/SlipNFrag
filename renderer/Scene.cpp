@@ -604,9 +604,9 @@ void Scene::Create(AppState& appState)
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesColoredLights.pipeline));
 
     descriptorSetLayouts[0] = singleBufferLayout;
-	descriptorSetLayouts[2] = singleFragmentStorageBufferLayout;
+	descriptorSetLayouts[2] = singleImageLayout;
 	descriptorSetLayouts[3] = singleImageLayout;
-    descriptorSetLayouts[4] = singleImageLayout;
+    descriptorSetLayouts[4] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 5;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRGBA.pipelineLayout));
     graphicsPipelineCreateInfo.layout = surfacesRGBA.pipelineLayout;
@@ -619,7 +619,6 @@ void Scene::Create(AppState& appState)
     stages[1].module = surfaceRGBAColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRGBAColoredLights.pipeline));
 
-	descriptorSetLayouts[2] = singleImageLayout;
 	descriptorSetLayouts[3] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 4;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRGBANoGlow.pipelineLayout));
@@ -651,8 +650,8 @@ void Scene::Create(AppState& appState)
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRotatedColoredLights.pipeline));
 
     descriptorSetLayouts[0] = singleBufferLayout;
-	descriptorSetLayouts[2] = singleFragmentStorageBufferLayout;
 	descriptorSetLayouts[3] = singleImageLayout;
+	descriptorSetLayouts[4] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 5;
     pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
     pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
@@ -667,7 +666,6 @@ void Scene::Create(AppState& appState)
     stages[1].module = surfaceRGBAColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &surfacesRotatedRGBAColoredLights.pipeline));
 
-	descriptorSetLayouts[2] = singleImageLayout;
 	descriptorSetLayouts[3] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 4;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &surfacesRotatedRGBANoGlow.pipelineLayout));
@@ -699,8 +697,8 @@ void Scene::Create(AppState& appState)
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesColoredLights.pipeline));
 
     descriptorSetLayouts[0] = singleBufferLayout;
-	descriptorSetLayouts[2] = singleFragmentStorageBufferLayout;
 	descriptorSetLayouts[3] = singleImageLayout;
+	descriptorSetLayouts[4] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 5;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRGBA.pipelineLayout));
     graphicsPipelineCreateInfo.layout = fencesRGBA.pipelineLayout;
@@ -713,7 +711,6 @@ void Scene::Create(AppState& appState)
     stages[1].module = fenceRGBAColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRGBAColoredLights.pipeline));
 
-	descriptorSetLayouts[2] = singleImageLayout;
 	descriptorSetLayouts[3] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 4;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRGBANoGlow.pipelineLayout));
@@ -745,8 +742,8 @@ void Scene::Create(AppState& appState)
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotatedColoredLights.pipeline));
 
     descriptorSetLayouts[0] = singleBufferLayout;
-	descriptorSetLayouts[2] = singleFragmentStorageBufferLayout;
 	descriptorSetLayouts[3] = singleImageLayout;
+	descriptorSetLayouts[4] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 5;
     pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
     pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
@@ -761,7 +758,6 @@ void Scene::Create(AppState& appState)
     stages[1].module = fenceRGBAColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &fencesRotatedRGBAColoredLights.pipeline));
 
-	descriptorSetLayouts[2] = singleImageLayout;
 	descriptorSetLayouts[3] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 4;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &fencesRotatedRGBANoGlow.pipelineLayout));

@@ -3,6 +3,7 @@
 #include "Pipeline.h"
 #include <vulkan/vulkan.h>
 #include "SortedSurfaceTexturesWithLightmaps.h"
+#include "SortedSurfaceTexturePairsWithLightmaps.h"
 
 struct Scene;
 
@@ -37,7 +38,7 @@ struct PipelineWithSorted : Pipeline
 
 	void Render(VkCommandBuffer commandBuffer)
 	{
-		if (std::is_same<Sorted, SortedSurfaceTexturesWithLightmaps>::value)
+		if constexpr (std::is_same<Sorted, SortedSurfaceTexturesWithLightmaps>::value)
 		{
 			VkDeviceSize index = 0;
 			for (auto t = 0; t < sorted.count; t++)
@@ -48,6 +49,23 @@ struct PipelineWithSorted : Pipeline
 				{
                     const auto& lightmap = texture.lightmaps[l];
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 3, 1, &lightmap.lightmap, 0, nullptr);
+					vkCmdDrawIndexed(commandBuffer, lightmap.indexCount, 1, index, 0, 0);
+					index += lightmap.indexCount;
+				}
+			}
+		}
+		else if constexpr (std::is_same<Sorted, SortedSurfaceTexturePairsWithLightmaps>::value)
+		{
+			VkDeviceSize index = 0;
+			for (auto t = 0; t < sorted.count; t++)
+			{
+				const auto& texture = sorted.textures[t];
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 3, 1, &texture.glowTexture, 0, nullptr);
+				for (auto l = 0; l < texture.count; l++)
+				{
+					const auto& lightmap = texture.lightmaps[l];
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 4, 1, &lightmap.lightmap, 0, nullptr);
 					vkCmdDrawIndexed(commandBuffer, lightmap.indexCount, 1, index, 0, 0);
 					index += lightmap.indexCount;
 				}
