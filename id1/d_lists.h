@@ -148,8 +148,7 @@ struct dlists_t
 	int last_textured_vertex;
 	int last_textured_attribute;
 	int last_colormapped_attribute;
-	int last_particle_position;
-	int last_particle_color;
+	int last_particle;
 	int last_colored_vertex;
 	int last_colored_color;
 	int last_colored_index8;
@@ -211,8 +210,7 @@ struct dlists_t
 	std::vector<float> textured_vertices;
 	std::vector<float> textured_attributes;
 	std::vector<float> colormapped_attributes;
-	std::vector<float> particle_positions;
-	std::vector<float> particle_colors;
+	std::vector<float> particles;
 	std::vector<float> colored_vertices;
 	std::vector<float> colored_colors;
 	std::vector<unsigned char> colored_indices8;

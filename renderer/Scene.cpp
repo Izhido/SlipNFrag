@@ -524,17 +524,11 @@ void Scene::Create(AppState& appState)
     aliasAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAttributes.vertexAttributes.data();
 
     PipelineAttributes particleAttributes { };
-    particleAttributes.vertexAttributes.resize(2);
-    particleAttributes.vertexBindings.resize(2);
-    particleAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    particleAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+    particleAttributes.vertexAttributes.resize(1);
+    particleAttributes.vertexBindings.resize(1);
+    particleAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    particleAttributes.vertexBindings[0].stride = 4 * sizeof(float);
     particleAttributes.vertexBindings[0].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-    particleAttributes.vertexAttributes[1].location = 1;
-    particleAttributes.vertexAttributes[1].binding = 1;
-    particleAttributes.vertexAttributes[1].format = VK_FORMAT_R32_SFLOAT;
-    particleAttributes.vertexBindings[1].binding = 1;
-    particleAttributes.vertexBindings[1].stride = sizeof(float);
-    particleAttributes.vertexBindings[1].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
     particleAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     particleAttributes.vertexInputState.vertexBindingDescriptionCount = particleAttributes.vertexBindings.size();
     particleAttributes.vertexInputState.pVertexBindingDescriptions = particleAttributes.vertexBindings.data();
@@ -2151,7 +2145,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     sprites.Allocate(d_lists.last_sprite);
     alias.Allocate(d_lists.last_alias);
     viewmodels.Allocate(d_lists.last_viewmodel);
-    lastParticle = d_lists.last_particle_color;
+    lastParticle = (d_lists.last_particle + 1) / 4 - 1;
     lastColoredIndex8 = d_lists.last_colored_index8;
     lastColoredIndex16 = d_lists.last_colored_index16;
     lastColoredIndex32 = d_lists.last_colored_index32;
@@ -2720,9 +2714,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         }
     }
     texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
-    particlePositionsSize = (d_lists.last_particle_position + 1) * sizeof(float);
+    particlesSize = (d_lists.last_particle + 1) * sizeof(float);
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-    verticesSize = floorVerticesSize + controllerVerticesSize + texturedVerticesSize + particlePositionsSize + coloredVerticesSize;
+    verticesSize = floorVerticesSize + controllerVerticesSize + texturedVerticesSize + particlesSize + coloredVerticesSize;
     if (verticesSize > 0)
     {
         perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
@@ -2753,9 +2747,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
     }
     size += attributesSize;
-    particleColorsSize = (d_lists.last_particle_color + 1) * sizeof(float);
     coloredColorsSize = (d_lists.last_colored_color + 1) * sizeof(float);
-    colorsSize = particleColorsSize + coloredColorsSize;
+    colorsSize = coloredColorsSize;
     if (colorsSize > 0)
     {
         perFrame.colors = perFrame.cachedColors.GetVertexBuffer(appState, colorsSize);

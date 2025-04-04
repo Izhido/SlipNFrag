@@ -135,7 +135,7 @@ struct Scene
 	VkDeviceSize floorVerticesSize;
 	VkDeviceSize controllerVerticesSize;
 	VkDeviceSize texturedVerticesSize;
-	VkDeviceSize particlePositionsSize;
+	VkDeviceSize particlesSize;
 	VkDeviceSize coloredVerticesSize;
 	VkDeviceSize verticesSize;
 	VkDeviceSize floorAttributesSize;
@@ -143,7 +143,6 @@ struct Scene
 	VkDeviceSize texturedAttributesSize;
 	VkDeviceSize colormappedLightsSize;
 	VkDeviceSize attributesSize;
-	VkDeviceSize particleColorsSize;
 	VkDeviceSize coloredColorsSize;
 	VkDeviceSize colorsSize;
 	VkDeviceSize floorIndicesSize;

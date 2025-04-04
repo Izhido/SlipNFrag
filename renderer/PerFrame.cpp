@@ -333,10 +333,10 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
         }
 		offset += appState.Scene.texturedVerticesSize;
 		particlePositionBase = texturedVertexBase + appState.Scene.texturedVerticesSize;
-		auto count = (size_t)appState.Scene.particlePositionsSize / sizeof(float);
-		std::copy(d_lists.particle_positions.data(), d_lists.particle_positions.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
-		offset += appState.Scene.particlePositionsSize;
-		coloredVertexBase = particlePositionBase + appState.Scene.particlePositionsSize;
+		auto count = (size_t)appState.Scene.particlesSize / sizeof(float);
+		std::copy(d_lists.particles.data(), d_lists.particles.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
+		offset += appState.Scene.particlesSize;
+		coloredVertexBase = particlePositionBase + appState.Scene.particlesSize;
 		count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
 		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 		offset += appState.Scene.coloredVerticesSize;
@@ -405,10 +405,6 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	auto count = (size_t)appState.Scene.colormappedLightsSize / sizeof(float);
 	std::copy(d_lists.colormapped_attributes.data(), d_lists.colormapped_attributes.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.colormappedLightsSize;
-	count = (size_t)appState.Scene.particleColorsSize / sizeof(float);
-	std::copy(d_lists.particle_colors.data(),d_lists.particle_colors.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
-	offset += appState.Scene.particleColorsSize;
-	coloredColorBase = appState.Scene.particleColorsSize;
 	count = (size_t)appState.Scene.coloredColorsSize / sizeof(float);
 	std::copy(d_lists.colored_colors.data(), d_lists.colored_colors.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.coloredColorsSize;
@@ -2165,7 +2161,6 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.particle.pipeline);
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &particlePositionBase);
-            vkCmdBindVertexBuffers(commandBuffer, 1, 1, &colors->buffer, &appState.NoOffset);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.particle.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
             pushConstants[0] = appState.FromEngine.vright0;
             pushConstants[1] = appState.FromEngine.vright1;
@@ -2182,7 +2177,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipeline);
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &coloredVertexBase);
-            vkCmdBindVertexBuffers(commandBuffer, 1, 1, &colors->buffer, &coloredColorBase);
+            vkCmdBindVertexBuffers(commandBuffer, 1, 1, &colors->buffer, &appState.NoOffset);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
             if (appState.IndexTypeUInt8Enabled)
             {

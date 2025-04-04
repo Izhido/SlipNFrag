@@ -65,7 +65,6 @@ struct PerFrame
 	VkDeviceSize controllerAttributeBase;
 	VkDeviceSize texturedAttributeBase;
 	VkDeviceSize colormappedAttributeBase;
-	VkDeviceSize coloredColorBase;
 	VkDeviceSize controllerIndexBase;
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;

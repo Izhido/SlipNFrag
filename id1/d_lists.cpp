@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 
@@ -59,8 +59,7 @@ void D_ResetLists ()
 	d_lists.last_textured_vertex = -1;
 	d_lists.last_textured_attribute = -1;
 	d_lists.last_colormapped_attribute = -1;
-	d_lists.last_particle_position = -1;
-	d_lists.last_particle_color = -1;
+	d_lists.last_particle = -1;
 	d_lists.last_colored_vertex = -1;
 	d_lists.last_colored_color = -1;
 	d_lists.last_colored_index8 = -1;
@@ -1127,27 +1126,22 @@ void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 
 void D_AddParticleToLists (particle_t* part)
 {
-	auto new_size = d_lists.last_particle_position + 1 + 3;
-	if (d_lists.particle_positions.size() < new_size)
+	auto new_size = d_lists.last_particle + 1 + 4;
+	if (d_lists.particles.size() < new_size)
 	{
-		d_lists.particle_positions.resize(new_size);
+		d_lists.particles.resize(new_size);
 	}
 	auto x = part->org[0];
 	auto y = part->org[1];
 	auto z = part->org[2];
-	d_lists.last_particle_position++;
-	d_lists.particle_positions[d_lists.last_particle_position] = x;
-	d_lists.last_particle_position++;
-	d_lists.particle_positions[d_lists.last_particle_position] = y;
-	d_lists.last_particle_position++;
-	d_lists.particle_positions[d_lists.last_particle_position] = z;
-	new_size = d_lists.last_particle_color + 1 + 1;
-	if (d_lists.particle_colors.size() < new_size)
-	{
-		d_lists.particle_colors.resize(new_size);
-	}
-	d_lists.last_particle_color++;
-	d_lists.particle_colors[d_lists.last_particle_color] = part->color;
+	d_lists.last_particle++;
+	d_lists.particles[d_lists.last_particle] = x;
+	d_lists.last_particle++;
+	d_lists.particles[d_lists.last_particle] = y;
+	d_lists.last_particle++;
+	d_lists.particles[d_lists.last_particle] = z;
+	d_lists.last_particle++;
+	d_lists.particles[d_lists.last_particle] = part->color;
 }
 
 void D_FillSkyData (dsky_t& sky)
