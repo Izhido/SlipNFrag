@@ -47,6 +47,7 @@ struct PerFrame
 	SharedMemoryBuffer* colors;
 	Texture* sky;
 	Texture* skyRGBA;
+	VkDeviceSize particleBase;
 	DescriptorResources skyResources;
 	DescriptorResources skyRGBAResources;
 	DescriptorResources host_colormapResources;
@@ -60,8 +61,6 @@ struct PerFrame
 	DescriptorResources controllerResources;
 	VkDeviceSize controllerVertexBase;
 	VkDeviceSize texturedVertexBase;
-	VkDeviceSize particlePositionBase;
-	VkDeviceSize coloredVertexBase;
 	VkDeviceSize controllerAttributeBase;
 	VkDeviceSize texturedAttributeBase;
 	VkDeviceSize colormappedAttributeBase;

@@ -891,12 +891,12 @@ void Scene::Create(AppState& appState)
 
     pipelineLayoutCreateInfo.setLayoutCount = 1;
     pushConstantInfo.size = 8 * sizeof(float);
-    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particle.pipelineLayout));
-    graphicsPipelineCreateInfo.layout = particle.pipelineLayout;
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particles.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = particles.pipelineLayout;
     graphicsPipelineCreateInfo.pVertexInputState = &particleAttributes.vertexInputState;
     stages[0].module = particleVertex;
     stages[1].module = coloredFragment;
-    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &particle.pipeline));
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &particles.pipeline));
 
     pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
     pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
@@ -2667,6 +2667,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         GetStagingBufferSize(appState, d_lists.viewmodels[i], viewmodels.loaded[i], &colormap, size);
     }
+	perFrame.particleBase = sortedVerticesSize;
+	if (lastParticle >= 0)
+	{
+		sortedVerticesSize += (d_lists.last_particle + 1) * sizeof(float);
+	}
     if (lastSky >= 0)
     {
         loadedSky.width = d_lists.sky[0].width;
@@ -2714,9 +2719,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         }
     }
     texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
-    particlesSize = (d_lists.last_particle + 1) * sizeof(float);
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-    verticesSize = floorVerticesSize + controllerVerticesSize + texturedVerticesSize + particlesSize + coloredVerticesSize;
+    verticesSize = floorVerticesSize + controllerVerticesSize + texturedVerticesSize + coloredVerticesSize;
     if (verticesSize > 0)
     {
         perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);

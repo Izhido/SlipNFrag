@@ -79,7 +79,7 @@ struct Scene
 	PipelineWithLoaded<LoadedSprite> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;
 	PipelineWithLoaded<LoadedAlias> viewmodels;
-	Pipeline particle;
+	Pipeline particles;
 	Pipeline colored;
 	Pipeline sky;
 	Pipeline skyRGBA;
@@ -135,7 +135,6 @@ struct Scene
 	VkDeviceSize floorVerticesSize;
 	VkDeviceSize controllerVerticesSize;
 	VkDeviceSize texturedVerticesSize;
-	VkDeviceSize particlesSize;
 	VkDeviceSize coloredVerticesSize;
 	VkDeviceSize verticesSize;
 	VkDeviceSize floorAttributesSize;

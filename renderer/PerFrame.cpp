@@ -332,12 +332,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			std::copy(d_lists.textured_vertices.data(), d_lists.textured_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
         }
 		offset += appState.Scene.texturedVerticesSize;
-		particlePositionBase = texturedVertexBase + appState.Scene.texturedVerticesSize;
-		auto count = (size_t)appState.Scene.particlesSize / sizeof(float);
-		std::copy(d_lists.particles.data(), d_lists.particles.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
-		offset += appState.Scene.particlesSize;
-		coloredVertexBase = particlePositionBase + appState.Scene.particlesSize;
-		count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
+		auto count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
 		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 		offset += appState.Scene.coloredVerticesSize;
 	}
@@ -738,6 +733,11 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, attributeIndex, sortedVertices, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		if (d_lists.last_particle >= 0)
+		{
+			auto count = (d_lists.last_particle + 1);
+			std::copy(d_lists.particles.data(), d_lists.particles.data() + count, (float*)(((unsigned char*)sortedVertices->mapped) + offset));
+		}
 		if ((sortedVertices->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
 		{
 			VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
@@ -2159,9 +2159,9 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 		}
         if (appState.Scene.lastParticle >= 0)
         {
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.particle.pipeline);
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &particlePositionBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.particle.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.particles.pipeline);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &particleBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.particles.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
             pushConstants[0] = appState.FromEngine.vright0;
             pushConstants[1] = appState.FromEngine.vright1;
             pushConstants[2] = appState.FromEngine.vright2;
@@ -2170,13 +2170,13 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             pushConstants[5] = appState.FromEngine.vup1;
             pushConstants[6] = appState.FromEngine.vup2;
             pushConstants[7] = 0;
-            vkCmdPushConstants(commandBuffer, appState.Scene.particle.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 8 * sizeof(float), pushConstants);
+            vkCmdPushConstants(commandBuffer, appState.Scene.particles.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 8 * sizeof(float), pushConstants);
             vkCmdDraw(commandBuffer, 6, appState.Scene.lastParticle + 1, 0, 0);
         }
         if (appState.Scene.lastColoredIndex8 >= 0 || appState.Scene.lastColoredIndex16 >= 0 || appState.Scene.lastColoredIndex32 >= 0)
         {
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipeline);
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &coloredVertexBase);
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
             vkCmdBindVertexBuffers(commandBuffer, 1, 1, &colors->buffer, &appState.NoOffset);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
             if (appState.IndexTypeUInt8Enabled)
