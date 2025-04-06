@@ -76,7 +76,7 @@ struct Scene
 	PipelineWithSorted<LoadedSurfaceRotatedColoredLights, SortedSurfaceTexturesWithLightmaps> turbulentRotatedColoredLights;
 	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceTexturesWithLightmaps> turbulentRotatedRGBALit;
 	PipelineWithSorted<LoadedSurfaceRotatedColoredLights, SortedSurfaceTexturesWithLightmaps> turbulentRotatedRGBAColoredLights;
-	PipelineWithLoaded<LoadedSprite> sprites;
+	PipelineWithSorted<LoadedSprite, SortedSurfaceTextures> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;
 	PipelineWithLoaded<LoadedAlias> viewmodels;
 	Pipeline particles;
@@ -134,12 +134,12 @@ struct Scene
 	Skybox* skybox;
 	VkDeviceSize floorVerticesSize;
 	VkDeviceSize controllerVerticesSize;
-	VkDeviceSize texturedVerticesSize;
+	VkDeviceSize skyVerticesSize;
 	VkDeviceSize coloredVerticesSize;
 	VkDeviceSize verticesSize;
 	VkDeviceSize floorAttributesSize;
 	VkDeviceSize controllerAttributesSize;
-	VkDeviceSize texturedAttributesSize;
+	VkDeviceSize skyAttributesSize;
 	VkDeviceSize colormappedLightsSize;
 	VkDeviceSize attributesSize;
 	VkDeviceSize coloredColorsSize;

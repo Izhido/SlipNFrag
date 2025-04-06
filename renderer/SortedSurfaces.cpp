@@ -262,6 +262,30 @@ void SortedSurfaces::Sort(AppState& appState, LoadedTurbulent& loaded, int index
 	}
 }
 
+void SortedSurfaces::Sort(AppState& appState, LoadedSprite& loaded, int index, SortedSurfaceTextures& sorted)
+{
+	auto texture = loaded.texture.texture->descriptorSet;
+	auto entry = sorted.added.find(texture);
+	if (entry == sorted.added.end())
+	{
+		if (sorted.count >= sorted.textures.size())
+		{
+			sorted.textures.resize(sorted.textures.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedTexture = sorted.textures[sorted.count];
+		sortedTexture.texture = texture;
+		sortedTexture.entries.clear();
+		sortedTexture.entries.push_back(index);
+		sorted.added.insert({ texture, sorted.count });
+		sorted.count++;
+	}
+	else
+	{
+		auto& sortedTexture = sorted.textures[entry->second];
+		sortedTexture.entries.push_back(index);
+	}
+}
+
 float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float attributeIndex, float* target)
 {
     auto source = loaded.vertices;
@@ -475,6 +499,29 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTextures& sorted, std::vector<Loa
 	}
     attributeIndex = (uint32_t)attributeIndexAsFloat;
     offset = ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
+}
+
+void SortedSurfaces::LoadVertices(SortedSurfaceTextures& sorted, std::vector<LoadedSprite>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
+{
+	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	for (auto t = 0; t < sorted.count; t++)
+	{
+		auto& texture = sorted.textures[t];
+		for (auto i : texture.entries)
+		{
+			auto vertices = d_lists.textured_vertices.data() + loaded[i].firstVertex * 3;
+			auto attributes = d_lists.textured_attributes.data() + loaded[i].firstVertex * 2;
+			for (auto v = 0; v < loaded[i].count; v++)
+			{
+				*target++ = *vertices++;
+				*target++ = *vertices++;
+				*target++ = *vertices++;
+				*target++ = *attributes++;
+				*target++ = *attributes++;
+			}
+		}
+	}
+	offset = ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
 }
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
@@ -1235,6 +1282,37 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::v
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
 }
 
+VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::vector<LoadedSprite>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
+{
+	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	uint16_t index = 0;
+    for (auto t = 0; t < sorted.count; t++)
+    {
+        auto& texture = sorted.textures[t];
+		VkDeviceSize indexCount = 0;
+		for (auto i : texture.entries)
+		{
+			auto& surface = loaded[i];
+			auto count = surface.count - 2;
+			auto first = index;
+			*target++ = index++;
+			*target++ = index++;
+			*target++ = index;
+			for (auto j = 1; j < count; j++)
+			{
+				*target++ = first;
+				*target++ = index++;
+				*target++ = index;
+			}
+			index++;
+			count *= 3;
+			indexCount += count;
+		}
+		texture.indexCount = indexCount;
+	}
+    return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
+}
+
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
 	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
@@ -1547,6 +1625,37 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::v
 }
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulentRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
+{
+	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	uint32_t index = 0;
+    for (auto t = 0; t < sorted.count; t++)
+    {
+        auto& texture = sorted.textures[t];
+		VkDeviceSize indexCount = 0;
+		for (auto i : texture.entries)
+		{
+			auto& surface = loaded[i];
+			auto count = surface.count - 2;
+			auto first = index;
+			*target++ = index++;
+			*target++ = index++;
+			*target++ = index;
+			for (auto j = 1; j < count; j++)
+			{
+				*target++ = first;
+				*target++ = index++;
+				*target++ = index;
+			}
+			index++;
+			count *= 3;
+			indexCount += count;
+		}
+		texture.indexCount = indexCount;
+	}
+    return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
+}
+
+VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::vector<LoadedSprite>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
 	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
 	uint32_t index = 0;

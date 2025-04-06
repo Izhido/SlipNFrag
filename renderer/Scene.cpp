@@ -486,7 +486,21 @@ void Scene::Create(AppState& appState)
     surfaceAttributes.vertexInputState.vertexAttributeDescriptionCount = surfaceAttributes.vertexAttributes.size();
     surfaceAttributes.vertexInputState.pVertexAttributeDescriptions = surfaceAttributes.vertexAttributes.data();
 
-    PipelineAttributes texturedAttributes { };
+	PipelineAttributes spriteAttributes { };
+	spriteAttributes.vertexAttributes.resize(2);
+	spriteAttributes.vertexBindings.resize(1);
+	spriteAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	spriteAttributes.vertexAttributes[1].location = 1;
+	spriteAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+	spriteAttributes.vertexAttributes[1].offset = 3 * sizeof(float);
+	spriteAttributes.vertexBindings[0].stride = 5 * sizeof(float);
+	spriteAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	spriteAttributes.vertexInputState.vertexBindingDescriptionCount = spriteAttributes.vertexBindings.size();
+	spriteAttributes.vertexInputState.pVertexBindingDescriptions = spriteAttributes.vertexBindings.data();
+	spriteAttributes.vertexInputState.vertexAttributeDescriptionCount = spriteAttributes.vertexAttributes.size();
+	spriteAttributes.vertexInputState.pVertexAttributeDescriptions = spriteAttributes.vertexAttributes.data();
+
+	PipelineAttributes texturedAttributes { };
     texturedAttributes.vertexAttributes.resize(2);
     texturedAttributes.vertexBindings.resize(2);
     texturedAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -864,8 +878,7 @@ void Scene::Create(AppState& appState)
     pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sprites.pipelineLayout));
     graphicsPipelineCreateInfo.layout = sprites.pipelineLayout;
-    graphicsPipelineCreateInfo.pVertexInputState = &texturedAttributes.vertexInputState;
-    graphicsPipelineCreateInfo.pInputAssemblyState = &triangleStrip;
+    graphicsPipelineCreateInfo.pVertexInputState = &spriteAttributes.vertexInputState;
     stages[0].module = spriteVertex;
     stages[1].module = spriteFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &sprites.pipeline));
@@ -878,7 +891,6 @@ void Scene::Create(AppState& appState)
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &alias.pipelineLayout));
     graphicsPipelineCreateInfo.layout = alias.pipelineLayout;
     graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
-    graphicsPipelineCreateInfo.pInputAssemblyState = &triangles;
     stages[0].module = aliasVertex;
     stages[1].module = aliasFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &alias.pipeline));
@@ -2650,10 +2662,17 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         sortedAttributesSize += (16 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
+	sprites.SetBases(sortedVerticesSize, sortedIndicesCount);
+	SortedSurfaces::Initialize(sprites.sorted);
     previousTexture = nullptr;
     for (auto i = 0; i <= sprites.last; i++)
     {
-        GetStagingBufferSize(appState, d_lists.sprites[i], sprites.loaded[i], size);
+		auto& loaded = sprites.loaded[i];
+        GetStagingBufferSize(appState, d_lists.sprites[i], loaded, size);
+		SortedSurfaces::Sort(appState, loaded, i, sprites.sorted);
+		sortedVerticesCount += loaded.count;
+		sortedVerticesSize += (loaded.count * 5 * sizeof(float));
+		sortedIndicesCount += ((loaded.count - 2) * 3);
     }
     previousApverts = nullptr;
     previousTexture = nullptr;
@@ -2674,12 +2693,12 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
     if (lastSky >= 0)
     {
-        loadedSky.width = d_lists.sky[0].width;
-        loadedSky.height = d_lists.sky[0].height;
-        loadedSky.size = d_lists.sky[0].size;
-        loadedSky.data = d_lists.sky[0].data;
-        loadedSky.firstVertex = d_lists.sky[0].first_vertex;
-        loadedSky.count = d_lists.sky[0].count;
+        loadedSky.width = d_lists.sky[lastSky].width;
+        loadedSky.height = d_lists.sky[lastSky].height;
+        loadedSky.size = d_lists.sky[lastSky].size;
+        loadedSky.data = d_lists.sky[lastSky].data;
+        loadedSky.firstVertex = d_lists.sky[lastSky].first_vertex;
+        loadedSky.count = d_lists.sky[lastSky].count;
         if (perFrame.sky == nullptr)
         {
             perFrame.sky = new Texture { };
@@ -2689,12 +2708,12 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
     if (lastSkyRGBA >= 0)
     {
-        loadedSkyRGBA.width = d_lists.sky_rgba[0].width;
-        loadedSkyRGBA.height = d_lists.sky_rgba[0].height;
-        loadedSkyRGBA.size = d_lists.sky_rgba[0].size;
-        loadedSkyRGBA.data = d_lists.sky_rgba[0].data;
-        loadedSkyRGBA.firstVertex = d_lists.sky_rgba[0].first_vertex;
-        loadedSkyRGBA.count = d_lists.sky_rgba[0].count;
+        loadedSkyRGBA.width = d_lists.sky_rgba[lastSkyRGBA].width;
+        loadedSkyRGBA.height = d_lists.sky_rgba[lastSkyRGBA].height;
+        loadedSkyRGBA.size = d_lists.sky_rgba[lastSkyRGBA].size;
+        loadedSkyRGBA.data = d_lists.sky_rgba[lastSkyRGBA].data;
+        loadedSkyRGBA.firstVertex = d_lists.sky_rgba[lastSkyRGBA].first_vertex;
+        loadedSkyRGBA.count = d_lists.sky_rgba[lastSkyRGBA].count;
         if (perFrame.skyRGBA == nullptr)
         {
             perFrame.skyRGBA = new Texture { };
@@ -2718,9 +2737,17 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
             controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
         }
     }
-    texturedVerticesSize = (d_lists.last_textured_vertex + 1) * sizeof(float);
+	skyVerticesSize = 0;
+	if (appState.Scene.lastSky >= 0)
+	{
+		skyVerticesSize += appState.Scene.loadedSky.count * 3 * sizeof(float);
+	}
+	if (appState.Scene.lastSkyRGBA >= 0)
+	{
+		skyVerticesSize += appState.Scene.loadedSkyRGBA.count * 3 * sizeof(float);
+	}
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-    verticesSize = floorVerticesSize + controllerVerticesSize + texturedVerticesSize + coloredVerticesSize;
+    verticesSize = floorVerticesSize + controllerVerticesSize + skyVerticesSize + coloredVerticesSize;
     if (verticesSize > 0)
     {
         perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
@@ -2743,9 +2770,17 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
             controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
         }
     }
-    texturedAttributesSize = (d_lists.last_textured_attribute + 1) * sizeof(float);
+	skyAttributesSize = 0;
+	if (appState.Scene.lastSky >= 0)
+	{
+		skyAttributesSize += appState.Scene.loadedSky.count * 2 * sizeof(float);
+	}
+	if (appState.Scene.lastSkyRGBA >= 0)
+	{
+		skyAttributesSize += appState.Scene.loadedSkyRGBA.count * 2 * sizeof(float);
+	}
     colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
-    attributesSize = floorAttributesSize + controllerAttributesSize + texturedAttributesSize + colormappedLightsSize;
+    attributesSize = floorAttributesSize + controllerAttributesSize + skyAttributesSize + colormappedLightsSize;
     if (attributesSize > 0)
     {
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
@@ -2818,6 +2853,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         turbulentRotatedColoredLights.ScaleIndexBase(sizeof(uint16_t));
         turbulentRotatedRGBALit.ScaleIndexBase(sizeof(uint16_t));
         turbulentRotatedRGBAColoredLights.ScaleIndexBase(sizeof(uint16_t));
+		sprites.ScaleIndexBase(sizeof(uint16_t));
     }
     else
     {
@@ -2859,6 +2895,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         turbulentRotatedColoredLights.ScaleIndexBase(sizeof(uint32_t));
         turbulentRotatedRGBALit.ScaleIndexBase(sizeof(uint32_t));
         turbulentRotatedRGBAColoredLights.ScaleIndexBase(sizeof(uint32_t));
+		sprites.ScaleIndexBase(sizeof(uint32_t));
     }
 
     if (appState.IndexTypeUInt8Enabled)

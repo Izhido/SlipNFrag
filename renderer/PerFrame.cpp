@@ -300,16 +300,12 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			}
 			offset += appState.Scene.controllerVerticesSize;
 		}
-		texturedVertexBase = controllerVertexBase + appState.Scene.controllerVerticesSize;
+		skyVertexBase = controllerVertexBase + appState.Scene.controllerVerticesSize;
         if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
         {
-            auto source = d_lists.textured_vertices.data();
+			auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
+            auto source = d_lists.textured_vertices.data() + firstVertex * 3;
             auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-            auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
-            size_t count = firstVertex * 3;
-			std::copy(source, source + count, target);
-            source += count;
-            target += count;
             *target++ = -appState.SkyLeft + appState.SkyHorizontal * source[0];
 			*target++ = appState.SkyTop - appState.SkyVertical * source[1];
 			*target++ = -source[2];
@@ -322,16 +318,8 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			*target++ = -appState.SkyLeft + appState.SkyHorizontal * source[9];
 			*target++ = appState.SkyTop - appState.SkyVertical * source[10];
 			*target++ = -source[11];
-            source += 12;
-            count = (size_t)appState.Scene.texturedVerticesSize / sizeof(float) - (count + 12);
-			std::copy(source, source + count, target);
         }
-        else
-        {
-			auto count = (size_t)appState.Scene.texturedVerticesSize / sizeof(float);
-			std::copy(d_lists.textured_vertices.data(), d_lists.textured_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
-        }
-		offset += appState.Scene.texturedVerticesSize;
+		offset += appState.Scene.skyVerticesSize;
 		auto count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
 		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 		offset += appState.Scene.coloredVerticesSize;
@@ -363,20 +351,16 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 		offset += appState.Scene.controllerAttributesSize;
 	}
-	texturedAttributeBase = controllerAttributeBase + appState.Scene.controllerAttributesSize;
+	skyAttributeBase = controllerAttributeBase + appState.Scene.controllerAttributesSize;
     if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
     {
         float skyTexCoordsLeft = 0.5f - appState.SkyLeft / 2;
         float skyTexCoordsTop = 0.5f - appState.SkyTop / 2;
         float skyTexCoordsHorizontal = appState.SkyHorizontal / 2;
         float skyTexCoordsVertical = appState.SkyVertical / 2;
-        auto source = d_lists.textured_attributes.data();
+		auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
+        auto source = d_lists.textured_attributes.data() + firstVertex * 2;
         auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-        auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
-        size_t count = firstVertex * 2;
-		std::copy(source, source + count, target);
-        source += count;
-        target += count;
         *target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[0];
 		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[1];
 		*target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[2];
@@ -385,18 +369,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[5];
 		*target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[6];
 		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[7];
-        source += 8;
-        target += 8;
-        count = (size_t)appState.Scene.texturedAttributesSize / sizeof(float) - (count + 8);
-		std::copy(source, source + count, target);
     }
-    else
-    {
-		auto count = (size_t)appState.Scene.texturedAttributesSize / sizeof(float);
-		std::copy(d_lists.textured_attributes.data(), d_lists.textured_attributes.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
-    }
-	offset += appState.Scene.texturedAttributesSize;
-	colormappedAttributeBase = texturedAttributeBase + appState.Scene.texturedAttributesSize;
+	offset += appState.Scene.skyAttributesSize;
+	colormappedAttributeBase = skyAttributeBase + appState.Scene.skyAttributesSize;
 	auto count = (size_t)appState.Scene.colormappedLightsSize / sizeof(float);
 	std::copy(d_lists.colormapped_attributes.data(), d_lists.colormapped_attributes.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.colormappedLightsSize;
@@ -733,6 +708,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, attributeIndex, sortedVertices, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+		SortedSurfaces::LoadVertices(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedVertices, offset);
 		if (d_lists.last_particle >= 0)
 		{
 			auto count = (d_lists.last_particle + 1);
@@ -846,6 +822,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedIndices16, offset);
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedIndices16, offset);
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedIndices16, offset);
+			offset = SortedSurfaces::LoadIndices16(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedIndices16, offset);
 			if ((sortedIndices16->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
 			{
 				VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
@@ -898,6 +875,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedIndices32, offset);
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedIndices32, offset);
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedIndices32, offset);
+			offset = SortedSurfaces::LoadIndices32(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedIndices32, offset);
 			if ((sortedIndices32->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
 			{
 				VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
@@ -1496,8 +1474,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				skyResources.created = true;
 			}
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sky.pipeline);
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
-			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &skyVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &skyAttributeBase);
 			VkDescriptorSet descriptorSets[2];
 			descriptorSets[0] = sceneMatricesAndPaletteResources.descriptorSet;
 			descriptorSets[1] = skyResources.descriptorSet;
@@ -1538,8 +1516,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				skyRGBAResources.created = true;
 			}
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.skyRGBA.pipeline);
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
-			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &skyVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &skyAttributeBase);
 			VkDescriptorSet descriptorSets[2];
 			descriptorSets[0] = sceneMatricesResources.descriptorSet;
 			descriptorSets[1] = skyRGBAResources.descriptorSet;
@@ -2433,20 +2411,24 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 		if (appState.Scene.sprites.last >= 0)
 		{
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipeline);
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &texturedVertexBase);
-			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &texturedAttributeBase);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
-			SharedMemoryTexture* previousTexture = nullptr;
-			for (auto i = 0; i <= appState.Scene.sprites.last; i++)
+			auto vertexBase = appState.Scene.sprites.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+			if (appState.Scene.sortedIndices16Size > 0)
 			{
-				auto& loaded = appState.Scene.sprites.loaded[i];
-				auto texture = loaded.texture.texture;
-				if (previousTexture != texture)
-				{
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-					previousTexture = texture;
-				}
-				vkCmdDraw(commandBuffer, loaded.count, 1, loaded.firstVertex, 0);
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.sprites.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.sprites.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			VkDeviceSize indexBase = 0;
+			for (auto t = 0; t < appState.Scene.sprites.sorted.count; t++)
+			{
+				const auto& texture = appState.Scene.sprites.sorted.textures[t];
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.sprites.pipelineLayout, 1, 1, &texture.texture, 0, nullptr);
+				vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
+				indexBase += texture.indexCount;
 			}
 		}
 		if (appState.Scene.viewmodels.last >= 0)
