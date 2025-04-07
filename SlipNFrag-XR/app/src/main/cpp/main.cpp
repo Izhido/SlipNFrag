@@ -235,9 +235,11 @@ void android_main(struct android_app* app)
 		VkPhysicalDevice vulkanPhysicalDevice = VK_NULL_HANDLE;
 		uint32_t queueFamilyIndex = 0;
 
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
 		PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
         VkDebugUtilsMessengerEXT vulkanDebugMessenger = VK_NULL_HANDLE;
+#endif
 
 		PFN_xrInitializeLoaderKHR xrInitializeLoaderKHR = nullptr;
 		XrResult res = xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*) (&xrInitializeLoaderKHR));
@@ -488,7 +490,10 @@ void android_main(struct android_app* app)
 		uint32_t vulkanSwapchainSampleCount;
 		{
 			std::vector<const char*> vulkanExtensions;
+
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			vulkanExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
 
 			VkApplicationInfo appInfo { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 			appInfo.pApplicationName = "slipnfrag_xr";
@@ -541,17 +546,15 @@ void android_main(struct android_app* app)
 			CHECK_XRCMD(xrCreateVulkanInstanceKHR(instance, &vulkanCreateInfo, &vulkanInstance, &errCreateVulkanInstance));
 			CHECK_VKCMD(errCreateVulkanInstance);
 
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
             vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
             vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
             VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
-            messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-            messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
-#if !defined(NDEBUG)
-            messengerCreateInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
-            messengerCreateInfo.messageType |= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
-#endif
+            messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+            messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
             messengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
 			CHECK_VKCMD(vkCreateDebugUtilsMessengerEXT(vulkanInstance, &messengerCreateInfo, nullptr, &vulkanDebugMessenger));
+#endif
 
 			XrVulkanGraphicsDeviceGetInfoKHR deviceGetInfo { XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR };
 			deviceGetInfo.systemId = systemId;
@@ -1211,6 +1214,10 @@ void android_main(struct android_app* app)
         appState.FileLoader = new FileLoader(app);
 
         appState.VertexTransform.m[15] = 1;
+
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+		appState.vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(vulkanInstance, "vkSetDebugUtilsObjectNameEXT");
+#endif
 
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
@@ -2930,10 +2937,12 @@ void android_main(struct android_app* app)
 			appState.Device = VK_NULL_HANDLE;
 		}
 
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		if (vulkanDebugMessenger != VK_NULL_HANDLE)
 		{
 			vkDestroyDebugUtilsMessengerEXT(vulkanInstance, vulkanDebugMessenger, nullptr);
 		}
+#endif
 
 		if (vulkanInstance != VK_NULL_HANDLE)
 		{
