@@ -83,8 +83,8 @@ struct Scene
 	Pipeline colored;
 	Pipeline sky;
 	Pipeline skyRGBA;
+	Pipeline controllers;
 	Pipeline floor;
-	Pipeline floorStrip;
     std::vector<VkBuffer> paletteBuffers;
     std::vector<VkBuffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;

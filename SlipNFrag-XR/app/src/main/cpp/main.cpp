@@ -1217,6 +1217,9 @@ void android_main(struct android_app* app)
 
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		appState.vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(vulkanInstance, "vkSetDebugUtilsObjectNameEXT");
+		appState.vkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdBeginDebugUtilsLabelEXT");
+		appState.vkCmdInsertDebugUtilsLabelEXT = (PFN_vkCmdInsertDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdInsertDebugUtilsLabelEXT");
+		appState.vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdEndDebugUtilsLabelEXT");
 #endif
 
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
@@ -2793,8 +2796,8 @@ void android_main(struct android_app* app)
                 vkFreeMemory(appState.Device, appState.Scene.paletteMemory, nullptr);
             }
 
-			appState.Scene.floorStrip.Delete(appState);
 			appState.Scene.floor.Delete(appState);
+			appState.Scene.controllers.Delete(appState);
 			appState.Scene.skyRGBA.Delete(appState);
 			appState.Scene.sky.Delete(appState);
 			appState.Scene.colored.Delete(appState);
