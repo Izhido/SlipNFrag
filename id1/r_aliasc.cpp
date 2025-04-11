@@ -706,6 +706,7 @@ void R_AliasColoredDrawModel (acoloredlight_t *plighting)
 // cache align
     paliashdr = (aliashdr_t *)Mod_Extradata (currententity->model);
     pmdl = (mdl_t *)((byte *)paliashdr + paliashdr->model);
+	r_holey = (currententity->model->flags & MF_HOLEY);
 
     if (pmdl->numverts + ((CACHE_SIZE - 1) / sizeof(finalcoloredvert_t)) + 1 > r_aliasfinalcoloredverts.size())
     {

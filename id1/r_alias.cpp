@@ -37,6 +37,7 @@ trivertx_t		*r_apverts;
 
 // TODO: these probably will go away with optimized rasterization
 mdl_t				*pmdl;
+qboolean			r_holey;
 vec3_t				r_plightvec;
 int					r_ambientlight;
 float				r_shadelight;
@@ -722,6 +723,7 @@ void R_AliasDrawModel (alight_t *plighting)
 // cache align
     paliashdr = (aliashdr_t *)Mod_Extradata (currententity->model);
     pmdl = (mdl_t *)((byte *)paliashdr + paliashdr->model);
+	r_holey = (currententity->model->flags & MF_HOLEY);
 
     if (pmdl->numverts + ((CACHE_SIZE - 1) / sizeof(finalvert_t)) + 1 > r_aliasfinalverts.size())
     {

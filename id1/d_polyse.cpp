@@ -161,6 +161,31 @@ void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts)
 	int		i, z;
 	short	*zbuf;
 
+	if (r_holey)
+	{
+		for (i=0 ; i<numverts ; i++, fv++)
+		{
+		// valid triangle coordinates for filling can include the bottom and
+		// right clip edges, due to the fill rule; these shouldn't be drawn
+			if ((fv->v[0] < r_refdef.vrectright) &&
+				(fv->v[1] < r_refdef.vrectbottom))
+			{
+				int pix = skintable[fv->v[3]>>16][fv->v[2]>>16];
+				if (pix < 255)
+				{
+					z = fv->v[5]>>16;
+					zbuf = zspantable[fv->v[1]] + fv->v[0];
+					if (z >= *zbuf)
+					{
+						*zbuf = z;
+						pix = ((byte *)acolormap)[pix + (fv->v[4] & 0xFF00) ];
+						d_viewbuffer[d_scantable[fv->v[1]] + fv->v[0]] = pix;
+					}
+				}
+			}
+		}
+		return;
+	}
 	for (i=0 ; i<numverts ; i++, fv++)
 	{
 	// valid triangle coordinates for filling can include the bottom and
@@ -378,15 +403,33 @@ split:
 		goto nodraw;
 
 
-	z = new_points[5]>>16;
-	zbuf = zspantable[new_points[1]] + new_points[0];
-	if (z >= *zbuf)
+	if (r_holey)
 	{
-		int		pix;
-		
-		*zbuf = z;
-		pix = d_pcolormap[skintable[new_points[3]>>16][new_points[2]>>16]];
-		d_viewbuffer[d_scantable[new_points[1]] + new_points[0]] = pix;
+		int pix = skintable[new_points[3]>>16][new_points[2]>>16];
+		if (pix < 255)
+		{
+			z = new_points[5]>>16;
+			zbuf = zspantable[new_points[1]] + new_points[0];
+			if (z >= *zbuf)
+			{
+				*zbuf = z;
+				pix = d_pcolormap[pix];
+				d_viewbuffer[d_scantable[new_points[1]] + new_points[0]] = pix;
+			}
+		}
+	}
+	else
+	{
+		z = new_points[5]>>16;
+		zbuf = zspantable[new_points[1]] + new_points[0];
+		if (z >= *zbuf)
+		{
+			int		pix;
+			
+			*zbuf = z;
+			pix = d_pcolormap[skintable[new_points[3]>>16][new_points[2]>>16]];
+			d_viewbuffer[d_scantable[new_points[1]] + new_points[0]] = pix;
+		}
 	}
 
 nodraw:
@@ -635,6 +678,63 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 	int		llight;
 	long long		lzi;
 	short	*lpz;
+
+	if (r_holey)
+	{
+		do
+		{
+			lcount = d_aspancount - pspanpackage->count;
+
+			errorterm += erroradjustup;
+			if (errorterm >= 0)
+			{
+				d_aspancount += d_countextrastep;
+				errorterm -= erroradjustdown;
+			}
+			else
+			{
+				d_aspancount += ubasestep;
+			}
+
+			if (lcount)
+			{
+				lpdest = (byte*)pspanpackage->pdest;
+				lptex = pspanpackage->ptex;
+				lpz = pspanpackage->pz;
+				lsfrac = pspanpackage->sfrac;
+				ltfrac = pspanpackage->tfrac;
+				llight = pspanpackage->light;
+				lzi = pspanpackage->zi;
+
+				do
+				{
+					if (*lptex < 255 && (lzi >> 16) >= *lpz)
+					{
+						*lpdest = ((byte *)acolormap)[*lptex + (llight & 0xFF00)];
+	// gel mapping					*lpdest = gelmap[*lpdest];
+						*lpz = lzi >> 16;
+					}
+					lpdest++;
+					lzi += r_zistepx;
+					lpz++;
+					llight += r_lstepx;
+					lptex += a_ststepxwhole;
+					lsfrac += a_sstepxfrac;
+					lptex += lsfrac >> 16;
+					lsfrac &= 0xFFFF;
+					ltfrac += a_tstepxfrac;
+					if (ltfrac & 0x10000)
+					{
+						lptex += r_affinetridesc.skinwidth;
+						ltfrac &= 0xFFFF;
+					}
+				} while (--lcount);
+			}
+
+			pspanpackage++;
+		} while (pspanpackage->count != -999999);
+		return;
+	}
 
 	do
 	{
