@@ -47,6 +47,7 @@ extern m_state_t m_state;
     NSEventModifierFlags previousModifierFlags;
     NSTrackingArea* trackingArea;
     NSCursor* blankCursor;
+	BOOL stopDrawing;
 }
 
 -(void)viewDidLoad
@@ -238,7 +239,7 @@ extern m_state_t m_state;
 		[NSApplication.sharedApplication.mainWindow close];
 	}
 	
-	if (sys_errormessage.length() > 0)
+	if ([self displaySysErrorIfNeeded])
 	{
 		return;
 	}
@@ -499,7 +500,7 @@ extern m_state_t m_state;
 
 -(BOOL)displaySysErrorIfNeeded
 {
-    if (sys_errormessage.length() > 0)
+    if (!stopDrawing && !sys_errormessage.empty())
     {
         if (sys_nogamedata)
         {
@@ -540,6 +541,7 @@ extern m_state_t m_state;
                 [NSApplication.sharedApplication.mainWindow close];
             }];
         }
+		stopDrawing = true;
         return YES;
     }
     return NO;
