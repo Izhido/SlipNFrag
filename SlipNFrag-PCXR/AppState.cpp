@@ -129,9 +129,9 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 						y++;
 						while ((y % Constants::screenToConsoleMultiplier) != 0)
 						{
-							target += ScreenWidth - width;
-							memcpy(target, target - ScreenWidth, width * sizeof(uint32_t));
-							target += width;
+							target -= width;
+							std::copy(target, target + width, target + ScreenWidth);
+							target += ScreenWidth + width;
 							y++;
 						}
 						target += ScreenWidth - width;
@@ -153,7 +153,7 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 				{
 					found = true;
 					auto leading = ConsoleWidth * ConsoleHeight - count + 1;
-					memset(target, 0, leading * sizeof(uint32_t));
+					std::fill(target, target + leading, 0);
 					target += leading;
 					*target++ = Scene.paletteData[entry];
 					while (count > 0)
@@ -166,14 +166,14 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 			}
 			if (!found)
 			{
-				memset(target, 0, ConsoleWidth * ConsoleHeight * sizeof(uint32_t));
+				std::fill(target, target + ConsoleWidth * ConsoleHeight, 0);
 			}
 			{
 				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
 				for (auto& directRect : DirectRect::directRects)
 				{
-					auto source = directRect.data;
-					auto target = (uint32_t*)(perFrame.stagingBuffer.mapped) + directRect.y * ConsoleWidth + directRect.x;
+					source = directRect.data;
+					target = (uint32_t*)(perFrame.stagingBuffer.mapped) + directRect.y * ConsoleWidth + directRect.x;
 					for (auto y = 0; y < directRect.height; y++)
 					{
 						for (auto x = 0; x < directRect.width; x++)
@@ -299,8 +299,8 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 				{
 					auto width = directRect.width * Constants::screenToConsoleMultiplier;
 					auto height = directRect.height * Constants::screenToConsoleMultiplier;
-					auto source = directRect.data;
-					auto target = (uint32_t*)(perFrame.stagingBuffer.mapped) + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
+					source = directRect.data;
+					target = (uint32_t*)(perFrame.stagingBuffer.mapped) + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
 					auto y = 0;
 					while (y < height)
 					{
@@ -317,9 +317,9 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 						y++;
 						while ((y % Constants::screenToConsoleMultiplier) != 0)
 						{
-							target += ScreenWidth - width;
-							memcpy(target, target - ScreenWidth, width * sizeof(uint32_t));
-							target += width;
+							target -= width;
+							std::copy(target, target + width, target + ScreenWidth);
+							target += ScreenWidth + width;
 							y++;
 						}
 						target += ScreenWidth - width;
@@ -328,18 +328,15 @@ void AppState::RenderScreen(ScreenPerFrame& perFrame)
 			}
 		}
 	}
-	else if (Mode == AppNoGameDataMode)
-	{
-		if (!NoGameDataLoaded)
-		{
-			memcpy(ScreenData.data(), NoGameDataData.data(), NoGameDataData.size() * sizeof(uint32_t));
-			NoGameDataLoaded = true;
-		}
-		memcpy(perFrame.stagingBuffer.mapped, ScreenData.data(), perFrame.stagingBuffer.size);
-	}
 	else
 	{
-		memcpy(perFrame.stagingBuffer.mapped, ScreenData.data(), perFrame.stagingBuffer.size);
+		if (Mode == AppNoGameDataMode && !NoGameDataLoaded)
+		{
+			std::copy(NoGameDataData.data(), NoGameDataData.data() + NoGameDataData.size(), ScreenData.data());
+			NoGameDataLoaded = true;
+		}
+		auto count = (size_t)perFrame.stagingBuffer.size / sizeof(uint32_t);
+		std::copy(ScreenData.data(), ScreenData.data() + count, (uint32_t*)perFrame.stagingBuffer.mapped);
 	}
 }
 

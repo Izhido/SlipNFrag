@@ -109,6 +109,12 @@ struct AppState
 	VkImageMemoryBarrier copyBarrier;
 	VkImageMemoryBarrier submitBarrier;
 	bool NoGameDataLoaded;
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
+	PFN_vkCmdBeginDebugUtilsLabelEXT vkCmdBeginDebugUtilsLabelEXT;
+	PFN_vkCmdInsertDebugUtilsLabelEXT vkCmdInsertDebugUtilsLabelEXT;
+	PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT;
+#endif
 
 	void RenderScreen(ScreenPerFrame& perFrame);
 	void RenderKeyboard(ScreenPerFrame& perFrame);

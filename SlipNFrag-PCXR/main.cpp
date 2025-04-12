@@ -272,9 +272,11 @@ int main(int argc, char* argv[])
 		VkPhysicalDevice vulkanPhysicalDevice = VK_NULL_HANDLE;
 		uint32_t queueFamilyIndex = 0;
 
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
 		PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
         VkDebugUtilsMessengerEXT vulkanDebugMessenger = VK_NULL_HANDLE;
+#endif
 
 		std::vector<std::string> xrInstanceExtensionSources
 		{
@@ -508,7 +510,10 @@ int main(int argc, char* argv[])
 		uint32_t vulkanSwapchainSampleCount;
 		{
 			std::vector<const char*> vulkanExtensions;
+
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			vulkanExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
 
 			VkApplicationInfo appInfo { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 			appInfo.pApplicationName = "slipnfrag_xr";
@@ -561,17 +566,15 @@ int main(int argc, char* argv[])
 			CHECK_XRCMD(xrCreateVulkanInstanceKHR(instance, &vulkanCreateInfo, &vulkanInstance, &errCreateVulkanInstance));
 			CHECK_VKCMD(errCreateVulkanInstance);
 
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
             vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
             vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
             VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
-            messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-            messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
-#if !defined(NDEBUG)
-            messengerCreateInfo.messageSeverity |= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
-            messengerCreateInfo.messageType |= VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
-#endif
+            messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+            messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
             messengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
 			CHECK_VKCMD(vkCreateDebugUtilsMessengerEXT(vulkanInstance, &messengerCreateInfo, nullptr, &vulkanDebugMessenger));
+#endif
 
 			XrVulkanGraphicsDeviceGetInfoKHR deviceGetInfo { XR_TYPE_VULKAN_GRAPHICS_DEVICE_GET_INFO_KHR };
 			deviceGetInfo.systemId = systemId;
@@ -1220,6 +1223,13 @@ int main(int argc, char* argv[])
 
         appState.VertexTransform.m[15] = 1;
 
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+		appState.vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(vulkanInstance, "vkSetDebugUtilsObjectNameEXT");
+		appState.vkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdBeginDebugUtilsLabelEXT");
+		appState.vkCmdInsertDebugUtilsLabelEXT = (PFN_vkCmdInsertDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdInsertDebugUtilsLabelEXT");
+		appState.vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdEndDebugUtilsLabelEXT");
+#endif
+
 		PFN_xrGetAudioOutputDeviceGuidOculus xrGetAudioOutputDeviceGuidOculus = nullptr;
 		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetAudioOutputDeviceGuidOculus", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetAudioOutputDeviceGuidOculus)));
 
@@ -1514,8 +1524,8 @@ int main(int argc, char* argv[])
 				{
 					entry.DeleteOld(appState);
 				}
-				appState.Scene.lightmapsRGB.DeleteOld(appState);
-				appState.Scene.lightmaps.DeleteOld(appState);
+				appState.Scene.lightmapsRGBToDelete.DeleteOld(appState);
+				appState.Scene.lightmapsToDelete.DeleteOld(appState);
 				appState.Scene.indexBuffers.DeleteOld(appState);
 				appState.Scene.aliasBuffers.DeleteOld(appState);
 
@@ -1527,14 +1537,12 @@ int main(int argc, char* argv[])
 					{
 						if (entry.second.lightmap != nullptr)
 						{
-							entry.second.lightmap->next = appState.Scene.lightmaps.oldLightmaps;
-							appState.Scene.lightmaps.oldLightmaps = entry.second.lightmap;
+							appState.Scene.lightmapsToDelete.Dispose(entry.second.lightmap);
 							entry.second.lightmap = nullptr;
 						}
 						if (entry.second.lightmapRGB != nullptr)
 						{
-							entry.second.lightmapRGB->next = appState.Scene.lightmapsRGB.oldLightmaps;
-							appState.Scene.lightmapsRGB.oldLightmaps = entry.second.lightmapRGB;
+							appState.Scene.lightmapsRGBToDelete.Dispose(entry.second.lightmapRGB);
 							entry.second.lightmapRGB = nullptr;
 						}
 					}
@@ -2675,10 +2683,10 @@ int main(int argc, char* argv[])
 			}
 			appState.Scene.surfaceTextures.clear();
 
-			appState.Scene.lightmapsRGB.Delete(appState);
+			appState.Scene.lightmapsRGBToDelete.Delete(appState);
 			appState.Scene.lightmapRGBBuffers.clear();
 
-			appState.Scene.lightmaps.Delete(appState);
+			appState.Scene.lightmapsToDelete.Delete(appState);
 			appState.Scene.lightmapBuffers.clear();
 
 			for (auto& entry : appState.Scene.perSurfaceCache)
@@ -2721,13 +2729,15 @@ int main(int argc, char* argv[])
                 vkFreeMemory(appState.Device, appState.Scene.paletteMemory, nullptr);
             }
 
-			appState.Scene.floorStrip.Delete(appState);
 			appState.Scene.floor.Delete(appState);
+			appState.Scene.controllers.Delete(appState);
 			appState.Scene.skyRGBA.Delete(appState);
 			appState.Scene.sky.Delete(appState);
 			appState.Scene.colored.Delete(appState);
-			appState.Scene.particle.Delete(appState);
+			appState.Scene.particles.Delete(appState);
+			appState.Scene.viewmodelsHoley.Delete(appState);
 			appState.Scene.viewmodels.Delete(appState);
+			appState.Scene.aliasHoley.Delete(appState);
 			appState.Scene.alias.Delete(appState);
 			appState.Scene.sprites.Delete(appState);
 			appState.Scene.turbulentRotatedRGBAColoredLights.Delete(appState);
@@ -2865,10 +2875,12 @@ int main(int argc, char* argv[])
 			appState.Device = VK_NULL_HANDLE;
 		}
 
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		if (vulkanDebugMessenger != VK_NULL_HANDLE)
 		{
 			vkDestroyDebugUtilsMessengerEXT(vulkanInstance, vulkanDebugMessenger, nullptr);
 		}
+#endif
 
 		if (vulkanInstance != VK_NULL_HANDLE)
 		{
