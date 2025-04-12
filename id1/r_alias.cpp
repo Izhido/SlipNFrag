@@ -749,11 +749,17 @@ void R_AliasDrawModel (alight_t *plighting)
 	{
 		if (currententity == &cl.viewent)
 		{
-			D_AddViewmodelToLists (paliashdr, pskindesc, currententity->colormap, r_apverts);
+			if (r_holey)
+				D_AddViewmodelHoleyToLists (paliashdr, pskindesc, r_apverts, currententity);
+			else
+				D_AddViewmodelToLists (paliashdr, pskindesc, r_apverts, currententity);
 		}
 		else
 		{
-			D_AddAliasToLists (paliashdr, pskindesc, currententity->colormap, r_apverts);
+			if (r_holey)
+				D_AddAliasHoleyToLists (paliashdr, pskindesc, r_apverts, currententity);
+			else
+				D_AddAliasToLists (paliashdr, pskindesc, r_apverts, currententity);
 		}
 		return;
 	}

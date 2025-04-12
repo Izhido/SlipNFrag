@@ -36,7 +36,7 @@ D_SpriteDrawSpans
 */
 void D_SpriteDrawSpans (sspan_t *pspan)
 {
-	int			count, spancount, izistep;
+	int			u, v, diff, count, spancount, izistep;
 	int			izi;
 	byte		*pbase, *pdest;
 	fixed16_t	s, t, snext, tnext, sstep, tstep;
@@ -59,13 +59,32 @@ void D_SpriteDrawSpans (sspan_t *pspan)
 
 	do
 	{
-		pdest = (byte *)d_viewbuffer + (screenwidth * pspan->v) + pspan->u;
-		pz = d_pzbuffer + (d_zwidth * pspan->v) + pspan->u;
+		u = pspan->u;
+		v = pspan->v;
+		
+		if (v < r_refdef.vrect.y || v >= r_refdef.vrectbottom)
+			goto NextSpan;
 
 		count = pspan->count;
 
+		diff = r_refdef.vrect.x - u;
+		if (diff > 0)
+		{
+			u += diff;
+			count -= diff;
+		}
+		
+		diff = u + count - r_refdef.vrectright;
+		if (diff > 0)
+		{
+			count -= diff;
+		}
+
 		if (count <= 0)
 			goto NextSpan;
+
+		pdest = (byte *)d_viewbuffer + (screenwidth * pspan->v) + pspan->u;
+		pz = d_pzbuffer + (d_zwidth * pspan->v) + pspan->u;
 
 	// calculate the initial s/z, t/z, 1/z, s, and t and clamp
 		du = (float)pspan->u;

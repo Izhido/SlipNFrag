@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 
@@ -52,7 +52,9 @@ void D_ResetLists ()
 	d_lists.last_turbulent_rotated_rgba_colored_lights = -1;
 	d_lists.last_sprite = -1;
 	d_lists.last_alias = -1;
+	d_lists.last_alias_holey = -1;
 	d_lists.last_viewmodel = -1;
+	d_lists.last_viewmodel_holey = -1;
 	d_lists.last_sky = -1;
 	d_lists.last_sky_rgba = -1;
     d_lists.last_skybox = -1;
@@ -1010,7 +1012,7 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 	alias.count = mdl->numtris * 3;
 }
 
-void D_FillAliasLights (aliashdr_t* aliashdr, trivertx_t* apverts, mdl_t* mdl)
+void D_FillAliasLights (trivertx_t* apverts, mdl_t* mdl)
 {
 	auto vertex = apverts;
 	auto attribute = d_lists.colormapped_attributes.data() + d_lists.last_colormapped_attribute + 1;
@@ -1042,7 +1044,7 @@ void D_FillAliasLights (aliashdr_t* aliashdr, trivertx_t* apverts, mdl_t* mdl)
 	d_lists.last_colormapped_attribute += mdl->numverts;
 }
 
-void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)
+void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity)
 {
 	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 	if (mdl->numtris <= 0)
@@ -1055,11 +1057,11 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 		d_lists.alias.emplace_back();
 	}
 	auto& alias = d_lists.alias[d_lists.last_alias];
-	D_FillAliasData(alias, aliashdr, mdl, skindesc, colormap, apverts);
+	D_FillAliasData(alias, aliashdr, mdl, skindesc, entity->colormap, apverts);
 	vec3_t angles;
-	angles[ROLL] = currententity->angles[ROLL];
-	angles[PITCH] = -currententity->angles[PITCH];
-	angles[YAW] = currententity->angles[YAW];
+	angles[ROLL] = entity->angles[ROLL];
+	angles[PITCH] = -entity->angles[PITCH];
+	angles[YAW] = entity->angles[YAW];
 	vec3_t forward, right, up;
 	AngleVectors (angles, forward, right, up);
 	float tmatrix[3][4] { };
@@ -1076,14 +1078,55 @@ void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* 
 		t2matrix[i][1] = -right[i];
 		t2matrix[i][2] = up[i];
 	}
-	t2matrix[0][3] = currententity->origin[0];
-	t2matrix[1][3] = currententity->origin[1];
-	t2matrix[2][3] = currententity->origin[2];
+	t2matrix[0][3] = entity->origin[0];
+	t2matrix[1][3] = entity->origin[1];
+	t2matrix[2][3] = entity->origin[2];
 	R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
-	D_FillAliasLights(aliashdr, apverts, mdl);
+	D_FillAliasLights(apverts, mdl);
 }
 
-void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts)
+void D_AddAliasHoleyToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity)
+{
+	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
+	if (mdl->numtris <= 0)
+	{
+		return;
+	}
+	d_lists.last_alias_holey++;
+	if (d_lists.last_alias_holey >= d_lists.aliasHoley.size())
+	{
+		d_lists.aliasHoley.emplace_back();
+	}
+	auto& alias = d_lists.aliasHoley[d_lists.last_alias_holey];
+	D_FillAliasData(alias, aliashdr, mdl, skindesc, entity->colormap, apverts);
+	vec3_t angles;
+	angles[ROLL] = entity->angles[ROLL];
+	angles[PITCH] = -entity->angles[PITCH];
+	angles[YAW] = entity->angles[YAW];
+	vec3_t forward, right, up;
+	AngleVectors (angles, forward, right, up);
+	float tmatrix[3][4] { };
+	tmatrix[0][0] = mdl->scale[0];
+	tmatrix[1][1] = mdl->scale[1];
+	tmatrix[2][2] = mdl->scale[2];
+	tmatrix[0][3] = mdl->scale_origin[0];
+	tmatrix[1][3] = mdl->scale_origin[1];
+	tmatrix[2][3] = mdl->scale_origin[2];
+	float t2matrix[3][4] { };
+	for (auto i = 0; i < 3; i++)
+	{
+		t2matrix[i][0] = forward[i];
+		t2matrix[i][1] = -right[i];
+		t2matrix[i][2] = up[i];
+	}
+	t2matrix[0][3] = entity->origin[0];
+	t2matrix[1][3] = entity->origin[1];
+	t2matrix[2][3] = entity->origin[2];
+	R_ConcatTransforms (t2matrix, tmatrix, alias.transform);
+	D_FillAliasLights(apverts, mdl);
+}
+
+void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity)
 {
 	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 	if (mdl->numtris <= 0)
@@ -1096,11 +1139,11 @@ void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 		d_lists.viewmodels.emplace_back();
 	}
 	auto& viewmodel = d_lists.viewmodels[d_lists.last_viewmodel];
-	D_FillAliasData(viewmodel, aliashdr, mdl, skindesc, colormap, apverts);
+	D_FillAliasData(viewmodel, aliashdr, mdl, skindesc, entity->colormap, apverts);
 	vec3_t angles;
-	angles[ROLL] = currententity->angles[ROLL];
-	angles[PITCH] = -currententity->angles[PITCH];
-	angles[YAW] = currententity->angles[YAW];
+	angles[ROLL] = entity->angles[ROLL];
+	angles[PITCH] = -entity->angles[PITCH];
+	angles[YAW] = entity->angles[YAW];
 	vec3_t forward, right, up;
 	AngleVectors (angles, forward, right, up);
 	float tmatrix[3][4] { };
@@ -1117,11 +1160,52 @@ void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, by
 		t2matrix[i][1] = -right[i];
 		t2matrix[i][2] = up[i];
 	}
-	t2matrix[0][3] = currententity->origin[0] + r_modelorg_delta[0];
-	t2matrix[1][3] = currententity->origin[1] + r_modelorg_delta[1];
-	t2matrix[2][3] = currententity->origin[2] + r_modelorg_delta[2];
+	t2matrix[0][3] = entity->origin[0] + r_modelorg_delta[0];
+	t2matrix[1][3] = entity->origin[1] + r_modelorg_delta[1];
+	t2matrix[2][3] = entity->origin[2] + r_modelorg_delta[2];
 	R_ConcatTransforms (t2matrix, tmatrix, viewmodel.transform);
-	D_FillAliasLights(aliashdr, apverts, mdl);
+	D_FillAliasLights(apverts, mdl);
+}
+
+void D_AddViewmodelHoleyToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity)
+{
+	auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
+	if (mdl->numtris <= 0)
+	{
+		return;
+	}
+	d_lists.last_viewmodel_holey++;
+	if (d_lists.last_viewmodel_holey >= d_lists.viewmodelsHoley.size())
+	{
+		d_lists.viewmodelsHoley.emplace_back();
+	}
+	auto& viewmodel = d_lists.viewmodelsHoley[d_lists.last_viewmodel_holey];
+	D_FillAliasData(viewmodel, aliashdr, mdl, skindesc, entity->colormap, apverts);
+	vec3_t angles;
+	angles[ROLL] = entity->angles[ROLL];
+	angles[PITCH] = -entity->angles[PITCH];
+	angles[YAW] = entity->angles[YAW];
+	vec3_t forward, right, up;
+	AngleVectors (angles, forward, right, up);
+	float tmatrix[3][4] { };
+	tmatrix[0][0] = mdl->scale[0];
+	tmatrix[1][1] = mdl->scale[1];
+	tmatrix[2][2] = mdl->scale[2];
+	tmatrix[0][3] = mdl->scale_origin[0];
+	tmatrix[1][3] = mdl->scale_origin[1];
+	tmatrix[2][3] = mdl->scale_origin[2];
+	float t2matrix[3][4] { };
+	for (auto i = 0; i < 3; i++)
+	{
+		t2matrix[i][0] = forward[i];
+		t2matrix[i][1] = -right[i];
+		t2matrix[i][2] = up[i];
+	}
+	t2matrix[0][3] = entity->origin[0] + r_modelorg_delta[0];
+	t2matrix[1][3] = entity->origin[1] + r_modelorg_delta[1];
+	t2matrix[2][3] = entity->origin[2] + r_modelorg_delta[2];
+	R_ConcatTransforms (t2matrix, tmatrix, viewmodel.transform);
+	D_FillAliasLights(apverts, mdl);
 }
 
 void D_AddParticleToLists (particle_t* part)

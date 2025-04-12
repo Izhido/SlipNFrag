@@ -141,7 +141,9 @@ struct dlists_t
 	int last_turbulent_rotated_rgba_colored_lights;
 	int last_sprite;
 	int last_alias;
+	int last_alias_holey;
 	int last_viewmodel;
+	int last_viewmodel_holey;
 	int last_sky;
 	int last_sky_rgba;
     int last_skybox;
@@ -203,7 +205,9 @@ struct dlists_t
 	std::vector<dsurfacerotated_t> turbulent_rotated_rgba_colored_lights;
 	std::vector<dspritedata_t> sprites;
 	std::vector<dalias_t> alias;
+	std::vector<dalias_t> aliasHoley;
 	std::vector<dalias_t> viewmodels;
+	std::vector<dalias_t> viewmodelsHoley;
 	std::vector<dsky_t> sky;
 	std::vector<dsky_t> sky_rgba;
     std::vector<dskybox_t> skyboxes;
@@ -261,8 +265,10 @@ void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, surfcache_s* c
 void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddTurbulentRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
-void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
-void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, byte* colormap, trivertx_t* apverts);
+void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity);
+void D_AddAliasHoleyToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity);
+void D_AddViewmodelToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity);
+void D_AddViewmodelHoleyToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity);
 void D_AddParticleToLists (particle_t* part);
 void D_AddSkyToLists ();
 void D_AddSkyRGBAToLists ();

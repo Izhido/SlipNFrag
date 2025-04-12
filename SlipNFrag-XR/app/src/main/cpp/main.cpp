@@ -2802,7 +2802,9 @@ void android_main(struct android_app* app)
 			appState.Scene.sky.Delete(appState);
 			appState.Scene.colored.Delete(appState);
 			appState.Scene.particles.Delete(appState);
+			appState.Scene.viewmodelsHoley.Delete(appState);
 			appState.Scene.viewmodels.Delete(appState);
+			appState.Scene.aliasHoley.Delete(appState);
 			appState.Scene.alias.Delete(appState);
 			appState.Scene.sprites.Delete(appState);
 			appState.Scene.turbulentRotatedRGBAColoredLights.Delete(appState);

@@ -78,7 +78,9 @@ struct Scene
 	PipelineWithSorted<LoadedSurfaceRotatedColoredLights, SortedSurfaceTexturesWithLightmaps> turbulentRotatedRGBAColoredLights;
 	PipelineWithSorted<LoadedSprite, SortedSurfaceTextures> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;
+	PipelineWithLoaded<LoadedAlias> aliasHoley;
 	PipelineWithLoaded<LoadedAlias> viewmodels;
+	PipelineWithLoaded<LoadedAlias> viewmodelsHoley;
 	Pipeline particles;
 	Pipeline colored;
 	Pipeline sky;

@@ -357,10 +357,14 @@ void Scene::Create(AppState& appState)
     CreateShader(appState, "shaders/alias.vert.spv", &aliasVertex);
     VkShaderModule aliasFragment;
     CreateShader(appState, "shaders/alias.frag.spv", &aliasFragment);
+	VkShaderModule aliasHoleyFragment;
+	CreateShader(appState, "shaders/alias_holey.frag.spv", &aliasHoleyFragment);
     VkShaderModule viewmodelVertex;
     CreateShader(appState, "shaders/viewmodel.vert.spv", &viewmodelVertex);
     VkShaderModule viewmodelFragment;
     CreateShader(appState, "shaders/viewmodel.frag.spv", &viewmodelFragment);
+    VkShaderModule viewmodelHoleyFragment;
+    CreateShader(appState, "shaders/viewmodel_holey.frag.spv", &viewmodelHoleyFragment);
     VkShaderModule particleVertex;
     CreateShader(appState, "shaders/particle.vert.spv", &particleVertex);
     VkShaderModule skyVertex;
@@ -1090,6 +1094,16 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoley.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = aliasHoley.pipelineLayout;
+    stages[1].module = aliasHoleyFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoley.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)aliasHoley.pipeline;
+	pipelineName.pObjectName = ALIAS_HOLEY_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodels.pipelineLayout));
     graphicsPipelineCreateInfo.layout = viewmodels.pipelineLayout;
     stages[0].module = viewmodelVertex;
@@ -1098,6 +1112,16 @@ void Scene::Create(AppState& appState)
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	pipelineName.objectHandle = (uint64_t)viewmodels.pipeline;
 	pipelineName.pObjectName = VIEWMODELS_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodelsHoley.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = viewmodelsHoley.pipelineLayout;
+    stages[1].module = viewmodelHoleyFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodelsHoley.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)viewmodelsHoley.pipeline;
+	pipelineName.pObjectName = VIEWMODELS_HOLEY_NAME;
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
@@ -1195,8 +1219,10 @@ void Scene::Create(AppState& appState)
     vkDestroyShaderModule(appState.Device, skyFragment, nullptr);
     vkDestroyShaderModule(appState.Device, skyVertex, nullptr);
     vkDestroyShaderModule(appState.Device, particleVertex, nullptr);
+    vkDestroyShaderModule(appState.Device, viewmodelHoleyFragment, nullptr);
     vkDestroyShaderModule(appState.Device, viewmodelFragment, nullptr);
     vkDestroyShaderModule(appState.Device, viewmodelVertex, nullptr);
+    vkDestroyShaderModule(appState.Device, aliasHoleyFragment, nullptr);
     vkDestroyShaderModule(appState.Device, aliasFragment, nullptr);
     vkDestroyShaderModule(appState.Device, aliasVertex, nullptr);
     vkDestroyShaderModule(appState.Device, spriteFragment, nullptr);
@@ -2386,7 +2412,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     turbulentRotatedRGBAColoredLights.Allocate(d_lists.last_turbulent_rotated_rgba_colored_lights);
     sprites.Allocate(d_lists.last_sprite);
     alias.Allocate(d_lists.last_alias);
+	aliasHoley.Allocate(d_lists.last_alias_holey);
     viewmodels.Allocate(d_lists.last_viewmodel);
+	viewmodelsHoley.Allocate(d_lists.last_viewmodel_holey);
     lastParticle = (d_lists.last_particle + 1) / 4 - 1;
     lastColoredIndex8 = d_lists.last_colored_index8;
     lastColoredIndex16 = d_lists.last_colored_index16;
@@ -2910,12 +2938,24 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         GetStagingBufferSize(appState, d_lists.alias[i], alias.loaded[i], &colormap, size);
     }
+	previousApverts = nullptr;
+	previousTexture = nullptr;
+	for (auto i = 0; i <= aliasHoley.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.aliasHoley[i], aliasHoley.loaded[i], &colormap, size);
+	}
     previousApverts = nullptr;
     previousTexture = nullptr;
     for (auto i = 0; i <= viewmodels.last; i++)
     {
         GetStagingBufferSize(appState, d_lists.viewmodels[i], viewmodels.loaded[i], &colormap, size);
     }
+	previousApverts = nullptr;
+	previousTexture = nullptr;
+	for (auto i = 0; i <= viewmodelsHoley.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.viewmodelsHoley[i], viewmodelsHoley.loaded[i], &colormap, size);
+	}
 	perFrame.particleBase = sortedVerticesSize;
 	if (lastParticle >= 0)
 	{
