@@ -30,9 +30,9 @@ vertex VertexOut vertexMain(VertexIn inVertex [[stage_in]])
     return outVertex;
 }
 
-fragment half4 fragmentMain(VertexOut input [[stage_in]], texture2d<half> screenTexture [[texture(0)]], texture2d<half> consoleTexture [[texture(1)]], texture1d<float> paletteTexture [[texture(2)]], sampler screenSampler [[sampler(0)]], sampler consoleSampler [[sampler(1)]], sampler paletteSampler [[sampler(2)]])
+fragment half4 fragmentMain(VertexOut input [[stage_in]], texture2d<uint> screenTexture [[texture(0)]], texture2d<uint> consoleTexture [[texture(1)]], texture1d<half> paletteTexture [[texture(2)]], sampler screenSampler [[sampler(0)]], sampler consoleSampler [[sampler(1)]])
 {
-    half consoleEntry = consoleTexture.sample(consoleSampler, input.texCoords)[0];
-    half screenEntry = screenTexture.sample(screenSampler, input.texCoords)[0];
-    return half4(paletteTexture.sample(paletteSampler, (consoleEntry < 1 ? consoleEntry : screenEntry)));
+    auto consoleEntry = consoleTexture.sample(consoleSampler, input.texCoords)[0];
+    auto screenEntry = screenTexture.sample(screenSampler, input.texCoords)[0];
+    return paletteTexture.read(consoleEntry < 255 ? consoleEntry : screenEntry);
 }
