@@ -183,7 +183,7 @@ void D_DrawTurbulentLit8Span (void)
 		light = (int)(light0 + (light1 - light0) * lm_tturb_frac / 0x10000);
 
 		*r_turb_pdest++ = ((unsigned char *)vid.colormap)
-				[(light & 0xFF00) + pix];
+				[(light & VID_CMASK) + pix];
 
 		r_turb_s += r_turb_sstep;
 		r_turb_t += r_turb_tstep;

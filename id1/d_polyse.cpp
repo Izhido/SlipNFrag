@@ -178,7 +178,7 @@ void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts)
 					if (z >= *zbuf)
 					{
 						*zbuf = z;
-						pix = ((byte *)acolormap)[pix + (fv->v[4] & 0xFF00) ];
+						pix = ((byte *)acolormap)[pix + (fv->v[4] & VID_CMASK) ];
 						d_viewbuffer[d_scantable[fv->v[1]] + fv->v[0]] = pix;
 					}
 				}
@@ -201,7 +201,7 @@ void D_PolysetDrawFinalVerts (finalvert_t *fv, int numverts)
 				
 				*zbuf = z;
 				pix = skintable[fv->v[3]>>16][fv->v[2]>>16];
-				pix = ((byte *)acolormap)[pix + (fv->v[4] & 0xFF00) ];
+				pix = ((byte *)acolormap)[pix + (fv->v[4] & VID_CMASK) ];
 				d_viewbuffer[d_scantable[fv->v[1]] + fv->v[0]] = pix;
 			}
 		}
@@ -239,7 +239,7 @@ void D_DrawSubdiv (void)
 			continue;
 		}
 
-		d_pcolormap = &((byte *)acolormap)[index0->v[4] & 0xFF00];
+		d_pcolormap = &((byte *)acolormap)[index0->v[4] & VID_CMASK];
 
 		if (ptri[i].facesfront)
 		{
@@ -710,7 +710,7 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 				{
 					if (*lptex < 255 && (lzi >> 16) >= *lpz)
 					{
-						*lpdest = ((byte *)acolormap)[*lptex + (llight & 0xFF00)];
+						*lpdest = ((byte *)acolormap)[*lptex + (llight & VID_CMASK)];
 	// gel mapping					*lpdest = gelmap[*lpdest];
 						*lpz = lzi >> 16;
 					}
@@ -765,7 +765,7 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 			{
 				if ((lzi >> 16) >= *lpz)
 				{
-					*lpdest = ((byte *)acolormap)[*lptex + (llight & 0xFF00)];
+					*lpdest = ((byte *)acolormap)[*lptex + (llight & VID_CMASK)];
 // gel mapping					*lpdest = gelmap[*lpdest];
 					*lpz = lzi >> 16;
 				}
@@ -1184,7 +1184,7 @@ split:
 		
 		d_pzbuffer[ofs] = new[5];
 		pix = skintable[new[3]>>16][new[2]>>16];
-//		pix = ((byte *)acolormap)[pix + (new[4] & 0xFF00)];
+//		pix = ((byte *)acolormap)[pix + (new[4] & VID_CMASK)];
 		d_viewbuffer[ofs] = pix;
 	}
 

@@ -715,7 +715,7 @@ void R_DrawSurfaceBlock8_mip0 (void)
 			{
 				pix = psource[b];
 				prowdest[b] = ((unsigned char *)vid.colormap)
-						[(light & 0xFF00) + pix];
+						[(light & VID_CMASK) + pix];
 				light += lightstep;
 			}
 	
@@ -765,7 +765,7 @@ void R_DrawSurfaceBlock8_mip1 (void)
 			{
 				pix = psource[b];
 				prowdest[b] = ((unsigned char *)vid.colormap)
-						[(light & 0xFF00) + pix];
+						[(light & VID_CMASK) + pix];
 				light += lightstep;
 			}
 	
@@ -815,7 +815,7 @@ void R_DrawSurfaceBlock8_mip2 (void)
 			{
 				pix = psource[b];
 				prowdest[b] = ((unsigned char *)vid.colormap)
-						[(light & 0xFF00) + pix];
+						[(light & VID_CMASK) + pix];
 				light += lightstep;
 			}
 	
@@ -865,7 +865,7 @@ void R_DrawSurfaceBlock8_mip3 (void)
 			{
 				pix = psource[b];
 				prowdest[b] = ((unsigned char *)vid.colormap)
-						[(light & 0xFF00) + pix];
+						[(light & VID_CMASK) + pix];
 				light += lightstep;
 			}
 	
@@ -907,21 +907,21 @@ void R_DrawSurfaceBlock8_coloredmip0 (void)
 		int lightright_g = r_lightptr[4];
 		int lightright_b = r_lightptr[5];
 		r_lightptr += r_lightwidth;
-		int lightleftstep_r = (r_lightptr[0] - lightleft_r) >> 4;
-		int lightleftstep_g = (r_lightptr[1] - lightleft_g) >> 4;
-		int lightleftstep_b = (r_lightptr[2] - lightleft_b) >> 4;
-		int lightrightstep_r = (r_lightptr[3] - lightright_r) >> 4;
-		int lightrightstep_g = (r_lightptr[4] - lightright_g) >> 4;
-		int lightrightstep_b = (r_lightptr[5] - lightright_b) >> 4;
+		int lightleftstep_r = ((int)r_lightptr[0] - lightleft_r) / 16;
+		int lightleftstep_g = ((int)r_lightptr[1] - lightleft_g) / 16;
+		int lightleftstep_b = ((int)r_lightptr[2] - lightleft_b) / 16;
+		int lightrightstep_r = ((int)r_lightptr[3] - lightright_r) / 16;
+		int lightrightstep_g = ((int)r_lightptr[4] - lightright_g) / 16;
+		int lightrightstep_b = ((int)r_lightptr[5] - lightright_b) / 16;
 
 		for (i=0 ; i<16 ; i++)
 		{
 			lighttemp_r = lightleft_r - lightright_r;
 			lighttemp_g = lightleft_g - lightright_g;
 			lighttemp_b = lightleft_b - lightright_b;
-			lightstep_r = lighttemp_r >> 4;
-			lightstep_g = lighttemp_g >> 4;
-			lightstep_b = lighttemp_b >> 4;
+			lightstep_r = lighttemp_r / 16;
+			lightstep_g = lighttemp_g / 16;
+			lightstep_b = lighttemp_b / 16;
 
 			light_r = lightright_r;
 			light_g = lightright_g;
@@ -992,21 +992,21 @@ void R_DrawSurfaceBlock8_coloredmip1 (void)
 		int lightright_g = r_lightptr[4];
 		int lightright_b = r_lightptr[5];
 		r_lightptr += r_lightwidth;
-		int lightleftstep_r = (r_lightptr[0] - lightleft_r) >> 3;
-		int lightleftstep_g = (r_lightptr[1] - lightleft_g) >> 3;
-		int lightleftstep_b = (r_lightptr[2] - lightleft_b) >> 3;
-		int lightrightstep_r = (r_lightptr[3] - lightright_r) >> 3;
-		int lightrightstep_g = (r_lightptr[4] - lightright_g) >> 3;
-		int lightrightstep_b = (r_lightptr[5] - lightright_b) >> 3;
+		int lightleftstep_r = ((int)r_lightptr[0] - lightleft_r) / 8;
+		int lightleftstep_g = ((int)r_lightptr[1] - lightleft_g) / 8;
+		int lightleftstep_b = ((int)r_lightptr[2] - lightleft_b) / 8;
+		int lightrightstep_r = ((int)r_lightptr[3] - lightright_r) / 8;
+		int lightrightstep_g = ((int)r_lightptr[4] - lightright_g) / 8;
+		int lightrightstep_b = ((int)r_lightptr[5] - lightright_b) / 8;
 
 		for (i=0 ; i<8 ; i++)
 		{
 			lighttemp_r = lightleft_r - lightright_r;
 			lighttemp_g = lightleft_g - lightright_g;
 			lighttemp_b = lightleft_b - lightright_b;
-			lightstep_r = lighttemp_r >> 3;
-			lightstep_g = lighttemp_g >> 3;
-			lightstep_b = lighttemp_b >> 3;
+			lightstep_r = lighttemp_r / 8;
+			lightstep_g = lighttemp_g / 8;
+			lightstep_b = lighttemp_b / 8;
 
 			light_r = lightright_r;
 			light_g = lightright_g;
@@ -1077,21 +1077,21 @@ void R_DrawSurfaceBlock8_coloredmip2 (void)
 		int lightright_g = r_lightptr[4];
 		int lightright_b = r_lightptr[5];
 		r_lightptr += r_lightwidth;
-		int lightleftstep_r = (r_lightptr[0] - lightleft_r) >> 2;
-		int lightleftstep_g = (r_lightptr[1] - lightleft_g) >> 2;
-		int lightleftstep_b = (r_lightptr[2] - lightleft_b) >> 2;
-		int lightrightstep_r = (r_lightptr[3] - lightright_r) >> 2;
-		int lightrightstep_g = (r_lightptr[4] - lightright_g) >> 2;
-		int lightrightstep_b = (r_lightptr[5] - lightright_b) >> 2;
+		int lightleftstep_r = ((int)r_lightptr[0] - lightleft_r) / 4;
+		int lightleftstep_g = ((int)r_lightptr[1] - lightleft_g) / 4;
+		int lightleftstep_b = ((int)r_lightptr[2] - lightleft_b) / 4;
+		int lightrightstep_r = ((int)r_lightptr[3] - lightright_r) / 4;
+		int lightrightstep_g = ((int)r_lightptr[4] - lightright_g) / 4;
+		int lightrightstep_b = ((int)r_lightptr[5] - lightright_b) / 4;
 
 		for (i=0 ; i<4 ; i++)
 		{
 			lighttemp_r = lightleft_r - lightright_r;
 			lighttemp_g = lightleft_g - lightright_g;
 			lighttemp_b = lightleft_b - lightright_b;
-			lightstep_r = lighttemp_r >> 2;
-			lightstep_g = lighttemp_g >> 2;
-			lightstep_b = lighttemp_b >> 2;
+			lightstep_r = lighttemp_r / 4;
+			lightstep_g = lighttemp_g / 4;
+			lightstep_b = lighttemp_b / 4;
 
 			light_r = lightright_r;
 			light_g = lightright_g;
@@ -1162,21 +1162,21 @@ void R_DrawSurfaceBlock8_coloredmip3 (void)
 		int lightright_g = r_lightptr[4];
 		int lightright_b = r_lightptr[5];
 		r_lightptr += r_lightwidth;
-		int lightleftstep_r = (r_lightptr[0] - lightleft_r) >> 1;
-		int lightleftstep_g = (r_lightptr[1] - lightleft_g) >> 1;
-		int lightleftstep_b = (r_lightptr[2] - lightleft_b) >> 1;
-		int lightrightstep_r = (r_lightptr[3] - lightright_r) >> 1;
-		int lightrightstep_g = (r_lightptr[4] - lightright_g) >> 1;
-		int lightrightstep_b = (r_lightptr[5] - lightright_b) >> 1;
+		int lightleftstep_r = ((int)r_lightptr[0] - lightleft_r) / 2;
+		int lightleftstep_g = ((int)r_lightptr[1] - lightleft_g) / 2;
+		int lightleftstep_b = ((int)r_lightptr[2] - lightleft_b) / 2;
+		int lightrightstep_r = ((int)r_lightptr[3] - lightright_r) / 2;
+		int lightrightstep_g = ((int)r_lightptr[4] - lightright_g) / 2;
+		int lightrightstep_b = ((int)r_lightptr[5] - lightright_b) / 2;
 
 		for (i=0 ; i<2 ; i++)
 		{
 			lighttemp_r = lightleft_r - lightright_r;
 			lighttemp_g = lightleft_g - lightright_g;
 			lighttemp_b = lightleft_b - lightright_b;
-			lightstep_r = lighttemp_r >> 1;
-			lightstep_g = lighttemp_g >> 1;
-			lightstep_b = lighttemp_b >> 1;
+			lightstep_r = lighttemp_r / 2;
+			lightstep_g = lighttemp_g / 2;
+			lightstep_b = lighttemp_b / 2;
 
 			light_r = lightright_r;
 			light_g = lightright_g;
