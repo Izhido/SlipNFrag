@@ -734,6 +734,25 @@ void R_AliasColoredDrawModel (acoloredlight_t *plighting)
 	R_AliasColoredSetupLighting (plighting);
 	R_AliasColoredSetupFrame ();
 
+	if (d_uselists)
+	{
+		if (currententity == &cl.viewent)
+		{
+			if (r_holey)
+				D_AddViewmodelHoleyColoredLightsToLists (paliashdr, pskindesc, r_apverts, currententity);
+			else
+				D_AddViewmodelColoredLightsToLists (paliashdr, pskindesc, r_apverts, currententity);
+		}
+		else
+		{
+			if (r_holey)
+				D_AddAliasHoleyColoredLightsToLists (paliashdr, pskindesc, r_apverts, currententity);
+			else
+				D_AddAliasColoredLightsToLists (paliashdr, pskindesc, r_apverts, currententity);
+		}
+		return;
+	}
+
 	if (!currententity->colormap)
 		Sys_Error ("R_AliasColoredDrawModel: !currententity->colormap");
 

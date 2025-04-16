@@ -359,12 +359,24 @@ void Scene::Create(AppState& appState)
     CreateShader(appState, "shaders/alias.frag.spv", &aliasFragment);
 	VkShaderModule aliasHoleyFragment;
 	CreateShader(appState, "shaders/alias_holey.frag.spv", &aliasHoleyFragment);
+	VkShaderModule aliasColoredLightsVertex;
+	CreateShader(appState, "shaders/alias_colored_lights.vert.spv", &aliasColoredLightsVertex);
+	VkShaderModule aliasColoredLightsFragment;
+	CreateShader(appState, "shaders/alias_colored_lights.frag.spv", &aliasColoredLightsFragment);
+	VkShaderModule aliasHoleyColoredLightsFragment;
+	CreateShader(appState, "shaders/alias_holey_colored_lights.frag.spv", &aliasHoleyColoredLightsFragment);
     VkShaderModule viewmodelVertex;
     CreateShader(appState, "shaders/viewmodel.vert.spv", &viewmodelVertex);
     VkShaderModule viewmodelFragment;
     CreateShader(appState, "shaders/viewmodel.frag.spv", &viewmodelFragment);
     VkShaderModule viewmodelHoleyFragment;
     CreateShader(appState, "shaders/viewmodel_holey.frag.spv", &viewmodelHoleyFragment);
+	VkShaderModule viewmodelColoredLightsVertex;
+	CreateShader(appState, "shaders/viewmodel_colored_lights.vert.spv", &viewmodelColoredLightsVertex);
+	VkShaderModule viewmodelColoredLightsFragment;
+	CreateShader(appState, "shaders/viewmodel_colored_lights.frag.spv", &viewmodelColoredLightsFragment);
+	VkShaderModule viewmodelHoleyColoredLightsFragment;
+	CreateShader(appState, "shaders/viewmodel_holey_colored_lights.frag.spv", &viewmodelHoleyColoredLightsFragment);
     VkShaderModule particleVertex;
     CreateShader(appState, "shaders/particle.vert.spv", &particleVertex);
     VkShaderModule skyVertex;
@@ -543,6 +555,27 @@ void Scene::Create(AppState& appState)
     aliasAttributes.vertexInputState.pVertexBindingDescriptions = aliasAttributes.vertexBindings.data();
     aliasAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasAttributes.vertexAttributes.size();
     aliasAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAttributes.vertexAttributes.data();
+
+    PipelineAttributes aliasColoredLightsAttributes { };
+	aliasColoredLightsAttributes.vertexAttributes.resize(3);
+	aliasColoredLightsAttributes.vertexBindings.resize(3);
+	aliasColoredLightsAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8A8_UINT;
+	aliasColoredLightsAttributes.vertexBindings[0].stride = 4 * sizeof(byte);
+	aliasColoredLightsAttributes.vertexAttributes[1].location = 1;
+	aliasColoredLightsAttributes.vertexAttributes[1].binding = 1;
+	aliasColoredLightsAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+	aliasColoredLightsAttributes.vertexBindings[1].binding = 1;
+	aliasColoredLightsAttributes.vertexBindings[1].stride = 2 * sizeof(float);
+	aliasColoredLightsAttributes.vertexAttributes[2].location = 2;
+	aliasColoredLightsAttributes.vertexAttributes[2].binding = 2;
+	aliasColoredLightsAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+	aliasColoredLightsAttributes.vertexBindings[2].binding = 2;
+	aliasColoredLightsAttributes.vertexBindings[2].stride = 3 * sizeof(float);
+	aliasColoredLightsAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	aliasColoredLightsAttributes.vertexInputState.vertexBindingDescriptionCount = aliasColoredLightsAttributes.vertexBindings.size();
+	aliasColoredLightsAttributes.vertexInputState.pVertexBindingDescriptions = aliasColoredLightsAttributes.vertexBindings.data();
+	aliasColoredLightsAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasColoredLightsAttributes.vertexAttributes.size();
+	aliasColoredLightsAttributes.vertexInputState.pVertexAttributeDescriptions = aliasColoredLightsAttributes.vertexAttributes.data();
 
     PipelineAttributes particleAttributes { };
     particleAttributes.vertexAttributes.resize(1);
@@ -1104,8 +1137,37 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+	pipelineLayoutCreateInfo.setLayoutCount = 2;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = 21 * sizeof(float);
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasColoredLights.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = aliasColoredLights.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasColoredLightsAttributes.vertexInputState;
+	stages[0].module = aliasColoredLightsVertex;
+    stages[1].module = aliasColoredLightsFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasColoredLights.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)aliasColoredLights.pipeline;
+	pipelineName.pObjectName = ALIAS_COLORED_LIGHTS_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoleyColoredLights.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = aliasHoleyColoredLights.pipelineLayout;
+    stages[1].module = aliasHoleyColoredLightsFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoleyColoredLights.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)aliasHoleyColoredLights.pipeline;
+	pipelineName.pObjectName = ALIAS_HOLEY_COLORED_LIGHTS_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	pushConstantInfo.size = 16 * sizeof(float);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodels.pipelineLayout));
     graphicsPipelineCreateInfo.layout = viewmodels.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
     stages[0].module = viewmodelVertex;
     stages[1].module = viewmodelFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodels.pipeline));
@@ -1125,7 +1187,33 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+	pipelineLayoutCreateInfo.setLayoutCount = 2;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	pushConstantInfo.size = 21 * sizeof(float);
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodelsColoredLights.pipelineLayout));
+	graphicsPipelineCreateInfo.layout = viewmodelsColoredLights.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasColoredLightsAttributes.vertexInputState;
+	stages[0].module = viewmodelColoredLightsVertex;
+	stages[1].module = viewmodelColoredLightsFragment;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodelsColoredLights.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)viewmodelsColoredLights.pipeline;
+	pipelineName.pObjectName = VIEWMODELS_COLORED_LIGHTS_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodelsHoleyColoredLights.pipelineLayout));
+	graphicsPipelineCreateInfo.layout = viewmodelsHoleyColoredLights.pipelineLayout;
+	stages[1].module = viewmodelHoleyColoredLightsFragment;
+	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodelsHoleyColoredLights.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)viewmodelsHoleyColoredLights.pipeline;
+	pipelineName.pObjectName = VIEWMODELS_HOLEY_COLORED_LIGHTS_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
     pipelineLayoutCreateInfo.setLayoutCount = 1;
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstantInfo.size = 8 * sizeof(float);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particles.pipelineLayout));
     graphicsPipelineCreateInfo.layout = particles.pipelineLayout;
@@ -1219,9 +1307,15 @@ void Scene::Create(AppState& appState)
     vkDestroyShaderModule(appState.Device, skyFragment, nullptr);
     vkDestroyShaderModule(appState.Device, skyVertex, nullptr);
     vkDestroyShaderModule(appState.Device, particleVertex, nullptr);
+    vkDestroyShaderModule(appState.Device, viewmodelHoleyColoredLightsFragment, nullptr);
+    vkDestroyShaderModule(appState.Device, viewmodelColoredLightsFragment, nullptr);
+    vkDestroyShaderModule(appState.Device, viewmodelColoredLightsVertex, nullptr);
     vkDestroyShaderModule(appState.Device, viewmodelHoleyFragment, nullptr);
     vkDestroyShaderModule(appState.Device, viewmodelFragment, nullptr);
     vkDestroyShaderModule(appState.Device, viewmodelVertex, nullptr);
+    vkDestroyShaderModule(appState.Device, aliasHoleyColoredLightsFragment, nullptr);
+    vkDestroyShaderModule(appState.Device, aliasColoredLightsFragment, nullptr);
+    vkDestroyShaderModule(appState.Device, aliasColoredLightsVertex, nullptr);
     vkDestroyShaderModule(appState.Device, aliasHoleyFragment, nullptr);
     vkDestroyShaderModule(appState.Device, aliasFragment, nullptr);
     vkDestroyShaderModule(appState.Device, aliasVertex, nullptr);
@@ -2371,6 +2465,183 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
     }
 }
 
+void Scene::GetStagingBufferSize(AppState& appState, const daliascoloredlights_t& alias, LoadedAliasColoredLights& loaded, VkDeviceSize& size)
+{
+    if (previousApverts != alias.apverts)
+    {
+        auto entry = aliasVertexCache.find(alias.apverts);
+        if (entry == aliasVertexCache.end())
+        {
+            auto vertexSize = 4 * sizeof(byte);
+            loaded.vertices.size = alias.vertex_count * 2 * vertexSize;
+            loaded.vertices.buffer = new SharedMemoryBuffer { };
+            loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
+			aliasBuffers.MoveToFront(loaded.vertices.buffer);
+            size += loaded.vertices.size;
+            loaded.vertices.source = alias.apverts;
+			aliasBuffers.SetupAliasVertices(loaded.vertices);
+            loaded.texCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
+            loaded.texCoords.buffer = new SharedMemoryBuffer { };
+            loaded.texCoords.buffer->CreateVertexBuffer(appState, loaded.texCoords.size);
+			aliasBuffers.MoveToFront(loaded.texCoords.buffer);
+            size += loaded.texCoords.size;
+            loaded.texCoords.source = alias.texture_coordinates;
+            loaded.texCoords.width = alias.width;
+            loaded.texCoords.height = alias.height;
+			aliasBuffers.SetupAliasTexCoords(loaded.texCoords);
+            aliasVertexCache.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
+        }
+        else
+        {
+            loaded.vertices.buffer = entry->second.vertices;
+            loaded.texCoords.buffer = entry->second.texCoords;
+        }
+        previousApverts = alias.apverts;
+        previousVertexBuffer = loaded.vertices.buffer;
+        previousTexCoordsBuffer = loaded.texCoords.buffer;
+    }
+    else
+    {
+        loaded.vertices.buffer = previousVertexBuffer;
+        loaded.texCoords.buffer = previousTexCoordsBuffer;
+    }
+    if (previousTexture != alias.data)
+    {
+        auto entry = aliasTextureCache.find(alias.data);
+        if (entry == aliasTextureCache.end())
+        {
+            auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
+            auto texture = new SharedMemoryTexture { };
+            texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+            textures.MoveToFront(texture);
+            loaded.texture.size = alias.size;
+            size += loaded.texture.size;
+            loaded.texture.texture = texture;
+            loaded.texture.source = alias.data;
+            loaded.texture.mips = 1;
+            textures.Setup(loaded.texture);
+            aliasTextureCache.insert({ alias.data, texture });
+        }
+        else
+        {
+            loaded.texture.texture = entry->second;
+            loaded.texture.index = 0;
+        }
+        previousTexture = alias.data;
+        previousSharedMemoryTexture = loaded.texture.texture;
+    }
+    else
+    {
+        loaded.texture.texture = previousSharedMemoryTexture;
+        loaded.texture.index = 0;
+    }
+    auto entry = aliasIndexCache.find(alias.aliashdr);
+    if (entry == aliasIndexCache.end())
+    {
+        auto aliashdr = (aliashdr_t *)alias.aliashdr;
+        auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
+        auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
+        auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
+        unsigned int maxIndex = 0;
+        for (auto i = 0; i < mdl->numtris; i++)
+        {
+            auto v0 = triangle->vertindex[0];
+            auto v1 = triangle->vertindex[1];
+            auto v2 = triangle->vertindex[2];
+            auto v0back = (((stverts[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+            auto v1back = (((stverts[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+            auto v2back = (((stverts[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
+            maxIndex = std::max(maxIndex, (unsigned int)(v0 * 2 + (v0back ? 1 : 0)));
+            maxIndex = std::max(maxIndex, (unsigned int)(v1 * 2 + (v1back ? 1 : 0)));
+            maxIndex = std::max(maxIndex, (unsigned int)(v2 * 2 + (v2back ? 1 : 0)));
+            triangle++;
+        }
+        if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
+        {
+            loaded.indices.size = alias.count;
+            if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
+            {
+                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+                loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
+                indexBuffers.MoveToFront(loaded.indices.indices.buffer);
+                latestIndexBuffer8 = loaded.indices.indices.buffer;
+                usedInLatestIndexBuffer8 = 0;
+            }
+            else
+            {
+                loaded.indices.indices.buffer = latestIndexBuffer8;
+            }
+            loaded.indices.indices.offset = usedInLatestIndexBuffer8;
+            usedInLatestIndexBuffer8 += loaded.indices.size;
+            size += loaded.indices.size;
+            loaded.indices.source = alias.aliashdr;
+            loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
+            loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
+            indexBuffers.SetupAliasIndices8(loaded.indices);
+        }
+        else if (maxIndex < UPPER_16BIT_LIMIT)
+        {
+            loaded.indices.size = alias.count * sizeof(uint16_t);
+            if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
+            {
+                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+                loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
+                indexBuffers.MoveToFront(loaded.indices.indices.buffer);
+                latestIndexBuffer16 = loaded.indices.indices.buffer;
+                usedInLatestIndexBuffer16 = 0;
+            }
+            else
+            {
+                loaded.indices.indices.buffer = latestIndexBuffer16;
+            }
+            loaded.indices.indices.offset = usedInLatestIndexBuffer16;
+            usedInLatestIndexBuffer16 += loaded.indices.size;
+            size += loaded.indices.size;
+            loaded.indices.source = alias.aliashdr;
+            loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
+            loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
+            indexBuffers.SetupAliasIndices16(loaded.indices);
+        }
+        else
+        {
+            loaded.indices.size = alias.count * sizeof(uint32_t);
+            if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
+            {
+                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+                loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
+                indexBuffers.MoveToFront(loaded.indices.indices.buffer);
+                latestIndexBuffer32 = loaded.indices.indices.buffer;
+                usedInLatestIndexBuffer32 = 0;
+            }
+            else
+            {
+                loaded.indices.indices.buffer = latestIndexBuffer32;
+            }
+            loaded.indices.indices.offset = usedInLatestIndexBuffer32;
+            usedInLatestIndexBuffer32 += loaded.indices.size;
+            size += loaded.indices.size;
+            loaded.indices.source = alias.aliashdr;
+            loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
+            loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
+            indexBuffers.SetupAliasIndices32(loaded.indices);
+        }
+        aliasIndexCache.insert({ alias.aliashdr, loaded.indices.indices });
+    }
+    else
+    {
+        loaded.indices.indices = entry->second;
+    }
+    loaded.firstAttribute = alias.first_attribute;
+    loaded.count = alias.count;
+    for (auto j = 0; j < 3; j++)
+    {
+        for (auto i = 0; i < 4; i++)
+        {
+            loaded.transform[j][i] = alias.transform[j][i];
+        }
+    }
+}
+
 VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 {
 	frameCount++;
@@ -2412,9 +2683,13 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     turbulentRotatedRGBAColoredLights.Allocate(d_lists.last_turbulent_rotated_rgba_colored_lights);
     sprites.Allocate(d_lists.last_sprite);
     alias.Allocate(d_lists.last_alias);
+	aliasColoredLights.Allocate(d_lists.last_alias_colored_lights);
 	aliasHoley.Allocate(d_lists.last_alias_holey);
+	aliasHoleyColoredLights.Allocate(d_lists.last_alias_holey_colored_lights);
     viewmodels.Allocate(d_lists.last_viewmodel);
+	viewmodelsColoredLights.Allocate(d_lists.last_viewmodel_colored_lights);
 	viewmodelsHoley.Allocate(d_lists.last_viewmodel_holey);
+	viewmodelsHoleyColoredLights.Allocate(d_lists.last_viewmodel_holey_colored_lights);
     lastParticle = (d_lists.last_particle + 1) / 4 - 1;
     lastColoredIndex8 = d_lists.last_colored_index8;
     lastColoredIndex16 = d_lists.last_colored_index16;
@@ -2940,9 +3215,21 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
 	previousApverts = nullptr;
 	previousTexture = nullptr;
+	for (auto i = 0; i <= aliasColoredLights.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.alias_colored_lights[i], aliasColoredLights.loaded[i], size);
+	}
+	previousApverts = nullptr;
+	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasHoley.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.aliasHoley[i], aliasHoley.loaded[i], &colormap, size);
+		GetStagingBufferSize(appState, d_lists.alias_holey[i], aliasHoley.loaded[i], &colormap, size);
+	}
+	previousApverts = nullptr;
+	previousTexture = nullptr;
+	for (auto i = 0; i <= aliasHoleyColoredLights.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.alias_holey_colored_lights[i], aliasHoleyColoredLights.loaded[i], size);
 	}
     previousApverts = nullptr;
     previousTexture = nullptr;
@@ -2950,11 +3237,23 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         GetStagingBufferSize(appState, d_lists.viewmodels[i], viewmodels.loaded[i], &colormap, size);
     }
+    previousApverts = nullptr;
+    previousTexture = nullptr;
+    for (auto i = 0; i <= viewmodelsColoredLights.last; i++)
+    {
+        GetStagingBufferSize(appState, d_lists.viewmodels_colored_lights[i], viewmodelsColoredLights.loaded[i], size);
+    }
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= viewmodelsHoley.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.viewmodelsHoley[i], viewmodelsHoley.loaded[i], &colormap, size);
+		GetStagingBufferSize(appState, d_lists.viewmodels_holey[i], viewmodelsHoley.loaded[i], &colormap, size);
+	}
+	previousApverts = nullptr;
+	previousTexture = nullptr;
+	for (auto i = 0; i <= viewmodelsHoleyColoredLights.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.viewmodels_holey_colored_lights[i], viewmodelsHoleyColoredLights.loaded[i], size);
 	}
 	perFrame.particleBase = sortedVerticesSize;
 	if (lastParticle >= 0)
@@ -3049,8 +3348,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		skyAttributesSize += appState.Scene.loadedSkyRGBA.count * 2 * sizeof(float);
 	}
-    colormappedLightsSize = (d_lists.last_colormapped_attribute + 1) * sizeof(float);
-    attributesSize = floorAttributesSize + controllerAttributesSize + skyAttributesSize + colormappedLightsSize;
+	aliasLightsSize = (d_lists.last_alias_light + 1) * sizeof(float);
+    attributesSize = floorAttributesSize + controllerAttributesSize + skyAttributesSize + aliasLightsSize;
     if (attributesSize > 0)
     {
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);

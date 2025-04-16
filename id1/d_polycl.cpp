@@ -5,8 +5,6 @@
 #include "r_local.h"
 #include "d_local.h"
 
-#define VID_CMAX (255 * 64 - 1)
-
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {
 	void			*pdest;

@@ -17,7 +17,7 @@ layout(push_constant) uniform Transforms
 layout(location = 0) in uvec4 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
 layout(location = 2) in float vertexLight;
-layout(location = 0) out mediump vec4 fragmentData;
+layout(location = 0) out vec4 fragmentData;
 
 void main(void)
 {

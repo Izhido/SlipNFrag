@@ -78,9 +78,13 @@ struct Scene
 	PipelineWithSorted<LoadedSurfaceRotatedColoredLights, SortedSurfaceTexturesWithLightmaps> turbulentRotatedRGBAColoredLights;
 	PipelineWithSorted<LoadedSprite, SortedSurfaceTextures> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;
+	PipelineWithLoaded<LoadedAliasColoredLights> aliasColoredLights;
 	PipelineWithLoaded<LoadedAlias> aliasHoley;
+	PipelineWithLoaded<LoadedAliasColoredLights> aliasHoleyColoredLights;
 	PipelineWithLoaded<LoadedAlias> viewmodels;
+	PipelineWithLoaded<LoadedAliasColoredLights> viewmodelsColoredLights;
 	PipelineWithLoaded<LoadedAlias> viewmodelsHoley;
+	PipelineWithLoaded<LoadedAliasColoredLights> viewmodelsHoleyColoredLights;
 	Pipeline particles;
 	Pipeline colored;
 	Pipeline sky;
@@ -142,7 +146,7 @@ struct Scene
 	VkDeviceSize floorAttributesSize;
 	VkDeviceSize controllerAttributesSize;
 	VkDeviceSize skyAttributesSize;
-	VkDeviceSize colormappedLightsSize;
+	VkDeviceSize aliasLightsSize;
 	VkDeviceSize attributesSize;
 	VkDeviceSize coloredColorsSize;
 	VkDeviceSize colorsSize;
@@ -201,6 +205,7 @@ struct Scene
 	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const daliascoloredlights_t& alias, LoadedAliasColoredLights& loaded, VkDeviceSize& size);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);
 	void Reset(AppState& appState);
 };

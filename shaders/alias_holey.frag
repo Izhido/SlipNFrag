@@ -20,12 +20,12 @@ void main()
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
 	uvec4 lowEntry = textureLod(fragmentTexture, fragmentData.xy, mip.x);
 	uvec4 highEntry = textureLod(fragmentTexture, fragmentData.xy, mip.y);
-	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowEntry.x, fragmentData.z), 0);
-	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x, fragmentData.z), 0);
-	if (lowColormapped.x == 255 || highColormapped.x == 255)
+	if (lowEntry.x == 255 || highEntry.x == 255)
 	{
 		discard;
 	}
+	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowEntry.x, fragmentData.z), 0);
+	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x, fragmentData.z), 0);
 	vec4 lowColor = palette[lowColormapped.x];
 	vec4 highColor = palette[highColormapped.x];
 	outColor = mix(lowColor, highColor, level.y - mip.x);

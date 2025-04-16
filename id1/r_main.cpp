@@ -608,7 +608,7 @@ void R_DrawEntitiesOnList (void)
 			VectorCopy (currententity->origin, r_entorigin);
 			VectorSubtract (r_origin, r_entorigin, modelorg);
 
-			if (!d_uselists && cl.worldmodel->lightRGBdata != NULL && currententity->colormap == vid.colormap)
+			if (cl.worldmodel->lightRGBdata != NULL)
 			{
 			// see if the bounding box lets us trivially reject, also sets
 			// trivial accept status

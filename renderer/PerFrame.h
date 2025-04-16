@@ -78,7 +78,7 @@ struct PerFrame
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
-	static void SetPushConstants(const LoadedAlias& alias, float pushConstants[]);
-	static void SetTintPushConstants(float pushConstants[]);
+	static void SetPushConstants(const LoadedAliasColoredLights& alias, float pushConstants[]);
+	static void SetTintPushConstants(float pushConstants[], size_t offset = 0);
 	void Render(AppState& appState, uint32_t swapchainImageIndex);
 };
