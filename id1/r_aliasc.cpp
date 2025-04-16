@@ -525,19 +525,19 @@ void R_AliasColoredPrepareUnclippedPoints (void)
 // FIXME: just use pfinalverts directly?
 	fv = pfinalcoloredverts;
 
-	if (R_AliasColoredTransformAndProjectFinalVerts (fv, pstverts))
-	{
-		if (r_affinetridesc.drawtype)
-			D_PolysetDrawFinalColoredVerts (fv, r_anumverts);
+	if (!R_AliasColoredTransformAndProjectFinalVerts (fv, pstverts))
+		return;
 
-		r_affinetridesc.pfinalverts = NULL;
-		r_affinetridesc.pfinalcoloredverts = pfinalcoloredverts;
-		r_affinetridesc.ptriangles = (mtriangle_t *)
-				((byte *)paliashdr + paliashdr->triangles);
-		r_affinetridesc.numtriangles = pmdl->numtris;
+	if (r_affinetridesc.drawtype)
+		D_PolysetDrawFinalColoredVerts (fv, r_anumverts);
 
-		D_PolysetDraw ();
-	}
+	r_affinetridesc.pfinalverts = NULL;
+	r_affinetridesc.pfinalcoloredverts = pfinalcoloredverts;
+	r_affinetridesc.ptriangles = (mtriangle_t *)
+			((byte *)paliashdr + paliashdr->triangles);
+	r_affinetridesc.numtriangles = pmdl->numtris;
+
+	D_PolysetDraw ();
 }
 
 /*
@@ -606,9 +606,18 @@ void R_AliasColoredSetupLighting (acoloredlight_t *plighting)
 
 // guarantee that no vertex will ever be lit below LIGHT_MIN, so we don't have
 // to clamp off the bottom
-	r_ambientcoloredlight.color[0] = plighting->ambientlight.color[0] << 8;
-	r_ambientcoloredlight.color[1] = plighting->ambientlight.color[1] << 8;
-	r_ambientcoloredlight.color[2] = plighting->ambientlight.color[2] << 8;
+	r_ambientcoloredlight = plighting->ambientlight;
+
+	if (r_ambientcoloredlight.color[0] < LIGHT_MIN)
+		r_ambientcoloredlight.color[0] = LIGHT_MIN;
+	if (r_ambientcoloredlight.color[1] < LIGHT_MIN)
+		r_ambientcoloredlight.color[1] = LIGHT_MIN;
+	if (r_ambientcoloredlight.color[2] < LIGHT_MIN)
+		r_ambientcoloredlight.color[2] = LIGHT_MIN;
+
+	r_ambientcoloredlight.color[0] = (255 - r_ambientcoloredlight.color[0]) << VID_CBITS;
+	r_ambientcoloredlight.color[1] = (255 - r_ambientcoloredlight.color[1]) << VID_CBITS;
+	r_ambientcoloredlight.color[2] = (255 - r_ambientcoloredlight.color[2]) << VID_CBITS;
 
 	if (r_ambientcoloredlight.color[0] < LIGHT_MIN)
 		r_ambientcoloredlight.color[0] = LIGHT_MIN;

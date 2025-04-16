@@ -5,6 +5,8 @@
 #include "r_local.h"
 #include "d_local.h"
 
+#define VID_CMAX (255 * 64 - 1)
+
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {
 	void			*pdest;
@@ -154,9 +156,12 @@ void D_PolysetDrawFinalColoredVerts (finalcoloredvert_t *fv, int numverts)
 						if (pix < 224)
 						{
 							auto pal = abasepal + pix*3;
-							auto rcomp = ((fv->v[4] * (*pal++)) >> 15) & 511;
-							auto gcomp = ((fv->v[5] * (*pal++)) >> 15) & 511;
-							auto bcomp = ((fv->v[6] * (*pal)) >> 15) & 511;
+							auto r = VID_CMAX - fv->v[4]; if (r < 0) r = 0;
+							auto g = VID_CMAX - fv->v[5]; if (g < 0) g = 0;
+							auto b = VID_CMAX - fv->v[6]; if (b < 0) b = 0;
+							auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+							auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+							auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
 							if (rcomp > 255) rcomp = 255;
 							if (gcomp > 255) gcomp = 255;
 							if (bcomp > 255) bcomp = 255;
@@ -188,9 +193,12 @@ void D_PolysetDrawFinalColoredVerts (finalcoloredvert_t *fv, int numverts)
 				if (pix < 224)
 				{
 					auto pal = abasepal + pix*3;
-					auto rcomp = ((fv->v[4] * (*pal++)) >> 15) & 511;
-					auto gcomp = ((fv->v[5] * (*pal++)) >> 15) & 511;
-					auto bcomp = ((fv->v[6] * (*pal)) >> 15) & 511;
+					auto r = VID_CMAX - fv->v[4]; if (r < 0) r = 0;
+					auto g = VID_CMAX - fv->v[5]; if (g < 0) g = 0;
+					auto b = VID_CMAX - fv->v[6]; if (b < 0) b = 0;
+					auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+					auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+					auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
 					if (rcomp > 255) rcomp = 255;
 					if (gcomp > 255) gcomp = 255;
 					if (bcomp > 255) bcomp = 255;
@@ -417,9 +425,12 @@ split:
 				if (pix < 224)
 				{
 					auto pal = abasepal + pix*3;
-					auto rcomp = ((new_points[4] * (*pal++)) >> 15) & 511;
-					auto gcomp = ((new_points[5] * (*pal++)) >> 15) & 511;
-					auto bcomp = ((new_points[6] * (*pal)) >> 15) & 511;
+					auto r = VID_CMAX - new_points[4]; if (r < 0) r = 0;
+					auto g = VID_CMAX - new_points[5]; if (g < 0) g = 0;
+					auto b = VID_CMAX - new_points[6]; if (b < 0) b = 0;
+					auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+					auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+					auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
 					if (rcomp > 255) rcomp = 255;
 					if (gcomp > 255) gcomp = 255;
 					if (bcomp > 255) bcomp = 255;
@@ -442,9 +453,12 @@ split:
 			if (pix < 224)
 			{
 				auto pal = abasepal + pix*3;
-				auto rcomp = ((new_points[4] * (*pal++)) >> 15) & 511;
-				auto gcomp = ((new_points[5] * (*pal++)) >> 15) & 511;
-				auto bcomp = ((new_points[6] * (*pal)) >> 15) & 511;
+				auto r = VID_CMAX - new_points[4]; if (r < 0) r = 0;
+				auto g = VID_CMAX - new_points[5]; if (g < 0) g = 0;
+				auto b = VID_CMAX - new_points[6]; if (b < 0) b = 0;
+				auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+				auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+				auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
 				if (rcomp > 255) rcomp = 255;
 				if (gcomp > 255) gcomp = 255;
 				if (bcomp > 255) bcomp = 255;
@@ -673,7 +687,7 @@ void D_PolysetDrawColoredSpans8 (coloredspanpackage_t *pspanpackage)
 	byte	*lptex;
 	int		lsfrac, ltfrac;
 	int		llightr, llightg, llightb;
-	long long lzi;
+	long long		lzi;
 	short	*lpz;
 
 	if (r_holey)
@@ -715,9 +729,12 @@ void D_PolysetDrawColoredSpans8 (coloredspanpackage_t *pspanpackage)
 							if (pix < 224)
 							{
 								auto pal = abasepal + pix*3;
-								auto rcomp = ((llightr * (*pal++)) >> 15) & 511;
-								auto gcomp = ((llightg * (*pal++)) >> 15) & 511;
-								auto bcomp = ((llightb * (*pal)) >> 15) & 511;
+								auto r = VID_CMAX - llightr; if (r < 0) r = 0;
+								auto g = VID_CMAX - llightg; if (g < 0) g = 0;
+								auto b = VID_CMAX - llightb; if (b < 0) b = 0;
+								auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+								auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+								auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
 								if (rcomp > 255) rcomp = 255;
 								if (gcomp > 255) gcomp = 255;
 								if (bcomp > 255) bcomp = 255;
@@ -787,9 +804,12 @@ void D_PolysetDrawColoredSpans8 (coloredspanpackage_t *pspanpackage)
 					if (pix < 224)
 					{
 						auto pal = abasepal + pix*3;
-						auto rcomp = ((llightr * (*pal++)) >> 15) & 511;
-						auto gcomp = ((llightg * (*pal++)) >> 15) & 511;
-						auto bcomp = ((llightb * (*pal)) >> 15) & 511;
+						auto r = VID_CMAX - llightr; if (r < 0) r = 0;
+						auto g = VID_CMAX - llightg; if (g < 0) g = 0;
+						auto b = VID_CMAX - llightb; if (b < 0) b = 0;
+						auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+						auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+						auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
 						if (rcomp > 255) rcomp = 255;
 						if (gcomp > 255) gcomp = 255;
 						if (bcomp > 255) bcomp = 255;
