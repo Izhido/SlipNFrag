@@ -612,11 +612,20 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 		if (ent->baseline.modelindex != ent->v.modelindex)
 			bits |= U_MODEL;
 
+		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION && pr_alpha_ofs >= 0)
+			bits |= U_ALPHA;
+
+		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION && pr_scale_ofs >= 0)
+			bits |= U_SCALE;
+
 		if (e >= 256)
 			bits |= U_LONGENTITY;
 			
 		if (bits >= 256)
 			bits |= U_MOREBITS;
+
+		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION && bits >= 65536)
+			bits |= U_EVENMOREBITS;
 
 	//
 	// write the message
@@ -631,6 +640,8 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 			
 			if (bits & U_MOREBITS)
 				MSG_WriteByte (msg, bits>>8);
+			if (bits & U_EVENMOREBITS)
+				MSG_WriteByte (msg, bits>>16);
 			MSG_WriteLongAsString(msg, e);
 			
 			if (bits & U_MODEL)
@@ -655,6 +666,10 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 				MSG_WriteFloat (msg, ent->v.origin[2]);
 			if (bits & U_ANGLE3)
 				MSG_WriteFloat(msg, ent->v.angles[2]);
+			if (bits & U_ALPHA)
+				MSG_WriteByte (msg, ((eval_t *)((char *)&ent->v + pr_alpha_ofs*4))->_int);
+			if (bits & U_SCALE)
+				MSG_WriteByte (msg, ((eval_t *)((char *)&ent->v + pr_scale_ofs*4))->_int);
 
 			msg->maxsize = oldmaxsize;
 			if (oldmaxsize > 0 && msg->cursize > oldmaxsize)
@@ -792,10 +807,8 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 #ifdef QUAKE2
 	items = (int)ent->v.items | ((int)ent->v.items2 << 23);
 #else
-	val = GetEdictFieldValue(ent, "items2");
-
-	if (val)
-		items = (int)ent->v.items | ((int)val->_float << 23);
+	if (pr_items2_ofs >= 0)
+		items = (int)ent->v.items | ((int)((eval_t *)((char *)&ent->v + pr_items2_ofs*4))->_float << 23);
 	else
 		items = (int)ent->v.items | ((int)pr_global_struct->serverflags << 28);
 #endif
@@ -1179,6 +1192,24 @@ void SV_CreateBaseline (void)
 			svent->baseline.modelindex =
 				SV_ModelIndex(pr_strings + svent->v.model);
 		}
+		if (pr_alpha_ofs >= 0)
+		{
+			auto alpha = ((eval_t *)((char *)&svent->v + pr_alpha_ofs*4))->_int;
+			svent->baseline.alpha = alpha;
+		}
+		else
+		{
+			svent->baseline.alpha = 0;
+		}
+		if (pr_scale_ofs >= 0)
+		{
+			auto scale = ((eval_t *)((char *)&svent->v + pr_scale_ofs*4))->_int;
+			svent->baseline.scale = scale;
+		}
+		else
+		{
+			svent->baseline.scale = 0;
+		}
 		
 	//
 	// add to the message
@@ -1207,6 +1238,8 @@ void SV_CreateBaseline (void)
 				MSG_WriteFloat(&sv.signon, svent->baseline.origin[i]);
 				MSG_WriteFloat(&sv.signon, svent->baseline.angles[i]);
 			}
+			MSG_WriteByte(&sv.signon, svent->baseline.alpha);
+			MSG_WriteByte(&sv.signon, svent->baseline.scale);
 		}
 		else
 		{

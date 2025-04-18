@@ -33,6 +33,11 @@ int				pr_edict_size;	// in bytes
 
 unsigned short		pr_crc;
 
+int 			pr_items2_ofs;
+int 			pr_gravity_ofs;
+int 			pr_alpha_ofs;
+int 			pr_scale_ofs;
+
 std::unordered_map<std::string_view, int> pr_fielddefs_index;
 
 int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
@@ -51,16 +56,6 @@ cvar_t	saved1 = {"saved1", "0", true};
 cvar_t	saved2 = {"saved2", "0", true};
 cvar_t	saved3 = {"saved3", "0", true};
 cvar_t	saved4 = {"saved4", "0", true};
-
-#define	MAX_FIELD_LEN	64
-#define GEFV_CACHESIZE	2
-
-typedef struct {
-	ddef_t	*pcache;
-	char	field[MAX_FIELD_LEN];
-} gefv_cache;
-
-static gefv_cache	gefvCache[GEFV_CACHESIZE] = {{NULL, ""}, {NULL, ""}};
 
 /*
 =================
@@ -270,28 +265,9 @@ dfunction_t *ED_FindFunction (const char *name)
 eval_t *GetEdictFieldValue(edict_t *ed, const char *field)
 {
 	ddef_t			*def = NULL;
-	int				i;
-	static int		rep = 0;
-
-	for (i=0 ; i<GEFV_CACHESIZE ; i++)
-	{
-		if (!strcmp(field, gefvCache[i].field))
-		{
-			def = gefvCache[i].pcache;
-			goto Done;
-		}
-	}
 
 	def = ED_FindField (field);
 
-	if (strlen(field) < MAX_FIELD_LEN)
-	{
-		gefvCache[rep].pcache = def;
-		strcpy (gefvCache[rep].field, field);
-		rep ^= 1;
-	}
-
-Done:
 	if (!def)
 		return NULL;
 
@@ -1080,9 +1056,11 @@ void PR_LoadProgs (void)
 {
 	int		i;
 
-// flush the non-C variable lookup cache
-	for (i=0 ; i<GEFV_CACHESIZE ; i++)
-		gefvCache[i].field[0] = 0;
+// cleanup cached entity field offsets:
+	pr_items2_ofs = -1;
+	pr_gravity_ofs = -1;
+	pr_alpha_ofs = -1;
+	pr_scale_ofs = -1;
 
 	CRC_Init (&pr_crc);
 
@@ -1149,7 +1127,24 @@ void PR_LoadProgs (void)
 			Sys_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
 		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
-		pr_fielddefs_index.insert({ pr_strings + pr_fielddefs[i].s_name, i });
+		const char* name = pr_strings + pr_fielddefs[i].s_name;
+		pr_fielddefs_index.insert({ name, i });
+		if (Q_strcmp(name, "items2") == 0)
+		{
+			pr_items2_ofs = pr_fielddefs[i].ofs;
+		}
+		else if (Q_strcmp(name, "gravity") == 0)
+		{
+			pr_gravity_ofs = pr_fielddefs[i].ofs;
+		}
+		else if (Q_strcmp(name, "alpha") == 0)
+		{
+			pr_alpha_ofs = pr_fielddefs[i].ofs;
+		}
+		else if (Q_strcmp(name, "scale") == 0)
+		{
+			pr_scale_ofs = pr_fielddefs[i].ofs;
+		}
 	}
 
 	for (i=0 ; i<progs->numglobals ; i++)

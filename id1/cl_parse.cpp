@@ -592,6 +592,11 @@ void CL_ParseExpandedUpdate (int bits)
 		i = MSG_ReadByte ();
 		bits |= (i<<8);
 	}
+	if (bits & U_EVENMOREBITS)
+	{
+		i = MSG_ReadByte ();
+		bits |= (i<<16);
+	}
 
 	num = MSG_ReadLongFromString();
 
@@ -709,6 +714,12 @@ if (bits&(1<<i))
 	else
 		ent->msg_angles[0][2] = ent->baseline.angles[2];
 
+	if (bits & U_ALPHA)
+		ent->alpha = MSG_ReadByte();
+	
+	if (bits & U_SCALE)
+		ent->scale = MSG_ReadByte();
+	
 	if ( bits & U_NOLERP )
 		ent->forcelink = true;
 
@@ -740,6 +751,8 @@ void CL_ParseBaseline (entity_t *ent)
 		ent->baseline.origin[i] = MSG_ReadCoord ();
 		ent->baseline.angles[i] = MSG_ReadAngle ();
 	}
+	ent->baseline.alpha = 0;
+	ent->baseline.scale = 0;
 }
 
 void CL_ParseExpandedBaseline (entity_t *ent)
@@ -755,6 +768,8 @@ void CL_ParseExpandedBaseline (entity_t *ent)
 		ent->baseline.origin[i] = MSG_ReadFloat ();
 		ent->baseline.angles[i] = MSG_ReadFloat ();
 	}
+	ent->baseline.alpha = MSG_ReadByte();
+	ent->baseline.scale = MSG_ReadByte();
 }
 
 
@@ -1200,7 +1215,7 @@ void CL_ParseServerMessage (void)
 		case svc_version:
 			i = MSG_ReadLong ();
 			if (i != PROTOCOL_VERSION && i != EXPANDED_PROTOCOL_VERSION)
-				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i\n", i, PROTOCOL_VERSION, EXPANDED_PROTOCOL_VERSION);
+				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or 0x%.8x\n", i, PROTOCOL_VERSION, EXPANDED_PROTOCOL_VERSION);
 			cl_protocol_version_from_server = i;
 			break;
 			

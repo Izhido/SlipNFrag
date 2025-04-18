@@ -220,6 +220,8 @@ typedef struct
 	int		colormap;
 	int		skin;
 	int		effects;
+	int		alpha;
+	int		scale;
 } entity_state_t;
 
 

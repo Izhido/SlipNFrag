@@ -1645,6 +1645,24 @@ void PF_makestatic (void)
 			MSG_WriteFloat(&sv.signon, ent->v.origin[i]);
 			MSG_WriteFloat(&sv.signon, ent->v.angles[i]);
 		}
+		if (pr_alpha_ofs >= 0)
+		{
+			auto alpha = ((eval_t *)((char *)&ent->v + pr_alpha_ofs*4))->_int;
+			MSG_WriteByte(&sv.signon, alpha);
+		}
+		else
+		{
+			MSG_WriteByte(&sv.signon, 0);
+		}
+		if (pr_scale_ofs >= 0)
+		{
+			auto scale = ((eval_t *)((char *)&ent->v + pr_scale_ofs*4))->_int;
+			MSG_WriteByte(&sv.signon, scale);
+		}
+		else
+		{
+			MSG_WriteByte(&sv.signon, 0);
+		}
 	}
 	else
 	{

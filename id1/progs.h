@@ -131,6 +131,12 @@ extern	int			pr_xstatement;
 
 extern	unsigned short		pr_crc;
 
+// Cached, often requested entity field offsets:
+extern	int 	pr_items2_ofs;
+extern	int 	pr_gravity_ofs;
+extern	int 	pr_alpha_ofs;
+extern	int 	pr_scale_ofs;
+
 void PR_RunError (const char *error, ...);
 
 void ED_PrintEdicts (void);

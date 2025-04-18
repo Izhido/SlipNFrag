@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // protocol.h -- communications protocols
 
 #define	PROTOCOL_VERSION	15
-#define EXPANDED_PROTOCOL_VERSION   ((int)'S' << 24 | (int)'&' << 16 | (int)'F' << 8 | 15)
+#define EXPANDED_PROTOCOL_VERSION   ((int)'S' << 24 | (int)'&' << 16 | (int)'F' << 8 | 16)
 
 // if the high bit of the servercmd is set, the low bits are fast update flags:
 #define	U_MOREBITS	(1<<0)
@@ -40,6 +40,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	U_SKIN		(1<<12)
 #define	U_EFFECTS	(1<<13)
 #define	U_LONGENTITY	(1<<14)
+#define U_EVENMOREBITS	(1<<15)
+
+// extra svc_update bits sent using the expanded protocol
+#define	U_ALPHA		(1<<16)
+#define	U_SCALE		(1<<17)
 
 
 #define	SU_VIEWHEIGHT	(1<<0)
