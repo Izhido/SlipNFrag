@@ -1186,6 +1186,7 @@ void R_DrawBEntitiesOnList (void)
 static std::vector<edge_t> ledges(4 + NUMSTACKEDGES + 1);
 static std::vector<surf_t> lsurfs(NUMSTACKSURFACES + 1);
 static std::vector<int> lfences(NUMSTACKSURFACES + 1);
+static std::vector<int> lalphasurfs(NUMSTACKSURFACES + 1);
 
 /*
 ================
@@ -1210,6 +1211,7 @@ void R_EdgeDrawing (void)
 	{
 		lsurfs.resize(r_cnumsurfs + 1);
 		lfences.resize(r_cnumsurfs + 1);
+		lalphasurfs.resize(r_cnumsurfs + 1);
 	}
 	r_edges =  ledges.data();
 	surfaces =  lsurfs.data();
@@ -1219,6 +1221,7 @@ void R_EdgeDrawing (void)
 	R_SurfacePatch ();
 	
 	r_fences =  lfences.data();
+	r_alphasurfs =  lalphasurfs.data();
 
 	r_increaseledges = false;
 	r_increaselsurfs = false;

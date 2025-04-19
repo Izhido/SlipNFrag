@@ -75,6 +75,8 @@ extern fixed16_t	r_turb_lm_bbextents, r_turb_lm_bbextentt;
 
 extern int			r_turb_extents0, r_turb_extents1;
 
+extern byte			r_ditherthresholds[];
+
 
 void D_DrawLittleSpans64 (espan_t *pspans);
 void D_DrawBigSpans64 (espan_t *pspans);
@@ -89,6 +91,8 @@ void D_DrawSkyScans8 (espan_t *pspan);
 void D_DrawSkyScans16 (espan_t *pspan);
 
 void D_DrawFenceSpans8 (espan_t *pspans);
+
+void D_DrawAlphaSpans8 (espan_t *pspans, byte alpha);
 
 void R_ShowSubDiv (void);
 extern void (*prealspandrawer)(void);

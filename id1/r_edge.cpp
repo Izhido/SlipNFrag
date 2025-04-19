@@ -40,6 +40,7 @@ edge_t	*r_edges, *edge_p, *edge_max;
 surf_t	*surfaces, *surface_p, *surf_max;
 
 int		*r_fences, *r_fence_p;
+int		*r_alphasurfs, *r_alphasurf_p;
 
 // surfaces are generated in back to front order by the bsp, so if a surf
 // pointer is greater than another one, it should be drawn in front
@@ -138,6 +139,7 @@ void R_BeginEdgeFrame (void)
 	surfaces[1].flags = SURF_DRAWBACKGROUND;
 
 	r_fence_p = r_fences;
+	r_alphasurf_p = r_alphasurfs;
 
 // put the background behind everything in the world
 	if (r_draworder.value)
@@ -430,7 +432,7 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 // start edge yet)
 	if (--surf->spanstate == 0)
 	{
-		if (surf->isfence)
+		if (surf->isfence || surf->isalpha)
 		{
 			span = surf->spans;
 			span->count = (int)(edge->u >> 20) - span->u;
@@ -488,7 +490,7 @@ void R_LeadingEdge (edge_t *edge)
 	// end edge)
 		if (++surf->spanstate == 1)
 		{
-			if (surf->isfence)
+			if (surf->isfence || surf->isalpha)
 			{
 				span = span_p++;
 				span->u = (int)(edge->u >> 20);
@@ -643,6 +645,19 @@ void R_GenerateSpans (void)
 	for (auto fence = r_fences ; fence < r_fence_p ; fence++)
 	{
 		surf = &surfaces[*fence];
+		if (surf->spanstate != 0)
+		{
+			surf->spanstate = 0;
+			if (surf->spans)
+			{
+				surf->spans->count = edge_tail_u_shift20 - surf->spans->u;
+			}
+		}
+	}
+
+	for (auto alphasurf = r_alphasurfs ; alphasurf < r_alphasurf_p ; alphasurf++)
+	{
+		surf = &surfaces[*alphasurf];
 		if (surf->spanstate != 0)
 		{
 			surf->spanstate = 0;

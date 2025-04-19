@@ -100,7 +100,8 @@ typedef struct surf_s
 	float		nearzi;				// nearest 1/z on surface, for mipmapping
 	int	insubmodel;
 	float		d_ziorigin, d_zistepu, d_zistepv;
-	uint32_t	isfence;			// related texture contains "holes" (texels with value 255)
+	uint16_t	isfence;			// related texture contains "holes" (texels with value 255)
+	uint16_t	isalpha;			// related entity has alpha value defined
 	// this should total 80 bytes in 64-bit platforms
 } surf_t;
 
@@ -113,6 +114,7 @@ extern	surf_t	*surfaces, *surface_p, *surf_max;
 //  attached to an edge_t
 
 extern	int		*r_fences, *r_fence_p;
+extern	int		*r_alphasurfs, *r_alphasurf_p;
 
 //===================================================================
 
