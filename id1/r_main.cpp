@@ -1185,8 +1185,7 @@ void R_DrawBEntitiesOnList (void)
 
 static std::vector<edge_t> ledges(4 + NUMSTACKEDGES + 1);
 static std::vector<surf_t> lsurfs(NUMSTACKSURFACES + 1);
-static std::vector<int> lfences(NUMSTACKSURFACES + 1);
-static std::vector<int> lalphasurfs(NUMSTACKSURFACES + 1);
+static std::vector<int> lholeysurfs(NUMSTACKSURFACES + 1);
 
 /*
 ================
@@ -1210,8 +1209,7 @@ void R_EdgeDrawing (void)
 	if (lsurfs.size() < r_cnumsurfs + 1)
 	{
 		lsurfs.resize(r_cnumsurfs + 1);
-		lfences.resize(r_cnumsurfs + 1);
-		lalphasurfs.resize(r_cnumsurfs + 1);
+		lholeysurfs.resize(r_cnumsurfs + 1);
 	}
 	r_edges =  ledges.data();
 	surfaces =  lsurfs.data();
@@ -1220,8 +1218,7 @@ void R_EdgeDrawing (void)
 // is used to indicate no edge attached to surface
 	R_SurfacePatch ();
 	
-	r_fences =  lfences.data();
-	r_alphasurfs =  lalphasurfs.data();
+	r_holeysurfs =  lholeysurfs.data();
 
 	r_increaseledges = false;
 	r_increaselsurfs = false;

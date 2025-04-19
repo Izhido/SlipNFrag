@@ -258,7 +258,7 @@ void D_DrawSurfaces (void)
 	}
 	else
 	{
-		// First, draw all non-fence-originated spans:
+		// First, draw all non-holey spans:
 		for (s = &surfaces[1] ; s<surface_p ; s++)
 		{
 			if (!s->spans)
@@ -451,128 +451,78 @@ void D_DrawSurfaces (void)
 				}
 			}
 		}
-		// Then, draw fence-originated spans:
-		for (auto fence = r_fences ; fence < r_fence_p ; fence++)
+		// Then, draw holey spans (fences, dithered alpha turbulent or regular surfaces):
+		for (auto holey = r_holeysurfs ; holey < r_holeysurf_p ; holey++)
 		{
-			s = &surfaces[*fence];
+			s = &surfaces[*holey];
 
 			if (!s->spans)
 				continue;
 
-			r_drawnpolycount++;
-
-			d_zistepu = s->d_zistepu;
-			d_zistepv = s->d_zistepv;
-			d_ziorigin = s->d_ziorigin;
-
-			// Fence textures are assumed to be referenced only by regular surfaces:
-			if (s->insubmodel)
+			if (s->flags & SURF_DRAWTURB)
 			{
-			// FIXME: we don't want to do all this for every polygon!
-			// TODO: store once at start of frame
-				currententity = s->entity;	//FIXME: make this passed in to
-											// R_RotateBmodel ()
-				VectorSubtract (r_origin, currententity->origin, local_modelorg);
-				TransformVector (local_modelorg, transformed_modelorg);
-
-				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-									// make entity passed in
+				// TODO: Render turbulent holey surfaces here
 			}
-
-			pface = (msurface_t*)s->data;
-			miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip
-			* pface->texinfo->mipadjust);
-
-		// FIXME: make this passed in to D_CacheSurface
-			pcurrentcache = D_CacheSurface (pface, miplevel);
-
-			if (pcurrentcache != nullptr)
+			else
 			{
-				cacheblock = (pixel_t *)pcurrentcache->data;
-				cachewidth = pcurrentcache->width;
+				r_drawnpolycount++;
 
-				D_CalcGradients (pface);
+				d_zistepu = s->d_zistepu;
+				d_zistepv = s->d_zistepv;
+				d_ziorigin = s->d_ziorigin;
 
-				D_DrawFenceSpans8 (s->spans);
-			}
+				// Fence textures are assumed to be referenced only by regular surfaces:
+				if (s->insubmodel)
+				{
+				// FIXME: we don't want to do all this for every polygon!
+				// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+												// R_RotateBmodel ()
+					VectorSubtract (r_origin, currententity->origin, local_modelorg);
+					TransformVector (local_modelorg, transformed_modelorg);
 
-			if (s->insubmodel)
-			{
-			//
-			// restore the old drawing state
-			// FIXME: we don't want to do this every time!
-			// TODO: speed up
-			//
-				currententity = &cl_entities[0];
-				VectorCopy (world_transformed_modelorg,
-							transformed_modelorg);
-				VectorCopy (base_vpn, vpn);
-				VectorCopy (base_vup, vup);
-				VectorCopy (base_vright, vright);
-				VectorCopy (base_modelorg, modelorg);
-				R_TransformFrustum ();
-			}
-		}
-		// And then, draw alpha-affected spans:
-		for (auto alphasurf = r_alphasurfs ; alphasurf < r_alphasurf_p ; alphasurf++)
-		{
-			s = &surfaces[*alphasurf];
+					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+										// make entity passed in
+				}
 
-			if (!s->spans)
-				continue;
+				pface = (msurface_t*)s->data;
+				miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip
+				* pface->texinfo->mipadjust);
 
-			r_drawnpolycount++;
+			// FIXME: make this passed in to D_CacheSurface
+				pcurrentcache = D_CacheSurface (pface, miplevel);
 
-			d_zistepu = s->d_zistepu;
-			d_zistepv = s->d_zistepv;
-			d_ziorigin = s->d_ziorigin;
+				if (pcurrentcache != nullptr)
+				{
+					cacheblock = (pixel_t *)pcurrentcache->data;
+					cachewidth = pcurrentcache->width;
 
-			// Fence textures are assumed to be referenced only by regular surfaces:
-			if (s->insubmodel)
-			{
-			// FIXME: we don't want to do all this for every polygon!
-			// TODO: store once at start of frame
-				currententity = s->entity;	//FIXME: make this passed in to
-											// R_RotateBmodel ()
-				VectorSubtract (r_origin, currententity->origin, local_modelorg);
-				TransformVector (local_modelorg, transformed_modelorg);
+					D_CalcGradients (pface);
 
-				R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-									// make entity passed in
-			}
+					if (s->isfence && s->isalpha)
+						D_DrawFenceAlphaSpans8 (s->spans, s->entity->alpha);
+					else if (s->isfence)
+						D_DrawFenceSpans8 (s->spans);
+					else
+						D_DrawAlphaSpans8 (s->spans, s->entity->alpha);
+				}
 
-			pface = (msurface_t*)s->data;
-			miplevel = D_MipLevelForScale (s->nearzi * scale_for_mip
-			* pface->texinfo->mipadjust);
-
-		// FIXME: make this passed in to D_CacheSurface
-			pcurrentcache = D_CacheSurface (pface, miplevel);
-
-			if (pcurrentcache != nullptr)
-			{
-				cacheblock = (pixel_t *)pcurrentcache->data;
-				cachewidth = pcurrentcache->width;
-
-				D_CalcGradients (pface);
-
-				D_DrawAlphaSpans8 (s->spans, s->entity->alpha);
-			}
-
-			if (s->insubmodel)
-			{
-			//
-			// restore the old drawing state
-			// FIXME: we don't want to do this every time!
-			// TODO: speed up
-			//
-				currententity = &cl_entities[0];
-				VectorCopy (world_transformed_modelorg,
-							transformed_modelorg);
-				VectorCopy (base_vpn, vpn);
-				VectorCopy (base_vup, vup);
-				VectorCopy (base_vright, vright);
-				VectorCopy (base_modelorg, modelorg);
-				R_TransformFrustum ();
+				if (s->insubmodel)
+				{
+				//
+				// restore the old drawing state
+				// FIXME: we don't want to do this every time!
+				// TODO: speed up
+				//
+					currententity = &cl_entities[0];
+					VectorCopy (world_transformed_modelorg,
+								transformed_modelorg);
+					VectorCopy (base_vpn, vpn);
+					VectorCopy (base_vup, vup);
+					VectorCopy (base_vright, vright);
+					VectorCopy (base_modelorg, modelorg);
+					R_TransformFrustum ();
+				}
 			}
 		}
 	}

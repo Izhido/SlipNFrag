@@ -93,6 +93,7 @@ void D_DrawSkyScans16 (espan_t *pspan);
 void D_DrawFenceSpans8 (espan_t *pspans);
 
 void D_DrawAlphaSpans8 (espan_t *pspans, byte alpha);
+void D_DrawFenceAlphaSpans8 (espan_t *pspans, byte alpha);
 
 void R_ShowSubDiv (void);
 extern void (*prealspandrawer)(void);

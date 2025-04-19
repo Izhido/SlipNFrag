@@ -113,8 +113,7 @@ extern	surf_t	*surfaces, *surface_p, *surf_max;
 // surfaces[0] is a dummy, because index 0 is used to indicate no surface
 //  attached to an edge_t
 
-extern	int		*r_fences, *r_fence_p;
-extern	int		*r_alphasurfs, *r_alphasurf_p;
+extern	int		*r_holeysurfs, *r_holeysurf_p;
 
 //===================================================================
 
