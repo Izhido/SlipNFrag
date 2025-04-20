@@ -1647,8 +1647,16 @@ void PF_makestatic (void)
 		}
 		if (pr_alpha_ofs >= 0)
 		{
-			auto alpha = ((eval_t *)((char *)&ent->v + pr_alpha_ofs*4))->_int;
-			MSG_WriteByte(&sv.signon, alpha);
+			auto alpha = ((eval_t *)((char *)&ent->v + pr_alpha_ofs*4))->_float;
+			if (alpha != 0)
+			{
+				alpha = fmin(fmax(1.f + 254.f * alpha, 1.f), 255.f);
+				MSG_WriteByte(&sv.signon, (int)floor(alpha + 0.5f));
+			}
+			else
+			{
+				MSG_WriteByte(&sv.signon, 0);
+			}
 		}
 		else
 		{
@@ -1656,8 +1664,16 @@ void PF_makestatic (void)
 		}
 		if (pr_scale_ofs >= 0)
 		{
-			auto scale = ((eval_t *)((char *)&ent->v + pr_scale_ofs*4))->_int;
-			MSG_WriteByte(&sv.signon, scale);
+			auto scale = ((eval_t *)((char *)&ent->v + pr_scale_ofs*4))->_float;
+			if (scale != 0)
+			{
+				scale = fmin(fmax(1.f + 254.f * scale, 1.f), 255.f);
+				MSG_WriteByte(&sv.signon, (int)floor(scale + 0.5f));
+			}
+			else
+			{
+				MSG_WriteByte(&sv.signon, 0);
+			}
 		}
 		else
 		{

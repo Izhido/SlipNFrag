@@ -667,9 +667,31 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 			if (bits & U_ANGLE3)
 				MSG_WriteFloat(msg, ent->v.angles[2]);
 			if (bits & U_ALPHA)
-				MSG_WriteByte (msg, ((eval_t *)((char *)&ent->v + pr_alpha_ofs*4))->_int);
+			{
+				auto alpha = ((eval_t *)((char *)&ent->v + pr_alpha_ofs*4))->_float;
+				if (alpha != 0)
+				{
+					alpha = fmin(fmax(1.f + 254.f * alpha, 1.f), 255.f);
+					MSG_WriteByte (msg, (int)floor(alpha + 0.5f));
+				}
+				else
+				{
+					MSG_WriteByte (msg, 0);
+				}
+			}
 			if (bits & U_SCALE)
-				MSG_WriteByte (msg, ((eval_t *)((char *)&ent->v + pr_scale_ofs*4))->_int);
+			{
+				auto scale = ((eval_t *)((char *)&ent->v + pr_scale_ofs*4))->_float;
+				if (scale != 0)
+				{
+					scale = fmin(fmax(1.f + 254.f * scale, 1.f), 255.f);
+					MSG_WriteByte (msg, (int)floor(scale + 0.5f));
+				}
+				else
+				{
+					MSG_WriteByte (msg, 0);
+				}
+			}
 
 			msg->maxsize = oldmaxsize;
 			if (oldmaxsize > 0 && msg->cursize > oldmaxsize)
@@ -1194,8 +1216,16 @@ void SV_CreateBaseline (void)
 		}
 		if (pr_alpha_ofs >= 0)
 		{
-			auto alpha = ((eval_t *)((char *)&svent->v + pr_alpha_ofs*4))->_int;
-			svent->baseline.alpha = alpha;
+			auto alpha = ((eval_t *)((char *)&svent->v + pr_alpha_ofs*4))->_float;
+			if (alpha != 0)
+			{
+				alpha = fmin(fmax(1.f + 254.f * alpha, 1.f), 255.f);
+				svent->baseline.alpha = (int)floor(alpha + 0.5f);
+			}
+			else
+			{
+				svent->baseline.alpha = 0;
+			}
 		}
 		else
 		{
@@ -1203,8 +1233,16 @@ void SV_CreateBaseline (void)
 		}
 		if (pr_scale_ofs >= 0)
 		{
-			auto scale = ((eval_t *)((char *)&svent->v + pr_scale_ofs*4))->_int;
-			svent->baseline.scale = scale;
+			auto scale = ((eval_t *)((char *)&svent->v + pr_scale_ofs*4))->_float;
+			if (scale != 0)
+			{
+				scale = fmin(fmax(1.f + 254.f * scale, 1.f), 255.f);
+				svent->baseline.scale = (int)floor(scale + 0.5f);
+			}
+			else
+			{
+				svent->baseline.scale = 0;
+			}
 		}
 		else
 		{

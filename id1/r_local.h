@@ -254,6 +254,7 @@ extern int				numtriangles;
 extern aliashdr_t		*paliashdr;
 extern mdl_t			*pmdl;
 extern qboolean			r_holey;
+extern byte				r_aliasalpha;
 extern float			leftclip, topclip, rightclip, bottomclip;
 extern int				r_acliptype;
 extern finalvert_t		*pfinalverts;

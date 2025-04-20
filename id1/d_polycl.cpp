@@ -13,6 +13,7 @@ typedef struct {
 	byte			*ptex;
     int				sfrac, tfrac, lightr, lightg, lightb;
     long long       zi;
+	int				xpos, ypos;
 } coloredspanpackage_t;
 
 typedef struct {
@@ -66,6 +67,7 @@ extern short			*d_pz;
 extern int				d_sfrac, d_tfrac;
 int						d_lightr, d_lightg, d_lightb;
 extern long long 		d_zi;
+extern int				d_xpos, d_ypos;
 extern int				d_ptexextrastep, d_sfracextrastep;
 extern int				d_tfracextrastep;
 int						d_lightrextrastep, d_lightgextrastep, d_lightbextrastep;
@@ -75,6 +77,7 @@ extern int				d_pdestbasestep, d_ptexbasestep;
 extern int				d_sfracbasestep, d_tfracbasestep;
 extern int				d_ziextrastep, d_zibasestep;
 extern int				d_pzextrastep, d_pzbasestep;
+extern int				d_xposextrastep, d_xposbasestep;
 
 typedef struct {
 	int		quotient;
@@ -136,6 +139,47 @@ void D_PolysetDrawFinalColoredVerts (finalcoloredvert_t *fv, int numverts)
 
 	if (r_holey)
 	{
+		if (r_aliasalpha != 0)
+		{
+			for (i=0 ; i<numverts ; i++, fv++)
+			{
+			// valid triangle coordinates for filling can include the bottom and
+			// right clip edges, due to the fill rule; these shouldn't be drawn
+				if ((fv->v[0] < r_refdef.vrectright) &&
+					(fv->v[1] < r_refdef.vrectbottom))
+				{
+					if (r_aliasalpha >= r_ditherthresholds[(fv->v[1] % 4) * 4 + (fv->v[0] % 4)])
+					{
+						int pix = skintable[fv->v[3]>>16][fv->v[2]>>16];
+						if (pix < 255)
+						{
+							z = fv->v[7]>>16;
+							zbuf = zspantable[fv->v[1]] + fv->v[0];
+							if (z >= *zbuf)
+							{
+								*zbuf = z;
+								if (pix < 224)
+								{
+									auto pal = abasepal + pix*3;
+									auto r = VID_CMAX - fv->v[4]; if (r < 0) r = 0;
+									auto g = VID_CMAX - fv->v[5]; if (g < 0) g = 0;
+									auto b = VID_CMAX - fv->v[6]; if (b < 0) b = 0;
+									auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+									auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+									auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
+									if (rcomp > 255) rcomp = 255;
+									if (gcomp > 255) gcomp = 255;
+									if (bcomp > 255) bcomp = 255;
+									pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+								}
+								d_viewbuffer[d_scantable[fv->v[1]] + fv->v[0]] = pix;
+							}
+						}
+					}
+				}
+			}
+			return;
+		}
 		for (i=0 ; i<numverts ; i++, fv++)
 		{
 		// valid triangle coordinates for filling can include the bottom and
@@ -172,7 +216,46 @@ void D_PolysetDrawFinalColoredVerts (finalcoloredvert_t *fv, int numverts)
 		}
 		return;
 	}
-
+	if (r_aliasalpha != 0)
+	{
+		for (i=0 ; i<numverts ; i++, fv++)
+		{
+		// valid triangle coordinates for filling can include the bottom and
+		// right clip edges, due to the fill rule; these shouldn't be drawn
+			if ((fv->v[0] < r_refdef.vrectright) &&
+				(fv->v[1] < r_refdef.vrectbottom))
+			{
+				if (r_aliasalpha >= r_ditherthresholds[(fv->v[1] % 4) * 4 + (fv->v[0] % 4)])
+				{
+					z = fv->v[7]>>16;
+					zbuf = zspantable[fv->v[1]] + fv->v[0];
+					if (z >= *zbuf)
+					{
+						int		pix;
+						
+						*zbuf = z;
+						pix = skintable[fv->v[3]>>16][fv->v[2]>>16];
+						if (pix < 224)
+						{
+							auto pal = abasepal + pix*3;
+							auto r = VID_CMAX - fv->v[4]; if (r < 0) r = 0;
+							auto g = VID_CMAX - fv->v[5]; if (g < 0) g = 0;
+							auto b = VID_CMAX - fv->v[6]; if (b < 0) b = 0;
+							auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+							auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+							auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
+							if (rcomp > 255) rcomp = 255;
+							if (gcomp > 255) gcomp = 255;
+							if (bcomp > 255) bcomp = 255;
+							pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+						}
+						d_viewbuffer[d_scantable[fv->v[1]] + fv->v[0]] = pix;
+					}
+				}
+			}
+		}
+		return;
+	}
 	for (i=0 ; i<numverts ; i++, fv++)
 	{
 	// valid triangle coordinates for filling can include the bottom and
@@ -412,14 +495,78 @@ split:
 
 	if (r_holey)
 	{
-		int pix = skintable[new_points[3]>>16][new_points[2]>>16];
-		if (pix < 255)
+		if (r_aliasalpha != 0)
+		{
+			if (r_aliasalpha >= r_ditherthresholds[(new_points[1] % 4) * 4 + (new_points[0] % 4)])
+			{
+				int pix = skintable[new_points[3]>>16][new_points[2]>>16];
+				if (pix < 255)
+				{
+					z = new_points[7]>>16;
+					zbuf = zspantable[new_points[1]] + new_points[0];
+					if (z >= *zbuf)
+					{
+						*zbuf = z;
+						if (pix < 224)
+						{
+							auto pal = abasepal + pix*3;
+							auto r = VID_CMAX - new_points[4]; if (r < 0) r = 0;
+							auto g = VID_CMAX - new_points[5]; if (g < 0) g = 0;
+							auto b = VID_CMAX - new_points[6]; if (b < 0) b = 0;
+							auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+							auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+							auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
+							if (rcomp > 255) rcomp = 255;
+							if (gcomp > 255) gcomp = 255;
+							if (bcomp > 255) bcomp = 255;
+							pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+						}
+						d_viewbuffer[d_scantable[new_points[1]] + new_points[0]] = pix;
+					}
+				}
+			}
+		}
+		else
+		{
+			int pix = skintable[new_points[3]>>16][new_points[2]>>16];
+			if (pix < 255)
+			{
+				z = new_points[7]>>16;
+				zbuf = zspantable[new_points[1]] + new_points[0];
+				if (z >= *zbuf)
+				{
+					*zbuf = z;
+					if (pix < 224)
+					{
+						auto pal = abasepal + pix*3;
+						auto r = VID_CMAX - new_points[4]; if (r < 0) r = 0;
+						auto g = VID_CMAX - new_points[5]; if (g < 0) g = 0;
+						auto b = VID_CMAX - new_points[6]; if (b < 0) b = 0;
+						auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+						auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+						auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
+						if (rcomp > 255) rcomp = 255;
+						if (gcomp > 255) gcomp = 255;
+						if (bcomp > 255) bcomp = 255;
+						pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+					}
+					d_viewbuffer[d_scantable[new_points[1]] + new_points[0]] = pix;
+				}
+			}
+		}
+	}
+	else if (r_aliasalpha != 0)
+	{
+		if (r_aliasalpha >= r_ditherthresholds[(new_points[1] % 4) * 4 + (new_points[0] % 4)])
 		{
 			z = new_points[7]>>16;
 			zbuf = zspantable[new_points[1]] + new_points[0];
 			if (z >= *zbuf)
 			{
+				int		pix;
+				
 				*zbuf = z;
+				pix = skintable[new_points[3]>>16][new_points[2]>>16];
 				if (pix < 224)
 				{
 					auto pal = abasepal + pix*3;
@@ -501,6 +648,9 @@ void D_PolysetColoredScanLeftEdge (int height)
 		d_pedgecoloredspanpackage->lightb = d_lightb;
 		d_pedgecoloredspanpackage->zi = d_zi;
 
+		d_pedgecoloredspanpackage->xpos = d_xpos;
+		d_pedgecoloredspanpackage->ypos = d_ypos;
+
 		d_pedgecoloredspanpackage++;
 
 		errorterm += erroradjustup;
@@ -524,6 +674,7 @@ void D_PolysetColoredScanLeftEdge (int height)
 			d_lightg += d_lightgextrastep;
 			d_lightb += d_lightbextrastep;
 			d_zi += d_ziextrastep;
+			d_xpos += d_xposextrastep;
 			errorterm -= erroradjustdown;
 		}
 		else
@@ -545,7 +696,9 @@ void D_PolysetColoredScanLeftEdge (int height)
 			d_lightg += d_lightgbasestep;
 			d_lightb += d_lightbbasestep;
 			d_zi += d_zibasestep;
+			d_xpos += d_xposbasestep;
 		}
+		d_ypos++;
 	} while (--height);
 }
 
@@ -686,10 +839,95 @@ void D_PolysetDrawColoredSpans8 (coloredspanpackage_t *pspanpackage)
 	int		lsfrac, ltfrac;
 	int		llightr, llightg, llightb;
 	long long		lzi;
+	int		lxpos, lypos;
 	short	*lpz;
 
 	if (r_holey)
 	{
+		if (r_aliasalpha != 0)
+		{
+			do
+			{
+				lcount = d_aspancount - pspanpackage->count;
+
+				errorterm += erroradjustup;
+				if (errorterm >= 0)
+				{
+					d_aspancount += d_countextrastep;
+					errorterm -= erroradjustdown;
+				}
+				else
+				{
+					d_aspancount += ubasestep;
+				}
+
+				if (lcount)
+				{
+					lpdest = (byte*)pspanpackage->pdest;
+					lptex = pspanpackage->ptex;
+					lpz = pspanpackage->pz;
+					lsfrac = pspanpackage->sfrac;
+					ltfrac = pspanpackage->tfrac;
+					llightr = pspanpackage->lightr;
+					llightg = pspanpackage->lightg;
+					llightb = pspanpackage->lightb;
+					lzi = pspanpackage->zi;
+					lxpos = pspanpackage->xpos;
+					lypos = (pspanpackage->ypos % 4) * 4;
+
+					do
+					{
+						if (r_aliasalpha >= r_ditherthresholds[lypos + (lxpos % 4)])
+						{
+							auto pix = *lptex;
+							if (pix < 255)
+							{
+								if ((lzi >> 16) >= *lpz)
+								{
+									if (pix < 224)
+									{
+										auto pal = abasepal + pix*3;
+										auto r = VID_CMAX - llightr; if (r < 0) r = 0;
+										auto g = VID_CMAX - llightg; if (g < 0) g = 0;
+										auto b = VID_CMAX - llightb; if (b < 0) b = 0;
+										auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+										auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+										auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
+										if (rcomp > 255) rcomp = 255;
+										if (gcomp > 255) gcomp = 255;
+										if (bcomp > 255) bcomp = 255;
+										pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+									}
+									*lpdest = pix;
+				// gel mapping					*lpdest = gelmap[*lpdest];
+									*lpz = lzi >> 16;
+								}
+							}
+						}
+						lpdest++;
+						lxpos++;
+						lzi += r_zistepx;
+						lpz++;
+						llightr += r_lrstepx;
+						llightg += r_lgstepx;
+						llightb += r_lbstepx;
+						lptex += a_ststepxwhole;
+						lsfrac += a_sstepxfrac;
+						lptex += lsfrac >> 16;
+						lsfrac &= 0xFFFF;
+						ltfrac += a_tstepxfrac;
+						if (ltfrac & 0x10000)
+						{
+							lptex += r_affinetridesc.skinwidth;
+							ltfrac &= 0xFFFF;
+						}
+					} while (--lcount);
+				}
+
+				pspanpackage++;
+			} while (pspanpackage->count != -999999);
+			return;
+		}
 		do
 		{
 			lcount = d_aspancount - pspanpackage->count;
@@ -766,7 +1004,87 @@ void D_PolysetDrawColoredSpans8 (coloredspanpackage_t *pspanpackage)
 		} while (pspanpackage->count != -999999);
 		return;
 	}
+	if (r_aliasalpha != 0)
+	{
+		do
+		{
+			lcount = d_aspancount - pspanpackage->count;
 
+			errorterm += erroradjustup;
+			if (errorterm >= 0)
+			{
+				d_aspancount += d_countextrastep;
+				errorterm -= erroradjustdown;
+			}
+			else
+			{
+				d_aspancount += ubasestep;
+			}
+
+			if (lcount)
+			{
+				lpdest = (byte*)pspanpackage->pdest;
+				lptex = pspanpackage->ptex;
+				lpz = pspanpackage->pz;
+				lsfrac = pspanpackage->sfrac;
+				ltfrac = pspanpackage->tfrac;
+				llightr = pspanpackage->lightr;
+				llightg = pspanpackage->lightg;
+				llightb = pspanpackage->lightb;
+				lzi = pspanpackage->zi;
+				lxpos = pspanpackage->xpos;
+				lypos = (pspanpackage->ypos % 4) * 4;
+
+				do
+				{
+					if (r_aliasalpha >= r_ditherthresholds[lypos + (lxpos % 4)])
+					{
+						if ((lzi >> 16) >= *lpz)
+						{
+							auto pix = *lptex;
+							if (pix < 224)
+							{
+								auto pal = abasepal + pix*3;
+								auto r = VID_CMAX - llightr; if (r < 0) r = 0;
+								auto g = VID_CMAX - llightg; if (g < 0) g = 0;
+								auto b = VID_CMAX - llightb; if (b < 0) b = 0;
+								auto rcomp = (((unsigned)r * (*pal++)) >> 13) & 511;
+								auto gcomp = (((unsigned)g * (*pal++)) >> 13) & 511;
+								auto bcomp = (((unsigned)b * (*pal)) >> 13) & 511;
+								if (rcomp > 255) rcomp = 255;
+								if (gcomp > 255) gcomp = 255;
+								if (bcomp > 255) bcomp = 255;
+								pix = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+							}
+							*lpdest = pix;
+		// gel mapping					*lpdest = gelmap[*lpdest];
+							*lpz = lzi >> 16;
+						}
+					}
+					lpdest++;
+					lxpos++;
+					lzi += r_zistepx;
+					lpz++;
+					llightr += r_lrstepx;
+					llightg += r_lgstepx;
+					llightb += r_lbstepx;
+					lptex += a_ststepxwhole;
+					lsfrac += a_sstepxfrac;
+					lptex += lsfrac >> 16;
+					lsfrac &= 0xFFFF;
+					ltfrac += a_tstepxfrac;
+					if (ltfrac & 0x10000)
+					{
+						lptex += r_affinetridesc.skinwidth;
+						ltfrac &= 0xFFFF;
+					}
+				} while (--lcount);
+			}
+
+			pspanpackage++;
+		} while (pspanpackage->count != -999999);
+		return;
+	}
 	do
 	{
 		lcount = d_aspancount - pspanpackage->count;
@@ -876,6 +1194,8 @@ void D_RasterizeAliasColoredPolySmooth (void)
 //
 	d_pedgecoloredspanpackage = a_coloredspans;
 
+	d_xpos = plefttop[0];
+	d_ypos = plefttop[1];
 	ystart = plefttop[1];
 	d_aspancount = plefttop[0] - prighttop[0];
 
@@ -913,6 +1233,9 @@ void D_RasterizeAliasColoredPolySmooth (void)
 		d_pedgecoloredspanpackage->lightb = d_lightb;
 		d_pedgecoloredspanpackage->zi = d_zi;
 
+		d_pedgecoloredspanpackage->xpos = d_xpos;
+		d_pedgecoloredspanpackage->ypos = d_ypos;
+
 		d_pedgecoloredspanpackage++;
 	}
 	else
@@ -930,6 +1253,8 @@ void D_RasterizeAliasColoredPolySmooth (void)
 
 		d_pdestbasestep = screenwidth + ubasestep;
 		d_pdestextrastep = d_pdestbasestep + 1;
+		d_xposbasestep = ubasestep;
+		d_xposextrastep = d_xposbasestep + 1;
 
 	// TODO: can reuse partial expressions here
 
@@ -997,6 +1322,8 @@ void D_RasterizeAliasColoredPolySmooth (void)
 
 // TODO: make this a function; modularize this function in general
 
+		d_xpos = plefttop[0];
+		d_ypos = plefttop[1];
 		ystart = plefttop[1];
 		d_aspancount = plefttop[0] - prighttop[0];
 		d_ptex = (byte *)r_affinetridesc.pskin + (plefttop[2] >> 16) +
@@ -1027,6 +1354,9 @@ void D_RasterizeAliasColoredPolySmooth (void)
 			d_pedgecoloredspanpackage->lightb = d_lightb;
 			d_pedgecoloredspanpackage->zi = d_zi;
 
+			d_pedgecoloredspanpackage->xpos = d_xpos;
+			d_pedgecoloredspanpackage->ypos = d_ypos;
+
 			d_pedgecoloredspanpackage++;
 		}
 		else
@@ -1036,6 +1366,8 @@ void D_RasterizeAliasColoredPolySmooth (void)
 
 			d_pdestbasestep = screenwidth + ubasestep;
 			d_pdestextrastep = d_pdestbasestep + 1;
+			d_xposbasestep = ubasestep;
+			d_xposextrastep = d_xposbasestep + 1;
 
 	#if	id386
 			d_pzbasestep = (d_zwidth + ubasestep) << 1;
