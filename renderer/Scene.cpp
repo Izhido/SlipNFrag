@@ -1532,7 +1532,7 @@ void Scene::CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded)
 	if (perSurface.vertices.empty())
 	{
 		perSurface.vertices.resize(loaded.numedges * 3);
-		auto model = (model_t*)loaded.model;
+		auto model = ((entity_t*)loaded.entity)->model;
 		auto vertexes = model->vertexes;
         auto e = face->firstedge;
         auto v = 0;
@@ -1681,7 +1681,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
     loaded.face = turbulent.face;
-    loaded.model = turbulent.model;
+    loaded.entity = turbulent.entity;
     loaded.count = turbulent.count;
     CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != turbulent.data)
@@ -1741,7 +1741,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulent& loaded, VkDeviceSize& size)
 {
     loaded.face = turbulent.face;
-    loaded.model = turbulent.model;
+    loaded.entity = turbulent.entity;
     loaded.count = turbulent.count;
     CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != turbulent.data)
@@ -1813,7 +1813,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, PerSurfaceData& perSurface, LoadedSurface2Textures& loaded, VkDeviceSize& size)
 {
     loaded.face = surface.face;
-    loaded.model = surface.model;
+    loaded.entity = surface.entity;
     loaded.count = surface.count;
     CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != surface.data)
@@ -1929,7 +1929,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& surface, PerSurfaceData& perSurface, LoadedSurface2TexturesColoredLights& loaded, VkDeviceSize& size)
 {
 	loaded.face = surface.face;
-	loaded.model = surface.model;
+	loaded.entity = surface.entity;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != surface.data)
@@ -2045,7 +2045,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedSurface& loaded, VkDeviceSize& size)
 {
 	loaded.face = surface.face;
-	loaded.model = surface.model;
+	loaded.entity = surface.entity;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != surface.data)
@@ -2106,7 +2106,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedSurfaceColoredLights& loaded, VkDeviceSize& size)
 {
 	loaded.face = surface.face;
-	loaded.model = surface.model;
+	loaded.entity = surface.entity;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != surface.data)

@@ -55,7 +55,7 @@ android {
             shaders.srcDir("../../shaders/")
         }
     }
-    ndkVersion = "28.0.13004108"
+    ndkVersion = "28.1.13356709"
     buildToolsVersion = "36.0.0"
 }
 

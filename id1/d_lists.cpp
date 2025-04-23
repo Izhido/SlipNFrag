@@ -131,7 +131,6 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 {
 	surface.face = face;
 	surface.entity = entity;
-	surface.model = entity->model;
 	surface.created = cache->created;
 	auto texture = (texture_t*)(cache->texture);
 	surface.width = texture->width;
@@ -146,7 +145,6 @@ void D_FillSurfaceColoredLightsData (dsurface_t& surface, msurface_t* face, surf
 {
 	surface.face = face;
 	surface.entity = entity;
-	surface.model = entity->model;
 	surface.created = cache->created;
 	auto texture = (texture_t*)(cache->texture);
 	surface.width = texture->width;
@@ -161,7 +159,6 @@ void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfc
 {
 	surface.face = face;
 	surface.entity = entity;
-	surface.model = entity->model;
 	surface.created = cache->created;
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
@@ -178,7 +175,6 @@ void D_FillSurfaceRGBAColoredLightsData (dsurfacewithglow_t& surface, msurface_t
 {
 	surface.face = face;
 	surface.entity = entity;
-	surface.model = entity->model;
 	surface.created = cache->created;
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
@@ -195,7 +191,6 @@ void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcac
 {
 	surface.face = face;
 	surface.entity = entity;
-	surface.model = entity->model;
 	surface.created = cache->created;
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
@@ -210,7 +205,6 @@ void D_FillSurfaceRGBANoGlowColoredLightsData (dsurface_t& surface, msurface_t* 
 {
 	surface.face = face;
 	surface.entity = entity;
-	surface.model = entity->model;
 	surface.created = cache->created;
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
@@ -651,7 +645,6 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 {
 	turbulent.face = face;
 	turbulent.entity = entity;
-	turbulent.model = entity->model;
 	auto texture = face->texinfo->texture;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
@@ -664,7 +657,6 @@ void D_FillTurbulentRGBAData (dturbulent_t& turbulent, msurface_t* face, entity_
 {
 	turbulent.face = face;
 	turbulent.entity = entity;
-	turbulent.model = entity->model;
 	auto texture = face->texinfo->texture->external_color;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
