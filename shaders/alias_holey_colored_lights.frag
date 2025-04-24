@@ -1,7 +1,7 @@
 #version 460
 
-precision mediump float;
-precision mediump int;
+precision highp float;
+precision highp int;
 
 layout(set = 0, binding = 1) uniform Palette
 {
@@ -32,9 +32,9 @@ void main()
 	}
 	vec4 lowColor = palette[lowEntry.x];
 	vec4 highColor = palette[highEntry.x];
-	vec4 color =
+	vec4 color = min(vec4(255, 255, 255, 255),
 		mix(lowColor, highColor, level.y - mip.x) *
-		((lowEntry.x >= 224 || highEntry.x >= 224) ? vec4(255, 255, 255, 255) : max(fragmentLight, vec4(255, 255, 255, 255)));
+		((lowEntry.x >= 224 || highEntry.x >= 224) ? vec4(255, 255, 255, 255) : fragmentLight));
 	vec4 tinted = mix(color, tint, tint.a);
 	vec4 gammaCorrected = vec4(
 		clamp((gamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , gamma ) + 0.5), 0, 255),

@@ -2,6 +2,9 @@
 
 #extension GL_EXT_multiview : require
 
+precision highp float;
+precision highp int;
+
 layout(set = 0, binding = 0) uniform SceneMatrices
 {
 	layout(offset = 0) mat4 viewMatrix[2];
