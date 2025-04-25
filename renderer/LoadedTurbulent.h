@@ -5,7 +5,8 @@
 struct LoadedTurbulent
 {
 	void* face;
-	void* entity;
+	void* model;
+	unsigned char alpha;
     uint32_t count;
     int numedges;
     float* vertices;

@@ -6,7 +6,8 @@
 struct dturbulent_t
 {
 	void* face;
-	void* entity;
+	void* model;
+	unsigned char alpha;
 	int width;
 	int height;
 	int size;

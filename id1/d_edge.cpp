@@ -547,7 +547,8 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 				currententity->origin[2] == 0 &&
 				currententity->angles[YAW] == 0 &&
 				currententity->angles[PITCH] == 0 &&
-				currententity->angles[ROLL] == 0)
+				currententity->angles[ROLL] == 0 &&
+				currententity->alpha == 0)
 			{
 				if (texture->external_color != nullptr)
 					D_AddTurbulentRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
@@ -570,7 +571,8 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 				currententity->origin[2] == 0 &&
 				currententity->angles[YAW] == 0 &&
 				currententity->angles[PITCH] == 0 &&
-				currententity->angles[ROLL] == 0)
+				currententity->angles[ROLL] == 0 &&
+				currententity->alpha == 0)
 			{
 				if (texture->external_color != nullptr)
 					D_AddTurbulentRGBALitToLists (pface, pcurrentcache, currententity);
@@ -588,7 +590,8 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 	         currententity->origin[2] == 0 &&
 	         currententity->angles[YAW] == 0 &&
 	         currententity->angles[PITCH] == 0 &&
-	         currententity->angles[ROLL] == 0)
+	         currententity->angles[ROLL] == 0 &&
+			 currententity->alpha == 0)
 	{
 		if (texture->external_color != nullptr)
 			D_AddTurbulentRGBAToLists (pface, currententity);
@@ -620,7 +623,8 @@ void D_DrawSurfaceToLists (msurface_t* pface)
 				currententity->origin[2] == 0 &&
 				currententity->angles[YAW] == 0 &&
 				currententity->angles[PITCH] == 0 &&
-				currententity->angles[ROLL] == 0)
+				currententity->angles[ROLL] == 0 &&
+				currententity->alpha == 0)
 			{
 				if (pface->flags & SURF_DRAWFENCE)
 				{
@@ -665,7 +669,8 @@ void D_DrawSurfaceToLists (msurface_t* pface)
 				currententity->origin[2] == 0 &&
 				currententity->angles[YAW] == 0 &&
 				currententity->angles[PITCH] == 0 &&
-				currententity->angles[ROLL] == 0)
+				currententity->angles[ROLL] == 0 &&
+				currententity->alpha == 0)
 			{
 				if (pface->flags & SURF_DRAWFENCE)
 				{

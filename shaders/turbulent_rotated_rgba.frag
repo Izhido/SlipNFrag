@@ -11,43 +11,37 @@ const float ditherThresholds[16] = float[]
 	16.0 / 17.0,  8.0 / 17.0, 14.0 / 17.0,  6.0 / 17.0
 );
 
-layout(set = 0, binding = 1) uniform Palette
+layout(set = 2, binding = 0) uniform usampler2DArray fragmentTexture;
+
+layout(push_constant) uniform Turbulent
 {
-	layout(offset = 0) vec4 palette[256];
+	layout(offset = 0) vec4 tint;
+	layout(offset = 16) float gamma;
+	layout(offset = 20) float time;
 };
 
-layout(set = 1, binding = 0) uniform usampler2D fragmentTexture;
-
-layout(push_constant) uniform Tint
-{
-	layout(offset = 64) vec4 tint;
-	layout(offset = 80) float gamma;
-};
-
-layout(location = 0) in vec3 fragmentCoords;
-layout(location = 1) in flat vec4 fragmentLight;
+layout(location = 0) in vec2 fragmentTexCoords;
+layout(location = 1) in flat ivec2 fragmentFlat;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
-	ivec2 ditherIndex = ivec2(gl_FragCoord.xy) % 4;
-	if (fragmentCoords.z < ditherThresholds[ditherIndex.y * 4 + ditherIndex.x])
+	if (fragmentFlat.y > 0)
 	{
-		discard;
+		ivec2 ditherIndex = ivec2(gl_FragCoord.xy) % 4;
+		if (float(fragmentFlat.y) / 255 < ditherThresholds[ditherIndex.y * 4 + ditherIndex.x])
+		{
+			discard;
+		}
 	}
-	vec2 level = textureQueryLod(fragmentTexture, fragmentCoords.xy);
+	vec2 distortion = sin(mod(time + fragmentTexCoords * 5, 3.14159*2)) / 10;
+	vec2 texCoords = fragmentTexCoords.xy + distortion.yx;
+	vec2 level = textureQueryLod(fragmentTexture, texCoords);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
-	uvec4 lowEntry = textureLod(fragmentTexture, fragmentCoords.xy, mip.x);
-	uvec4 highEntry = textureLod(fragmentTexture, fragmentCoords.xy, mip.y);
-	if (lowEntry.x == 255 || highEntry.x == 255)
-	{
-		discard;
-	}
-	vec4 lowColor = palette[lowEntry.x];
-	vec4 highColor = palette[highEntry.x];
-	vec4 color = min(vec4(255, 255, 255, 255),
-		mix(lowColor, highColor, level.y - mip.x) *
-		((lowEntry.x >= 224 || highEntry.x >= 224) ? vec4(255, 255, 255, 255) : fragmentLight));
+	vec3 fragmentTextureCoords = vec3(texCoords, fragmentFlat.x);
+	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, mip.x);
+	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, mip.y);
+	vec4 color = mix(lowColor, highColor, level.y - mip.x);
 	vec4 tinted = mix(color, tint, tint.a);
 	vec4 gammaCorrected = vec4(
 		clamp((gamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , gamma ) + 0.5), 0, 255),

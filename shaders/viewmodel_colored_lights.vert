@@ -17,15 +17,15 @@ layout(push_constant) uniform Transforms
 	layout(offset = 0) mat4 aliasTransform;
 };
 
-layout(location = 0) in uvec4 vertexPosition;
+layout(location = 0) in uvec3 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
 layout(location = 2) in vec3 vertexLight;
 layout(location = 0) out vec3 fragmentCoords;
-layout(location = 1) out vec4 fragmentLight;
+layout(location = 1) out flat vec4 fragmentLight;
 
 void main(void)
 {
-	vec4 position = viewMatrix[gl_ViewIndex] * vertexTransform * aliasTransform * vertexPosition;
+	vec4 position = viewMatrix[gl_ViewIndex] * vertexTransform * aliasTransform * vec4(vertexPosition, 1);
 	gl_Position = projectionMatrix[gl_ViewIndex] * position;
 	fragmentCoords = vec3(vertexTexCoords, clamp(-position.z * 9 - 2, 0, 1));
 	fragmentLight = vec4(vertexLight / 32, 255);

@@ -19,7 +19,7 @@ layout(set = 1, binding = 0) readonly buffer TextureData
 
 layout(location = 0) in vec4 vertexPosition;
 layout(location = 0) out vec2 fragmentTexCoords;
-layout(location = 1) out flat int fragmentTextureIndex;
+layout(location = 1) out flat ivec2 fragmentFlat;
 
 void main(void)
 {
@@ -39,5 +39,5 @@ void main(void)
 	vec4 sizesAndIndices = textureData[attributeIndex + 4];
 	vec2 texCoords = vec2(dot(position, vecs0), dot(position, vecs1));
 	fragmentTexCoords = texCoords / sizesAndIndices.xy;
-	fragmentTextureIndex = int(sizesAndIndices.z);
+	fragmentFlat = ivec2(sizesAndIndices.zw);
 }

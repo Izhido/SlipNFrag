@@ -232,7 +232,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	{
 		auto target = (byte*)(((unsigned char*)stagingBuffer->mapped) + offset);
 		auto source = (trivertx_t*)loadedBuffer->source;
-		for (auto i = 0; i < loadedBuffer->size; i += 2 * 4 * sizeof(byte))
+		for (auto i = 0; i < loadedBuffer->size; i += 2 * 3 * sizeof(byte))
 		{
 			auto x = source->v[0];
 			auto y = source->v[1];
@@ -240,11 +240,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			*target++ = x;
 			*target++ = y;
 			*target++ = z;
-			*target++ = 1;
 			*target++ = x;
 			*target++ = y;
 			*target++ = z;
-			*target++ = 1;
 			source++;
 		}
 		offset += loadedBuffer->size;
@@ -1772,160 +1770,6 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
 		}
-		if (appState.Scene.surfacesRotated.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = SURFACES_ROTATED_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.surfacesRotated.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotated.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotated.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			appState.Scene.surfacesRotated.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.surfacesRotatedColoredLights.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = SURFACES_ROTATED_COLORED_LIGHTS_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.surfacesRotatedColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			appState.Scene.surfacesRotatedColoredLights.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.surfacesRotatedRGBA.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = SURFACES_ROTATED_RGBA_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.surfacesRotatedRGBA.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			appState.Scene.surfacesRotatedRGBA.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.surfacesRotatedRGBAColoredLights.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = SURFACES_ROTATED_RGBA_COLORED_LIGHTS_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.surfacesRotatedRGBAColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			appState.Scene.surfacesRotatedRGBAColoredLights.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.surfacesRotatedRGBANoGlow.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = SURFACES_ROTATED_RGBA_NO_GLOW_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.surfacesRotatedRGBANoGlow.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedRGBANoGlow.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedRGBANoGlow.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			appState.Scene.surfacesRotatedRGBANoGlow.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.surfacesRotatedRGBANoGlowColoredLights.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = SURFACES_ROTATED_RGBA_NO_GLOW_COLORED_LIGHTS_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.surfacesRotatedRGBANoGlowColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
-			appState.Scene.surfacesRotatedRGBANoGlowColoredLights.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
 		if (appState.Scene.turbulent.last >= 0)
 		{
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -2096,180 +1940,6 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[5] = (float)cl.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			appState.Scene.turbulentRGBAColoredLights.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.turbulentRotated.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = TURBULENT_ROTATED_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.turbulentRotated.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotated.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotated.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			auto time = (float)cl.time;
-			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotated.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
-			VkDeviceSize indexBase = 0;
-            for (auto t = 0; t < appState.Scene.turbulentRotated.sorted.count; t++)
-            {
-                const auto& texture = appState.Scene.turbulentRotated.sorted.textures[t];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
-				vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-				indexBase += texture.indexCount;
-			}
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.turbulentRotatedRGBA.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = TURBULENT_ROTATED_RGBA_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.turbulentRotatedRGBA.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
-			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			VkDeviceSize indexBase = 0;
-            for (auto t = 0; t < appState.Scene.turbulentRotatedRGBA.sorted.count; t++)
-            {
-                const auto& texture = appState.Scene.turbulentRotatedRGBA.sorted.textures[t];
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
-				vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
-				indexBase += texture.indexCount;
-			}
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.turbulentRotatedLit.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = TURBULENT_ROTATED_LIT_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.turbulentRotatedLit.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedLit.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedLit.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			auto time = (float)cl.time;
-			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedLit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
-			appState.Scene.turbulentRotatedLit.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.turbulentRotatedColoredLights.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = TURBULENT_ROTATED_COLORED_LIGHTS_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.turbulentRotatedColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
-			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			appState.Scene.turbulentRotatedColoredLights.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.turbulentRotatedRGBALit.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = TURBULENT_ROTATED_RGBA_LIT_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.turbulentRotatedRGBALit.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedRGBALit.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBALit.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
-			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			appState.Scene.turbulentRotatedRGBALit.Render(commandBuffer);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-		}
-		if (appState.Scene.turbulentRotatedRGBAColoredLights.last >= 0)
-		{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			renderLabel.pLabelName = TURBULENT_ROTATED_RGBA_COLORED_LIGHTS_NAME;
-			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
-			auto vertexBase = appState.Scene.turbulentRotatedRGBAColoredLights.vertexBase;
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
-			if (appState.Scene.sortedIndices16Size > 0)
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
-			}
-			else
-			{
-				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
-			}
-			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
-			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
-			appState.Scene.turbulentRotatedRGBAColoredLights.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
@@ -2503,6 +2173,160 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
         }
+		if (appState.Scene.surfacesRotated.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = SURFACES_ROTATED_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.surfacesRotated.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotated.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotated.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotated.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			appState.Scene.surfacesRotated.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.surfacesRotatedColoredLights.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = SURFACES_ROTATED_COLORED_LIGHTS_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.surfacesRotatedColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
+			appState.Scene.surfacesRotatedColoredLights.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.surfacesRotatedRGBA.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = SURFACES_ROTATED_RGBA_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.surfacesRotatedRGBA.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBA.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
+			appState.Scene.surfacesRotatedRGBA.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.surfacesRotatedRGBAColoredLights.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = SURFACES_ROTATED_RGBA_COLORED_LIGHTS_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.surfacesRotatedRGBAColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBAColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
+			appState.Scene.surfacesRotatedRGBAColoredLights.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.surfacesRotatedRGBANoGlow.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = SURFACES_ROTATED_RGBA_NO_GLOW_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.surfacesRotatedRGBANoGlow.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedRGBANoGlow.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedRGBANoGlow.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBANoGlow.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
+			appState.Scene.surfacesRotatedRGBANoGlow.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.surfacesRotatedRGBANoGlowColoredLights.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = SURFACES_ROTATED_RGBA_NO_GLOW_COLORED_LIGHTS_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.surfacesRotatedRGBANoGlowColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			vkCmdPushConstants(commandBuffer, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 5 * sizeof(float), &pushConstants);
+			appState.Scene.surfacesRotatedRGBANoGlowColoredLights.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
         if (appState.Scene.fences.last >= 0)
         {
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -2811,6 +2635,180 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
         }
+		if (appState.Scene.turbulentRotated.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = TURBULENT_ROTATED_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.turbulentRotated.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotated.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotated.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			auto time = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotated.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
+			VkDeviceSize indexBase = 0;
+            for (auto t = 0; t < appState.Scene.turbulentRotated.sorted.count; t++)
+            {
+                const auto& texture = appState.Scene.turbulentRotated.sorted.textures[t];
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotated.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+				vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
+				indexBase += texture.indexCount;
+			}
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.turbulentRotatedRGBA.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = TURBULENT_ROTATED_RGBA_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.turbulentRotatedRGBA.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			pushConstants[5] = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
+			VkDeviceSize indexBase = 0;
+            for (auto t = 0; t < appState.Scene.turbulentRotatedRGBA.sorted.count; t++)
+            {
+                const auto& texture = appState.Scene.turbulentRotatedRGBA.sorted.textures[t];
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBA.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+				vkCmdDrawIndexed(commandBuffer, texture.indexCount, 1, indexBase, 0, 0);
+				indexBase += texture.indexCount;
+			}
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.turbulentRotatedLit.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = TURBULENT_ROTATED_LIT_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipelineLayout, 0, 1, &sceneMatricesAndColormapResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.turbulentRotatedLit.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedLit.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedLit.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedLit.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			auto time = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedLit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
+			appState.Scene.turbulentRotatedLit.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.turbulentRotatedColoredLights.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = TURBULENT_ROTATED_COLORED_LIGHTS_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.turbulentRotatedColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			pushConstants[5] = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
+			appState.Scene.turbulentRotatedColoredLights.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.turbulentRotatedRGBALit.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = TURBULENT_ROTATED_RGBA_LIT_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.turbulentRotatedRGBALit.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedRGBALit.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBALit.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			pushConstants[5] = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
+			appState.Scene.turbulentRotatedRGBALit.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.turbulentRotatedRGBAColoredLights.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = TURBULENT_ROTATED_RGBA_COLORED_LIGHTS_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, 0, 1, &sceneMatricesResources.descriptorSet, 0, nullptr);
+			auto vertexBase = appState.Scene.turbulentRotatedRGBAColoredLights.vertexBase;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &sortedVertices->buffer, &vertexBase);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, 1, 1, &sortedAttributesResources.descriptorSet, 0, nullptr);
+			if (appState.Scene.sortedIndices16Size > 0)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices16->buffer, appState.Scene.turbulentRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT16);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
+			}
+			SetTintPushConstants(pushConstants);
+			pushConstants[5] = (float)cl.time;
+			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
+			appState.Scene.turbulentRotatedRGBAColoredLights.Render(commandBuffer);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
 		if (appState.Scene.sprites.last >= 0)
 		{
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)

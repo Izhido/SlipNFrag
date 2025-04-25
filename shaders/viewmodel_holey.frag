@@ -19,26 +19,27 @@ layout(set = 0, binding = 1) uniform Palette
 layout(set = 1, binding = 0) uniform usampler2D fragmentColormap;
 layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
 
-layout(location = 0) in vec4 fragmentData;
+layout(location = 0) in vec3 fragmentCoords;
+layout(location = 1) in flat float fragmentLight;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
 {
 	ivec2 ditherIndex = ivec2(gl_FragCoord.xy) % 4;
-	if (fragmentData.w < ditherThresholds[ditherIndex.y * 4 + ditherIndex.x])
+	if (fragmentCoords.z < ditherThresholds[ditherIndex.y * 4 + ditherIndex.x])
 	{
 		discard;
 	}
-	vec2 level = textureQueryLod(fragmentTexture, fragmentData.xy);
+	vec2 level = textureQueryLod(fragmentTexture, fragmentCoords.xy);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
-	uvec4 lowEntry = textureLod(fragmentTexture, fragmentData.xy, mip.x);
-	uvec4 highEntry = textureLod(fragmentTexture, fragmentData.xy, mip.y);
+	uvec4 lowEntry = textureLod(fragmentTexture, fragmentCoords.xy, mip.x);
+	uvec4 highEntry = textureLod(fragmentTexture, fragmentCoords.xy, mip.y);
 	if (lowEntry.x == 255 || highEntry.x == 255)
 	{
 		discard;
 	}
-	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowEntry.x, fragmentData.z), 0);
-	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x, fragmentData.z), 0);
+	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowEntry.x, fragmentLight), 0);
+	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x, fragmentLight), 0);
 	vec4 lowColor = palette[lowColormapped.x];
 	vec4 highColor = palette[highColormapped.x];
 	outColor = mix(lowColor, highColor, level.y - mip.x);

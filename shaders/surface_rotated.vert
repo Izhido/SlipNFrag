@@ -20,6 +20,7 @@ layout(set = 1, binding = 0) readonly buffer TextureData
 layout(location = 0) in vec4 vertexPosition;
 layout(location = 0) out vec4 fragmentCoords;
 layout(location = 1) out flat ivec4 fragmentFlat;
+layout(location = 2) out flat int fragmentAlpha;
 
 void main(void)
 {
@@ -43,4 +44,5 @@ void main(void)
 	vec2 lightmapCoords = (texCoords - minsAndExtents.xy) * lightmapSizeMinusOne / minsAndExtents.zw;
 	fragmentCoords = vec4(lightmapCoords, texCoords / sizesAndIndices.xy);
 	fragmentFlat = ivec4(sizesAndIndices.zw, lightmapSizeMinusOne);
+	fragmentAlpha = int(textureData[attributeIndex + 6][0]);
 }

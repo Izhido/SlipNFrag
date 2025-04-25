@@ -396,7 +396,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, st
 			for (auto i : lightmap.entries)
 			{
                 target = CopyVertices(loaded[i], attributeIndexAsFloat, target);
-                attributeIndexAsFloat += 6;
+                attributeIndexAsFloat += 7;
 			}
 		}
 	}
@@ -417,7 +417,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, st
 			for (auto i : lightmap.entries)
 			{
                 target = CopyVertices(loaded[i], attributeIndexAsFloat, target);
-                attributeIndexAsFloat += 6;
+                attributeIndexAsFloat += 7;
 			}
 		}
 	}
@@ -438,7 +438,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted
 			for (auto i : lightmap.entries)
 			{
 				target = CopyVertices(loaded[i], attributeIndexAsFloat, target);
-				attributeIndexAsFloat += 6;
+				attributeIndexAsFloat += 7;
 			}
 		}
 	}
@@ -459,7 +459,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted
 			for (auto i : lightmap.entries)
 			{
 				target = CopyVertices(loaded[i], attributeIndexAsFloat, target);
-				attributeIndexAsFloat += 6;
+				attributeIndexAsFloat += 7;
 			}
 		}
 	}
@@ -732,6 +732,10 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
                 *target++ = face->texinfo->texture->height;
                 *target++ = surface.lightmap.lightmap->offset;
                 *target++ = surface.texture.index;
+				*target++ = surface.alpha;
+				*target++ = 0;
+				*target++ = 0;
+				*target++ = 0;
 				attributeCount++;
 			}
 		}
@@ -777,6 +781,10 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
                 *target++ = face->texinfo->texture->height;
                 *target++ = surface.lightmap.lightmap->offset;
                 *target++ = surface.texture.index;
+				*target++ = surface.alpha;
+				*target++ = 0;
+				*target++ = 0;
+				*target++ = 0;
 				attributeCount++;
 			}
 		}
@@ -822,6 +830,10 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightma
                 *target++ = face->texinfo->texture->height;
                 *target++ = surface.lightmap.lightmap->offset;
                 *target++ = surface.texture.index;
+				*target++ = surface.alpha;
+				*target++ = 0;
+				*target++ = 0;
+				*target++ = 0;
 				attributeCount++;
 			}
 		}
@@ -867,6 +879,10 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightma
                 *target++ = face->texinfo->texture->height;
                 *target++ = surface.lightmap.lightmap->offset;
                 *target++ = surface.texture.index;
+				*target++ = surface.alpha;
+				*target++ = 0;
+				*target++ = 0;
+				*target++ = 0;
 				attributeCount++;
 			}
 		}
@@ -933,7 +949,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTextures& sorted, std::
             *target++ = face->texinfo->texture->width;
             *target++ = face->texinfo->texture->height;
             *target++ = surface.texture.index;
-            *target++ = 0;
+            *target++ = surface.alpha;
 			attributeCount++;
 		}
 	}
