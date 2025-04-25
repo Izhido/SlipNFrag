@@ -10,4 +10,5 @@ struct LoadedTurbulentRotated : LoadedTurbulent
 	float yaw;
 	float pitch;
 	float roll;
+	unsigned char alpha;
 };

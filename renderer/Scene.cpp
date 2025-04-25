@@ -1735,7 +1735,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
 {
     loaded.face = turbulent.face;
     loaded.model = turbulent.model;
-	loaded.alpha = turbulent.alpha;
     loaded.count = turbulent.count;
     CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != turbulent.data)
@@ -1796,7 +1795,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
 {
     loaded.face = turbulent.face;
     loaded.model = turbulent.model;
-	loaded.alpha = turbulent.alpha;
     loaded.count = turbulent.count;
     CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != turbulent.data)
@@ -1869,7 +1867,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 {
     loaded.face = surface.face;
     loaded.model = surface.model;
-	loaded.alpha = surface.alpha;
     loaded.count = surface.count;
     CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != surface.data)
@@ -1986,7 +1983,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 {
 	loaded.face = surface.face;
 	loaded.model = surface.model;
-	loaded.alpha = surface.alpha;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != surface.data)
@@ -2103,7 +2099,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 {
 	loaded.face = surface.face;
 	loaded.model = surface.model;
-	loaded.alpha = surface.alpha;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != surface.data)
@@ -2165,7 +2160,6 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 {
 	loaded.face = surface.face;
 	loaded.model = surface.model;
-	loaded.alpha = surface.alpha;
 	loaded.count = surface.count;
 	CacheVertices(perSurface, loaded);
 	if (perSurface.textureSource != surface.data)
@@ -2232,6 +2226,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
     loaded.yaw = surface.yaw;
     loaded.pitch = surface.pitch;
     loaded.roll = surface.roll;
+	loaded.alpha = surface.alpha;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotatedColoredLights& loaded, VkDeviceSize& size)
@@ -2243,6 +2238,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotated_t& su
     loaded.yaw = surface.yaw;
     loaded.pitch = surface.pitch;
     loaded.roll = surface.roll;
+	loaded.alpha = surface.alpha;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotated2Textures& loaded, VkDeviceSize& size)
@@ -2254,6 +2250,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithgl
     loaded.yaw = surface.yaw;
     loaded.pitch = surface.pitch;
     loaded.roll = surface.roll;
+	loaded.alpha = surface.alpha;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithglow_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotated2TexturesColoredLights& loaded, VkDeviceSize& size)
@@ -2265,6 +2262,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacerotatedwithgl
     loaded.yaw = surface.yaw;
     loaded.pitch = surface.pitch;
     loaded.roll = surface.roll;
+	loaded.alpha = surface.alpha;
 }
 
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotated& loaded, VkDeviceSize& size)
@@ -2276,6 +2274,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerot
     loaded.yaw = surface.yaw;
     loaded.pitch = surface.pitch;
     loaded.roll = surface.roll;
+	loaded.alpha = surface.alpha;
 }
 
 void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotatedColoredLights& loaded, VkDeviceSize& size)
@@ -2287,6 +2286,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerot
     loaded.yaw = surface.yaw;
     loaded.pitch = surface.pitch;
     loaded.roll = surface.roll;
+	loaded.alpha = surface.alpha;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulentRotated& loaded, VkDeviceSize& size)
@@ -2298,6 +2298,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& 
     loaded.yaw = turbulent.yaw;
     loaded.pitch = turbulent.pitch;
     loaded.roll = turbulent.roll;
+	loaded.alpha = turbulent.alpha;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size)

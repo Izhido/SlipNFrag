@@ -10,4 +10,5 @@ struct LoadedSurfaceRotated2TexturesColoredLights : LoadedSurface2TexturesColore
 	float yaw;
 	float pitch;
 	float roll;
+	unsigned char alpha;
 };

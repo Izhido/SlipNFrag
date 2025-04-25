@@ -131,7 +131,6 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 {
 	surface.face = face;
 	surface.model = entity->model;
-	surface.alpha = entity->alpha;
 	surface.created = cache->created;
 	auto texture = (texture_t*)(cache->texture);
 	surface.width = texture->width;
@@ -146,7 +145,6 @@ void D_FillSurfaceColoredLightsData (dsurface_t& surface, msurface_t* face, surf
 {
 	surface.face = face;
 	surface.model = entity->model;
-	surface.alpha = entity->alpha;
 	surface.created = cache->created;
 	auto texture = (texture_t*)(cache->texture);
 	surface.width = texture->width;
@@ -161,7 +159,6 @@ void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfc
 {
 	surface.face = face;
 	surface.model = entity->model;
-	surface.alpha = entity->alpha;
 	surface.created = cache->created;
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
@@ -178,7 +175,6 @@ void D_FillSurfaceRGBAColoredLightsData (dsurfacewithglow_t& surface, msurface_t
 {
 	surface.face = face;
 	surface.model = entity->model;
-	surface.alpha = entity->alpha;
 	surface.created = cache->created;
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
@@ -195,7 +191,6 @@ void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcac
 {
 	surface.face = face;
 	surface.model = entity->model;
-	surface.alpha = entity->alpha;
 	surface.created = cache->created;
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
@@ -210,7 +205,6 @@ void D_FillSurfaceRGBANoGlowColoredLightsData (dsurface_t& surface, msurface_t* 
 {
 	surface.face = face;
 	surface.model = entity->model;
-	surface.alpha = entity->alpha;
 	surface.created = cache->created;
 	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
@@ -230,6 +224,7 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	surface.yaw = entity->angles[YAW];
 	surface.pitch = entity->angles[PITCH];
 	surface.roll = entity->angles[ROLL];
+	surface.alpha = entity->alpha;
 }
 
 void D_FillSurfaceRotatedColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
@@ -241,6 +236,7 @@ void D_FillSurfaceRotatedColoredLightsData (dsurfacerotated_t& surface, msurface
 	surface.yaw = entity->angles[YAW];
 	surface.pitch = entity->angles[PITCH];
 	surface.roll = entity->angles[ROLL];
+	surface.alpha = entity->alpha;
 }
 
 void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
@@ -252,6 +248,7 @@ void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_
 	surface.yaw = entity->angles[YAW];
 	surface.pitch = entity->angles[PITCH];
 	surface.roll = entity->angles[ROLL];
+	surface.alpha = entity->alpha;
 }
 
 void D_FillSurfaceRotatedRGBAColoredLightsData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
@@ -263,6 +260,7 @@ void D_FillSurfaceRotatedRGBAColoredLightsData (dsurfacerotatedwithglow_t& surfa
 	surface.yaw = entity->angles[YAW];
 	surface.pitch = entity->angles[PITCH];
 	surface.roll = entity->angles[ROLL];
+	surface.alpha = entity->alpha;
 }
 
 void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
@@ -274,6 +272,7 @@ void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t*
 	surface.yaw = entity->angles[YAW];
 	surface.pitch = entity->angles[PITCH];
 	surface.roll = entity->angles[ROLL];
+	surface.alpha = entity->alpha;
 }
 
 void D_FillSurfaceRotatedRGBANoGlowColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
@@ -285,6 +284,7 @@ void D_FillSurfaceRotatedRGBANoGlowColoredLightsData (dsurfacerotated_t& surface
 	surface.yaw = entity->angles[YAW];
 	surface.pitch = entity->angles[PITCH];
 	surface.roll = entity->angles[ROLL];
+	surface.alpha = entity->alpha;
 }
 
 void D_AddSurfaceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -651,7 +651,6 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 {
 	turbulent.face = face;
 	turbulent.model = entity->model;
-	turbulent.alpha = entity->alpha;
 	auto texture = face->texinfo->texture;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
@@ -664,7 +663,6 @@ void D_FillTurbulentRGBAData (dturbulent_t& turbulent, msurface_t* face, entity_
 {
 	turbulent.face = face;
 	turbulent.model = entity->model;
-	turbulent.alpha = entity->alpha;
 	auto texture = face->texinfo->texture->external_color;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
@@ -790,6 +788,7 @@ void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity)
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
+	turbulent.alpha = entity->alpha;
 }
 
 void D_AddTurbulentRotatedRGBAToLists (msurface_t* face, entity_t* entity)
@@ -811,6 +810,7 @@ void D_AddTurbulentRotatedRGBAToLists (msurface_t* face, entity_t* entity)
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
+	turbulent.alpha = entity->alpha;
 }
 
 void D_AddTurbulentRotatedLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -834,6 +834,7 @@ void D_AddTurbulentRotatedLitToLists (msurface_t* face, surfcache_s* cache, enti
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
+	turbulent.alpha = entity->alpha;
 }
 
 void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -857,6 +858,7 @@ void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, surfcache_s* c
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
+	turbulent.alpha = entity->alpha;
 }
 
 void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -880,6 +882,7 @@ void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, surfcache_s* cache, 
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
+	turbulent.alpha = entity->alpha;
 }
 
 void D_AddTurbulentRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
@@ -903,6 +906,7 @@ void D_AddTurbulentRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_
 	turbulent.yaw = entity->angles[YAW];
 	turbulent.pitch = entity->angles[PITCH];
 	turbulent.roll = entity->angles[ROLL];
+	turbulent.alpha = entity->alpha;
 }
 
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc)

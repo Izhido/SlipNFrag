@@ -7,7 +7,6 @@ struct dturbulent_t
 {
 	void* face;
 	void* model;
-	unsigned char alpha;
 	int width;
 	int height;
 	int size;
@@ -38,6 +37,7 @@ struct dturbulentrotated_t : dturbulent_t
 	float yaw;
 	float pitch;
 	float roll;
+	unsigned char alpha;
 };
 
 struct dsurfacerotated_t : dsurface_t
@@ -48,6 +48,7 @@ struct dsurfacerotated_t : dsurface_t
 	float yaw;
 	float pitch;
 	float roll;
+	unsigned char alpha;
 };
 
 struct dsurfacerotatedwithglow_t : dsurfacewithglow_t
@@ -58,6 +59,7 @@ struct dsurfacerotatedwithglow_t : dsurfacewithglow_t
 	float yaw;
 	float pitch;
 	float roll;
+	unsigned char alpha;
 };
 
 struct dspritedata_t

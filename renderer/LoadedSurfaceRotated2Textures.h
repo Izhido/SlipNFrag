@@ -10,4 +10,5 @@ struct LoadedSurfaceRotated2Textures : LoadedSurface2Textures
 	float yaw;
 	float pitch;
 	float roll;
+	unsigned char alpha;
 };

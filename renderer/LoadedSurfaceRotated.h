@@ -10,4 +10,5 @@ struct LoadedSurfaceRotated : LoadedSurface
 	float yaw;
 	float pitch;
 	float roll;
+	unsigned char alpha;
 };
