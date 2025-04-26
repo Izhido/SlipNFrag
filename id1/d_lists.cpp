@@ -66,7 +66,7 @@ void D_ResetLists ()
     d_lists.last_skybox = -1;
 	d_lists.last_textured_vertex = -1;
 	d_lists.last_textured_attribute = -1;
-	d_lists.last_alias_light = -1;
+	d_lists.last_alias_attribute = -1;
 	d_lists.last_particle = -1;
 	d_lists.last_colored_vertex = -1;
 	d_lists.last_colored_color = -1;
@@ -1013,12 +1013,7 @@ void D_FillAliasData(dalias_t& alias, aliashdr_t* aliashdr, mdl_t* mdl, maliassk
 	alias.apverts = apverts;
 	alias.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
 	alias.vertex_count = mdl->numverts;
-	alias.first_attribute = d_lists.last_alias_light + 1;
-	auto new_size = d_lists.last_alias_light + 1 + 2 * mdl->numverts;
-	if (d_lists.alias_lights.size() < new_size)
-	{
-		d_lists.alias_lights.resize(new_size);
-	}
+	alias.first_attribute = d_lists.last_alias_attribute + 1;
 	alias.count = mdl->numtris * 3;
 }
 
@@ -1032,19 +1027,19 @@ void D_FillAliasColoredData(daliascoloredlights_t& alias, aliashdr_t* aliashdr, 
 	alias.apverts = apverts;
 	alias.texture_coordinates = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
 	alias.vertex_count = mdl->numverts;
-	alias.first_attribute = d_lists.last_alias_light + 1;
-	auto new_size = d_lists.last_alias_light + 1 + 2 * 3 * mdl->numverts;
-	if (d_lists.alias_lights.size() < new_size)
-	{
-		d_lists.alias_lights.resize(new_size);
-	}
+	alias.first_attribute = d_lists.last_alias_attribute + 1;
 	alias.count = mdl->numtris * 3;
 }
 
 void D_FillAliasLights (trivertx_t* apverts, mdl_t* mdl)
 {
+	auto new_size = d_lists.last_alias_attribute + 1 + 2 * mdl->numverts;
+	if (d_lists.alias_attributes.size() < new_size)
+	{
+		d_lists.alias_attributes.resize(new_size);
+	}
 	auto vertex = apverts;
-	auto attribute = d_lists.alias_lights.data() + d_lists.last_alias_light + 1;
+	auto attribute = d_lists.alias_attributes.data() + d_lists.last_alias_attribute + 1;
 	vec3_t lightvec { r_plightvec[0], r_plightvec[1], r_plightvec[2] };
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
@@ -1069,13 +1064,18 @@ void D_FillAliasLights (trivertx_t* apverts, mdl_t* mdl)
 		*attribute++ = light;
 		vertex++;
 	}
-	d_lists.last_alias_light += 2 * mdl->numverts;
+	d_lists.last_alias_attribute += 2 * mdl->numverts;
 }
 
 void D_FillAliasColoredLights (trivertx_t* apverts, mdl_t* mdl)
 {
+	auto new_size = d_lists.last_alias_attribute + 1 + 2 * 3 * mdl->numverts;
+	if (d_lists.alias_attributes.size() < new_size)
+	{
+		d_lists.alias_attributes.resize(new_size);
+	}
 	auto vertex = apverts;
-	auto attribute = d_lists.alias_lights.data() + d_lists.last_alias_light + 1;
+	auto attribute = d_lists.alias_attributes.data() + d_lists.last_alias_attribute + 1;
 	vec3_t lightvec { r_plightvec[0], r_plightvec[1], r_plightvec[2] };
 	for (auto i = 0; i < mdl->numverts; i++)
 	{
@@ -1108,7 +1108,7 @@ void D_FillAliasColoredLights (trivertx_t* apverts, mdl_t* mdl)
 		*attribute++ = (float)(std::max(VID_CMAX - temp.color[2], 0));
 		vertex++;
 	}
-	d_lists.last_alias_light += 2 * 3 * mdl->numverts;
+	d_lists.last_alias_attribute += 2 * 3 * mdl->numverts;
 }
 
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity)

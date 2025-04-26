@@ -373,9 +373,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
     }
 	offset += appState.Scene.skyAttributesSize;
 	colormappedAttributeBase = skyAttributeBase + appState.Scene.skyAttributesSize;
-	auto count = (size_t)appState.Scene.aliasLightsSize / sizeof(float);
-	std::copy(d_lists.alias_lights.data(), d_lists.alias_lights.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
-	offset += appState.Scene.aliasLightsSize;
+	auto count = (size_t)appState.Scene.aliasAttributesSize / sizeof(float);
+	std::copy(d_lists.alias_attributes.data(), d_lists.alias_attributes.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
+	offset += appState.Scene.aliasAttributesSize;
 	count = (size_t)appState.Scene.coloredColorsSize / sizeof(float);
 	std::copy(d_lists.colored_colors.data(), d_lists.colored_colors.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.coloredColorsSize;

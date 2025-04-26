@@ -3408,8 +3408,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		skyAttributesSize += appState.Scene.loadedSkyRGBA.count * 2 * sizeof(float);
 	}
-	aliasLightsSize = (d_lists.last_alias_light + 1) * sizeof(float);
-    attributesSize = floorAttributesSize + controllerAttributesSize + skyAttributesSize + aliasLightsSize;
+	aliasAttributesSize = (d_lists.last_alias_attribute + 1) * sizeof(float);
+    attributesSize = floorAttributesSize + controllerAttributesSize + skyAttributesSize + aliasAttributesSize;
     if (attributesSize > 0)
     {
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);

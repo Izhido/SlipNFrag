@@ -146,7 +146,7 @@ struct Scene
 	VkDeviceSize floorAttributesSize;
 	VkDeviceSize controllerAttributesSize;
 	VkDeviceSize skyAttributesSize;
-	VkDeviceSize aliasLightsSize;
+	VkDeviceSize aliasAttributesSize;
 	VkDeviceSize attributesSize;
 	VkDeviceSize coloredColorsSize;
 	VkDeviceSize colorsSize;
