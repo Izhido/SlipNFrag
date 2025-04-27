@@ -372,7 +372,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[7];
     }
 	offset += appState.Scene.skyAttributesSize;
-	colormappedAttributeBase = skyAttributeBase + appState.Scene.skyAttributesSize;
+	aliasAttributeBase = skyAttributeBase + appState.Scene.skyAttributesSize;
 	auto count = (size_t)appState.Scene.aliasAttributesSize / sizeof(float);
 	std::copy(d_lists.alias_attributes.data(), d_lists.alias_attributes.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 	offset += appState.Scene.aliasAttributesSize;
@@ -603,9 +603,27 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			offset += 16384;
 		}
 	}
+	for (auto i = 0; i <= appState.Scene.aliasAlpha.last; i++)
+	{
+		auto& alias = d_lists.alias_alpha[i];
+		if (alias.colormap != nullptr)
+		{
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.colormap, 16384);
+			offset += 16384;
+		}
+	}
 	for (auto i = 0; i <= appState.Scene.aliasHoley.last; i++)
 	{
 		auto& alias = d_lists.alias_holey[i];
+		if (alias.colormap != nullptr)
+		{
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.colormap, 16384);
+			offset += 16384;
+		}
+	}
+	for (auto i = 0; i <= appState.Scene.aliasHoleyAlpha.last; i++)
+	{
+		auto& alias = d_lists.alias_holey_alpha[i];
 		if (alias.colormap != nullptr)
 		{
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.colormap, 16384);
@@ -1262,9 +1280,17 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	{
 		FillColormapTextures(appState, appState.Scene.alias.loaded[i]);
 	}
+	for (auto i = 0; i <= appState.Scene.aliasAlpha.last; i++)
+	{
+		FillColormapTextures(appState, appState.Scene.aliasAlpha.loaded[i]);
+	}
 	for (auto i = 0; i <= appState.Scene.aliasHoley.last; i++)
 	{
 		FillColormapTextures(appState, appState.Scene.aliasHoley.loaded[i]);
+	}
+	for (auto i = 0; i <= appState.Scene.aliasHoleyAlpha.last; i++)
+	{
+		FillColormapTextures(appState, appState.Scene.aliasHoleyAlpha.loaded[i]);
 	}
 	for (auto i = 0; i <= appState.Scene.viewmodels.last; i++)
 	{
@@ -2011,7 +2037,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
 					previousTexCoords = texCoords;
 				}
-				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
@@ -2088,7 +2114,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
 					previousTexCoords = texCoords;
 				}
-				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.aliasColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
@@ -2839,6 +2865,83 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
 		}
+		if (appState.Scene.aliasAlpha.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = ALIAS_ALPHA_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
+			pushConstants[3] = 0;
+			pushConstants[7] = 0;
+			pushConstants[11] = 0;
+			pushConstants[15] = 1;
+			SharedMemoryBuffer* previousVertices = nullptr;
+			SharedMemoryBuffer* previousTexCoords = nullptr;
+			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
+			for (auto i = 0; i <= appState.Scene.aliasAlpha.last; i++)
+			{
+				auto& loaded = appState.Scene.aliasAlpha.loaded[i];
+				auto vertices = loaded.vertices.buffer;
+				if (previousVertices != vertices)
+				{
+					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+					previousVertices = vertices;
+				}
+				auto texCoords = loaded.texCoords.buffer;
+				if (previousTexCoords != texCoords)
+				{
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
+					previousTexCoords = texCoords;
+				}
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
+				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+				SetPushConstants(loaded, pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.aliasAlpha.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
+				if (loaded.isHostColormap)
+				{
+					if (previousColormapDescriptorSet != host_colormapResources.descriptorSet)
+					{
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 1, 1, &host_colormapResources.descriptorSet, 0, nullptr);
+						previousColormapDescriptorSet = host_colormapResources.descriptorSet;
+					}
+				}
+				else
+				{
+					auto colormap = loaded.colormap.texture;
+					if (colormapResources.bound[descriptorSetIndex] != colormap)
+					{
+						textureInfo.sampler = appState.Scene.sampler;
+						textureInfo.imageView = colormap->view;
+						writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
+						vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
+						colormapResources.bound[descriptorSetIndex] = colormap;
+					}
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 1, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr);
+					previousColormapDescriptorSet = colormapResources.descriptorSets[descriptorSetIndex];
+					descriptorSetIndex++;
+				}
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
+				}
+				auto indices = loaded.indices.indices.buffer;
+				if (previousIndices != indices)
+				{
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
+					previousIndices = indices;
+				}
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+			}
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
 		if (appState.Scene.aliasHoley.last >= 0)
 		{
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -2871,7 +2974,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
 					previousTexCoords = texCoords;
 				}
-				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoley.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
@@ -2902,6 +3005,137 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				if (previousTexture != texture)
 				{
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
+				}
+				auto indices = loaded.indices.indices.buffer;
+				if (previousIndices != indices)
+				{
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
+					previousIndices = indices;
+				}
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+			}
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.aliasHoleyAlpha.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = ALIAS_HOLEY_ALPHA_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
+			pushConstants[3] = 0;
+			pushConstants[7] = 0;
+			pushConstants[11] = 0;
+			pushConstants[15] = 1;
+			SharedMemoryBuffer* previousVertices = nullptr;
+			SharedMemoryBuffer* previousTexCoords = nullptr;
+			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
+			SharedMemoryTexture* previousTexture = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
+			for (auto i = 0; i <= appState.Scene.aliasHoleyAlpha.last; i++)
+			{
+				auto& loaded = appState.Scene.aliasHoleyAlpha.loaded[i];
+				auto vertices = loaded.vertices.buffer;
+				if (previousVertices != vertices)
+				{
+					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+					previousVertices = vertices;
+				}
+				auto texCoords = loaded.texCoords.buffer;
+				if (previousTexCoords != texCoords)
+				{
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
+					previousTexCoords = texCoords;
+				}
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
+				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+				SetPushConstants(loaded, pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyAlpha.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
+				if (loaded.isHostColormap)
+				{
+					if (previousColormapDescriptorSet != host_colormapResources.descriptorSet)
+					{
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 1, 1, &host_colormapResources.descriptorSet, 0, nullptr);
+						previousColormapDescriptorSet = host_colormapResources.descriptorSet;
+					}
+				}
+				else
+				{
+					auto colormap = loaded.colormap.texture;
+					if (colormapResources.bound[descriptorSetIndex] != colormap)
+					{
+						textureInfo.sampler = appState.Scene.sampler;
+						textureInfo.imageView = colormap->view;
+						writes[0].dstSet = colormapResources.descriptorSets[descriptorSetIndex];
+						vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
+						colormapResources.bound[descriptorSetIndex] = colormap;
+					}
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 1, 1, &colormapResources.descriptorSets[descriptorSetIndex], 0, nullptr);
+					previousColormapDescriptorSet = colormapResources.descriptorSets[descriptorSetIndex];
+					descriptorSetIndex++;
+				}
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
+				}
+				auto indices = loaded.indices.indices.buffer;
+				if (previousIndices != indices)
+				{
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
+					previousIndices = indices;
+				}
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+			}
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.aliasAlphaColoredLights.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = ALIAS_ALPHA_COLORED_LIGHTS_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlphaColoredLights.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlphaColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
+			pushConstants[3] = 0;
+			pushConstants[7] = 0;
+			pushConstants[11] = 0;
+			pushConstants[15] = 1;
+			SetTintPushConstants(pushConstants, 16);
+			SharedMemoryBuffer* previousVertices = nullptr;
+			SharedMemoryBuffer* previousTexCoords = nullptr;
+			SharedMemoryTexture* previousTexture = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
+			for (auto i = 0; i <= appState.Scene.aliasAlphaColoredLights.last; i++)
+			{
+				auto& loaded = appState.Scene.aliasAlphaColoredLights.loaded[i];
+				auto vertices = loaded.vertices.buffer;
+				if (previousVertices != vertices)
+				{
+					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+					previousVertices = vertices;
+				}
+				auto texCoords = loaded.texCoords.buffer;
+				if (previousTexCoords != texCoords)
+				{
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
+					previousTexCoords = texCoords;
+				}
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
+				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+				SetPushConstants(loaded, pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.aliasAlphaColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlphaColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
 					previousTexture = texture;
 				}
 				auto indices = loaded.indices.indices.buffer;
@@ -2948,7 +3182,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
 					previousTexCoords = texCoords;
 				}
-				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
@@ -2956,6 +3190,60 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				if (previousTexture != texture)
 				{
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
+					previousTexture = texture;
+				}
+				auto indices = loaded.indices.indices.buffer;
+				if (previousIndices != indices)
+				{
+					vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
+					previousIndices = indices;
+				}
+				vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+			}
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
+		if (appState.Scene.aliasHoleyAlphaColoredLights.last >= 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = ALIAS_HOLEY_ALPHA_COLORED_LIGHTS_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlphaColoredLights.pipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, 0, 1, &sceneMatricesAndNeutralPaletteResources.descriptorSet, 0, nullptr);
+			pushConstants[3] = 0;
+			pushConstants[7] = 0;
+			pushConstants[11] = 0;
+			pushConstants[15] = 1;
+			SetTintPushConstants(pushConstants, 16);
+			SharedMemoryBuffer* previousVertices = nullptr;
+			SharedMemoryBuffer* previousTexCoords = nullptr;
+			SharedMemoryTexture* previousTexture = nullptr;
+			SharedMemoryBuffer* previousIndices = nullptr;
+			for (auto i = 0; i <= appState.Scene.aliasHoleyAlphaColoredLights.last; i++)
+			{
+				auto& loaded = appState.Scene.aliasHoleyAlphaColoredLights.loaded[i];
+				auto vertices = loaded.vertices.buffer;
+				if (previousVertices != vertices)
+				{
+					vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+					previousVertices = vertices;
+				}
+				auto texCoords = loaded.texCoords.buffer;
+				if (previousTexCoords != texCoords)
+				{
+					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
+					previousTexCoords = texCoords;
+				}
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
+				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+				SetPushConstants(loaded, pushConstants);
+				vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
+				auto texture = loaded.texture.texture;
+				if (previousTexture != texture)
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
 					previousTexture = texture;
 				}
 				auto indices = loaded.indices.indices.buffer;
@@ -3002,7 +3290,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
 					previousTexCoords = texCoords;
 				}
-				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.viewmodels.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
@@ -3079,7 +3367,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
 					previousTexCoords = texCoords;
 				}
-				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsHoley.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
@@ -3156,7 +3444,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
 					previousTexCoords = texCoords;
 				}
-				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
@@ -3210,7 +3498,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
 					previousTexCoords = texCoords;
 				}
-				VkDeviceSize attributeOffset = colormappedAttributeBase + loaded.firstAttribute * sizeof(float);
+				VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
 				vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
 				SetPushConstants(loaded, pushConstants);
 				vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsHoleyColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);

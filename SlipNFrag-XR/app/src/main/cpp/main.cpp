@@ -2806,9 +2806,13 @@ void android_main(struct android_app* app)
 			appState.Scene.viewmodelsHoley.Delete(appState);
 			appState.Scene.viewmodelsColoredLights.Delete(appState);
 			appState.Scene.viewmodels.Delete(appState);
+			appState.Scene.aliasHoleyAlphaColoredLights.Delete(appState);
 			appState.Scene.aliasHoleyColoredLights.Delete(appState);
+			appState.Scene.aliasHoleyAlpha.Delete(appState);
 			appState.Scene.aliasHoley.Delete(appState);
+			appState.Scene.aliasAlphaColoredLights.Delete(appState);
 			appState.Scene.aliasColoredLights.Delete(appState);
+			appState.Scene.aliasAlpha.Delete(appState);
 			appState.Scene.alias.Delete(appState);
 			appState.Scene.sprites.Delete(appState);
 			appState.Scene.turbulentRotatedRGBAColoredLights.Delete(appState);

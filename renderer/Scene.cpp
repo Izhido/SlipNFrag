@@ -401,6 +401,18 @@ void Scene::Create(AppState& appState)
 	CreateShader(appState, "shaders/alias_colored_lights.frag.spv", &aliasColoredLightsFragment);
 	VkShaderModule aliasHoleyColoredLightsFragment;
 	CreateShader(appState, "shaders/alias_holey_colored_lights.frag.spv", &aliasHoleyColoredLightsFragment);
+	VkShaderModule aliasAlphaVertex;
+	CreateShader(appState, "shaders/alias_alpha.vert.spv", &aliasAlphaVertex);
+	VkShaderModule aliasAlphaFragment;
+	CreateShader(appState, "shaders/alias_alpha.frag.spv", &aliasAlphaFragment);
+	VkShaderModule aliasAlphaColoredLightsVertex;
+	CreateShader(appState, "shaders/alias_alpha_colored_lights.vert.spv", &aliasAlphaColoredLightsVertex);
+	VkShaderModule aliasAlphaColoredLightsFragment;
+	CreateShader(appState, "shaders/alias_alpha_colored_lights.frag.spv", &aliasAlphaColoredLightsFragment);
+	VkShaderModule aliasHoleyAlphaFragment;
+	CreateShader(appState, "shaders/alias_holey_alpha.frag.spv", &aliasHoleyAlphaFragment);
+	VkShaderModule aliasHoleyAlphaColoredLightsFragment;
+	CreateShader(appState, "shaders/alias_holey_alpha_colored_lights.frag.spv", &aliasHoleyAlphaColoredLightsFragment);
     VkShaderModule viewmodelVertex;
     CreateShader(appState, "shaders/viewmodel.vert.spv", &viewmodelVertex);
     VkShaderModule viewmodelFragment;
@@ -592,6 +604,27 @@ void Scene::Create(AppState& appState)
     aliasAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasAttributes.vertexAttributes.size();
     aliasAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAttributes.vertexAttributes.data();
 
+    PipelineAttributes aliasAlphaAttributes { };
+	aliasAlphaAttributes.vertexAttributes.resize(3);
+	aliasAlphaAttributes.vertexBindings.resize(3);
+	aliasAlphaAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
+	aliasAlphaAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
+	aliasAlphaAttributes.vertexAttributes[1].location = 1;
+	aliasAlphaAttributes.vertexAttributes[1].binding = 1;
+	aliasAlphaAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+	aliasAlphaAttributes.vertexBindings[1].binding = 1;
+	aliasAlphaAttributes.vertexBindings[1].stride = 2 * sizeof(float);
+	aliasAlphaAttributes.vertexAttributes[2].location = 2;
+	aliasAlphaAttributes.vertexAttributes[2].binding = 2;
+	aliasAlphaAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32_SFLOAT;
+	aliasAlphaAttributes.vertexBindings[2].binding = 2;
+	aliasAlphaAttributes.vertexBindings[2].stride = 2 * sizeof(float);
+	aliasAlphaAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	aliasAlphaAttributes.vertexInputState.vertexBindingDescriptionCount = aliasAlphaAttributes.vertexBindings.size();
+	aliasAlphaAttributes.vertexInputState.pVertexBindingDescriptions = aliasAlphaAttributes.vertexBindings.data();
+	aliasAlphaAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasAlphaAttributes.vertexAttributes.size();
+	aliasAlphaAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAlphaAttributes.vertexAttributes.data();
+
     PipelineAttributes aliasColoredLightsAttributes { };
 	aliasColoredLightsAttributes.vertexAttributes.resize(3);
 	aliasColoredLightsAttributes.vertexBindings.resize(3);
@@ -612,6 +645,27 @@ void Scene::Create(AppState& appState)
 	aliasColoredLightsAttributes.vertexInputState.pVertexBindingDescriptions = aliasColoredLightsAttributes.vertexBindings.data();
 	aliasColoredLightsAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasColoredLightsAttributes.vertexAttributes.size();
 	aliasColoredLightsAttributes.vertexInputState.pVertexAttributeDescriptions = aliasColoredLightsAttributes.vertexAttributes.data();
+
+    PipelineAttributes aliasAlphaColoredLightsAttributes { };
+	aliasAlphaColoredLightsAttributes.vertexAttributes.resize(3);
+	aliasAlphaColoredLightsAttributes.vertexBindings.resize(3);
+	aliasAlphaColoredLightsAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
+	aliasAlphaColoredLightsAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
+	aliasAlphaColoredLightsAttributes.vertexAttributes[1].location = 1;
+	aliasAlphaColoredLightsAttributes.vertexAttributes[1].binding = 1;
+	aliasAlphaColoredLightsAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+	aliasAlphaColoredLightsAttributes.vertexBindings[1].binding = 1;
+	aliasAlphaColoredLightsAttributes.vertexBindings[1].stride = 2 * sizeof(float);
+	aliasAlphaColoredLightsAttributes.vertexAttributes[2].location = 2;
+	aliasAlphaColoredLightsAttributes.vertexAttributes[2].binding = 2;
+	aliasAlphaColoredLightsAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	aliasAlphaColoredLightsAttributes.vertexBindings[2].binding = 2;
+	aliasAlphaColoredLightsAttributes.vertexBindings[2].stride = 4 * sizeof(float);
+	aliasAlphaColoredLightsAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	aliasAlphaColoredLightsAttributes.vertexInputState.vertexBindingDescriptionCount = aliasAlphaColoredLightsAttributes.vertexBindings.size();
+	aliasAlphaColoredLightsAttributes.vertexInputState.pVertexBindingDescriptions = aliasAlphaColoredLightsAttributes.vertexBindings.data();
+	aliasAlphaColoredLightsAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasAlphaColoredLightsAttributes.vertexAttributes.size();
+	aliasAlphaColoredLightsAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAlphaColoredLightsAttributes.vertexAttributes.data();
 
     PipelineAttributes particleAttributes { };
     particleAttributes.vertexAttributes.resize(1);
@@ -1162,13 +1216,39 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasAlpha.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = aliasAlpha.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasAlphaAttributes.vertexInputState;
+	stages[0].module = aliasAlphaVertex;
+    stages[1].module = aliasAlphaFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasAlpha.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)aliasAlpha.pipeline;
+	pipelineName.pObjectName = ALIAS_ALPHA_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoley.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasHoley.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
+	stages[0].module = aliasVertex;
     stages[1].module = aliasHoleyFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoley.pipeline));
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	pipelineName.objectHandle = (uint64_t)aliasHoley.pipeline;
 	pipelineName.pObjectName = ALIAS_HOLEY_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoleyAlpha.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = aliasHoleyAlpha.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasAlphaAttributes.vertexInputState;
+	stages[0].module = aliasAlphaVertex;
+    stages[1].module = aliasHoleyAlphaFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoleyAlpha.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)aliasHoleyAlpha.pipeline;
+	pipelineName.pObjectName = ALIAS_HOLEY_ALPHA_NAME;
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
@@ -1187,13 +1267,39 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasAlphaColoredLights.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = aliasAlphaColoredLights.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasAlphaColoredLightsAttributes.vertexInputState;
+	stages[0].module = aliasAlphaColoredLightsVertex;
+    stages[1].module = aliasAlphaColoredLightsFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasAlphaColoredLights.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)aliasAlphaColoredLights.pipeline;
+	pipelineName.pObjectName = ALIAS_ALPHA_COLORED_LIGHTS_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoleyColoredLights.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasHoleyColoredLights.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasColoredLightsAttributes.vertexInputState;
+	stages[0].module = aliasColoredLightsVertex;
     stages[1].module = aliasHoleyColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoleyColoredLights.pipeline));
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	pipelineName.objectHandle = (uint64_t)aliasHoleyColoredLights.pipeline;
 	pipelineName.pObjectName = ALIAS_HOLEY_COLORED_LIGHTS_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoleyAlphaColoredLights.pipelineLayout));
+    graphicsPipelineCreateInfo.layout = aliasHoleyAlphaColoredLights.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &aliasAlphaColoredLightsAttributes.vertexInputState;
+	stages[0].module = aliasAlphaColoredLightsVertex;
+    stages[1].module = aliasHoleyAlphaColoredLightsFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoleyAlphaColoredLights.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)aliasHoleyAlphaColoredLights.pipeline;
+	pipelineName.pObjectName = ALIAS_HOLEY_ALPHA_COLORED_LIGHTS_NAME;
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
@@ -1348,6 +1454,12 @@ void Scene::Create(AppState& appState)
     vkDestroyShaderModule(appState.Device, viewmodelHoleyFragment, nullptr);
     vkDestroyShaderModule(appState.Device, viewmodelFragment, nullptr);
     vkDestroyShaderModule(appState.Device, viewmodelVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, aliasHoleyAlphaColoredLightsFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, aliasHoleyAlphaFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, aliasAlphaColoredLightsFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, aliasAlphaColoredLightsVertex, nullptr);
+	vkDestroyShaderModule(appState.Device, aliasAlphaFragment, nullptr);
+	vkDestroyShaderModule(appState.Device, aliasAlphaVertex, nullptr);
     vkDestroyShaderModule(appState.Device, aliasHoleyColoredLightsFragment, nullptr);
     vkDestroyShaderModule(appState.Device, aliasColoredLightsFragment, nullptr);
     vkDestroyShaderModule(appState.Device, aliasColoredLightsVertex, nullptr);
@@ -2743,9 +2855,13 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     turbulentRotatedRGBAColoredLights.Allocate(d_lists.last_turbulent_rotated_rgba_colored_lights);
     sprites.Allocate(d_lists.last_sprite);
     alias.Allocate(d_lists.last_alias);
+	aliasAlpha.Allocate(d_lists.last_alias_alpha);
 	aliasColoredLights.Allocate(d_lists.last_alias_colored_lights);
+	aliasAlphaColoredLights.Allocate(d_lists.last_alias_alpha_colored_lights);
 	aliasHoley.Allocate(d_lists.last_alias_holey);
+	aliasHoleyAlpha.Allocate(d_lists.last_alias_holey_alpha);
 	aliasHoleyColoredLights.Allocate(d_lists.last_alias_holey_colored_lights);
+	aliasHoleyAlphaColoredLights.Allocate(d_lists.last_alias_holey_alpha_colored_lights);
     viewmodels.Allocate(d_lists.last_viewmodel);
 	viewmodelsColoredLights.Allocate(d_lists.last_viewmodel_colored_lights);
 	viewmodelsHoley.Allocate(d_lists.last_viewmodel_holey);
@@ -3200,7 +3316,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedRGBA.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-        sortedAttributesSize += (12 * sizeof(float));
+        sortedAttributesSize += (20 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
     turbulentRotatedLit.SetBases(sortedVerticesSize, sortedIndicesCount);
@@ -3275,9 +3391,21 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
 	previousApverts = nullptr;
 	previousTexture = nullptr;
+	for (auto i = 0; i <= aliasAlpha.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.alias_alpha[i], aliasAlpha.loaded[i], &colormap, size);
+	}
+	previousApverts = nullptr;
+	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasColoredLights.last; i++)
 	{
 		GetStagingBufferSize(appState, d_lists.alias_colored_lights[i], aliasColoredLights.loaded[i], size);
+	}
+	previousApverts = nullptr;
+	previousTexture = nullptr;
+	for (auto i = 0; i <= aliasAlphaColoredLights.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.alias_alpha_colored_lights[i], aliasAlphaColoredLights.loaded[i], size);
 	}
 	previousApverts = nullptr;
 	previousTexture = nullptr;
@@ -3287,9 +3415,21 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
 	previousApverts = nullptr;
 	previousTexture = nullptr;
+	for (auto i = 0; i <= aliasHoleyAlpha.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.alias_holey_alpha[i], aliasHoleyAlpha.loaded[i], &colormap, size);
+	}
+	previousApverts = nullptr;
+	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasHoleyColoredLights.last; i++)
 	{
 		GetStagingBufferSize(appState, d_lists.alias_holey_colored_lights[i], aliasHoleyColoredLights.loaded[i], size);
+	}
+	previousApverts = nullptr;
+	previousTexture = nullptr;
+	for (auto i = 0; i <= aliasHoleyAlphaColoredLights.last; i++)
+	{
+		GetStagingBufferSize(appState, d_lists.alias_holey_alpha_colored_lights[i], aliasHoleyAlphaColoredLights.loaded[i], size);
 	}
     previousApverts = nullptr;
     previousTexture = nullptr;

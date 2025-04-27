@@ -756,6 +756,13 @@ void R_AliasDrawModel (alight_t *plighting)
 			else
 				D_AddViewmodelToLists (paliashdr, pskindesc, r_apverts, currententity);
 		}
+		else if (currententity->alpha > 0)
+		{
+			if (r_holey)
+				D_AddAliasHoleyAlphaToLists (paliashdr, pskindesc, r_apverts, currententity);
+			else
+				D_AddAliasAlphaToLists (paliashdr, pskindesc, r_apverts, currententity);
+		}
 		else
 		{
 			if (r_holey)

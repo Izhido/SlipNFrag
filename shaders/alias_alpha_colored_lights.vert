@@ -19,13 +19,13 @@ layout(push_constant) uniform Transforms
 
 layout(location = 0) in uvec3 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
-layout(location = 2) in vec3 vertexLight;
+layout(location = 2) in vec4 vertexAttributes;
 layout(location = 0) out vec2 fragmentTexCoords;
-layout(location = 1) out flat vec4 fragmentLight;
+layout(location = 1) out flat vec4 fragmentAttributes;
 
 void main(void)
 {
 	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * aliasTransform * vec4(vertexPosition, 1);
 	fragmentTexCoords = vertexTexCoords;
-	fragmentLight = vec4(vertexLight / 32, 255);
+	fragmentAttributes = vec4(vertexAttributes.xyz / 32, vertexAttributes.w);
 }

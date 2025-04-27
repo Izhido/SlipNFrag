@@ -78,9 +78,13 @@ struct Scene
 	PipelineWithSorted<LoadedSurfaceRotatedColoredLights, SortedSurfaceTexturesWithLightmaps> turbulentRotatedRGBAColoredLights;
 	PipelineWithSorted<LoadedSprite, SortedSurfaceTextures> sprites;
 	PipelineWithLoaded<LoadedAlias> alias;
+	PipelineWithLoaded<LoadedAlias> aliasAlpha;
 	PipelineWithLoaded<LoadedAliasColoredLights> aliasColoredLights;
+	PipelineWithLoaded<LoadedAliasColoredLights> aliasAlphaColoredLights;
 	PipelineWithLoaded<LoadedAlias> aliasHoley;
+	PipelineWithLoaded<LoadedAlias> aliasHoleyAlpha;
 	PipelineWithLoaded<LoadedAliasColoredLights> aliasHoleyColoredLights;
+	PipelineWithLoaded<LoadedAliasColoredLights> aliasHoleyAlphaColoredLights;
 	PipelineWithLoaded<LoadedAlias> viewmodels;
 	PipelineWithLoaded<LoadedAliasColoredLights> viewmodelsColoredLights;
 	PipelineWithLoaded<LoadedAlias> viewmodelsHoley;

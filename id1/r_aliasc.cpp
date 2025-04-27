@@ -744,6 +744,13 @@ void R_AliasColoredDrawModel (acoloredlight_t *plighting)
 			else
 				D_AddViewmodelColoredLightsToLists (paliashdr, pskindesc, r_apverts, currententity);
 		}
+		else if (currententity->alpha > 0)
+		{
+			if (r_holey)
+				D_AddAliasHoleyAlphaColoredLightsToLists (paliashdr, pskindesc, r_apverts, currententity);
+			else
+				D_AddAliasAlphaColoredLightsToLists (paliashdr, pskindesc, r_apverts, currententity);
+		}
 		else
 		{
 			if (r_holey)

@@ -63,7 +63,7 @@ struct PerFrame
 	VkDeviceSize skyVertexBase;
 	VkDeviceSize controllerAttributeBase;
 	VkDeviceSize skyAttributeBase;
-	VkDeviceSize colormappedAttributeBase;
+	VkDeviceSize aliasAttributeBase;
 	VkDeviceSize controllerIndexBase;
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
