@@ -39,7 +39,9 @@ void D_ResetLists ()
 	d_lists.last_fence_rotated = -1;
 	d_lists.last_fence_rotated_colored_lights = -1;
 	d_lists.last_fence_rotated_rgba = -1;
+	d_lists.last_fence_rotated_rgba_colored_lights = -1;
 	d_lists.last_fence_rotated_rgba_no_glow = -1;
+	d_lists.last_fence_rotated_rgba_no_glow_colored_lights = -1;
 	d_lists.last_turbulent = -1;
 	d_lists.last_turbulent_rgba = -1;
 	d_lists.last_turbulent_lit = -1;

@@ -3329,7 +3329,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedLit.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-        sortedAttributesSize += (16 * sizeof(float));
+        sortedAttributesSize += (28 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
     turbulentRotatedColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
@@ -3342,7 +3342,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-        sortedAttributesSize += (16 * sizeof(float));
+        sortedAttributesSize += (28 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
     turbulentRotatedRGBALit.SetBases(sortedVerticesSize, sortedIndicesCount);
@@ -3355,7 +3355,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedRGBALit.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-        sortedAttributesSize += (16 * sizeof(float));
+        sortedAttributesSize += (28 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
     turbulentRotatedRGBAColoredLights.SetBases(sortedVerticesSize, sortedIndicesCount);
@@ -3368,7 +3368,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedRGBAColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
-        sortedAttributesSize += (16 * sizeof(float));
+        sortedAttributesSize += (28 * sizeof(float));
         sortedIndicesCount += ((loaded.count - 2) * 3);
     }
 	sprites.SetBases(sortedVerticesSize, sortedIndicesCount);
