@@ -1517,7 +1517,7 @@ int COM_FindAllFiles (const char *directory, const char *prefix, const char *ext
 		}
 	}
 
-	Sys_Printf ("FindAllFiles: can't find %s*.%s\n", prefix, extension);
+	Sys_Printf ("FindAllFiles: can't find %s*%s\n", prefix, extension);
 
 	return -1;
 }
