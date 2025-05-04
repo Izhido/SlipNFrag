@@ -36,8 +36,8 @@ D_SpriteDrawSpans
 */
 void D_SpriteDrawSpans (sspan_t *pspan)
 {
-	int			u, v, diff, count, spancount, izistep;
-	int			izi;
+	int			u, v, diff, count, spancount;
+	long long	izistep, izi;
 	byte		*pbase, *pdest;
 	fixed16_t	s, t, snext, tnext, sstep, tstep;
 	float		sdivz, tdivz, zi, z, du, dv, spancountminus1;
@@ -55,7 +55,7 @@ void D_SpriteDrawSpans (sspan_t *pspan)
 	zi8stepu = d_zistepu * 8;
 
 // we count on FP exceptions being turned off to avoid range problems
-	izistep = (int)(d_zistepu * 0x8000 * 0x10000);
+	izistep = d_zistepu * 0x8000 * 0x10000;
 
 	do
 	{
@@ -95,7 +95,7 @@ void D_SpriteDrawSpans (sspan_t *pspan)
 		zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
 		z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
 	// we count on FP exceptions being turned off to avoid range problems
-		izi = (int)(zi * 0x8000 * 0x10000);
+		izi = zi * 0x8000 * 0x10000;
 
 		s = (int)(sdivz * z) + sadjust;
 		if (s > bbextents)
