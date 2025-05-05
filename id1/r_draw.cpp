@@ -580,7 +580,7 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 	surface_p->flags = fa->flags;
 	surface_p->insubmodel = insubmodel;
 	surface_p->isfence = (fa->flags & SURF_DRAWFENCE);
-	surface_p->isalpha = (!(fa->flags & SURF_DRAWTURB) && (currententity->alpha != 0));
+	surface_p->isalpha = (currententity->alpha != 0);
 	surface_p->spanstate = 0;
 	surface_p->entity = currententity;
 	surface_p->key = r_currentkey++;
@@ -706,7 +706,7 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 	surface_p->flags = psurf->flags;
 	surface_p->insubmodel = true;
 	surface_p->isfence = (psurf->flags & SURF_DRAWFENCE);
-	surface_p->isalpha = (!(psurf->flags & SURF_DRAWTURB) && (currententity->alpha != 0));
+	surface_p->isalpha = (currententity->alpha != 0);
 	surface_p->spanstate = 0;
 	surface_p->entity = currententity;
 	surface_p->key = r_currentbkey;

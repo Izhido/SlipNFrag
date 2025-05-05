@@ -327,74 +327,77 @@ void D_DrawSurfaces (void)
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
-				r_drawnpolycount++;
-
-				pface = (msurface_t*)s->data;
-				miplevel = 0;
-				cacheblock = (pixel_t *)
-						((byte *)pface->texinfo->texture +
-						 pface->texinfo->texture->offsets[0]);
-				cachewidth = pface->texinfo->texture->width;
-				r_turb_cacheheight = pface->texinfo->texture->height;
-
-				if (s->insubmodel)
+				if (!s->isfence && !s->isalpha)
 				{
-				// FIXME: we don't want to do all this for every polygon!
-				// TODO: store once at start of frame
-					currententity = s->entity;	//FIXME: make this passed in to
-												// R_RotateBmodel ()
-					VectorSubtract (r_origin, currententity->origin,
-							local_modelorg);
-					TransformVector (local_modelorg, transformed_modelorg);
+					r_drawnpolycount++;
 
-					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
-										// make entity passed in
-				}
+					pface = (msurface_t*)s->data;
+					miplevel = 0;
+					cacheblock = (pixel_t *)
+							((byte *)pface->texinfo->texture +
+							 pface->texinfo->texture->offsets[0]);
+					cachewidth = pface->texinfo->texture->width;
+					r_turb_cacheheight = pface->texinfo->texture->height;
 
-				D_TurbCalcGradients (pface);
-				if (pface->samples != nullptr)
-				{
-					auto texture = R_TextureAnimation (pface->texinfo->texture);
-					pcurrentcache = D_CacheLightmap (pface, texture);
-					if (pcurrentcache == nullptr)
+					if (s->insubmodel)
 					{
-						Turbulent8Non64 (s->spans);
+					// FIXME: we don't want to do all this for every polygon!
+					// TODO: store once at start of frame
+						currententity = s->entity;	//FIXME: make this passed in to
+													// R_RotateBmodel ()
+						VectorSubtract (r_origin, currententity->origin,
+								local_modelorg);
+						TransformVector (local_modelorg, transformed_modelorg);
+
+						R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+											// make entity passed in
+					}
+
+					D_TurbCalcGradients (pface);
+					if (pface->samples != nullptr)
+					{
+						auto texture = R_TextureAnimation (pface->texinfo->texture);
+						pcurrentcache = D_CacheLightmap (pface, texture);
+						if (pcurrentcache == nullptr)
+						{
+							Turbulent8Non64 (s->spans);
+						}
+						else
+						{
+							r_turb_lightmapblock = (unsigned*)&(pcurrentcache->data[0]);
+							r_turb_lightmapwidthminusone = (pcurrentcache->width / sizeof(unsigned)) - 1;
+							r_turb_lightmapheightminusone = pcurrentcache->height - 1;
+							r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
+							r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
+							TurbulentLit8 (s->spans);
+						}
+					}
+					else if (cachewidth == 64 && r_turb_cacheheight == 64)
+					{
+						Turbulent8 (s->spans);
 					}
 					else
 					{
-						r_turb_lightmapblock = (unsigned*)&(pcurrentcache->data[0]);
-						r_turb_lightmapwidthminusone = (pcurrentcache->width / sizeof(unsigned)) - 1;
-						r_turb_lightmapheightminusone = pcurrentcache->height - 1;
-						r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
-						r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
-						TurbulentLit8 (s->spans);
+						Turbulent8Non64 (s->spans);
 					}
-				}
-                else if (cachewidth == 64 && r_turb_cacheheight == 64)
-                {
-                    Turbulent8 (s->spans);
-                }
-                else
-                {
-                    Turbulent8Non64 (s->spans);
-                }
-				(*d_drawzspans) (s->spans);
+					(*d_drawzspans) (s->spans);
 
-				if (s->insubmodel)
-				{
-				//
-				// restore the old drawing state
-				// FIXME: we don't want to do this every time!
-				// TODO: speed up
-				//
-					currententity = &cl_entities[0];
-					VectorCopy (world_transformed_modelorg,
-								transformed_modelorg);
-					VectorCopy (base_vpn, vpn);
-					VectorCopy (base_vup, vup);
-					VectorCopy (base_vright, vright);
-					VectorCopy (base_modelorg, modelorg);
-					R_TransformFrustum ();
+					if (s->insubmodel)
+					{
+					//
+					// restore the old drawing state
+					// FIXME: we don't want to do this every time!
+					// TODO: speed up
+					//
+						currententity = &cl_entities[0];
+						VectorCopy (world_transformed_modelorg,
+									transformed_modelorg);
+						VectorCopy (base_vpn, vpn);
+						VectorCopy (base_vup, vup);
+						VectorCopy (base_vright, vright);
+						VectorCopy (base_modelorg, modelorg);
+						R_TransformFrustum ();
+					}
 				}
 			}
 			else if (!s->isfence && !s->isalpha)
@@ -461,7 +464,78 @@ void D_DrawSurfaces (void)
 
 			if (s->flags & SURF_DRAWTURB)
 			{
-				// TODO: Render turbulent holey surfaces here
+				r_drawnpolycount++;
+
+				d_zistepu = s->d_zistepu;
+				d_zistepv = s->d_zistepv;
+				d_ziorigin = s->d_ziorigin;
+
+				pface = (msurface_t*)s->data;
+				miplevel = 0;
+				cacheblock = (pixel_t *)
+						((byte *)pface->texinfo->texture +
+						 pface->texinfo->texture->offsets[0]);
+				cachewidth = pface->texinfo->texture->width;
+				r_turb_cacheheight = pface->texinfo->texture->height;
+
+				if (s->insubmodel)
+				{
+				// FIXME: we don't want to do all this for every polygon!
+				// TODO: store once at start of frame
+					currententity = s->entity;	//FIXME: make this passed in to
+												// R_RotateBmodel ()
+					VectorSubtract (r_origin, currententity->origin,
+							local_modelorg);
+					TransformVector (local_modelorg, transformed_modelorg);
+
+					R_RotateBmodel ();	// FIXME: don't mess with the frustum,
+										// make entity passed in
+				}
+
+				D_TurbCalcGradients (pface);
+				if (pface->samples != nullptr)
+				{
+					auto texture = R_TextureAnimation (pface->texinfo->texture);
+					pcurrentcache = D_CacheLightmap (pface, texture);
+					if (pcurrentcache == nullptr)
+					{
+						TurbulentAlpha8Non64 (s->spans, s->entity->alpha);
+					}
+					else
+					{
+						r_turb_lightmapblock = (unsigned*)&(pcurrentcache->data[0]);
+						r_turb_lightmapwidthminusone = (pcurrentcache->width / sizeof(unsigned)) - 1;
+						r_turb_lightmapheightminusone = pcurrentcache->height - 1;
+						r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
+						r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
+						TurbulentLitAlpha8 (s->spans, s->entity->alpha);
+					}
+				}
+                else if (cachewidth == 64 && r_turb_cacheheight == 64)
+                {
+                    TurbulentAlpha8 (s->spans, s->entity->alpha);
+                }
+                else
+                {
+					TurbulentAlpha8Non64 (s->spans, s->entity->alpha);
+                }
+
+				if (s->insubmodel)
+				{
+				//
+				// restore the old drawing state
+				// FIXME: we don't want to do this every time!
+				// TODO: speed up
+				//
+					currententity = &cl_entities[0];
+					VectorCopy (world_transformed_modelorg,
+								transformed_modelorg);
+					VectorCopy (base_vpn, vpn);
+					VectorCopy (base_vup, vup);
+					VectorCopy (base_vright, vright);
+					VectorCopy (base_modelorg, modelorg);
+					R_TransformFrustum ();
+				}
 			}
 			else
 			{
