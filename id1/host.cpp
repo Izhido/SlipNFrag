@@ -540,6 +540,10 @@ void Host_ClearMemory (void)
 	r_skyRGBAinitialized = false;
 	r_skyboxinitialized = false;
 	r_skyboxprefix = "";
+	r_worldwateralpha = -1;
+	r_worldlavaalpha = -1;
+	r_worldtelealpha = -1;
+	r_worldslimealpha = -1;
 
 	cls.signon = 0;
 	sv.Clear();

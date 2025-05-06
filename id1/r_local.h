@@ -85,6 +85,10 @@ extern cvar_t	r_numsurfs;
 extern cvar_t	r_reportedgeout;
 extern cvar_t	r_maxedges;
 extern cvar_t	r_numedges;
+extern cvar_t	r_wateralpha;
+extern cvar_t	r_lavaalpha;
+extern cvar_t	r_telealpha;
+extern cvar_t	r_slimealpha;
 
 #define XCENTERING	(1.0 / 2.0)
 #define YCENTERING	(1.0 / 2.0)
@@ -332,6 +336,11 @@ extern qboolean	r_fov_greater_than_90;
 
 extern vec3_t	r_modelorg_delta;
 extern qboolean	r_load_as_rgba;
+
+extern float	r_worldwateralpha;
+extern float	r_worldlavaalpha;
+extern float	r_worldtelealpha;
+extern float	r_worldslimealpha;
 
 extern qboolean	d_uselists;
 

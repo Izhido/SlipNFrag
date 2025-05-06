@@ -430,7 +430,7 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 // start edge yet)
 	if (--surf->spanstate == 0)
 	{
-		if (surf->isfence || surf->isalpha)
+		if (surf->isfence || surf->alpha != 0)
 		{
 			span = surf->spans;
 			span->count = (int)(edge->u >> 20) - span->u;
@@ -488,7 +488,7 @@ void R_LeadingEdge (edge_t *edge)
 	// end edge)
 		if (++surf->spanstate == 1)
 		{
-			if (surf->isfence || surf->isalpha)
+			if (surf->isfence || surf->alpha != 0)
 			{
 				span = span_p++;
 				span->u = (int)(edge->u >> 20);

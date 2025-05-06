@@ -101,7 +101,8 @@ typedef struct surf_s
 	int	insubmodel;
 	float		d_ziorigin, d_zistepu, d_zistepv;
 	uint16_t	isfence;			// related texture contains "holes" (texels with value 255)
-	uint16_t	isalpha;			// related entity has alpha value defined
+	byte		alpha;				// related entity has alpha value defined
+	byte		pad;
 	// this should total 80 bytes in 64-bit platforms
 } surf_t;
 
@@ -163,6 +164,8 @@ typedef struct edge_s
 } edge_t;
 
 texture_t *R_TextureAnimation (texture_t *base);
+
+byte R_AlphaForSurface (msurface_t* surf, entity_t* entity);
 
 #endif	// _R_SHARED_H_
 

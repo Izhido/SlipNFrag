@@ -327,7 +327,7 @@ void D_DrawSurfaces (void)
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
-				if (!s->isfence && !s->isalpha)
+				if (!s->isfence && s->alpha == 0)
 				{
 					r_drawnpolycount++;
 
@@ -400,7 +400,7 @@ void D_DrawSurfaces (void)
 					}
 				}
 			}
-			else if (!s->isfence && !s->isalpha)
+			else if (!s->isfence && s->alpha == 0)
 			{
 				r_drawnpolycount++;
 
@@ -499,7 +499,7 @@ void D_DrawSurfaces (void)
 					pcurrentcache = D_CacheLightmap (pface, texture);
 					if (pcurrentcache == nullptr)
 					{
-						TurbulentAlpha8Non64 (s->spans, s->entity->alpha);
+						TurbulentAlpha8Non64 (s->spans, s->alpha);
 					}
 					else
 					{
@@ -508,16 +508,16 @@ void D_DrawSurfaces (void)
 						r_turb_lightmapheightminusone = pcurrentcache->height - 1;
 						r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
 						r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
-						TurbulentLitAlpha8 (s->spans, s->entity->alpha);
+						TurbulentLitAlpha8 (s->spans, s->alpha);
 					}
 				}
                 else if (cachewidth == 64 && r_turb_cacheheight == 64)
                 {
-                    TurbulentAlpha8 (s->spans, s->entity->alpha);
+                    TurbulentAlpha8 (s->spans, s->alpha);
                 }
                 else
                 {
-					TurbulentAlpha8Non64 (s->spans, s->entity->alpha);
+					TurbulentAlpha8Non64 (s->spans, s->alpha);
                 }
 
 				if (s->insubmodel)
@@ -573,12 +573,12 @@ void D_DrawSurfaces (void)
 
 					D_CalcGradients (pface);
 
-					if (s->isfence && s->isalpha)
-						D_DrawFenceAlphaSpans8 (s->spans, s->entity->alpha);
+					if (s->isfence && s->alpha != 0)
+						D_DrawFenceAlphaSpans8 (s->spans, s->alpha);
 					else if (s->isfence)
 						D_DrawFenceSpans8 (s->spans);
 					else
-						D_DrawAlphaSpans8 (s->spans, s->entity->alpha);
+						D_DrawAlphaSpans8 (s->spans, s->alpha);
 				}
 
 				if (s->insubmodel)
@@ -611,6 +611,7 @@ D_DrawTurbulentToLists
 void D_DrawTurbulentToLists (msurface_t* pface)
 {
 	auto texture = R_TextureAnimation (pface->texinfo->texture);
+	auto alpha = R_AlphaForSurface(pface, currententity);
 	if (pface->samplesRGB != nullptr)
 	{
 		auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
@@ -622,7 +623,7 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 				currententity->angles[YAW] == 0 &&
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0 &&
-				currententity->alpha == 0)
+				alpha == 0)
 			{
 				if (texture->external_color != nullptr)
 					D_AddTurbulentRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
@@ -630,9 +631,9 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 					D_AddTurbulentColoredLightsToLists (pface, pcurrentcache, currententity);
 			}
 			else if (texture->external_color != nullptr)
-				D_AddTurbulentRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+				D_AddTurbulentRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity, alpha);
 			else
-				D_AddTurbulentRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
+				D_AddTurbulentRotatedColoredLightsToLists (pface, pcurrentcache, currententity, alpha);
 		}
 	}
 	else if (pface->samples != nullptr)
@@ -646,7 +647,7 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 				currententity->angles[YAW] == 0 &&
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0 &&
-				currententity->alpha == 0)
+				alpha == 0)
 			{
 				if (texture->external_color != nullptr)
 					D_AddTurbulentRGBALitToLists (pface, pcurrentcache, currententity);
@@ -654,9 +655,9 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 					D_AddTurbulentLitToLists (pface, pcurrentcache, currententity);
 			}
 			else if (texture->external_color != nullptr)
-				D_AddTurbulentRotatedRGBALitToLists (pface, pcurrentcache, currententity);
+				D_AddTurbulentRotatedRGBALitToLists (pface, pcurrentcache, currententity, alpha);
 			else
-				D_AddTurbulentRotatedLitToLists (pface, pcurrentcache, currententity);
+				D_AddTurbulentRotatedLitToLists (pface, pcurrentcache, currententity, alpha);
 		}
 	}
 	else if (currententity->origin[0] == 0 &&
@@ -665,7 +666,7 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 	         currententity->angles[YAW] == 0 &&
 	         currententity->angles[PITCH] == 0 &&
 	         currententity->angles[ROLL] == 0 &&
-			 currententity->alpha == 0)
+			 alpha == 0)
 	{
 		if (texture->external_color != nullptr)
 			D_AddTurbulentRGBAToLists (pface, currententity);
@@ -673,9 +674,9 @@ void D_DrawTurbulentToLists (msurface_t* pface)
 			D_AddTurbulentToLists (pface, currententity);
 	}
 	else if (texture->external_color != nullptr)
-		D_AddTurbulentRotatedRGBAToLists (pface, currententity);
+		D_AddTurbulentRotatedRGBAToLists (pface, currententity, alpha);
 	else
-		D_AddTurbulentRotatedToLists (pface, currententity);
+		D_AddTurbulentRotatedToLists (pface, currententity, alpha);
 }
 
 
@@ -687,6 +688,7 @@ D_DrawSurfaceToLists
 void D_DrawSurfaceToLists (msurface_t* pface)
 {
 	auto texture = R_TextureAnimation (pface->texinfo->texture);
+	auto alpha = R_AlphaForSurface(pface, currententity);
 	if (pface->samplesRGB != NULL)
 	{
 		auto pcurrentcache = D_CacheColoredLightmap (pface, texture);
@@ -698,7 +700,7 @@ void D_DrawSurfaceToLists (msurface_t* pface)
 				currententity->angles[YAW] == 0 &&
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0 &&
-				currententity->alpha == 0)
+				alpha == 0)
 			{
 				if (pface->flags & SURF_DRAWFENCE)
 				{
@@ -719,18 +721,18 @@ void D_DrawSurfaceToLists (msurface_t* pface)
 			else if (pface->flags & SURF_DRAWFENCE)
 			{
 				if (texture->external_color != nullptr && texture->external_glow != nullptr)
-					D_AddFenceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+					D_AddFenceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity, alpha);
 				else if (texture->external_color != nullptr)
-					D_AddFenceRotatedRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity);
+					D_AddFenceRotatedRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity, alpha);
 				else
-					D_AddFenceRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
+					D_AddFenceRotatedColoredLightsToLists (pface, pcurrentcache, currententity, alpha);
 			}
 			else if (texture->external_color != nullptr && texture->external_glow != nullptr)
-				D_AddSurfaceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity);
+				D_AddSurfaceRotatedRGBAColoredLightsToLists (pface, pcurrentcache, currententity, alpha);
 			else if (texture->external_color != nullptr)
-				D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity);
+				D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (pface, pcurrentcache, currententity, alpha);
 			else
-				D_AddSurfaceRotatedColoredLightsToLists (pface, pcurrentcache, currententity);
+				D_AddSurfaceRotatedColoredLightsToLists (pface, pcurrentcache, currententity, alpha);
 		}
 	}
 	else
@@ -744,7 +746,7 @@ void D_DrawSurfaceToLists (msurface_t* pface)
 				currententity->angles[YAW] == 0 &&
 				currententity->angles[PITCH] == 0 &&
 				currententity->angles[ROLL] == 0 &&
-				currententity->alpha == 0)
+				alpha == 0)
 			{
 				if (pface->flags & SURF_DRAWFENCE)
 				{
@@ -765,18 +767,18 @@ void D_DrawSurfaceToLists (msurface_t* pface)
 			else if (pface->flags & SURF_DRAWFENCE)
 			{
 				if (texture->external_color != nullptr && texture->external_glow != nullptr)
-					D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity);
+					D_AddFenceRotatedRGBAToLists (pface, pcurrentcache, currententity, alpha);
 				else if (texture->external_color != nullptr)
-					D_AddFenceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
+					D_AddFenceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity, alpha);
 				else
-					D_AddFenceRotatedToLists (pface, pcurrentcache, currententity);
+					D_AddFenceRotatedToLists (pface, pcurrentcache, currententity, alpha);
 			}
 			else if (texture->external_color != nullptr && texture->external_glow != nullptr)
-				D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity);
+				D_AddSurfaceRotatedRGBAToLists (pface, pcurrentcache, currententity, alpha);
 			else if (texture->external_color != nullptr)
-				D_AddSurfaceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity);
+				D_AddSurfaceRotatedRGBANoGlowToLists (pface, pcurrentcache, currententity, alpha);
 			else
-				D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity);
+				D_AddSurfaceRotatedToLists (pface, pcurrentcache, currententity, alpha);
 		}
 	}
 }

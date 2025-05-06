@@ -1345,6 +1345,14 @@ void Mod_LoadFaces (lump_t *l)
 		if (!Q_strncmp(out->texinfo->texture->name,"*",1))		// turbulent
 		{
 			out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
+			if (!Q_strncmp(out->texinfo->texture->name+1,"lava",4))
+				out->flags |= SURF_DRAWLAVA;
+			else if (!Q_strncmp(out->texinfo->texture->name+1,"tele",4))
+				out->flags |= SURF_DRAWTELE;
+			else if (!Q_strncmp(out->texinfo->texture->name+1,"slime",5))
+				out->flags |= SURF_DRAWSLIME;
+			else
+				out->flags |= SURF_DRAWWATER;
 			continue;
 		}
 
@@ -1423,6 +1431,14 @@ void Mod_LoadBSP2Faces (lump_t *l)
 		if (!Q_strncmp(out->texinfo->texture->name,"*",1))		// turbulent
 		{
 			out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
+			if (!Q_strncmp(out->texinfo->texture->name+1,"lava",4))
+				out->flags |= SURF_DRAWLAVA;
+			else if (!Q_strncmp(out->texinfo->texture->name+1,"tele",4))
+				out->flags |= SURF_DRAWTELE;
+			else if (!Q_strncmp(out->texinfo->texture->name+1,"slime",5))
+				out->flags |= SURF_DRAWSLIME;
+			else
+				out->flags |= SURF_DRAWWATER;
 			continue;
 		}
 

@@ -62,6 +62,11 @@ qboolean	r_fov_greater_than_90;
 vec3_t 		r_modelorg_delta;
 qboolean	r_load_as_rgba;
 
+float		r_worldwateralpha;
+float		r_worldlavaalpha;
+float		r_worldtelealpha;
+float		r_worldslimealpha;
+
 //
 // view origin
 //
@@ -147,6 +152,10 @@ cvar_t	r_maxedges = {"r_maxedges", "0"};
 cvar_t	r_numedges = {"r_numedges", "0"};
 cvar_t	r_aliastransbase = {"r_aliastransbase", "200"};
 cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
+cvar_t	r_wateralpha = {"r_wateralpha", "1", true};
+cvar_t	r_lavaalpha = {"r_lavaalpha", "0"};
+cvar_t	r_telealpha = {"r_telealpha", "0"};
+cvar_t	r_slimealpha = {"r_slimealpha", "0"};
 
 extern cvar_t	scr_fov;
 
@@ -227,6 +236,10 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_numedges);
 	Cvar_RegisterVariable (&r_aliastransbase);
 	Cvar_RegisterVariable (&r_aliastransadj);
+	Cvar_RegisterVariable (&r_wateralpha);
+	Cvar_RegisterVariable (&r_lavaalpha);
+	Cvar_RegisterVariable (&r_telealpha);
+	Cvar_RegisterVariable (&r_slimealpha);
 
 	Cvar_SetValue ("r_maxedges", (float)NUMSTACKEDGES);
 	Cvar_SetValue ("r_maxsurfs", (float)NUMSTACKSURFACES);
@@ -248,6 +261,11 @@ void R_Init (void)
 	Sys_MakeCodeWriteable ((long)R_EdgeCodeStart,
 					     (long)R_EdgeCodeEnd - (long)R_EdgeCodeStart);
 #endif	// id386
+
+	r_worldwateralpha = -1;
+	r_worldlavaalpha = -1;
+	r_worldtelealpha = -1;
+	r_worldslimealpha = -1;
 
 	D_Init ();
 }
@@ -317,6 +335,22 @@ void R_NewMap (void)
 					r_skyboxinitialized = true;
 				}
 			}
+		}
+		else if (Q_strcasecmp (key.c_str(), "wateralpha") == 0)
+		{
+			r_worldwateralpha = Q_atof(value.c_str());
+		}
+		else if (Q_strcasecmp (key.c_str(), "lavaalpha") == 0)
+		{
+			r_worldlavaalpha = Q_atof(value.c_str());
+		}
+		else if (Q_strcasecmp (key.c_str(), "telealpha") == 0)
+		{
+			r_worldtelealpha = Q_atof(value.c_str());
+		}
+		else if (Q_strcasecmp (key.c_str(), "slimealpha") == 0)
+		{
+			r_worldslimealpha = Q_atof(value.c_str());
 		}
 	}
 

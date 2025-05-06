@@ -207,6 +207,7 @@ struct Scene
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurfacerotated_t& surface, PerSurfaceData& perSurface, LoadedSurfaceRotatedColoredLights& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
+	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulentrotated_t& surface, PerSurfaceData& perSurface, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const daliascoloredlights_t& alias, LoadedAliasColoredLights& loaded, VkDeviceSize& size);

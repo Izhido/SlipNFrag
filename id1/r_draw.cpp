@@ -393,6 +393,60 @@ void R_EmitCachedEdge (void)
 
 /*
 ================
+R_AlphaForSurface
+================
+*/
+byte R_AlphaForSurface (msurface_t* surf, entity_t* entity)
+{
+	if (entity->alpha != 0)
+	{
+		return entity->alpha;
+	}
+	else if (surf->flags & SURF_DRAWWATER)
+	{
+		if (r_worldwateralpha >= 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_worldwateralpha, 1.f), 255.f));
+		else if (r_wateralpha.value != 1)
+			return (byte)(fmin(fmax(1.f + 254.f * r_wateralpha.value, 1.f), 255.f));
+	}
+	else if (surf->flags & SURF_DRAWLAVA)
+	{
+		if (r_worldlavaalpha >= 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_worldlavaalpha, 1.f), 255.f));
+		else if (r_lavaalpha.value != 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_lavaalpha.value, 1.f), 255.f));
+		else if (r_worldwateralpha >= 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_worldwateralpha, 1.f), 255.f));
+		else if (r_wateralpha.value != 1)
+			return (byte)(fmin(fmax(1.f + 254.f * r_wateralpha.value, 1.f), 255.f));
+	}
+	else if (surf->flags & SURF_DRAWTELE)
+	{
+		if (r_worldtelealpha >= 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_worldtelealpha, 1.f), 255.f));
+		else if (r_telealpha.value != 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_telealpha.value, 1.f), 255.f));
+		else if (r_worldwateralpha >= 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_worldwateralpha, 1.f), 255.f));
+		else if (r_wateralpha.value != 1)
+			return (byte)(fmin(fmax(1.f + 254.f * r_wateralpha.value, 1.f), 255.f));
+	}
+	else if (surf->flags & SURF_DRAWSLIME)
+	{
+		if (r_worldslimealpha >= 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_worldslimealpha, 1.f), 255.f));
+		else if (r_slimealpha.value != 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_slimealpha.value, 1.f), 255.f));
+		else if (r_worldwateralpha >= 0)
+			return (byte)(fmin(fmax(1.f + 254.f * r_worldwateralpha, 1.f), 255.f));
+		else if (r_wateralpha.value != 1)
+			return (byte)(fmin(fmax(1.f + 254.f * r_wateralpha.value, 1.f), 255.f));
+	}
+	return 0;
+}
+
+/*
+================
 R_RenderFace
 ================
 */
@@ -580,7 +634,7 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 	surface_p->flags = fa->flags;
 	surface_p->insubmodel = insubmodel;
 	surface_p->isfence = (fa->flags & SURF_DRAWFENCE);
-	surface_p->isalpha = (currententity->alpha != 0);
+	surface_p->alpha = R_AlphaForSurface(fa, currententity);
 	surface_p->spanstate = 0;
 	surface_p->entity = currententity;
 	surface_p->key = r_currentkey++;
@@ -600,7 +654,7 @@ void R_RenderFace (msurface_t *fa, int clipflags)
 
 //JDC	VectorCopy (r_worldmodelorg, surface_p->modelorg);
 
-	if (surface_p->isfence || surface_p->isalpha)
+	if (surface_p->isfence || surface_p->alpha != 0)
 	{
 		*r_holeysurf_p = (int)(surface_p - surfaces);
 		r_holeysurf_p++;
@@ -706,7 +760,7 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 	surface_p->flags = psurf->flags;
 	surface_p->insubmodel = true;
 	surface_p->isfence = (psurf->flags & SURF_DRAWFENCE);
-	surface_p->isalpha = (currententity->alpha != 0);
+	surface_p->alpha = R_AlphaForSurface(psurf, currententity);
 	surface_p->spanstate = 0;
 	surface_p->entity = currententity;
 	surface_p->key = r_currentbkey;
@@ -726,7 +780,7 @@ void R_RenderBmodelFace (bedge_t *pedges, msurface_t *psurf)
 
 //JDC	VectorCopy (r_worldmodelorg, surface_p->modelorg);
 
-	if (surface_p->isfence || surface_p->isalpha)
+	if (surface_p->isfence || surface_p->alpha != 0)
 	{
 		*r_holeysurf_p = (int)(surface_p - surfaces);
 		r_holeysurf_p++;

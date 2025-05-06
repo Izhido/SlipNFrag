@@ -2413,6 +2413,18 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulentrotated_t& 
 	loaded.alpha = turbulent.alpha;
 }
 
+void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulentrotated_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulentRotated& loaded, VkDeviceSize& size)
+{
+    GetStagingBufferSizeRGBANoGlow(appState, (const dturbulent_t&)turbulent, perSurface, loaded, size);
+    loaded.originX = turbulent.origin_x;
+    loaded.originY = turbulent.origin_y;
+    loaded.originZ = turbulent.origin_z;
+    loaded.yaw = turbulent.yaw;
+    loaded.pitch = turbulent.pitch;
+    loaded.roll = turbulent.roll;
+	loaded.alpha = turbulent.alpha;
+}
+
 void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size)
 {
     if (previousTexture != sprite.data)
