@@ -68,6 +68,8 @@ qboolean	block_drawing;
 
 void SCR_ScreenShot_f (void);
 
+extern cvar_t host_timescale;
+
 /*
 ===============================================================================
 
@@ -530,30 +532,32 @@ void SCR_SetUpToDrawConsole (void)
 		con_conlines = 0;
 	}
 	
+	auto timescale = (host_timescale.value > 0) ? host_timescale.value : 1;
+
 	if (scr_conlines < scr_con_current)
 	{
-		scr_con_current -= scr_conspeed.value*(320.0/240.0)*host_frametime;
+		scr_con_current -= scr_conspeed.value*(320.0/240.0)*host_frametime / timescale;
 		if (scr_conlines > scr_con_current)
 			scr_con_current = scr_conlines;
 
 	}
 	else if (scr_conlines > scr_con_current)
 	{
-		scr_con_current += scr_conspeed.value*host_frametime;
+		scr_con_current += scr_conspeed.value*host_frametime / timescale;
 		if (scr_conlines < scr_con_current)
 			scr_con_current = scr_conlines;
 	}
 
 	if (con_conlines < con_con_current)
 	{
-		con_con_current -= scr_conspeed.value*host_frametime;
+		con_con_current -= scr_conspeed.value*host_frametime / timescale;
 		if (con_conlines > con_con_current)
 			con_con_current = con_conlines;
 		
 	}
 	else if (con_conlines > con_con_current)
 	{
-		con_con_current += scr_conspeed.value*host_frametime;
+		con_con_current += scr_conspeed.value*host_frametime / timescale;
 		if (con_conlines < con_con_current)
 			con_con_current = con_conlines;
 	}

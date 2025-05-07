@@ -57,6 +57,7 @@ std::vector<unsigned>	host_basepalcoverage;
 
 cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
 cvar_t	host_speeds = {"host_speeds","0"};			// set for running times
+cvar_t	host_timescale = {"host_timescale", "0"};
 
 cvar_t	max_edicts = {"max_edicts","0"};
 
@@ -242,6 +243,7 @@ void Host_InitLocal (void)
 	
 	Cvar_RegisterVariable (&host_framerate);
 	Cvar_RegisterVariable (&host_speeds);
+	Cvar_RegisterVariable (&host_timescale);
 
 	Cvar_RegisterVariable (&max_edicts);
 
@@ -575,7 +577,9 @@ qboolean Host_FilterTime (float time)
 	host_frametime = realtime - oldrealtime;
 	oldrealtime = realtime;
 
-	if (host_framerate.value > 0)
+	if (host_timescale.value > 0)
+		host_frametime *= host_timescale.value;
+	else if (host_framerate.value > 0)
 		host_frametime = host_framerate.value;
 	else
 	{	// don't allow really long or short frames
