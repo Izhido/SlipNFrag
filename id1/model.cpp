@@ -2198,14 +2198,48 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 
 	paliasgroup->intervals = (byte *)poutintervals - (byte *)pheader;
 
+	qboolean increasing = true;
+	float firstinterval = 0;
+	float previnterval = 0;
 	for (i=0 ; i<numframes ; i++)
 	{
 		*poutintervals = LittleFloat (pin_intervals->interval);
-		if (*poutintervals <= 0.0)
-			Sys_Error ("Mod_LoadAliasGroup: interval<=0");
+
+		if (i == 0)
+		{
+			firstinterval = *poutintervals;
+		}
+
+		if (increasing && previnterval >= *poutintervals)
+		{
+			increasing = false;
+		}
+		previnterval = *poutintervals;
 
 		poutintervals++;
 		pin_intervals++;
+	}
+
+	if (!increasing)
+	{
+		if (firstinterval > 0)
+		{
+			Con_Printf("Mod_LoadAliasGroup: intervals do not increase - rebuilding with first interval\n");
+
+			poutintervals = (float*)(mod_aliaspool.data() + pooltop + sizeof(maliasgroup_t) + (numframes - 1) * sizeof(paliasgroup->frames[0]));
+
+			auto interval = firstinterval;
+
+			for (i=0 ; i<numframes ; i++)
+			{
+				*poutintervals++ = interval;
+				interval += firstinterval;
+			}
+		}
+		else
+		{
+			Sys_Error ("Mod_LoadAliasGroup: interval<=0");
+		}
 	}
 
 	ptemp = (void *)pin_intervals;
@@ -2303,14 +2337,35 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 
 	paliasskingroup->intervals = (byte *)poutskinintervals - (byte *)pheader;
 
+	qboolean increasing = true;
+	float prevskininterval = 0;
 	for (i=0 ; i<numskins ; i++)
 	{
 		*poutskinintervals = LittleFloat (pinskinintervals->interval);
-		if (*poutskinintervals <= 0)
-			Sys_Error ("Mod_LoadAliasSkinGroup: interval<=0");
+
+		if (increasing && prevskininterval >= *poutskinintervals)
+		{
+			increasing = false;
+		}
+		prevskininterval = *poutskinintervals;
 
 		poutskinintervals++;
 		pinskinintervals++;
+	}
+
+	if (!increasing)
+	{
+		Con_Printf("Mod_LoadAliasGroup: skin intervals do not increase - rebuilding with 0.1 second intervals\n");
+
+		poutskinintervals = (float*)(mod_aliaspool.data() + pooltop + sizeof(maliasskingroup_t) + (numskins - 1) * sizeof(paliasskingroup->skindescs[0]));
+
+		auto interval = 0.1;
+
+		for (i=0 ; i<numskins ; i++)
+		{
+			*poutskinintervals++ = interval;
+			interval += 0.1;
+		}
 	}
 
 	ptemp = (void *)pinskinintervals;
