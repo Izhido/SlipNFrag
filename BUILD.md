@@ -70,17 +70,17 @@ The OXR version is an Android Studio project that can be found at `SlipNFrag-XR`
 
 The following is the list of components, and their version numbers, required to build the Android project, as of this writing:
 
-* Android SDK Platform **15.0** (R) API level **35**
+* Android SDK Platform **16.0** (R) API level **36**
 
-* NDK (Side by Side) **28.0.13004108**
+* NDK (Side by Side) **28.1.13356709**
 
-* Android SDK Build-Tools **35.0.2**
+* Android SDK Build-Tools **36.0.0**
 
-* OpenXR SDK **1.1.45**
+* OpenXR SDK **1.1.47**
 
 * stb (latest version gathered from https://github.com/nothings/stb )
 
-* CMake **3.31.5** (or later)
+* CMake **4.0.2** (or later)
 
 > (Versions for other components can be checked in *Project Structure* in the Android Studio project.)
 

@@ -12,8 +12,8 @@ android {
         minSdk = 29
         //noinspection ExpiredTargetSdkVersion
         targetSdk = 32
-        versionCode = 28
-        versionName = "1.0.28"
+        versionCode = 29
+        versionName = "1.0.29"
         shaders {
             glslcArgs += listOf("-c", "-g")
         }
@@ -47,7 +47,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.31.6"
+            version = "4.0.2"
         }
     }
     sourceSets {

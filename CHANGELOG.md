@@ -1,6 +1,24 @@
 # Changelog
 
-## Version **1.0.28**:
+### Version **1.0.29**:
+
+* Added support for transparent or semi-transparent surfaces and alias models (finally!).
+* Alias & viewmodels can now use colored lighting in all versions (desktop and GPU-based ones).
+* BREAKING CHANGE: Increased the version number from the network protocol from 'SnF'15 to 'SnF'16, to include the new scale & alpha server attributes to use them on the client side. NOTE: This means clients from older versions will no longer be able to connect via network to this new version.
+* Reduced the amount of lightmap copy commands sent to the GPU, which resulted in a minimal, but noticeable, increase in performance in the OXR and PCXR versions.
+* Particles in the OXR and PCXR versions now match their position more closely to the ones rendered in the desktop versions.
+* Added labels and groups in the renderer of the OXR and PCXR versions, to ease debugging when using tools such as RenderDoc.
+* A few minor optimizations for both OXR and PCXR versions to improve performance even more.
+* Fixed issue in the MacOS version that was not reacting properly to a Sys_Error() by not displaying it on screen before exiting.
+* Fixed potential memory access error in the renderer of the desktop versions when applying lights to both surfaces and alias models.
+* Modified RGB lightmap code in the renderer of the desktop versions to match more closely the expected colored lighting.
+* Fixed unexpected error in cleanup and data size specification of fence surfaces with colored lights and RGB textures, which caused the OXR and PCXR versions to crash upon finding them.
+* Added support for the "host_timescale" cvar in the core engine, in use by a few modern mods & maps.
+* Modified animation loading code for alias, so it can be more tolerant of invalid time interval data - upon finding incorrect values, they will be recalculated to follow more closely what is originally done in GLQuake (and any modern engines derived from it).
+* Other minor & miscellaneous fixes applied as well into the core engine.
+
+### Version **1.0.28**:
+
 * Migrated repository to GitHub. Downloads are now exposed as Releases in the repository.
 * Reorganized README to explain more clearly what to do with the application(s).
 * Rebuilt OXR version as a GameActivity-based application, to make it easier to get SDK updates.
