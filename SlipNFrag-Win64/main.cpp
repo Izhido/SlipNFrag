@@ -34,6 +34,19 @@ using namespace Gdiplus;
 
 AppState appState { };
 
+BOOL IsDarkThemeActive()
+{
+    DWORD type;
+    DWORD value;
+    DWORD count = 4;
+    auto err = RegGetValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", L"AppsUseLightTheme", RRF_RT_REG_DWORD, &type, &value, &count);
+    if (err == ERROR_SUCCESS && type == REG_DWORD)
+    {
+        return (value == 0);
+    }
+    return FALSE;
+}
+
 void HandleXInputState(XINPUT_STATE& previousState, XINPUT_STATE& newState)
 {
     auto previousButton = ((previousState.Gamepad.wButtons & XINPUT_GAMEPAD_START) != 0);
@@ -375,6 +388,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         lpMMI->ptMinTrackSize.y = 200 + appState.nonClientHeight;
         break;
     }
+    case WM_SETFOCUS:
+        if (appState.playButton != NULL)
+        {
+            UpdateWindow(appState.playButton);
+        }
+        break;
     case WM_SIZE:
     {
         if (appState.playButton != NULL)
@@ -391,10 +410,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     }
+    case WM_MOVE:
+        if (appState.playButton != NULL)
+        {
+            UpdateWindow(appState.playButton);
+        }
+        break;
     case WM_COMMAND:
         if (wParam == IDC_PLAY_BUTTON)
         {
             DestroyWindow(appState.playButton);
+            appState.playButton = NULL;
 
             RECT clientRect;
             GetClientRect(hWnd, &clientRect);
@@ -746,6 +772,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     }
+    case WM_CTLCOLORBTN:
+        return (INT_PTR)appState.backgroundBrush;
     case WM_DRAWITEM:
     {
         auto dis = (DRAWITEMSTRUCT*)lParam;
@@ -753,7 +781,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             Graphics graphics(dis->hDC);
             graphics.SetSmoothingMode(SmoothingModeAntiAlias);
-            SolidBrush brush(Color(0, 0, 0));
+            SolidBrush brush(Color(appState.backgroundR, appState.backgroundG, appState.backgroundB));
             graphics.FillRectangle(&brush, 
                 (INT)(dis->rcItem.left - 1),
                 (INT)(dis->rcItem.top - 1),
@@ -763,14 +791,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             BYTE types[]{ PathPointTypeLine, PathPointTypeLine, PathPointTypeLine, PathPointTypeLine | PathPointTypeCloseSubpath };
             if ((dis->itemState & ODS_SELECTED) == ODS_SELECTED)
             {
-                graphics.DrawEllipse(&pen, 3, 3, 145, 145);
+                graphics.DrawEllipse(&pen, 3, 3, 144, 144);
                 Point points[] { Point(56, 46), Point(104, 75), Point(56, 104), Point(56, 46) };
                 GraphicsPath path(points, types, 4);
                 graphics.DrawPath(&pen, &path);
             }
             else
             {
-                graphics.DrawEllipse(&pen, 2, 2, 147, 147);
+                graphics.DrawEllipse(&pen, 2, 2, 146, 146);
                 Point points[] { Point(55, 45), Point(105, 75), Point(55, 105), Point(55, 45) };
                 GraphicsPath path(points, types, 4);
                 graphics.DrawPath(&pen, &path);
@@ -915,7 +943,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     appState.commandLine = std::string("slipnfrag.exe ") + converted_cmdline;
 
-    appState.usesDarkMode = TRUE;
+    appState.usesDarkMode = IsDarkThemeActive();
+    if (appState.usesDarkMode)
+    {
+        appState.backgroundR = 0;
+        appState.backgroundG = 0;
+        appState.backgroundB = 0;
+        appState.backgroundBrush = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    }
+    else
+    {
+        appState.backgroundR = 255;
+        appState.backgroundG = 255;
+        appState.backgroundB = 255;
+        appState.backgroundBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+    }
 
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
@@ -928,7 +970,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     wcex.hInstance = hInstance;
     wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MAINICON));
     wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    wcex.hbrBackground = appState.backgroundBrush;
     wcex.lpszClassName = appState.windowClass.c_str();
 
     RegisterClassExW(&wcex);

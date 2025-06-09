@@ -16,6 +16,10 @@ struct AppState
     std::wstring windowTitle;
     std::wstring windowClass;
     BOOL usesDarkMode;
+    BYTE backgroundR;
+    BYTE backgroundG;
+    BYTE backgroundB;
+    HBRUSH backgroundBrush;
     int nonClientWidth;
     int nonClientHeight;
     HWND playButton;
