@@ -779,30 +779,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         auto dis = (DRAWITEMSTRUCT*)lParam;
         if (dis->CtlID == IDC_PLAY_BUTTON)
         {
-            Graphics graphics(dis->hDC);
-            graphics.SetSmoothingMode(SmoothingModeAntiAlias);
+            Bitmap backBuffer(150, 150);
+            Graphics graphicsBackBuffer(&backBuffer);
+            graphicsBackBuffer.SetSmoothingMode(SmoothingModeAntiAlias);
             SolidBrush brush(Color(appState.backgroundR, appState.backgroundG, appState.backgroundB));
-            graphics.FillRectangle(&brush, 
-                (INT)(dis->rcItem.left - 1),
-                (INT)(dis->rcItem.top - 1),
-                (INT)(dis->rcItem.right - dis->rcItem.left + 1),
-                (INT)(dis->rcItem.bottom - dis->rcItem.top + 1));
+            graphicsBackBuffer.FillRectangle(&brush, 0, 0, 150, 150);
             Pen pen(Color(128, 128, 128), 3);
             BYTE types[]{ PathPointTypeLine, PathPointTypeLine, PathPointTypeLine, PathPointTypeLine | PathPointTypeCloseSubpath };
             if ((dis->itemState & ODS_SELECTED) == ODS_SELECTED)
             {
-                graphics.DrawEllipse(&pen, 3, 3, 144, 144);
+                graphicsBackBuffer.DrawEllipse(&pen, 3, 3, 144, 144);
                 Point points[] { Point(56, 46), Point(104, 75), Point(56, 104), Point(56, 46) };
                 GraphicsPath path(points, types, 4);
-                graphics.DrawPath(&pen, &path);
+                graphicsBackBuffer.DrawPath(&pen, &path);
             }
             else
             {
-                graphics.DrawEllipse(&pen, 2, 2, 146, 146);
+                graphicsBackBuffer.DrawEllipse(&pen, 2, 2, 146, 146);
                 Point points[] { Point(55, 45), Point(105, 75), Point(55, 105), Point(55, 45) };
                 GraphicsPath path(points, types, 4);
-                graphics.DrawPath(&pen, &path);
+                graphicsBackBuffer.DrawPath(&pen, &path);
             }
+            Graphics graphics(dis->hDC);
+            graphics.DrawImage(&backBuffer, (INT)(dis->rcItem.left - 1), (INT)(dis->rcItem.top - 1));
         }
         break;
     }
