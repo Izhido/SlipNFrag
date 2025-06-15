@@ -22,6 +22,10 @@ struct AppState
     HBRUSH backgroundBrush;
     int nonClientWidth;
     int nonClientHeight;
+    BITMAPINFO screenBitmapInfo;
+    HDC screenDC;
+    HBITMAP screenBitmap;
+    void* screenBitmapBits;
     HWND playButton;
     bool painting;
     bool cursorRelocated;

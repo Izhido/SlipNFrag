@@ -374,11 +374,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         GetWindowRect(hWnd, &windowRect);
         RECT clientRect;
         GetClientRect(hWnd, &clientRect);
+        auto dpi = GetDpiForWindow(hWnd);
+        auto halfWidth = 75 * dpi / USER_DEFAULT_SCREEN_DPI;
+        auto halfHeight = halfWidth;
         appState.nonClientWidth = (windowRect.right - windowRect.left) - (clientRect.right - clientRect.left);
         appState.nonClientHeight = (windowRect.bottom - windowRect.top) - (clientRect.bottom - clientRect.top);
-        auto left = (clientRect.left + clientRect.right) / 2 - 75;
-        auto top = (clientRect.top + clientRect.bottom) / 2 - 75;
-        appState.playButton = CreateWindow(L"BUTTON", L"Play", WS_VISIBLE | WS_CHILD | BS_OWNERDRAW, left, top, 150, 150, hWnd, (HMENU)IDC_PLAY_BUTTON, appState.instance, NULL);
+        auto left = (clientRect.left + clientRect.right) / 2 - halfWidth;
+        auto top = (clientRect.top + clientRect.bottom) / 2 - halfHeight;
+        auto width = halfWidth * 2;
+        auto height = halfHeight * 2;
+        appState.playButton = CreateWindow(L"BUTTON", L"Play", WS_VISIBLE | WS_CHILD | BS_OWNERDRAW, left, top, width, height, hWnd, (HMENU)IDC_PLAY_BUTTON, appState.instance, NULL);
         break;
     }
     case WM_GETMINMAXINFO:
@@ -402,9 +407,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             auto height = HIWORD(lParam);
             if (width > 0 && height > 0)
             {
-                auto left = width / 2 - 75;
-                auto top = height / 2 - 75;
-                SetWindowPos(appState.playButton, NULL, left, top, 150, 150, 0);
+                auto dpi = GetDpiForWindow(hWnd);
+                auto halfWidth = 75 * dpi / USER_DEFAULT_SCREEN_DPI;
+                auto halfHeight = halfWidth;
+                auto left = width / 2 - halfWidth;
+                auto top = height / 2 - halfHeight;
+                auto newWidth = halfWidth * 2;
+                auto newHeight = halfHeight * 2;
+                SetWindowPos(appState.playButton, NULL, left, top, newWidth, newHeight, 0);
                 UpdateWindow(appState.playButton);
             }
         }
@@ -424,12 +434,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             RECT clientRect;
             GetClientRect(hWnd, &clientRect);
-            float windowWidth = clientRect.right - clientRect.left;
-            float windowHeight = clientRect.bottom - clientRect.top;
+            auto windowWidth = clientRect.right - clientRect.left;
+            auto windowHeight = clientRect.bottom - clientRect.top;
             if (windowWidth < 320) windowWidth = 320;
             if (windowHeight < 200) windowHeight = 200;
-            auto windowRowBytes = (float)(((int)ceil(windowWidth) + 3) & ~3);
-            auto factor = windowWidth / 320;
+            auto windowRowBytes = (windowWidth + 3) & ~3;
+            float factor = windowWidth / 320.f;
             float consoleWidth = 320;
             auto consoleHeight = ceil(windowHeight / factor);
             if (consoleHeight < 200)
@@ -491,11 +501,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 else
                 {
                     std::wstring message = L"(The error message could not be converted.)";
-                    auto size = MultiByteToWideChar(CP_UTF8, 0, sys_errormessage.c_str(), sys_errormessage.length(), NULL, 0);
+                    auto size = MultiByteToWideChar(CP_UTF8, 0, sys_errormessage.c_str(), (int)sys_errormessage.length(), NULL, 0);
                     if (size > 0)
                     {
                         message.resize(size + 16);
-                        MultiByteToWideChar(CP_UTF8, 0, sys_errormessage.c_str(), sys_errormessage.length(), message.data(), (int)message.size());
+                        MultiByteToWideChar(CP_UTF8, 0, sys_errormessage.c_str(), (int)sys_errormessage.length(), message.data(), (int)message.size());
                     }
 
                     MessageBox(NULL, message.c_str(), L"Slip & Frag - Sys_Error:", MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY | MB_OK);
@@ -550,12 +560,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
                     RECT clientRect;
                     GetClientRect(hWnd, &clientRect);
-                    float windowWidth = clientRect.right - clientRect.left;
-                    float windowHeight = clientRect.bottom - clientRect.top;
+                    auto windowWidth = clientRect.right - clientRect.left;
+                    auto windowHeight = clientRect.bottom - clientRect.top;
                     if (windowWidth < 320) windowWidth = 320;
                     if (windowHeight < 200) windowHeight = 200;
-                    auto windowRowBytes = (float)(((int)ceil(windowWidth) + 3) & ~3);
-                    auto factor = windowWidth / 320;
+                    auto windowRowBytes = (windowWidth + 3) & ~3;
+                    float factor = windowWidth / 320.f;
                     float consoleWidth = 320;
                     auto consoleHeight = ceil(windowHeight / factor);
                     if (consoleHeight < 200)
@@ -586,15 +596,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             VID_Resize();
                         }
                         hdc = BeginPaint(hWnd, &ps);
-                        memdc = CreateCompatibleDC(hdc);
-                        BITMAPINFO bitmapInfo { };
-                        bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-                        bitmapInfo.bmiHeader.biPlanes = 1;
-                        bitmapInfo.bmiHeader.biBitCount = 8;
-                        bitmapInfo.bmiHeader.biCompression = BI_RGB;
-                        bitmapInfo.bmiHeader.biWidth = vid_width;
-                        bitmapInfo.bmiHeader.biHeight = -vid_height;
-                        bitmap = CreateDIBSection(memdc, &bitmapInfo, DIB_RGB_COLORS, &bitmapBits, NULL, 0);
+                        if (vid_width != appState.screenBitmapInfo.bmiHeader.biWidth ||
+                            -vid_height != appState.screenBitmapInfo.bmiHeader.biHeight)
+                        {
+                            if (appState.screenBitmap)
+                            {
+                                DeleteObject(appState.screenBitmap);
+                            }
+                            if (appState.screenDC)
+                            {
+                                DeleteDC(appState.screenDC);
+                            }
+                            memdc = CreateCompatibleDC(hdc);
+                            appState.screenBitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                            appState.screenBitmapInfo.bmiHeader.biPlanes = 1;
+                            appState.screenBitmapInfo.bmiHeader.biBitCount = 8;
+                            appState.screenBitmapInfo.bmiHeader.biCompression = BI_RGB;
+                            appState.screenBitmapInfo.bmiHeader.biWidth = vid_width;
+                            appState.screenBitmapInfo.bmiHeader.biHeight = -vid_height;
+                            bitmap = CreateDIBSection(memdc, &appState.screenBitmapInfo, DIB_RGB_COLORS, &bitmapBits, NULL, 0);
+                            appState.screenDC = memdc;
+                            appState.screenBitmap = bitmap;
+                            appState.screenBitmapBits = bitmapBits;
+                        }
+                        else
+                        {
+                            memdc = appState.screenDC;
+                            bitmap = appState.screenBitmap;
+                            bitmapBits = appState.screenBitmapBits;
+                        }
                         unsigned char* vidSource = vid_buffer.data();
                         unsigned char* conSource = con_buffer.data();
                         auto target = (unsigned char*)bitmapBits;
@@ -602,8 +632,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         auto stepY = (uint64_t)(consoleHeight * 1024 * 1024 / windowHeight);
                         auto conRow = conSource;
                         uint64_t posY = 0;
-                        uint32_t posYDiv20 = 0;
-                        auto previousPosYDiv20 = -1;
+                        uint64_t posYDiv20 = 0;
+                        auto previousPosYDiv20 = MAXUINT64;
                         bool hasCon;
                         auto copyCount = 0;
                         for (auto y = 0; y < vid_height; y++)
@@ -703,7 +733,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                                 copyCount += vid_rowbytes;
                             }
                             posY += stepY;
-                            posYDiv20 = posY >> 20;
+                            posYDiv20 = (uint32_t)(posY >> 20);
                             conRow = conSource + posYDiv20 * con_rowbytes;
                         }
                         if (copyCount > 0)
@@ -731,8 +761,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                             auto stepX = (uint64_t)(consoleWidth * 1024 * 1024 / windowWidth);
                             auto stepY = (uint64_t)(consoleHeight * 1024 * 1024 / windowHeight);
 
-                            auto posY = 0;
-                            auto prevPosYDiv20 = 0;
+                            uint64_t posY = 0;
+                            uint64_t prevPosYDiv20 = 0;
                             for (auto v = top; v < bottom; v++)
                             {
                                 uint64_t posX = 0;
@@ -760,8 +790,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     SetDIBColorTable(memdc, 0, 256, (RGBQUAD*)d_8to24table);
                     BitBlt(hdc, 0, 0, vid_width, vid_height, memdc, 0, 0, SRCCOPY);
                     SelectObject(memdc, previous);
-                    DeleteObject(bitmap);
-                    DeleteDC(memdc);
                     EndPaint(hWnd, &ps);
 
                     appState.painting = false;
@@ -779,24 +807,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         auto dis = (DRAWITEMSTRUCT*)lParam;
         if (dis->CtlID == IDC_PLAY_BUTTON)
         {
-            Bitmap backBuffer(150, 150);
+            auto dpi = GetDpiForWindow(hWnd);
+            auto halfWidth = 75 * dpi / USER_DEFAULT_SCREEN_DPI;
+            auto halfHeight = halfWidth;
+            auto width = halfWidth * 2;
+            auto height = halfHeight * 2;
+            Bitmap backBuffer(width, height);
             Graphics graphicsBackBuffer(&backBuffer);
             graphicsBackBuffer.SetSmoothingMode(SmoothingModeAntiAlias);
             SolidBrush brush(Color(appState.backgroundR, appState.backgroundG, appState.backgroundB));
-            graphicsBackBuffer.FillRectangle(&brush, 0, 0, 150, 150);
-            Pen pen(Color(128, 128, 128), 3);
+            graphicsBackBuffer.FillRectangle(&brush, 0, 0, width, height);
+            Pen pen(Color(128, 128, 128), 3 * dpi / USER_DEFAULT_SCREEN_DPI);
             BYTE types[]{ PathPointTypeLine, PathPointTypeLine, PathPointTypeLine, PathPointTypeLine | PathPointTypeCloseSubpath };
             if ((dis->itemState & ODS_SELECTED) == ODS_SELECTED)
             {
-                graphicsBackBuffer.DrawEllipse(&pen, 3, 3, 144, 144);
-                Point points[] { Point(56, 46), Point(104, 75), Point(56, 104), Point(56, 46) };
+                graphicsBackBuffer.DrawEllipse(&pen, 
+                    (INT)(3 * dpi / USER_DEFAULT_SCREEN_DPI), 
+                    (INT)(3 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    (INT)(width - 6 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    (INT)(height - 6 * dpi / USER_DEFAULT_SCREEN_DPI));
+                Point points[] { 
+                    Point(56 * dpi / USER_DEFAULT_SCREEN_DPI, 46 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    Point(104 * dpi / USER_DEFAULT_SCREEN_DPI, halfHeight),
+                    Point(56 * dpi / USER_DEFAULT_SCREEN_DPI, 104 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    Point(56 * dpi / USER_DEFAULT_SCREEN_DPI, 46 * dpi / USER_DEFAULT_SCREEN_DPI)
+                };
                 GraphicsPath path(points, types, 4);
                 graphicsBackBuffer.DrawPath(&pen, &path);
             }
             else
             {
-                graphicsBackBuffer.DrawEllipse(&pen, 2, 2, 146, 146);
-                Point points[] { Point(55, 45), Point(105, 75), Point(55, 105), Point(55, 45) };
+                graphicsBackBuffer.DrawEllipse(&pen,
+                    (INT)(2 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    (INT)(2 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    (INT)(width - 4 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    (INT)(height - 4 * dpi / USER_DEFAULT_SCREEN_DPI));
+                Point points[] {
+                    Point(55 * dpi / USER_DEFAULT_SCREEN_DPI, 45 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    Point(105 * dpi / USER_DEFAULT_SCREEN_DPI, halfHeight),
+                    Point(55 * dpi / USER_DEFAULT_SCREEN_DPI, 105 * dpi / USER_DEFAULT_SCREEN_DPI),
+                    Point(55 * dpi / USER_DEFAULT_SCREEN_DPI, 45 * dpi / USER_DEFAULT_SCREEN_DPI)
+                };
                 GraphicsPath path(points, types, 4);
                 graphicsBackBuffer.DrawPath(&pen, &path);
             }
