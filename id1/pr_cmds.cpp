@@ -555,7 +555,7 @@ void PF_ambientsound (void)
 
 	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
-		MSG_WriteLongAsString (&sv.signon, soundnum);
+		MSG_WriteLong (&sv.signon, soundnum);
 	}
 	else
 	{
@@ -1625,8 +1625,8 @@ void PF_makestatic (void)
 	}
 	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
-		MSG_WriteByte(&sv.signon, svc_expandedspawnstatic);
-		MSG_WriteLongAsString (&sv.signon, index);
+		MSG_WriteByte (&sv.signon, svc_expandedspawnstatic);
+		MSG_WriteLong (&sv.signon, index);
 	}
 	else
 	{

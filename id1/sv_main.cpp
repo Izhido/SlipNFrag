@@ -243,8 +243,8 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 		MSG_WriteByte (&sv.datagram, attenuation*64);
 	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
-		MSG_WriteLongAsString (&sv.datagram, channel);
-		MSG_WriteLongAsString (&sv.datagram, sound_num);
+		MSG_WriteLong (&sv.datagram, channel);
+		MSG_WriteLong (&sv.datagram, sound_num);
 		for (i=0 ; i<3 ; i++)
 			MSG_WriteFloat (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
 
@@ -642,10 +642,10 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 				MSG_WriteByte (msg, bits>>8);
 			if (bits & U_EVENMOREBITS)
 				MSG_WriteByte (msg, bits>>16);
-			MSG_WriteLongAsString(msg, e);
+			MSG_WriteLong (msg, e);
 			
 			if (bits & U_MODEL)
-				MSG_WriteLongAsString(msg, ent->v.modelindex);
+				MSG_WriteLong (msg, ent->v.modelindex);
 			if (bits & U_FRAME)
 				MSG_WriteByte (msg, ent->v.frame);
 			if (bits & U_COLORMAP)
@@ -864,7 +864,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
 		MSG_WriteByte (msg, svc_expandedclientdata);
-		MSG_WriteLongAsString (msg, bits);
+		MSG_WriteLong (msg, bits);
 		
 		if (bits & SU_VIEWHEIGHT)
 			MSG_WriteChar (msg, ent->v.view_ofs[2]);
@@ -883,22 +883,22 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 		MSG_WriteLong (msg, items);
 
 		if (bits & SU_WEAPONFRAME)
-			MSG_WriteLongAsString (msg, ent->v.weaponframe);
+			MSG_WriteLong (msg, ent->v.weaponframe);
 		if (bits & SU_ARMOR)
-			MSG_WriteLongAsString (msg, ent->v.armorvalue);
+			MSG_WriteLong (msg, ent->v.armorvalue);
 		if (bits & SU_WEAPON)
-			MSG_WriteLongAsString (msg, SV_ModelIndex(pr_strings+ent->v.weaponmodel));
+			MSG_WriteLong (msg, SV_ModelIndex(pr_strings+ent->v.weaponmodel));
 		
-		MSG_WriteLongAsString (msg, ent->v.health);
-		MSG_WriteLongAsString (msg, ent->v.currentammo);
-		MSG_WriteLongAsString (msg, ent->v.ammo_shells);
-		MSG_WriteLongAsString (msg, ent->v.ammo_nails);
-		MSG_WriteLongAsString (msg, ent->v.ammo_rockets);
-		MSG_WriteLongAsString (msg, ent->v.ammo_cells);
+		MSG_WriteLong (msg, ent->v.health);
+		MSG_WriteLong (msg, ent->v.currentammo);
+		MSG_WriteLong (msg, ent->v.ammo_shells);
+		MSG_WriteLong (msg, ent->v.ammo_nails);
+		MSG_WriteLong (msg, ent->v.ammo_rockets);
+		MSG_WriteLong (msg, ent->v.ammo_cells);
 		
 		if (standard_quake)
 		{
-			MSG_WriteLongAsString (msg, ent->v.weapon);
+			MSG_WriteLong (msg, ent->v.weapon);
 		}
 		else
 		{
@@ -906,7 +906,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 			{
 				if ( ((int)ent->v.weapon) & (1<<i) )
 				{
-					MSG_WriteLongAsString (msg, i);
+					MSG_WriteLong (msg, i);
 					break;
 				}
 			}
@@ -1255,9 +1255,9 @@ void SV_CreateBaseline (void)
 		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 		{
 			MSG_WriteByte (&sv.signon,svc_expandedspawnbaseline);
-			MSG_WriteLongAsString (&sv.signon,entnum);
+			MSG_WriteLong (&sv.signon,entnum);
 			
-			MSG_WriteLongAsString (&sv.signon, svent->baseline.modelindex);
+			MSG_WriteLong (&sv.signon, svent->baseline.modelindex);
 		}
 		else
 		{

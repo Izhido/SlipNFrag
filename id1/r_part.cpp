@@ -348,9 +348,9 @@ void R_ParseExpandedParticleEffect(void)
 	vec3_t		org, dir;
 	int			i, count, msgcount, color;
 
-	for (i = 0; i < 3; i++)
+	for (i=0 ; i<3 ; i++)
 		org[i] = MSG_ReadFloat();
-	for (i = 0; i < 3; i++)
+	for (i=0 ; i<3 ; i++)
 		dir[i] = MSG_ReadChar() * (1.0 / 16);
 	msgcount = MSG_ReadByte();
 	color = MSG_ReadByte();

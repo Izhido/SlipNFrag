@@ -614,39 +614,6 @@ void MSG_WriteAngle (sizebuf_t *sb, float f)
 	MSG_WriteByte (sb, ((int)f*256/360) & 255);
 }
 
-void MSG_WriteLongAsString(sizebuf_t* sb, int value)
-{
-	static byte number[16];
-	auto negative = (value < 0);
-	if (negative)
-	{
-		value = -value;
-	}
-	auto i = 0;
-	while (value > 0)
-	{
-		number[i] = value % 10;
-		value /= 10;
-		i++;
-	}
-	byte* target;
-	if (negative)
-	{
-		target = (byte*)SZ_GetSpace(sb, i + 2);
-		*target++ = '-';
-	}
-	else
-	{
-		target = (byte*)SZ_GetSpace(sb, i + 1);
-	}
-	while (i > 0)
-	{
-		i--;
-		*target++ = '0' + number[i];
-	}
-	*target = 0;
-}
-
 //
 // reading functions
 //
@@ -773,42 +740,6 @@ char *MSG_ReadString (void)
 	string.push_back(0);
 	
 	return string.data();
-}
-
-int MSG_ReadLongFromString ()
-{
-	auto result = 0;
-	auto negative = false;
-	auto c = MSG_ReadChar ();
-	if (c == '-')
-	{
-		negative = true;
-	}
-	else if (c <= 0)
-	{
-		return 0;
-	}
-	else
-	{
-		result = c - '0';
-	}
-	while (true)
-	{
-		auto c = MSG_ReadChar ();
-		if (c <= 0)
-		{
-			break;
-		}
-		else
-		{
-			result = result * 10 + (c - '0');
-		}
-	}
-	if (negative)
-	{
-		return -result;
-	}
-	return result;
 }
 
 float MSG_ReadCoord (void)

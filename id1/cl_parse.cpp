@@ -222,8 +222,8 @@ void CL_ParseExpandedStartSoundPacket(void)
 	else
 		attenuation = DEFAULT_SOUND_PACKET_ATTENUATION;
 	
-	channel = MSG_ReadLongFromString ();
-	sound_num = MSG_ReadLongFromString ();
+	channel = MSG_ReadLong ();
+	sound_num = MSG_ReadLong ();
 
 	ent = channel >> 3;
 	channel &= 7;
@@ -598,7 +598,7 @@ void CL_ParseExpandedUpdate (int bits)
 		bits |= (i<<16);
 	}
 
-	num = MSG_ReadLongFromString();
+	num = MSG_ReadLong ();
 
 	ent = CL_EntityNum (num);
 
@@ -615,7 +615,7 @@ if (bits&(1<<i))
 	
 	if (bits & U_MODEL)
 	{
-		modnum = MSG_ReadLongFromString();
+		modnum = MSG_ReadLong ();
 	}
 	else
 		modnum = ent->baseline.modelindex;
@@ -759,7 +759,7 @@ void CL_ParseExpandedBaseline (entity_t *ent)
 {
 	int			i;
 	
-	ent->baseline.modelindex = MSG_ReadLongFromString();
+	ent->baseline.modelindex = MSG_ReadLong ();
 	ent->baseline.frame = MSG_ReadByte ();
 	ent->baseline.colormap = MSG_ReadByte();
 	ent->baseline.skin = MSG_ReadByte();
@@ -946,12 +946,12 @@ void CL_ParseExpandedClientdata (int bits)
 	cl.inwater = (bits & SU_INWATER) != 0;
 
 	if (bits & SU_WEAPONFRAME)
-		cl.stats[STAT_WEAPONFRAME] = MSG_ReadLongFromString ();
+		cl.stats[STAT_WEAPONFRAME] = MSG_ReadLong ();
 	else
 		cl.stats[STAT_WEAPONFRAME] = 0;
 
 	if (bits & SU_ARMOR)
-		i = MSG_ReadLongFromString ();
+		i = MSG_ReadLong ();
 	else
 		i = 0;
 	if (cl.stats[STAT_ARMOR] != i)
@@ -961,7 +961,7 @@ void CL_ParseExpandedClientdata (int bits)
 	}
 
 	if (bits & SU_WEAPON)
-		i = MSG_ReadLongFromString ();
+		i = MSG_ReadLong ();
 	else
 		i = 0;
 	if (cl.stats[STAT_WEAPON] != i)
@@ -970,14 +970,14 @@ void CL_ParseExpandedClientdata (int bits)
 		Sbar_Changed ();
 	}
 	
-	i = MSG_ReadLongFromString ();
+	i = MSG_ReadLong ();
 	if (cl.stats[STAT_HEALTH] != i)
 	{
 		cl.stats[STAT_HEALTH] = i;
 		Sbar_Changed ();
 	}
 
-	i = MSG_ReadLongFromString ();
+	i = MSG_ReadLong ();
 	if (cl.stats[STAT_AMMO] != i)
 	{
 		cl.stats[STAT_AMMO] = i;
@@ -986,7 +986,7 @@ void CL_ParseExpandedClientdata (int bits)
 
 	for (i=0 ; i<4 ; i++)
 	{
-		j = MSG_ReadLongFromString ();
+		j = MSG_ReadLong ();
 		if (cl.stats[STAT_SHELLS+i] != j)
 		{
 			cl.stats[STAT_SHELLS+i] = j;
@@ -994,7 +994,7 @@ void CL_ParseExpandedClientdata (int bits)
 		}
 	}
 
-	i = MSG_ReadLongFromString ();
+	i = MSG_ReadLong ();
 
 	if (standard_quake)
 	{
@@ -1125,7 +1125,7 @@ void CL_ParseExpandedStaticSound (void)
 	
 	for (i=0 ; i<3 ; i++)
 		org[i] = MSG_ReadFloat ();
-	sound_num = MSG_ReadLongFromString();
+	sound_num = MSG_ReadLong ();
 	vol = MSG_ReadByte ();
 	atten = MSG_ReadByte ();
 	
@@ -1208,7 +1208,7 @@ void CL_ParseServerMessage (void)
 			break;
 		
 		case svc_expandedclientdata:
-			i = MSG_ReadLongFromString();
+			i = MSG_ReadLong ();
 			CL_ParseExpandedClientdata(i);
 			break;
 		
@@ -1317,7 +1317,7 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_expandedspawnbaseline:
-			i = MSG_ReadLongFromString();
+			i = MSG_ReadLong ();
 			CL_ParseExpandedBaseline(CL_EntityNum(i));
 			break;
 
