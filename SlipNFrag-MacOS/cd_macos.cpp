@@ -48,11 +48,11 @@ void CDAudio_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef b
 	if (cdaudio_audioqueue == nullptr)
 		return;
 
-	cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
+	cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), (int)cdaudio_stagingBuffer.size() / 2);
 	if (cdaudio_lastCopied == 0 && cdaudio_playLooping)
 	{
 		stb_vorbis_seek_start(cdaudio_stream);
-        cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), cdaudio_stagingBuffer.size() >> 1);
+        cdaudio_lastCopied = stb_vorbis_get_samples_float_interleaved(cdaudio_stream, cdaudio_info.channels, cdaudio_stagingBuffer.data(), (int)cdaudio_stagingBuffer.size() / 2);
 	}
 
 	if (cdaudio_lastCopied == 0)
@@ -61,7 +61,10 @@ void CDAudio_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef b
 	{
 		std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 		
-		memcpy(buffer->mAudioData, cdaudio_stagingBuffer.data(), cdaudio_lastCopied << 3);
+		if (buffer->mAudioDataByteSize != cdaudio_lastCopied << 3)
+			return;
+
+		memcpy(buffer->mAudioData, cdaudio_stagingBuffer.data(), buffer->mAudioDataByteSize);
 		AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
 	}
 }
@@ -189,7 +192,7 @@ void CDAudio_Play(byte track, qboolean looping)
 	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
 	int error = VORBIS__no_error;
-	cdaudio_stream = stb_vorbis_open_memory(cdaudio_trackContents.data(), cdaudio_trackContents.size() - 1, &error, nullptr);
+	cdaudio_stream = stb_vorbis_open_memory(cdaudio_trackContents.data(), (int)cdaudio_trackContents.size() - 1, &error, nullptr);
 	if (error != VORBIS__no_error)
 	{
 		Con_DPrintf("CDAudio: Error %i opening track %u.\n", error, track);

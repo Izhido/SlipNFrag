@@ -222,11 +222,9 @@ void CL_ParseExpandedStartSoundPacket(void)
 	else
 		attenuation = DEFAULT_SOUND_PACKET_ATTENUATION;
 	
+	ent = MSG_ReadLong ();
 	channel = MSG_ReadLong ();
 	sound_num = MSG_ReadLong ();
-
-	ent = channel >> 3;
-	channel &= 7;
 
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadFloat ();

@@ -215,8 +215,6 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
     
 	ent = NUM_FOR_EDICT(entity);
 
-	channel = (ent<<3) | channel;
-
 	field_mask = 0;
 	if (volume != DEFAULT_SOUND_PACKET_VOLUME)
 		field_mask |= SND_VOLUME;
@@ -224,7 +222,7 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 		field_mask |= SND_ATTENUATION;
 
 // directed messages go only to the entity the are targeted on
-	if (channel > 65535 || sound_num > 255)
+	if (ent > 8191 || channel > 7 || sound_num > 255)
 	{
 		sv_bump_protocol_version = true;
 	}
@@ -243,6 +241,7 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 		MSG_WriteByte (&sv.datagram, attenuation*64);
 	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
+		MSG_WriteLong (&sv.datagram, ent);
 		MSG_WriteLong (&sv.datagram, channel);
 		MSG_WriteLong (&sv.datagram, sound_num);
 		for (i=0 ; i<3 ; i++)
@@ -250,6 +249,9 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 
 		return;
 	}
+
+	channel = (ent<<3) | channel;
+
 	MSG_WriteShort (&sv.datagram, channel);
 	MSG_WriteByte (&sv.datagram, sound_num);
 	for (i=0 ; i<3 ; i++)

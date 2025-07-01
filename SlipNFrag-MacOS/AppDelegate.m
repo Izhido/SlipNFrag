@@ -19,6 +19,11 @@
     return YES;
 }
 
+- (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)sender
+{
+    return YES;
+}
+
 - (IBAction)preferences:(NSMenuItem *)sender
 {
     if (self.preferencesController != nil)
