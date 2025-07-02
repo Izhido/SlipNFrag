@@ -72,16 +72,31 @@ void CL_ParseBeam (model_t *m)
 	vec3_t	start, end;
 	beam_t	*b;
 	int		i;
+
+	if (cl_protocol_version_from_server == EXPANDED_PROTOCOL_VERSION)
+	{
+		ent = MSG_ReadLong ();
 	
-	ent = MSG_ReadShort ();
+		start[0] = MSG_ReadFloat ();
+		start[1] = MSG_ReadFloat ();
+		start[2] = MSG_ReadFloat ();
+
+		end[0] = MSG_ReadFloat ();
+		end[1] = MSG_ReadFloat ();
+		end[2] = MSG_ReadFloat ();
+	}
+	else
+	{
+		ent = MSG_ReadShort ();
 	
-	start[0] = MSG_ReadCoord ();
-	start[1] = MSG_ReadCoord ();
-	start[2] = MSG_ReadCoord ();
-	
-	end[0] = MSG_ReadCoord ();
-	end[1] = MSG_ReadCoord ();
-	end[2] = MSG_ReadCoord ();
+		start[0] = MSG_ReadCoord ();
+		start[1] = MSG_ReadCoord ();
+		start[2] = MSG_ReadCoord ();
+
+		end[0] = MSG_ReadCoord ();
+		end[1] = MSG_ReadCoord ();
+		end[2] = MSG_ReadCoord ();
+	}
 
 // override any beam with the same entity
 	for (i=0, b=cl_beams.data() ; i< cl_beams.size() ; i++, b++)
@@ -114,6 +129,25 @@ void CL_ParseBeam (model_t *m)
 
 /*
 =================
+CL_ReadTEntPosition
+=================
+*/
+void CL_ReadTEntPosition (vec3_t pos)
+{
+	if (cl_protocol_version_from_server == EXPANDED_PROTOCOL_VERSION)
+	{
+		for (auto i=0 ; i<3 ; i++)
+			pos[i] = MSG_ReadFloat ();
+	}
+	else
+	{
+		for (auto i=0 ; i<3 ; i++)
+			pos[i] = MSG_ReadCoord ();
+	}
+}
+
+/*
+=================
 CL_ParseTEnt
 =================
 */
@@ -132,25 +166,19 @@ void CL_ParseTEnt (void)
 	switch (type)
 	{
 	case TE_WIZSPIKE:			// spike hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		R_RunParticleEffect (pos, vec3_origin, 20, 30);
 		S_StartSound (-1, 0, cl_sfx_wizhit, pos, 1, 1);
 		break;
 		
 	case TE_KNIGHTSPIKE:			// spike hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		R_RunParticleEffect (pos, vec3_origin, 226, 20);
 		S_StartSound (-1, 0, cl_sfx_knighthit, pos, 1, 1);
 		break;
 		
 	case TE_SPIKE:			// spike hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 #ifdef GLTEST
 		Test_Spawn (pos);
 #else
@@ -170,9 +198,7 @@ void CL_ParseTEnt (void)
 		}
 		break;
 	case TE_SUPERSPIKE:			// super spike hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		R_RunParticleEffect (pos, vec3_origin, 0, 20);
 
 		if ( Sys_Random() % 5 )
@@ -190,16 +216,12 @@ void CL_ParseTEnt (void)
 		break;
 		
 	case TE_GUNSHOT:			// bullet hitting wall
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		R_RunParticleEffect (pos, vec3_origin, 0, 20);
 		break;
 		
 	case TE_EXPLOSION:			// rocket explosion
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		R_ParticleExplosion (pos);
 		dl = CL_AllocDlight (0);
 		VectorCopy (pos, dl->origin);
@@ -210,9 +232,7 @@ void CL_ParseTEnt (void)
 		break;
 		
 	case TE_TAREXPLOSION:			// tarbaby explosion
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		R_BlobExplosion (pos);
 
 		S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
@@ -237,23 +257,17 @@ void CL_ParseTEnt (void)
 // PGM 01/21/97
 
 	case TE_LAVASPLASH:	
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		R_LavaSplash (pos);
 		break;
 	
 	case TE_TELEPORT:
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		R_TeleportSplash (pos);
 		break;
 		
 	case TE_EXPLOSION2:				// color mapped explosion
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		colorStart = MSG_ReadByte ();
 		colorLength = MSG_ReadByte ();
 		R_ParticleExplosion2 (pos, colorStart, colorLength);
@@ -267,19 +281,13 @@ void CL_ParseTEnt (void)
 		
 #ifdef QUAKE2
 	case TE_IMPLOSION:
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
 		S_StartSound (-1, 0, cl_sfx_imp, pos, 1, 1);
 		break;
 
 	case TE_RAILTRAIL:
-		pos[0] = MSG_ReadCoord ();
-		pos[1] = MSG_ReadCoord ();
-		pos[2] = MSG_ReadCoord ();
-		endpos[0] = MSG_ReadCoord ();
-		endpos[1] = MSG_ReadCoord ();
-		endpos[2] = MSG_ReadCoord ();
+		CL_ReadTEntPosition (pos);
+		CL_ReadTEntPosition (endpos);
 		S_StartSound (-1, 0, cl_sfx_rail, pos, 1, 1);
 		S_StartSound (-1, 1, cl_sfx_r_exp3, endpos, 1, 1);
 		R_RocketTrail (pos, endpos, 0+128);

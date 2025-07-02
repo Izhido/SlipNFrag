@@ -1593,7 +1593,10 @@ void PF_WriteAngle (void)
 
 void PF_WriteCoord (void)
 {
-	MSG_WriteCoord (WriteDest(), G_FLOAT(OFS_PARM1));
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+		MSG_WriteFloat (WriteDest(), G_FLOAT(OFS_PARM1));
+	else
+		MSG_WriteCoord (WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteString (void)
@@ -1604,7 +1607,10 @@ void PF_WriteString (void)
 
 void PF_WriteEntity (void)
 {
-	MSG_WriteShort (WriteDest(), G_EDICTNUM(OFS_PARM1));
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+		MSG_WriteLong (WriteDest(), G_EDICTNUM(OFS_PARM1));
+	else
+		MSG_WriteShort (WriteDest(), G_EDICTNUM(OFS_PARM1));
 }
 
 //=============================================================================
