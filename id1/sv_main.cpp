@@ -1513,54 +1513,15 @@ void SV_SpawnServer (char *server)
 	sv_static_entity_count = 0;
 	sv_bump_protocol_version = false;
 	sv_request_protocol_version_upgrade = false;
+
+// set the protocol version to the default value
+	sv_protocol_version = PROTOCOL_VERSION;
 	
 	ED_LoadFromFile (sv.worldmodel->entities);
 
 	sv.active = true;
 
-// all setup is completed, any further precache statements are errors
-	sv.state = ss_active;
-	
-// run two frames to allow everything to settle
-	host_frametime = 0.1;
-	SV_Physics ();
-	SV_Physics ();
-
 // perform first protocol version adjustment
-	SV_SetProtocolVersion ();
-	sv_bump_protocol_version = false;
-
-// create a baseline for more efficient communications
-	SV_CreateBaseline ();
-
-// use signon message for second protocol version adjustment
-	if (sv_protocol_version == PROTOCOL_VERSION && sv.signon.cursize > NET_MAXMESSAGE)
-	{
-		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
-	}
-
-// if the protocol was not adjusted at this point, reset limits to their expected values
-	if (sv_protocol_version == PROTOCOL_VERSION)
-	{
-		sv.signon.maxsize = NET_MAXMESSAGE;
-		sv.datagram.maxsize = MAX_DATAGRAM;
-		sv.reliable_datagram.maxsize = MAX_DATAGRAM;
-	}
-
-// send serverinfo to all connected clients
-	for (i=0,host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
-		if (host_client->active)
-		{
-			SV_SendServerinfo (host_client);
-		}
-	
-	Con_DPrintf ("Server spawned.\n");
-}
-
-void SV_SetProtocolVersion (void)
-{
-	sv_protocol_version = PROTOCOL_VERSION;
-
 	if (sv_bump_protocol_version ||
 		sv.models.size() >= MAX_MODELS ||
 		sv.sound_precache.size() >= MAX_SOUNDS ||
@@ -1594,6 +1555,41 @@ void SV_SetProtocolVersion (void)
 			sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
 		}
 	}
+	sv_bump_protocol_version = false;
+
+// all setup is completed, any further precache statements are errors
+	sv.state = ss_active;
+	
+// run two frames to allow everything to settle
+	host_frametime = 0.1;
+	SV_Physics ();
+	SV_Physics ();
+
+// create a baseline for more efficient communications
+	SV_CreateBaseline ();
+
+// use signon message for second protocol version adjustment
+	if (sv_protocol_version == PROTOCOL_VERSION && sv.signon.cursize > NET_MAXMESSAGE)
+	{
+		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
+	}
+
+// if the protocol was not adjusted at this point, reset limits to their expected values
+	if (sv_protocol_version == PROTOCOL_VERSION)
+	{
+		sv.signon.maxsize = NET_MAXMESSAGE;
+		sv.datagram.maxsize = MAX_DATAGRAM;
+		sv.reliable_datagram.maxsize = MAX_DATAGRAM;
+	}
+
+// send serverinfo to all connected clients
+	for (i=0,host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
+		if (host_client->active)
+		{
+			SV_SendServerinfo (host_client);
+		}
+	
+	Con_DPrintf ("Server spawned.\n");
 }
 
 void SV_DeleteEdictLeafs(size_t start, size_t end)
