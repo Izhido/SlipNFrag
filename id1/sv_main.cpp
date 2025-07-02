@@ -130,7 +130,7 @@ void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count)
 
 	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
-		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-24)
+		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-22)
 			return;
 		MSG_WriteByte (&sv.datagram, svc_expandedparticle);
 		MSG_WriteFloat (&sv.datagram, org[0]);
@@ -142,9 +142,9 @@ void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count)
 		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
 			return;
 		MSG_WriteByte (&sv.datagram, svc_particle);
-		MSG_WriteCoord(&sv.datagram, org[0]);
-		MSG_WriteCoord(&sv.datagram, org[1]);
-		MSG_WriteCoord(&sv.datagram, org[2]);
+		MSG_WriteCoord (&sv.datagram, org[0]);
+		MSG_WriteCoord (&sv.datagram, org[1]);
+		MSG_WriteCoord (&sv.datagram, org[2]);
 	}
 	for (i=0 ; i<3 ; i++)
 	{
@@ -181,6 +181,7 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
     int field_mask;
     int			i;
 	int			ent;
+	vec3_t		pos;
 	
 	if (volume < 0 || volume > 255)
 		Sys_Error ("SV_StartSound: volume = %i", volume);
@@ -190,17 +191,6 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 
 	if (channel < 0 || channel > 7)
 		Sys_Error ("SV_StartSound: channel = %i", channel);
-
-	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-	{
-		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-32)
-			return;
-    }
-	else
-	{
-		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
-			return;
-	}
 
 // find precache number for sound
     for (sound_num=1 ; sound_num<sv.sound_precache.size() ; sound_num++)
@@ -221,25 +211,36 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION)
 		field_mask |= SND_ATTENUATION;
 
+	for (i=0 ; i<3 ; i++)
+		pos[i] = entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]);
+
 // directed messages go only to the entity the are targeted on
-	if (ent > 8191 || channel > 7 || sound_num > 255)
+	if (!sv.active && !sv_bump_protocol_version && (ent > 8191 || channel > 7 || sound_num > 255 || pos[0] < -4096 || pos[0] >= 4096 || pos[1] < -4096 || pos[1] >= 4096 || pos[2] < -4096 || pos[2] >= 4096))
 	{
 		sv_bump_protocol_version = true;
 	}
-	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
 	{
+		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-32)
+			return;
+		
 		MSG_WriteByte (&sv.datagram, svc_expandedsound);
-	}
+    }
 	else
 	{
+		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
+			return;
+
 		MSG_WriteByte (&sv.datagram, svc_sound);
 	}
+
 	MSG_WriteByte (&sv.datagram, field_mask);
 	if (field_mask & SND_VOLUME)
 		MSG_WriteByte (&sv.datagram, volume);
 	if (field_mask & SND_ATTENUATION)
 		MSG_WriteByte (&sv.datagram, attenuation*64);
-	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
 	{
 		MSG_WriteLong (&sv.datagram, ent);
 		MSG_WriteLong (&sv.datagram, channel);
@@ -1526,7 +1527,7 @@ void SV_SpawnServer (char *server)
 	SV_Physics ();
 
 // perform first protocol version adjustment
-	SV_SetProtocolVersion();
+	SV_SetProtocolVersion ();
 	sv_bump_protocol_version = false;
 
 // create a baseline for more efficient communications
@@ -1556,7 +1557,7 @@ void SV_SpawnServer (char *server)
 	Con_DPrintf ("Server spawned.\n");
 }
 
-void SV_SetProtocolVersion()
+void SV_SetProtocolVersion (void)
 {
 	sv_protocol_version = PROTOCOL_VERSION;
 
@@ -1577,12 +1578,12 @@ void SV_SetProtocolVersion()
 			{
 				continue;
 			}
-			if (model->mins[0] <= -4095 ||
-				model->mins[1] <= -4095 ||
-				model->mins[2] <= -4095 ||
-				model->maxs[0] >= 4095 ||
-				model->maxs[1] >= 4095 ||
-				model->maxs[2] >= 4095)
+			if (model->mins[0] < -4096 ||
+				model->mins[1] < -4096 ||
+				model->mins[2] < -4096 ||
+				model->maxs[0] >= 4096 ||
+				model->maxs[1] >= 4096 ||
+				model->maxs[2] >= 4096)
 			{
 				beyond = true;
 				break;

@@ -536,11 +536,11 @@ void PF_ambientsound (void)
 
 // add an svc_spawnambient command to the level signon packet
 
-	if (soundnum >= MAX_SOUNDS)
+	if (!sv.active && !sv_bump_protocol_version && (soundnum >= MAX_SOUNDS || pos[0] < -4096 || pos[0] >= 4096 || pos[1] < -4096 || pos[1] >= 4096 || pos[2] < -4096 || pos[2] >= 4096))
 	{
 		sv_bump_protocol_version = true;
 	}
-	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
 	{
 		MSG_WriteByte(&sv.signon, svc_expandedspawnstaticsound);
 		for (i=0 ; i<3 ; i++)
@@ -553,7 +553,7 @@ void PF_ambientsound (void)
 			MSG_WriteCoord(&sv.signon, pos[i]);
 	}
 
-	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
 	{
 		MSG_WriteLong (&sv.signon, soundnum);
 	}
@@ -1619,11 +1619,11 @@ void PF_makestatic (void)
 	ent = G_EDICT(OFS_PARM0);
 
 	auto index = SV_ModelIndex(pr_strings + ent->v.model);
-	if (index >= MAX_MODELS)
+	if (!sv.active && !sv_bump_protocol_version && (index >= MAX_MODELS || ent->v.origin[0] < -4096 || ent->v.origin[0] >= 4096 || ent->v.origin[1] < -4096 || ent->v.origin[1] >= 4096 || ent->v.origin[2] < -4096 || ent->v.origin[2] >= 4096))
 	{
 		sv_bump_protocol_version = true;
 	}
-	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
 	{
 		MSG_WriteByte (&sv.signon, svc_expandedspawnstatic);
 		MSG_WriteLong (&sv.signon, index);
@@ -1638,7 +1638,7 @@ void PF_makestatic (void)
 	MSG_WriteByte (&sv.signon, ent->v.frame);
 	MSG_WriteByte (&sv.signon, ent->v.colormap);
 	MSG_WriteByte (&sv.signon, ent->v.skin);
-	if (sv_bump_protocol_version || sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
 	{
 		for (i=0 ; i<3 ; i++)
 		{

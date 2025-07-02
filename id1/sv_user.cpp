@@ -586,9 +586,7 @@ nextmsg:
 				break;
 			
 			case clc_ackexpproto:
-				sv_bump_protocol_version = true;
-				SV_SetProtocolVersion();
-				sv_bump_protocol_version = false;
+				sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
 				break;
 			}
 		}

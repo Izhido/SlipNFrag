@@ -225,7 +225,7 @@ extern qboolean sv_request_protocol_version_upgrade;
 //===========================================================
 
 void SV_Init (void);
-void SV_SetProtocolVersion();
+void SV_SetProtocolVersion (void);
 void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count);
 void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume,
     float attenuation);
