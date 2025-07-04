@@ -1633,15 +1633,16 @@ void PF_makestatic (void)
 	{
 		MSG_WriteByte (&sv.signon, svc_expandedspawnstatic);
 		MSG_WriteLong (&sv.signon, index);
+		MSG_WriteLong (&sv.signon, ent->v.frame);
 	}
 	else
 	{
 		MSG_WriteByte (&sv.signon,svc_spawnstatic);
 		MSG_WriteByte (&sv.signon, index);
+		MSG_WriteByte (&sv.signon, ent->v.frame);
 	}
 	sv_static_entity_count++;
 
-	MSG_WriteByte (&sv.signon, ent->v.frame);
 	MSG_WriteByte (&sv.signon, ent->v.colormap);
 	MSG_WriteByte (&sv.signon, ent->v.skin);
 	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)

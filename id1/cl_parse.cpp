@@ -640,7 +640,7 @@ if (bits&(1<<i))
 	}
 	
 	if (bits & U_FRAME)
-		ent->frame = MSG_ReadByte ();
+		ent->frame = MSG_ReadLong ();
 	else
 		ent->frame = ent->baseline.frame;
 
@@ -758,7 +758,7 @@ void CL_ParseExpandedBaseline (entity_t *ent)
 	int			i;
 	
 	ent->baseline.modelindex = MSG_ReadLong ();
-	ent->baseline.frame = MSG_ReadByte ();
+	ent->baseline.frame = MSG_ReadLong ();
 	ent->baseline.colormap = MSG_ReadByte();
 	ent->baseline.skin = MSG_ReadByte();
 	for (i=0 ; i<3 ; i++)
@@ -782,10 +782,6 @@ void CL_ParseClientdata (int bits)
 {
 	int		i, j;
 	
-	if (cl_protocol_version_from_server != PROTOCOL_VERSION)
-	{
-		Host_Error("CL_ParseClientdata: command unavailable for expanded protocol version\n");
-	}
 	if (bits & SU_VIEWHEIGHT)
 		cl.viewheight = MSG_ReadChar ();
 	else

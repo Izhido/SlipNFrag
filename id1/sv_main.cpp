@@ -650,7 +650,7 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 			if (bits & U_MODEL)
 				MSG_WriteLong (msg, ent->v.modelindex);
 			if (bits & U_FRAME)
-				MSG_WriteByte (msg, ent->v.frame);
+				MSG_WriteLong (msg, ent->v.frame);
 			if (bits & U_COLORMAP)
 				MSG_WriteByte (msg, ent->v.colormap);
 			if (bits & U_SKIN)
@@ -1261,6 +1261,7 @@ void SV_CreateBaseline (void)
 			MSG_WriteLong (&sv.signon,entnum);
 			
 			MSG_WriteLong (&sv.signon, svent->baseline.modelindex);
+			MSG_WriteLong (&sv.signon, svent->baseline.frame);
 		}
 		else
 		{
@@ -1268,8 +1269,8 @@ void SV_CreateBaseline (void)
 			MSG_WriteShort (&sv.signon,entnum);
 
 			MSG_WriteByte (&sv.signon, svent->baseline.modelindex);
+			MSG_WriteByte (&sv.signon, svent->baseline.frame);
 		}
-		MSG_WriteByte (&sv.signon, svent->baseline.frame);
 		MSG_WriteByte (&sv.signon, svent->baseline.colormap);
 		MSG_WriteByte (&sv.signon, svent->baseline.skin);
 		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
