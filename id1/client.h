@@ -287,6 +287,9 @@ extern	std::vector<beam_t>			cl_beams;
 extern int cl_protocol_version_from_server;
 extern int cl_protocol_version_upgrade_requested;
 
+extern int cl_protocol_version_from_demo;
+extern int cl_protocol_flags_from_demo;
+
 //=============================================================================
 
 //
@@ -354,6 +357,11 @@ void CL_Stop_f (void);
 void CL_Record_f (void);
 void CL_PlayDemo_f (void);
 void CL_TimeDemo_f (void);
+
+//
+// cl_dtran.c
+//
+int CL_DemoTranslate (void);
 
 //
 // cl_parse.c

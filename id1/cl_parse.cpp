@@ -898,9 +898,6 @@ void CL_ParseExpandedClientdata (int bits)
 {
 	int		i, j;
 	
-	if (cl_protocol_version_from_server != EXPANDED_PROTOCOL_VERSION)
-		Host_Error("CL_ParseExpandedClientdata: command unavailable for normal protocol version\n");
-
 	if (bits & SU_VIEWHEIGHT)
 		cl.viewheight = MSG_ReadChar ();
 	else

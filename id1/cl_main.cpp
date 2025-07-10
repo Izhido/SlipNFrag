@@ -847,5 +847,8 @@ void CL_Init (void)
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
 	
 	cls.demofile = -1;
+
+	cl_protocol_version_from_demo = 0;
+	cl_protocol_flags_from_demo = 0;
 }
 

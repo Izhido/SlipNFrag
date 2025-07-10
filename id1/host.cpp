@@ -714,6 +714,8 @@ void _Host_FrameReset()
 	increasebasespans = 0;
 	warp_stack_index = -1;
 	insubmodel = false;
+	cl_protocol_version_from_demo = 0;
+	cl_protocol_flags_from_demo = 0;
 }
 
 double _host_frame_time1 = 0;

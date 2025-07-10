@@ -52,6 +52,9 @@ void CL_StopPlayback (void)
 	cls.demofile = -1;
 	cls.state = ca_disconnected;
 
+	cl_protocol_version_from_demo = 0;
+	cl_protocol_flags_from_demo = 0;
+	
 	if (cls.timedemo)
 		CL_FinishTimeDemo ();
 }
@@ -139,6 +142,12 @@ int CL_GetMessage (void)
 		}
 		r = Sys_FileRead (cls.demofile, net_message.data.data(), net_message.cursize);
 		if (r != size)
+		{
+			CL_StopPlayback ();
+			return 0;
+		}
+
+		if (CL_DemoTranslate() == 0)
 		{
 			CL_StopPlayback ();
 			return 0;

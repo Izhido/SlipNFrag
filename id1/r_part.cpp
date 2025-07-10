@@ -349,11 +349,11 @@ void R_ParseExpandedParticleEffect(void)
 	int			i, count, msgcount, color;
 
 	for (i=0 ; i<3 ; i++)
-		org[i] = MSG_ReadFloat();
+		org[i] = MSG_ReadFloat ();
 	for (i=0 ; i<3 ; i++)
-		dir[i] = MSG_ReadChar() * (1.0 / 16);
-	msgcount = MSG_ReadByte();
-	color = MSG_ReadByte();
+		dir[i] = MSG_ReadChar () * (1.0 / 16);
+	msgcount = MSG_ReadByte ();
+	color = MSG_ReadByte ();
 
 	if (msgcount == 255)
 		count = 1024;
