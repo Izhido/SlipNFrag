@@ -153,6 +153,7 @@
   <ItemGroup>
     <ClCompile Include="..\id1\chase.cpp" />
     <ClCompile Include="..\id1\cl_demo.cpp" />
+    <ClCompile Include="..\id1\cl_dtran.cpp" />
     <ClCompile Include="..\id1\cl_input.cpp" />
     <ClCompile Include="..\id1\cl_main.cpp" />
     <ClCompile Include="..\id1\cl_parse.cpp" />
