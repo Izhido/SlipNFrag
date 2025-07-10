@@ -315,7 +315,7 @@ typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
 
 typedef struct model_s
 {
-	string_t		name;
+	std::string	name;
 	int	needload;		// bmodels and sprites don't cache normally
 
 	modtype_t	type;

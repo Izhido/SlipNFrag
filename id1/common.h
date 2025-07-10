@@ -154,7 +154,7 @@ void COM_Init (const char *path);
 void COM_InitArgv (int argc, char **argv);
 
 char *COM_SkipPath (char *pathname);
-void COM_StripExtension (char *in, char *out);
+void COM_StripExtension (const char *in, char *out);
 void COM_FileBase (const char *in, char *out);
 void COM_DefaultExtension (std::string& path, const char *extension);
 
