@@ -1,5 +1,15 @@
 # Changelog
 
+## Version **1.0.30**:
+
+* Support for demo files created using other sourceports (using protocol 666 or 999), through the use of a translation layer that converts all instructions in the demo to ones that the core engine is able to understand.
+* BREAKING CHANGE: Increased, one more time, the version number from the expanded network protocol from 'SnF'16 to 'SnF'17, to include fixes in the data types of entities, alias models, sounds and particles sent using the expanded network protocol, whose identifiers are larger than 8 or 16 bits in size, to support more custom maps & mods. NOTE: This means, once again, clients from older versions will no longer be able to connect via network to this new version.
+* Updated code that sends network protocol commands from quakec code to support also entities with identifiers larger than 16 bits, to prevent visual errors in large maps & mods.
+* High DPI awareness is now enabled for the Win64 version, which allows it to run in full high resolution.
+* Minor visual fixes in the Win64 version related to the start screen before starting the game.
+* Fix to alias model loading in the core engine - model names will now be stored in their own space in memory, instead of sharing them with the memory used by the quakec code. This fixes a weird loading error found in the demos attached to the latest version of Copper.
+* Miscellaneous fixes and version updates of components in the OXR version (using Android Studio).
+
 ### Version **1.0.29**:
 
 * Added support for transparent or semi-transparent surfaces and alias models (finally!).
