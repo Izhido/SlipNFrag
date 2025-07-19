@@ -2737,7 +2737,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 	version = LittleLong (pin->version);
 	if (version != SPRITE_VERSION)
 		Sys_Error ("%s has wrong version number "
-				 "(%i should be %i)", mod->name, version, SPRITE_VERSION);
+				 "(%i should be %i)", mod->name.c_str(), version, SPRITE_VERSION);
 
 	numframes = LittleLong (pin->numframes);
 
@@ -2814,7 +2814,7 @@ void Mod_Print (void)
 	Con_Printf ("Cached models:\n");
 	for (auto& mod : mod_known)
 	{
-		Con_Printf ("%8p : %s",mod.extradata, pr_strings + mod.name);
+		Con_Printf ("%8p : %s",mod.extradata, mod.name.c_str());
 		if (mod.needload & NL_UNREFERENCED)
 			Con_Printf (" (!R)");
 		if (mod.needload & NL_NEEDS_LOADED)
