@@ -615,11 +615,17 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 		if (ent->baseline.modelindex != ent->v.modelindex)
 			bits |= U_MODEL;
 
-		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION && pr_alpha_ofs >= 0)
-			bits |= U_ALPHA;
+		if (pr_alpha_ofs >= 0)
+			if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+				bits |= U_ALPHA;
+			else
+				sv_request_protocol_version_upgrade = true;
 
-		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION && pr_scale_ofs >= 0)
-			bits |= U_SCALE;
+		if (pr_scale_ofs >= 0)
+			if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+				bits |= U_SCALE;
+			else
+				sv_request_protocol_version_upgrade = true;
 
 		if (e >= 256)
 			bits |= U_LONGENTITY;
