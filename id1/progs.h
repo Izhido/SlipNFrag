@@ -73,7 +73,7 @@ void PR_LoadProgs (void);
 
 void PR_Profile_f (void);
 
-edict_t *ED_Alloc (void);
+edict_t *ED_Alloc (qboolean touch_triggers);
 void ED_Free (edict_t *ed);
 
 char	*ED_NewString (const char *string);

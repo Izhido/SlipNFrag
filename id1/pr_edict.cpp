@@ -81,7 +81,7 @@ instead of being removed and recreated, which can cause interpolated
 angles and bad trails.
 =================
 */
-edict_t *ED_Alloc (void)
+edict_t *ED_Alloc (qboolean touch_triggers)
 {
 	int			i,j,k;
 	edict_t		*e;
@@ -99,7 +99,7 @@ edict_t *ED_Alloc (void)
 		}
 	}
 	
-		sv.num_edicts++;
+	sv.num_edicts++;
 	if (sv.num_edicts * pr_edict_size >= sv.edicts.size())
 	{
 		auto sv_playerindex = 0;
@@ -121,7 +121,7 @@ edict_t *ED_Alloc (void)
 		for (j = 0, k = 0; j < sv.num_edicts; j++, k += pr_edict_size)
 		{
 			e = (edict_t*)(sv.edicts.data() + k);
-			SV_LinkEdict(e, true);
+			SV_LinkEdict(e, touch_triggers);
 		}
 		for (j = 0, c = svs.clients.data(); j < svs.maxclients ; j++, c++)
 		{
@@ -995,7 +995,7 @@ void ED_LoadFromFile (const char *data)
 		if (!ent)
 			ent = EDICT_NUM(0);
 		else
-			ent = ED_Alloc ();
+			ent = ED_Alloc (true);
 		data = ED_ParseEdict (data, ent);
 
 // remove things from different skill levels or deathmatch

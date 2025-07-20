@@ -991,7 +991,7 @@ void PF_etos (void)
 void PF_Spawn (void)
 {
 	edict_t	*ed;
-	ed = ED_Alloc();
+	ed = ED_Alloc(false);
 	RETURN_EDICT(ed);
 }
 

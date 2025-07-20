@@ -162,12 +162,21 @@ void SV_Impact (edict_t *e1, edict_t *e2)
 	old_self = pr_global_struct->self;
 	old_other = pr_global_struct->other;
 	
+	auto n1 = NUM_FOR_EDICT(e1);
+	auto n2 = NUM_FOR_EDICT(e2);
+	auto sequence = sv.edicts_reallocation_sequence;
+
 	pr_global_struct->time = sv.time;
 	if (e1->v.touch && e1->v.solid != SOLID_NOT)
 	{
 		pr_global_struct->self = EDICT_TO_PROG(e1);
 		pr_global_struct->other = EDICT_TO_PROG(e2);
 		PR_ExecuteProgram (e1->v.touch);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			e1 = EDICT_NUM(n1);
+			e2 = EDICT_NUM(n2);
+		}
 	}
 	
 	if (e2->v.touch && e2->v.solid != SOLID_NOT)
@@ -254,6 +263,9 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 	
 	time_left = time;
 
+	auto num = NUM_FOR_EDICT(ent);
+	auto sequence = sv.edicts_reallocation_sequence;
+
 	for (bumpcount=0 ; bumpcount<numbumps ; bumpcount++)
 	{
 		if (!ent->v.velocity[0] && !ent->v.velocity[1] && !ent->v.velocity[2])
@@ -263,6 +275,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 			end[i] = ent->v.origin[i] + time_left * ent->v.velocity[i];
 
 		trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
+		auto tracenum = (trace.ent == nullptr ? 0 : NUM_FOR_EDICT(trace.ent));
 
 		if (trace.allsolid)
 		{	// entity is trapped in another solid
@@ -303,6 +316,14 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 // run the impact function
 //
 		SV_Impact (ent, trace.ent);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			ent = EDICT_NUM(num);
+			trace.ent = (tracenum == 0 ? nullptr : EDICT_NUM(tracenum));
+			if (steptrace)
+				steptrace->ent = trace.ent;
+			sequence = sv.edicts_reallocation_sequence;
+		}
 		if (ent->free)
 			break;		// removed by the impact function
 
@@ -434,7 +455,15 @@ trace_t SV_PushEntity (edict_t *ent, const vec3_t push)
 	SV_LinkEdict (ent, true);
 
 	if (trace.ent)
+	{
+		auto tracenum = NUM_FOR_EDICT(trace.ent);
+		auto sequence = sv.edicts_reallocation_sequence;
 		SV_Impact (ent, trace.ent);		
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			trace.ent = EDICT_NUM(tracenum);
+		}
+	}
 
 	return trace;
 }					
@@ -457,6 +486,9 @@ void SV_PushMove (edict_t *pusher, float movetime)
 	vec3_t		mins, maxs, move;
 	vec3_t		entorig, pushorig;
 	int			num_moved;
+
+	auto pushernum = NUM_FOR_EDICT(pusher);
+	auto sequence = sv.edicts_reallocation_sequence;
 
 	if (!pusher->v.velocity[0] && !pusher->v.velocity[1] && !pusher->v.velocity[2])
 	{
@@ -540,6 +572,12 @@ void SV_PushMove (edict_t *pusher, float movetime)
 		// try moving the contacted entity 
 		pusher->v.solid = SOLID_NOT;
 		SV_PushEntity (check, move);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			pusher = EDICT_NUM(pushernum);
+			check = EDICT_NUM(e);
+			sequence = sv.edicts_reallocation_sequence;
+		}
 		pusher->v.solid = SOLID_BSP;
 
 	// if it is still inside the pusher, block
@@ -569,6 +607,12 @@ void SV_PushMove (edict_t *pusher, float movetime)
 				pr_global_struct->self = EDICT_TO_PROG(pusher);
 				pr_global_struct->other = EDICT_TO_PROG(check);
 				PR_ExecuteProgram (pusher->v.blocked);
+				if (sequence != sv.edicts_reallocation_sequence)
+				{
+					pusher = EDICT_NUM(pushernum);
+					check = EDICT_NUM(e);
+					sequence = sv.edicts_reallocation_sequence;
+				}
 			}
 			
 		// move back any entities we already moved
@@ -757,7 +801,11 @@ void SV_Physics_Pusher (edict_t *ent)
 			SV_PushRotate (ent, movetime);
 		else
 #endif
+			auto num = NUM_FOR_EDICT(ent);
+			auto sequence = sv.edicts_reallocation_sequence;
 			SV_PushMove (ent, movetime);	// advances ent->v.ltime if not blocked
+			if (sequence != sv.edicts_reallocation_sequence)
+				ent = EDICT_NUM(num);
 	}
 		
 	if (thinktime > oldltime && thinktime <= ent->v.ltime)
@@ -940,6 +988,9 @@ int SV_TryUnstick (edict_t *ent, const vec3_t oldvel)
 	VectorCopy (ent->v.origin, oldorg);
 	VectorCopy (vec3_origin, dir);
 
+	auto num = NUM_FOR_EDICT(ent);
+	auto sequence = sv.edicts_reallocation_sequence;
+
 	for (i=0 ; i<8 ; i++)
 	{
 // try pushing a little in an axial direction
@@ -956,12 +1007,22 @@ int SV_TryUnstick (edict_t *ent, const vec3_t oldvel)
 		}
 		
 		SV_PushEntity (ent, dir);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			ent = EDICT_NUM(num);
+			sequence = sv.edicts_reallocation_sequence;
+		}
 
 // retry the original move
 		ent->v.velocity[0] = oldvel[0];
 		ent->v. velocity[1] = oldvel[1];
 		ent->v. velocity[2] = 0;
 		clip = SV_FlyMove (ent, 0.1, &steptrace);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			ent = EDICT_NUM(num);
+			sequence = sv.edicts_reallocation_sequence;
+		}
 
 		if ( fabs(oldorg[1] - ent->v.origin[1]) > 4
 		|| fabs(oldorg[0] - ent->v.origin[0]) > 4 )
@@ -1004,7 +1065,15 @@ void SV_WalkMove (edict_t *ent)
 	VectorCopy (ent->v.origin, oldorg);
 	VectorCopy (ent->v.velocity, oldvel);
 	
+	auto num = NUM_FOR_EDICT(ent);
+	auto sequence = sv.edicts_reallocation_sequence;
+
 	clip = SV_FlyMove (ent, host_frametime, &steptrace);
+	if (sequence != sv.edicts_reallocation_sequence)
+	{
+		ent = EDICT_NUM(num);
+		sequence = sv.edicts_reallocation_sequence;
+	}
 
 	if ( !(clip & 2) )
 		return;		// move didn't block on a step
@@ -1036,12 +1105,22 @@ void SV_WalkMove (edict_t *ent)
 
 // move up
 	SV_PushEntity (ent, upmove);	// FIXME: don't link?
+	if (sequence != sv.edicts_reallocation_sequence)
+	{
+		ent = EDICT_NUM(num);
+		sequence = sv.edicts_reallocation_sequence;
+	}
 
 // move forward
 	ent->v.velocity[0] = oldvel[0];
 	ent->v. velocity[1] = oldvel[1];
 	ent->v. velocity[2] = 0;
 	clip = SV_FlyMove (ent, host_frametime, &steptrace);
+	if (sequence != sv.edicts_reallocation_sequence)
+	{
+		ent = EDICT_NUM(num);
+		sequence = sv.edicts_reallocation_sequence;
+	}
 
 // check for stuckness, possibly due to the limited precision of floats
 // in the clipping hulls
@@ -1051,6 +1130,11 @@ void SV_WalkMove (edict_t *ent)
 		&& fabs(oldorg[0] - ent->v.origin[0]) < 0.03125 )
 		{	// stepping up didn't make any progress
 			clip = SV_TryUnstick (ent, oldvel);
+			if (sequence != sv.edicts_reallocation_sequence)
+			{
+				ent = EDICT_NUM(num);
+				sequence = sv.edicts_reallocation_sequence;
+			}
 		}
 	}
 	
@@ -1060,6 +1144,10 @@ void SV_WalkMove (edict_t *ent)
 
 // move down
 	downtrace = SV_PushEntity (ent, downmove);	// FIXME: don't link?
+	if (sequence != sv.edicts_reallocation_sequence)
+	{
+		ent = EDICT_NUM(num);
+	}
 
 	if (downtrace.plane.normal[2] > 0.7)
 	{
@@ -1129,6 +1217,7 @@ void SV_Physics_Client (edict_t	*ent, int num)
 		if (sequence != sv.edicts_reallocation_sequence)
 		{
 			ent = EDICT_NUM(num);
+			sequence = sv.edicts_reallocation_sequence;
 		}
 		if (!SV_CheckWater (ent) && ! ((int)ent->v.flags & FL_WATERJUMP) )
 			SV_AddGravity (ent);
@@ -1137,6 +1226,10 @@ void SV_Physics_Client (edict_t	*ent, int num)
 		VectorAdd (ent->v.velocity, ent->v.basevelocity, ent->v.velocity);
 #endif
 		SV_WalkMove (ent);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			ent = EDICT_NUM(num);
+		}
 
 #ifdef QUAKE2
 		VectorSubtract (ent->v.velocity, ent->v.basevelocity, ent->v.velocity);
@@ -1146,6 +1239,10 @@ void SV_Physics_Client (edict_t	*ent, int num)
 	case MOVETYPE_TOSS:
 	case MOVETYPE_BOUNCE:
 		SV_Physics_Toss (ent, num);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			ent = EDICT_NUM(num);
+		}
 		break;
 
 	case MOVETYPE_FLY:
@@ -1154,8 +1251,13 @@ void SV_Physics_Client (edict_t	*ent, int num)
 		if (sequence != sv.edicts_reallocation_sequence)
 		{
 			ent = EDICT_NUM(num);
+			sequence = sv.edicts_reallocation_sequence;
 		}
 		SV_FlyMove (ent, host_frametime, NULL);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			ent = EDICT_NUM(num);
+		}
 		break;
 		
 	case MOVETYPE_NOCLIP:
@@ -1323,6 +1425,7 @@ void SV_Physics_Toss (edict_t *ent, int num)
 	if (sequence != sv.edicts_reallocation_sequence)
 	{
 		ent = EDICT_NUM(num);
+		sequence = sv.edicts_reallocation_sequence;
 	}
 
 #ifdef QUAKE2
@@ -1365,6 +1468,10 @@ void SV_Physics_Toss (edict_t *ent, int num)
 #endif
 	VectorScale (ent->v.velocity, host_frametime, move);
 	trace = SV_PushEntity (ent, move);
+	if (sequence != sv.edicts_reallocation_sequence)
+	{
+		ent = EDICT_NUM(num);
+	}
 #ifdef QUAKE2
 	VectorSubtract (ent->v.velocity, ent->v.basevelocity, ent->v.velocity);
 #endif
@@ -1534,6 +1641,7 @@ void SV_Physics_Step (edict_t *ent, int num)
 	qboolean	hitsound;
 
 // freefall if not onground
+	auto sequence = sv.edicts_reallocation_sequence;
 	if ( ! ((int)ent->v.flags & (FL_ONGROUND | FL_FLY | FL_SWIM) ) )
 	{
 		if (ent->v.velocity[2] < sv_gravity.value*-0.1)
@@ -1544,6 +1652,11 @@ void SV_Physics_Step (edict_t *ent, int num)
 		SV_AddGravity (ent);
 		SV_CheckVelocity (ent);
 		SV_FlyMove (ent, host_frametime, NULL);
+		if (sequence != sv.edicts_reallocation_sequence)
+		{
+			ent = EDICT_NUM(num);
+			sequence = sv.edicts_reallocation_sequence;
+		}
 		SV_LinkEdict (ent, true);
 
 		if ( (int)ent->v.flags & FL_ONGROUND )	// just hit ground
@@ -1554,7 +1667,6 @@ void SV_Physics_Step (edict_t *ent, int num)
 	}
 
 // regular thinking
-	auto sequence = sv.edicts_reallocation_sequence;
 	SV_RunThink (ent, num);
 	if (sequence != sv.edicts_reallocation_sequence)
 	{
