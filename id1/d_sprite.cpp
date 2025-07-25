@@ -37,7 +37,7 @@ D_SpriteDrawSpans
 void D_SpriteDrawSpans (sspan_t *pspan)
 {
 	int			u, v, diff, count, spancount;
-	long long	izistep, izi;
+	int64_t		izistep, izi;
 	byte		*pbase, *pdest;
 	fixed16_t	s, t, snext, tnext, sstep, tstep;
 	float		sdivz, tdivz, zi, z, du, dv, spancountminus1;
@@ -221,7 +221,7 @@ void D_SpriteScanLeftEdge (void)
 	emitpoint_t	*pvert, *pnext;
 	sspan_t		*pspan;
 	float		du, dv, vtop, vbottom, slope;
-	long long	u, u_step;
+	int64_t		u, u_step;
 
 	pspan = sprite_spans;
 	i = minindex;
@@ -283,7 +283,7 @@ void D_SpriteScanRightEdge (void)
 	emitpoint_t	*pvert, *pnext;
 	sspan_t		*pspan;
 	float		du, dv, vtop, vbottom, slope, uvert, unext, vvert, vnext;
-	long long	u, u_step;
+	int64_t		u, u_step;
 
 	pspan = sprite_spans;
 	i = minindex;

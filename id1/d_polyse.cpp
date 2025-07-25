@@ -36,7 +36,7 @@ typedef struct {
 	int				count;
 	byte			*ptex;
 	int				sfrac, tfrac, light;
-	long long       zi;
+	int64_t			zi;
 	int				xpos, ypos;
 } spanpackage_t;
 
@@ -88,7 +88,7 @@ static int				ystart;
 byte					*d_pdest, *d_ptex;
 short					*d_pz;
 int						d_sfrac, d_tfrac, d_light;
-long long				d_zi;
+int64_t					d_zi;
 int						d_xpos, d_ypos;
 int						d_ptexextrastep, d_sfracextrastep;
 int						d_tfracextrastep, d_lightextrastep, d_pdestextrastep;
@@ -777,7 +777,7 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 	byte	*lptex;
 	int		lsfrac, ltfrac;
 	int		llight;
-	long long		lzi;
+	int64_t	lzi;
 	int		lxpos, lypos;
 	short	*lpz;
 

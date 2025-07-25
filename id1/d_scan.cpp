@@ -27,11 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 unsigned char	*r_turb_pbase, *r_turb_pdest;
 short			*r_turb_pz;
-long long		r_turb_izi, r_turb_izistep;
+int64_t			r_turb_izi, r_turb_izistep;
 unsigned char	r_turb_alpha;
 int				r_turb_u, r_turb_vdither;
 fixed16_t		r_turb_s, r_turb_t, r_turb_sstep, r_turb_tstep;
-long long		r_turb_lm_s, r_turb_lm_t, r_turb_lm_sstep, r_turb_lm_tstep;
+int64_t			r_turb_lm_s, r_turb_lm_t, r_turb_lm_sstep, r_turb_lm_tstep;
 int				*r_turb_turb;
 int				r_turb_spancount;
 
@@ -154,7 +154,7 @@ D_DrawTurbulentLit8Span
 void D_DrawTurbulentLit8Span (void)
 {
 	int			sturb, tturb;
-	long long	lm_sturb, lm_tturb;
+	int64_t		lm_sturb, lm_tturb;
 	unsigned	light;
 	byte		pix;
 
@@ -199,10 +199,10 @@ void D_DrawTurbulentLit8Span (void)
 		pix = *(r_turb_pbase + (tturb*cachewidth) + sturb);
 		
 		auto position = ((lm_tturb>>16)*(r_turb_lightmapwidthminusone + 1)) + (lm_sturb>>16);
-		long long light00 = *(r_turb_lightmapblock + position);
-		long long light01 = *(r_turb_lightmapblock + position + 1);
-		long long light10 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1);
-		long long light11 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1 + 1);
+		int64_t light00 = *(r_turb_lightmapblock + position);
+		int64_t light01 = *(r_turb_lightmapblock + position + 1);
+		int64_t light10 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1);
+		int64_t light11 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1 + 1);
 		auto lm_sturb_frac = lm_sturb & 0xFFFF;
 		auto lm_tturb_frac = lm_tturb & 0xFFFF;
 		auto light0 = light00 + (light01 - light00) * lm_sturb_frac / 0x10000;
@@ -228,7 +228,7 @@ D_DrawTurbulentLitAlpha8Span
 void D_DrawTurbulentLitAlpha8Span (void)
 {
 	int			sturb, tturb;
-	long long	lm_sturb, lm_tturb;
+	int64_t		lm_sturb, lm_tturb;
 	unsigned	light;
 	byte		pix;
 
@@ -280,10 +280,10 @@ void D_DrawTurbulentLitAlpha8Span (void)
 				pix = *(r_turb_pbase + (tturb*cachewidth) + sturb);
 				
 				auto position = ((lm_tturb>>16)*(r_turb_lightmapwidthminusone + 1)) + (lm_sturb>>16);
-				long long light00 = *(r_turb_lightmapblock + position);
-				long long light01 = *(r_turb_lightmapblock + position + 1);
-				long long light10 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1);
-				long long light11 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1 + 1);
+				int64_t light00 = *(r_turb_lightmapblock + position);
+				int64_t light01 = *(r_turb_lightmapblock + position + 1);
+				int64_t light10 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1);
+				int64_t light11 = *(r_turb_lightmapblock + position + r_turb_lightmapwidthminusone + 1 + 1);
 				auto lm_sturb_frac = lm_sturb & 0xFFFF;
 				auto lm_tturb_frac = lm_tturb & 0xFFFF;
 				auto light0 = light00 + (light01 - light00) * lm_sturb_frac / 0x10000;
@@ -454,7 +454,7 @@ void TurbulentLit8 (espan_t *pspan)
 {
 	int			count;
 	fixed16_t	snext, tnext;
-	long long	lm_snext, lm_tnext;
+	int64_t		lm_snext, lm_tnext;
 	float		sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float		sdivz16stepu, tdivz16stepu, zi16stepu;
 	fixed16_t	cachewidth16, cacheheight16;
@@ -663,7 +663,7 @@ void TurbulentLitAlpha8 (espan_t *pspan, byte alpha)
 {
 	int			count;
 	fixed16_t	snext, tnext;
-	long long	lm_snext, lm_tnext;
+	int64_t		lm_snext, lm_tnext;
 	float		sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float		sdivz16stepu, tdivz16stepu, zi16stepu;
 	fixed16_t	cachewidth16, cacheheight16;
@@ -1847,7 +1847,7 @@ D_DrawLittleZSpans64
 void D_DrawLittleZSpans64 (espan_t *pspan)
 {
 	int				count, spancount;
-	long long		izistep, izi;
+	int64_t			izistep, izi;
 	short			*pdest;
 	uint64_t		ltemp;
 	double			zi;
@@ -1932,7 +1932,7 @@ D_DrawBigZSpans64
 void D_DrawBigZSpans64 (espan_t *pspan)
 {
 	int				count, spancount;
-	long long		izistep, izi;
+	int64_t			izistep, izi;
 	short			*pdest;
 	uint64_t		ltemp;
 	double			zi;
@@ -2027,7 +2027,7 @@ void D_DrawFenceSpans8 (espan_t *pspan)
 	fixed16_t		s, t, snext, tnext, sstep, tstep;
 	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float			sdivz8stepu, tdivz8stepu, zi8stepu;
-	long long		izistep, izi;
+	int64_t			izistep, izi;
 	byte			btemp;
 
 	sstep = 0;	// keep compiler happy
@@ -2183,7 +2183,7 @@ void D_DrawAlphaSpans8 (espan_t *pspan, byte alpha)
 	fixed16_t		s, t, snext, tnext, sstep, tstep;
 	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float			sdivz8stepu, tdivz8stepu, zi8stepu;
-	long long		izistep, izi;
+	int64_t			izistep, izi;
 
 	sstep = 0;	// keep compiler happy
 	tstep = 0;	// ditto
@@ -2343,7 +2343,7 @@ void D_DrawFenceAlphaSpans8 (espan_t *pspan, byte alpha)
 	fixed16_t		s, t, snext, tnext, sstep, tstep;
 	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float			sdivz8stepu, tdivz8stepu, zi8stepu;
-	long long		izistep, izi;
+	int64_t			izistep, izi;
 	byte			btemp;
 
 	sstep = 0;	// keep compiler happy
