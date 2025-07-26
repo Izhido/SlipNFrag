@@ -258,11 +258,11 @@ void android_main(struct android_app* app)
 			XR_KHR_ANDROID_THREAD_SETTINGS_EXTENSION_NAME,
 			XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME,
 			XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME,
-			XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME,
-			XR_FB_COLOR_SPACE_EXTENSION_NAME
+			XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME
 		};
 
 		auto performanceSettingsEnabled = false;
+		auto colorSpacesEnabled = false;
 
 		uint32_t instanceExtensionCount;
 		CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(nullptr, 0, &instanceExtensionCount, nullptr));
@@ -282,6 +282,12 @@ void android_main(struct android_app* app)
 			if (strncmp(extension.extensionName, XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
 				performanceSettingsEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+
+			if (strncmp(extension.extensionName, XR_FB_COLOR_SPACE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				colorSpacesEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 
@@ -701,56 +707,65 @@ void android_main(struct android_app* app)
 		CHECK_XRCMD(xrCreateSession(instance, &sessionCreateInfo, &appState.Session));
 		CHECK(appState.Session != XR_NULL_HANDLE);
 
-		// Enumerate the supported color space options for the system.
-		PFN_xrEnumerateColorSpacesFB xrEnumerateColorSpacesFB = nullptr;
-		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrEnumerateColorSpacesFB", (PFN_xrVoidFunction*)(&xrEnumerateColorSpacesFB)));
-
-		uint32_t colorSpaceCount = 0;
-		CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, 0, &colorSpaceCount, nullptr));
-
-		std::vector<XrColorSpaceFB> colorSpaces(colorSpaceCount);
-
-		CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, colorSpaceCount, &colorSpaceCount, colorSpaces.data()));
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Supported color spaces:");
-
-		for (uint32_t i = 0; i < colorSpaceCount; i++) 
+		if (colorSpacesEnabled)
 		{
-			const char* name;
-			switch (colorSpaces[i])
+			// Enumerate the supported color space options for the system.
+			PFN_xrEnumerateColorSpacesFB xrEnumerateColorSpacesFB = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrEnumerateColorSpacesFB", (PFN_xrVoidFunction*)(&xrEnumerateColorSpacesFB)));
+
+			uint32_t colorSpaceCount = 0;
+			CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, 0, &colorSpaceCount, nullptr));
+
+			std::vector<XrColorSpaceFB> colorSpaces(colorSpaceCount);
+
+			CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, colorSpaceCount, &colorSpaceCount, colorSpaces.data()));
+			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Supported color spaces:");
+
+			auto rec2020Supported = false;
+
+			for (uint32_t i = 0; i < colorSpaceCount; i++)
 			{
-				case 1:
-					name = "XR_COLOR_SPACE_REC2020_FB";
-					break;
-				case 2:
-					name = "XR_COLOR_SPACE_REC709_FB";
-					break;
-				case 3:
-					name = "XR_COLOR_SPACE_RIFT_CV1_FB";
-					break;
-				case 4:
-					name = "XR_COLOR_SPACE_RIFT_S_FB";
-					break;
-				case 5:
-					name = "XR_COLOR_SPACE_QUEST_FB";
-					break;
-				case 6:
-					name = "XR_COLOR_SPACE_P3_FB";
-					break;
-				case 7:
-					name = "XR_COLOR_SPACE_ADOBE_RGB_FB";
-					break;
-				default:
-					name = "XR_COLOR_SPACE_UNMANAGED_FB";
-					break;
+				const char* name;
+				switch (colorSpaces[i])
+				{
+					case 1:
+						name = "XR_COLOR_SPACE_REC2020_FB";
+						rec2020Supported = true;
+						break;
+					case 2:
+						name = "XR_COLOR_SPACE_REC709_FB";
+						break;
+					case 3:
+						name = "XR_COLOR_SPACE_RIFT_CV1_FB";
+						break;
+					case 4:
+						name = "XR_COLOR_SPACE_RIFT_S_FB";
+						break;
+					case 5:
+						name = "XR_COLOR_SPACE_QUEST_FB";
+						break;
+					case 6:
+						name = "XR_COLOR_SPACE_P3_FB";
+						break;
+					case 7:
+						name = "XR_COLOR_SPACE_ADOBE_RGB_FB";
+						break;
+					default:
+						name = "XR_COLOR_SPACE_UNMANAGED_FB";
+						break;
+				}
+				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%d:%d (%s)", i, colorSpaces[i], name);
 			}
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%d:%d (%s)", i, colorSpaces[i], name);
+
+			if (rec2020Supported)
+			{
+				PFN_xrSetColorSpaceFB xrSetColorSpaceFB = nullptr;
+				CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetColorSpaceFB", (PFN_xrVoidFunction*)(&xrSetColorSpaceFB)));
+
+				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Setting color space %i (%s)...", XR_COLOR_SPACE_REC2020_FB, "XR_COLOR_SPACE_REC2020_FB");
+				CHECK_XRCMD(xrSetColorSpaceFB(appState.Session, XR_COLOR_SPACE_REC2020_FB));
+			}
 		}
-
-		PFN_xrSetColorSpaceFB xrSetColorSpaceFB = nullptr;
-		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetColorSpaceFB", (PFN_xrVoidFunction*)(&xrSetColorSpaceFB)));
-
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Setting color space %i (%s)...", XR_COLOR_SPACE_REC2020_FB, "XR_COLOR_SPACE_REC2020_FB");
-		CHECK_XRCMD(xrSetColorSpaceFB(appState.Session, XR_COLOR_SPACE_REC2020_FB));
 
 		// Get the supported display refresh rates for the system.
 		PFN_xrEnumerateDisplayRefreshRatesFB xrEnumerateDisplayRefreshRatesFB = nullptr;
