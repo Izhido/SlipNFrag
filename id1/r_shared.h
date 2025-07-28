@@ -100,9 +100,10 @@ typedef struct surf_s
 	float		nearzi;				// nearest 1/z on surface, for mipmapping
 	int	insubmodel;
 	float		d_ziorigin, d_zistepu, d_zistepv;
-	uint16_t	isfence;			// related texture contains "holes" (texels with value 255)
-	byte		alpha;				// related entity has alpha value defined
-	byte		pad;
+	byte		isfence;			// related texture contains "holes" (texels with value 255)
+	byte		issky;				// related texture is a sky texture
+	byte		isskybox;			// is one of the surfaces created for the skybox
+	byte		alpha;				// alpha (opacity) of the surface (except that 0 == no alpha -> opaque)
 	// this should total 80 bytes in 64-bit platforms
 } surf_t;
 

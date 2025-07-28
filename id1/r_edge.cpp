@@ -322,8 +322,23 @@ void R_CleanupSpan ()
 		span->u = surf->last_u;
 		span->count = iu - span->u;
 		span->v = current_iv;
-		span->pnext = surf->spans;
-		surf->spans = span;
+		if (surf->issky && r_skyboxinitialized)
+		{
+		// add the span to the closest available skybox surface
+			auto surf3 = surf;
+			do
+			{
+				surf3 = surf3->next;
+			} while (!surf3->isskybox);
+			span->pnext = surf3->spans;
+			surf3->spans = span;
+		}
+		else
+		{
+		// add the span to the current surface
+			span->pnext = surf->spans;
+			surf->spans = span;
+		}
 	}
 
 // reset spanstate for all surfaces in the surface stack
@@ -440,7 +455,8 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 		if (surf->insubmodel)
 			r_bmodelactive--;
 
-		if (surf == surfaces[1].next)
+		auto surf2 = surfaces[1].next;
+		if (surf == surf2)
 		{
 		// emit a span (current top going away)
 			iu = (int)(edge->u >> 20);
@@ -450,12 +466,44 @@ void R_TrailingEdge (surf_t *surf, edge_t *edge)
 				span->u = surf->last_u;
 				span->count = iu - span->u;
 				span->v = current_iv;
+				if (surf->issky && r_skyboxinitialized)
+				{
+				// add the span to the closest available skybox surface
+					auto surf3 = surf;
+					do
+					{
+						surf3 = surf3->next;
+					} while (!surf3->isskybox);
+					span->pnext = surf3->spans;
+					surf3->spans = span;
+				}
+				else
+				{
+				// add the span to the current surface
+					span->pnext = surf->spans;
+					surf->spans = span;
+				}
+			}
+
+		// set last_u on the surface below
+			surf->next->last_u = iu;
+		}
+		else if (surf->isskybox && surf2->issky && r_skyboxinitialized)
+		{
+		// emit a span (current top going away)
+			iu = (int)(edge->u >> 20);
+			if (iu > surf->last_u)
+			{
+				span = span_p++;
+				span->u = surf2->last_u;
+				span->count = iu - span->u;
+				span->v = current_iv;
 				span->pnext = surf->spans;
 				surf->spans = span;
 			}
 
 		// set last_u on the surface below
-			surf->next->last_u = iu;
+			surf2->last_u = iu;
 		}
 
 		surf->prev->next = surf->next;
@@ -587,8 +635,23 @@ newtop:
 				span->u = surf2->last_u;
 				span->count = iu - span->u;
 				span->v = current_iv;
-				span->pnext = surf2->spans;
-				surf2->spans = span;
+				if (surf2->issky && r_skyboxinitialized)
+				{
+				// add the span to the closest available skybox surface
+					auto surf3 = surf2;
+					do
+					{
+						surf3 = surf3->next;
+					} while (!surf3->isskybox);
+					span->pnext = surf3->spans;
+					surf3->spans = span;
+				}
+				else
+				{
+				// add the span to the previous surface on top
+					span->pnext = surf2->spans;
+					surf2->spans = span;
+				}
 			}
 
 			// set last_u on the new span
