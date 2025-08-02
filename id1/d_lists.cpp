@@ -4,7 +4,7 @@
 #include "r_local.h"
 #include "d_local.h"
 
-dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+dlists_t d_lists { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 qboolean d_uselists = false;
 
@@ -79,6 +79,10 @@ void D_ResetLists ()
 	d_lists.last_colored_index8 = -1;
 	d_lists.last_colored_index16 = -1;
 	d_lists.last_colored_index32 = -1;
+	d_lists.last_cutout_vertex = -1;
+	d_lists.last_cutout_index8 = -1;
+	d_lists.last_cutout_index16 = -1;
+	d_lists.last_cutout_index32 = -1;
 	d_lists.last_lightmap_texel = -1;
 	d_lists.clear_color = -1;
 }
@@ -2115,4 +2119,277 @@ void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color)
 	}
 	d_lists.last_colored_vertex += 3 * face->numedges;
 	d_lists.last_colored_color += face->numedges;
+}
+
+void D_AddCutoutSurfaceToLists (msurface_t* face, entity_t* entity)
+{
+	if (face->numedges < 3)
+	{
+		return;
+	}
+	auto new_size = d_lists.last_cutout_vertex + 1 + 3 * face->numedges;
+	if (d_lists.cutout_vertices.size() < new_size)
+	{
+		d_lists.cutout_vertices.resize(new_size);
+	}
+	auto first_vertex = (d_lists.last_cutout_vertex + 1) / 3;
+	if (first_vertex + face->numedges <= UPPER_8BIT_LIMIT)
+	{
+		auto edge = entity->model->surfedges[face->firstedge];
+		unsigned int index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		new_size = d_lists.last_cutout_index8 + 1 + (face->numedges - 2) * 3;
+		if (d_lists.cutout_indices8.size() < new_size)
+		{
+			d_lists.cutout_indices8.resize(new_size);
+		}
+		auto& vertex = entity->model->vertexes[index];
+		auto x = vertex.position[0];
+		auto y = vertex.position[1];
+		auto z = vertex.position[2];
+		auto target = d_lists.cutout_vertices.data() + d_lists.last_cutout_vertex + 1;
+		*target++ = x;
+		*target++ = y;
+		*target = z;
+		d_lists.last_cutout_index8++;
+		d_lists.cutout_indices8[d_lists.last_cutout_index8] = first_vertex;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		unsigned char previous_index = 0;
+		unsigned char before_previous_index;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			unsigned char current_index;
+			if (use_back)
+			{
+				next_back--;
+				current_index = next_back;
+			}
+			else
+			{
+				next_front++;
+				current_index = next_front;
+			}
+			edge = entity->model->surfedges[face->firstedge + current_index];
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			use_back = !use_back;
+			auto& vertex = entity->model->vertexes[index];
+			x = vertex.position[0];
+			y = vertex.position[1];
+			z = vertex.position[2];
+			target = d_lists.cutout_vertices.data() + d_lists.last_cutout_vertex + 1 + current_index * 3;
+			*target++ = x;
+			*target++ = y;
+			*target = z;
+			if (i >= 3)
+			{
+				if (use_back)
+				{
+					d_lists.last_cutout_index8++;
+					d_lists.cutout_indices8[d_lists.last_cutout_index8] = first_vertex + previous_index;
+					d_lists.last_cutout_index8++;
+					d_lists.cutout_indices8[d_lists.last_cutout_index8] = first_vertex + before_previous_index;
+				}
+				else
+				{
+					d_lists.last_cutout_index8++;
+					d_lists.cutout_indices8[d_lists.last_cutout_index8] = first_vertex + before_previous_index;
+					d_lists.last_cutout_index8++;
+					d_lists.cutout_indices8[d_lists.last_cutout_index8] = first_vertex + previous_index;
+				}
+			}
+			d_lists.last_cutout_index8++;
+			d_lists.cutout_indices8[d_lists.last_cutout_index8] = first_vertex + current_index;
+			before_previous_index = previous_index;
+			previous_index = current_index;
+		}
+	}
+	else if (first_vertex + face->numedges <= UPPER_16BIT_LIMIT)
+	{
+		auto edge = entity->model->surfedges[face->firstedge];
+		unsigned int index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		new_size = d_lists.last_cutout_index16 + 1 + (face->numedges - 2) * 3;
+		if (d_lists.cutout_indices16.size() < new_size)
+		{
+			d_lists.cutout_indices16.resize(new_size);
+		}
+		auto& vertex = entity->model->vertexes[index];
+		auto x = vertex.position[0];
+		auto y = vertex.position[1];
+		auto z = vertex.position[2];
+		auto target = d_lists.cutout_vertices.data() + d_lists.last_cutout_vertex + 1;
+		*target++ = x;
+		*target++ = y;
+		*target = z;
+		d_lists.last_cutout_index16++;
+		d_lists.cutout_indices16[d_lists.last_cutout_index16] = first_vertex;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		uint16_t previous_index = 0;
+		uint16_t before_previous_index;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			uint16_t current_index;
+			if (use_back)
+			{
+				next_back--;
+				current_index = next_back;
+			}
+			else
+			{
+				next_front++;
+				current_index = next_front;
+			}
+			edge = entity->model->surfedges[face->firstedge + current_index];
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			use_back = !use_back;
+			auto& vertex = entity->model->vertexes[index];
+			x = vertex.position[0];
+			y = vertex.position[1];
+			z = vertex.position[2];
+			target = d_lists.cutout_vertices.data() + d_lists.last_cutout_vertex + 1 + current_index * 3;
+			*target++ = x;
+			*target++ = y;
+			*target = z;
+			if (i >= 3)
+			{
+				if (use_back)
+				{
+					d_lists.last_cutout_index16++;
+					d_lists.cutout_indices16[d_lists.last_cutout_index16] = first_vertex + previous_index;
+					d_lists.last_cutout_index16++;
+					d_lists.cutout_indices16[d_lists.last_cutout_index16] = first_vertex + before_previous_index;
+				}
+				else
+				{
+					d_lists.last_cutout_index16++;
+					d_lists.cutout_indices16[d_lists.last_cutout_index16] = first_vertex + before_previous_index;
+					d_lists.last_cutout_index16++;
+					d_lists.cutout_indices16[d_lists.last_cutout_index16] = first_vertex + previous_index;
+				}
+			}
+			d_lists.last_cutout_index16++;
+			d_lists.cutout_indices16[d_lists.last_cutout_index16] = first_vertex + current_index;
+			before_previous_index = previous_index;
+			previous_index = current_index;
+		}
+	}
+	else
+	{
+		auto edge = entity->model->surfedges[face->firstedge];
+		unsigned int index;
+		if (edge >= 0)
+		{
+			index = entity->model->edges[edge].v[0];
+		}
+		else
+		{
+			index = entity->model->edges[-edge].v[1];
+		}
+		new_size = d_lists.last_cutout_index32 + 1 + (face->numedges - 2) * 3;
+		if (d_lists.cutout_indices32.size() < new_size)
+		{
+			d_lists.cutout_indices32.resize(new_size);
+		}
+		auto& vertex = entity->model->vertexes[index];
+		auto x = vertex.position[0];
+		auto y = vertex.position[1];
+		auto z = vertex.position[2];
+		auto target = d_lists.cutout_vertices.data() + d_lists.last_cutout_vertex + 1;
+		*target++ = x;
+		*target++ = y;
+		*target = z;
+		d_lists.last_cutout_index32++;
+		d_lists.cutout_indices32[d_lists.last_cutout_index32] = first_vertex;
+		auto next_front = 0;
+		auto next_back = face->numedges;
+		auto use_back = false;
+		uint32_t previous_index = first_vertex;
+		uint32_t before_previous_index;
+		for (auto i = 1; i < face->numedges; i++)
+		{
+			uint32_t current_index;
+			if (use_back)
+			{
+				next_back--;
+				current_index = next_back;
+			}
+			else
+			{
+				next_front++;
+				current_index = next_front;
+			}
+			edge = entity->model->surfedges[face->firstedge + current_index];
+			if (edge >= 0)
+			{
+				index = entity->model->edges[edge].v[0];
+			}
+			else
+			{
+				index = entity->model->edges[-edge].v[1];
+			}
+			use_back = !use_back;
+			auto& vertex = entity->model->vertexes[index];
+			x = vertex.position[0];
+			y = vertex.position[1];
+			z = vertex.position[2];
+			target = d_lists.cutout_vertices.data() + d_lists.last_cutout_vertex + 1 + current_index * 3;
+			*target++ = x;
+			*target++ = y;
+			*target = z;
+			if (i >= 3)
+			{
+				if (use_back)
+				{
+					d_lists.last_cutout_index32++;
+					d_lists.cutout_indices32[d_lists.last_cutout_index32] = first_vertex + previous_index;
+					d_lists.last_cutout_index32++;
+					d_lists.cutout_indices32[d_lists.last_cutout_index32] = first_vertex + before_previous_index;
+				}
+				else
+				{
+					d_lists.last_cutout_index32++;
+					d_lists.cutout_indices32[d_lists.last_cutout_index32] = first_vertex + before_previous_index;
+					d_lists.last_cutout_index32++;
+					d_lists.cutout_indices32[d_lists.last_cutout_index32] = first_vertex + previous_index;
+				}
+			}
+			d_lists.last_cutout_index32++;
+			d_lists.cutout_indices32[d_lists.last_cutout_index32] = first_vertex + current_index;
+			before_previous_index = previous_index;
+			previous_index = current_index;
+		}
+	}
+	d_lists.last_cutout_vertex += 3 * face->numedges;
 }

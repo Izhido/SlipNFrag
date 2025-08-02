@@ -67,6 +67,9 @@ struct PerFrame
 	VkDeviceSize controllerIndexBase;
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
+	VkDeviceSize cutoutIndex8Base;
+	VkDeviceSize cutoutIndex16Base;
+	VkDeviceSize cutoutIndex32Base;
     Buffer* previousSortedAttributes;
 
 	static float GammaCorrect(float component);

@@ -91,6 +91,7 @@ struct Scene
 	PipelineWithLoaded<LoadedAliasColoredLights> viewmodelsHoleyColoredLights;
 	Pipeline particles;
 	Pipeline colored;
+	Pipeline cutout;
 	Pipeline sky;
 	Pipeline skyRGBA;
 	Pipeline controllers;
@@ -110,6 +111,9 @@ struct Scene
 	int lastColoredIndex8;
 	int lastColoredIndex16;
 	int lastColoredIndex32;
+	int lastCutoutIndex8;
+	int lastCutoutIndex16;
+	int lastCutoutIndex32;
 	int lastSky;
 	int lastSkyRGBA;
 	LoadedSky loadedSky;
@@ -146,6 +150,7 @@ struct Scene
 	VkDeviceSize controllerVerticesSize;
 	VkDeviceSize skyVerticesSize;
 	VkDeviceSize coloredVerticesSize;
+	VkDeviceSize cutoutVerticesSize;
 	VkDeviceSize verticesSize;
 	VkDeviceSize floorAttributesSize;
 	VkDeviceSize controllerAttributesSize;
@@ -158,6 +163,10 @@ struct Scene
 	VkDeviceSize controllerIndicesSize;
 	VkDeviceSize coloredIndices8Size;
 	VkDeviceSize coloredIndices16Size;
+	VkDeviceSize coloredIndices32Size;
+	VkDeviceSize cutoutIndices8Size;
+	VkDeviceSize cutoutIndices16Size;
+	VkDeviceSize cutoutIndices32Size;
 	VkDeviceSize indices8Size;
 	VkDeviceSize indices16Size;
 	VkDeviceSize indices32Size;

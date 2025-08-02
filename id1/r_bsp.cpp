@@ -797,6 +797,10 @@ void R_RecursiveWorldNodeForLists (mnode_t *node)
 						else if (r_skyRGBAinitialized)
 						{
 							D_AddSkyRGBAToLists();
+							if ((surf->flags & SURF_DRAWSKYBOX) == 0)
+							{
+								D_AddCutoutSurfaceToLists (surf, currententity);
+							}
 						}
 						else if (r_skyinitialized)
 						{

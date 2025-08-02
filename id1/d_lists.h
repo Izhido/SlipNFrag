@@ -170,6 +170,10 @@ struct dlists_t
 	int last_colored_index8;
 	int last_colored_index16;
 	int last_colored_index32;
+	int last_cutout_vertex;
+	int last_cutout_index8;
+	int last_cutout_index16;
+	int last_cutout_index32;
 	int last_lightmap_texel;
 	int clear_color;
 	float vieworg0;
@@ -242,6 +246,10 @@ struct dlists_t
 	std::vector<unsigned char> colored_indices8;
 	std::vector<uint16_t> colored_indices16;
 	std::vector<uint32_t> colored_indices32;
+	std::vector<float> cutout_vertices;
+	std::vector<unsigned char> cutout_indices8;
+	std::vector<uint16_t> cutout_indices16;
+	std::vector<uint32_t> cutout_indices32;
 	std::vector<uint32_t> lightmap_texels;
 };
 
@@ -304,3 +312,4 @@ void D_AddSkyToLists ();
 void D_AddSkyRGBAToLists ();
 void D_AddSkyboxToLists (mtexinfo_t* textures);
 void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color);
+void D_AddCutoutSurfaceToLists (msurface_t* face, entity_t* entity);

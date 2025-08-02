@@ -324,6 +324,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
 		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
 		offset += appState.Scene.coloredVerticesSize;
+		count = (size_t)appState.Scene.cutoutVerticesSize / sizeof(float);
+		std::copy(d_lists.cutout_vertices.data(), d_lists.cutout_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
+		offset += appState.Scene.cutoutVerticesSize;
 	}
 	if (appState.Scene.floorAttributesSize > 0)
 	{
@@ -415,6 +418,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			coloredIndex8Base = controllerIndexBase + appState.Scene.controllerIndicesSize;
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices8.data(), appState.Scene.coloredIndices8Size);
 			offset += appState.Scene.coloredIndices8Size;
+			cutoutIndex8Base = coloredIndex8Base + appState.Scene.coloredIndices8Size;
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.cutout_indices8.data(), appState.Scene.cutoutIndices8Size);
+			offset += appState.Scene.cutoutIndices8Size;
 			while (offset % 4 != 0)
 			{
 				offset++;
@@ -425,6 +431,9 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			coloredIndex16Base = 0;
 			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
 			offset += appState.Scene.coloredIndices16Size;
+			cutoutIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices16Size;
+			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
+			offset += appState.Scene.cutoutIndices16Size;
 			while (offset % 4 != 0)
 			{
 				offset++;
@@ -471,14 +480,28 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += appState.Scene.coloredIndices8Size * sizeof(uint16_t);
 		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
 		offset += appState.Scene.coloredIndices16Size;
+		cutoutIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices8Size * sizeof(uint16_t) + appState.Scene.coloredIndices16Size;
+		target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
+		for (auto i = 0; i < appState.Scene.cutoutIndices8Size; i++)
+		{
+			*target++ = d_lists.cutout_indices8[i];
+		}
+		offset += appState.Scene.cutoutIndices8Size * sizeof(uint16_t);
+		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
+		offset += appState.Scene.cutoutIndices16Size;
 		while (offset % 4 != 0)
 		{
 			offset++;
 		}
 	}
-	count = (size_t)appState.Scene.indices32Size / sizeof(uint32_t);
+	count = (size_t)appState.Scene.coloredIndices32Size / sizeof(uint32_t);
 	std::copy((uint32_t*)d_lists.colored_indices32.data(), (uint32_t*)d_lists.colored_indices32.data() + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
-	offset += appState.Scene.indices32Size;
+	offset += appState.Scene.coloredIndices32Size;
+	cutoutIndex32Base = appState.Scene.coloredIndices32Size;
+	count = (size_t)appState.Scene.cutoutIndices32Size / sizeof(uint32_t);
+	std::copy((uint32_t*)d_lists.cutout_indices32.data(), (uint32_t*)d_lists.cutout_indices32.data() + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+	offset += appState.Scene.cutoutIndices32Size;
+
 
 	for (auto& chain : appState.Scene.lightmapChains)
 	{
@@ -2194,6 +2217,45 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             {
                 vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, 0, VK_INDEX_TYPE_UINT32);
                 vkCmdDrawIndexed(commandBuffer, appState.Scene.lastColoredIndex32 + 1, 1, 0, 0, 0);
+            }
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+        }
+        if (appState.Scene.lastCutoutIndex8 >= 0 || appState.Scene.lastCutoutIndex16 >= 0 || appState.Scene.lastCutoutIndex32 >= 0)
+        {
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = CUTOUT_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.cutout.pipeline);
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.cutout.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
+            if (appState.IndexTypeUInt8Enabled)
+            {
+                if (appState.Scene.lastCutoutIndex8 >= 0)
+                {
+                    vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, cutoutIndex8Base, VK_INDEX_TYPE_UINT8_EXT);
+                    vkCmdDrawIndexed(commandBuffer, appState.Scene.lastCutoutIndex8 + 1, 1, 0, 0, 0);
+                }
+                if (appState.Scene.lastCutoutIndex16 >= 0)
+                {
+                    vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, cutoutIndex16Base, VK_INDEX_TYPE_UINT16);
+                    vkCmdDrawIndexed(commandBuffer, appState.Scene.lastCutoutIndex16 + 1, 1, 0, 0, 0);
+                }
+            }
+            else
+            {
+                if (appState.Scene.lastCutoutIndex8 >= 0 || appState.Scene.lastCutoutIndex16 >= 0)
+                {
+                    vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, cutoutIndex16Base, VK_INDEX_TYPE_UINT16);
+                    vkCmdDrawIndexed(commandBuffer, appState.Scene.lastCutoutIndex8 + 1 + appState.Scene.lastCutoutIndex16 + 1, 1, 0, 0, 0);
+                }
+            }
+            if (appState.Scene.lastCutoutIndex32 >= 0)
+            {
+                vkCmdBindIndexBuffer(commandBuffer, indices32->buffer, cutoutIndex32Base, VK_INDEX_TYPE_UINT32);
+                vkCmdDrawIndexed(commandBuffer, appState.Scene.lastCutoutIndex32 + 1, 1, 0, 0, 0);
             }
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);

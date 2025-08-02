@@ -51,6 +51,7 @@
 #define VIEWMODELS_HOLEY_COLORED_LIGHTS_NAME "Viewmodels (holey, colored lights)"
 #define PARTICLES_NAME "Particles"
 #define COLORED_NAME "Colored"
+#define CUTOUT_NAME "Cutout"
 #define SKY_NAME "Sky"
 #define SKY_RGBA_NAME "Sky (RGBA)"
 #define CONTROLLERS_NAME "Controllers"

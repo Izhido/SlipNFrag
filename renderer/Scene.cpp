@@ -437,6 +437,10 @@ void Scene::Create(AppState& appState)
     CreateShader(appState, "shaders/colored.vert.spv", &coloredVertex);
     VkShaderModule coloredFragment;
     CreateShader(appState, "shaders/colored.frag.spv", &coloredFragment);
+    VkShaderModule cutoutVertex;
+    CreateShader(appState, "shaders/cutout.vert.spv", &cutoutVertex);
+    VkShaderModule cutoutFragment;
+    CreateShader(appState, "shaders/cutout.frag.spv", &cutoutFragment);
     VkShaderModule texturedVertex;
     CreateShader(appState, "shaders/textured.vert.spv", &texturedVertex);
     VkShaderModule texturedFragment;
@@ -710,6 +714,17 @@ void Scene::Create(AppState& appState)
     coloredAttributes.vertexInputState.pVertexBindingDescriptions = coloredAttributes.vertexBindings.data();
     coloredAttributes.vertexInputState.vertexAttributeDescriptionCount = coloredAttributes.vertexAttributes.size();
     coloredAttributes.vertexInputState.pVertexAttributeDescriptions = coloredAttributes.vertexAttributes.data();
+
+    PipelineAttributes cutoutAttributes { };
+    cutoutAttributes.vertexAttributes.resize(1);
+    cutoutAttributes.vertexBindings.resize(1);
+    cutoutAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    cutoutAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+    cutoutAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    cutoutAttributes.vertexInputState.vertexBindingDescriptionCount = cutoutAttributes.vertexBindings.size();
+    cutoutAttributes.vertexInputState.pVertexBindingDescriptions = cutoutAttributes.vertexBindings.data();
+    cutoutAttributes.vertexInputState.vertexAttributeDescriptionCount = cutoutAttributes.vertexAttributes.size();
+    cutoutAttributes.vertexInputState.pVertexAttributeDescriptions = cutoutAttributes.vertexAttributes.data();
 
     descriptorSetLayouts.resize(5);
 
@@ -1382,6 +1397,19 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &cutout.pipelineLayout));
+	colorBlendAttachmentState.blendEnable = false;
+    graphicsPipelineCreateInfo.layout = cutout.pipelineLayout;
+    graphicsPipelineCreateInfo.pVertexInputState = &cutoutAttributes.vertexInputState;
+    stages[0].module = cutoutVertex;
+    stages[1].module = cutoutFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &cutout.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)cutout.pipeline;
+	pipelineName.pObjectName = CUTOUT_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
     pipelineLayoutCreateInfo.setLayoutCount = 2;
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     pushConstantInfo.size = 13 * sizeof(float);
@@ -1389,6 +1417,7 @@ void Scene::Create(AppState& appState)
     pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &sky.pipelineLayout));
     depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
+	colorBlendAttachmentState.blendEnable = true;
     graphicsPipelineCreateInfo.layout = sky.pipelineLayout;
     graphicsPipelineCreateInfo.pVertexInputState = &skyAttributes.vertexInputState;
     graphicsPipelineCreateInfo.pInputAssemblyState = &triangleStrip;
@@ -1442,6 +1471,8 @@ void Scene::Create(AppState& appState)
 
     vkDestroyShaderModule(appState.Device, texturedFragment, nullptr);
     vkDestroyShaderModule(appState.Device, texturedVertex, nullptr);
+    vkDestroyShaderModule(appState.Device, cutoutFragment, nullptr);
+    vkDestroyShaderModule(appState.Device, cutoutVertex, nullptr);
     vkDestroyShaderModule(appState.Device, coloredFragment, nullptr);
     vkDestroyShaderModule(appState.Device, coloredVertex, nullptr);
     vkDestroyShaderModule(appState.Device, skyRGBAFragment, nullptr);
@@ -2882,6 +2913,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     lastColoredIndex8 = d_lists.last_colored_index8;
     lastColoredIndex16 = d_lists.last_colored_index16;
     lastColoredIndex32 = d_lists.last_colored_index32;
+	lastCutoutIndex8 = d_lists.last_cutout_index8;
+	lastCutoutIndex16 = d_lists.last_cutout_index16;
+	lastCutoutIndex32 = d_lists.last_cutout_index32;
     lastSky = d_lists.last_sky;
     lastSkyRGBA = d_lists.last_sky_rgba;
     appState.FromEngine.vieworg0 = d_lists.vieworg0;
@@ -3528,7 +3562,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		skyVerticesSize += appState.Scene.loadedSkyRGBA.count * 3 * sizeof(float);
 	}
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-    verticesSize = floorVerticesSize + controllerVerticesSize + skyVerticesSize + coloredVerticesSize;
+	cutoutVerticesSize = (d_lists.last_cutout_vertex + 1) * sizeof(float);
+    verticesSize = floorVerticesSize + controllerVerticesSize + skyVerticesSize + coloredVerticesSize + cutoutVerticesSize;
     if (verticesSize > 0)
     {
         perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
@@ -3593,6 +3628,10 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
     coloredIndices8Size = lastColoredIndex8 + 1;
     coloredIndices16Size = (lastColoredIndex16 + 1) * sizeof(uint16_t);
+	coloredIndices32Size = (lastColoredIndex32 + 1) * sizeof(uint32_t);
+	cutoutIndices8Size = lastCutoutIndex8 + 1;
+	cutoutIndices16Size = (lastCutoutIndex16 + 1) * sizeof(uint16_t);
+	cutoutIndices32Size = (lastCutoutIndex32 + 1) * sizeof(uint32_t);
 
     if (sortedVerticesCount < UPPER_16BIT_LIMIT)
     {
@@ -3681,16 +3720,17 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 
     if (appState.IndexTypeUInt8Enabled)
     {
-        indices8Size = floorIndicesSize + controllerIndicesSize + coloredIndices8Size;
-        indices16Size = coloredIndices16Size;
+        indices8Size = floorIndicesSize + controllerIndicesSize + coloredIndices8Size + cutoutIndices8Size;
+        indices16Size = coloredIndices16Size + cutoutIndices16Size;
     }
     else
     {
         floorIndicesSize *= sizeof(uint16_t);
         controllerIndicesSize *= sizeof(uint16_t);
         indices8Size = 0;
-        indices16Size = floorIndicesSize + controllerIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size;
+        indices16Size = floorIndicesSize + controllerIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
     }
+	indices32Size = coloredIndices32Size + cutoutIndices32Size;
 
     if (indices8Size > 0)
     {
@@ -3704,7 +3744,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
     size += indices16Size;
 
-    indices32Size = (lastColoredIndex32 + 1) * sizeof(uint32_t);
     if (indices32Size > 0)
     {
         perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, indices32Size);
