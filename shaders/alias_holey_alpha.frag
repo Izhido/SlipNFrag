@@ -20,7 +20,7 @@ layout(set = 1, binding = 0) uniform usampler2D fragmentColormap;
 layout(set = 2, binding = 0) uniform usampler2D fragmentTexture;
 
 layout(location = 0) in vec2 fragmentTexCoords;
-layout(location = 1) in flat vec2 fragmentAttributes;
+layout(location = 1) in vec2 fragmentAttributes;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
