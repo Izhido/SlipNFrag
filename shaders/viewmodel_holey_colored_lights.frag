@@ -25,7 +25,7 @@ layout(push_constant) uniform Tint
 };
 
 layout(location = 0) in vec3 fragmentCoords;
-layout(location = 1) in flat vec4 fragmentLight;
+layout(location = 1) in vec4 fragmentLight;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()

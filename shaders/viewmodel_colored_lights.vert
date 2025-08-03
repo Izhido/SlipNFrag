@@ -21,7 +21,7 @@ layout(location = 0) in uvec3 vertexPosition;
 layout(location = 1) in vec2 vertexTexCoords;
 layout(location = 2) in vec3 vertexLight;
 layout(location = 0) out vec3 fragmentCoords;
-layout(location = 1) out flat vec4 fragmentLight;
+layout(location = 1) out vec4 fragmentLight;
 
 void main(void)
 {
