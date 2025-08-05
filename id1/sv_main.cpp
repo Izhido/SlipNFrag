@@ -130,8 +130,6 @@ void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count)
 
 	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
-		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-22)
-			return;
 		MSG_WriteByte (&sv.datagram, svc_expandedparticle);
 		MSG_WriteFloat (&sv.datagram, org[0]);
 		MSG_WriteFloat (&sv.datagram, org[1]);
@@ -222,9 +220,6 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 
 	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
 	{
-		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-32)
-			return;
-		
 		MSG_WriteByte (&sv.datagram, svc_expandedsound);
     }
 	else
