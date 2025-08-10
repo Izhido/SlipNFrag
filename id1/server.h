@@ -64,8 +64,10 @@ struct server_t
 	server_state_t	state;			// some actions are only valid during load
 
 	sizebuf_t	datagram;
+	sizebuf_t	datagram_expanded;
 
 	sizebuf_t	reliable_datagram;	// copied to all clients at end of frame
+	sizebuf_t	reliable_datagram_expanded;
 
 	sizebuf_t	signon;
 
@@ -96,7 +98,7 @@ struct client_t
 										// copied and clear once per frame
 
 	edict_t			*edict;				// EDICT_NUM(clientnum+1)
-	string_t			name;			// for printing to other people
+	string_t		name;				// for printing to other people
 	int				colors;
 		
 	float			ping_times[NUM_PING_TIMES];
@@ -107,6 +109,9 @@ struct client_t
 
 // client known data for deltas	
 	int				old_frags;
+
+	int				protocol_version;
+	int				serverinfo_protocol_offset;
 
 	void Clear();
 };
@@ -251,7 +256,7 @@ void SV_Physics (void);
 qboolean SV_CheckBottom (edict_t *ent);
 qboolean SV_movestep (edict_t *ent, const vec3_t move, qboolean relink);
 
-void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg);
+void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, int protocol_version);
 
 void SV_MoveToGoal (void);
 

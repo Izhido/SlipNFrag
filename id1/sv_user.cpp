@@ -484,6 +484,8 @@ qboolean SV_ReadClientMessage (void)
 	int		ret;
 	int		cmd;
 	char		*s;
+	qboolean	agreed;
+	int		i;
 	
 	do
 	{
@@ -586,7 +588,18 @@ nextmsg:
 				break;
 			
 			case clc_ackexpproto:
-				sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
+				host_client->protocol_version = EXPANDED_PROTOCOL_VERSION;
+				agreed = true;
+				for (i=0;i<(int)svs.clients.size();i++)
+				{
+					if (svs.clients[i].protocol_version != EXPANDED_PROTOCOL_VERSION)
+					{
+						agreed = false;
+						break;
+					}
+				}
+				if (agreed)
+					sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
 				break;
 			}
 		}

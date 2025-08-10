@@ -51,7 +51,9 @@ void server_t::Clear()
 	memset(edicts.data(), 0, edicts.size());
 	state = ss_loading;
 	datagram.Clear();
+	datagram_expanded.Clear();
 	reliable_datagram.Clear();
+	reliable_datagram_expanded.Clear();
 	signon.Clear();
 }
 
@@ -128,22 +130,20 @@ void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count)
 {
 	int		i, v;
 
-	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	auto write_non_expanded = (sv.datagram.maxsize == 0 || sv.datagram.cursize <= MAX_DATAGRAM-16);
+
+	MSG_WriteByte (&sv.datagram_expanded, svc_expandedparticle);
+	MSG_WriteFloat (&sv.datagram_expanded, org[0]);
+	MSG_WriteFloat (&sv.datagram_expanded, org[1]);
+	MSG_WriteFloat (&sv.datagram_expanded, org[2]);
+	if (write_non_expanded)
 	{
-		MSG_WriteByte (&sv.datagram, svc_expandedparticle);
-		MSG_WriteFloat (&sv.datagram, org[0]);
-		MSG_WriteFloat (&sv.datagram, org[1]);
-		MSG_WriteFloat (&sv.datagram, org[2]);
-	}
-	else
-	{
-		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
-			return;
 		MSG_WriteByte (&sv.datagram, svc_particle);
 		MSG_WriteCoord (&sv.datagram, org[0]);
 		MSG_WriteCoord (&sv.datagram, org[1]);
 		MSG_WriteCoord (&sv.datagram, org[2]);
 	}
+	auto offset = sv.datagram_expanded.cursize;
 	for (i=0 ; i<3 ; i++)
 	{
 		v = dir[i]*16;
@@ -151,11 +151,14 @@ void SV_StartParticle (const vec3_t org, const vec3_t dir, int color, int count)
 			v = 127;
 		else if (v < -128)
 			v = -128;
-		MSG_WriteChar (&sv.datagram, v);
+		MSG_WriteChar (&sv.datagram_expanded, v);
 	}
-	MSG_WriteByte (&sv.datagram, count);
-	MSG_WriteByte (&sv.datagram, color);
-}           
+	MSG_WriteByte (&sv.datagram_expanded, count);
+	MSG_WriteByte (&sv.datagram_expanded, color);
+
+	if (write_non_expanded)
+		SZ_Write (&sv.datagram, sv.datagram_expanded.data.data() + offset, 3 + 2);
+}
 
 /*  
 ==================
@@ -218,41 +221,40 @@ void SV_StartSound (edict_t *entity, int channel, const char *sample, int volume
 		sv_bump_protocol_version = true;
 	}
 
-	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
-	{
-		MSG_WriteByte (&sv.datagram, svc_expandedsound);
-    }
-	else
-	{
-		if (sv.datagram.maxsize > 0 && sv.datagram.cursize > MAX_DATAGRAM-16)
-			return;
+	auto write_non_expanded = (sv.datagram.maxsize == 0 || sv.datagram.cursize <= MAX_DATAGRAM-16);
 
+	MSG_WriteByte (&sv.datagram_expanded, svc_expandedsound);
+	if (write_non_expanded)
 		MSG_WriteByte (&sv.datagram, svc_sound);
-	}
 
-	MSG_WriteByte (&sv.datagram, field_mask);
+	auto offset = sv.datagram_expanded.cursize;
+	MSG_WriteByte (&sv.datagram_expanded, field_mask);
 	if (field_mask & SND_VOLUME)
-		MSG_WriteByte (&sv.datagram, volume);
+		MSG_WriteByte (&sv.datagram_expanded, volume);
 	if (field_mask & SND_ATTENUATION)
-		MSG_WriteByte (&sv.datagram, attenuation*64);
-	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
+		MSG_WriteByte (&sv.datagram_expanded, attenuation*64);
+	if (write_non_expanded)
 	{
-		MSG_WriteLong (&sv.datagram, ent);
-		MSG_WriteLong (&sv.datagram, channel);
-		MSG_WriteLong (&sv.datagram, sound_num);
-		for (i=0 ; i<3 ; i++)
-			MSG_WriteFloat (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
-
-		return;
+		auto length = sv.datagram_expanded.cursize - offset;
+		SZ_Write (&sv.datagram, sv.datagram_expanded.data.data() + offset, length);
 	}
 
-	channel = (ent<<3) | channel;
-
-	MSG_WriteShort (&sv.datagram, channel);
-	MSG_WriteByte (&sv.datagram, sound_num);
+	MSG_WriteLong (&sv.datagram_expanded, ent);
+	MSG_WriteLong (&sv.datagram_expanded, channel);
+	MSG_WriteLong (&sv.datagram_expanded, sound_num);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
-}           
+		MSG_WriteFloat (&sv.datagram_expanded, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
+
+	if (write_non_expanded)
+	{
+		channel = (ent<<3) | channel;
+
+		MSG_WriteShort (&sv.datagram, channel);
+		MSG_WriteByte (&sv.datagram, sound_num);
+		for (i=0 ; i<3 ; i++)
+			MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
+	}
+}
 
 /*
 ==============================================================================
@@ -279,7 +281,7 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteString (&client->message,version_message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
-	auto protocol_offset = client->message.cursize;
+	client->serverinfo_protocol_offset = client->message.cursize;
 	MSG_WriteLong (&client->message, sv_protocol_version);
 	MSG_WriteByte (&client->message, svs.maxclients);
 
@@ -311,17 +313,6 @@ void SV_SendServerinfo (client_t *client)
 
 	MSG_WriteByte (&client->message, svc_signonnum);
 	MSG_WriteByte (&client->message, 1);
-
-	if (sv_protocol_version == PROTOCOL_VERSION && client->message.cursize < MAX_MSGLEN - 64)
-	{
-		client->message.maxsize = MAX_MSGLEN;
-	}
-
-	if (sv_protocol_version == PROTOCOL_VERSION && client->message.maxsize == 0)
-	{
-		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
-		MSG_WriteLong(client->message.data.data() + protocol_offset, sv_protocol_version);
-	}
 
 	client->sendsignon = true;
 	client->spawned = false;		// need prespawn, spawn, etc
@@ -365,6 +356,7 @@ void SV_ConnectClient (int clientnum)
 	client->active = true;
 	client->spawned = false;
 	client->edict = ent;
+	client->protocol_version = sv_protocol_version;
 	client->message.maxsize = (sv_protocol_version == EXPANDED_PROTOCOL_VERSION ? 0 : MAX_MSGLEN);
 	client->message.allowoverflow = true;		// we can catch it
 
@@ -443,6 +435,7 @@ SV_ClearDatagram
 void SV_ClearDatagram (void)
 {
 	SZ_Clear (&sv.datagram);
+	SZ_Clear (&sv.datagram_expanded);
 }
 
 /*
@@ -528,7 +521,7 @@ SV_WriteEntitiesToClient
 
 =============
 */
-void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
+void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg, int protocol_version)
 {
 	int		e, i;
 	int		bits;
@@ -566,7 +559,7 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 				continue;		// not visible
 		}
 
-		if (msg->maxsize > 0 && sv_protocol_version == PROTOCOL_VERSION && msg->maxsize - msg->cursize < 16)
+		if (msg->maxsize > 0 && protocol_version == PROTOCOL_VERSION && msg->maxsize - msg->cursize < 16)
 		{
 			Con_Printf ("packet overflow\n");
 			sv_request_protocol_version_upgrade = true;
@@ -611,13 +604,13 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 			bits |= U_MODEL;
 
 		if (pr_alpha_ofs >= 0)
-			if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+			if (protocol_version == EXPANDED_PROTOCOL_VERSION)
 				bits |= U_ALPHA;
 			else
 				sv_request_protocol_version_upgrade = true;
 
 		if (pr_scale_ofs >= 0)
-			if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+			if (protocol_version == EXPANDED_PROTOCOL_VERSION)
 				bits |= U_SCALE;
 			else
 				sv_request_protocol_version_upgrade = true;
@@ -628,13 +621,13 @@ void SV_WriteEntitiesToClient (edict_t	*clent, sizebuf_t *msg)
 		if (bits >= 256)
 			bits |= U_MOREBITS;
 
-		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION && bits >= 65536)
+		if (protocol_version == EXPANDED_PROTOCOL_VERSION && bits >= 65536)
 			bits |= U_EVENMOREBITS;
 
 	//
 	// write the message
 	//
-		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+		if (protocol_version == EXPANDED_PROTOCOL_VERSION)
 		{
 			auto oldsize = msg->cursize;
 			auto oldmaxsize = msg->maxsize;
@@ -765,7 +758,7 @@ SV_WriteClientdataToMessage
 
 ==================
 */
-void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
+void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, int protocol_version)
 {
 	int		bits;
 	int		i;
@@ -781,7 +774,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 	if (ent->v.dmg_take || ent->v.dmg_save)
 	{
 		other = PROG_TO_EDICT(ent->v.dmg_inflictor);
-		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+		if (protocol_version == EXPANDED_PROTOCOL_VERSION)
 		{
 			MSG_WriteByte(msg, svc_expandeddamage);
 		}
@@ -791,7 +784,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 		}
 		MSG_WriteByte (msg, ent->v.dmg_save);
 		MSG_WriteByte (msg, ent->v.dmg_take);
-		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+		if (protocol_version == EXPANDED_PROTOCOL_VERSION)
 		{
 			for (i=0 ; i<3 ; i++)
 				MSG_WriteFloat (msg, other->v.origin[i] + 0.5*(other->v.mins[i] + other->v.maxs[i]));
@@ -865,7 +858,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg)
 		bits |= SU_WEAPON;
 
 // send the data
-	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	if (protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
 		MSG_WriteByte (msg, svc_expandedclientdata);
 		MSG_WriteLong (msg, bits);
@@ -983,7 +976,7 @@ qboolean SV_SendClientDatagram (client_t *client)
 	
 	msg.maxsize = MAX_DATAGRAM;
 	msg.cursize = 0;
-	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+	if (client->protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
 		int size = NET_MaxUnreliableMessageSize(client->netconnection);
 		if (size >= 0)
@@ -994,13 +987,18 @@ qboolean SV_SendClientDatagram (client_t *client)
 	MSG_WriteFloat (&msg, sv.time);
 
 // add the client specific data to the datagram
-	SV_WriteClientdataToMessage (client->edict, &msg);
+	SV_WriteClientdataToMessage (client->edict, &msg, client->protocol_version);
 
-	SV_WriteEntitiesToClient (client->edict, &msg);
+	SV_WriteEntitiesToClient (client->edict, &msg, client->protocol_version);
 
 // copy the server datagram if there is space
-	if (msg.maxsize == 0 || msg.cursize + sv.datagram.cursize < msg.maxsize)
-		SZ_Write (&msg, (void*)sv.datagram.data.data(), sv.datagram.cursize);
+	sizebuf_t* source;
+	if (client->protocol_version == EXPANDED_PROTOCOL_VERSION)
+		source = &sv.datagram_expanded;
+	else
+		source = &sv.datagram;
+	if (msg.maxsize == 0 || msg.cursize + source->cursize < msg.maxsize)
+		SZ_Write (&msg, (void*)source->data.data(), source->cursize);
 
 // send the datagram
 	if (NET_SendUnreliableMessage (client->netconnection, &msg) == -1)
@@ -1044,10 +1042,16 @@ void SV_UpdateToReliableMessages (void)
 	{
 		if (!client->active)
 			continue;
-		SZ_Write (&client->message, (void*)sv.reliable_datagram.data.data(), sv.reliable_datagram.cursize);
+		sizebuf_t* source;
+		if (client->protocol_version == EXPANDED_PROTOCOL_VERSION)
+			source = &sv.reliable_datagram_expanded;
+		else
+			source = &sv.reliable_datagram;
+		SZ_Write (&client->message, (void*)source->data.data(), source->cursize);
 	}
 
 	SZ_Clear (&sv.reliable_datagram);
+	SZ_Clear (&sv.reliable_datagram_expanded);
 }
 
 
@@ -1428,11 +1432,17 @@ void SV_SpawnServer (char *server)
 	SV_ResizeEdicts(sv.max_edicts * pr_edict_size);
 	sv.edicts_reallocation_sequence++;
 
-	sv.datagram.maxsize = 0;
+	sv.datagram.maxsize = MAX_DATAGRAM;
 	sv.datagram.cursize = 0;
 
-	sv.reliable_datagram.maxsize = 0;
+	sv.datagram_expanded.maxsize = 0;
+	sv.datagram_expanded.cursize = 0;
+
+	sv.reliable_datagram.maxsize = MAX_DATAGRAM;
 	sv.reliable_datagram.cursize = 0;
+	
+	sv.reliable_datagram_expanded.maxsize = 0;
+	sv.reliable_datagram_expanded.cursize = 0;
 	
 	sv.signon.maxsize = 0;
 	sv.signon.cursize = 0;
@@ -1578,21 +1588,37 @@ void SV_SpawnServer (char *server)
 		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
 	}
 
-// if the protocol was not adjusted at this point, reset limits to their expected values
-	if (sv_protocol_version == PROTOCOL_VERSION)
-	{
-		sv.signon.maxsize = NET_MAXMESSAGE;
-		sv.datagram.maxsize = MAX_DATAGRAM;
-		sv.reliable_datagram.maxsize = MAX_DATAGRAM;
-	}
-
 // send serverinfo to all connected clients
 	for (i=0,host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
 		if (host_client->active)
 		{
 			SV_SendServerinfo (host_client);
+			if (sv_protocol_version == PROTOCOL_VERSION && host_client->message.cursize >= MAX_MSGLEN - 64 && !sv_bump_protocol_version)
+			{
+				sv_bump_protocol_version = true;
+			}
 		}
 	
+// use bump flag for the third and final protocol version adjustment
+	if (sv_bump_protocol_version)
+	{
+		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
+		for (i=0,host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
+			if (host_client->active && host_client->protocol_version == PROTOCOL_VERSION)
+			{
+				host_client->protocol_version = sv_protocol_version;
+				MSG_WriteLong (host_client->message.data.data() + host_client->serverinfo_protocol_offset, sv_protocol_version);
+			}
+
+		sv_bump_protocol_version = false;
+	}
+
+// if the protocol was not adjusted at this point, reset the signon limits to their expected values
+	if (sv_protocol_version == PROTOCOL_VERSION)
+	{
+		sv.signon.maxsize = NET_MAXMESSAGE;
+	}
+
 	Con_DPrintf ("Server spawned.\n");
 }
 

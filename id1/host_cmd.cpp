@@ -1039,9 +1039,14 @@ void Host_Name_f (void)
 	
 // send notification to all clients
 	
+	auto offset = sv.reliable_datagram.cursize;
+
 	MSG_WriteByte (&sv.reliable_datagram, svc_updatename);
 	MSG_WriteByte (&sv.reliable_datagram, host_client - svs.clients.data());
 	MSG_WriteString (&sv.reliable_datagram, pr_strings + host_client->name);
+
+	auto length = sv.reliable_datagram.cursize - offset;
+	SZ_Write (&sv.reliable_datagram_expanded, sv.reliable_datagram.data.data() + offset, length);
 }
 
 	
@@ -1282,9 +1287,13 @@ void Host_Color_f(void)
 	host_client->edict->v.team = bottom + 1;
 
 // send notification to all clients
+	auto offset = sv.reliable_datagram.cursize;
+
 	MSG_WriteByte (&sv.reliable_datagram, svc_updatecolors);
 	MSG_WriteByte (&sv.reliable_datagram, host_client - svs.clients.data());
 	MSG_WriteByte (&sv.reliable_datagram, host_client->colors);
+
+	SZ_Write (&sv.reliable_datagram_expanded, sv.reliable_datagram.data.data() + offset, 3);
 }
 
 /*
@@ -1341,8 +1350,12 @@ void Host_Pause_f (void)
 		}
 
 	// send notification to all clients
+		auto offset = sv.reliable_datagram.cursize;
+
 		MSG_WriteByte (&sv.reliable_datagram, svc_setpause);
 		MSG_WriteByte (&sv.reliable_datagram, sv.paused);
+
+		SZ_Write (&sv.reliable_datagram_expanded, sv.reliable_datagram.data.data() + offset, 2);
 	}
 }
 
@@ -1491,7 +1504,7 @@ void Host_Spawn_f (void)
 		MSG_WriteAngle (&host_client->message, ent->v.angles[i] );
 	MSG_WriteAngle (&host_client->message, 0 );
 
-	SV_WriteClientdataToMessage (sv_player, &host_client->message);
+	SV_WriteClientdataToMessage (sv_player, &host_client->message, host_client->protocol_version);
 
 	MSG_WriteByte (&host_client->message, svc_signonnum);
 	MSG_WriteByte (&host_client->message, 3);

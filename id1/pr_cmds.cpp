@@ -542,23 +542,18 @@ void PF_ambientsound (void)
 	}
 	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
 	{
-		MSG_WriteByte(&sv.signon, svc_expandedspawnstaticsound);
+		MSG_WriteByte (&sv.signon,svc_expandedspawnstaticsound);
 		for (i=0 ; i<3 ; i++)
 			MSG_WriteFloat(&sv.signon, pos[i]);
+
+		MSG_WriteLong (&sv.signon, soundnum);
 	}
 	else
 	{
 		MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
 		for (i=0 ; i<3 ; i++)
 			MSG_WriteCoord(&sv.signon, pos[i]);
-	}
 
-	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION || sv_bump_protocol_version)
-	{
-		MSG_WriteLong (&sv.signon, soundnum);
-	}
-	else
-	{
 		MSG_WriteByte (&sv.signon, soundnum);
 	}
 
@@ -1533,7 +1528,7 @@ MESSAGE WRITING
 #define	MSG_ALL			2		// reliable to all
 #define	MSG_INIT		3		// write to the init string
 
-sizebuf_t *WriteDest (void)
+void PF_WriteByte (void)
 {
 	int		entnum;
 	int		dest;
@@ -1543,74 +1538,303 @@ sizebuf_t *WriteDest (void)
 	switch (dest)
 	{
 	case MSG_BROADCAST:
-		return &sv.datagram;
+		MSG_WriteByte (&sv.datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteByte (&sv.datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
 	
 	case MSG_ONE:
 		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
 		entnum = NUM_FOR_EDICT(ent);
 		if (entnum < 1 || entnum > svs.maxclients)
-			PR_RunError ("WriteDest: not a client");
-		return &svs.clients[entnum-1].message;
+			PR_RunError ("PF_WriteByte: not a client");
+		MSG_WriteByte (&svs.clients[entnum-1].message, G_FLOAT(OFS_PARM1));
+		break;
 		
 	case MSG_ALL:
-		return &sv.reliable_datagram;
+		MSG_WriteByte (&sv.reliable_datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteByte (&sv.reliable_datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
 	
 	case MSG_INIT:
-		return &sv.signon;
+		MSG_WriteByte (&sv.signon, G_FLOAT(OFS_PARM1));
+		break;
 
 	default:
-		PR_RunError ("WriteDest: bad destination");
+		PR_RunError ("PF_WriteByte: bad destination");
 		break;
 	}
-	
-	return NULL;
-}
-
-void PF_WriteByte (void)
-{
-	MSG_WriteByte (WriteDest(), G_FLOAT(OFS_PARM1));
 }
 
 void PF_WriteChar (void)
 {
-	MSG_WriteChar (WriteDest(), G_FLOAT(OFS_PARM1));
+	int		entnum;
+	int		dest;
+	edict_t	*ent;
+
+	dest = G_FLOAT(OFS_PARM0);
+	switch (dest)
+	{
+	case MSG_BROADCAST:
+		MSG_WriteChar (&sv.datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteChar (&sv.datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_ONE:
+		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+		entnum = NUM_FOR_EDICT(ent);
+		if (entnum < 1 || entnum > svs.maxclients)
+			PR_RunError ("PF_WriteChar: not a client");
+		MSG_WriteChar (&svs.clients[entnum-1].message, G_FLOAT(OFS_PARM1));
+		break;
+		
+	case MSG_ALL:
+		MSG_WriteChar (&sv.reliable_datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteChar (&sv.reliable_datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_INIT:
+		MSG_WriteChar (&sv.signon, G_FLOAT(OFS_PARM1));
+		break;
+
+	default:
+		PR_RunError ("PF_WriteChar: bad destination");
+		break;
+	}
 }
 
 void PF_WriteShort (void)
 {
-	MSG_WriteShort (WriteDest(), G_FLOAT(OFS_PARM1));
+	int		entnum;
+	int		dest;
+	edict_t	*ent;
+
+	dest = G_FLOAT(OFS_PARM0);
+	switch (dest)
+	{
+	case MSG_BROADCAST:
+		MSG_WriteShort (&sv.datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteShort (&sv.datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_ONE:
+		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+		entnum = NUM_FOR_EDICT(ent);
+		if (entnum < 1 || entnum > svs.maxclients)
+			PR_RunError ("PF_WriteShort: not a client");
+		MSG_WriteShort (&svs.clients[entnum-1].message, G_FLOAT(OFS_PARM1));
+		break;
+		
+	case MSG_ALL:
+		MSG_WriteShort (&sv.reliable_datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteShort (&sv.reliable_datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_INIT:
+		MSG_WriteShort (&sv.signon, G_FLOAT(OFS_PARM1));
+		break;
+
+	default:
+		PR_RunError ("PF_WriteShort: bad destination");
+		break;
+	}
 }
 
 void PF_WriteLong (void)
 {
-	MSG_WriteLong (WriteDest(), G_FLOAT(OFS_PARM1));
+	int		entnum;
+	int		dest;
+	edict_t	*ent;
+
+	dest = G_FLOAT(OFS_PARM0);
+	switch (dest)
+	{
+	case MSG_BROADCAST:
+		MSG_WriteLong (&sv.datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteLong (&sv.datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_ONE:
+		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+		entnum = NUM_FOR_EDICT(ent);
+		if (entnum < 1 || entnum > svs.maxclients)
+			PR_RunError ("PF_WriteLong: not a client");
+		MSG_WriteLong (&svs.clients[entnum-1].message, G_FLOAT(OFS_PARM1));
+		break;
+		
+	case MSG_ALL:
+		MSG_WriteLong (&sv.reliable_datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteLong (&sv.reliable_datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_INIT:
+		MSG_WriteLong (&sv.signon, G_FLOAT(OFS_PARM1));
+		break;
+
+	default:
+		PR_RunError ("PF_WriteLong: bad destination");
+		break;
+	}
 }
 
 void PF_WriteAngle (void)
 {
-	MSG_WriteAngle (WriteDest(), G_FLOAT(OFS_PARM1));
+	int		entnum;
+	int		dest;
+	edict_t	*ent;
+
+	dest = G_FLOAT(OFS_PARM0);
+	switch (dest)
+	{
+	case MSG_BROADCAST:
+		MSG_WriteAngle (&sv.datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteAngle (&sv.datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_ONE:
+		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+		entnum = NUM_FOR_EDICT(ent);
+		if (entnum < 1 || entnum > svs.maxclients)
+			PR_RunError ("PF_WriteAngle: not a client");
+		MSG_WriteAngle (&svs.clients[entnum-1].message, G_FLOAT(OFS_PARM1));
+		break;
+		
+	case MSG_ALL:
+		MSG_WriteAngle (&sv.reliable_datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteAngle (&sv.reliable_datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_INIT:
+		MSG_WriteAngle (&sv.signon, G_FLOAT(OFS_PARM1));
+		break;
+
+	default:
+		PR_RunError ("PF_WriteAngle: bad destination");
+		break;
+	}
 }
 
 void PF_WriteCoord (void)
 {
-	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-		MSG_WriteFloat (WriteDest(), G_FLOAT(OFS_PARM1));
-	else
-		MSG_WriteCoord (WriteDest(), G_FLOAT(OFS_PARM1));
+	int		entnum;
+	int		dest;
+	edict_t	*ent;
+
+	dest = G_FLOAT(OFS_PARM0);
+	switch (dest)
+	{
+	case MSG_BROADCAST:
+		MSG_WriteCoord (&sv.datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteFloat (&sv.datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_ONE:
+		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+		entnum = NUM_FOR_EDICT(ent);
+		if (entnum < 1 || entnum > svs.maxclients)
+			PR_RunError ("PF_WriteCoord: not a client");
+		if (svs.clients[entnum-1].protocol_version == EXPANDED_PROTOCOL_VERSION)
+			MSG_WriteFloat (&svs.clients[entnum-1].message, G_FLOAT(OFS_PARM1));
+		else
+			MSG_WriteCoord (&svs.clients[entnum-1].message, G_FLOAT(OFS_PARM1));
+		break;
+		
+	case MSG_ALL:
+		MSG_WriteCoord (&sv.reliable_datagram, G_FLOAT(OFS_PARM1));
+		MSG_WriteFloat (&sv.reliable_datagram_expanded, G_FLOAT(OFS_PARM1));
+		break;
+	
+	case MSG_INIT:
+		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+			MSG_WriteFloat (&sv.signon, G_FLOAT(OFS_PARM1));
+		else
+			MSG_WriteCoord (&sv.signon, G_FLOAT(OFS_PARM1));
+		break;
+
+	default:
+		PR_RunError ("PF_WriteCoord: bad destination");
+		break;
+	}
 }
 
 void PF_WriteString (void)
 {
-	MSG_WriteString (WriteDest(), G_STRING(OFS_PARM1));
+	int		entnum;
+	int		dest;
+	edict_t	*ent;
+
+	dest = G_FLOAT(OFS_PARM0);
+	switch (dest)
+	{
+	case MSG_BROADCAST:
+		MSG_WriteString (&sv.datagram, G_STRING(OFS_PARM1));
+		MSG_WriteString (&sv.datagram_expanded, G_STRING(OFS_PARM1));
+		break;
+	
+	case MSG_ONE:
+		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+		entnum = NUM_FOR_EDICT(ent);
+		if (entnum < 1 || entnum > svs.maxclients)
+			PR_RunError ("PF_WriteString: not a client");
+		MSG_WriteString (&svs.clients[entnum-1].message, G_STRING(OFS_PARM1));
+		break;
+		
+	case MSG_ALL:
+		MSG_WriteString (&sv.reliable_datagram, G_STRING(OFS_PARM1));
+		MSG_WriteString (&sv.reliable_datagram_expanded, G_STRING(OFS_PARM1));
+		break;
+	
+	case MSG_INIT:
+		MSG_WriteString (&sv.signon, G_STRING(OFS_PARM1));
+		break;
+
+	default:
+		PR_RunError ("PF_WriteString: bad destination");
+		break;
+	}
 }
 
 
 void PF_WriteEntity (void)
 {
-	if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
-		MSG_WriteLong (WriteDest(), G_EDICTNUM(OFS_PARM1));
-	else
-		MSG_WriteShort (WriteDest(), G_EDICTNUM(OFS_PARM1));
+	int		entnum;
+	int		dest;
+	edict_t	*ent;
+
+	dest = G_FLOAT(OFS_PARM0);
+	switch (dest)
+	{
+	case MSG_BROADCAST:
+		MSG_WriteShort (&sv.datagram, G_EDICTNUM(OFS_PARM1));
+		MSG_WriteLong (&sv.datagram_expanded, G_EDICTNUM(OFS_PARM1));
+		break;
+	
+	case MSG_ONE:
+		ent = PROG_TO_EDICT(pr_global_struct->msg_entity);
+		entnum = NUM_FOR_EDICT(ent);
+		if (entnum < 1 || entnum > svs.maxclients)
+			PR_RunError ("PF_WriteEntity: not a client");
+		if (svs.clients[entnum-1].protocol_version == EXPANDED_PROTOCOL_VERSION)
+			MSG_WriteLong (&svs.clients[entnum-1].message, G_EDICTNUM(OFS_PARM1));
+		else
+			MSG_WriteShort (&svs.clients[entnum-1].message, G_EDICTNUM(OFS_PARM1));
+		break;
+		
+	case MSG_ALL:
+		MSG_WriteShort (&sv.reliable_datagram, G_EDICTNUM(OFS_PARM1));
+		MSG_WriteLong (&sv.reliable_datagram_expanded, G_EDICTNUM(OFS_PARM1));
+		break;
+	
+	case MSG_INIT:
+		if (sv_protocol_version == EXPANDED_PROTOCOL_VERSION)
+			MSG_WriteLong (&sv.signon, G_EDICTNUM(OFS_PARM1));
+		else
+			MSG_WriteShort (&sv.signon, G_EDICTNUM(OFS_PARM1));
+		break;
+
+	default:
+		PR_RunError ("PF_WriteEntity: bad destination");
+		break;
+	}
 }
 
 //=============================================================================
