@@ -1329,7 +1329,7 @@ void android_main(struct android_app* app)
 								CHECK(appState.Session != XR_NULL_HANDLE);
 								sessionRunning = false;
 								ANativeActivity_finish(app->activity);
-								CHECK_XRCMD(xrEndSession(appState.Session))
+								CHECK_XRCMD(xrEndSession(appState.Session));
 								break;
 							}
 							case XR_SESSION_STATE_EXITING:
@@ -1823,10 +1823,10 @@ void android_main(struct android_app* app)
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
 					}
 
-					double clearR = 0;
-					double clearG = 0;
-					double clearB = 0;
-					double clearA = 1;
+					float clearR = 0;
+					float clearG = 0;
+					float clearB = 0;
+					float clearA = 1;
 					
 					auto readClearColor = false;
 					
@@ -1851,10 +1851,10 @@ void android_main(struct android_app* app)
 						if (readClearColor && d_lists.clear_color >= 0)
 						{
 							auto color = d_8to24table[d_lists.clear_color];
-							clearR = (color & 255) / 255.0f;
-							clearG = (color >> 8 & 255) / 255.0f;
-							clearB = (color >> 16 & 255) / 255.0f;
-							clearA = (color >> 24) / 255.0f;
+							clearR = (float)(color & 255) / 255.0f;
+							clearG = (float)(color >> 8 & 255) / 255.0f;
+							clearB = (float)(color >> 16 & 255) / 255.0f;
+							clearA = (float)(color >> 24) / 255.0f;
 						}
 
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
@@ -2178,7 +2178,7 @@ void android_main(struct android_app* app)
 					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
 					screenLayer.radius = CylinderProjection::radius;
-					screenLayer.aspectRatio = (float)appState.ScreenWidth / appState.ScreenHeight;
+					screenLayer.aspectRatio = (float)appState.ScreenWidth / (float)appState.ScreenHeight;
 					screenLayer.centralAngle = CylinderProjection::horizontalAngle;
 					screenLayer.subImage.swapchain = appState.Screen.swapchain;
 					screenLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
