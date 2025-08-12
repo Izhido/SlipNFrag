@@ -75,6 +75,8 @@ void client_t::Clear()
 	num_pings = 0;
 	memset(spawn_parms, 0, sizeof(spawn_parms));
 	old_frags = 0;
+	protocol_version = 0;
+	serverinfo_protocol_offset = 0;
 }
 
 //============================================================================
@@ -1603,15 +1605,15 @@ void SV_SpawnServer (char *server)
 	if (sv_bump_protocol_version)
 	{
 		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
-		for (i=0,host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
-			if (host_client->active && host_client->protocol_version == PROTOCOL_VERSION)
-			{
-				host_client->protocol_version = sv_protocol_version;
-				MSG_WriteLong (host_client->message.data.data() + host_client->serverinfo_protocol_offset, sv_protocol_version);
-			}
-
 		sv_bump_protocol_version = false;
 	}
+
+	for (i=0,host_client = svs.clients.data() ; i<svs.maxclients ; i++, host_client++)
+		if (host_client->active && host_client->protocol_version != sv_protocol_version)
+		{
+			host_client->protocol_version = sv_protocol_version;
+			MSG_WriteLong (host_client->message.data.data() + host_client->serverinfo_protocol_offset, sv_protocol_version);
+		}
 
 // if the protocol was not adjusted at this point, reset the signon limits to their expected values
 	if (sv_protocol_version == PROTOCOL_VERSION)
