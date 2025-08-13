@@ -709,6 +709,10 @@ void _Host_FrameReset()
 	sv_bump_protocol_version = false;
 	sv_request_protocol_version_upgrade = false;
 	sv_static_entity_count = 0;
+	pr_w_attack_function_name = -1;
+	pr_w_attack_function_called = 0;
+	pr_exec_client = nullptr;
+	pr_exec_edict = nullptr;
 	increasebverts = false;
 	increasebedges = false;
 	increasebasespans = 0;

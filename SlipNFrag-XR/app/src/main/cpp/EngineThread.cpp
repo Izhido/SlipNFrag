@@ -65,6 +65,7 @@ void runEngine(AppState* appState, struct android_app* app)
 			{
 				VID_ReallocSurfCache();
 			}
+			cl_allow_immersive = false;
 			auto updated = Host_FrameUpdate(frame_lapse);
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
@@ -133,6 +134,10 @@ void runEngine(AppState* appState, struct android_app* app)
 			cl.viewangles[YAW] = yaw;
 			cl.viewangles[PITCH] = pitch;
 			cl.viewangles[ROLL] = roll;
+			cl_allow_immersive = true;
+			cl_immersive_origin_delta[0] = r_modelorg_delta[0];
+			cl_immersive_origin_delta[1] = r_modelorg_delta[1];
+			cl_immersive_origin_delta[2] = r_modelorg_delta[2];
 			auto updated = Host_FrameUpdate(frame_lapse);
 			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:
 			auto previousYaw = cl.viewangles[YAW];

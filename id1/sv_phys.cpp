@@ -1714,7 +1714,13 @@ void SV_Physics (void)
 		}
 
 		if (i > 0 && i <= svs.maxclients)
+		{
+			pr_exec_client = &svs.clients[i-1];
+			pr_exec_edict = ent;
 			SV_Physics_Client (ent, i);
+			pr_exec_edict = nullptr;
+			pr_exec_client = nullptr;
+		}
 		else if (ent->v.movetype == MOVETYPE_PUSH)
 			SV_Physics_Pusher (ent);
 		else if (ent->v.movetype == MOVETYPE_NONE)

@@ -54,8 +54,11 @@ std::unordered_map<int, int>	cl_dlight_index;
 int				cl_numvisedicts;
 std::vector<entity_t*>		cl_visedicts(MAX_VISEDICTS);
 
-int	cl_protocol_version_from_server;
-int	cl_protocol_version_upgrade_requested;
+int				cl_protocol_version_from_server;
+int				cl_protocol_version_upgrade_requested;
+
+qboolean		cl_allow_immersive;
+vec3_t			cl_immersive_origin_delta;
 
 void client_state_t::Clear()
 {
@@ -757,6 +760,14 @@ void CL_SendCmd (void)
 		MSG_WriteByte (&buf, clc_ackexpproto);
 	}
 
+	if (cl_protocol_version_from_server == EXPANDED_PROTOCOL_VERSION && cl_allow_immersive)
+	{
+		MSG_WriteByte (&buf, clc_immersive);
+		MSG_WriteFloat (&buf, cl_immersive_origin_delta[0]);
+		MSG_WriteFloat (&buf, cl_immersive_origin_delta[1]);
+		MSG_WriteFloat (&buf, cl_immersive_origin_delta[2]);
+	}
+
 //
 // deliver the message
 //
@@ -855,5 +866,7 @@ void CL_Init (void)
 
 	cl_protocol_version_from_demo = 0;
 	cl_protocol_flags_from_demo = 0;
+
+	cl_allow_immersive = false;
 }
 

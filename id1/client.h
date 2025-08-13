@@ -284,11 +284,14 @@ extern	std::vector<dlight_t>		cl_dlights;
 extern	std::vector<entity_t>		cl_temp_entities;
 extern	std::vector<beam_t>			cl_beams;
 
-extern int cl_protocol_version_from_server;
-extern int cl_protocol_version_upgrade_requested;
+extern	int				cl_protocol_version_from_server;
+extern	int 			cl_protocol_version_upgrade_requested;
 
-extern int cl_protocol_version_from_demo;
-extern int cl_protocol_flags_from_demo;
+extern	int 			cl_protocol_version_from_demo;
+extern	int 			cl_protocol_flags_from_demo;
+
+extern	qboolean		cl_allow_immersive;
+extern	vec3_t			cl_immersive_origin_delta;
 
 //=============================================================================
 

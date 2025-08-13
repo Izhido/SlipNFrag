@@ -42,6 +42,8 @@ std::unordered_map<std::string_view, int> pr_fielddefs_index;
 
 int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
 
+int 			pr_w_attack_function_name;
+
 ddef_t *ED_FieldAtOfs (int ofs);
 qboolean	ED_ParseEpair (void *base, ddef_t *key, const char *s);
 
@@ -1062,6 +1064,12 @@ void PR_LoadProgs (void)
 	pr_alpha_ofs = -1;
 	pr_scale_ofs = -1;
 
+	pr_w_attack_function_name = -1;
+	pr_w_attack_function_called = 0;
+
+	pr_exec_client = nullptr;
+	pr_exec_edict = nullptr;
+
 	CRC_Init (&pr_crc);
 
 	static std::vector<byte> progs_block;
@@ -1102,6 +1110,8 @@ void PR_LoadProgs (void)
 		pr_statements[i].c = LittleShort(pr_statements[i].c);
 	}
 
+	qboolean allow_immersive = ((int)Cvar_VariableValue("sv_allow_immersive"));
+
 	for (i=0 ; i<progs->numfunctions; i++)
 	{
 	pr_functions[i].first_statement = LittleLong (pr_functions[i].first_statement);
@@ -1110,6 +1120,8 @@ void PR_LoadProgs (void)
 	pr_functions[i].s_file = LittleLong (pr_functions[i].s_file);
 	pr_functions[i].numparms = LittleLong (pr_functions[i].numparms);
 	pr_functions[i].locals = LittleLong (pr_functions[i].locals);
+	if (allow_immersive && Q_strncmp(pr_strings + pr_functions[i].s_name, "W_Attack", 8) == 0)
+		pr_w_attack_function_name = pr_functions[i].s_name;
 	}	
 
 	for (i=0 ; i<progs->numglobaldefs ; i++)

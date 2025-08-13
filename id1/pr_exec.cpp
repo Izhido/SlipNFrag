@@ -136,6 +136,11 @@ const char *pr_opnames[] =
 "BITOR"
 };
 
+int			pr_w_attack_function_called;
+
+client_t	*pr_exec_client;
+edict_t		*pr_exec_edict;
+
 const char *PR_GlobalString (int ofs);
 const char *PR_GlobalStringNoContents (int ofs);
 
@@ -332,6 +337,16 @@ int PR_EnterFunction (dfunction_t *f)
 	}
 
 	pr_xfunction = f;
+
+	if (pr_xfunction->s_name == pr_w_attack_function_name && pr_exec_client != nullptr && pr_exec_client->immersive_received)
+	{
+		if (++pr_w_attack_function_called == 1)
+		{
+			VectorCopy (pr_exec_edict->v.origin, pr_exec_client->immersive_backup_origin);
+			VectorAdd (pr_exec_edict->v.origin, pr_exec_client->immersive_origin_delta, pr_exec_edict->v.origin);
+		}
+	}
+
 	return f->first_statement - 1;	// offset the s++
 }
 
@@ -352,6 +367,14 @@ int PR_LeaveFunction (void)
 	localstack_used -= c;
 	if (localstack_used < 0)
 		PR_RunError ("PR_ExecuteProgram: locals stack underflow\n");
+
+	if (pr_xfunction->s_name == pr_w_attack_function_name && pr_exec_client != nullptr && pr_exec_client->immersive_received)
+	{
+		if (--pr_w_attack_function_called == 0)
+		{
+			VectorCopy (pr_exec_client->immersive_backup_origin, pr_exec_edict->v.origin);
+		}
+	}
 
 	for (i=0 ; i < c ; i++)
 		((int *)pr_globals)[pr_xfunction->parm_start + i] = localstack[localstack_used+i];

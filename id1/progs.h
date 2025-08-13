@@ -64,6 +64,9 @@ extern	int				pr_edict_size;	// in bytes
 
 extern string_t pr_string_temp;
 
+extern	int 			pr_w_attack_function_name;
+extern	int 			pr_w_attack_function_called;
+
 //============================================================================
 
 void PR_Init (void);

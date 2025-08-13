@@ -30,6 +30,8 @@ int				sv_static_entity_count;
 qboolean		sv_bump_protocol_version;
 qboolean		sv_request_protocol_version_upgrade;
 
+cvar_t			sv_allow_immersive = {"sv_allow_immersive","1"};
+
 void server_t::Clear()
 {
 	active = false;
@@ -78,6 +80,13 @@ void client_t::Clear()
 	old_frags = 0;
 	protocol_version = 0;
 	serverinfo_protocol_offset = 0;
+	immersive_received = false;
+	immersive_backup_origin[0] = 0;
+	immersive_backup_origin[1] = 0;
+	immersive_backup_origin[2] = 0;
+	immersive_origin_delta[0] = 0;
+	immersive_origin_delta[1] = 0;
+	immersive_origin_delta[2] = 0;
 }
 
 //============================================================================
@@ -110,6 +119,8 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_idealpitchscale);
 	Cvar_RegisterVariable (&sv_aim);
 	Cvar_RegisterVariable (&sv_nostep);
+
+	Cvar_RegisterVariable (&sv_allow_immersive);
 
 	sv.lightstyles.resize(MAX_LIGHTSTYLES);
 }
@@ -915,7 +926,10 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, int protocol_ver
 	}
 
 	if (sv_request_protocol_version_upgrade)
+	{
 		bits |= SU_REQEXPPROTO;
+		sv_request_protocol_version_upgrade = false;
+	}
 
 	MSG_WriteByte (msg, svc_clientdata);
 	MSG_WriteShort (msg, bits);
@@ -984,6 +998,10 @@ qboolean SV_SendClientDatagram (client_t *client)
 		int size = NET_MaxUnreliableMessageSize(client->netconnection);
 		if (size >= 0)
 			msg.maxsize = size;
+	}
+	else if (pr_w_attack_function_name >= 0)
+	{
+		sv_request_protocol_version_upgrade = true;
 	}
 
 	MSG_WriteByte (&msg, svc_time);

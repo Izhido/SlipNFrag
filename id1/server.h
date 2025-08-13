@@ -113,6 +113,10 @@ struct client_t
 	int				protocol_version;
 	int				serverinfo_protocol_offset;
 
+	qboolean		immersive_received;
+	vec3_t			immersive_backup_origin;
+	vec3_t			immersive_origin_delta;
+
 	void Clear();
 };
 
@@ -228,6 +232,9 @@ extern	int			sv_static_entity_count;
 
 extern	qboolean	sv_bump_protocol_version;
 extern	qboolean	sv_request_protocol_version_upgrade;
+
+extern	client_t	*pr_exec_client;
+extern	edict_t		*pr_exec_edict;
 //===========================================================
 
 void SV_Init (void);

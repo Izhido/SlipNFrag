@@ -472,6 +472,20 @@ void SV_ReadClientMove (usercmd_t *move)
 #endif
 }
 
+
+/*
+===================
+SV_ReadClientImmersive
+===================
+*/
+void SV_ReadClientImmersive (void)
+{
+	host_client->immersive_received = true;
+	host_client->immersive_origin_delta[0] = MSG_ReadFloat ();
+	host_client->immersive_origin_delta[1] = MSG_ReadFloat ();
+	host_client->immersive_origin_delta[2] = MSG_ReadFloat ();
+}
+
 /*
 ===================
 SV_ReadClientMessage
@@ -601,6 +615,11 @@ nextmsg:
 				if (agreed)
 					sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
 				break;
+
+			case clc_immersive:
+				if (pr_w_attack_function_name > 0)
+					SV_ReadClientImmersive ();
+				break;
 			}
 		}
 	} while (ret == 1);
@@ -624,6 +643,8 @@ void SV_RunClients (void)
 			continue;
 	
 		sv_player = host_client->edict;
+
+		host_client->immersive_received = false;
 
 		if (!SV_ReadClientMessage ())
 		{
