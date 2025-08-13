@@ -730,10 +730,14 @@ CL_SendCmd
 */
 void CL_SendCmd (void)
 {
-	usercmd_t		cmd;
+	usercmd_t			cmd;
+	static sizebuf_t	buf;
 
 	if (cls.state != ca_connected)
 		return;
+
+	buf.maxsize = 128;
+	buf.cursize = 0;
 
 	if (cls.signon == SIGNONS)
 	{
@@ -744,15 +748,40 @@ void CL_SendCmd (void)
 		IN_Move (&cmd);
 	
 	// send the unreliable message
-		CL_SendMove (&cmd);
+		CL_SendMove (&cmd, &buf);
 	
 	}
 
 	if (cl_protocol_version_upgrade_requested && cl_protocol_version_from_server != EXPANDED_PROTOCOL_VERSION)
 	{
+		MSG_WriteByte (&buf, clc_ackexpproto);
+	}
+
+//
+// deliver the message
+//
+	if (!cls.demoplayback)
+	{
+
+//
+// allways dump the first two message, because it may contain leftover inputs
+// from the last level
+//
+	if (++cl.movemessages > 2)
+	{
+
+	if (NET_SendUnreliableMessage (cls.netcon, &buf) == -1)
+	{
+		Con_Printf ("CL_SendCmd: lost server connection\n");
+		CL_Disconnect ();
+	}
+
+	if (cl_protocol_version_upgrade_requested && cl_protocol_version_from_server != EXPANDED_PROTOCOL_VERSION)
+	{
 		cl_protocol_version_from_server = EXPANDED_PROTOCOL_VERSION;
-		CL_SendAckExpandedProtocol (&cmd);
 		cl_protocol_version_upgrade_requested = false;
+	}
+	}
 	}
 
 	if (cls.demoplayback)
@@ -775,30 +804,6 @@ void CL_SendCmd (void)
 		Host_Error ("CL_WriteToServer: lost server connection");
 
 	SZ_Clear (&cls.message);
-}
-
-void CL_SendAckExpandedProtocol(usercmd_t* cmd)
-{
-	static sizebuf_t buf;
-
-	buf.maxsize = 4;
-	buf.cursize = 0;
-
-	cl.cmd = *cmd;
-
-	MSG_WriteByte (&buf, clc_ackexpproto);
-
-	//
-	// deliver the message
-	//
-	if (cls.demoplayback)
-		return;
-
-	if (NET_SendUnreliableMessage (cls.netcon, &buf) == -1)
-	{
-		Con_Printf ("CL_SendAckExpandedProtocol: lost server connection\n");
-		CL_Disconnect ();
-	}
 }
 
 /*

@@ -24,10 +24,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 server_t		sv;
 server_static_t	svs;
 
-int sv_protocol_version;
-int sv_static_entity_count;
-qboolean sv_bump_protocol_version;
-qboolean sv_request_protocol_version_upgrade;
+int				sv_protocol_version;
+int				sv_static_entity_count;
+
+qboolean		sv_bump_protocol_version;
+qboolean		sv_request_protocol_version_upgrade;
 
 void server_t::Clear()
 {

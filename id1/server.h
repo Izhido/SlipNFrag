@@ -223,10 +223,11 @@ extern	double		host_time;
 
 extern	edict_t		*sv_player;
 
-extern int sv_protocol_version;
-extern int sv_static_entity_count;
-extern qboolean sv_bump_protocol_version;
-extern qboolean sv_request_protocol_version_upgrade;
+extern	int			sv_protocol_version;
+extern	int			sv_static_entity_count;
+
+extern	qboolean	sv_bump_protocol_version;
+extern	qboolean	sv_request_protocol_version_upgrade;
 //===========================================================
 
 void SV_Init (void);

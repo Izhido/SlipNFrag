@@ -329,9 +329,7 @@ extern 	kbutton_t 	in_speed;
 
 void CL_InitInput (void);
 void CL_SendCmd (void);
-void CL_SendMove (usercmd_t *cmd);
-
-void CL_SendAckExpandedProtocol(usercmd_t* cmd);
+void CL_SendMove (usercmd_t *cmd, sizebuf_t *buf);
 
 void CL_ParseTEnt (void);
 void CL_UpdateTEnts (void);

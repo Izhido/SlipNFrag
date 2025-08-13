@@ -329,30 +329,26 @@ void CL_BaseMove (usercmd_t *cmd)
 CL_SendMove
 ==============
 */
-void CL_SendMove (usercmd_t *cmd)
+void CL_SendMove (usercmd_t *cmd, sizebuf_t *buf)
 {
 	int		i;
 	int		bits;
-	static sizebuf_t	buf;
-	
-	buf.maxsize = 128;
-	buf.cursize = 0;
-	
+
 	cl.cmd = *cmd;
 
 //
 // send the movement message
 //
-    MSG_WriteByte (&buf, clc_move);
+    MSG_WriteByte (buf, clc_move);
 
-	MSG_WriteFloat (&buf, cl.mtime[0]);	// so server can get ping times
+	MSG_WriteFloat (buf, cl.mtime[0]);	// so server can get ping times
 
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteAngle (&buf, cl.viewangles[i]);
+		MSG_WriteAngle (buf, cl.viewangles[i]);
 	
-    MSG_WriteShort (&buf, cmd->forwardmove);
-    MSG_WriteShort (&buf, cmd->sidemove);
-    MSG_WriteShort (&buf, cmd->upmove);
+    MSG_WriteShort (buf, cmd->forwardmove);
+    MSG_WriteShort (buf, cmd->sidemove);
+    MSG_WriteShort (buf, cmd->upmove);
 
 //
 // send button bits
@@ -367,36 +363,17 @@ void CL_SendMove (usercmd_t *cmd)
 		bits |= 2;
 	in_jump.state &= ~2;
 	
-    MSG_WriteByte (&buf, bits);
+    MSG_WriteByte (buf, bits);
 
-    MSG_WriteByte (&buf, in_impulse);
+    MSG_WriteByte (buf, in_impulse);
 	in_impulse = 0;
 
 #ifdef QUAKE2
 //
 // light level
 //
-	MSG_WriteByte (&buf, cmd->lightlevel);
+	MSG_WriteByte (buf, cmd->lightlevel);
 #endif
-
-//
-// deliver the message
-//
-	if (cls.demoplayback)
-		return;
-
-//
-// allways dump the first two message, because it may contain leftover inputs
-// from the last level
-//
-	if (++cl.movemessages <= 2)
-		return;
-	
-	if (NET_SendUnreliableMessage (cls.netcon, &buf) == -1)
-	{
-		Con_Printf ("CL_SendMove: lost server connection\n");
-		CL_Disconnect ();
-	}
 }
 
 /*
