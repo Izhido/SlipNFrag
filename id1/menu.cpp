@@ -19,6 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 
+void (*in_menudrawfn)(void);
+void (*in_menukeyfn)(int key);
+void (*cl_immersivemenudrawfn)(void);
+void (*cl_immersivemenukeyfn)(int key);
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 
@@ -33,6 +37,7 @@ void M_Menu_Main_f (void);
 		void M_Menu_Net_f (void);
 	void M_Menu_Options_f (void);
 		void M_Menu_Keys_f (void);
+		void M_Menu_Immersive_f(void);
 		void M_Menu_Video_f (void);
 	void M_Menu_Help_f (void);
 	void M_Menu_Quit_f (void);
@@ -52,6 +57,7 @@ void M_Main_Draw (void);
 		void M_Net_Draw (void);
 	void M_Options_Draw (void);
 		void M_Keys_Draw (void);
+		void M_Immersive_Draw(void);
 		void M_Video_Draw (void);
 	void M_Help_Draw (void);
 	void M_Quit_Draw (void);
@@ -71,6 +77,7 @@ void M_Main_Key (int key);
 		void M_Net_Key (int key);
 	void M_Options_Key (int key);
 		void M_Keys_Key (int key);
+		void M_Immersive_Key(int key);
 		void M_Video_Key (int key);
 	void M_Help_Key (int key);
 	void M_Quit_Key (int key);
@@ -1051,21 +1058,33 @@ again:
 //=============================================================================
 /* OPTIONS MENU */
 
-#ifdef _WIN32
-#define	OPTIONS_ITEMS	14
-#else
-#define	OPTIONS_ITEMS	13
-#endif
-
 #define	SLIDER_RANGE	10
 
 int		options_cursor;
+int		options_items;
+int		options_immersive;
+int		options_video;
 
 void M_Menu_Options_f (void)
 {
 	key_dest = key_menu;
 	m_state = m_options;
 	m_entersound = true;
+	options_items = 12;
+	if (vid_menudrawfn)
+	{
+		options_video = options_items;
+		options_items++;
+	}
+	else
+		options_video = -1;
+	if (cl_immersivemenudrawfn)
+	{
+		options_immersive = options_items;
+		options_items++;
+	}
+	else
+		options_immersive = -1;
 }
 
 
@@ -1222,8 +1241,11 @@ void M_Options_Draw (void)
 	M_Print (16, 120, "            Lookstrafe");
 	M_DrawCheckbox (220, 120, lookstrafe.value);
 
-	if (vid_menudrawfn)
-		M_Print (16, 128, "         Video Options");
+	if (options_video >= 0)
+		M_Print (16, 32+8*options_video, "         Video Options");
+
+	if (options_immersive >= 0)
+		M_Print(16, 32+8*options_immersive, "     Immersive Options");
 
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -1240,6 +1262,16 @@ void M_Options_Key (int k)
 
 	case K_ENTER:
 		m_entersound = true;
+		if (options_cursor == options_video)
+		{
+			M_Menu_Video_f();
+			return;
+		}
+		else if (options_cursor == options_immersive)
+		{
+			M_Menu_Immersive_f();
+			return;
+		}
 		switch (options_cursor)
 		{
 		case 0:
@@ -1252,9 +1284,6 @@ void M_Options_Key (int k)
 		case 2:
 			Cbuf_AddText ("exec default.cfg\n");
 			break;
-		case 12:
-			M_Menu_Video_f ();
-			break;
 		default:
 			M_AdjustSliders (1);
 			break;
@@ -1265,13 +1294,13 @@ void M_Options_Key (int k)
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor--;
 		if (options_cursor < 0)
-			options_cursor = OPTIONS_ITEMS-1;
+			options_cursor = options_items-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
 		options_cursor++;
-		if (options_cursor >= OPTIONS_ITEMS)
+		if (options_cursor >= options_items)
 			options_cursor = 0;
 		break;
 
@@ -1282,14 +1311,6 @@ void M_Options_Key (int k)
 	case K_RIGHTARROW:
 		M_AdjustSliders (1);
 		break;
-	}
-
-	if (options_cursor == 12 && vid_menudrawfn == NULL)
-	{
-		if (k == K_UPARROW)
-			options_cursor = 11;
-		else
-			options_cursor = 0;
 	}
 }
 
@@ -1378,6 +1399,11 @@ void M_UnbindCommand (const char *command)
 
 void M_Keys_Draw (void)
 {
+	if (in_menudrawfn)
+	{
+		(*in_menudrawfn) ();
+	}
+
 	int		i;
 	int		keys[2];
 	int		x, y;
@@ -1426,6 +1452,11 @@ void M_Keys_Draw (void)
 
 void M_Keys_Key (int k)
 {
+	if (in_menukeyfn)
+	{
+		(*in_menukeyfn) (k);
+	}
+
 	char	cmd[80];
 	int		keys[2];
 
@@ -1504,6 +1535,28 @@ void M_Video_Draw (void)
 void M_Video_Key (int key)
 {
 	(*vid_menukeyfn) (key);
+}
+
+//=============================================================================
+/* IMMERSIVE MENU */
+
+void M_Menu_Immersive_f(void)
+{
+	key_dest = key_menu;
+	m_state = m_immersive;
+	m_entersound = true;
+}
+
+
+void M_Immersive_Draw(void)
+{
+	(*cl_immersivemenudrawfn) ();
+}
+
+
+void M_Immersive_Key(int key)
+{
+	(*cl_immersivemenukeyfn) (key);
 }
 
 //=============================================================================

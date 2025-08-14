@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // input.h -- external (non-keyboard) input devices
 
+extern void (*in_menudrawfn)(void);
+extern void (*in_menukeyfn)(int key);
+
 void IN_Init (void);
 
 void IN_Shutdown (void);

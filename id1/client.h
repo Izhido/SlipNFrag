@@ -269,6 +269,12 @@ extern	cvar_t	m_yaw;
 extern	cvar_t	m_forward;
 extern	cvar_t	m_side;
 
+//
+// menu
+//
+extern void (*cl_immersivemenudrawfn)(void);
+extern void (*cl_immersivemenukeyfn)(int key);
+
 
 #define	MAX_TEMP_ENTITIES	64			// lightning bolts, etc
 #define	MAX_STATIC_ENTITIES	128			// torches, etc
