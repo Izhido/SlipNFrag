@@ -67,6 +67,13 @@ extern string_t pr_string_temp;
 extern	int 			pr_w_attack_function_name;
 extern	int 			pr_w_attack_function_called;
 
+extern	int 			pr_t_damage_function_name;
+extern	int 			pr_t_damage_function_called;
+
+extern	func_t 			pr_player_run_function;
+
+extern	qboolean		pr_immersive_allowed;
+
 //============================================================================
 
 void PR_Init (void);

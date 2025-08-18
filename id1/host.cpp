@@ -711,6 +711,10 @@ void _Host_FrameReset()
 	sv_static_entity_count = 0;
 	pr_w_attack_function_name = -1;
 	pr_w_attack_function_called = 0;
+	pr_t_damage_function_name = -1;
+	pr_t_damage_function_called = 0;
+	pr_player_run_function = -1;
+	pr_immersive_allowed = false;
 	pr_exec_client = nullptr;
 	pr_exec_edict = nullptr;
 	increasebverts = false;

@@ -130,7 +130,25 @@ qboolean SV_RunThink (edict_t *ent, int num)
 	thinktime = ent->v.nextthink;
 	if (thinktime <= 0 || thinktime > sv.time + host_frametime)
 		return true;
-		
+
+	qboolean frame_function_entered = false;
+	if (pr_immersive_allowed && pr_exec_client != nullptr && pr_exec_client->immersive_received && ent->v.think == pr_exec_client->immersive_frame_function && ent->v.button0)
+	{
+		VectorCopy (ent->v.origin, pr_exec_client->immersive_backup_origin);
+		VectorAdd (ent->v.origin, pr_exec_client->immersive_origin_delta, ent->v.origin);
+		if (pr_exec_client->immersive_left_handed || pr_exec_client->immersive_right_handed)
+		{
+			VectorAdd (ent->v.origin, pr_exec_client->immersive_dominant_delta, ent->v.origin);
+			VectorCopy (ent->v.v_angle, pr_exec_client->immersive_backup_angles);
+			VectorCopy (pr_exec_client->immersive_dominant_angles, ent->v.v_angle);
+			VectorCopy (pr_global_struct->v_forward, pr_exec_client->immersive_backup_forward);
+			VectorCopy (pr_global_struct->v_right, pr_exec_client->immersive_backup_right);
+			VectorCopy (pr_global_struct->v_up, pr_exec_client->immersive_backup_up);
+			AngleVectors (ent->v.v_angle, pr_global_struct->v_forward, pr_global_struct->v_right, pr_global_struct->v_up);
+		}
+		frame_function_entered = true;
+	}
+
 	if (thinktime < sv.time)
 		thinktime = sv.time;	// don't let things stay in the past.
 								// it is possible to start that way
@@ -145,6 +163,23 @@ qboolean SV_RunThink (edict_t *ent, int num)
 	{
 		ent = EDICT_NUM(num);
 	}
+
+	if (frame_function_entered)
+	{
+		VectorCopy (pr_exec_client->immersive_backup_origin, ent->v.origin);
+		if (pr_exec_client->immersive_left_handed || pr_exec_client->immersive_right_handed)
+		{
+			VectorCopy (pr_exec_client->immersive_backup_angles, ent->v.v_angle);
+			VectorCopy (pr_exec_client->immersive_backup_forward, pr_global_struct->v_forward);
+			VectorCopy (pr_exec_client->immersive_backup_right, pr_global_struct->v_right);
+			VectorCopy (pr_exec_client->immersive_backup_up, pr_global_struct->v_up);
+		}
+		if (ent->v.think != pr_player_run_function && ent->v.button0)
+			pr_exec_client->immersive_frame_function = ent->v.think;
+		else
+			pr_exec_client->immersive_frame_function = -1;
+	}
+
 	return !ent->free;
 }
 

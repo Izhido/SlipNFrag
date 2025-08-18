@@ -40,6 +40,8 @@ cvar_t	m_yaw = {"m_yaw","0.022", true};
 cvar_t	m_forward = {"m_forward","1", true};
 cvar_t	m_side = {"m_side","0.8", true};
 
+cvar_t	cl_immersive_dominant_hand = {"dominant_hand", "right", true};
+
 
 client_static_t	cls;
 client_state_t	cl;
@@ -59,6 +61,11 @@ int				cl_protocol_version_upgrade_requested;
 
 qboolean		cl_allow_immersive;
 vec3_t			cl_immersive_origin_delta;
+qboolean		cl_immersive_hands_available;
+vec3_t			cl_immersive_left_hand_delta;
+vec3_t			cl_immersive_left_hand_angles;
+vec3_t			cl_immersive_right_hand_delta;
+vec3_t			cl_immersive_right_hand_angles;
 
 void client_state_t::Clear()
 {
@@ -106,6 +113,8 @@ void client_state_t::Clear()
 	cdtrack = 0;
 	looptrack = 0;
 	scores.clear();
+	immersive_enabled = false;
+	immersive_hands_enabled = false;
 }
 
 /*
@@ -763,9 +772,57 @@ void CL_SendCmd (void)
 	if (cl_protocol_version_from_server == EXPANDED_PROTOCOL_VERSION && cl_allow_immersive)
 	{
 		MSG_WriteByte (&buf, clc_immersive);
+
 		MSG_WriteFloat (&buf, cl_immersive_origin_delta[0]);
 		MSG_WriteFloat (&buf, cl_immersive_origin_delta[1]);
 		MSG_WriteFloat (&buf, cl_immersive_origin_delta[2]);
+
+	// Dominant hand data, then off hand data:
+		if (cl_immersive_hands_available)
+		{
+			auto hand = Cvar_VariableString ("dominant_hand");
+
+			if (Q_strncmp(hand, "right", 5) == 0)
+			{
+				MSG_WriteByte (&buf, IMM_HANDSAVAILABLE);
+
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[0]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[1]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[2]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[0]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[1]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[2]);
+
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[0]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[1]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[2]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[0]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[1]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[2]);
+			}
+			else
+			{
+				MSG_WriteByte (&buf, IMM_HANDSAVAILABLE | IMM_LEFTHANDED);
+
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[0]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[1]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[2]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[0]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[1]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[2]);
+
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[0]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[1]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[2]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[0]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[1]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[2]);
+			}
+		}
+		else
+		{
+			MSG_WriteByte (&buf, 0);
+		}
 	}
 
 //
@@ -855,6 +912,8 @@ void CL_Init (void)
 
 //	Cvar_RegisterVariable (&cl_autofire);
 	
+	Cvar_RegisterVariable (&cl_immersive_dominant_hand);
+
 	Cmd_AddCommand ("entities", CL_PrintEntities_f);
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("record", CL_Record_f);

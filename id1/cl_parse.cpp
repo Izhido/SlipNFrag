@@ -892,6 +892,9 @@ void CL_ParseClientdata (int bits)
 			Sbar_Changed ();
 		}
 	}
+
+	cl.immersive_enabled = false;
+	cl.immersive_hands_enabled = false;
 }
 
 void CL_ParseExpandedClientdata (int bits)
@@ -1003,6 +1006,9 @@ void CL_ParseExpandedClientdata (int bits)
 			Sbar_Changed ();
 		}
 	}
+
+	cl.immersive_enabled = (bits & SU_IMMERSIVE) == SU_IMMERSIVE;
+	cl.immersive_hands_enabled = (bits & SU_IMMERHANDS) == SU_IMMERHANDS;
 }
 
 /*

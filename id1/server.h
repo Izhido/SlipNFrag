@@ -115,7 +115,20 @@ struct client_t
 
 	qboolean		immersive_received;
 	vec3_t			immersive_backup_origin;
+	vec3_t			immersive_backup_angles;
+	vec3_t			immersive_backup_forward;
+	vec3_t			immersive_backup_right;
+	vec3_t			immersive_backup_up;
 	vec3_t			immersive_origin_delta;
+	qboolean		immersive_left_handed;
+	qboolean		immersive_right_handed;
+	vec3_t			immersive_dominant_delta;
+	vec3_t			immersive_dominant_angles;
+	vec3_t			immersive_offhand_delta;
+	vec3_t			immersive_offhand_angles;
+	vec3_t			immersive_backup_damage_origin;
+	vec3_t			immersive_backup_damage_angles;
+	func_t			immersive_frame_function;
 
 	void Clear();
 };
@@ -264,7 +277,7 @@ void SV_Physics (void);
 qboolean SV_CheckBottom (edict_t *ent);
 qboolean SV_movestep (edict_t *ent, const vec3_t move, qboolean relink);
 
-void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, int protocol_version);
+void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, client_t *client);
 
 void SV_MoveToGoal (void);
 

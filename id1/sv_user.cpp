@@ -484,6 +484,32 @@ void SV_ReadClientImmersive (void)
 	host_client->immersive_origin_delta[0] = MSG_ReadFloat ();
 	host_client->immersive_origin_delta[1] = MSG_ReadFloat ();
 	host_client->immersive_origin_delta[2] = MSG_ReadFloat ();
+
+	auto bits = MSG_ReadByte ();
+	if (bits & IMM_HANDSAVAILABLE)
+	{
+		host_client->immersive_left_handed = ((bits & IMM_LEFTHANDED) == IMM_LEFTHANDED);
+		host_client->immersive_right_handed = !host_client->immersive_left_handed;
+
+		host_client->immersive_dominant_delta[0] = MSG_ReadFloat ();
+		host_client->immersive_dominant_delta[1] = MSG_ReadFloat ();
+		host_client->immersive_dominant_delta[2] = MSG_ReadFloat ();
+		host_client->immersive_dominant_angles[0] = MSG_ReadFloat ();
+		host_client->immersive_dominant_angles[1] = MSG_ReadFloat ();
+		host_client->immersive_dominant_angles[2] = MSG_ReadFloat ();
+
+		host_client->immersive_offhand_delta[0] = MSG_ReadFloat ();
+		host_client->immersive_offhand_delta[1] = MSG_ReadFloat ();
+		host_client->immersive_offhand_delta[2] = MSG_ReadFloat ();
+		host_client->immersive_offhand_angles[0] = MSG_ReadFloat ();
+		host_client->immersive_offhand_angles[1] = MSG_ReadFloat ();
+		host_client->immersive_offhand_angles[2] = MSG_ReadFloat ();
+	}
+	else
+	{
+		host_client->immersive_left_handed = false;
+		host_client->immersive_right_handed = false;
+	}
 }
 
 /*
@@ -617,7 +643,7 @@ nextmsg:
 				break;
 
 			case clc_immersive:
-				if (pr_w_attack_function_name > 0)
+				if (pr_immersive_allowed)
 					SV_ReadClientImmersive ();
 				break;
 			}

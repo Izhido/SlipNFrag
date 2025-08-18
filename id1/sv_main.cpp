@@ -81,12 +81,7 @@ void client_t::Clear()
 	protocol_version = 0;
 	serverinfo_protocol_offset = 0;
 	immersive_received = false;
-	immersive_backup_origin[0] = 0;
-	immersive_backup_origin[1] = 0;
-	immersive_backup_origin[2] = 0;
-	immersive_origin_delta[0] = 0;
-	immersive_origin_delta[1] = 0;
-	immersive_origin_delta[2] = 0;
+	immersive_frame_function = -1;
 }
 
 //============================================================================
@@ -772,7 +767,7 @@ SV_WriteClientdataToMessage
 
 ==================
 */
-void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, int protocol_version)
+void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, client_t *client)
 {
 	int		bits;
 	int		i;
@@ -788,7 +783,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, int protocol_ver
 	if (ent->v.dmg_take || ent->v.dmg_save)
 	{
 		other = PROG_TO_EDICT(ent->v.dmg_inflictor);
-		if (protocol_version == EXPANDED_PROTOCOL_VERSION)
+		if (client->protocol_version == EXPANDED_PROTOCOL_VERSION)
 		{
 			MSG_WriteByte(msg, svc_expandeddamage);
 		}
@@ -798,7 +793,7 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, int protocol_ver
 		}
 		MSG_WriteByte (msg, ent->v.dmg_save);
 		MSG_WriteByte (msg, ent->v.dmg_take);
-		if (protocol_version == EXPANDED_PROTOCOL_VERSION)
+		if (client->protocol_version == EXPANDED_PROTOCOL_VERSION)
 		{
 			for (i=0 ; i<3 ; i++)
 				MSG_WriteFloat (msg, other->v.origin[i] + 0.5*(other->v.mins[i] + other->v.maxs[i]));
@@ -871,8 +866,15 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, int protocol_ver
 //	if (ent->v.weapon)
 		bits |= SU_WEAPON;
 
+	if (client->immersive_received)
+	{
+		bits |= SU_IMMERSIVE;
+		if (client->immersive_left_handed || client->immersive_right_handed)
+			bits |= SU_IMMERHANDS;
+	}
+
 // send the data
-	if (protocol_version == EXPANDED_PROTOCOL_VERSION)
+	if (client->protocol_version == EXPANDED_PROTOCOL_VERSION)
 	{
 		MSG_WriteByte (msg, svc_expandedclientdata);
 		MSG_WriteLong (msg, bits);
@@ -999,7 +1001,7 @@ qboolean SV_SendClientDatagram (client_t *client)
 		if (size >= 0)
 			msg.maxsize = size;
 	}
-	else if (pr_w_attack_function_name >= 0)
+	else if (pr_immersive_allowed)
 	{
 		sv_request_protocol_version_upgrade = true;
 	}
@@ -1008,7 +1010,7 @@ qboolean SV_SendClientDatagram (client_t *client)
 	MSG_WriteFloat (&msg, sv.time);
 
 // add the client specific data to the datagram
-	SV_WriteClientdataToMessage (client->edict, &msg, client->protocol_version);
+	SV_WriteClientdataToMessage (client->edict, &msg, client);
 
 	SV_WriteEntitiesToClient (client->edict, &msg, client->protocol_version);
 

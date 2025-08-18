@@ -3541,7 +3541,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         floorVerticesSize += 3 * 4 * sizeof(float);
     }
-    if (appState.Focused && (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
+    if (appState.Focused && (key_dest == key_game || key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
     {
         if (appState.LeftController.PoseIsValid)
         {

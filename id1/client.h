@@ -225,6 +225,10 @@ struct client_state_t
 // frag scoreboard
 	std::vector<scoreboard_t>	scores;		// [cl.maxclients]
 
+// acknowledged immersive data from server
+	qboolean	immersive_enabled;
+	qboolean	immersive_hands_enabled;
+
 #ifdef QUAKE2
 // light level at player's position including dlights
 // this is sent back to the server each frame
@@ -269,6 +273,8 @@ extern	cvar_t	m_yaw;
 extern	cvar_t	m_forward;
 extern	cvar_t	m_side;
 
+extern	cvar_t	cl_immersive_dominant_hand;
+
 //
 // menu
 //
@@ -298,6 +304,11 @@ extern	int 			cl_protocol_flags_from_demo;
 
 extern	qboolean		cl_allow_immersive;
 extern	vec3_t			cl_immersive_origin_delta;
+extern	qboolean		cl_immersive_hands_available;
+extern	vec3_t			cl_immersive_left_hand_delta;
+extern	vec3_t			cl_immersive_left_hand_angles;
+extern	vec3_t			cl_immersive_right_hand_delta;
+extern	vec3_t			cl_immersive_right_hand_angles;
 
 //=============================================================================
 

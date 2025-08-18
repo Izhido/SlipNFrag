@@ -62,6 +62,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	SU_WEAPONFRAME	(1<<12)
 #define	SU_ARMOR		(1<<13)
 #define	SU_WEAPON		(1<<14)
+#define	SU_IMMERSIVE	(1<<15)
+#define	SU_IMMERHANDS	(1<<16)
 
 // a sound with no channel is a local only sound
 #define	SND_VOLUME		(1<<0)		// a byte
@@ -77,6 +79,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // these determine which intermission screen plays
 #define	GAME_COOP			0
 #define	GAME_DEATHMATCH		1
+
+// immersive data
+#define IMM_HANDSAVAILABLE	(1<<0)
+#define IMM_LEFTHANDED		(1<<1)
 
 //==================
 // note that there are some defs.qc that mirror to these numbers

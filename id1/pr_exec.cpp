@@ -138,6 +138,8 @@ const char *pr_opnames[] =
 
 int			pr_w_attack_function_called;
 
+int			pr_t_damage_function_called;
+
 client_t	*pr_exec_client;
 edict_t		*pr_exec_edict;
 
@@ -338,12 +340,34 @@ int PR_EnterFunction (dfunction_t *f)
 
 	pr_xfunction = f;
 
-	if (pr_xfunction->s_name == pr_w_attack_function_name && pr_exec_client != nullptr && pr_exec_client->immersive_received)
+	if (pr_immersive_allowed && pr_exec_client != nullptr && pr_exec_client->immersive_received && pr_exec_edict != nullptr && pr_exec_edict->v.button0)
 	{
-		if (++pr_w_attack_function_called == 1)
+		if (pr_xfunction->s_name == pr_w_attack_function_name)
 		{
-			VectorCopy (pr_exec_edict->v.origin, pr_exec_client->immersive_backup_origin);
-			VectorAdd (pr_exec_edict->v.origin, pr_exec_client->immersive_origin_delta, pr_exec_edict->v.origin);
+			if (++pr_w_attack_function_called == 1)
+			{
+				VectorCopy (pr_exec_edict->v.origin, pr_exec_client->immersive_backup_origin);
+				VectorAdd (pr_exec_edict->v.origin, pr_exec_client->immersive_origin_delta, pr_exec_edict->v.origin);
+				if (pr_exec_client->immersive_left_handed || pr_exec_client->immersive_right_handed)
+				{
+					VectorAdd (pr_exec_edict->v.origin, pr_exec_client->immersive_dominant_delta, pr_exec_edict->v.origin);
+					VectorCopy (pr_exec_edict->v.v_angle, pr_exec_client->immersive_backup_angles);
+					VectorCopy (pr_exec_client->immersive_dominant_angles, pr_exec_edict->v.v_angle);
+				}
+			}
+		}
+		else if (pr_xfunction->s_name == pr_t_damage_function_name && pr_w_attack_function_called > 0)
+		{
+			if (++pr_t_damage_function_called == 1)
+			{
+				VectorCopy (pr_exec_edict->v.origin, pr_exec_client->immersive_backup_damage_origin);
+				VectorCopy (pr_exec_client->immersive_backup_origin, pr_exec_edict->v.origin);
+				if (pr_exec_client->immersive_left_handed || pr_exec_client->immersive_right_handed)
+				{
+					VectorCopy (pr_exec_edict->v.v_angle, pr_exec_client->immersive_backup_damage_angles);
+					VectorCopy (pr_exec_client->immersive_backup_angles, pr_exec_edict->v.v_angle);
+				}
+			}
 		}
 	}
 
@@ -368,11 +392,29 @@ int PR_LeaveFunction (void)
 	if (localstack_used < 0)
 		PR_RunError ("PR_ExecuteProgram: locals stack underflow\n");
 
-	if (pr_xfunction->s_name == pr_w_attack_function_name && pr_exec_client != nullptr && pr_exec_client->immersive_received)
+	if (pr_xfunction->s_name == pr_t_damage_function_name)
+	{
+		if (pr_t_damage_function_called > 0 && pr_w_attack_function_called > 0)
+		{
+			if (--pr_t_damage_function_called == 0)
+			{
+				VectorCopy (pr_exec_client->immersive_backup_damage_origin, pr_exec_edict->v.origin);
+				if (pr_exec_client->immersive_left_handed || pr_exec_client->immersive_right_handed)
+					VectorCopy (pr_exec_client->immersive_backup_damage_angles, pr_exec_edict->v.v_angle);
+			}
+		}
+	}
+	else if (pr_xfunction->s_name == pr_w_attack_function_name && pr_w_attack_function_called > 0)
 	{
 		if (--pr_w_attack_function_called == 0)
 		{
 			VectorCopy (pr_exec_client->immersive_backup_origin, pr_exec_edict->v.origin);
+			if (pr_exec_client->immersive_left_handed || pr_exec_client->immersive_right_handed)
+				VectorCopy (pr_exec_client->immersive_backup_angles, pr_exec_edict->v.v_angle);
+			if (pr_exec_edict->v.think != pr_player_run_function)
+				pr_exec_client->immersive_frame_function = pr_exec_edict->v.think;
+			else
+				pr_exec_client->immersive_frame_function = -1;
 		}
 	}
 
