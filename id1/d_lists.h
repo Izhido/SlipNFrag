@@ -92,6 +92,16 @@ struct dalias_t : daliascoloredlights_t
 	unsigned char* colormap;
 };
 
+struct dviewmodelcoloredlights_t : daliascoloredlights_t
+{
+	float transform2[3][4];
+};
+
+struct dviewmodel_t : dviewmodelcoloredlights_t
+{
+	unsigned char* colormap;
+};
+
 struct dsky_t
 {
 	int width;
@@ -230,10 +240,10 @@ struct dlists_t
 	std::vector<dalias_t> alias_holey_alpha;
 	std::vector<daliascoloredlights_t> alias_holey_colored_lights;
 	std::vector<daliascoloredlights_t> alias_holey_alpha_colored_lights;
-	std::vector<dalias_t> viewmodels;
-	std::vector<daliascoloredlights_t> viewmodels_colored_lights;
-	std::vector<dalias_t> viewmodels_holey;
-	std::vector<daliascoloredlights_t> viewmodels_holey_colored_lights;
+	std::vector<dviewmodel_t> viewmodels;
+	std::vector<dviewmodelcoloredlights_t> viewmodels_colored_lights;
+	std::vector<dviewmodel_t> viewmodels_holey;
+	std::vector<dviewmodelcoloredlights_t> viewmodels_holey_colored_lights;
 	std::vector<dsky_t> sky;
 	std::vector<dsky_t> sky_rgba;
     std::vector<dskybox_t> skyboxes;

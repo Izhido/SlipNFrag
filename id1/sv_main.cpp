@@ -292,6 +292,7 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteByte (&client->message, svc_serverinfo);
 	client->serverinfo_protocol_offset = client->message.cursize;
 	MSG_WriteLong (&client->message, sv_protocol_version);
+	client->protocol_version = sv_protocol_version;
 	MSG_WriteByte (&client->message, svs.maxclients);
 
 	if (!coop.value && deathmatch.value)

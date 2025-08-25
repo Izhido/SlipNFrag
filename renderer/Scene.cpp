@@ -2492,7 +2492,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
     loaded.firstVertex = sprite.first_vertex;
 }
 
-void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size)
+void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlights_t& alias, LoadedAliasColoredLights& loaded, VkDeviceSize& size)
 {
     if (previousApverts != alias.apverts)
     {
@@ -2531,16 +2531,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
     {
         loaded.vertices.buffer = previousVertexBuffer;
         loaded.texCoords.buffer = previousTexCoordsBuffer;
-    }
-    if (alias.colormap == nullptr)
-    {
-        loaded.colormap.size = 0;
-        loaded.colormap.texture = host_colormap;
-    }
-    else
-    {
-        loaded.colormap.size = 16384;
-        size += loaded.colormap.size;
     }
     if (previousTexture != alias.data)
     {
@@ -2669,8 +2659,23 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
         loaded.indices.indices = entry->second;
     }
     loaded.firstAttribute = alias.first_attribute;
-    loaded.isHostColormap = (alias.colormap == nullptr);
     loaded.count = alias.count;
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size)
+{
+	GetStagingBufferSizeAlias(appState, alias, loaded, size);
+    if (alias.colormap == nullptr)
+    {
+        loaded.colormap.size = 0;
+        loaded.colormap.texture = host_colormap;
+    }
+    else
+    {
+        loaded.colormap.size = 16384;
+        size += loaded.colormap.size;
+    }
+    loaded.isHostColormap = (alias.colormap == nullptr);
     for (auto j = 0; j < 3; j++)
     {
         for (auto i = 0; i < 4; i++)
@@ -2682,172 +2687,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 
 void Scene::GetStagingBufferSize(AppState& appState, const daliascoloredlights_t& alias, LoadedAliasColoredLights& loaded, VkDeviceSize& size)
 {
-    if (previousApverts != alias.apverts)
-    {
-        auto entry = aliasVertexCache.find(alias.apverts);
-        if (entry == aliasVertexCache.end())
-        {
-            auto vertexSize = 3 * sizeof(byte);
-            loaded.vertices.size = alias.vertex_count * 2 * vertexSize;
-            loaded.vertices.buffer = new SharedMemoryBuffer { };
-            loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
-			aliasBuffers.MoveToFront(loaded.vertices.buffer);
-            size += loaded.vertices.size;
-            loaded.vertices.source = alias.apverts;
-			aliasBuffers.SetupAliasVertices(loaded.vertices);
-            loaded.texCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
-            loaded.texCoords.buffer = new SharedMemoryBuffer { };
-            loaded.texCoords.buffer->CreateVertexBuffer(appState, loaded.texCoords.size);
-			aliasBuffers.MoveToFront(loaded.texCoords.buffer);
-            size += loaded.texCoords.size;
-            loaded.texCoords.source = alias.texture_coordinates;
-            loaded.texCoords.width = alias.width;
-            loaded.texCoords.height = alias.height;
-			aliasBuffers.SetupAliasTexCoords(loaded.texCoords);
-            aliasVertexCache.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
-        }
-        else
-        {
-            loaded.vertices.buffer = entry->second.vertices;
-            loaded.texCoords.buffer = entry->second.texCoords;
-        }
-        previousApverts = alias.apverts;
-        previousVertexBuffer = loaded.vertices.buffer;
-        previousTexCoordsBuffer = loaded.texCoords.buffer;
-    }
-    else
-    {
-        loaded.vertices.buffer = previousVertexBuffer;
-        loaded.texCoords.buffer = previousTexCoordsBuffer;
-    }
-    if (previousTexture != alias.data)
-    {
-        auto entry = aliasTextureCache.find(alias.data);
-        if (entry == aliasTextureCache.end())
-        {
-            auto mipCount = (int)(std::floor(std::log2(std::max(alias.width, alias.height)))) + 1;
-            auto texture = new SharedMemoryTexture { };
-            texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-            textures.MoveToFront(texture);
-            loaded.texture.size = alias.size;
-            size += loaded.texture.size;
-            loaded.texture.texture = texture;
-            loaded.texture.source = alias.data;
-            loaded.texture.mips = 1;
-            textures.Setup(loaded.texture);
-            aliasTextureCache.insert({ alias.data, texture });
-        }
-        else
-        {
-            loaded.texture.texture = entry->second;
-            loaded.texture.index = 0;
-        }
-        previousTexture = alias.data;
-        previousSharedMemoryTexture = loaded.texture.texture;
-    }
-    else
-    {
-        loaded.texture.texture = previousSharedMemoryTexture;
-        loaded.texture.index = 0;
-    }
-    auto entry = aliasIndexCache.find(alias.aliashdr);
-    if (entry == aliasIndexCache.end())
-    {
-        auto aliashdr = (aliashdr_t *)alias.aliashdr;
-        auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
-        auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
-        auto stverts = (stvert_t *)((byte *)aliashdr + aliashdr->stverts);
-        unsigned int maxIndex = 0;
-        for (auto i = 0; i < mdl->numtris; i++)
-        {
-            auto v0 = triangle->vertindex[0];
-            auto v1 = triangle->vertindex[1];
-            auto v2 = triangle->vertindex[2];
-            auto v0back = (((stverts[v0].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-            auto v1back = (((stverts[v1].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-            auto v2back = (((stverts[v2].onseam & ALIAS_ONSEAM) == ALIAS_ONSEAM) && triangle->facesfront == 0);
-            maxIndex = std::max(maxIndex, (unsigned int)(v0 * 2 + (v0back ? 1 : 0)));
-            maxIndex = std::max(maxIndex, (unsigned int)(v1 * 2 + (v1back ? 1 : 0)));
-            maxIndex = std::max(maxIndex, (unsigned int)(v2 * 2 + (v2back ? 1 : 0)));
-            triangle++;
-        }
-        if (maxIndex < UPPER_8BIT_LIMIT && appState.IndexTypeUInt8Enabled)
-        {
-            loaded.indices.size = alias.count;
-            if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
-            {
-                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-                loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
-                indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-                latestIndexBuffer8 = loaded.indices.indices.buffer;
-                usedInLatestIndexBuffer8 = 0;
-            }
-            else
-            {
-                loaded.indices.indices.buffer = latestIndexBuffer8;
-            }
-            loaded.indices.indices.offset = usedInLatestIndexBuffer8;
-            usedInLatestIndexBuffer8 += loaded.indices.size;
-            size += loaded.indices.size;
-            loaded.indices.source = alias.aliashdr;
-            loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
-            loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
-            indexBuffers.SetupAliasIndices8(loaded.indices);
-        }
-        else if (maxIndex < UPPER_16BIT_LIMIT)
-        {
-            loaded.indices.size = alias.count * sizeof(uint16_t);
-            if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
-            {
-                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-                loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
-                indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-                latestIndexBuffer16 = loaded.indices.indices.buffer;
-                usedInLatestIndexBuffer16 = 0;
-            }
-            else
-            {
-                loaded.indices.indices.buffer = latestIndexBuffer16;
-            }
-            loaded.indices.indices.offset = usedInLatestIndexBuffer16;
-            usedInLatestIndexBuffer16 += loaded.indices.size;
-            size += loaded.indices.size;
-            loaded.indices.source = alias.aliashdr;
-            loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
-            loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
-            indexBuffers.SetupAliasIndices16(loaded.indices);
-        }
-        else
-        {
-            loaded.indices.size = alias.count * sizeof(uint32_t);
-            if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
-            {
-                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
-                loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
-                indexBuffers.MoveToFront(loaded.indices.indices.buffer);
-                latestIndexBuffer32 = loaded.indices.indices.buffer;
-                usedInLatestIndexBuffer32 = 0;
-            }
-            else
-            {
-                loaded.indices.indices.buffer = latestIndexBuffer32;
-            }
-            loaded.indices.indices.offset = usedInLatestIndexBuffer32;
-            usedInLatestIndexBuffer32 += loaded.indices.size;
-            size += loaded.indices.size;
-            loaded.indices.source = alias.aliashdr;
-            loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
-            loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
-            indexBuffers.SetupAliasIndices32(loaded.indices);
-        }
-        aliasIndexCache.insert({ alias.aliashdr, loaded.indices.indices });
-    }
-    else
-    {
-        loaded.indices.indices = entry->second;
-    }
-    loaded.firstAttribute = alias.first_attribute;
-    loaded.count = alias.count;
+	GetStagingBufferSizeAlias(appState, alias, loaded, size);
     for (auto j = 0; j < 3; j++)
     {
         for (auto i = 0; i < 4; i++)
@@ -2855,6 +2695,29 @@ void Scene::GetStagingBufferSize(AppState& appState, const daliascoloredlights_t
             loaded.transform[j][i] = alias.transform[j][i];
         }
     }
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmodel, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size)
+{
+	GetStagingBufferSizeAlias(appState, viewmodel, loaded, size);
+    if (viewmodel.colormap == nullptr)
+    {
+        loaded.colormap.size = 0;
+        loaded.colormap.texture = host_colormap;
+    }
+    else
+    {
+        loaded.colormap.size = 16384;
+        size += loaded.colormap.size;
+    }
+    loaded.isHostColormap = (viewmodel.colormap == nullptr);
+	R_ConcatTransforms (viewmodel.transform2, viewmodel.transform, loaded.transform);
+}
+
+void Scene::GetStagingBufferSize(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded, VkDeviceSize& size)
+{
+	GetStagingBufferSizeAlias(appState, viewmodel, loaded, size);
+	R_ConcatTransforms (viewmodel.transform2, viewmodel.transform, loaded.transform);
 }
 
 VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
