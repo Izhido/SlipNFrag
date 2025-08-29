@@ -1009,6 +1009,15 @@ void CL_ParseExpandedClientdata (int bits)
 
 	cl.immersive_enabled = (bits & SU_IMMERSIVE) == SU_IMMERSIVE;
 	cl.immersive_hands_enabled = (bits & SU_IMMERHANDS) == SU_IMMERHANDS;
+
+	if (cl.immersive_hands_enabled)
+	{
+		for (i=0 ; i<3 ; i++)
+			cl.immersive_viewmodel_angle_offset[i] = MSG_ReadFloat ();
+
+		for (i=0 ; i<3 ; i++)
+			cl.immersive_viewmodel_scale_origin_offset[i] = MSG_ReadFloat ();
+	}
 }
 
 /*

@@ -75,6 +75,29 @@ struct server_t
 };
 
 
+struct immersive_t
+{
+	qboolean	received;
+	vec3_t		backup_origin;
+	vec3_t		backup_angles;
+	vec3_t		backup_forward;
+	vec3_t		backup_right;
+	vec3_t		backup_up;
+	vec3_t		origin_delta;
+	qboolean	left_handed;
+	qboolean	right_handed;
+	vec3_t		dominant_delta;
+	vec3_t		dominant_angles;
+	vec3_t		offhand_delta;
+	vec3_t		offhand_angles;
+	vec3_t		backup_damage_origin;
+	vec3_t		backup_damage_angles;
+	func_t		frame_function;
+	vec3_t		viewmodel_angle_offset;
+	vec3_t		viewmodel_scale_origin_offset;
+};
+
+
 #define	NUM_PING_TIMES		16
 #define	NUM_SPAWN_PARMS		16
 
@@ -113,22 +136,7 @@ struct client_t
 	int				protocol_version;
 	int				serverinfo_protocol_offset;
 
-	qboolean		immersive_received;
-	vec3_t			immersive_backup_origin;
-	vec3_t			immersive_backup_angles;
-	vec3_t			immersive_backup_forward;
-	vec3_t			immersive_backup_right;
-	vec3_t			immersive_backup_up;
-	vec3_t			immersive_origin_delta;
-	qboolean		immersive_left_handed;
-	qboolean		immersive_right_handed;
-	vec3_t			immersive_dominant_delta;
-	vec3_t			immersive_dominant_angles;
-	vec3_t			immersive_offhand_delta;
-	vec3_t			immersive_offhand_angles;
-	vec3_t			immersive_backup_damage_origin;
-	vec3_t			immersive_backup_damage_angles;
-	func_t			immersive_frame_function;
+	immersive_t		immersive;
 
 	void Clear();
 };
@@ -291,3 +299,6 @@ void SV_SpawnServer (char *server);
 #endif
 void SV_DeleteEdictLeafs(size_t start, size_t end);
 void SV_ResizeEdicts(size_t newsize);
+
+void SV_LoadImmersiveViewmodels (void);
+qboolean SV_ValidImmersiveViewmodel (client_t* client);

@@ -362,6 +362,10 @@
 		28DFACDC28A4B30F00646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28DFACDD28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
 		28DFACDE28A4B31700646DE0 /* r_image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFACDB28A4B2DB00646DE0 /* r_image.cpp */; };
+		28DFCC442E6009AA00AE2461 /* sv_immer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFCC432E6009AA00AE2461 /* sv_immer.cpp */; };
+		28DFCC452E6009AA00AE2461 /* sv_immer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFCC432E6009AA00AE2461 /* sv_immer.cpp */; };
+		28DFCC462E6009AA00AE2461 /* sv_immer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFCC432E6009AA00AE2461 /* sv_immer.cpp */; };
+		28DFCC472E6009AA00AE2461 /* sv_immer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28DFCC432E6009AA00AE2461 /* sv_immer.cpp */; };
 		28E8074B2ACA719700067E76 /* Skybox.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28E8074A2ACA719700067E76 /* Skybox.mm */; };
 		28E95FAA260C50A0000DDF6C /* cd_ios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28E95FA9260C50A0000DDF6C /* cd_ios.cpp */; };
 		28E9CEC72A8843BB00EDEF92 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E9CEC62A8843BB00EDEF92 /* SettingsView.swift */; };
@@ -647,6 +651,7 @@
 		28D698232A9C126D00EA7F5B /* SortedSurfaceRotatedLightmap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedSurfaceRotatedLightmap.h; sourceTree = "<group>"; };
 		28D698242A9C129E00EA7F5B /* SortedSurfaceRotatedTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedSurfaceRotatedTexture.h; sourceTree = "<group>"; };
 		28DFACDB28A4B2DB00646DE0 /* r_image.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = r_image.cpp; sourceTree = "<group>"; };
+		28DFCC432E6009AA00AE2461 /* sv_immer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sv_immer.cpp; sourceTree = "<group>"; };
 		28E807492ACA707F00067E76 /* Skybox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Skybox.h; sourceTree = "<group>"; };
 		28E8074A2ACA719700067E76 /* Skybox.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Skybox.mm; sourceTree = "<group>"; };
 		28E95FA9260C50A0000DDF6C /* cd_ios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cd_ios.cpp; sourceTree = "<group>"; };
@@ -989,6 +994,7 @@
 				287A3242229DBF6B00AE6BFA /* server.h */,
 				287A323B229DBE7100AE6BFA /* sound.h */,
 				287A3245229DBFBA00AE6BFA /* spritegn.h */,
+				28DFCC432E6009AA00AE2461 /* sv_immer.cpp */,
 				283D4BCE229E0CD400D68A47 /* sv_main.cpp */,
 				283D4BEF229E168300D68A47 /* sv_move.cpp */,
 				283D4B85229DD85500D68A47 /* sv_phys.cpp */,
@@ -1232,6 +1238,7 @@
 				2875DC432A6CC66800EED860 /* sys_visionos.cpp in Sources */,
 				289DCF172A8030E8005A4D55 /* DirectRect.cpp in Sources */,
 				2875DC372A6CA3DA00EED860 /* keys.cpp in Sources */,
+				28DFCC452E6009AA00AE2461 /* sv_immer.cpp in Sources */,
 				2847C6922A8AACFD000A839F /* MainScene.swift in Sources */,
 				2875DC182A6CA3DA00EED860 /* r_main.cpp in Sources */,
 				2875DC242A6CA3DA00EED860 /* cl_main.cpp in Sources */,
@@ -1376,6 +1383,7 @@
 				28BA2A8D229F403C001830E9 /* mathlib.cpp in Sources */,
 				2875EBEA2A78C2C600F66CDB /* Engine.mm in Sources */,
 				28BA2A87229F403C001830E9 /* d_surf.cpp in Sources */,
+				28DFCC472E6009AA00AE2461 /* sv_immer.cpp in Sources */,
 				28BA2A84229F403C001830E9 /* d_scan.cpp in Sources */,
 				28BA2A8B229F403C001830E9 /* host_cmd.cpp in Sources */,
 				28BA2AAD229F403C001830E9 /* world.cpp in Sources */,
@@ -1466,6 +1474,7 @@
 				282AF304250E774A00E171DA /* view.cpp in Sources */,
 				282AF2F8250E773500E171DA /* r_sprite.cpp in Sources */,
 				28E95FAA260C50A0000DDF6C /* cd_ios.cpp in Sources */,
+				28DFCC462E6009AA00AE2461 /* sv_immer.cpp in Sources */,
 				2884738028E33D9E00B8A885 /* d_polycl.cpp in Sources */,
 				282AF2D9250E770A00E171DA /* d_sprite.cpp in Sources */,
 				282AF2D2250E770A00E171DA /* d_init.cpp in Sources */,
@@ -1560,6 +1569,7 @@
 				287A322A229DBC4D00AE6BFA /* vid_null.cpp in Sources */,
 				283D4B9B229DE45D00D68A47 /* d_surf.cpp in Sources */,
 				283D4B8A229DD8CF00D68A47 /* cl_demo.cpp in Sources */,
+				28DFCC442E6009AA00AE2461 /* sv_immer.cpp in Sources */,
 				283D4BEC229E141E00D68A47 /* net_loop.cpp in Sources */,
 				283D4BAD229DF5B900D68A47 /* sv_user.cpp in Sources */,
 				283D4BDE229E102700D68A47 /* d_polyse.cpp in Sources */,

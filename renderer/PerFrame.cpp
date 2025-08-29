@@ -1838,7 +1838,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulent.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			auto time = (float)cl.time;
+			auto time = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulent.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
 			VkDeviceSize indexBase = 0;
 			for (auto t = 0; t < appState.Scene.turbulent.sorted.count; t++)
@@ -1872,7 +1872,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRGBA.indexBase, VK_INDEX_TYPE_UINT32);
 			}
 			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
+			pushConstants[5] = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			VkDeviceSize indexBase = 0;
             for (auto t = 0; t < appState.Scene.turbulentRGBA.sorted.count; t++)
@@ -1905,7 +1905,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentLit.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			auto time = (float)cl.time;
+			auto time = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentLit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
 			appState.Scene.turbulentLit.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -1932,7 +1932,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
 			}
 			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
+			pushConstants[5] = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			appState.Scene.turbulentColoredLights.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -1959,7 +1959,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRGBALit.indexBase, VK_INDEX_TYPE_UINT32);
 			}
 			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
+			pushConstants[5] = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRGBALit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			appState.Scene.turbulentRGBALit.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -1986,7 +1986,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
 			}
 			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
+			pushConstants[5] = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			appState.Scene.turbulentRGBAColoredLights.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -2742,7 +2742,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotated.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			auto time = (float)cl.time;
+			auto time = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotated.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
 			VkDeviceSize indexBase = 0;
             for (auto t = 0; t < appState.Scene.turbulentRotated.sorted.count; t++)
@@ -2776,7 +2776,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBA.indexBase, VK_INDEX_TYPE_UINT32);
 			}
 			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
+			pushConstants[5] = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBA.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			VkDeviceSize indexBase = 0;
             for (auto t = 0; t < appState.Scene.turbulentRotatedRGBA.sorted.count; t++)
@@ -2809,7 +2809,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedLit.indexBase, VK_INDEX_TYPE_UINT32);
 			}
-			auto time = (float)cl.time;
+			auto time = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedLit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(float), &time);
 			appState.Scene.turbulentRotatedLit.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -2836,7 +2836,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
 			}
 			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
+			pushConstants[5] = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			appState.Scene.turbulentRotatedColoredLights.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -2863,7 +2863,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBALit.indexBase, VK_INDEX_TYPE_UINT32);
 			}
 			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
+			pushConstants[5] = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBALit.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			appState.Scene.turbulentRotatedRGBALit.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -2890,7 +2890,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 				vkCmdBindIndexBuffer(commandBuffer, sortedIndices32->buffer, appState.Scene.turbulentRotatedRGBAColoredLights.indexBase, VK_INDEX_TYPE_UINT32);
 			}
 			SetTintPushConstants(pushConstants);
-			pushConstants[5] = (float)cl.time;
+			pushConstants[5] = (float)appState.FromEngine.time;
 			vkCmdPushConstants(commandBuffer, appState.Scene.turbulentRotatedRGBAColoredLights.pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 6 * sizeof(float), pushConstants);
 			appState.Scene.turbulentRotatedRGBAColoredLights.Render(commandBuffer);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)

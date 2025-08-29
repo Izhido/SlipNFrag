@@ -132,19 +132,22 @@ qboolean SV_RunThink (edict_t *ent, int num)
 		return true;
 
 	qboolean frame_function_entered = false;
-	if (pr_immersive_allowed && pr_exec_client != nullptr && pr_exec_client->immersive_received && ent->v.think == pr_exec_client->immersive_frame_function && ent->v.button0)
+	if (pr_immersive_allowed && pr_exec_client != nullptr && pr_exec_client->immersive.received && ent->v.think == pr_exec_client->immersive.frame_function && ent->v.button0)
 	{
-		VectorCopy (ent->v.origin, pr_exec_client->immersive_backup_origin);
-		VectorAdd (ent->v.origin, pr_exec_client->immersive_origin_delta, ent->v.origin);
-		if (pr_exec_client->immersive_left_handed || pr_exec_client->immersive_right_handed)
+		VectorCopy (ent->v.origin, pr_exec_client->immersive.backup_origin);
+		if (pr_exec_client->immersive.left_handed || pr_exec_client->immersive.right_handed)
 		{
-			VectorAdd (ent->v.origin, pr_exec_client->immersive_dominant_delta, ent->v.origin);
-			VectorCopy (ent->v.v_angle, pr_exec_client->immersive_backup_angles);
-			VectorCopy (pr_exec_client->immersive_dominant_angles, ent->v.v_angle);
-			VectorCopy (pr_global_struct->v_forward, pr_exec_client->immersive_backup_forward);
-			VectorCopy (pr_global_struct->v_right, pr_exec_client->immersive_backup_right);
-			VectorCopy (pr_global_struct->v_up, pr_exec_client->immersive_backup_up);
+			VectorAdd (ent->v.origin, pr_exec_client->immersive.dominant_delta, ent->v.origin);
+			VectorCopy (ent->v.v_angle, pr_exec_client->immersive.backup_angles);
+			VectorCopy (pr_exec_client->immersive.dominant_angles, ent->v.v_angle);
+			VectorCopy (pr_global_struct->v_forward, pr_exec_client->immersive.backup_forward);
+			VectorCopy (pr_global_struct->v_right, pr_exec_client->immersive.backup_right);
+			VectorCopy (pr_global_struct->v_up, pr_exec_client->immersive.backup_up);
 			AngleVectors (ent->v.v_angle, pr_global_struct->v_forward, pr_global_struct->v_right, pr_global_struct->v_up);
+		}
+		else
+		{
+			VectorAdd (ent->v.origin, pr_exec_client->immersive.origin_delta, ent->v.origin);
 		}
 		frame_function_entered = true;
 	}
@@ -166,18 +169,18 @@ qboolean SV_RunThink (edict_t *ent, int num)
 
 	if (frame_function_entered)
 	{
-		VectorCopy (pr_exec_client->immersive_backup_origin, ent->v.origin);
-		if (pr_exec_client->immersive_left_handed || pr_exec_client->immersive_right_handed)
+		VectorCopy (pr_exec_client->immersive.backup_origin, ent->v.origin);
+		if (pr_exec_client->immersive.left_handed || pr_exec_client->immersive.right_handed)
 		{
-			VectorCopy (pr_exec_client->immersive_backup_angles, ent->v.v_angle);
-			VectorCopy (pr_exec_client->immersive_backup_forward, pr_global_struct->v_forward);
-			VectorCopy (pr_exec_client->immersive_backup_right, pr_global_struct->v_right);
-			VectorCopy (pr_exec_client->immersive_backup_up, pr_global_struct->v_up);
+			VectorCopy (pr_exec_client->immersive.backup_angles, ent->v.v_angle);
+			VectorCopy (pr_exec_client->immersive.backup_forward, pr_global_struct->v_forward);
+			VectorCopy (pr_exec_client->immersive.backup_right, pr_global_struct->v_right);
+			VectorCopy (pr_exec_client->immersive.backup_up, pr_global_struct->v_up);
 		}
 		if (ent->v.think != pr_player_run_function && ent->v.button0)
-			pr_exec_client->immersive_frame_function = ent->v.think;
+			pr_exec_client->immersive.frame_function = ent->v.think;
 		else
-			pr_exec_client->immersive_frame_function = -1;
+			pr_exec_client->immersive.frame_function = -1;
 	}
 
 	return !ent->free;

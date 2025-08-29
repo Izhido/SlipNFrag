@@ -80,8 +80,8 @@ void client_t::Clear()
 	old_frags = 0;
 	protocol_version = 0;
 	serverinfo_protocol_offset = 0;
-	immersive_received = false;
-	immersive_frame_function = -1;
+	immersive.received = false;
+	immersive.frame_function = -1;
 }
 
 //============================================================================
@@ -867,10 +867,10 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, client_t *client
 //	if (ent->v.weapon)
 		bits |= SU_WEAPON;
 
-	if (client->immersive_received)
+	if (client->immersive.received)
 	{
 		bits |= SU_IMMERSIVE;
-		if (client->immersive_left_handed || client->immersive_right_handed)
+		if (client->immersive.left_handed || client->immersive.right_handed)
 			bits |= SU_IMMERHANDS;
 	}
 
@@ -924,6 +924,15 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, client_t *client
 					break;
 				}
 			}
+		}
+
+		if (bits & SU_IMMERHANDS)
+		{
+			for (i=0 ; i<3 ; i++)
+				MSG_WriteFloat (msg, client->immersive.viewmodel_angle_offset[i]);
+
+			for (i=0 ; i<3 ; i++)
+				MSG_WriteFloat (msg, client->immersive.viewmodel_scale_origin_offset[i]);
 		}
 		return;
 	}
@@ -1642,6 +1651,8 @@ void SV_SpawnServer (char *server)
 	{
 		sv.signon.maxsize = NET_MAXMESSAGE;
 	}
+
+	SV_LoadImmersiveViewmodels ();
 
 	Con_DPrintf ("Server spawned.\n");
 }

@@ -376,7 +376,6 @@ void CL_UpdateTEnts (void)
 			VectorCopy (cl_entities[cl.viewentity].origin, b->start);
 			if (cl.immersive_enabled)
 			{
-				VectorAdd (b->start, cl_immersive_origin_delta, b->start);
 				if (cl.immersive_hands_enabled)
 				{
 					auto hand = Cvar_VariableString ("dominant_hand");
@@ -389,6 +388,10 @@ void CL_UpdateTEnts (void)
 					{
 						VectorAdd (b->start, cl_immersive_left_hand_delta, b->start);
 					}
+				}
+				else
+				{
+					VectorAdd (b->start, cl_immersive_origin_delta, b->start);
 				}
 			}
 		}

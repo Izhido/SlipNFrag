@@ -2711,12 +2711,81 @@ void Scene::GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmod
         size += loaded.colormap.size;
     }
     loaded.isHostColormap = (viewmodel.colormap == nullptr);
-	R_ConcatTransforms (viewmodel.transform2, viewmodel.transform, loaded.transform);
+	RelocateViewmodel(appState, viewmodel, loaded);
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded, VkDeviceSize& size)
 {
 	GetStagingBufferSizeAlias(appState, viewmodel, loaded, size);
+	RelocateViewmodel(appState, viewmodel, loaded);
+}
+
+void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded)
+{
+	if (appState.FromEngine.immersive_hands_enabled && key_dest == key_game)
+	{
+		vec3_t angles;
+		angles[YAW] = appState.FromEngine.viewmodel_angle_offset1;
+		angles[PITCH] = -appState.FromEngine.viewmodel_angle_offset0;
+		angles[ROLL] = appState.FromEngine.viewmodel_angle_offset2;
+		vec3_t forward, right, up;
+		AngleVectors (angles, forward, right, up);
+		float preRotate[3][4] { };
+		for (auto i = 0; i < 3; i++)
+		{
+			preRotate[i][0] = forward[i];
+			preRotate[i][1] = -right[i];
+			preRotate[i][2] = up[i];
+		}
+		float scaling[3][4] { };
+		scaling[0][0] = viewmodel.transform[0][0];
+		scaling[1][1] = viewmodel.transform[1][1];
+		scaling[2][2] = viewmodel.transform[2][2];
+		scaling[0][3] = viewmodel.transform[0][3] + appState.FromEngine.viewmodel_scale_origin_offset0;
+		scaling[1][3] = viewmodel.transform[1][3] + appState.FromEngine.viewmodel_scale_origin_offset1;
+		scaling[2][3] = viewmodel.transform[2][3] + appState.FromEngine.viewmodel_scale_origin_offset2;
+		float transform[3][4] { };
+		R_ConcatTransforms (preRotate, scaling, transform);
+		auto scale = appState.Scale;
+		float yaw;
+		float pitch;
+		float roll;
+		float handDeltaX;
+		float handDeltaY;
+		float handDeltaZ;
+		if (appState.FromEngine.dominant_hand_right)
+		{
+			auto& pose = appState.RightController.SpaceLocation.pose;
+			AppState::AnglesFromQuaternion(pose.orientation, yaw, pitch, roll);
+			handDeltaX = pose.position.x / scale;
+			handDeltaY = -pose.position.z / scale;
+			handDeltaZ = pose.position.y / scale;
+		}
+		else
+		{
+			auto& pose = appState.LeftController.SpaceLocation.pose;
+			AppState::AnglesFromQuaternion(pose.orientation, yaw, pitch, roll);
+			handDeltaX = pose.position.x / scale;
+			handDeltaY = -pose.position.z / scale;
+			handDeltaZ = pose.position.y / scale;
+		}
+		angles[YAW] = yaw * 180 / M_PI + 90;
+		angles[PITCH] = -pitch * 180 / M_PI;
+		angles[ROLL] = -roll * 180 / M_PI;
+		AngleVectors (angles, forward, right, up);
+		float transform2[3][4] { };
+		for (auto i = 0; i < 3; i++)
+		{
+			transform2[i][0] = forward[i];
+			transform2[i][1] = -right[i];
+			transform2[i][2] = up[i];
+		}
+		transform2[0][3] = appState.FromEngine.vieworg0 + handDeltaX;
+		transform2[1][3] = appState.FromEngine.vieworg1 + handDeltaY;
+		transform2[2][3] = appState.FromEngine.vieworg2 + handDeltaZ;
+		R_ConcatTransforms (transform2, transform, loaded.transform);
+		return;
+	}
 	R_ConcatTransforms (viewmodel.transform2, viewmodel.transform, loaded.transform);
 }
 
@@ -2790,6 +2859,15 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     appState.FromEngine.vup0 = d_lists.vup0;
     appState.FromEngine.vup1 = d_lists.vup1;
     appState.FromEngine.vup2 = d_lists.vup2;
+	appState.FromEngine.time = d_lists.time;
+	appState.FromEngine.immersive_hands_enabled = d_lists.immersive_hands_enabled;
+	appState.FromEngine.dominant_hand_right = d_lists.dominant_hand_right;
+	appState.FromEngine.viewmodel_angle_offset0 = d_lists.viewmodel_angle_offset0;
+	appState.FromEngine.viewmodel_angle_offset1 = d_lists.viewmodel_angle_offset1;
+	appState.FromEngine.viewmodel_angle_offset2 = d_lists.viewmodel_angle_offset2;
+	appState.FromEngine.viewmodel_scale_origin_offset0 = d_lists.viewmodel_scale_origin_offset0;
+	appState.FromEngine.viewmodel_scale_origin_offset1 = d_lists.viewmodel_scale_origin_offset1;
+	appState.FromEngine.viewmodel_scale_origin_offset2 = d_lists.viewmodel_scale_origin_offset2;
 
     appState.VertexTransform.m[0] = appState.Scale;
     appState.VertexTransform.m[6] = -appState.Scale;
@@ -3404,7 +3482,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         floorVerticesSize += 3 * 4 * sizeof(float);
     }
-    if (appState.Focused && (key_dest == key_game || key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
+    if (appState.Focused && (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
     {
         if (appState.LeftController.PoseIsValid)
         {

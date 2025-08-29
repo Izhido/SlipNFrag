@@ -172,6 +172,22 @@ void D_SetupFrame (void)
 		d_lists.vup0 = vup[0];
 		d_lists.vup1 = vup[1];
 		d_lists.vup2 = vup[2];
+		d_lists.time = cl.time;
+		d_lists.immersive_hands_enabled = cl.immersive_hands_enabled;
+
+		if (d_lists.immersive_hands_enabled)
+		{
+			auto hand = Cvar_VariableString ("dominant_hand");
+			d_lists.dominant_hand_right = (Q_strncmp(hand, "right", 5) == 0);
+
+			d_lists.viewmodel_angle_offset0 = cl.immersive_viewmodel_angle_offset[0];
+			d_lists.viewmodel_angle_offset1 = cl.immersive_viewmodel_angle_offset[1];
+			d_lists.viewmodel_angle_offset2 = cl.immersive_viewmodel_angle_offset[2];
+
+			d_lists.viewmodel_scale_origin_offset0 = cl.immersive_viewmodel_scale_origin_offset[0];
+			d_lists.viewmodel_scale_origin_offset1 = cl.immersive_viewmodel_scale_origin_offset[1];
+			d_lists.viewmodel_scale_origin_offset2 = cl.immersive_viewmodel_scale_origin_offset[2];
+		}
 	}
 }
 
