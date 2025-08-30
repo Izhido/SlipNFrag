@@ -212,6 +212,7 @@
     <ClCompile Include="..\id1\r_vars.cpp" />
     <ClCompile Include="..\id1\sbar.cpp" />
     <ClCompile Include="..\id1\screen.cpp" />
+    <ClCompile Include="..\id1\sv_immer.cpp" />
     <ClCompile Include="..\id1\sv_main.cpp" />
     <ClCompile Include="..\id1\sv_move.cpp" />
     <ClCompile Include="..\id1\sv_phys.cpp" />

@@ -1598,38 +1598,6 @@ int main(int argc, char* argv[])
 					CHECK(viewCountOutput == viewCapacityInput);
 					CHECK(viewCountOutput == configViews.size());
 
-					appState.LeftController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
-					appState.LeftController.PoseIsValid = false;
-					res = xrLocateSpace(appState.HandSpaces[0], appSpace, frameState.predictedDisplayTime, &appState.LeftController.SpaceLocation);
-					CHECK_XRRESULT(res, "xrLocateSpace(appState.HandSpaces[0], appSpace)");
-					if (XR_UNQUALIFIED_SUCCESS(res)) 
-					{
-						if ((appState.LeftController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
-						{
-							appState.LeftController.PoseIsValid = true;
-						}
-					} 
-					else if (appState.ActiveHands[0]) 
-					{
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate left hand action space in app space: %d", res);
-					}
-
-					appState.RightController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
-					appState.RightController.PoseIsValid = false;
-					res = xrLocateSpace(appState.HandSpaces[1], appSpace, frameState.predictedDisplayTime, &appState.RightController.SpaceLocation);
-					CHECK_XRRESULT(res, "xrLocateSpace(appState.HandSpaces[1], appSpace)");
-					if (XR_UNQUALIFIED_SUCCESS(res))
-					{
-						if ((appState.RightController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
-						{
-							appState.RightController.PoseIsValid = true;
-						}
-					}
-					else if (appState.ActiveHands[1])
-					{
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate right hand action space in app space: %d", res);
-					}
-
 					if (appState.ViewMatrices.size() != viewCountOutput)
 					{
 						appState.ViewMatrices.resize(viewCountOutput);
@@ -1653,7 +1621,39 @@ int main(int argc, char* argv[])
 
 					{
 						std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
-						
+
+						appState.LeftController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
+						appState.LeftController.PoseIsValid = false;
+						res = xrLocateSpace(appState.HandSpaces[0], appSpace, frameState.predictedDisplayTime, &appState.LeftController.SpaceLocation);
+						CHECK_XRRESULT(res, "xrLocateSpace(appState.HandSpaces[0], appSpace)");
+						if (XR_UNQUALIFIED_SUCCESS(res))
+						{
+							if ((appState.LeftController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+							{
+								appState.LeftController.PoseIsValid = true;
+							}
+						}
+						else if (appState.ActiveHands[0])
+						{
+							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate left hand action space in app space: %d", res);
+						}
+
+						appState.RightController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
+						appState.RightController.PoseIsValid = false;
+						res = xrLocateSpace(appState.HandSpaces[1], appSpace, frameState.predictedDisplayTime, &appState.RightController.SpaceLocation);
+						CHECK_XRRESULT(res, "xrLocateSpace(appState.HandSpaces[1], appSpace)");
+						if (XR_UNQUALIFIED_SUCCESS(res))
+						{
+							if ((appState.RightController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+							{
+								appState.RightController.PoseIsValid = true;
+							}
+						}
+						else if (appState.ActiveHands[1])
+						{
+							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate right hand action space in app space: %d", res);
+						}
+
 						appState.CameraLocation.type = XR_TYPE_SPACE_LOCATION;
 						res = xrLocateSpace(screenSpace, appSpace, frameState.predictedDisplayTime, &appState.CameraLocation);
 						CHECK_XRRESULT(res, "xrLocateSpace(screenSpace, appSpace)");
@@ -1661,37 +1661,7 @@ int main(int argc, char* argv[])
 
 						if (appState.CameraLocationIsValid)
 						{
-							auto x = appState.CameraLocation.pose.orientation.x;
-							auto y = appState.CameraLocation.pose.orientation.y;
-							auto z = appState.CameraLocation.pose.orientation.z;
-							auto w = appState.CameraLocation.pose.orientation.w;
-
-							float Q[3] = { x, y, z };
-							float ww = w * w;
-							float Q11 = Q[1] * Q[1];
-							float Q22 = Q[0] * Q[0];
-							float Q33 = Q[2] * Q[2];
-							const float psign = -1;
-							float s2 = psign * 2 * (psign * w * Q[0] + Q[1] * Q[2]);
-							const float singularityRadius = 1e-12;
-							if (s2 < singularityRadius - 1)
-							{
-								appState.Yaw = 0;
-								appState.Pitch = -M_PI / 2;
-								appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
-							}
-							else if (s2 > 1 - singularityRadius)
-							{
-								appState.Yaw = 0;
-								appState.Pitch = M_PI / 2;
-								appState.Roll = atan2(2 * (psign * Q[1] * Q[0] + w * Q[2]), ww + Q22 - Q11 - Q33);
-							}
-							else
-							{
-								appState.Yaw = -(atan2(-2 * (w * Q[1] - psign * Q[0] * Q[2]), ww + Q33 - Q11 - Q22));
-								appState.Pitch = asin(s2);
-								appState.Roll = atan2(2 * (w * Q[2] - psign * Q[1] * Q[0]), ww + Q11 - Q22 - Q33);
-							}
+							AppState::AnglesFromQuaternion(appState.CameraLocation.pose.orientation, appState.Yaw, appState.Pitch, appState.Roll);
 						}
 
 						float playerHeight = 32;
@@ -1756,10 +1726,10 @@ int main(int argc, char* argv[])
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
 					}
 
-					double clearR = 0;
-					double clearG = 0;
-					double clearB = 0;
-					double clearA = 1;
+					float clearR = 0;
+					float clearG = 0;
+					float clearB = 0;
+					float clearA = 1;
 					
 					auto readClearColor = false;
 					
@@ -1784,10 +1754,10 @@ int main(int argc, char* argv[])
 						if (readClearColor && d_lists.clear_color >= 0)
 						{
 							auto color = d_8to24table[d_lists.clear_color];
-							clearR = (color & 255) / 255.0f;
-							clearG = (color >> 8 & 255) / 255.0f;
-							clearB = (color >> 16 & 255) / 255.0f;
-							clearA = (color >> 24) / 255.0f;
+							clearR = (float)(color & 255) / 255.0f;
+							clearG = (float)(color >> 8 & 255) / 255.0f;
+							clearB = (float)(color >> 16 & 255) / 255.0f;
+							clearA = (float)(color >> 24) / 255.0f;
 						}
 
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
@@ -2111,7 +2081,7 @@ int main(int argc, char* argv[])
 					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
 					screenLayer.radius = CylinderProjection::radius;
-					screenLayer.aspectRatio = (float)appState.ScreenWidth / appState.ScreenHeight;
+					screenLayer.aspectRatio = (float)appState.ScreenWidth / (float)appState.ScreenHeight;
 					screenLayer.centralAngle = CylinderProjection::horizontalAngle;
 					screenLayer.subImage.swapchain = appState.Screen.swapchain;
 					screenLayer.subImage.imageRect.extent.width = appState.ScreenWidth;

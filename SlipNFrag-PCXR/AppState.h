@@ -116,6 +116,7 @@ struct AppState
 	PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT;
 #endif
 
+	static void AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitch, float& roll);
 	void RenderScreen(ScreenPerFrame& perFrame);
 	void RenderKeyboard(ScreenPerFrame& perFrame);
 };

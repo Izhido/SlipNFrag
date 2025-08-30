@@ -273,6 +273,9 @@
     <ClCompile Include="..\id1\cl_dtran.cpp">
       <Filter>Source Files\id1</Filter>
     </ClCompile>
+    <ClCompile Include="..\id1\sv_immer.cpp">
+      <Filter>Source Files\id1</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppState.h">

@@ -56,6 +56,7 @@ void runEngine(AppState* appState)
 			{
 				VID_ReallocSurfCache();
 			}
+			cl_allow_immersive = false;
 			auto updated = Host_FrameUpdate(frame_lapse);
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
@@ -79,22 +80,52 @@ void runEngine(AppState* appState)
 		}
 		else if (mode == AppWorldMode)
 		{
-			float positionX;
-			float positionY;
-			float positionZ;
-			float scale;
 			float yaw;
 			float pitch;
 			float roll;
+			float originDeltaX;
+			float originDeltaY;
+			float originDeltaZ;
+			bool handsAvailable;
+			float leftHandYaw;
+			float leftHandPitch;
+			float leftHandRoll;
+			float leftHandDeltaX;
+			float leftHandDeltaY;
+			float leftHandDeltaZ;
+			float rightHandYaw;
+			float rightHandPitch;
+			float rightHandRoll;
+			float rightHandDeltaX;
+			float rightHandDeltaY;
+			float rightHandDeltaZ;
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
 				yaw = appState->Yaw * 180 / M_PI + 90;
 				pitch = -appState->Pitch * 180 / M_PI;
 				roll = -appState->Roll * 180 / M_PI;
-				positionX = appState->CameraLocation.pose.position.x;
-				positionY = appState->CameraLocation.pose.position.y;
-				positionZ = appState->CameraLocation.pose.position.z;
-				scale = appState->Scale;
+				auto scale = appState->Scale;
+				originDeltaX = appState->CameraLocation.pose.position.x / scale;
+				originDeltaY = -appState->CameraLocation.pose.position.z / scale;
+				originDeltaZ = appState->CameraLocation.pose.position.y / scale;
+				handsAvailable = (appState->LeftController.PoseIsValid && appState->RightController.PoseIsValid);
+				if (handsAvailable)
+				{
+					AppState::AnglesFromQuaternion(appState->LeftController.SpaceLocation.pose.orientation, leftHandYaw, leftHandPitch, leftHandRoll);
+					leftHandYaw = leftHandYaw * 180 / M_PI + 90;
+					leftHandPitch = -leftHandPitch * 180 / M_PI;
+					leftHandRoll = -leftHandRoll * 180 / M_PI;
+					leftHandDeltaX = appState->LeftController.SpaceLocation.pose.position.x / scale;
+					leftHandDeltaY = -appState->LeftController.SpaceLocation.pose.position.z / scale;
+					leftHandDeltaZ = appState->LeftController.SpaceLocation.pose.position.y / scale;
+					AppState::AnglesFromQuaternion(appState->RightController.SpaceLocation.pose.orientation, rightHandYaw, rightHandPitch, rightHandRoll);
+					rightHandYaw = rightHandYaw * 180 / M_PI + 90;
+					rightHandPitch = -rightHandPitch * 180 / M_PI;
+					rightHandRoll = -rightHandRoll * 180 / M_PI;
+					rightHandDeltaX = appState->RightController.SpaceLocation.pose.position.x / scale;
+					rightHandDeltaY = -appState->RightController.SpaceLocation.pose.position.z / scale;
+					rightHandDeltaZ = appState->RightController.SpaceLocation.pose.position.y / scale;
+				}
 			}
 			if (appState->PreviousTime < 0)
 			{
@@ -123,6 +154,26 @@ void runEngine(AppState* appState)
 			cl.viewangles[YAW] = yaw;
 			cl.viewangles[PITCH] = pitch;
 			cl.viewangles[ROLL] = roll;
+			cl_allow_immersive = true;
+			cl_immersive_origin_delta[0] = originDeltaX;
+			cl_immersive_origin_delta[1] = originDeltaY;
+			cl_immersive_origin_delta[2] = originDeltaZ;
+			cl_immersive_hands_available = handsAvailable;
+			if (cl_immersive_hands_available)
+			{
+				cl_immersive_left_hand_delta[0] = leftHandDeltaX;
+				cl_immersive_left_hand_delta[1] = leftHandDeltaY;
+				cl_immersive_left_hand_delta[2] = leftHandDeltaZ;
+				cl_immersive_left_hand_angles[YAW] = leftHandYaw;
+				cl_immersive_left_hand_angles[PITCH] = leftHandPitch;
+				cl_immersive_left_hand_angles[ROLL] = leftHandRoll;
+				cl_immersive_right_hand_delta[0] = rightHandDeltaX;
+				cl_immersive_right_hand_delta[1] = rightHandDeltaY;
+				cl_immersive_right_hand_delta[2] = rightHandDeltaZ;
+				cl_immersive_right_hand_angles[YAW] = rightHandYaw;
+				cl_immersive_right_hand_angles[PITCH] = rightHandPitch;
+				cl_immersive_right_hand_angles[ROLL] = rightHandRoll;
+			}
 			auto updated = Host_FrameUpdate(frame_lapse);
 			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:
 			auto previousYaw = cl.viewangles[YAW];
@@ -141,9 +192,9 @@ void runEngine(AppState* appState)
 					appState->Scene.Reset(*appState);
 					appState->Scene.hostClearCount = host_clearcount;
 				}
-				r_modelorg_delta[0] = positionX / scale;
-				r_modelorg_delta[1] = -positionZ / scale;
-				r_modelorg_delta[2] = positionY / scale;
+				r_modelorg_delta[0] = originDeltaX;
+				r_modelorg_delta[1] = originDeltaY;
+				r_modelorg_delta[2] = originDeltaZ;
 				// Setting again view angles just in case the server changed them:
 				cl.viewangles[YAW] = yaw;
 				cl.viewangles[PITCH] = pitch;
