@@ -30,7 +30,7 @@ char	loadname[32];	// for hunk tags
 
 void Mod_LoadSpriteModel (model_t *mod, void *buffer);
 void Mod_LoadBrushModel (model_t *mod, void *buffer);
-void Mod_LoadAliasModel (model_t *mod, void *buffer);
+void Mod_LoadAliasModel (model_t *mod, void *buffer, int buf_size);
 model_t *Mod_LoadModel (model_t *mod, qboolean crash);
 
 std::vector<byte> mod_novis(MAX_MAP_LEAFS/8);
@@ -354,6 +354,8 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash)
 			Sys_Error ("Mod_NumForName: %s not found", mod->name.c_str());
 		return NULL;
 	}
+
+	auto buf_size = (int)contents.size() - 1;
 	
 //
 // allocate a new model
@@ -372,7 +374,7 @@ model_t *Mod_LoadModel (model_t *mod, qboolean crash)
 	switch (LittleLong(*(unsigned *)buf))
 	{
 	case IDPOLYHEADER:
-		Mod_LoadAliasModel (mod, buf);
+		Mod_LoadAliasModel (mod, buf, buf_size);
 		break;
 		
 	case IDSPRITEHEADER:
@@ -2382,7 +2384,7 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 Mod_LoadAliasModel
 =================
 */
-void Mod_LoadAliasModel (model_t *mod, void *buffer)
+void Mod_LoadAliasModel (model_t *mod, void *buffer, int buf_size)
 {
 	int					i;
 	mdl_t				*pmodel, *pinmodel;
@@ -2404,6 +2406,12 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	if (version != ALIAS_VERSION)
 		Sys_Error ("%s has wrong version number (%i should be %i)",
 				 mod->name.c_str(), version, ALIAS_VERSION);
+
+	unsigned short crc;
+	CRC_Init (&crc);
+	for (i=0 ; i<buf_size ; i++)
+		CRC_ProcessByte (&crc, ((byte *)buffer)[i]);
+	mod->alias_crc = crc;
 
 //
 // allocate space for a working header, plus all the data except the frames,

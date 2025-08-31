@@ -3152,6 +3152,10 @@ void M_Draw (void)
 	case m_slist:
 		M_ServerList_Draw ();
 		break;
+
+	case m_immersive:
+		M_Immersive_Draw ();
+		break;
 	}
 
 	if (m_entersound)
@@ -3243,6 +3247,10 @@ void M_Keydown (int key)
 
 	case m_slist:
 		M_ServerList_Key (key);
+		return;
+
+	case m_immersive:
+		M_Immersive_Key (key);
 		return;
 	}
 }

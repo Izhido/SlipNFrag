@@ -383,6 +383,8 @@ typedef struct model_s
 //
 	byte* extradata;		// only access through Mod_Extradata
 
+	unsigned short	alias_crc;
+
 } model_t;
 
 //============================================================================
