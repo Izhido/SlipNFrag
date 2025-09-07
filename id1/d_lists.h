@@ -197,7 +197,7 @@ struct dlists_t
 	float vup2;
 	double time;
 	qboolean immersive_hands_enabled;
-	qboolean dominant_hand_right;
+	qboolean dominant_hand_left;
 	float viewmodel_angle_offset0;
 	float viewmodel_angle_offset1;
 	float viewmodel_angle_offset2;

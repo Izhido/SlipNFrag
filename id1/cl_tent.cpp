@@ -380,13 +380,13 @@ void CL_UpdateTEnts (void)
 				{
 					auto hand = Cvar_VariableString ("dominant_hand");
 
-					if (Q_strncmp(hand, "right", 5) == 0)
+					if (Q_strncmp(hand, "left", 4) == 0)
 					{
-						VectorAdd (b->start, cl_immersive_right_hand_delta, b->start);
+						VectorAdd (b->start, cl_immersive_left_hand_delta, b->start);
 					}
 					else
 					{
-						VectorAdd (b->start, cl_immersive_left_hand_delta, b->start);
+						VectorAdd (b->start, cl_immersive_right_hand_delta, b->start);
 					}
 				}
 				else

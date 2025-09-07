@@ -488,7 +488,7 @@ void SV_ReadClientImmersive (void)
 	auto bits = MSG_ReadByte ();
 	if (bits & IMM_HANDSAVAILABLE)
 	{
-		host_client->immersive.left_handed = ((bits & IMM_LEFTHANDED) == IMM_LEFTHANDED);
+		host_client->immersive.left_handed = (bits & IMM_LEFTHANDED);
 		host_client->immersive.right_handed = !host_client->immersive.left_handed;
 
 		host_client->immersive.dominant_delta[0] = MSG_ReadFloat ();
@@ -678,11 +678,9 @@ void SV_RunClients (void)
 			continue;
 		}
 
-		if (host_client->immersive.received && !SV_ValidImmersiveViewmodel (host_client))
-		{
-			host_client->immersive.left_handed = false;
-			host_client->immersive.right_handed = false;
-		}
+		host_client->immersive.hands_allowed = (pr_immersive_allowed &&
+			host_client->immersive.received &&
+			SV_ValidImmersiveViewmodel (host_client));
 
 		if (!host_client->spawned)
 		{

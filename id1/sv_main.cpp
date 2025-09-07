@@ -84,6 +84,14 @@ void client_t::Clear()
 	immersive.frame_function = -1;
 }
 
+void client_t::StartupClear()
+{
+	Clear();
+	immersive.previous_hands_allowed = false;
+	immersive.previous_left_handed = false;
+	immersive.previous_right_handed = false;
+}
+
 //============================================================================
 
 /*
@@ -358,7 +366,7 @@ void SV_ConnectClient (int clientnum)
 	
 	if (sv.loadgame)
 		memcpy (spawn_parms, client->spawn_parms, sizeof(spawn_parms));
-	client->Clear();
+	client->StartupClear();
 	client->netconnection = netconnection;
 
 	client->name = ED_NewString(12);
@@ -867,10 +875,10 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, client_t *client
 //	if (ent->v.weapon)
 		bits |= SU_WEAPON;
 
-	if (client->immersive.received)
+	if (client->immersive.received && pr_immersive_allowed)
 	{
 		bits |= SU_IMMERSIVE;
-		if (client->immersive.left_handed || client->immersive.right_handed)
+		if (client->immersive.hands_allowed)
 			bits |= SU_IMMERHANDS;
 	}
 

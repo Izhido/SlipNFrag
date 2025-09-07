@@ -178,7 +178,7 @@ void D_SetupFrame (void)
 		if (d_lists.immersive_hands_enabled)
 		{
 			auto hand = Cvar_VariableString ("dominant_hand");
-			d_lists.dominant_hand_right = (Q_strncmp(hand, "right", 5) == 0);
+			d_lists.dominant_hand_left = (Q_strncmp(hand, "left", 4) == 0);
 
 			d_lists.viewmodel_angle_offset0 = cl.immersive_viewmodel_angle_offset[0];
 			d_lists.viewmodel_angle_offset1 = cl.immersive_viewmodel_angle_offset[1];

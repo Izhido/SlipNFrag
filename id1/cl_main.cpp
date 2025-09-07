@@ -782,25 +782,7 @@ void CL_SendCmd (void)
 		{
 			auto hand = Cvar_VariableString ("dominant_hand");
 
-			if (Q_strncmp(hand, "right", 5) == 0)
-			{
-				MSG_WriteByte (&buf, IMM_HANDSAVAILABLE);
-
-				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[0]);
-				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[1]);
-				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[2]);
-				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[0]);
-				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[1]);
-				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[2]);
-
-				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[0]);
-				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[1]);
-				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[2]);
-				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[0]);
-				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[1]);
-				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[2]);
-			}
-			else
+			if (Q_strncmp(hand, "left", 4) == 0)
 			{
 				MSG_WriteByte (&buf, IMM_HANDSAVAILABLE | IMM_LEFTHANDED);
 
@@ -817,6 +799,24 @@ void CL_SendCmd (void)
 				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[0]);
 				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[1]);
 				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[2]);
+			}
+			else
+			{
+				MSG_WriteByte (&buf, IMM_HANDSAVAILABLE);
+
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[0]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[1]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_delta[2]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[0]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[1]);
+				MSG_WriteFloat (&buf, cl_immersive_right_hand_angles[2]);
+
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[0]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[1]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_delta[2]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[0]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[1]);
+				MSG_WriteFloat (&buf, cl_immersive_left_hand_angles[2]);
 			}
 		}
 		else

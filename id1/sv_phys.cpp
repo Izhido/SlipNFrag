@@ -135,7 +135,7 @@ qboolean SV_RunThink (edict_t *ent, int num)
 	if (pr_immersive_allowed && pr_exec_client != nullptr && pr_exec_client->immersive.received && ent->v.think == pr_exec_client->immersive.frame_function && ent->v.button0)
 	{
 		VectorCopy (ent->v.origin, pr_exec_client->immersive.backup_origin);
-		if (pr_exec_client->immersive.left_handed || pr_exec_client->immersive.right_handed)
+		if (pr_exec_client->immersive.hands_allowed)
 		{
 			VectorAdd (ent->v.origin, pr_exec_client->immersive.dominant_delta, ent->v.origin);
 			VectorCopy (ent->v.v_angle, pr_exec_client->immersive.backup_angles);
@@ -170,7 +170,7 @@ qboolean SV_RunThink (edict_t *ent, int num)
 	if (frame_function_entered)
 	{
 		VectorCopy (pr_exec_client->immersive.backup_origin, ent->v.origin);
-		if (pr_exec_client->immersive.left_handed || pr_exec_client->immersive.right_handed)
+		if (pr_exec_client->immersive.hands_allowed)
 		{
 			VectorCopy (pr_exec_client->immersive.backup_angles, ent->v.v_angle);
 			VectorCopy (pr_exec_client->immersive.backup_forward, pr_global_struct->v_forward);
@@ -1785,6 +1785,36 @@ void SV_Physics (void)
 		{
 			ent = EDICT_NUM(i);
 			sequence = sv.edicts_reallocation_sequence;
+		}
+		if (i > 0 && i <= svs.maxclients)
+		{
+			auto* client = &svs.clients[i-1];
+			auto& immer = client->immersive;
+			if (pr_immersive_allowed)
+			{
+				if (!immer.hands_allowed && immer.previous_hands_allowed)
+				{
+					MSG_WriteByte (&client->message, svc_print);
+					MSG_WriteString (&client->message, "\x1Weapon at center\n");
+				}
+				else if (immer.hands_allowed)
+				{
+					if (immer.left_handed && (!immer.previous_left_handed || !immer.previous_hands_allowed))
+					{
+						MSG_WriteByte (&client->message, svc_print);
+						MSG_WriteString (&client->message, "\x1Weapon in left hand\n");
+					}
+					else if (immer.right_handed && (!immer.previous_right_handed || !immer.previous_hands_allowed))
+					{
+						MSG_WriteByte (&client->message, svc_print);
+						MSG_WriteString (&client->message, "\x1Weapon in right hand\n");
+					}
+				}
+			}
+
+			immer.previous_hands_allowed = immer.hands_allowed;
+			immer.previous_left_handed = immer.previous_left_handed;
+			immer.previous_right_handed = immer.right_handed;
 		}
 	}
 	

@@ -13,7 +13,7 @@ struct FromEngine
 	float vup2;
 	double time;
 	bool immersive_hands_enabled;
-	bool dominant_hand_right;
+	bool dominant_hand_left;
 	float viewmodel_angle_offset0;
 	float viewmodel_angle_offset1;
 	float viewmodel_angle_offset2;

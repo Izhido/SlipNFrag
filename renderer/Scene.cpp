@@ -2753,9 +2753,9 @@ void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_
 		float handDeltaX;
 		float handDeltaY;
 		float handDeltaZ;
-		if (appState.FromEngine.dominant_hand_right)
+		if (appState.FromEngine.dominant_hand_left)
 		{
-			auto& pose = appState.RightController.SpaceLocation.pose;
+			auto& pose = appState.LeftController.SpaceLocation.pose;
 			AppState::AnglesFromQuaternion(pose.orientation, yaw, pitch, roll);
 			handDeltaX = pose.position.x / scale;
 			handDeltaY = -pose.position.z / scale;
@@ -2763,7 +2763,7 @@ void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_
 		}
 		else
 		{
-			auto& pose = appState.LeftController.SpaceLocation.pose;
+			auto& pose = appState.RightController.SpaceLocation.pose;
 			AppState::AnglesFromQuaternion(pose.orientation, yaw, pitch, roll);
 			handDeltaX = pose.position.x / scale;
 			handDeltaY = -pose.position.z / scale;
@@ -2861,7 +2861,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     appState.FromEngine.vup2 = d_lists.vup2;
 	appState.FromEngine.time = d_lists.time;
 	appState.FromEngine.immersive_hands_enabled = d_lists.immersive_hands_enabled;
-	appState.FromEngine.dominant_hand_right = d_lists.dominant_hand_right;
+	appState.FromEngine.dominant_hand_left = d_lists.dominant_hand_left;
 	appState.FromEngine.viewmodel_angle_offset0 = d_lists.viewmodel_angle_offset0;
 	appState.FromEngine.viewmodel_angle_offset1 = d_lists.viewmodel_angle_offset1;
 	appState.FromEngine.viewmodel_angle_offset2 = d_lists.viewmodel_angle_offset2;

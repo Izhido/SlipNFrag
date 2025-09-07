@@ -223,7 +223,7 @@ void	Host_FindMaxClients (void)
 	svs.clients.resize(svs.maxclientslimit);
 	for (auto& client : svs.clients)
 	{
-		client.Clear();
+		client.StartupClear();
 	}
 	if (svs.maxclients > 1)
 		Cvar_SetValue ("deathmatch", 1.0);

@@ -347,7 +347,7 @@ int PR_EnterFunction (dfunction_t *f)
 			if (++pr_w_attack_function_called == 1)
 			{
 				VectorCopy (pr_exec_edict->v.origin, pr_exec_client->immersive.backup_origin);
-				if (pr_exec_client->immersive.left_handed || pr_exec_client->immersive.right_handed)
+				if (pr_exec_client->immersive.hands_allowed)
 				{
 					VectorAdd (pr_exec_edict->v.origin, pr_exec_client->immersive.dominant_delta, pr_exec_edict->v.origin);
 					VectorCopy (pr_exec_edict->v.v_angle, pr_exec_client->immersive.backup_angles);
@@ -365,7 +365,7 @@ int PR_EnterFunction (dfunction_t *f)
 			{
 				VectorCopy (pr_exec_edict->v.origin, pr_exec_client->immersive.backup_damage_origin);
 				VectorCopy (pr_exec_client->immersive.backup_origin, pr_exec_edict->v.origin);
-				if (pr_exec_client->immersive.left_handed || pr_exec_client->immersive.right_handed)
+				if (pr_exec_client->immersive.hands_allowed)
 				{
 					VectorCopy (pr_exec_edict->v.v_angle, pr_exec_client->immersive.backup_damage_angles);
 					VectorCopy (pr_exec_client->immersive.backup_angles, pr_exec_edict->v.v_angle);
@@ -402,7 +402,7 @@ int PR_LeaveFunction (void)
 			if (--pr_t_damage_function_called == 0)
 			{
 				VectorCopy (pr_exec_client->immersive.backup_damage_origin, pr_exec_edict->v.origin);
-				if (pr_exec_client->immersive.left_handed || pr_exec_client->immersive.right_handed)
+				if (pr_exec_client->immersive.hands_allowed)
 					VectorCopy (pr_exec_client->immersive.backup_damage_angles, pr_exec_edict->v.v_angle);
 			}
 		}
@@ -412,7 +412,7 @@ int PR_LeaveFunction (void)
 		if (--pr_w_attack_function_called == 0)
 		{
 			VectorCopy (pr_exec_client->immersive.backup_origin, pr_exec_edict->v.origin);
-			if (pr_exec_client->immersive.left_handed || pr_exec_client->immersive.right_handed)
+			if (pr_exec_client->immersive.hands_allowed)
 				VectorCopy (pr_exec_client->immersive.backup_angles, pr_exec_edict->v.v_angle);
 			if (pr_exec_edict->v.think != pr_player_run_function)
 				pr_exec_client->immersive.frame_function = pr_exec_edict->v.think;

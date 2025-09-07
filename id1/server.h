@@ -84,6 +84,7 @@ struct immersive_t
 	vec3_t		backup_right;
 	vec3_t		backup_up;
 	vec3_t		origin_delta;
+	qboolean	hands_allowed;
 	qboolean	left_handed;
 	qboolean	right_handed;
 	vec3_t		dominant_delta;
@@ -95,6 +96,9 @@ struct immersive_t
 	func_t		frame_function;
 	vec3_t		viewmodel_angle_offset;
 	vec3_t		viewmodel_scale_origin_offset;
+	qboolean	previous_hands_allowed;
+	qboolean	previous_left_handed;
+	qboolean	previous_right_handed;
 };
 
 
@@ -139,6 +143,7 @@ struct client_t
 	immersive_t		immersive;
 
 	void Clear();
+	void StartupClear();
 };
 
 
