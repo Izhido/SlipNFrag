@@ -50,6 +50,8 @@ std::string	com_token;
 int		com_argc;
 const char	**com_argv;
 
+std::string com_basedir;
+
 #define CMDLINE_LENGTH	256
 std::string	com_cmdline;
 
@@ -1782,7 +1784,6 @@ COM_InitFilesystem
 void COM_InitFilesystem (void)
 {
 	int             i, j;
-	std::string basedir;
 	searchpath_t    *search;
 
 //
@@ -1792,19 +1793,19 @@ void COM_InitFilesystem (void)
 	i = COM_CheckParm ("-basedir");
 	if (i && i < com_argc-1)
 	{
-		basedir = com_argv[i + 1];
+		com_basedir = com_argv[i + 1];
 	}
 	else
 	{
-		basedir = host_parms.basedir;
+		com_basedir = host_parms.basedir;
 	}
 
-	j = (int)basedir.length();
+	j = (int)com_basedir.length();
 
 	if (j > 0)
 	{
-		if ((basedir[j-1] == '\\') || (basedir[j-1] == '/'))
-			basedir.pop_back();
+		if ((com_basedir[j-1] == '\\') || (com_basedir[j-1] == '/'))
+			com_basedir.pop_back();
 	}
 
 //
@@ -1828,12 +1829,12 @@ void COM_InitFilesystem (void)
 //
 // start up with GAMENAME by default (id1)
 //
-	COM_AddGameDirectory (va("%s/" GAMENAME, basedir.c_str()) );
+	COM_AddGameDirectory (va("%s/" GAMENAME, com_basedir.c_str()) );
 
 	if (COM_CheckParm ("-rogue"))
-		COM_AddGameDirectory (va("%s/rogue", basedir.c_str()) );
+		COM_AddGameDirectory (va("%s/rogue", com_basedir.c_str()) );
 	if (COM_CheckParm ("-hipnotic"))
-		COM_AddGameDirectory (va("%s/hipnotic", basedir.c_str()) );
+		COM_AddGameDirectory (va("%s/hipnotic", com_basedir.c_str()) );
 
 //
 // -game <gamedir>
@@ -1843,7 +1844,7 @@ void COM_InitFilesystem (void)
 	if (i && i < com_argc-1)
 	{
 		com_modified = true;
-		COM_AddGameDirectory (va("%s/%s", basedir.c_str(), com_argv[i+1]));
+		COM_AddGameDirectory (va("%s/%s", com_basedir.c_str(), com_argv[i+1]));
 	}
 
 //

@@ -149,6 +149,8 @@ const char *COM_Parse (const char *data);
 extern	int		com_argc;
 extern	const char	**com_argv;
 
+extern	std::string com_basedir;
+
 int COM_CheckParm (const char *parm);
 void COM_Init (const char *path);
 void COM_InitArgv (int argc, char **argv);
