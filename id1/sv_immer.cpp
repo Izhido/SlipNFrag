@@ -264,6 +264,10 @@ void SV_LoadImmersiveViewmodels (void)
 qboolean SV_ValidImmersiveViewmodel (client_t* client)
 {
 	auto name = client->edict->v.weaponmodel;
+	if (name == 0) return false;
+
+	auto mod_name = pr_strings + name;
+	if (Q_strcmp(mod_name, "") == 0) return false;
 
 	auto mdl = Mod_FindName (pr_strings + name);
 
