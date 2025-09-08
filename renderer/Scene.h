@@ -126,6 +126,8 @@ struct Scene
 	LightmapsRGBToDelete lightmapsRGBToDelete;
 	std::vector<LightmapRGBChain> lightmapRGBChains;
 	std::unordered_map<void*, size_t> lightmapRGBChainTexturesInUse;
+	std::vector<VkDescriptorBufferInfo> lightmapDescriptorInfos;
+	std::vector<VkWriteDescriptorSet> lightmapDescriptorWrites;
 	std::vector<CachedSharedMemoryTextures> surfaceTextures;
 	std::vector<CachedSharedMemoryTextures> surfaceRGBATextures;
 	CachedSharedMemoryTextures textures;
@@ -135,7 +137,6 @@ struct Scene
 	Texture floorTexture;
 	Texture controllerTexture;
 	VkSampler sampler;
-	VkSampler lightmapSampler;
 	std::vector<std::list<UsedInSharedMemory>> latestMemory;
 	SharedMemoryBuffer* latestIndexBuffer8;
 	VkDeviceSize usedInLatestIndexBuffer8;
@@ -199,6 +200,8 @@ struct Scene
 	static VkDeviceSize GetAllocatedFor(int width, int height);
 	static uint32_t GetLayerCountFor(int width, int height);
     static void CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded);
+	void AddLightmapToDescriptorWrites(AppState& appState, Lightmap* lightmap);
+	void AddLightmapRGBToDescriptorWrites(AppState& appState, LightmapRGB* lightmap);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmap& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmapRGB& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulent& loaded, VkDeviceSize& size);

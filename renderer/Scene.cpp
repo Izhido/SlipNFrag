@@ -1546,11 +1546,6 @@ void Scene::Create(AppState& appState)
 	samplerCreateInfo.maxLod = VK_LOD_CLAMP_NONE;
 	CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &sampler));
 
-    samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &lightmapSampler));
-
     auto screenImageCount = appState.Screen.swapchainImages.size();
 
 	VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
@@ -1754,12 +1749,46 @@ void Scene::CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded)
 	loaded.vertices = perSurface.vertices.data();
 }
 
+void Scene::AddLightmapToDescriptorWrites(AppState& appState, Lightmap* lightmap)
+{
+	lightmapDescriptorInfos.push_back({ });
+	auto& bufferInfo = lightmapDescriptorInfos.back();
+	bufferInfo.range = VK_WHOLE_SIZE;
+	bufferInfo.buffer = lightmap->buffer->buffer.buffer;
+
+	lightmapDescriptorWrites.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET });
+	auto& write = lightmapDescriptorWrites.back();
+	write.descriptorCount = 1;
+	write.dstSet = lightmap->buffer->descriptorSet;
+	// write.pBufferInfo is not written here - it depends on the dynamic contents of lightmapDescriptorInfos...
+	write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+}
+
+void Scene::AddLightmapRGBToDescriptorWrites(AppState& appState, LightmapRGB* lightmap)
+{
+	lightmapDescriptorInfos.push_back({ });
+	auto& bufferInfo = lightmapDescriptorInfos.back();
+	bufferInfo.range = VK_WHOLE_SIZE;
+	bufferInfo.buffer = lightmap->buffer->buffer.buffer;
+
+	lightmapDescriptorWrites.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET });
+	auto& write = lightmapDescriptorWrites.back();
+	write.descriptorCount = 1;
+	write.dstSet = lightmap->buffer->descriptorSet;
+	// write.pBufferInfo is not written here - it depends on the dynamic contents of lightmapDescriptorInfos...
+	write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+}
+
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmap& loaded, VkDeviceSize& size)
 {
 	if (perSurface.lightmap == nullptr)
 	{
 		perSurface.lightmap = new Lightmap { };
-		perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		auto addToWrites = perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		if (addToWrites)
+		{
+			AddLightmapToDescriptorWrites(appState, perSurface.lightmap);
+		}
 		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
@@ -1785,7 +1814,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		lightmapsToDelete.Dispose(perSurface.lightmap);
 		perSurface.lightmap = new Lightmap { };
-		perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		auto addToWrites = perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		if (addToWrites)
+		{
+			AddLightmapToDescriptorWrites(appState, perSurface.lightmap);
+		}
 		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
@@ -1819,7 +1852,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	if (perSurface.lightmapRGB == nullptr)
 	{
 		perSurface.lightmapRGB = new LightmapRGB { };
-		perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		auto addToWrites = perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		if (addToWrites)
+		{
+			AddLightmapRGBToDescriptorWrites(appState, perSurface.lightmapRGB);
+		}
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
@@ -1845,7 +1882,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		lightmapsRGBToDelete.Dispose(perSurface.lightmapRGB);
 		perSurface.lightmapRGB = new LightmapRGB { };
-		perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		auto addToWrites = perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		if (addToWrites)
+		{
+			AddLightmapRGBToDescriptorWrites(appState, perSurface.lightmapRGB);
+		}
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
@@ -2890,6 +2931,10 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         colormapSize = 16384;
         size += colormapSize;
     }
+
+	lightmapDescriptorWrites.clear();
+	lightmapDescriptorInfos.clear();
+
     surfaces.SetBases(sortedVerticesSize, sortedIndicesCount);
     SortedSurfaces::Initialize(surfaces.sorted);
     for (auto i = 0; i <= surfaces.last; i++)

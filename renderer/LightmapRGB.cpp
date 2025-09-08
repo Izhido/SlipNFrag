@@ -4,7 +4,7 @@
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
-void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, void* texture)
+bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, void* texture)
 {
 	this->width = width;
 	this->height = height;
@@ -76,17 +76,10 @@ void LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, vo
 
 		buffer->referenceCount++;
 
-		VkDescriptorBufferInfo bufferInfo { };
-		bufferInfo.range = VK_WHOLE_SIZE;
-		bufferInfo.buffer = buffer->buffer.buffer;
-
-		VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-		write.descriptorCount = 1;
-		write.dstSet = buffer->descriptorSet;
-		write.pBufferInfo = &bufferInfo;
-		write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		vkUpdateDescriptorSets(appState.Device, 1, &write, 0, nullptr);
+		return true;
 	}
+
+	return false;
 }
 
 void LightmapRGB::Delete(AppState& appState) const

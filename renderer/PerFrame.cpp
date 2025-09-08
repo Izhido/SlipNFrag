@@ -1554,6 +1554,15 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
         vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
         previousSortedAttributes = sortedAttributes;
     }
+	if (!appState.Scene.lightmapDescriptorWrites.empty())
+	{
+		auto size = appState.Scene.lightmapDescriptorWrites.size();
+		for (size_t i = 0; i < size; i++)
+		{
+			appState.Scene.lightmapDescriptorWrites[i].pBufferInfo = &appState.Scene.lightmapDescriptorInfos[i];
+		}
+		vkUpdateDescriptorSets(appState.Device, (int)size, appState.Scene.lightmapDescriptorWrites.data(), 0, nullptr);
+	}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	VkDebugUtilsLabelEXT renderLabel { VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT };
 	renderLabel.pLabelName = "Render";

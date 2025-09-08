@@ -2712,7 +2712,6 @@ void android_main(struct android_app* app)
 				appState.RenderPass = VK_NULL_HANDLE;
 			}
 
-			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
 			if (appState.Scene.sampler != VK_NULL_HANDLE)
 			{
 				vkDestroySampler(appState.Device, appState.Scene.sampler, nullptr);
