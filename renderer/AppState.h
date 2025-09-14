@@ -1,18 +1,16 @@
 #pragma once
 
-#include "vid_oxr.h"
-#include "d_lists.h"
 #include "AppMode.h"
 #include <common/xr_dependencies.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
+#include "quakedef.h"
+#include "d_lists.h"
 #include "Keyboard.h"
 #include "Scene.h"
-#include "FileLoader.h"
 #include "FromEngine.h"
-#include "PerFrame.h"
-#include <thread>
 #include "Controller.h"
+#include <thread>
 
 struct AppState
 {
@@ -31,10 +29,10 @@ struct AppState
 	VkPhysicalDeviceMemoryProperties MemoryProperties;
 	int DefaultFOV;
 	int FOV;
-    float SkyLeft;
-    float SkyHorizontal;
-    float SkyTop;
-    float SkyVertical;
+	float SkyLeft;
+	float SkyHorizontal;
+	float SkyTop;
+	float SkyVertical;
 	VkRect2D SwapchainRect;
 	uint32_t SwapchainSampleCount;
 	std::vector<XrSwapchainImageVulkan2KHR> SwapchainImages;
@@ -47,7 +45,7 @@ struct AppState
 	float KeyboardHitOffsetY;
 	XrSwapchain LeftArrowsSwapchain;
 	XrSwapchain RightArrowsSwapchain;
-    FileLoader* FileLoader;
+	struct FileLoader* FileLoader;
 	Scene Scene;
 	FromEngine FromEngine;
 	std::unordered_map<uint32_t, PerFrame> PerFrame;
@@ -62,7 +60,7 @@ struct AppState
 	float Roll;
 	float DistanceToFloor;
 	float Scale;
-    XrMatrix4x4f VertexTransform;
+	XrMatrix4x4f VertexTransform;
 	int ScreenWidth;
 	int ScreenHeight;
 	int ConsoleWidth;
@@ -105,19 +103,15 @@ struct AppState
 	XrSpaceLocation CameraLocation;
 	bool CameraLocationIsValid;
 	bool Focused;
-	pid_t EngineThreadId;
-	pid_t RenderThreadId;
-	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
 	VkImageMemoryBarrier copyBarrier;
 	VkImageMemoryBarrier submitBarrier;
-	bool CallExitFunction;
-	bool NoGameDataLoaded;
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
 	PFN_vkCmdBeginDebugUtilsLabelEXT vkCmdBeginDebugUtilsLabelEXT;
 	PFN_vkCmdInsertDebugUtilsLabelEXT vkCmdInsertDebugUtilsLabelEXT;
 	PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT;
 #endif
+	bool NoGameDataLoaded;
 
 	static void AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitch, float& roll);
 	void RenderScreen(ScreenPerFrame& perFrame);

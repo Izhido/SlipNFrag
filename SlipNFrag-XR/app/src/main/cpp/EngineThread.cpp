@@ -1,6 +1,7 @@
 #include "EngineThread.h"
-#include "AppState.h"
+#include "AppState_oxr.h"
 #include "sys_oxr.h"
+#include "vid_oxr.h"
 #include "AppInput.h"
 #include "r_local.h"
 #include <pthread.h>
@@ -10,7 +11,7 @@
 #include <android_native_app_glue.h>
 #include "Locks.h"
 
-void runEngine(AppState* appState, struct android_app* app)
+void runEngine(AppState_oxr* appState, struct android_app* app)
 {
 	prctl(PR_SET_NAME, (long)"runEngine", 0, 0, 0);
 

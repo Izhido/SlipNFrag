@@ -2,9 +2,10 @@
 #include <locale>
 #include <android/log.h>
 #include <cmath>
-#include "AppState.h"
+#include "AppState_oxr.h"
 #include <map>
 #include "sys_oxr.h"
+#include "vid_oxr.h"
 #include "r_local.h"
 #include "EngineThread.h"
 #include "in_oxr.h"
@@ -18,6 +19,7 @@
 #include <unistd.h>
 #include <android_native_app_glue.h>
 #include "Locks.h"
+#include "FileLoader_oxr.h"
 
 extern int sound_started;
 
@@ -150,7 +152,7 @@ static VkBool32 DebugMessengerCallback(
 
 static void AppHandleCommand(struct android_app* app, int32_t cmd)
 {
-	auto appState = (AppState*)app->userData;
+	auto appState = (AppState_oxr*)app->userData;
 	double delta;
 
 	switch (cmd)
@@ -209,7 +211,7 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 	}
 }
 
-AppState appState { -1, -1, -1 };
+AppState_oxr appState { -1, -1, -1 };
 
 void android_main(struct android_app* app)
 {
@@ -1222,7 +1224,7 @@ void android_main(struct android_app* app)
 
 		XrEventDataBuffer eventDataBuffer { };
 
-        appState.FileLoader = new FileLoader(app);
+        appState.FileLoader = new FileLoader_oxr(app);
 
         appState.VertexTransform.m[15] = 1;
 
@@ -1273,7 +1275,7 @@ void android_main(struct android_app* app)
 						const XrSessionState oldState = sessionState;
 						sessionState = sessionStateChangedEvent.state;
 
-						__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "XrEventDataSessionStateChanged: state %s->%s session=%lld time=%lld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
+						__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "XrEventDataSessionStateChanged: state %s->%s session=%p time=%ld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
 
 						if ((sessionStateChangedEvent.session != XR_NULL_HANDLE) && (sessionStateChangedEvent.session != appState.Session))
 						{
@@ -2780,6 +2782,7 @@ void android_main(struct android_app* app)
 			appState.Scene.controllers.Delete(appState);
 			appState.Scene.skyRGBA.Delete(appState);
 			appState.Scene.sky.Delete(appState);
+			appState.Scene.cutout.Delete(appState);
 			appState.Scene.colored.Delete(appState);
 			appState.Scene.particles.Delete(appState);
 			appState.Scene.viewmodelsHoleyColoredLights.Delete(appState);

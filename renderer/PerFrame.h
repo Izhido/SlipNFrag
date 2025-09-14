@@ -73,7 +73,7 @@ struct PerFrame
     Buffer* previousSortedAttributes;
 
 	static float GammaCorrect(float component);
-	static byte AveragePixels(std::vector<byte>& pixdata);
+	static unsigned char AveragePixels(std::vector<unsigned char>& pixdata);
 	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void LoadNonStagedResources(AppState& appState);

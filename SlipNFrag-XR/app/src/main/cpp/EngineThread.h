@@ -1,5 +1,3 @@
 #pragma once
 
-struct AppState;
-
-void runEngine(AppState* appState, struct android_app* app);
+void runEngine(struct AppState_oxr* appState, struct android_app* app);

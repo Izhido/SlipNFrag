@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-struct AppState;
-
 struct AppInput
 {
 	int key;
@@ -16,5 +14,5 @@ struct AppInput
 
 	static void AddKeyInput(int key, int down);
 	static void AddCommandInput(const char* command);
-	static void Handle(AppState& appState, bool triggerHandled);
+	static void Handle(struct AppState_oxr& appState, bool triggerHandled);
 };

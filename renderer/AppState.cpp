@@ -1,4 +1,5 @@
 #include "AppState.h"
+#include "vid_oxr.h"
 #include "Constants.h"
 #include "DirectRect.h"
 #include "Locks.h"

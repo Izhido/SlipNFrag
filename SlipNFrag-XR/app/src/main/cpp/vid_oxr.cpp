@@ -1,3 +1,4 @@
+#include "quakedef.h"
 #include "vid_oxr.h"
 #include "d_local.h"
 #include "DirectRect.h"
@@ -11,10 +12,10 @@ int con_width;
 int con_height;
 std::vector<short> zbuffer;
 std::vector<byte> surfcache;
-int pal_changed;
 
 unsigned short d_8to16table[256];
 unsigned d_8to24table[256];
+int d_palchangecount;
 
 extern unsigned int sys_randseed;
 
@@ -43,7 +44,7 @@ void VID_SetPalette(unsigned char *palette)
         *table++ = v;
     }
     d_8to24table[255] &= 0xFFFFFF;    // 255 is transparent
-    pal_changed++;
+    d_palchangecount++;
 }
 
 void VID_ShiftPalette(unsigned char *palette)
@@ -75,7 +76,7 @@ void VID_Init(unsigned char* /*palette*/)
     int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
     surfcache.resize(surfcachesize);
     D_InitCaches(surfcache.data(), (int)surfcache.size());
-    pal_changed = 0;
+    d_palchangecount = 0;
 }
 
 void VID_Resize(float forced_aspect)

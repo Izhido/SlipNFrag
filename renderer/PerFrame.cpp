@@ -22,7 +22,7 @@ float PerFrame::GammaCorrect(float component)
 	return std::pow((component + 0.055f) / 1.055f, 2.4f);
 }
 
-byte PerFrame::AveragePixels(std::vector<byte>& pixdata)
+unsigned char PerFrame::AveragePixels(std::vector<unsigned char>& pixdata)
 {
 	int        r,g,b;
 	int        i;
@@ -31,7 +31,7 @@ byte PerFrame::AveragePixels(std::vector<byte>& pixdata)
 	int        dr, dg, db;
 	int        bestdistortion, distortion;
 	int        bestcolor;
-	byte    *pal;
+	unsigned char *pal;
 	int        e;
 
 	vis = 0;
@@ -97,7 +97,7 @@ byte PerFrame::AveragePixels(std::vector<byte>& pixdata)
 
 void PerFrame::GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture)
 {
-	byte* source = nullptr;
+	unsigned char* source = nullptr;
 	int sourceMipWidth = 0;
 	int sourceMipHeight = 0;
 	auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
@@ -122,7 +122,7 @@ void PerFrame::GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, Loade
 		}
 		mips--;
 	}
-	std::vector<byte> pixdata;
+	std::vector<unsigned char> pixdata;
 	auto mipLevels = (int)(std::floor(std::log2(std::max(sourceMipWidth, sourceMipHeight)))) + 1;
 	for (auto miplevel = 1 ; miplevel<mipLevels ; miplevel++)
 	{
