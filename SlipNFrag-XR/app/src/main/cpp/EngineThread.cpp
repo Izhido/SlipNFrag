@@ -1,7 +1,7 @@
 #include "EngineThread.h"
 #include "AppState.h"
 #include "sys_oxr.h"
-#include "Input.h"
+#include "AppInput.h"
 #include "r_local.h"
 #include <pthread.h>
 #include <sys/prctl.h>
@@ -26,9 +26,9 @@ void runEngine(AppState* appState, struct android_app* app)
 		}
 		{
 			std::lock_guard<std::mutex> lock(Locks::InputMutex);
-			for (auto i = 0; i <= Input::lastInputQueueItem; i++)
+			for (auto i = 0; i <= AppInput::lastInputQueueItem; i++)
 			{
-				auto& input = Input::inputQueue[i];
+				auto& input = AppInput::inputQueue[i];
 				if (input.key > 0)
 				{
 					Key_Event(input.key, input.down);
@@ -38,7 +38,7 @@ void runEngine(AppState* appState, struct android_app* app)
 					Cmd_ExecuteString(input.command.c_str(), src_command);
 				}
 			}
-			Input::lastInputQueueItem = -1;
+			AppInput::lastInputQueueItem = -1;
 		}
 		AppMode mode;
 		{

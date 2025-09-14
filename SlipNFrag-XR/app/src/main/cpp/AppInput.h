@@ -5,13 +5,13 @@
 
 struct AppState;
 
-struct Input
+struct AppInput
 {
 	int key;
 	int down;
 	std::string command;
 
-	static std::vector<Input> inputQueue;
+	static std::vector<AppInput> inputQueue;
 	static int lastInputQueueItem;
 
 	static void AddKeyInput(int key, int down);

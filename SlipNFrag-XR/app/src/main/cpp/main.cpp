@@ -1,20 +1,15 @@
 #include <jni.h>
-#include <string>
 #include <locale>
 #include <android/log.h>
-#include <array>
-#include <vector>
 #include <cmath>
 #include "AppState.h"
-#include <list>
 #include <map>
 #include "sys_oxr.h"
 #include "r_local.h"
 #include "EngineThread.h"
 #include "in_oxr.h"
-#include <common/xr_linear.h>
 #include "Utils.h"
-#include "Input.h"
+#include "AppInput.h"
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 #include "CylinderProjection.h"
@@ -507,7 +502,7 @@ void android_main(struct android_app* app)
 			appInfo.applicationVersion = 1;
 			appInfo.pEngineName = "slipnfrag_xr";
 			appInfo.engineVersion = 1;
-			appInfo.apiVersion = VK_MAKE_API_VERSION(0, 1, 1, 0);
+			appInfo.apiVersion = USE_VULKAN_VERSION;
 
 			VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 			instInfo.pApplicationInfo = &appInfo;
@@ -1411,7 +1406,7 @@ void android_main(struct android_app* app)
 			CHECK_XRCMD(xrSyncActions(appState.Session, &syncInfo));
 
 			auto keyPressHandled = appState.Keyboard.Handle(appState);
-			Input::Handle(appState, keyPressHandled);
+			AppInput::Handle(appState, keyPressHandled);
 
 			XrActionStatePose poseState { XR_TYPE_ACTION_STATE_POSE };
 
@@ -1571,10 +1566,10 @@ void android_main(struct android_app* app)
 						Joy_AdvancedUpdate_f();
 
 						// The following is to prevent having stuck arrow keys at transition time:
-						Input::AddKeyInput(K_DOWNARROW, false);
-						Input::AddKeyInput(K_UPARROW, false);
-						Input::AddKeyInput(K_LEFTARROW, false);
-						Input::AddKeyInput(K_RIGHTARROW, false);
+						AppInput::AddKeyInput(K_DOWNARROW, false);
+						AppInput::AddKeyInput(K_UPARROW, false);
+						AppInput::AddKeyInput(K_LEFTARROW, false);
+						AppInput::AddKeyInput(K_RIGHTARROW, false);
 
 						vid_width = (int)appState.EyeTextureMaxDimension;
 						vid_height = (int)appState.EyeTextureMaxDimension;

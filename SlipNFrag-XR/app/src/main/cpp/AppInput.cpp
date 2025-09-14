@@ -1,4 +1,4 @@
-#include "Input.h"
+#include "AppInput.h"
 #include "AppState.h"
 #include "in_oxr.h"
 #include "Utils.h"
@@ -6,10 +6,10 @@
 
 extern m_state_t m_state;
 
-std::vector<Input> Input::inputQueue(8);
-int Input::lastInputQueueItem = -1;
+std::vector<AppInput> AppInput::inputQueue(8);
+int AppInput::lastInputQueueItem = -1;
 
-void Input::AddKeyInput(int key, int down)
+void AppInput::AddKeyInput(int key, int down)
 {
 	lastInputQueueItem++;
 	if (lastInputQueueItem >= inputQueue.size())
@@ -22,7 +22,7 @@ void Input::AddKeyInput(int key, int down)
 	entry.command.clear();
 }
 
-void Input::AddCommandInput(const char* command)
+void AppInput::AddCommandInput(const char* command)
 {
 	lastInputQueueItem++;
 	if (lastInputQueueItem >= inputQueue.size())
@@ -35,7 +35,7 @@ void Input::AddCommandInput(const char* command)
 	entry.command = command;
 }
 
-void Input::Handle(AppState& appState, bool keyPressHandled)
+void AppInput::Handle(AppState& appState, bool keyPressHandled)
 {
 	std::lock_guard<std::mutex> lock(Locks::InputMutex);
 	

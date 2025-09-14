@@ -1,7 +1,7 @@
 #include "Keyboard.h"
 #include "AppState.h"
 #include "CylinderProjection.h"
-#include "Input.h"
+#include "AppInput.h"
 #include "Utils.h"
 
 extern byte* draw_chars;
@@ -262,31 +262,31 @@ void Keyboard::AddKeyInput(int key, bool down)
 	auto text = cell.text;
 	if (text[1] == 0)
 	{
-		Input::AddKeyInput(text[0], down);
+		AppInput::AddKeyInput(text[0], down);
 	}
 	else if (strcmp(text, "Bksp") == 0)
 	{
-		Input::AddKeyInput(K_BACKSPACE, down);
+		AppInput::AddKeyInput(K_BACKSPACE, down);
 	}
 	else if (strcmp(text, "Tab") == 0)
 	{
-		Input::AddKeyInput(K_TAB, down);
+		AppInput::AddKeyInput(K_TAB, down);
 	}
 	else if (strcmp(text, "Entr") == 0)
 	{
-		Input::AddKeyInput(K_ENTER, down);
+		AppInput::AddKeyInput(K_ENTER, down);
 	}
 	else if (strcmp(text, "Ctrl") == 0)
 	{
-		Input::AddKeyInput(K_CTRL, down);
+		AppInput::AddKeyInput(K_CTRL, down);
 	}
 	else if (strcmp(text, "Alt") == 0)
 	{
-		Input::AddKeyInput(K_ALT, down);
+		AppInput::AddKeyInput(K_ALT, down);
 	}
 	else if (strcmp(text, "Space") == 0)
 	{
-		Input::AddKeyInput(K_SPACE, down);
+		AppInput::AddKeyInput(K_SPACE, down);
 	}
 	else if (strcmp(text, "Caps") == 0 || strcmp(text, "CAPS") == 0)
 	{
