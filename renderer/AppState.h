@@ -114,6 +114,5 @@ struct AppState
 	bool NoGameDataLoaded;
 
 	static void AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitch, float& roll);
-	void RenderScreen(ScreenPerFrame& perFrame);
 	void RenderKeyboard(ScreenPerFrame& perFrame);
 };
