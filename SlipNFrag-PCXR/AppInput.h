@@ -3,18 +3,16 @@
 #include <string>
 #include <vector>
 
-struct AppState;
-
-struct Input
+struct AppInput
 {
 	int key;
 	int down;
 	std::string command;
 
-	static std::vector<Input> inputQueue;
+	static std::vector<AppInput> inputQueue;
 	static int lastInputQueueItem;
 
 	static void AddKeyInput(int key, int down);
 	static void AddCommandInput(const char* command);
-	static void Handle(AppState& appState, bool triggerHandled);
+	static void Handle(struct AppState_pcxr& appState, bool triggerHandled);
 };

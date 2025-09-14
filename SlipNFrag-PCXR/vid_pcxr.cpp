@@ -1,3 +1,4 @@
+#include "quakedef.h"
 #include "vid_pcxr.h"
 #include "d_local.h"
 #include "DirectRect.h"
@@ -14,10 +15,10 @@ int con_height;
 std::vector<short> zbuffer;
 std::vector<byte> surfcache;
 int surfcache_extrasize;
-int pal_changed;
 
 unsigned short d_8to16table[256];
 unsigned d_8to24table[256];
+int d_palchangecount;
 
 extern unsigned int sys_randseed;
 
@@ -46,7 +47,7 @@ void VID_SetPalette(unsigned char *palette)
         *table++ = v;
     }
     d_8to24table[255] &= 0xFFFFFF;    // 255 is transparent
-    pal_changed++;
+    d_palchangecount++;
 }
 
 void VID_ShiftPalette(unsigned char *palette)
@@ -54,7 +55,7 @@ void VID_ShiftPalette(unsigned char *palette)
     VID_SetPalette(palette);
 }
 
-void VID_Init(unsigned char *palette)
+void VID_Init(unsigned char* /*palette*/)
 {
     vid_buffer.resize(vid_width * vid_height);
     con_buffer.resize(con_width * con_height);
@@ -64,7 +65,7 @@ void VID_Init(unsigned char *palette)
     vid.maxwarpheight = WARP_HEIGHT;
     vid.height = vid_height;
     vid.conheight = con_height;
-    vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+    vid.aspect = ((float)vid.height / (float)vid.width) * (320.0f / 240.0f);
     vid.numpages = 1;
     vid.colormap = host_colormap.data();
     vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
@@ -79,7 +80,7 @@ void VID_Init(unsigned char *palette)
     surfcache.resize(surfcachesize);
     D_InitCaches(surfcache.data(), (int)surfcache.size());
     surfcache_extrasize = 0;
-    pal_changed = 0;
+    d_palchangecount = 0;
 }
 
 void VID_Resize(float forced_aspect)
@@ -121,7 +122,7 @@ void VID_Shutdown(void)
 {
 }
 
-void VID_Update(vrect_t *rects)
+void VID_Update(vrect_t* /*rects*/)
 {
 }
 

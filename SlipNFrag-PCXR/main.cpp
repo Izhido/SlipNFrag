@@ -5,20 +5,22 @@
 #include <array>
 #include <vector>
 #include <cmath>
-#include "AppState.h"
+#include "AppState_pcxr.h"
 #include <list>
 #include <map>
 #include "sys_pcxr.h"
+#include "vid_pcxr.h"
 #include "r_local.h"
 #include "EngineThread.h"
 #include "in_pcxr.h"
 #include <common/xr_linear.h>
 #include "Utils.h"
-#include "Input.h"
+#include "AppInput.h"
 #include "MemoryAllocateInfo.h"
 #include "Constants.h"
 #include "CylinderProjection.h"
 #include "Locks.h"
+#include "FileLoader_pcxr.h"
 
 wchar_t snd_audio_output_device_id[XR_MAX_AUDIO_DEVICE_STR_SIZE_OCULUS];
 
@@ -187,6 +189,10 @@ void PrintErrorMessage(const std::string& message)
 			position++;
 		}
 	}
+	if (lines.size() == 0)
+	{
+		lines.push_back(0);
+	}
 	lines.push_back(message.length());
 	for (auto i = 0; i < columns - 1; i++)
 	{
@@ -254,18 +260,16 @@ void PrintErrorMessage(const std::string& message)
 	printf("\n");
 }
 
-AppState appState { -1, -1, -1 };
+AppState_pcxr appState { -1, -1, -1 };
 
 int main(int argc, char* argv[])
 {
-    CHECK_HRCMD(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
+	CHECK_HRCMD(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
 
-    try
+	bool exitWithError = false;
+
+	try
 	{
-		appState.PausedTime = -1;
-		appState.PreviousTime = -1;
-		appState.CurrentTime = -1;
-
 		XrGraphicsBindingVulkan2KHR graphicsBinding { XR_TYPE_GRAPHICS_BINDING_VULKAN2_KHR };
 
 		VkInstance vulkanInstance = VK_NULL_HANDLE;
@@ -526,7 +530,7 @@ int main(int argc, char* argv[])
 			appInfo.applicationVersion = 1;
 			appInfo.pEngineName = "slipnfrag_xr";
 			appInfo.engineVersion = 1;
-			appInfo.apiVersion = VK_MAKE_API_VERSION(0, 1, 1, 0);
+			appInfo.apiVersion = USE_VULKAN_VERSION;
 
 			VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 			instInfo.pApplicationInfo = &appInfo;
@@ -1234,7 +1238,7 @@ int main(int argc, char* argv[])
 
 		XrEventDataBuffer eventDataBuffer { };
 
-        appState.FileLoader = new FileLoader();
+        appState.FileLoader = new FileLoader_pcxr();
 
         appState.VertexTransform.m[15] = 1;
 
@@ -1276,7 +1280,7 @@ int main(int argc, char* argv[])
 						const XrSessionState oldState = sessionState;
 						sessionState = sessionStateChangedEvent.state;
 
-						__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "XrEventDataSessionStateChanged: state %s->%s session=%lld time=%lld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
+						__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "XrEventDataSessionStateChanged: state %s->%s session=%p time=%ld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
 
 						if ((sessionStateChangedEvent.session != XR_NULL_HANDLE) && (sessionStateChangedEvent.session != appState.Session))
 						{
@@ -1320,7 +1324,7 @@ int main(int argc, char* argv[])
 								CHECK(appState.Session != XR_NULL_HANDLE);
 								sessionRunning = false;
 								appState.DestroyRequested = true;
-								CHECK_XRCMD(xrEndSession(appState.Session))
+								CHECK_XRCMD(xrEndSession(appState.Session));
 								break;
 							}
 							case XR_SESSION_STATE_EXITING:
@@ -1401,7 +1405,7 @@ int main(int argc, char* argv[])
 			CHECK_XRCMD(xrSyncActions(appState.Session, &syncInfo));
 
 			auto keyPressHandled = appState.Keyboard.Handle(appState);
-			Input::Handle(appState, keyPressHandled);
+			AppInput::Handle(appState, keyPressHandled);
 
 			XrActionStatePose poseState { XR_TYPE_ACTION_STATE_POSE };
 
@@ -1504,10 +1508,10 @@ int main(int argc, char* argv[])
 						Joy_AdvancedUpdate_f();
 
 						// The following is to prevent having stuck arrow keys at transition time:
-						Input::AddKeyInput(K_DOWNARROW, false);
-						Input::AddKeyInput(K_UPARROW, false);
-						Input::AddKeyInput(K_LEFTARROW, false);
-						Input::AddKeyInput(K_RIGHTARROW, false);
+						AppInput::AddKeyInput(K_DOWNARROW, false);
+						AppInput::AddKeyInput(K_UPARROW, false);
+						AppInput::AddKeyInput(K_LEFTARROW, false);
+						AppInput::AddKeyInput(K_RIGHTARROW, false);
 
 						vid_width = (int)appState.EyeTextureMaxDimension;
 						vid_height = (int)appState.EyeTextureMaxDimension;
@@ -2644,7 +2648,6 @@ int main(int argc, char* argv[])
 				appState.RenderPass = VK_NULL_HANDLE;
 			}
 
-			vkDestroySampler(appState.Device, appState.Scene.lightmapSampler, nullptr);
 			if (appState.Scene.sampler != VK_NULL_HANDLE)
 			{
 				vkDestroySampler(appState.Device, appState.Scene.sampler, nullptr);
@@ -2718,6 +2721,7 @@ int main(int argc, char* argv[])
 			appState.Scene.controllers.Delete(appState);
 			appState.Scene.skyRGBA.Delete(appState);
 			appState.Scene.sky.Delete(appState);
+			appState.Scene.cutout.Delete(appState);
 			appState.Scene.colored.Delete(appState);
 			appState.Scene.particles.Delete(appState);
 			appState.Scene.viewmodelsHoleyColoredLights.Delete(appState);
@@ -2886,27 +2890,38 @@ int main(int argc, char* argv[])
 		message += ex.what();
 		if (message.find("XR_ERROR_FORM_FACTOR_UNAVAILABLE") != std::string::npos)
 		{
-			message += "\n\nThis usually indicates that the VR headset is not connected. ";
+			message += "\n\nThis usually indicates that the VR headset is not connected.";
 			message += "\nVerify that the headset is connected to begin playing.";
 		}
 		else
 		{
 			message += "\n\nCheck the logs above for hints on what could have happened.";
 		}
-		message += "\n\nThe application will now exit.";
+		message += "\n\n\nPress Enter to exit the application.";
 		PrintErrorMessage(message);
-		return EXIT_FAILURE;
+		exitWithError = true;
 	}
 	catch (...)
 	{
-		std::string message = "An error occurred, for which no error message could be provided.\n\n";
-		message += "Check the logs above for hints on what could have happened.\n\n";
-		message += "The application will now exit.";
+		std::string message = "An error occurred, for which no error message could be provided.";
+		message += "\n\nCheck the logs above for hints on what could have happened.";
+		message += "\n\n\nPress Enter to exit the application.";
 		PrintErrorMessage(message);
-		return EXIT_FAILURE;
+		exitWithError = true;
+	}
+
+	if (!exitWithError)
+	{
+		PrintErrorMessage("Application closed. Press Enter to close this window.");
 	}
 
 	CoUninitialize();
 
-	return EXIT_SUCCESS;
+	auto c = getchar();
+	while (c != '\n')
+	{
+		c = getchar();
+	}
+
+	return (exitWithError ? EXIT_FAILURE : EXIT_SUCCESS);
 }

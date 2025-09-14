@@ -1,12 +1,13 @@
 #include "EngineThread.h"
-#include "AppState.h"
+#include "AppState_pcxr.h"
 #include "sys_pcxr.h"
-#include "Input.h"
+#include "vid_pcxr.h"
+#include "AppInput.h"
 #include "r_local.h"
 #include "Utils.h"
 #include "Locks.h"
 
-void runEngine(AppState* appState)
+void runEngine(AppState_pcxr* appState)
 {
 	while (!appState->EngineThreadStopped)
 	{
@@ -17,9 +18,9 @@ void runEngine(AppState* appState)
 		}
 		{
 			std::lock_guard<std::mutex> lock(Locks::InputMutex);
-			for (auto i = 0; i <= Input::lastInputQueueItem; i++)
+			for (auto i = 0; i <= AppInput::lastInputQueueItem; i++)
 			{
-				auto& input = Input::inputQueue[i];
+				auto& input = AppInput::inputQueue[i];
 				if (input.key > 0)
 				{
 					Key_Event(input.key, input.down);
@@ -29,7 +30,7 @@ void runEngine(AppState* appState)
 					Cmd_ExecuteString(input.command.c_str(), src_command);
 				}
 			}
-			Input::lastInputQueueItem = -1;
+			AppInput::lastInputQueueItem = -1;
 		}
 		AppMode mode;
 		{

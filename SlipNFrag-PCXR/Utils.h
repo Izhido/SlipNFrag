@@ -34,7 +34,7 @@ MAKE_TO_STRING_FUNC(XrResult)
 
 MAKE_TO_STRING_FUNC(XrFormFactor)
 
-#define THROW(msg) Throw(msg, nullptr, FILE_AND_LINE);
+#define THROW(msg) Throw(msg, nullptr, FILE_AND_LINE)
 #define CHECK(exp)                                      \
     {                                                   \
         if (!(exp)) {                                   \
@@ -48,19 +48,20 @@ MAKE_TO_STRING_FUNC(XrFormFactor)
         }                                    \
     }
 
-#define THROW_XR(xr, cmd) ThrowXrResult(xr, #cmd, FILE_AND_LINE);
-#define CHECK_XRCMD(cmd) CheckXrResult(cmd, #cmd, FILE_AND_LINE);
-#define CHECK_XRRESULT(res, cmdStr) CheckXrResult(res, cmdStr, FILE_AND_LINE);
+#define THROW_XR(xr, cmd) ThrowXrResult(xr, #cmd, FILE_AND_LINE)
+#define CHECK_XRCMD(cmd) CheckXrResult(cmd, #cmd, FILE_AND_LINE)
+#define CHECK_XRRESULT(res, cmdStr) CheckXrResult(res, cmdStr, FILE_AND_LINE)
 
-#define THROW_VK(res, cmd) ThrowVkResult(res, #cmd, FILE_AND_LINE);
-#define CHECK_VKCMD(cmd) CheckVkResult(cmd, #cmd, FILE_AND_LINE);
-#define CHECK_VKRESULT(res, cmdStr) CheckVkResult(res, cmdStr, FILE_AND_LINE);
+#define THROW_VK(res, cmd) ThrowVkResult(res, #cmd, FILE_AND_LINE)
+#define CHECK_VKCMD(cmd) CheckVkResult(cmd, #cmd, FILE_AND_LINE)
+#define CHECK_VKRESULT(res, cmdStr) CheckVkResult(res, cmdStr, FILE_AND_LINE)
 
-#define THROW_HR(hr, cmd) ThrowHResult(hr, #cmd, FILE_AND_LINE);
-#define CHECK_HRCMD(cmd) CheckHResult(cmd, #cmd, FILE_AND_LINE);
-#define CHECK_HRESULT(res, cmdStr) CheckHResult(res, cmdStr, FILE_AND_LINE);
+#define THROW_HR(hr, cmd) ThrowHResult(hr, #cmd, FILE_AND_LINE)
+#define CHECK_HRCMD(cmd) CheckHResult(cmd, #cmd, FILE_AND_LINE)
+#define CHECK_HRESULT(res, cmdStr) CheckHResult(res, cmdStr, FILE_AND_LINE)
 
-inline std::string Fmt(const char* fmt, ...) {
+inline std::string Fmt(const char* fmt, ...)
+{
     va_list vl;
     va_start(vl, fmt);
     int size = std::vsnprintf(nullptr, 0, fmt, vl);

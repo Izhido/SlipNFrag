@@ -1,6 +1,8 @@
-#include "FileLoader.h"
+#include "FileLoader_pcxr.h"
 
-void FileLoader::Load(const char* filename, std::vector<unsigned char>& data)
+#include <fstream>
+
+void FileLoader_pcxr::Load(const char* filename, std::vector<unsigned char>& data)
 {
     std::ifstream file(filename, std::ios::binary);
     file.seekg(0, std::ios::end);
