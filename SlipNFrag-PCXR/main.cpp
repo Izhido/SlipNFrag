@@ -1,26 +1,18 @@
-#include <vulkan/vulkan.h>
-#include <string>
-#include <locale>
-#include <android/log.h>
-#include <array>
-#include <vector>
-#include <cmath>
 #include "AppState_pcxr.h"
-#include <list>
-#include <map>
-#include "sys_pcxr.h"
-#include "vid_pcxr.h"
-#include "r_local.h"
-#include "EngineThread.h"
-#include "in_pcxr.h"
-#include <common/xr_linear.h>
 #include "Utils.h"
-#include "AppInput.h"
-#include "MemoryAllocateInfo.h"
-#include "Constants.h"
+#include <android/log.h>
+#include <locale>
 #include "CylinderProjection.h"
-#include "Locks.h"
+#include "Constants.h"
 #include "FileLoader_pcxr.h"
+#include "AppInput.h"
+#include "EngineThread.h"
+#include "Locks.h"
+#include "sys_pcxr.h"
+#include "r_local.h"
+#include "in_pcxr.h"
+#include "vid_pcxr.h"
+#include "MemoryAllocateInfo.h"
 
 wchar_t snd_audio_output_device_id[XR_MAX_AUDIO_DEVICE_STR_SIZE_OCULUS];
 
