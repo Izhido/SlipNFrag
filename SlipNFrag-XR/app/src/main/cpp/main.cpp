@@ -1,25 +1,20 @@
-#include <jni.h>
-#include <locale>
-#include <android/log.h>
-#include <cmath>
 #include "AppState_oxr.h"
-#include <map>
-#include "sys_oxr.h"
-#include "vid_oxr.h"
-#include "r_local.h"
-#include "EngineThread.h"
-#include "in_oxr.h"
 #include "Utils.h"
-#include "AppInput.h"
-#include "MemoryAllocateInfo.h"
-#include "Constants.h"
-#include "CylinderProjection.h"
-#include <pthread.h>
+#include <android/log.h>
+#include <android_native_app_glue.h>
 #include <sys/prctl.h>
 #include <unistd.h>
-#include <android_native_app_glue.h>
-#include "Locks.h"
+#include "CylinderProjection.h"
+#include "Constants.h"
 #include "FileLoader_oxr.h"
+#include "AppInput.h"
+#include "EngineThread.h"
+#include "Locks.h"
+#include "sys_oxr.h"
+#include "r_local.h"
+#include "in_oxr.h"
+#include "vid_oxr.h"
+#include "MemoryAllocateInfo.h"
 
 extern int sound_started;
 
