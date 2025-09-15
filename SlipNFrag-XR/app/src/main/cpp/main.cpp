@@ -1,12 +1,13 @@
 #include "AppState_oxr.h"
 #include "Utils.h"
+#include "FileLoader_oxr.h"
+#include "Logger_oxr.h"
 #include <android/log.h>
 #include <android_native_app_glue.h>
 #include <sys/prctl.h>
 #include <unistd.h>
 #include "CylinderProjection.h"
 #include "Constants.h"
-#include "FileLoader_oxr.h"
 #include "AppInput.h"
 #include "EngineThread.h"
 #include "Locks.h"
@@ -67,7 +68,7 @@ void SwitchBoundInput(AppState& appState, XrAction action, const char* name)
 		sourceName += "'";
 	}
 
-	__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", (std::string(name) + " action is bound to %s").c_str(), (!sourceName.empty() ? sourceName.c_str() : "nothing"));
+	appState.Logger->Info((std::string(name) + " action is bound to %s").c_str(), (!sourceName.empty() ? sourceName.c_str() : "nothing"));
 }
 
 const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer, XrInstance& instance)
@@ -80,7 +81,7 @@ const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer
 		if (baseHeader->type == XR_TYPE_EVENT_DATA_EVENTS_LOST)
 		{
 			auto const eventsLost = reinterpret_cast<const XrEventDataEventsLost*>(baseHeader);
-			__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "%d events lost", eventsLost->lostEventCount);
+			__android_log_print(ANDROID_LOG_WARN, Logger_oxr::tag, "%d events lost", eventsLost->lostEventCount);
 		}
 
 		return baseHeader;
@@ -140,7 +141,7 @@ static VkBool32 DebugMessengerCallback(
         typeName += "DEVICE ADDRESS BINDING ";
     }
 
-	__android_log_print(priority, "slipnfrag_native", "[%s%s] %s", typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
+	__android_log_print(priority, Logger_oxr::tag, "[%s%s] %s", typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
 	
 	return VK_FALSE;
 }
@@ -153,13 +154,13 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 	switch (cmd)
 	{
 		case APP_CMD_START:
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_START");
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onStart()");
+			appState->Logger->Info("    APP_CMD_START");
+			appState->Logger->Info("onStart()");
 			break;
 			
 		case APP_CMD_RESUME:
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onResume()");
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_RESUME");
+			appState->Logger->Info("onResume()");
+			appState->Logger->Info("    APP_CMD_RESUME");
 			appState->Resumed = true;
 			delta = GetTime() - appState->PausedTime;
 			if (appState->PreviousTime > 0)
@@ -173,35 +174,35 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 			break;
 			
 		case APP_CMD_PAUSE:
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onPause()");
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_PAUSE");
+			appState->Logger->Info("onPause()");
+			appState->Logger->Info("    APP_CMD_PAUSE");
 			appState->PausedTime = GetTime();
 			appState->Resumed = false;
 			break;
 
 		case APP_CMD_STOP:
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onStop()");
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_STOP");
+			appState->Logger->Info("onStop()");
+			appState->Logger->Info("    APP_CMD_STOP");
 			break;
 
 		case APP_CMD_DESTROY:
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "onDestroy()");
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_DESTROY");
+			appState->Logger->Info("onDestroy()");
+			appState->Logger->Info("    APP_CMD_DESTROY");
 			appState->CallExitFunction = true;
 			break;
 
 		case APP_CMD_INIT_WINDOW:
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "surfaceCreated()");
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_INIT_WINDOW");
+			appState->Logger->Info("surfaceCreated()");
+			appState->Logger->Info("    APP_CMD_INIT_WINDOW");
 			break;
 
 		case APP_CMD_TERM_WINDOW:
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "surfaceDestroyed()");
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "    APP_CMD_TERM_WINDOW");
+			appState->Logger->Info("surfaceDestroyed()");
+			appState->Logger->Info("    APP_CMD_TERM_WINDOW");
 			break;
 
 		default:
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Unrecognized app command %i", cmd);
+			appState->Logger->Info("Unrecognized app command %i", cmd);
 			break;
 	}
 }
@@ -214,6 +215,9 @@ void android_main(struct android_app* app)
 	app->activity->vm->AttachCurrentThread(&Env, nullptr);
 
 	prctl(PR_SET_NAME, (long)"android_main", 0, 0, 0);
+
+	appState.FileLoader = new FileLoader_oxr(app);
+	appState.Logger = new Logger_oxr();
 
 	try
 	{
@@ -268,7 +272,7 @@ void android_main(struct android_app* app)
 
 		CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(nullptr, (uint32_t)extensions.size(), &instanceExtensionCount, extensions.data()));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Available OpenXR extensions: (%d)", instanceExtensionCount);
+		appState.Logger->Verbose("Available OpenXR extensions: (%d)", instanceExtensionCount);
 
 		for (const XrExtensionProperties& extension : extensions)
 		{
@@ -284,7 +288,7 @@ void android_main(struct android_app* app)
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%d", extension.extensionName, extension.extensionVersion);
+			appState.Logger->Verbose("  Name=%s SpecVersion=%d", extension.extensionName, extension.extensionVersion);
 		}
 
 		for (auto& extensionName : xrInstanceExtensionSources)
@@ -315,21 +319,21 @@ void android_main(struct android_app* app)
 
 		CHECK_XRCMD(xrEnumerateApiLayerProperties((uint32_t) xrLayers.size(), &xrLayerCount, xrLayers.data()));
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available Layers: (%d)", xrLayerCount);
+		appState.Logger->Info("Available Layers: (%d)", xrLayerCount);
 		for (const XrApiLayerProperties& layer : xrLayers)
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%s LayerVersion=%d Description=%s", layer.layerName, GetXrVersionString(layer.specVersion).c_str(), layer.layerVersion, layer.description);
+			appState.Logger->Verbose("  Name=%s SpecVersion=%s LayerVersion=%d Description=%s", layer.layerName, GetXrVersionString(layer.specVersion).c_str(), layer.layerVersion, layer.description);
 
 			CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layer.layerName, 0, &instanceExtensionCount, nullptr));
 
 			CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layer.layerName, (uint32_t)extensions.size(), &instanceExtensionCount, extensions.data()));
 
 			const std::string indentStr(4, ' ');
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable OpenXR extensions for layer %s: (%d)", indentStr.c_str(), layer.layerName, instanceExtensionCount);
+			appState.Logger->Verbose("%sAvailable OpenXR extensions for layer %s: (%d)", indentStr.c_str(), layer.layerName, instanceExtensionCount);
 
 			for (const XrExtensionProperties& extension : extensions)
 			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), extension.extensionName, extension.extensionVersion);
+				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), extension.extensionName, extension.extensionVersion);
 			}
 		}
 
@@ -372,14 +376,14 @@ void android_main(struct android_app* app)
 		XrInstanceProperties instanceProperties { XR_TYPE_INSTANCE_PROPERTIES };
 		CHECK_XRCMD(xrGetInstanceProperties(instance, &instanceProperties));
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Instance RuntimeName=%s RuntimeVersion=%s", instanceProperties.runtimeName, GetXrVersionString(instanceProperties.runtimeVersion).c_str());
+		appState.Logger->Info("Instance RuntimeName=%s RuntimeVersion=%s", instanceProperties.runtimeName, GetXrVersionString(instanceProperties.runtimeVersion).c_str());
 
 		XrSystemId systemId = XR_NULL_SYSTEM_ID;
 		XrSystemGetInfo systemInfo { XR_TYPE_SYSTEM_GET_INFO };
 		systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 		CHECK_XRCMD(xrGetSystem(instance, &systemInfo, &systemId));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %lu for form factor %s", systemId, to_string(systemInfo.formFactor));
+		appState.Logger->Verbose("Using system %lu for form factor %s", systemId, to_string(systemInfo.formFactor));
 
 		CHECK(systemId != XR_NULL_SYSTEM_ID);
 
@@ -391,15 +395,15 @@ void android_main(struct android_app* app)
 
 		auto viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available View Configuration Types: (%d)", viewConfigTypeCount);
+		appState.Logger->Info("Available View Configuration Types: (%d)", viewConfigTypeCount);
 		for (XrViewConfigurationType viewConfigType : viewConfigTypes)
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View Configuration Type: %s %s", to_string(viewConfigType), viewConfigType == viewConfigurationType ? "(Selected)" : "");
+			appState.Logger->Verbose("  View Configuration Type: %s %s", to_string(viewConfigType), viewConfigType == viewConfigurationType ? "(Selected)" : "");
 
 			XrViewConfigurationProperties viewConfigProperties { XR_TYPE_VIEW_CONFIGURATION_PROPERTIES };
 			CHECK_XRCMD(xrGetViewConfigurationProperties(instance, systemId, viewConfigType, &viewConfigProperties));
 
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View configuration FovMutable=%s", (viewConfigProperties.fovMutable == XR_TRUE ? "True" : "False"));
+			appState.Logger->Verbose("  View configuration FovMutable=%s", (viewConfigProperties.fovMutable == XR_TRUE ? "True" : "False"));
 
 			uint32_t viewCount;
 			CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigType, 0, &viewCount, nullptr));
@@ -412,20 +416,20 @@ void android_main(struct android_app* app)
 				{
 					const XrViewConfigurationView& view = views[i];
 
-					__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "    View [%d]: Recommended Width=%d Height=%d SampleCount=%d", i, view.recommendedImageRectWidth, view.recommendedImageRectHeight, view.recommendedSwapchainSampleCount);
-					__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "    View [%d]:     Maximum Width=%d Height=%d SampleCount=%d", i, view.maxImageRectWidth, view.maxImageRectHeight, view.maxSwapchainSampleCount);
+					appState.Logger->Verbose("    View [%d]: Recommended Width=%d Height=%d SampleCount=%d", i, view.recommendedImageRectWidth, view.recommendedImageRectHeight, view.recommendedSwapchainSampleCount);
+					appState.Logger->Verbose("    View [%d]:     Maximum Width=%d Height=%d SampleCount=%d", i, view.maxImageRectWidth, view.maxImageRectHeight, view.maxSwapchainSampleCount);
 				}
 			}
 			else
 			{
-				__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Empty view configuration type");
+				appState.Logger->Error("Empty view configuration type");
 			}
 
 			uint32_t count;
 			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, systemId, viewConfigType, 0, &count, nullptr));
 			CHECK(count > 0);
 
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available Environment Blend Mode count : (%d)", count);
+			appState.Logger->Info("Available Environment Blend Mode count : (%d)", count);
 
 			std::vector<XrEnvironmentBlendMode> blendModes(count);
 			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, systemId, viewConfigType, count, &count, blendModes.data()));
@@ -434,7 +438,7 @@ void android_main(struct android_app* app)
 			for (XrEnvironmentBlendMode mode : blendModes)
 			{
 				const bool blendModeMatch = (mode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE);
-				__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Environment Blend Mode (%s) : %s", to_string(mode), blendModeMatch ? "(Selected)" : "");
+				appState.Logger->Info("Environment Blend Mode (%s) : %s", to_string(mode), blendModeMatch ? "(Selected)" : "");
 				blendModeFound |= blendModeMatch;
 			}
 			CHECK(blendModeFound);
@@ -482,7 +486,7 @@ void android_main(struct android_app* app)
 		}
 		if (!validationLayersFound)
 		{
-			__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "No validation layers found in the system, skipping");
+			appState.Logger->Warn("No validation layers found in the system, skipping");
 		}
 #endif
 
@@ -595,10 +599,10 @@ void android_main(struct android_app* app)
 			auto externalMemoryFdEnabled = false;
 			
 			const std::string indentStr(4, ' ');
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
+			appState.Logger->Verbose("%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
 			for (uint32_t i = 0; i < availableExtensionCount; ++i)
 			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
+				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
 
 				if (strcmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME) == 0)
 				{
@@ -692,7 +696,7 @@ void android_main(struct android_app* app)
 		VkPipelineCacheCreateInfo pipelineCacheCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO };
 		CHECK_VKCMD(vkCreatePipelineCache(appState.Device, &pipelineCacheCreateInfo, nullptr, &appState.PipelineCache));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Creating session...");
+		appState.Logger->Verbose("Creating session...");
 
 		XrSessionCreateInfo sessionCreateInfo { XR_TYPE_SESSION_CREATE_INFO };
 		sessionCreateInfo.next = reinterpret_cast<const XrBaseInStructure*>(&graphicsBinding);
@@ -712,7 +716,7 @@ void android_main(struct android_app* app)
 			std::vector<XrColorSpaceFB> colorSpaces(colorSpaceCount);
 
 			CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, colorSpaceCount, &colorSpaceCount, colorSpaces.data()));
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Supported color spaces:");
+			appState.Logger->Verbose("Supported color spaces:");
 
 			auto rec2020Supported = false;
 
@@ -747,7 +751,7 @@ void android_main(struct android_app* app)
 						name = "XR_COLOR_SPACE_UNMANAGED_FB";
 						break;
 				}
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%d:%d (%s)", i, colorSpaces[i], name);
+				appState.Logger->Verbose("%d:%d (%s)", i, colorSpaces[i], name);
 			}
 
 			if (rec2020Supported)
@@ -755,7 +759,7 @@ void android_main(struct android_app* app)
 				PFN_xrSetColorSpaceFB xrSetColorSpaceFB = nullptr;
 				CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetColorSpaceFB", (PFN_xrVoidFunction*)(&xrSetColorSpaceFB)));
 
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Setting color space %i (%s)...", XR_COLOR_SPACE_REC2020_FB, "XR_COLOR_SPACE_REC2020_FB");
+				appState.Logger->Verbose("Setting color space %i (%s)...", XR_COLOR_SPACE_REC2020_FB, "XR_COLOR_SPACE_REC2020_FB");
 				CHECK_XRCMD(xrSetColorSpaceFB(appState.Session, XR_COLOR_SPACE_REC2020_FB));
 			}
 		}
@@ -770,18 +774,18 @@ void android_main(struct android_app* app)
 		std::vector<float> supportedDisplayRefreshRates(numSupportedDisplayRefreshRates);
 		CHECK_XRCMD(xrEnumerateDisplayRefreshRatesFB(appState.Session, numSupportedDisplayRefreshRates, &numSupportedDisplayRefreshRates, supportedDisplayRefreshRates.data()));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Supported Refresh Rates:");
+		appState.Logger->Verbose("Supported Refresh Rates:");
 		auto highestDisplayRefreshRate = 0.0f;
 		for (uint32_t i = 0; i < numSupportedDisplayRefreshRates; i++) 
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%d:%.1f", i, supportedDisplayRefreshRates[i]);
+			appState.Logger->Verbose("%d:%.1f", i, supportedDisplayRefreshRates[i]);
 			highestDisplayRefreshRate = std::max(highestDisplayRefreshRate, supportedDisplayRefreshRates[i]);
 		}
 
 		PFN_xrRequestDisplayRefreshRateFB xrRequestDisplayRefreshRateFB;
 		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrRequestDisplayRefreshRateFB", (PFN_xrVoidFunction*)(&xrRequestDisplayRefreshRateFB)));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Requesting display refresh rate of %.1fHz...", highestDisplayRefreshRate);
+		appState.Logger->Verbose("Requesting display refresh rate of %.1fHz...", highestDisplayRefreshRate);
 		CHECK_XRCMD(xrRequestDisplayRefreshRateFB(appState.Session, highestDisplayRefreshRate));
 		
 		PFN_xrGetDisplayRefreshRateFB xrGetDisplayRefreshRateFB;
@@ -789,17 +793,17 @@ void android_main(struct android_app* app)
 
 		auto currentDisplayRefreshRate = 0.0f;
 		CHECK_XRCMD(xrGetDisplayRefreshRateFB(appState.Session, &currentDisplayRefreshRate));
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Current System Display Refresh Rate: %.1fHz.", currentDisplayRefreshRate);
+		appState.Logger->Verbose("Current System Display Refresh Rate: %.1fHz.", currentDisplayRefreshRate);
 		
 		uint32_t spaceCount;
 		CHECK_XRCMD(xrEnumerateReferenceSpaces(appState.Session, 0, &spaceCount, nullptr));
 		std::vector<XrReferenceSpaceType> spaces(spaceCount);
 		CHECK_XRCMD(xrEnumerateReferenceSpaces(appState.Session, spaceCount, &spaceCount, spaces.data()));
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available reference spaces: %d", spaceCount);
+		appState.Logger->Info("Available reference spaces: %d", spaceCount);
 		for (XrReferenceSpaceType space : spaces)
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name: %s", to_string(space));
+			appState.Logger->Verbose("  Name: %s", to_string(space));
 		}
 
 		appState.SubactionPaths.resize(2);
@@ -1055,9 +1059,9 @@ void android_main(struct android_app* app)
 		XrSystemProperties systemProperties { XR_TYPE_SYSTEM_PROPERTIES };
 		CHECK_XRCMD(xrGetSystemProperties(instance, systemId, &systemProperties));
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Properties: Name=%s VendorId=%d", systemProperties.systemName, systemProperties.vendorId);
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Tracking Properties: OrientationTracking=%s PositionTracking=%s", (systemProperties.trackingProperties.orientationTracking == XR_TRUE ? "True" : "False"), (systemProperties.trackingProperties.positionTracking == XR_TRUE ? "True" : "False"));
+		appState.Logger->Info("System Properties: Name=%s VendorId=%d", systemProperties.systemName, systemProperties.vendorId);
+		appState.Logger->Info("System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
+		appState.Logger->Info("System Tracking Properties: OrientationTracking=%s PositionTracking=%s", (systemProperties.trackingProperties.orientationTracking == XR_TRUE ? "True" : "False"), (systemProperties.trackingProperties.positionTracking == XR_TRUE ? "True" : "False"));
 
 		uint32_t viewCount;
 		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigurationType, 0, &viewCount, nullptr));
@@ -1098,7 +1102,7 @@ void android_main(struct android_app* app)
 				swapchainFormatsString += "]";
 			}
 		}
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Swapchain Formats: %s", swapchainFormatsString.c_str());
+		appState.Logger->Verbose("Swapchain Formats: %s", swapchainFormatsString.c_str());
 		if (!found)
 		{
 			THROW(Fmt("No runtime swapchain format supported for color swapchain %i", Constants::colorFormat));
@@ -1108,7 +1112,7 @@ void android_main(struct android_app* app)
 		appState.SwapchainRect.extent.height = configViews[0].recommendedImageRectHeight;
 		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;
 		
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
+		appState.Logger->Info("Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
 
 		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
@@ -1219,8 +1223,6 @@ void android_main(struct android_app* app)
 
 		XrEventDataBuffer eventDataBuffer { };
 
-        appState.FileLoader = new FileLoader_oxr(app);
-
         appState.VertexTransform.m[15] = 1;
 
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -1259,7 +1261,7 @@ void android_main(struct android_app* app)
 					case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
 					{
 						const auto& instanceLossPending = *reinterpret_cast<const XrEventDataInstanceLossPending*>(event);
-						__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "XrEventDataInstanceLossPending by %ld", instanceLossPending.lossTime);
+						appState.Logger->Warn("XrEventDataInstanceLossPending by %ld", instanceLossPending.lossTime);
 						exitRenderLoop = true;
 						requestRestart = true;
 						break;
@@ -1270,11 +1272,11 @@ void android_main(struct android_app* app)
 						const XrSessionState oldState = sessionState;
 						sessionState = sessionStateChangedEvent.state;
 
-						__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "XrEventDataSessionStateChanged: state %s->%s session=%p time=%ld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
+						appState.Logger->Info("XrEventDataSessionStateChanged: state %s->%s session=%p time=%ld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
 
 						if ((sessionStateChangedEvent.session != XR_NULL_HANDLE) && (sessionStateChangedEvent.session != appState.Session))
 						{
-							__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "XrEventDataSessionStateChanged for unknown session");
+							appState.Logger->Error("XrEventDataSessionStateChanged for unknown session");
 							continue;
 						}
 
@@ -1343,13 +1345,13 @@ void android_main(struct android_app* app)
 					case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
 					{
 						const auto& perfSettingsEvent = *reinterpret_cast<const XrEventDataPerfSettingsEXT*>(event);
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataPerfSettingsEXT: type %d subdomain %d : level %d -> level %d", perfSettingsEvent.type, perfSettingsEvent.subDomain, perfSettingsEvent.fromLevel, perfSettingsEvent.toLevel);
+						appState.Logger->Verbose("XrEventDataPerfSettingsEXT: type %d subdomain %d : level %d -> level %d", perfSettingsEvent.type, perfSettingsEvent.subDomain, perfSettingsEvent.fromLevel, perfSettingsEvent.toLevel);
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_DISPLAY_REFRESH_RATE_CHANGED_FB:
 					{
 						const auto& refreshRateChangedEvent = *reinterpret_cast<const XrEventDataDisplayRefreshRateChangedFB*>(event);
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataDisplayRefreshRateChangedFB: fromRate %f -> toRate %f", refreshRateChangedEvent.fromDisplayRefreshRate, refreshRateChangedEvent.toDisplayRefreshRate);
+						appState.Logger->Verbose("XrEventDataDisplayRefreshRateChangedFB: fromRate %f -> toRate %f", refreshRateChangedEvent.fromDisplayRefreshRate, refreshRateChangedEvent.toDisplayRefreshRate);
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
@@ -1377,11 +1379,11 @@ void android_main(struct android_app* app)
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
 					{
 						const auto& referenceSpaceChangeEvent = *reinterpret_cast<const XrEventDataReferenceSpaceChangePending*>(event);
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %ld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
+						appState.Logger->Verbose("XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %ld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
 						break;
 					}
 					default:
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Ignoring event type %d", event->type);
+						appState.Logger->Verbose("Ignoring event type %d", event->type);
 						break;
 				}
 
@@ -1695,7 +1697,7 @@ void android_main(struct android_app* app)
 						}
 						else if (appState.ActiveHands[0])
 						{
-							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate left hand action space in app space: %d", res);
+							appState.Logger->Verbose("Unable to locate left hand action space in app space: %d", res);
 						}
 
 						appState.RightController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
@@ -1711,7 +1713,7 @@ void android_main(struct android_app* app)
 						}
 						else if (appState.ActiveHands[1])
 						{
-							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate right hand action space in app space: %d", res);
+							appState.Logger->Verbose("Unable to locate right hand action space in app space: %d", res);
 						}
 
 						appState.CameraLocation.type = XR_TYPE_SPACE_LOCATION;
@@ -2631,12 +2633,12 @@ void android_main(struct android_app* app)
 	}
 	catch (const std::exception& ex)
 	{
-		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Caught exception: %s", ex.what());
+		appState.Logger->Error("Caught exception: %s", ex.what());
 		appState.CallExitFunction = true;
 	}
 	catch (...)
 	{
-		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Caught unknown exception");
+		appState.Logger->Error("Caught unknown exception");
 		appState.CallExitFunction = true;
 	}
 
@@ -2650,11 +2652,17 @@ void android_main(struct android_app* app)
 		SNDDMA_Shutdown();
 	}
 
+	delete appState.Logger;
+	appState.Logger = nullptr;
+
+	delete appState.FileLoader;
+	appState.FileLoader = nullptr;
+
 	app->activity->vm->DetachCurrentThread();
 
 	if (appState.CallExitFunction)
 	{
-		__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "exit(-1) called");
+		__android_log_print(ANDROID_LOG_ERROR, Logger_oxr::tag, "exit(-1) called");
 		exit(-1); // Not redundant - app won't truly exit Android unless forcefully terminated
 	}
 }

@@ -114,8 +114,6 @@ void AppState::Destroy()
 
 	Scene.created = false;
 
-	delete FileLoader;
-
 	if (ActionSet != XR_NULL_HANDLE)
 	{
 		xrDestroySpace(HandSpaces[0]);

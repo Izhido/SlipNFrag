@@ -46,6 +46,7 @@ struct AppState
 	XrSwapchain LeftArrowsSwapchain;
 	XrSwapchain RightArrowsSwapchain;
 	struct FileLoader* FileLoader;
+	struct Logger* Logger;
 	Scene Scene;
 	FromEngine FromEngine;
 	std::unordered_map<uint32_t, PerFrame> PerFrame;
