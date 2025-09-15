@@ -3693,3 +3693,88 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 	appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
 }
+
+void PerFrame::DestroyFramebuffer(AppState& appState) const
+{
+	if (framebuffer != VK_NULL_HANDLE)
+	{
+		vkDestroyFramebuffer(appState.Device, framebuffer, nullptr);
+	}
+	if (resolveView != VK_NULL_HANDLE)
+	{
+		vkDestroyImageView(appState.Device, resolveView, nullptr);
+	}
+	if (depthView != VK_NULL_HANDLE)
+	{
+		vkDestroyImageView(appState.Device, depthView, nullptr);
+	}
+	if (colorView != VK_NULL_HANDLE)
+	{
+		vkDestroyImageView(appState.Device, colorView, nullptr);
+	}
+	if (depthImage != VK_NULL_HANDLE)
+	{
+		vkDestroyImage(appState.Device, depthImage, nullptr);
+	}
+	if (depthMemory != VK_NULL_HANDLE)
+	{
+		vkFreeMemory(appState.Device, depthMemory, nullptr);
+	}
+	if (colorImage != VK_NULL_HANDLE)
+	{
+		vkDestroyImage(appState.Device, colorImage, nullptr);
+	}
+	if (colorMemory != VK_NULL_HANDLE)
+	{
+		vkFreeMemory(appState.Device, colorMemory, nullptr);
+	}
+}
+
+void PerFrame::Destroy(AppState& appState)
+{
+	controllerResources.Delete(appState);
+	floorResources.Delete(appState);
+	colormapResources.Delete(appState);
+	sortedAttributesResources.Delete(appState);
+	sceneMatricesAndColormapResources.Delete(appState);
+	sceneMatricesAndNeutralPaletteResources.Delete(appState);
+	sceneMatricesAndPaletteResources.Delete(appState);
+	sceneMatricesResources.Delete(appState);
+	host_colormapResources.Delete(appState);
+	skyRGBAResources.Delete(appState);
+	skyResources.Delete(appState);
+	if (skyRGBA != nullptr)
+	{
+		skyRGBA->Delete(appState);
+	}
+	if (sky != nullptr)
+	{
+		sky->Delete(appState);
+	}
+	colormaps.Delete(appState);
+	stagingBuffers.Delete(appState);
+	cachedColors.Delete(appState);
+	cachedSortedIndices32.Delete(appState);
+	cachedIndices32.Delete(appState);
+	cachedSortedIndices16.Delete(appState);
+	cachedIndices16.Delete(appState);
+	cachedIndices8.Delete(appState);
+	cachedSortedAttributes.Delete(appState);
+	cachedAttributes.Delete(appState);
+	cachedSortedVertices.Delete(appState);
+	cachedVertices.Delete(appState);
+
+	if (fence != VK_NULL_HANDLE)
+	{
+		vkDestroyFence(appState.Device, fence, nullptr);
+	}
+
+	if (commandPool != VK_NULL_HANDLE)
+	{
+		vkDestroyCommandPool(appState.Device, commandPool, nullptr);
+	}
+	if (matrices != nullptr)
+	{
+		matrices->Delete(appState);
+	}
+}

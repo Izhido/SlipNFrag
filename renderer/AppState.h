@@ -115,4 +115,5 @@ struct AppState
 
 	static void AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitch, float& roll);
 	void RenderKeyboard(ScreenPerFrame& perFrame);
+	void Destroy();
 };

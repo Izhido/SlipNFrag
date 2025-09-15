@@ -1,4 +1,5 @@
 #include "AppState.h"
+#include "FileLoader.h"
 
 void AppState::AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitch, float& roll)
 {
@@ -45,5 +46,109 @@ void AppState::RenderKeyboard(ScreenPerFrame& perFrame)
 		auto entry = *source++;
 		*target++ = Scene.paletteData[entry];
 		count--;
+	}
+}
+
+void AppState::Destroy()
+{
+	if (Device != VK_NULL_HANDLE)
+	{
+		for (auto& perFrame : PerFrame)
+		{
+			perFrame.second.DestroyFramebuffer(*this);
+		}
+
+		Scene.Reset(*this);
+
+		for (auto& texture : KeyboardTextures)
+		{
+			texture.second.Delete(*this);
+		}
+		KeyboardTextures.clear();
+
+		for (auto& perFrame : Keyboard.Screen.perFrame)
+		{
+			perFrame.second.stagingBuffer.Delete(*this);
+		}
+		Keyboard.Screen.perFrame.clear();
+
+		for (auto& texture : StatusBarTextures)
+		{
+			texture.Delete(*this);
+		}
+		StatusBarTextures.clear();
+
+		for (auto& texture : ConsoleTextures)
+		{
+			texture.Delete(*this);
+		}
+		ConsoleTextures.clear();
+
+		for (auto& perFrame : Screen.perFrame)
+		{
+			perFrame.second.stagingBuffer.Delete(*this);
+		}
+		Screen.perFrame.clear();
+
+		for (auto& perFrame : PerFrame)
+		{
+			perFrame.second.Destroy(*this);
+		}
+
+		PerFrame.clear();
+
+		if (RenderPass != VK_NULL_HANDLE)
+		{
+			vkDestroyRenderPass(Device, RenderPass, nullptr);
+			RenderPass = VK_NULL_HANDLE;
+		}
+
+		Scene.Destroy(*this);
+
+		if (SetupCommandPool != VK_NULL_HANDLE)
+		{
+			vkDestroyCommandPool(Device, SetupCommandPool, nullptr);
+			SetupCommandPool = VK_NULL_HANDLE;
+		}
+	}
+
+	Scene.created = false;
+
+	delete FileLoader;
+
+	if (ActionSet != XR_NULL_HANDLE)
+	{
+		xrDestroySpace(HandSpaces[0]);
+		xrDestroySpace(HandSpaces[1]);
+		HandSpaces.clear();
+
+		xrDestroyActionSet(ActionSet);
+		ActionSet = XR_NULL_HANDLE;
+	}
+
+	Skybox::DeleteAll(*this);
+
+	if (RightArrowsSwapchain != XR_NULL_HANDLE)
+	{
+		xrDestroySwapchain(RightArrowsSwapchain);
+		RightArrowsSwapchain = XR_NULL_HANDLE;
+	}
+
+	if (LeftArrowsSwapchain != XR_NULL_HANDLE)
+	{
+		xrDestroySwapchain(LeftArrowsSwapchain);
+		LeftArrowsSwapchain = XR_NULL_HANDLE;
+	}
+
+	if (Keyboard.Screen.swapchain != XR_NULL_HANDLE)
+	{
+		xrDestroySwapchain(Keyboard.Screen.swapchain);
+		Keyboard.Screen.swapchain = XR_NULL_HANDLE;
+	}
+
+	if (Screen.swapchain != XR_NULL_HANDLE)
+	{
+		xrDestroySwapchain(Screen.swapchain);
+		Screen.swapchain = XR_NULL_HANDLE;
 	}
 }

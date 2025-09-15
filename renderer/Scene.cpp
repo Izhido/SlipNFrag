@@ -3808,3 +3808,145 @@ void Scene::Reset(AppState& appState)
     aliasIndexCache.clear();
     aliasVertexCache.clear();
 }
+
+void Scene::Destroy(AppState& appState)
+{
+	if (sampler != VK_NULL_HANDLE)
+	{
+		vkDestroySampler(appState.Device, sampler, nullptr);
+		sampler = VK_NULL_HANDLE;
+	}
+
+	controllerTexture.Delete(appState);
+	floorTexture.Delete(appState);
+
+	textures.Delete(appState);
+
+	for (auto& entry : surfaceRGBATextures)
+	{
+		entry.Delete(appState);
+	}
+	surfaceRGBATextures.clear();
+
+	for (auto& entry : surfaceTextures)
+	{
+		entry.Delete(appState);
+	}
+	surfaceTextures.clear();
+
+	lightmapsRGBToDelete.Delete(appState);
+	lightmapRGBBuffers.clear();
+
+	lightmapsToDelete.Delete(appState);
+	lightmapBuffers.clear();
+
+	for (auto& entry : perSurfaceCache)
+	{
+		if (entry.second.lightmapRGB != nullptr)
+		{
+			entry.second.lightmapRGB->Delete(appState);
+		}
+		if (entry.second.lightmap != nullptr)
+		{
+			entry.second.lightmap->Delete(appState);
+		}
+	}
+	perSurfaceCache.clear();
+
+	indexBuffers.Delete(appState);
+	aliasBuffers.Delete(appState);
+
+	if (colormap.image != VK_NULL_HANDLE)
+	{
+		colormap.Delete(appState);
+	}
+
+	for (auto& buffer : neutralPaletteBuffers)
+	{
+		if (buffer != VK_NULL_HANDLE)
+		{
+			vkDestroyBuffer(appState.Device, buffer, nullptr);
+		}
+	}
+	for (auto& buffer : paletteBuffers)
+	{
+		if (buffer != VK_NULL_HANDLE)
+		{
+			vkDestroyBuffer(appState.Device, buffer, nullptr);
+		}
+	}
+	if (paletteMemory != VK_NULL_HANDLE)
+	{
+		vkFreeMemory(appState.Device, paletteMemory, nullptr);
+	}
+
+	floor.Delete(appState);
+	controllers.Delete(appState);
+	skyRGBA.Delete(appState);
+	sky.Delete(appState);
+	cutout.Delete(appState);
+	colored.Delete(appState);
+	particles.Delete(appState);
+	viewmodelsHoleyColoredLights.Delete(appState);
+	viewmodelsHoley.Delete(appState);
+	viewmodelsColoredLights.Delete(appState);
+	viewmodels.Delete(appState);
+	aliasHoleyAlphaColoredLights.Delete(appState);
+	aliasHoleyColoredLights.Delete(appState);
+	aliasHoleyAlpha.Delete(appState);
+	aliasHoley.Delete(appState);
+	aliasAlphaColoredLights.Delete(appState);
+	aliasColoredLights.Delete(appState);
+	aliasAlpha.Delete(appState);
+	alias.Delete(appState);
+	sprites.Delete(appState);
+	turbulentRotatedRGBAColoredLights.Delete(appState);
+	turbulentRotatedRGBALit.Delete(appState);
+	turbulentRotatedColoredLights.Delete(appState);
+	turbulentRotatedLit.Delete(appState);
+	turbulentRotatedRGBA.Delete(appState);
+	turbulentRotated.Delete(appState);
+	turbulentRGBAColoredLights.Delete(appState);
+	turbulentRGBALit.Delete(appState);
+	turbulentColoredLights.Delete(appState);
+	turbulentLit.Delete(appState);
+	turbulentRGBA.Delete(appState);
+	turbulent.Delete(appState);
+	fencesRotatedRGBANoGlowColoredLights.Delete(appState);
+	fencesRotatedRGBANoGlow.Delete(appState);
+	fencesRotatedRGBAColoredLights.Delete(appState);
+	fencesRotatedRGBA.Delete(appState);
+	fencesRotatedColoredLights.Delete(appState);
+	fencesRotated.Delete(appState);
+	fencesRGBANoGlowColoredLights.Delete(appState);
+	fencesRGBANoGlow.Delete(appState);
+	fencesRGBAColoredLights.Delete(appState);
+	fencesRGBA.Delete(appState);
+	fencesColoredLights.Delete(appState);
+	fences.Delete(appState);
+	surfacesRotatedRGBANoGlowColoredLights.Delete(appState);
+	surfacesRotatedRGBANoGlow.Delete(appState);
+	surfacesRotatedRGBAColoredLights.Delete(appState);
+	surfacesRotatedRGBA.Delete(appState);
+	surfacesRotatedColoredLights.Delete(appState);
+	surfacesRotated.Delete(appState);
+	surfacesRGBANoGlowColoredLights.Delete(appState);
+	surfacesRGBANoGlow.Delete(appState);
+	surfacesRGBAColoredLights.Delete(appState);
+	surfacesRGBA.Delete(appState);
+	surfacesColoredLights.Delete(appState);
+	surfaces.Delete(appState);
+
+	vkDestroyDescriptorSetLayout(appState.Device, singleImageLayout, nullptr);
+	singleImageLayout = VK_NULL_HANDLE;
+	vkDestroyDescriptorSetLayout(appState.Device, twoBuffersAndImageLayout, nullptr);
+	twoBuffersAndImageLayout = VK_NULL_HANDLE;
+	vkDestroyDescriptorSetLayout(appState.Device, doubleBufferLayout, nullptr);
+	doubleBufferLayout = VK_NULL_HANDLE;
+	vkDestroyDescriptorSetLayout(appState.Device, singleBufferLayout, nullptr);
+	singleBufferLayout = VK_NULL_HANDLE;
+	vkDestroyDescriptorSetLayout(appState.Device, singleFragmentStorageBufferLayout, nullptr);
+	singleFragmentStorageBufferLayout = VK_NULL_HANDLE;
+	vkDestroyDescriptorSetLayout(appState.Device, singleStorageBufferLayout, nullptr);
+	singleStorageBufferLayout = VK_NULL_HANDLE;
+}

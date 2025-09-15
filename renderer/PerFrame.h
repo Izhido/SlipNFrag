@@ -84,4 +84,6 @@ struct PerFrame
 	static void SetPushConstants(const LoadedAliasColoredLights& alias, float pushConstants[]);
 	static void SetTintPushConstants(float pushConstants[], size_t offset = 0);
 	void Render(AppState& appState, uint32_t swapchainImageIndex);
+	void DestroyFramebuffer(AppState& appState) const;
+	void Destroy(AppState& appState);
 };

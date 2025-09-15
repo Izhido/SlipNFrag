@@ -229,4 +229,5 @@ struct Scene
 	void RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);
 	void Reset(AppState& appState);
+	void Destroy(AppState& appState);
 };
