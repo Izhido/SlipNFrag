@@ -1,6 +1,5 @@
 #include "MemoryAllocateInfo.h"
 #include "AppState.h"
-#include <android/log.h>
 #include "Utils.h"
 
 bool updateMemoryAllocateInfo(AppState& appState, VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags& properties, VkMemoryAllocateInfo& memoryAllocateInfo, bool throwOnNotFound)

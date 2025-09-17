@@ -59,7 +59,7 @@ void runEngine(AppState_pcxr* appState)
 			}
 			cl_allow_immersive = false;
 			auto updated = Host_FrameUpdate(frame_lapse);
-			if (sys_quitcalled || sys_errormessage.length() > 0)
+			if (sys_quitcalled || !sys_errormessage.empty())
 			{
 				appState->DestroyRequested = true;
 				break;
@@ -180,7 +180,7 @@ void runEngine(AppState_pcxr* appState)
 			auto previousYaw = cl.viewangles[YAW];
 			auto previousPitch = cl.viewangles[PITCH];
 			auto previousRoll = cl.viewangles[ROLL];
-			if (sys_quitcalled || sys_errormessage.length() > 0)
+			if (sys_quitcalled || !sys_errormessage.empty())
 			{
 				appState->DestroyRequested = true;
 				break;

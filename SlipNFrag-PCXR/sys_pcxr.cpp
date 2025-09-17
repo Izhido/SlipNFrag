@@ -2,13 +2,12 @@
 #include "sys_pcxr.h"
 #include "errno.h"
 #include <sys/stat.h>
-#include <android/log.h>
 #include "Locks.h"
 #include <iterator>
 #include <random>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include "Locks.h"
+#include "Logger_pcxr.h"
 
 int sys_argc;
 char** sys_argv;
@@ -143,7 +142,11 @@ void Sys_Error(const char* error, ...)
         }
         string.resize(needed + 1);
     }
-    __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "Sys_Error: %s", string.data());
+    printf("[LOG_ERROR] ");
+    printf(Logger_pcxr::tag);
+    printf(": ");
+    printf(string.data());
+    printf("\n");
     sys_errormessage = string.data();
     Host_Shutdown();
     throw std::runtime_error("Sys_Error called");
@@ -217,6 +220,8 @@ void Sys_Init(int argc, char** argv)
     COM_InitArgv(argc, argv);
     parms.argc = com_argc;
     parms.argv = com_argv;
-    __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, "Host_Init");
+    printf("[LOG_VERBOSE] ");
+    printf(Logger_pcxr::tag);
+    printf(": Host_Init\n");
     Host_Init(&parms);
 }

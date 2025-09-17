@@ -1,10 +1,10 @@
 #include "AppState_pcxr.h"
 #include "Utils.h"
-#include <android/log.h>
+#include "FileLoader_pcxr.h"
+#include "Logger_pcxr.h"
 #include <locale>
 #include "CylinderProjection.h"
 #include "Constants.h"
-#include "FileLoader_pcxr.h"
 #include "AppInput.h"
 #include "EngineThread.h"
 #include "Locks.h"
@@ -58,7 +58,7 @@ void SwitchBoundInput(AppState& appState, XrAction action, const char* name)
 		sourceName += "'";
 	}
 
-	__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", (std::string(name) + " action is bound to %s").c_str(), (!sourceName.empty() ? sourceName.c_str() : "nothing"));
+	appState.Logger->Info((std::string(name) + " action is bound to %s").c_str(), (!sourceName.empty() ? sourceName.c_str() : "nothing"));
 }
 
 const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer, XrInstance& instance)
@@ -71,7 +71,7 @@ const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer
 		if (baseHeader->type == XR_TYPE_EVENT_DATA_EVENTS_LOST)
 		{
 			auto const eventsLost = reinterpret_cast<const XrEventDataEventsLost*>(baseHeader);
-			__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "%d events lost", eventsLost->lostEventCount);
+			printf("[LOG_WARN] %s: %d events lost\n", Logger_pcxr::tag, eventsLost->lostEventCount);
 		}
 
 		return baseHeader;
@@ -90,27 +90,27 @@ static VkBool32 DebugMessengerCallback(
         void* pUserData)
 {
 	std::string severityName;
-	int priority = ANDROID_LOG_UNKNOWN;
+	const char* priority = "LOG_UNKNOWN";
 
 	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) != 0u)
 	{
 		severityName += "ERROR:";
-		priority = ANDROID_LOG_ERROR;
+		priority = "LOG_ERROR";
 	}
 	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) != 0u)
 	{
         severityName += "WARN:";
-		priority = ANDROID_LOG_WARN;
+		priority = "LOG_WARN";
 	}
 	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) != 0u)
 	{
         severityName += "INFO:";
-		priority = ANDROID_LOG_INFO;
+		priority = "LOG_INFO";
 	}
     if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) != 0u)
     {
         severityName += "VERB:";
-        priority = ANDROID_LOG_VERBOSE;
+        priority = "LOG_VERBOSE";
     }
 
     std::string typeName;
@@ -131,7 +131,7 @@ static VkBool32 DebugMessengerCallback(
         typeName += "DEVICE ADDRESS BINDING ";
     }
 
-	__android_log_print(priority, "slipnfrag_native", "[%s%s] %s", typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
+	printf("[%s] %s: [%s%s] %s\n", priority, Logger_pcxr::tag, typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
 	
 	return VK_FALSE;
 }
@@ -258,6 +258,9 @@ int main(int argc, char* argv[])
 {
 	CHECK_HRCMD(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
 
+	appState.FileLoader = new FileLoader_pcxr();
+	appState.Logger = new Logger_pcxr();
+
 	bool exitWithError = false;
 
 	try
@@ -297,7 +300,7 @@ int main(int argc, char* argv[])
 
 		CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(nullptr, (uint32_t)extensions.size(), &instanceExtensionCount, extensions.data()));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Available OpenXR extensions: (%d)", instanceExtensionCount);
+		appState.Logger->Verbose("Available OpenXR extensions: (%d)", instanceExtensionCount);
 
 		for (const XrExtensionProperties& extension : extensions)
 		{
@@ -313,7 +316,7 @@ int main(int argc, char* argv[])
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%d", extension.extensionName, extension.extensionVersion);
+			appState.Logger->Verbose("  Name=%s SpecVersion=%d", extension.extensionName, extension.extensionVersion);
 		}
 
 		for (auto& extensionName : xrInstanceExtensionSources)
@@ -344,21 +347,21 @@ int main(int argc, char* argv[])
 
 		CHECK_XRCMD(xrEnumerateApiLayerProperties((uint32_t) xrLayers.size(), &xrLayerCount, xrLayers.data()));
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available Layers: (%d)", xrLayerCount);
+		appState.Logger->Info("Available Layers: (%d)", xrLayerCount);
 		for (const XrApiLayerProperties& layer : xrLayers)
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name=%s SpecVersion=%s LayerVersion=%d Description=%s", layer.layerName, GetXrVersionString(layer.specVersion).c_str(), layer.layerVersion, layer.description);
+			appState.Logger->Verbose("  Name=%s SpecVersion=%s LayerVersion=%d Description=%s", layer.layerName, GetXrVersionString(layer.specVersion).c_str(), layer.layerVersion, layer.description);
 
 			CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layer.layerName, 0, &instanceExtensionCount, nullptr));
 
 			CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(layer.layerName, (uint32_t)extensions.size(), &instanceExtensionCount, extensions.data()));
 
 			const std::string indentStr(4, ' ');
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable OpenXR extensions for layer %s: (%d)", indentStr.c_str(), layer.layerName, instanceExtensionCount);
+			appState.Logger->Verbose("%sAvailable OpenXR extensions for layer %s: (%d)", indentStr.c_str(), layer.layerName, instanceExtensionCount);
 
 			for (const XrExtensionProperties& extension : extensions)
 			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), extension.extensionName, extension.extensionVersion);
+				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), extension.extensionName, extension.extensionVersion);
 			}
 		}
 
@@ -396,14 +399,14 @@ int main(int argc, char* argv[])
 		XrInstanceProperties instanceProperties { XR_TYPE_INSTANCE_PROPERTIES };
 		CHECK_XRCMD(xrGetInstanceProperties(instance, &instanceProperties));
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Instance RuntimeName=%s RuntimeVersion=%s", instanceProperties.runtimeName, GetXrVersionString(instanceProperties.runtimeVersion).c_str());
+		appState.Logger->Info("Instance RuntimeName=%s RuntimeVersion=%s", instanceProperties.runtimeName, GetXrVersionString(instanceProperties.runtimeVersion).c_str());
 
 		XrSystemId systemId = XR_NULL_SYSTEM_ID;
 		XrSystemGetInfo systemInfo { XR_TYPE_SYSTEM_GET_INFO };
 		systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 		CHECK_XRCMD(xrGetSystem(instance, &systemInfo, &systemId));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Using system %lu for form factor %s", systemId, to_string(systemInfo.formFactor));
+		appState.Logger->Verbose("Using system %lu for form factor %s", systemId, to_string(systemInfo.formFactor));
 
 		CHECK(systemId != XR_NULL_SYSTEM_ID);
 
@@ -415,15 +418,15 @@ int main(int argc, char* argv[])
 
 		auto viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available View Configuration Types: (%d)", viewConfigTypeCount);
+		appState.Logger->Info("Available View Configuration Types: (%d)", viewConfigTypeCount);
 		for (XrViewConfigurationType viewConfigType : viewConfigTypes)
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View Configuration Type: %s %s", to_string(viewConfigType), viewConfigType == viewConfigurationType ? "(Selected)" : "");
+			appState.Logger->Verbose("  View Configuration Type: %s %s", to_string(viewConfigType), viewConfigType == viewConfigurationType ? "(Selected)" : "");
 
 			XrViewConfigurationProperties viewConfigProperties { XR_TYPE_VIEW_CONFIGURATION_PROPERTIES };
 			CHECK_XRCMD(xrGetViewConfigurationProperties(instance, systemId, viewConfigType, &viewConfigProperties));
 
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  View configuration FovMutable=%s", (viewConfigProperties.fovMutable == XR_TRUE ? "True" : "False"));
+			appState.Logger->Verbose("  View configuration FovMutable=%s", (viewConfigProperties.fovMutable == XR_TRUE ? "True" : "False"));
 
 			uint32_t viewCount;
 			CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigType, 0, &viewCount, nullptr));
@@ -436,20 +439,20 @@ int main(int argc, char* argv[])
 				{
 					const XrViewConfigurationView& view = views[i];
 
-					__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "    View [%d]: Recommended Width=%d Height=%d SampleCount=%d", i, view.recommendedImageRectWidth, view.recommendedImageRectHeight, view.recommendedSwapchainSampleCount);
-					__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "    View [%d]:     Maximum Width=%d Height=%d SampleCount=%d", i, view.maxImageRectWidth, view.maxImageRectHeight, view.maxSwapchainSampleCount);
+					appState.Logger->Verbose("    View [%d]: Recommended Width=%d Height=%d SampleCount=%d", i, view.recommendedImageRectWidth, view.recommendedImageRectHeight, view.recommendedSwapchainSampleCount);
+					appState.Logger->Verbose("    View [%d]:     Maximum Width=%d Height=%d SampleCount=%d", i, view.maxImageRectWidth, view.maxImageRectHeight, view.maxSwapchainSampleCount);
 				}
 			}
 			else
 			{
-				__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "Empty view configuration type");
+				appState.Logger->Error("Empty view configuration type");
 			}
 
 			uint32_t count;
 			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, systemId, viewConfigType, 0, &count, nullptr));
 			CHECK(count > 0);
 
-			__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available Environment Blend Mode count : (%d)", count);
+			appState.Logger->Info("Available Environment Blend Mode count : (%d)", count);
 
 			std::vector<XrEnvironmentBlendMode> blendModes(count);
 			CHECK_XRCMD(xrEnumerateEnvironmentBlendModes(instance, systemId, viewConfigType, count, &count, blendModes.data()));
@@ -458,7 +461,7 @@ int main(int argc, char* argv[])
 			for (XrEnvironmentBlendMode mode : blendModes)
 			{
 				const bool blendModeMatch = (mode == XR_ENVIRONMENT_BLEND_MODE_OPAQUE);
-				__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Environment Blend Mode (%s) : %s", to_string(mode), blendModeMatch ? "(Selected)" : "");
+				appState.Logger->Info("Environment Blend Mode (%s) : %s", to_string(mode), blendModeMatch ? "(Selected)" : "");
 				blendModeFound |= blendModeMatch;
 			}
 			CHECK(blendModeFound);
@@ -505,7 +508,7 @@ int main(int argc, char* argv[])
 		}
 		if (!validationLayersFound)
 		{
-			__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "No validation layers found in the system, skipping");
+			appState.Logger->Warn("No validation layers found in the system, skipping");
 		}
 #endif
 
@@ -617,10 +620,10 @@ int main(int argc, char* argv[])
 			auto indexTypeUInt8Enabled = false;
 			
 			const std::string indentStr(4, ' ');
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
+			appState.Logger->Verbose("%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
 			for (uint32_t i = 0; i < availableExtensionCount; ++i)
 			{
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
+				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
 
 				if (strcmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME) == 0)
 				{
@@ -703,7 +706,7 @@ int main(int argc, char* argv[])
 		VkPipelineCacheCreateInfo pipelineCacheCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO };
 		CHECK_VKCMD(vkCreatePipelineCache(appState.Device, &pipelineCacheCreateInfo, nullptr, &appState.PipelineCache));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Creating session...");
+		appState.Logger->Verbose("Creating session...");
 
 		XrSessionCreateInfo sessionCreateInfo { XR_TYPE_SESSION_CREATE_INFO };
 		sessionCreateInfo.next = reinterpret_cast<const XrBaseInStructure*>(&graphicsBinding);
@@ -723,7 +726,7 @@ int main(int argc, char* argv[])
 			std::vector<XrColorSpaceFB> colorSpaces(colorSpaceCount);
 
 			CHECK_XRCMD(xrEnumerateColorSpacesFB(appState.Session, colorSpaceCount, &colorSpaceCount, colorSpaces.data()));
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Supported color spaces:");
+			appState.Logger->Verbose("Supported color spaces:");
 
 			auto rec2020Supported = false;
 
@@ -758,7 +761,7 @@ int main(int argc, char* argv[])
 						name = "XR_COLOR_SPACE_UNMANAGED_FB";
 						break;
 				}
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%d:%d (%s)", i, colorSpaces[i], name);
+				appState.Logger->Verbose("%d:%d (%s)", i, colorSpaces[i], name);
 			}
 
 			if (rec2020Supported)
@@ -766,7 +769,7 @@ int main(int argc, char* argv[])
 				PFN_xrSetColorSpaceFB xrSetColorSpaceFB = nullptr;
 				CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrSetColorSpaceFB", (PFN_xrVoidFunction*)(&xrSetColorSpaceFB)));
 
-				__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Setting color space %i (%s)...", XR_COLOR_SPACE_REC2020_FB, "XR_COLOR_SPACE_REC2020_FB");
+				appState.Logger->Verbose("Setting color space %i (%s)...", XR_COLOR_SPACE_REC2020_FB, "XR_COLOR_SPACE_REC2020_FB");
 				CHECK_XRCMD(xrSetColorSpaceFB(appState.Session, XR_COLOR_SPACE_REC2020_FB));
 			}
 		}
@@ -781,18 +784,18 @@ int main(int argc, char* argv[])
 		std::vector<float> supportedDisplayRefreshRates(numSupportedDisplayRefreshRates);
 		CHECK_XRCMD(xrEnumerateDisplayRefreshRatesFB(appState.Session, numSupportedDisplayRefreshRates, &numSupportedDisplayRefreshRates, supportedDisplayRefreshRates.data()));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Supported Refresh Rates:");
+		appState.Logger->Verbose("Supported Refresh Rates:");
 		auto highestDisplayRefreshRate = 0.0f;
 		for (uint32_t i = 0; i < numSupportedDisplayRefreshRates; i++) 
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "%d:%.1f", i, supportedDisplayRefreshRates[i]);
+			appState.Logger->Verbose("%d:%.1f", i, supportedDisplayRefreshRates[i]);
 			highestDisplayRefreshRate = std::max(highestDisplayRefreshRate, supportedDisplayRefreshRates[i]);
 		}
 
 		PFN_xrRequestDisplayRefreshRateFB xrRequestDisplayRefreshRateFB;
 		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrRequestDisplayRefreshRateFB", (PFN_xrVoidFunction*)(&xrRequestDisplayRefreshRateFB)));
 
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Requesting display refresh rate of %.1fHz...", highestDisplayRefreshRate);
+		appState.Logger->Verbose("Requesting display refresh rate of %.1fHz...", highestDisplayRefreshRate);
 		CHECK_XRCMD(xrRequestDisplayRefreshRateFB(appState.Session, highestDisplayRefreshRate));
 		
 		PFN_xrGetDisplayRefreshRateFB xrGetDisplayRefreshRateFB;
@@ -800,17 +803,17 @@ int main(int argc, char* argv[])
 
 		auto currentDisplayRefreshRate = 0.0f;
 		CHECK_XRCMD(xrGetDisplayRefreshRateFB(appState.Session, &currentDisplayRefreshRate));
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Current System Display Refresh Rate: %.1fHz.", currentDisplayRefreshRate);
+		appState.Logger->Verbose("Current System Display Refresh Rate: %.1fHz.", currentDisplayRefreshRate);
 		
 		uint32_t spaceCount;
 		CHECK_XRCMD(xrEnumerateReferenceSpaces(appState.Session, 0, &spaceCount, nullptr));
 		std::vector<XrReferenceSpaceType> spaces(spaceCount);
 		CHECK_XRCMD(xrEnumerateReferenceSpaces(appState.Session, spaceCount, &spaceCount, spaces.data()));
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Available reference spaces: %d", spaceCount);
+		appState.Logger->Info("Available reference spaces: %d", spaceCount);
 		for (XrReferenceSpaceType space : spaces)
 		{
-			__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "  Name: %s", to_string(space));
+			appState.Logger->Verbose("  Name: %s", to_string(space));
 		}
 
 		appState.SubactionPaths.resize(2);
@@ -1066,9 +1069,9 @@ int main(int argc, char* argv[])
 		XrSystemProperties systemProperties { XR_TYPE_SYSTEM_PROPERTIES };
 		CHECK_XRCMD(xrGetSystemProperties(instance, systemId, &systemProperties));
 
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Properties: Name=%s VendorId=%d", systemProperties.systemName, systemProperties.vendorId);
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "System Tracking Properties: OrientationTracking=%s PositionTracking=%s", (systemProperties.trackingProperties.orientationTracking == XR_TRUE ? "True" : "False"), (systemProperties.trackingProperties.positionTracking == XR_TRUE ? "True" : "False"));
+		appState.Logger->Info("System Properties: Name=%s VendorId=%d", systemProperties.systemName, systemProperties.vendorId);
+		appState.Logger->Info("System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
+		appState.Logger->Info("System Tracking Properties: OrientationTracking=%s PositionTracking=%s", (systemProperties.trackingProperties.orientationTracking == XR_TRUE ? "True" : "False"), (systemProperties.trackingProperties.positionTracking == XR_TRUE ? "True" : "False"));
 
 		uint32_t viewCount;
 		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigurationType, 0, &viewCount, nullptr));
@@ -1109,7 +1112,7 @@ int main(int argc, char* argv[])
 				swapchainFormatsString += "]";
 			}
 		}
-		__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Swapchain Formats: %s", swapchainFormatsString.c_str());
+		appState.Logger->Verbose("Swapchain Formats: %s", swapchainFormatsString.c_str());
 		if (!found)
 		{
 			THROW(Fmt("No runtime swapchain format supported for color swapchain %i", Constants::colorFormat));
@@ -1119,7 +1122,7 @@ int main(int argc, char* argv[])
 		appState.SwapchainRect.extent.height = configViews[0].recommendedImageRectHeight;
 		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;
 		
-		__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
+		appState.Logger->Info("Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
 
 		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 		swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
@@ -1230,8 +1233,6 @@ int main(int argc, char* argv[])
 
 		XrEventDataBuffer eventDataBuffer { };
 
-        appState.FileLoader = new FileLoader_pcxr();
-
         appState.VertexTransform.m[15] = 1;
 
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -1261,7 +1262,7 @@ int main(int argc, char* argv[])
 					case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
 					{
 						const auto& instanceLossPending = *reinterpret_cast<const XrEventDataInstanceLossPending*>(event);
-						__android_log_print(ANDROID_LOG_WARN, "slipnfrag_native", "XrEventDataInstanceLossPending by %ld", instanceLossPending.lossTime);
+						appState.Logger->Warn("XrEventDataInstanceLossPending by %ld", instanceLossPending.lossTime);
 						exitRenderLoop = true;
 						requestRestart = true;
 						break;
@@ -1272,11 +1273,11 @@ int main(int argc, char* argv[])
 						const XrSessionState oldState = sessionState;
 						sessionState = sessionStateChangedEvent.state;
 
-						__android_log_print(ANDROID_LOG_INFO, "slipnfrag_native", "XrEventDataSessionStateChanged: state %s->%s session=%p time=%ld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
+						appState.Logger->Info("XrEventDataSessionStateChanged: state %s->%s session=%p time=%ld", to_string(oldState), to_string(sessionState), sessionStateChangedEvent.session, sessionStateChangedEvent.time);
 
 						if ((sessionStateChangedEvent.session != XR_NULL_HANDLE) && (sessionStateChangedEvent.session != appState.Session))
 						{
-							__android_log_print(ANDROID_LOG_ERROR, "slipnfrag_native", "XrEventDataSessionStateChanged for unknown session");
+							appState.Logger->Error("XrEventDataSessionStateChanged for unknown session");
 							continue;
 						}
 
@@ -1337,13 +1338,13 @@ int main(int argc, char* argv[])
 					case XR_TYPE_EVENT_DATA_PERF_SETTINGS_EXT:
 					{
 						const auto& perfSettingsEvent = *reinterpret_cast<const XrEventDataPerfSettingsEXT*>(event);
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataPerfSettingsEXT: type %d subdomain %d : level %d -> level %d", perfSettingsEvent.type, perfSettingsEvent.subDomain, perfSettingsEvent.fromLevel, perfSettingsEvent.toLevel);
+						appState.Logger->Verbose("XrEventDataPerfSettingsEXT: type %d subdomain %d : level %d -> level %d", perfSettingsEvent.type, perfSettingsEvent.subDomain, perfSettingsEvent.fromLevel, perfSettingsEvent.toLevel);
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_DISPLAY_REFRESH_RATE_CHANGED_FB:
 					{
 						const auto& refreshRateChangedEvent = *reinterpret_cast<const XrEventDataDisplayRefreshRateChangedFB*>(event);
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataDisplayRefreshRateChangedFB: fromRate %f -> toRate %f", refreshRateChangedEvent.fromDisplayRefreshRate, refreshRateChangedEvent.toDisplayRefreshRate);
+						appState.Logger->Verbose("XrEventDataDisplayRefreshRateChangedFB: fromRate %f -> toRate %f", refreshRateChangedEvent.fromDisplayRefreshRate, refreshRateChangedEvent.toDisplayRefreshRate);
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
@@ -1371,11 +1372,11 @@ int main(int argc, char* argv[])
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
 					{
 						const auto& referenceSpaceChangeEvent = *reinterpret_cast<const XrEventDataReferenceSpaceChangePending*>(event);
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %ld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
+						appState.Logger->Verbose("XrEventDataReferenceSpaceChangePending: changed space: %d for session %p at time %ld", referenceSpaceChangeEvent.referenceSpaceType, (void*)referenceSpaceChangeEvent.session, referenceSpaceChangeEvent.changeTime);
 						break;
 					}
 					default:
-						__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Ignoring event type %d", event->type);
+						appState.Logger->Verbose("Ignoring event type %d", event->type);
 						break;
 				}
 
@@ -1449,7 +1450,7 @@ int main(int argc, char* argv[])
 						sys_argc = argc;
 						sys_argv = argv;
 						Sys_Init(sys_argc, sys_argv);
-						if (sys_errormessage.length() > 0)
+						if (!sys_errormessage.empty())
 						{
 							if (sys_nogamedata)
 							{
@@ -1631,7 +1632,7 @@ int main(int argc, char* argv[])
 						}
 						else if (appState.ActiveHands[0])
 						{
-							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate left hand action space in app space: %d", res);
+							appState.Logger->Verbose("Unable to locate left hand action space in app space: %d", res);
 						}
 
 						appState.RightController.SpaceLocation.type = XR_TYPE_SPACE_LOCATION;
@@ -1647,7 +1648,7 @@ int main(int argc, char* argv[])
 						}
 						else if (appState.ActiveHands[1])
 						{
-							__android_log_print(ANDROID_LOG_VERBOSE, "slipnfrag_native", "Unable to locate right hand action space in app space: %d", res);
+							appState.Logger->Verbose("Unable to locate right hand action space in app space: %d", res);
 						}
 
 						appState.CameraLocation.type = XR_TYPE_SPACE_LOCATION;
@@ -2513,318 +2514,7 @@ int main(int argc, char* argv[])
 			CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
 		}
 
-		if (appState.Device != VK_NULL_HANDLE)
-		{
-			for (auto& perFrame : appState.PerFrame)
-			{
-				if (perFrame.second.framebuffer != VK_NULL_HANDLE)
-				{
-					vkDestroyFramebuffer(appState.Device, perFrame.second.framebuffer, nullptr);
-				}
-				if (perFrame.second.resolveView != VK_NULL_HANDLE)
-				{
-					vkDestroyImageView(appState.Device, perFrame.second.resolveView, nullptr);
-				}
-				if (perFrame.second.depthView != VK_NULL_HANDLE)
-				{
-					vkDestroyImageView(appState.Device, perFrame.second.depthView, nullptr);
-				}
-				if (perFrame.second.colorView != VK_NULL_HANDLE)
-				{
-					vkDestroyImageView(appState.Device, perFrame.second.colorView, nullptr);
-				}
-				if (perFrame.second.depthImage != VK_NULL_HANDLE)
-				{
-					vkDestroyImage(appState.Device, perFrame.second.depthImage, nullptr);
-				}
-				if (perFrame.second.depthMemory != VK_NULL_HANDLE)
-				{
-					vkFreeMemory(appState.Device, perFrame.second.depthMemory, nullptr);
-				}
-				if (perFrame.second.colorImage != VK_NULL_HANDLE)
-				{
-					vkDestroyImage(appState.Device, perFrame.second.colorImage, nullptr);
-				}
-				if (perFrame.second.colorMemory != VK_NULL_HANDLE)
-				{
-					vkFreeMemory(appState.Device, perFrame.second.colorMemory, nullptr);
-				}
-			}
-
-			appState.Scene.Reset(appState);
-
-			for (auto& texture : appState.KeyboardTextures)
-			{
-				texture.second.Delete(appState);
-			}
-			appState.KeyboardTextures.clear();
-
-			for (auto& perFrame : appState.Keyboard.Screen.perFrame)
-			{
-				perFrame.second.stagingBuffer.Delete(appState);
-			}
-			appState.Keyboard.Screen.perFrame.clear();
-
-			for (auto& texture : appState.StatusBarTextures)
-			{
-				texture.Delete(appState);
-			}
-			appState.StatusBarTextures.clear();
-
-			for (auto& texture : appState.ConsoleTextures)
-			{
-				texture.Delete(appState);
-			}
-			appState.ConsoleTextures.clear();
-
-			for (auto& perFrame : appState.Screen.perFrame)
-			{
-				perFrame.second.stagingBuffer.Delete(appState);
-			}
-			appState.Screen.perFrame.clear();
-
-			for (auto& perFrame : appState.PerFrame)
-			{
-				perFrame.second.controllerResources.Delete(appState);
-				perFrame.second.floorResources.Delete(appState);
-				perFrame.second.colormapResources.Delete(appState);
-                perFrame.second.sortedAttributesResources.Delete(appState);
-				perFrame.second.sceneMatricesAndColormapResources.Delete(appState);
-				perFrame.second.sceneMatricesAndNeutralPaletteResources.Delete(appState);
-				perFrame.second.sceneMatricesAndPaletteResources.Delete(appState);
-				perFrame.second.sceneMatricesResources.Delete(appState);
-				perFrame.second.host_colormapResources.Delete(appState);
-                perFrame.second.skyRGBAResources.Delete(appState);
-                perFrame.second.skyResources.Delete(appState);
-				if (perFrame.second.skyRGBA != nullptr)
-				{
-					perFrame.second.skyRGBA->Delete(appState);
-				}
-				if (perFrame.second.sky != nullptr)
-				{
-					perFrame.second.sky->Delete(appState);
-				}
-				perFrame.second.colormaps.Delete(appState);
-				perFrame.second.stagingBuffers.Delete(appState);
-				perFrame.second.cachedColors.Delete(appState);
-				perFrame.second.cachedSortedIndices32.Delete(appState);
-				perFrame.second.cachedIndices32.Delete(appState);
-				perFrame.second.cachedSortedIndices16.Delete(appState);
-				perFrame.second.cachedIndices16.Delete(appState);
-				perFrame.second.cachedIndices8.Delete(appState);
-                perFrame.second.cachedSortedAttributes.Delete(appState);
-				perFrame.second.cachedAttributes.Delete(appState);
-				perFrame.second.cachedSortedVertices.Delete(appState);
-				perFrame.second.cachedVertices.Delete(appState);
-
-				if (perFrame.second.fence != VK_NULL_HANDLE)
-				{
-					vkDestroyFence(appState.Device, perFrame.second.fence, nullptr);
-				}
-
-				if (perFrame.second.commandPool != VK_NULL_HANDLE)
-				{
-					vkDestroyCommandPool(appState.Device, perFrame.second.commandPool, nullptr);
-				}
-				if (perFrame.second.matrices != nullptr)
-				{
-					perFrame.second.matrices->Delete(appState);
-				}
-			}
-
-			appState.PerFrame.clear();
-
-			if (appState.RenderPass != VK_NULL_HANDLE)
-			{
-				vkDestroyRenderPass(appState.Device, appState.RenderPass, nullptr);
-				appState.RenderPass = VK_NULL_HANDLE;
-			}
-
-			if (appState.Scene.sampler != VK_NULL_HANDLE)
-			{
-				vkDestroySampler(appState.Device, appState.Scene.sampler, nullptr);
-				appState.Scene.sampler = VK_NULL_HANDLE;
-			}
-
-			appState.Scene.controllerTexture.Delete(appState);
-			appState.Scene.floorTexture.Delete(appState);
-
-			appState.Scene.textures.Delete(appState);
-
-			for (auto& entry : appState.Scene.surfaceRGBATextures)
-			{
-				entry.Delete(appState);
-			}
-			appState.Scene.surfaceRGBATextures.clear();
-
-			for (auto& entry : appState.Scene.surfaceTextures)
-			{
-				entry.Delete(appState);
-			}
-			appState.Scene.surfaceTextures.clear();
-
-			appState.Scene.lightmapsRGBToDelete.Delete(appState);
-			appState.Scene.lightmapRGBBuffers.clear();
-
-			appState.Scene.lightmapsToDelete.Delete(appState);
-			appState.Scene.lightmapBuffers.clear();
-
-			for (auto& entry : appState.Scene.perSurfaceCache)
-			{
-				if (entry.second.lightmapRGB != nullptr)
-				{
-					entry.second.lightmapRGB->Delete(appState);
-				}
-				if (entry.second.lightmap != nullptr)
-				{
-					entry.second.lightmap->Delete(appState);
-				}
-			}
-			appState.Scene.perSurfaceCache.clear();
-
-			appState.Scene.indexBuffers.Delete(appState);
-			appState.Scene.aliasBuffers.Delete(appState);
-
-            if (appState.Scene.colormap.image != VK_NULL_HANDLE)
-            {
-                appState.Scene.colormap.Delete(appState);
-            }
-
-            for (auto& buffer : appState.Scene.neutralPaletteBuffers)
-            {
-                if (buffer != VK_NULL_HANDLE)
-                {
-                    vkDestroyBuffer(appState.Device, buffer, nullptr);
-                }
-            }
-            for (auto& buffer : appState.Scene.paletteBuffers)
-            {
-                if (buffer != VK_NULL_HANDLE)
-                {
-                    vkDestroyBuffer(appState.Device, buffer, nullptr);
-                }
-            }
-            if (appState.Scene.paletteMemory != VK_NULL_HANDLE)
-            {
-                vkFreeMemory(appState.Device, appState.Scene.paletteMemory, nullptr);
-            }
-
-			appState.Scene.floor.Delete(appState);
-			appState.Scene.controllers.Delete(appState);
-			appState.Scene.skyRGBA.Delete(appState);
-			appState.Scene.sky.Delete(appState);
-			appState.Scene.cutout.Delete(appState);
-			appState.Scene.colored.Delete(appState);
-			appState.Scene.particles.Delete(appState);
-			appState.Scene.viewmodelsHoleyColoredLights.Delete(appState);
-			appState.Scene.viewmodelsHoley.Delete(appState);
-			appState.Scene.viewmodelsColoredLights.Delete(appState);
-			appState.Scene.viewmodels.Delete(appState);
-			appState.Scene.aliasHoleyAlphaColoredLights.Delete(appState);
-			appState.Scene.aliasHoleyColoredLights.Delete(appState);
-			appState.Scene.aliasHoleyAlpha.Delete(appState);
-			appState.Scene.aliasHoley.Delete(appState);
-			appState.Scene.aliasAlphaColoredLights.Delete(appState);
-			appState.Scene.aliasColoredLights.Delete(appState);
-			appState.Scene.aliasAlpha.Delete(appState);
-			appState.Scene.alias.Delete(appState);
-			appState.Scene.sprites.Delete(appState);
-			appState.Scene.turbulentRotatedRGBAColoredLights.Delete(appState);
-			appState.Scene.turbulentRotatedRGBALit.Delete(appState);
-			appState.Scene.turbulentRotatedColoredLights.Delete(appState);
-			appState.Scene.turbulentRotatedLit.Delete(appState);
-			appState.Scene.turbulentRotatedRGBA.Delete(appState);
-			appState.Scene.turbulentRotated.Delete(appState);
-			appState.Scene.turbulentRGBAColoredLights.Delete(appState);
-			appState.Scene.turbulentRGBALit.Delete(appState);
-			appState.Scene.turbulentColoredLights.Delete(appState);
-			appState.Scene.turbulentLit.Delete(appState);
-			appState.Scene.turbulentRGBA.Delete(appState);
-			appState.Scene.turbulent.Delete(appState);
-			appState.Scene.fencesRotatedRGBANoGlowColoredLights.Delete(appState);
-			appState.Scene.fencesRotatedRGBANoGlow.Delete(appState);
-			appState.Scene.fencesRotatedRGBAColoredLights.Delete(appState);
-			appState.Scene.fencesRotatedRGBA.Delete(appState);
-			appState.Scene.fencesRotatedColoredLights.Delete(appState);
-			appState.Scene.fencesRotated.Delete(appState);
-			appState.Scene.fencesRGBANoGlowColoredLights.Delete(appState);
-			appState.Scene.fencesRGBANoGlow.Delete(appState);
-			appState.Scene.fencesRGBAColoredLights.Delete(appState);
-			appState.Scene.fencesRGBA.Delete(appState);
-			appState.Scene.fencesColoredLights.Delete(appState);
-			appState.Scene.fences.Delete(appState);
-			appState.Scene.surfacesRotatedRGBANoGlowColoredLights.Delete(appState);
-			appState.Scene.surfacesRotatedRGBANoGlow.Delete(appState);
-			appState.Scene.surfacesRotatedRGBAColoredLights.Delete(appState);
-			appState.Scene.surfacesRotatedRGBA.Delete(appState);
-			appState.Scene.surfacesRotatedColoredLights.Delete(appState);
-			appState.Scene.surfacesRotated.Delete(appState);
-			appState.Scene.surfacesRGBANoGlowColoredLights.Delete(appState);
-			appState.Scene.surfacesRGBANoGlow.Delete(appState);
-			appState.Scene.surfacesRGBAColoredLights.Delete(appState);
-			appState.Scene.surfacesRGBA.Delete(appState);
-			appState.Scene.surfacesColoredLights.Delete(appState);
-			appState.Scene.surfaces.Delete(appState);
-
-			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleImageLayout, nullptr);
-			appState.Scene.singleImageLayout = VK_NULL_HANDLE;
-			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.twoBuffersAndImageLayout, nullptr);
-			appState.Scene.twoBuffersAndImageLayout = VK_NULL_HANDLE;
-			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.doubleBufferLayout, nullptr);
-			appState.Scene.doubleBufferLayout = VK_NULL_HANDLE;
-			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleBufferLayout, nullptr);
-			appState.Scene.singleBufferLayout = VK_NULL_HANDLE;
-			vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleFragmentStorageBufferLayout, nullptr);
-			appState.Scene.singleFragmentStorageBufferLayout = VK_NULL_HANDLE;
-            vkDestroyDescriptorSetLayout(appState.Device, appState.Scene.singleStorageBufferLayout, nullptr);
-            appState.Scene.singleStorageBufferLayout = VK_NULL_HANDLE;
-
-			if (appState.SetupCommandPool != VK_NULL_HANDLE)
-			{
-				vkDestroyCommandPool(appState.Device, appState.SetupCommandPool, nullptr);
-				appState.SetupCommandPool = VK_NULL_HANDLE;
-			}
-		}
-
-		appState.Scene.created = false;
-
-        delete appState.FileLoader;
-
-		if (appState.ActionSet != XR_NULL_HANDLE)
-		{
-			xrDestroySpace(appState.HandSpaces[0]);
-			xrDestroySpace(appState.HandSpaces[1]);
-			appState.HandSpaces.clear();
-
-			xrDestroyActionSet(appState.ActionSet);
-			appState.ActionSet = XR_NULL_HANDLE;
-		}
-
-		Skybox::DeleteAll(appState);
-
-		if (appState.RightArrowsSwapchain != XR_NULL_HANDLE)
-		{
-			xrDestroySwapchain(appState.RightArrowsSwapchain);
-			appState.RightArrowsSwapchain = XR_NULL_HANDLE;
-		}
-
-		if (appState.LeftArrowsSwapchain != XR_NULL_HANDLE)
-		{
-			xrDestroySwapchain(appState.LeftArrowsSwapchain);
-			appState.LeftArrowsSwapchain = XR_NULL_HANDLE;
-		}
-
-		if (appState.Keyboard.Screen.swapchain != XR_NULL_HANDLE)
-		{
-			xrDestroySwapchain(appState.Keyboard.Screen.swapchain);
-			appState.Keyboard.Screen.swapchain = XR_NULL_HANDLE;
-		}
-
-		if (appState.Screen.swapchain != XR_NULL_HANDLE)
-		{
-			xrDestroySwapchain(appState.Screen.swapchain);
-			appState.Screen.swapchain = XR_NULL_HANDLE;
-		}
+		appState.Destroy();
 
 		if (swapchain != XR_NULL_HANDLE)
 		{
@@ -2874,6 +2564,11 @@ int main(int argc, char* argv[])
 		if (vulkanInstance != VK_NULL_HANDLE)
 		{
 			vkDestroyInstance(vulkanInstance, nullptr);
+		}
+
+		if (!sys_errormessage.empty())
+		{
+			throw std::runtime_error(sys_errormessage);
 		}
 	}
 	catch (const std::exception& ex)
