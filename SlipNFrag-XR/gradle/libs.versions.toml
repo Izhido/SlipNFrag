@@ -1,11 +1,11 @@
 [versions]
 agp = "8.13.0"
-kotlin = "2.2.0"
+kotlin = "2.2.20"
 coreKtx = "1.17.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 gamesActivity = "4.0.0"
-openxr_loader_for_android = "1.1.51"
+openxr_loader_for_android = "1.1.52"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
