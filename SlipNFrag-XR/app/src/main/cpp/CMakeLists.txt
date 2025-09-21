@@ -8,7 +8,7 @@ set(ID1_DIR "${ROOT_DIR}/id1")
 set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(STB_DIR "${ROOT_DIR}/stb")
-set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.51")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.52")
 
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
@@ -45,13 +45,13 @@ add_library(slipnfrag_app_glue STATIC
 
 find_library(ANDROID_LIBRARY NAMES android)
 find_library(ANDROID_LOG_LIBRARY NAMES log)
-find_library(VULKAN_LIBRARY NAMES vulkan)
 
-find_package(OpenXR REQUIRED CONFIG)
+find_package(Vulkan REQUIRED)
+find_package(OpenXR CONFIG REQUIRED)
 
 target_include_directories(slipnfrag_native PRIVATE
         ${OPENXR_DIR}/src
-        ${VULKAN_INCLUDE_DIRS}
+        Vulkan::Headers
         ${LOCAL_DIR}
         ${ID1_DIR}
         ${RENDERER_DIR}
@@ -63,7 +63,7 @@ target_link_libraries(slipnfrag_native
         slipnfrag_app_glue
         ${ANDROID_LIBRARY}
         ${ANDROID_LOG_LIBRARY}
-        ${VULKAN_LIBRARY}
+        Vulkan::Vulkan
         OpenXR::openxr_loader
         OpenSLES
 )
