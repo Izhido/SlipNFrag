@@ -8,7 +8,6 @@ set(ID1_DIR "${ROOT_DIR}/id1")
 set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(SHADERS_DIR "${ROOT_DIR}/shaders")
-set(NULL_DIR "${ROOT_DIR}/SlipNFrag")
 set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.52")
 
@@ -16,27 +15,17 @@ file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
 file(GLOB RENDERER_SOURCE "${RENDERER_DIR}/*.cpp")
 file(GLOB SND_FLOAT_SOURCE "${SND_FLOAT_DIR}/*.cpp")
-file(GLOB NULL_SOURCE "${NULL_DIR}/*.cpp")
 file(GLOB SHADERS_SOURCE "${SHADERS_DIR}/*.vert" "${SHADERS_DIR}/*.frag")
 file(GLOB SLIPNFRAG_XR_ASSETS "${ROOT_DIR}/SlipNFrag-XR/app/src/main/assets/*")
 
-list(FILTER ID1_SOURCE EXCLUDE REGEX "net_sock")
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_udp")
-list(FILTER ID1_SOURCE EXCLUDE REGEX "net_win")
 list(FILTER ID1_SOURCE EXCLUDE REGEX "snd_")
-
-list(FILTER NULL_SOURCE EXCLUDE REGEX "cd_null")
-list(FILTER NULL_SOURCE EXCLUDE REGEX "snd_null")
-list(FILTER NULL_SOURCE EXCLUDE REGEX "in_null")
-list(FILTER NULL_SOURCE EXCLUDE REGEX "sys_null")
-list(FILTER NULL_SOURCE EXCLUDE REGEX "vid_null")
 
 add_executable(slipnfrag_pcxr
         ${LOCAL_SOURCE}
         ${ID1_SOURCE}
         ${RENDERER_SOURCE}
         ${SND_FLOAT_SOURCE}
-        ${NULL_SOURCE}
         ${SHADERS_SOURCE}
 )
 
@@ -70,7 +59,7 @@ function(compile_glsl_use_extension run_target_name)
         get_filename_component(glsl_name ${in_file} NAME_WE)
         get_filename_component(glsl_stage ${in_file} EXT)
         string(REPLACE "." "" glsl_stage ${glsl_stage})
-        set(out_file ${CMAKE_CURRENT_BINARY_DIR}/shaders/${glsl_name}.${glsl_stage}.spv)
+        set(out_file ${CMAKE_CURRENT_BINARY_DIR}/slipnfrag_assets/shaders/${glsl_name}.${glsl_stage}.spv)
         add_custom_command(
             OUTPUT ${out_file}
             COMMAND Vulkan::glslc -fshader-stage=${glsl_stage} ${in_file} -o ${out_file}
@@ -116,4 +105,4 @@ add_custom_command(
     TARGET slipnfrag_pcxr POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
             ${SLIPNFRAG_XR_ASSETS}
-            ${CMAKE_CURRENT_BINARY_DIR})
+            ${CMAKE_CURRENT_BINARY_DIR}/slipnfrag_assets)
