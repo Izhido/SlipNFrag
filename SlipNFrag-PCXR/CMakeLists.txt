@@ -10,9 +10,8 @@ set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(SHADERS_DIR "${ROOT_DIR}/shaders")
 set(NULL_DIR "${ROOT_DIR}/SlipNFrag")
 set(STB_DIR "${ROOT_DIR}/stb")
-set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.51")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.52")
 
-file(GLOB LOCAL_HEADERS "${LOCAL_DIR}/*.h")
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
 file(GLOB RENDERER_SOURCE "${RENDERER_DIR}/*.cpp")
@@ -32,16 +31,14 @@ list(FILTER NULL_SOURCE EXCLUDE REGEX "in_null")
 list(FILTER NULL_SOURCE EXCLUDE REGEX "sys_null")
 list(FILTER NULL_SOURCE EXCLUDE REGEX "vid_null")
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 add_executable(slipnfrag_pcxr
         ${LOCAL_SOURCE}
         ${ID1_SOURCE}
         ${RENDERER_SOURCE}
         ${SND_FLOAT_SOURCE}
         ${NULL_SOURCE}
-        ${LOCAL_HEADERS}
-        ${SHADERS_SOURCE})
+        ${SHADERS_SOURCE}
+)
 
 target_compile_options(slipnfrag_pcxr PRIVATE
         /Zc:wchar_t 
@@ -64,20 +61,7 @@ else()
     )
 endif()
 
-source_group("Headers" FILES ${LOCAL_HEADERS})
-source_group("Shaders" FILES ${SHADERS_SOURCE})
-
-file(GLOB glslc_folders $ENV{VULKAN_SDK}/*)
-find_program(GLSL_COMPILER glslc PATHS ${glslc_folders})
-find_program(GLSLANG_VALIDATOR glslangValidator)
-if(GLSL_COMPILER)
-    message(STATUS "Found glslc: ${GLSL_COMPILER}")
-elseif(GLSLANG_VALIDATOR)
-    message(STATUS "Found glslangValidator: ${GLSLANG_VALIDATOR}")
-else()
-    
-    message(FATAL_ERROR "Could NOT find glslc or glslangValidator.")
-endif()
+find_package(Vulkan REQUIRED)
 
 function(compile_glsl_use_extension run_target_name)
 
@@ -87,24 +71,11 @@ function(compile_glsl_use_extension run_target_name)
         get_filename_component(glsl_stage ${in_file} EXT)
         string(REPLACE "." "" glsl_stage ${glsl_stage})
         set(out_file ${CMAKE_CURRENT_BINARY_DIR}/shaders/${glsl_name}.${glsl_stage}.spv)
-        if(GLSL_COMPILER)
-            add_custom_command(
-                OUTPUT ${out_file}
-                COMMAND ${GLSL_COMPILER} -fshader-stage=${glsl_stage} ${in_file} -o ${out_file}
-                DEPENDS ${in_file}
-            )
-        elseif(GLSLANG_VALIDATOR)
-            add_custom_command(
-                OUTPUT ${out_file}
-                COMMAND ${GLSLANG_VALIDATOR} -V -S ${glsl_stage} ${in_file} -x -o ${out_file}
-                DEPENDS ${in_file}
-                VERBATIM
-            )
-        else()
-            get_filename_component(glsl_src_dir ${in_file} DIRECTORY)
-            set(precompiled_file ${glsl_src_dir}/${glsl_stage}.spv)
-            configure_file(${precompiled_file} ${out_file} COPYONLY)
-        endif()
+        add_custom_command(
+            OUTPUT ${out_file}
+            COMMAND Vulkan::glslc -fshader-stage=${glsl_stage} ${in_file} -o ${out_file}
+            DEPENDS ${in_file}
+        )
         list(APPEND glsl_output_files ${out_file})
     endforeach()
     add_custom_target(${run_target_name} ALL DEPENDS ${glsl_output_files})
@@ -117,15 +88,10 @@ add_dependencies(slipnfrag_pcxr
     run_slipnfrag_pcxr_glsl_compiles
 )
 
-find_package(Vulkan REQUIRED)
-
 target_include_directories(slipnfrag_pcxr PRIVATE
-        "."
         ${OPENXR_DIR}/include
         ${OPENXR_DIR}/src
-        ${Vulkan_INCLUDE_DIRS}
-        ${PROJECT_BINARY_DIR}/include
-        ${PROJECT_SOURCE_DIR}/external/include
+        Vulkan::Headers
         ${LOCAL_DIR}
         ${ID1_DIR}
         ${RENDERER_DIR}
@@ -135,7 +101,7 @@ target_include_directories(slipnfrag_pcxr PRIVATE
 target_link_libraries(slipnfrag_pcxr PRIVATE 
         openxr_loader
         winmm.lib
-        ${Vulkan_LIBRARY}
+        Vulkan::Vulkan
 )
 
 if(TARGET openxr-gfxwrapper)
