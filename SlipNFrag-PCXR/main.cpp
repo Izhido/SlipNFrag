@@ -483,10 +483,12 @@ int main(int argc, char* argv[])
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
 		const char* vulkanValidationLayerName = "VK_LAYER_KHRONOS_validation";
+		//const char* vulkanAPIDumpLayerName = "VK_LAYER_LUNARG_api_dump";
 
 		std::vector<const char*> validationLayerNames
 		{
 			vulkanValidationLayerName
+		//	,vulkanAPIDumpLayerName
 		};
 
 		auto validationLayersFound = false;
@@ -538,7 +540,9 @@ int main(int argc, char* argv[])
 			VkBool32 vvlValidateSync = VK_TRUE;
 			VkBool32 vvlThreadSafety = VK_TRUE;
 			VkBool32 vvlBestPractices = VK_TRUE;
-			VkBool32 vvlBestPracticesNVIDIA = VK_TRUE;
+			VkBool32 vvlBestPracticesNVIDIA = VK_FALSE; // VK_TRUE;
+			//VkBool32 adlOutputToFile = VK_TRUE;
+			//const char* adlFilename[] = { "apiDump.txt" };
 
 			VkLayerSettingEXT settings[] =
 			{
@@ -546,6 +550,8 @@ int main(int argc, char* argv[])
 				{ vulkanValidationLayerName, "thread_safety", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlThreadSafety },
 				{ vulkanValidationLayerName, "validate_best_practices", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlBestPractices },
 				{ vulkanValidationLayerName, "validate_best_practices_nvidia", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &vvlBestPracticesNVIDIA }
+			//	,{ vulkanAPIDumpLayerName, "file", VK_LAYER_SETTING_TYPE_BOOL32_EXT, 1, &adlOutputToFile },
+			//	,{ vulkanAPIDumpLayerName, "log_filename", VK_LAYER_SETTING_TYPE_STRING_EXT, (uint32_t)std::size(adlFilename), &adlFilename }
 			};
 
 			VkLayerSettingsCreateInfoEXT layerSettingsCreate { VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT };
