@@ -20,6 +20,12 @@ void SortedSurfaces::Initialize(SortedSurfaceTextures& sorted)
     sorted.added.clear();
 }
 
+void SortedSurfaces::Initialize(SortedAliasTextures& sorted)
+{
+	sorted.count = 0;
+	sorted.added.clear();
+}
+
 void SortedSurfaces::Sort(AppState& appState, LoadedSurface& loaded, int index, SortedSurfaceTexturesWithLightmaps& sorted)
 {
 	auto texture = loaded.texture.texture->descriptorSet;
@@ -274,6 +280,29 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSprite& loaded, int index, S
 		}
 		auto& sortedTexture = sorted.textures[sorted.count];
 		sortedTexture.texture = texture;
+		sortedTexture.entries.clear();
+		sortedTexture.entries.push_back(index);
+		sorted.added.insert({ texture, sorted.count });
+		sorted.count++;
+	}
+	else
+	{
+		auto& sortedTexture = sorted.textures[entry->second];
+		sortedTexture.entries.push_back(index);
+	}
+}
+
+void SortedSurfaces::Sort(AppState& appState, LoadedAliasColoredLights& loaded, int index, SortedAliasTextures& sorted)
+{
+	auto texture = loaded.texture.texture->descriptorSet;
+	auto entry = sorted.added.find(texture);
+	if (entry == sorted.added.end())
+	{
+		if (sorted.count >= sorted.textures.size())
+		{
+			sorted.textures.resize(sorted.textures.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedTexture = sorted.textures[sorted.count];
 		sortedTexture.entries.clear();
 		sortedTexture.entries.push_back(index);
 		sorted.added.insert({ texture, sorted.count });

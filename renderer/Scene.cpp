@@ -3415,77 +3415,113 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sortedVerticesSize += (loaded.count * 5 * sizeof(float));
 		sortedIndicesCount += ((loaded.count - 2) * 3);
     }
+	SortedSurfaces::Initialize(alias.sorted);
     previousApverts = nullptr;
     previousTexture = nullptr;
     for (auto i = 0; i <= alias.last; i++)
     {
-        GetStagingBufferSize(appState, d_lists.alias[i], alias.loaded[i], &colormap, size);
+		auto& loaded = alias.loaded[i];
+        GetStagingBufferSize(appState, d_lists.alias[i], loaded, &colormap, size);
+		SortedSurfaces::Sort(appState, loaded, i, alias.sorted);
     }
+	SortedSurfaces::Initialize(aliasAlpha.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasAlpha.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias_alpha[i], aliasAlpha.loaded[i], &colormap, size);
+		auto& loaded = aliasAlpha.loaded[i];
+		GetStagingBufferSize(appState, d_lists.alias_alpha[i], loaded, &colormap, size);
+		SortedSurfaces::Sort(appState, loaded, i, aliasAlpha.sorted);
 	}
+	SortedSurfaces::Initialize(aliasColoredLights.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasColoredLights.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias_colored_lights[i], aliasColoredLights.loaded[i], size);
+		auto& loaded = aliasColoredLights.loaded[i];
+		GetStagingBufferSize(appState, d_lists.alias_colored_lights[i], loaded, size);
+		SortedSurfaces::Sort(appState, loaded, i, aliasColoredLights.sorted);
 	}
+	SortedSurfaces::Initialize(aliasAlphaColoredLights.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasAlphaColoredLights.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias_alpha_colored_lights[i], aliasAlphaColoredLights.loaded[i], size);
+		auto& loaded = aliasAlphaColoredLights.loaded[i];
+		GetStagingBufferSize(appState, d_lists.alias_alpha_colored_lights[i], loaded, size);
+		SortedSurfaces::Sort(appState, loaded, i, aliasAlphaColoredLights.sorted);
 	}
+	SortedSurfaces::Initialize(aliasHoley.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasHoley.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias_holey[i], aliasHoley.loaded[i], &colormap, size);
+		auto& loaded = aliasHoley.loaded[i];
+		GetStagingBufferSize(appState, d_lists.alias_holey[i], loaded, &colormap, size);
+		SortedSurfaces::Sort(appState, loaded, i, aliasHoley.sorted);
 	}
+	SortedSurfaces::Initialize(aliasHoleyAlpha.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasHoleyAlpha.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias_holey_alpha[i], aliasHoleyAlpha.loaded[i], &colormap, size);
+		auto& loaded = aliasHoleyAlpha.loaded[i];
+		GetStagingBufferSize(appState, d_lists.alias_holey_alpha[i], loaded, &colormap, size);
+		SortedSurfaces::Sort(appState, loaded, i, aliasHoleyAlpha.sorted);
 	}
+	SortedSurfaces::Initialize(aliasHoleyColoredLights.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasHoleyColoredLights.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias_holey_colored_lights[i], aliasHoleyColoredLights.loaded[i], size);
+		auto& loaded = aliasHoleyColoredLights.loaded[i];
+		GetStagingBufferSize(appState, d_lists.alias_holey_colored_lights[i], loaded, size);
+		SortedSurfaces::Sort(appState, loaded, i, aliasHoleyColoredLights.sorted);
 	}
+	SortedSurfaces::Initialize(aliasHoleyAlphaColoredLights.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= aliasHoleyAlphaColoredLights.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.alias_holey_alpha_colored_lights[i], aliasHoleyAlphaColoredLights.loaded[i], size);
+		auto& loaded = aliasHoleyAlphaColoredLights.loaded[i];
+		GetStagingBufferSize(appState, d_lists.alias_holey_alpha_colored_lights[i], loaded, size);
+		SortedSurfaces::Sort(appState, loaded, i, aliasHoleyAlphaColoredLights.sorted);
 	}
+	SortedSurfaces::Initialize(viewmodels.sorted);
     previousApverts = nullptr;
     previousTexture = nullptr;
     for (auto i = 0; i <= viewmodels.last; i++)
     {
-        GetStagingBufferSize(appState, d_lists.viewmodels[i], viewmodels.loaded[i], &colormap, size);
+		auto& loaded = viewmodels.loaded[i];
+        GetStagingBufferSize(appState, d_lists.viewmodels[i], loaded, &colormap, size);
+		SortedSurfaces::Sort(appState, loaded, i, viewmodels.sorted);
     }
+	SortedSurfaces::Initialize(viewmodelsColoredLights.sorted);
     previousApverts = nullptr;
     previousTexture = nullptr;
     for (auto i = 0; i <= viewmodelsColoredLights.last; i++)
     {
-        GetStagingBufferSize(appState, d_lists.viewmodels_colored_lights[i], viewmodelsColoredLights.loaded[i], size);
+		auto& loaded = viewmodelsColoredLights.loaded[i];
+        GetStagingBufferSize(appState, d_lists.viewmodels_colored_lights[i], loaded, size);
+		SortedSurfaces::Sort(appState, loaded, i, viewmodelsColoredLights.sorted);
     }
+	SortedSurfaces::Initialize(viewmodelsHoley.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= viewmodelsHoley.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.viewmodels_holey[i], viewmodelsHoley.loaded[i], &colormap, size);
+		auto& loaded = viewmodelsHoley.loaded[i];
+		GetStagingBufferSize(appState, d_lists.viewmodels_holey[i], loaded, &colormap, size);
+		SortedSurfaces::Sort(appState, loaded, i, viewmodelsHoley.sorted);
 	}
+	SortedSurfaces::Initialize(viewmodelsHoleyColoredLights.sorted);
 	previousApverts = nullptr;
 	previousTexture = nullptr;
 	for (auto i = 0; i <= viewmodelsHoleyColoredLights.last; i++)
 	{
-		GetStagingBufferSize(appState, d_lists.viewmodels_holey_colored_lights[i], viewmodelsHoleyColoredLights.loaded[i], size);
+		auto& loaded = viewmodelsHoleyColoredLights.loaded[i];
+		GetStagingBufferSize(appState, d_lists.viewmodels_holey_colored_lights[i], loaded, size);
+		SortedSurfaces::Sort(appState, loaded, i, viewmodelsHoleyColoredLights.sorted);
 	}
 	perFrame.particleBase = sortedVerticesSize;
 	if (lastParticle >= 0)

@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.h>
 #include "PipelineWithSorted.h"
-#include "PipelineWithLoaded.h"
+#include "PipelineWithSortedAlias.h"
 #include "CachedAliasBuffers.h"
 #include "CachedIndexBuffers.h"
 #include "PerSurfaceData.h"
@@ -77,18 +77,18 @@ struct Scene
 	PipelineWithSorted<LoadedSurfaceRotated, SortedSurfaceTexturesWithLightmaps> turbulentRotatedRGBALit;
 	PipelineWithSorted<LoadedSurfaceRotatedColoredLights, SortedSurfaceTexturesWithLightmaps> turbulentRotatedRGBAColoredLights;
 	PipelineWithSorted<LoadedSprite, SortedSurfaceTextures> sprites;
-	PipelineWithLoaded<LoadedAlias> alias;
-	PipelineWithLoaded<LoadedAlias> aliasAlpha;
-	PipelineWithLoaded<LoadedAliasColoredLights> aliasColoredLights;
-	PipelineWithLoaded<LoadedAliasColoredLights> aliasAlphaColoredLights;
-	PipelineWithLoaded<LoadedAlias> aliasHoley;
-	PipelineWithLoaded<LoadedAlias> aliasHoleyAlpha;
-	PipelineWithLoaded<LoadedAliasColoredLights> aliasHoleyColoredLights;
-	PipelineWithLoaded<LoadedAliasColoredLights> aliasHoleyAlphaColoredLights;
-	PipelineWithLoaded<LoadedAlias> viewmodels;
-	PipelineWithLoaded<LoadedAliasColoredLights> viewmodelsColoredLights;
-	PipelineWithLoaded<LoadedAlias> viewmodelsHoley;
-	PipelineWithLoaded<LoadedAliasColoredLights> viewmodelsHoleyColoredLights;
+	PipelineWithSortedAlias<LoadedAlias, SortedAliasTextures> alias;
+	PipelineWithSortedAlias<LoadedAlias, SortedAliasTextures> aliasAlpha;
+	PipelineWithSortedAlias<LoadedAliasColoredLights, SortedAliasTextures> aliasColoredLights;
+	PipelineWithSortedAlias<LoadedAliasColoredLights, SortedAliasTextures> aliasAlphaColoredLights;
+	PipelineWithSortedAlias<LoadedAlias, SortedAliasTextures> aliasHoley;
+	PipelineWithSortedAlias<LoadedAlias, SortedAliasTextures> aliasHoleyAlpha;
+	PipelineWithSortedAlias<LoadedAliasColoredLights, SortedAliasTextures> aliasHoleyColoredLights;
+	PipelineWithSortedAlias<LoadedAliasColoredLights, SortedAliasTextures> aliasHoleyAlphaColoredLights;
+	PipelineWithSortedAlias<LoadedAlias, SortedAliasTextures> viewmodels;
+	PipelineWithSortedAlias<LoadedAliasColoredLights, SortedAliasTextures> viewmodelsColoredLights;
+	PipelineWithSortedAlias<LoadedAlias, SortedAliasTextures> viewmodelsHoley;
+	PipelineWithSortedAlias<LoadedAliasColoredLights, SortedAliasTextures> viewmodelsHoleyColoredLights;
 	Pipeline particles;
 	Pipeline colored;
 	Pipeline cutout;

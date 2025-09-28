@@ -2,11 +2,12 @@
 
 #include "Pipeline.h"
 
-template <typename Loaded>
-struct PipelineWithLoaded : Pipeline
+template <typename Loaded, typename Sorted>
+struct PipelineWithSortedAlias : Pipeline
 {
 	int last;
 	std::vector<Loaded> loaded;
+	Sorted sorted;
 
 	void Allocate(int last)
 	{
