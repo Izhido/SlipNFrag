@@ -31,7 +31,7 @@ target_compile_options(slipnfrag_native PRIVATE
         -DANDROID_STL=c++_shared
         -DXR_USE_PLATFORM_ANDROID=1
         -DXR_USE_GRAPHICS_API_VULKAN=1
-        "-DUSE_OPENXR_VERSION=XR_MAKE_VERSION(1, 0, 34)"
+        "-DUSE_OPENXR_VERSION=XR_MAKE_VERSION(1, 1, 46)"
         "-DUSE_VULKAN_VERSION=VK_MAKE_API_VERSION(0, 1, 1, 0)"
 )
 

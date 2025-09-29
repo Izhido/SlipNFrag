@@ -595,9 +595,10 @@ void android_main(struct android_app* app)
 			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
 			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
 
-			auto indexTypeUInt8Enabled = false;
-			auto externalMemoryFdEnabled = false;
-			
+			auto shaderDemoteToHelperInvocation = false;
+			auto shaderTerminateInvocation = false;
+			std::vector<const char*> enabledExtensions;
+
 			const std::string indentStr(4, ' ');
 			appState.Logger->Verbose("%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
 			for (uint32_t i = 0; i < availableExtensionCount; ++i)
@@ -606,48 +607,60 @@ void android_main(struct android_app* app)
 
 				if (strcmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME) == 0)
 				{
-					indexTypeUInt8Enabled = true;
+					appState.IndexTypeUInt8Enabled = true;
+					enabledExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
 				}
-
-				if (strcmp(availableExtensions[i].extensionName, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME) == 0)
+				else if (strcmp(availableExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME) == 0)
 				{
-					externalMemoryFdEnabled = true;
+					shaderDemoteToHelperInvocation = true;
+					enabledExtensions.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
+				}
+				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME) == 0)
+				{
+					shaderTerminateInvocation = true;
+					enabledExtensions.push_back(VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME);
 				}
 			}
-
-			std::vector<const char*> deviceExtensions;
-
-			if (indexTypeUInt8Enabled)
-			{
-				deviceExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
-				appState.IndexTypeUInt8Enabled = true;
-			}
-
-			if (externalMemoryFdEnabled)
-			{
-				// UGLY HACK. Meta Quest devices require this extension, but the validation layers report that the OpenXR runtime does not enable it for you.
-				deviceExtensions.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
-			}
-
-			VkPhysicalDeviceFeatures features { };
-			features.samplerAnisotropy = VK_TRUE;
-
-			VkPhysicalDeviceMultiviewFeatures multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
-			multiviewFeatures.multiview = VK_TRUE;
 
 			VkDeviceCreateInfo deviceInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 			deviceInfo.queueCreateInfoCount = 1;
 			deviceInfo.pQueueCreateInfos = &queueInfo;
-			deviceInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
-			deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
-			deviceInfo.pEnabledFeatures = &features;
-			deviceInfo.pNext = &multiviewFeatures;
+			deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
+			deviceInfo.ppEnabledExtensionNames = enabledExtensions.data();
 
-			VkPhysicalDeviceIndexTypeUint8FeaturesEXT indexTypeUint8Feature { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT };
-			if (indexTypeUInt8Enabled)
+			void* chain = &deviceInfo;
+
+			VkPhysicalDeviceFeatures2 features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+			((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&features;
+			chain = (void*)((VkBaseInStructure*)chain)->pNext;
+
+			VkPhysicalDeviceMultiviewFeatures multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
+			multiviewFeatures.multiview = VK_TRUE;
+			((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&multiviewFeatures;
+			chain = (void*)((VkBaseInStructure*)chain)->pNext;
+
+			VkPhysicalDeviceIndexTypeUint8FeaturesEXT indexTypeUint8Features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT };
+			if (appState.IndexTypeUInt8Enabled)
 			{
-				indexTypeUint8Feature.indexTypeUint8 = VK_TRUE;
-				multiviewFeatures.pNext = &indexTypeUint8Feature;
+				indexTypeUint8Features.indexTypeUint8 = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&indexTypeUint8Features;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT shaderDemoteToHelperInvocationFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT };
+			if (shaderDemoteToHelperInvocation)
+			{
+				shaderDemoteToHelperInvocationFeatures.shaderDemoteToHelperInvocation = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&shaderDemoteToHelperInvocationFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceShaderTerminateInvocationFeaturesKHR shaderTerminateInvocationFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES_KHR };
+			if (shaderTerminateInvocation)
+			{
+				shaderTerminateInvocationFeatures.shaderTerminateInvocation = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&shaderTerminateInvocationFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
 			}
 
 			XrVulkanDeviceCreateInfoKHR deviceCreateInfo { XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR };
