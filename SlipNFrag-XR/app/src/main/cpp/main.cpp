@@ -1219,6 +1219,7 @@ void android_main(struct android_app* app)
 		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
 
 		XrCompositionLayerCubeKHR skyboxLayer { XR_TYPE_COMPOSITION_LAYER_CUBE_KHR };
+		skyboxLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 
 		XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
 		waitInfo.timeout = XR_INFINITE_DURATION;
@@ -2024,14 +2025,13 @@ void android_main(struct android_app* app)
 
 					if (appState.Mode != AppWorldMode || appState.Scene.skybox != nullptr)
 					{
-						worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+						worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 					}
 					else
 					{
 						worldLayer.layerFlags = 0;
 					}
-					worldLayer.layerFlags |= XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
-					
+
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
 					worldRendered = true;
@@ -2167,7 +2167,7 @@ void android_main(struct android_app* app)
 					{
 						if (appState.CameraLocationIsValid)
 						{
-							screenLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+							screenLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 							screenLayer.pose = appState.CameraLocation.pose;
 
 							layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenLayer));
@@ -2307,7 +2307,7 @@ void android_main(struct android_app* app)
 							}
 							if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 							{
-								keyboardLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+								keyboardLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 								keyboardLayer.pose = keyboardLocation.pose;
 
 								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardLayer));
