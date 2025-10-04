@@ -2,8 +2,9 @@
 
 struct immviewmodeldata_t
 {
-	vec3_t	angle_offset;
-	vec3_t	scale_origin_offset;
+	vec3_t	rotate;
+	vec3_t	offset;
+	vec3_t	scale;
 };
 
 model_t *Mod_FindName (const char *name);
@@ -130,7 +131,7 @@ void SV_LoadViewmodelsFromFile (std::vector<byte>& contents)
 
 		if (!crc_valid) continue;
 
-		immviewmodeldata_t viewmodeldata { };
+		immviewmodeldata_t viewmodeldata { { }, { }, { 1, 1, 1 }};
 
 		if (!data.empty())
 		{
@@ -181,26 +182,35 @@ void SV_LoadViewmodelsFromFile (std::vector<byte>& contents)
 				switch (position)
 				{
 				case 0:
-					viewmodeldata.angle_offset[0] = value;
+					viewmodeldata.rotate[0] = value;
 					break;
 				case 1:
-					viewmodeldata.angle_offset[1] = value;
+					viewmodeldata.rotate[1] = value;
 					break;
 				case 2:
-					viewmodeldata.angle_offset[2] = value;
+					viewmodeldata.rotate[2] = value;
 					break;
 				case 3:
-					viewmodeldata.scale_origin_offset[0] = value;
+					viewmodeldata.offset[0] = value;
 					break;
 				case 4:
-					viewmodeldata.scale_origin_offset[1] = value;
+					viewmodeldata.offset[1] = value;
+					break;
+				case 5:
+					viewmodeldata.offset[2] = value;
+					break;
+				case 6:
+					viewmodeldata.scale[0] = value;
+					break;
+				case 7:
+					viewmodeldata.scale[1] = value;
 					break;
 				default:
-					viewmodeldata.scale_origin_offset[2] = value;
+					viewmodeldata.scale[2] = value;
 				}
 
 				position++;
-				if (position >= 6)
+				if (position >= 9)
 					break;
 			}
 		}
@@ -218,21 +228,30 @@ void SV_LoadImmersiveViewmodels (void)
 
 	if (!pr_immersive_allowed) return;
 
-	imm_viewmodels.insert({"progs/v_shot.mdl,51045",{{ 6, 0, 0 }, { -2, 0, 9 }}});
-	imm_viewmodels.insert({"progs/v_shot2.mdl,17450",{{ 8, 0, 0 }, { -7, 0, 8 }}});
-	imm_viewmodels.insert({"progs/v_nail.mdl,45157",{{ 0, 0, 0 }, { -16, 0, 16 }}});
-	imm_viewmodels.insert({"progs/v_nail2.mdl,45135",{{ 0, 0, 0 }, { -16, 0, 16 }}});
-	imm_viewmodels.insert({"progs/v_rock.mdl,31509",{{ -6, 0, 0 }, { -9 , 0, 12 }}});
-	imm_viewmodels.insert({"progs/v_rock2.mdl,1775",{{ 8, 0, 0 }, { -11, 0, 14 }}});
-	imm_viewmodels.insert({"progs/v_light.mdl,33213",{{ 3, 0, 0 }, { -7, 0, 14 }}});
-	imm_viewmodels.insert({"progs/v_prox.mdl,40768",{{ -6, 0, 0 }, { -9 , 0, 12 }}});
-	imm_viewmodels.insert({"progs/v_laserg.mdl,9376",{{ 3, 0, 0 }, { -7, 0, 14 }}});
-	imm_viewmodels.insert({"progs/v_lava.mdl,14853",{{ 0, 0, 0 }, { -16, 0, 16 }}});
-	imm_viewmodels.insert({"progs/v_lava2.mdl,53468",{{ 0, 0, 0 }, { -16, 0, 16 }}});
-	imm_viewmodels.insert({"progs/v_multi.mdl,55429",{{ -6, 0, 0 }, { -9 , 0, 12 }}});
-	imm_viewmodels.insert({"progs/v_multi2.mdl,45339",{{ 8, 0, 0 }, { -11, 0, 14 }}});
-	imm_viewmodels.insert({"progs/v_plasma.mdl,28062",{{ 3, 0, 0 }, { -7, 0, 14 }}});
-	imm_viewmodels.insert({"progs/v_shot3.mdl,24820",{{ 6, 0, 0 }, { -5, 0, 8 }}});
+// model[,CRC32]: [rotation in degrees], [offset from origin], [scale]
+
+// id1
+	imm_viewmodels.insert({"progs/v_shot.mdl,51045",{{ 6, 0, 0 }, { -2, 0, 9 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_shot2.mdl,17450",{{ 8, 0, 0 }, { -7, 0, 8 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_nail.mdl,45157",{{ 0, 0, 0 }, { -16, 0, 16 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_nail2.mdl,45135",{{ 0, 0, 0 }, { -16, 0, 16 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_rock.mdl,31509",{{ -6, 0, 0 }, { -9 , 0, 12 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_rock2.mdl,1775",{{ 8, 0, 0 }, { -11, 0, 14 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_light.mdl,33213",{{ 3, 0, 0 }, { -7, 0, 14 }, { 1, 1, 1 }}});
+
+// hipnotic
+	imm_viewmodels.insert({"progs/v_prox.mdl,40768",{{ -6, 0, 0 }, { -9 , 0, 12 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_laserg.mdl,9376",{{ 3, 0, 0 }, { -7, 0, 14 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_lava.mdl,14853",{{ 0, 0, 0 }, { -16, 0, 16 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_lava2.mdl,53468",{{ 0, 0, 0 }, { -16, 0, 16 }, { 1, 1, 1 }}});
+
+// rogue
+	imm_viewmodels.insert({"progs/v_multi.mdl,55429",{{ -6, 0, 0 }, { -9 , 0, 12 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_multi2.mdl,45339",{{ 8, 0, 0 }, { -11, 0, 14 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_plasma.mdl,28062",{{ 3, 0, 0 }, { -7, 0, 14 }, { 1, 1, 1 }}});
+
+// ArcaneDimensions
+	imm_viewmodels.insert({"progs/v_shot3.mdl,24820",{{ 6, 0, 0 }, { -5, 0, 8 }, { 1, 1, 1 }}});
 
 	const char* viewmodels_file = "viewmodels.txt";
 
@@ -280,8 +299,9 @@ qboolean SV_ValidImmersiveViewmodel (client_t* client)
 
 	if (entryWithCRC != imm_viewmodels.end())
 	{
-		VectorCopy(entryWithCRC->second.angle_offset, host_client->immersive.viewmodel_angle_offset);
-		VectorCopy(entryWithCRC->second.scale_origin_offset, host_client->immersive.viewmodel_scale_origin_offset);
+		VectorCopy(entryWithCRC->second.rotate, host_client->immersive.viewmodel_rotate);
+		VectorCopy(entryWithCRC->second.offset, host_client->immersive.viewmodel_offset);
+		VectorCopy(entryWithCRC->second.scale, host_client->immersive.viewmodel_scale);
 
 		return true;
 	}
@@ -290,8 +310,9 @@ qboolean SV_ValidImmersiveViewmodel (client_t* client)
 		auto entryWithoutCRC = imm_viewmodels.find(nameWithoutCRC);
 		if (entryWithoutCRC != imm_viewmodels.end())
 		{
-			VectorCopy(entryWithoutCRC->second.angle_offset, host_client->immersive.viewmodel_angle_offset);
-			VectorCopy(entryWithoutCRC->second.scale_origin_offset, host_client->immersive.viewmodel_scale_origin_offset);
+			VectorCopy(entryWithoutCRC->second.rotate, host_client->immersive.viewmodel_rotate);
+			VectorCopy(entryWithoutCRC->second.offset, host_client->immersive.viewmodel_offset);
+			VectorCopy(entryWithoutCRC->second.scale, host_client->immersive.viewmodel_scale);
 
 			return true;
 		}

@@ -937,10 +937,13 @@ void SV_WriteClientdataToMessage (edict_t *ent, sizebuf_t *msg, client_t *client
 		if (bits & SU_IMMERHANDS)
 		{
 			for (i=0 ; i<3 ; i++)
-				MSG_WriteFloat (msg, client->immersive.viewmodel_angle_offset[i]);
+				MSG_WriteFloat (msg, client->immersive.viewmodel_rotate[i]);
 
 			for (i=0 ; i<3 ; i++)
-				MSG_WriteFloat (msg, client->immersive.viewmodel_scale_origin_offset[i]);
+				MSG_WriteFloat (msg, client->immersive.viewmodel_offset[i]);
+
+			for (i=0 ; i<3 ; i++)
+				MSG_WriteFloat (msg, client->immersive.viewmodel_scale[i]);
 		}
 		return;
 	}

@@ -228,8 +228,9 @@ struct client_state_t
 // acknowledged immersive data from server
 	qboolean	immersive_enabled;
 	qboolean	immersive_hands_enabled;
-	vec3_t		immersive_viewmodel_angle_offset;
-	vec3_t		immersive_viewmodel_scale_origin_offset;
+	vec3_t		immersive_viewmodel_rotate;
+	vec3_t		immersive_viewmodel_offset;
+	vec3_t		immersive_viewmodel_scale;
 
 #ifdef QUAKE2
 // light level at player's position including dlights

@@ -1013,10 +1013,13 @@ void CL_ParseExpandedClientdata (int bits)
 	if (cl.immersive_hands_enabled)
 	{
 		for (i=0 ; i<3 ; i++)
-			cl.immersive_viewmodel_angle_offset[i] = MSG_ReadFloat ();
+			cl.immersive_viewmodel_rotate[i] = MSG_ReadFloat ();
 
 		for (i=0 ; i<3 ; i++)
-			cl.immersive_viewmodel_scale_origin_offset[i] = MSG_ReadFloat ();
+			cl.immersive_viewmodel_offset[i] = MSG_ReadFloat ();
+
+		for (i=0 ; i<3 ; i++)
+			cl.immersive_viewmodel_scale[i] = MSG_ReadFloat ();
 	}
 }
 

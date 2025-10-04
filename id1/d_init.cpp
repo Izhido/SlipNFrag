@@ -180,13 +180,17 @@ void D_SetupFrame (void)
 			auto hand = Cvar_VariableString ("dominant_hand");
 			d_lists.dominant_hand_left = (Q_strncmp(hand, "left", 4) == 0);
 
-			d_lists.viewmodel_angle_offset0 = cl.immersive_viewmodel_angle_offset[0];
-			d_lists.viewmodel_angle_offset1 = cl.immersive_viewmodel_angle_offset[1];
-			d_lists.viewmodel_angle_offset2 = cl.immersive_viewmodel_angle_offset[2];
+			d_lists.viewmodel_rotate0 = cl.immersive_viewmodel_rotate[0];
+			d_lists.viewmodel_rotate1 = cl.immersive_viewmodel_rotate[1];
+			d_lists.viewmodel_rotate2 = cl.immersive_viewmodel_rotate[2];
 
-			d_lists.viewmodel_scale_origin_offset0 = cl.immersive_viewmodel_scale_origin_offset[0];
-			d_lists.viewmodel_scale_origin_offset1 = cl.immersive_viewmodel_scale_origin_offset[1];
-			d_lists.viewmodel_scale_origin_offset2 = cl.immersive_viewmodel_scale_origin_offset[2];
+			d_lists.viewmodel_offset0 = cl.immersive_viewmodel_offset[0];
+			d_lists.viewmodel_offset1 = cl.immersive_viewmodel_offset[1];
+			d_lists.viewmodel_offset2 = cl.immersive_viewmodel_offset[2];
+
+			d_lists.viewmodel_scale0 = cl.immersive_viewmodel_scale[0];
+			d_lists.viewmodel_scale1 = cl.immersive_viewmodel_scale[1];
+			d_lists.viewmodel_scale2 = cl.immersive_viewmodel_scale[2];
 		}
 	}
 }

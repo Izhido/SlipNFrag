@@ -94,8 +94,9 @@ struct immersive_t
 	vec3_t		backup_damage_origin;
 	vec3_t		backup_damage_angles;
 	func_t		frame_function;
-	vec3_t		viewmodel_angle_offset;
-	vec3_t		viewmodel_scale_origin_offset;
+	vec3_t		viewmodel_rotate;
+	vec3_t		viewmodel_offset;
+	vec3_t		viewmodel_scale;
 	qboolean	previous_hands_allowed;
 	qboolean	previous_left_handed;
 	qboolean	previous_right_handed;

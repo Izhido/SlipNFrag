@@ -2766,9 +2766,9 @@ void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_
 	if (appState.FromEngine.immersive_hands_enabled && key_dest == key_game)
 	{
 		vec3_t angles;
-		angles[YAW] = appState.FromEngine.viewmodel_angle_offset1;
-		angles[PITCH] = -appState.FromEngine.viewmodel_angle_offset0;
-		angles[ROLL] = appState.FromEngine.viewmodel_angle_offset2;
+		angles[YAW] = appState.FromEngine.viewmodel_rotate1;
+		angles[PITCH] = -appState.FromEngine.viewmodel_rotate0;
+		angles[ROLL] = appState.FromEngine.viewmodel_rotate2;
 		vec3_t forward, right, up;
 		AngleVectors (angles, forward, right, up);
 		float preRotate[3][4] { };
@@ -2778,13 +2778,16 @@ void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_
 			preRotate[i][1] = -right[i];
 			preRotate[i][2] = up[i];
 		}
+		preRotate[0][0] *= appState.FromEngine.viewmodel_scale0;
+		preRotate[1][1] *= appState.FromEngine.viewmodel_scale1;
+		preRotate[2][2] *= appState.FromEngine.viewmodel_scale2;
 		float scaling[3][4] { };
 		scaling[0][0] = viewmodel.transform[0][0];
 		scaling[1][1] = viewmodel.transform[1][1];
 		scaling[2][2] = viewmodel.transform[2][2];
-		scaling[0][3] = viewmodel.transform[0][3] + appState.FromEngine.viewmodel_scale_origin_offset0;
-		scaling[1][3] = viewmodel.transform[1][3] + appState.FromEngine.viewmodel_scale_origin_offset1;
-		scaling[2][3] = viewmodel.transform[2][3] + appState.FromEngine.viewmodel_scale_origin_offset2;
+		scaling[0][3] = viewmodel.transform[0][3] + appState.FromEngine.viewmodel_offset0;
+		scaling[1][3] = viewmodel.transform[1][3] + appState.FromEngine.viewmodel_offset1;
+		scaling[2][3] = viewmodel.transform[2][3] + appState.FromEngine.viewmodel_offset2;
 		float transform[3][4] { };
 		R_ConcatTransforms (preRotate, scaling, transform);
 		auto scale = appState.Scale;
@@ -2903,12 +2906,15 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	appState.FromEngine.time = d_lists.time;
 	appState.FromEngine.immersive_hands_enabled = d_lists.immersive_hands_enabled;
 	appState.FromEngine.dominant_hand_left = d_lists.dominant_hand_left;
-	appState.FromEngine.viewmodel_angle_offset0 = d_lists.viewmodel_angle_offset0;
-	appState.FromEngine.viewmodel_angle_offset1 = d_lists.viewmodel_angle_offset1;
-	appState.FromEngine.viewmodel_angle_offset2 = d_lists.viewmodel_angle_offset2;
-	appState.FromEngine.viewmodel_scale_origin_offset0 = d_lists.viewmodel_scale_origin_offset0;
-	appState.FromEngine.viewmodel_scale_origin_offset1 = d_lists.viewmodel_scale_origin_offset1;
-	appState.FromEngine.viewmodel_scale_origin_offset2 = d_lists.viewmodel_scale_origin_offset2;
+	appState.FromEngine.viewmodel_rotate0 = d_lists.viewmodel_rotate0;
+	appState.FromEngine.viewmodel_rotate1 = d_lists.viewmodel_rotate1;
+	appState.FromEngine.viewmodel_rotate2 = d_lists.viewmodel_rotate2;
+	appState.FromEngine.viewmodel_offset0 = d_lists.viewmodel_offset0;
+	appState.FromEngine.viewmodel_offset1 = d_lists.viewmodel_offset1;
+	appState.FromEngine.viewmodel_offset2 = d_lists.viewmodel_offset2;
+	appState.FromEngine.viewmodel_scale0 = d_lists.viewmodel_scale0;
+	appState.FromEngine.viewmodel_scale1 = d_lists.viewmodel_scale1;
+	appState.FromEngine.viewmodel_scale2 = d_lists.viewmodel_scale2;
 
     appState.VertexTransform.m[0] = appState.Scale;
     appState.VertexTransform.m[6] = -appState.Scale;
