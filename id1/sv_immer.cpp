@@ -228,7 +228,7 @@ void SV_LoadImmersiveViewmodels (void)
 
 	if (!pr_immersive_allowed) return;
 
-// model[,CRC32]: [rotation in degrees], [offset from origin], [scale]
+// model[,CRC16]: [rotation in degrees], [offset from origin], [scale]
 
 // id1
 	imm_viewmodels.insert({"progs/v_shot.mdl,51045",{{ 6, 0, 0 }, { -2, 0, 9 }, { 1, 1, 1 }}});
@@ -250,8 +250,36 @@ void SV_LoadImmersiveViewmodels (void)
 	imm_viewmodels.insert({"progs/v_multi2.mdl,45339",{{ 8, 0, 0 }, { -11, 0, 14 }, { 1, 1, 1 }}});
 	imm_viewmodels.insert({"progs/v_plasma.mdl,28062",{{ 3, 0, 0 }, { -7, 0, 14 }, { 1, 1, 1 }}});
 
-// ArcaneDimensions
-	imm_viewmodels.insert({"progs/v_shot3.mdl,24820",{{ 6, 0, 0 }, { -5, 0, 8 }, { 1, 1, 1 }}});
+// ArcaneDimensions (1.80p1)
+	imm_viewmodels.insert({"progs/v_shot.mdl,64893",{{ 5, 0, 0 }, { -6, 0, 13 }, { 0.7, 0.7, 0.7 }}});
+	imm_viewmodels.insert({"progs/v_shot2.mdl,53147",{{ 8, 0, 0 }, { -7, 0, 8 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_shot3.mdl,24820",{{ 5, 0, 0 }, { -6, 0, 8 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_nail.mdl,27843",{{ 0, 0, 0 }, { -16, 0, 16 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_nail2.mdl,38486",{{ 0, 0, 0 }, { -16, 0, 16 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_rock.mdl,55259",{{ -4, 0, 0 }, { -9 , 0, 12 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_rock2.mdl,30105",{{ 8, 0, 0 }, { -11, 0, 14 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_light.mdl,47549",{{ 1, 0, 0 }, { -7, 0, 14 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_plasma.mdl,10007",{{ -13, 0, 0 }, { -16, 0, 20 }, { 2, 1, 1 }}});
+
+// alkaline (1.2)
+	imm_viewmodels.insert({"progs/v_shot40fps.mdl,22201",{{ 5, 0, 0 }, { -6, 0, 13 }, { 0.7, 0.7, 0.7 }}});
+	imm_viewmodels.insert({"progs/v_shot2_40fps.mdl,40908",{{ 8, 0, 0 }, { -13, 0, 12 }, { 0.7, 0.7, 0.7 }}});
+	imm_viewmodels.insert({"progs/v_nail_alk40fps.mdl,57447",{{ 0, 0, 0 }, { -13, 0, 16 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_nail3.mdl,28732",{{ 0, 0, 0 }, { -12, 0, 16 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_rock_40fps.mdl,32950",{{ -6, 0, 0 }, { -9 , 0, 12 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_mine_40fps.mdl,45911",{{ -6, 0, 0 }, { -9 , 0, 12 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_rock2_40fps.mdl,27002",{{ 8, 0, 0 }, { -11, 0, 14 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_laserg40fps.mdl,18484",{{ 5, 0, 0 }, { -7, 0, 14 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_plasma.mdl,25190",{{ 1, 0, 0 }, { 9, 0, 14 }, { 1, 1, 1 }}});
+
+// LibreQuake
+	imm_viewmodels.insert({"progs/v_shot.mdl,17894",{{ 0, 0, 0 }, { -3, 0, 10 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_shot2.mdl,9073",{{ 0, 0, 0 }, { -1, 0, 10 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_nail.mdl,53996",{{ 0, 0, 0 }, { 14, 0, 18 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_nail2.mdl,2792",{{ 0, 0, 0 }, { 1, 0, 21 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_rock.mdl,4650",{{ 0, 0, 0 }, { -6, 0, 16 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_rock2.mdl,8174",{{ -2, 0, 0 }, { -6, 0, 24 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_light.mdl,25844",{{ 0, 0, 0 }, { 12, 0, 14 }, { 1, 1, 1 }}});
 
 	const char* viewmodels_file = "viewmodels.txt";
 
