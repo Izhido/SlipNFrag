@@ -3,7 +3,7 @@
 #include "FileLoader_oxr.h"
 #include "Logger_oxr.h"
 #include <android/log.h>
-#include <android_native_app_glue.h>
+#include <game-activity/native_app_glue/android_native_app_glue.h>
 #include <sys/prctl.h>
 #include <unistd.h>
 #include "CylinderProjection.h"
@@ -245,7 +245,7 @@ void android_main(struct android_app* app)
 		XrLoaderInitInfoAndroidKHR loaderInitInfoAndroid { };
 		loaderInitInfoAndroid.type = XR_TYPE_LOADER_INIT_INFO_ANDROID_KHR;
 		loaderInitInfoAndroid.applicationVM = app->activity->vm;
-		loaderInitInfoAndroid.applicationContext = app->activity->clazz;
+		loaderInitInfoAndroid.applicationContext = app->activity->javaGameActivity;
 		CHECK_XRCMD(xrInitializeLoaderKHR((const XrLoaderInitInfoBaseHeaderKHR*)&loaderInitInfoAndroid));
 
 		std::vector<std::string> xrInstanceExtensionSources
@@ -357,7 +357,7 @@ void android_main(struct android_app* app)
 
 		XrInstanceCreateInfoAndroidKHR instanceCreateInfoAndroid { XR_TYPE_INSTANCE_CREATE_INFO_ANDROID_KHR };
 		instanceCreateInfoAndroid.applicationVM = app->activity->vm;
-		instanceCreateInfoAndroid.applicationActivity = app->activity->clazz;
+		instanceCreateInfoAndroid.applicationActivity = app->activity->javaGameActivity;
 
 		XrInstanceCreateInfo createInfo { XR_TYPE_INSTANCE_CREATE_INFO };
 		createInfo.next = (XrBaseInStructure*)&instanceCreateInfoAndroid;
@@ -1337,7 +1337,7 @@ void android_main(struct android_app* app)
 							{
 								CHECK(appState.Session != XR_NULL_HANDLE);
 								sessionRunning = false;
-								ANativeActivity_finish(app->activity);
+								GameActivity_finish(app->activity);
 								CHECK_XRCMD(xrEndSession(appState.Session));
 								break;
 							}

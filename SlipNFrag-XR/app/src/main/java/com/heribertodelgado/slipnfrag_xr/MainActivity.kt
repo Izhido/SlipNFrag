@@ -6,7 +6,7 @@ import com.google.androidgamesdk.GameActivity
 class MainActivity : GameActivity() {
     companion object {
         init {
-            System.loadLibrary("slipnfrag_xr")
+            System.loadLibrary("slipnfrag_native")
         }
     }
 

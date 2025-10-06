@@ -8,7 +8,7 @@
 #include <sys/prctl.h>
 #include <unistd.h>
 #include "Utils.h"
-#include <android_native_app_glue.h>
+#include <game-activity/native_app_glue/android_native_app_glue.h>
 #include "Locks.h"
 
 void runEngine(AppState_oxr* appState, struct android_app* app)
@@ -70,7 +70,7 @@ void runEngine(AppState_oxr* appState, struct android_app* app)
 			auto updated = Host_FrameUpdate(frame_lapse);
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
-				ANativeActivity_finish(app->activity);
+				GameActivity_finish(app->activity);
 				appState->CallExitFunction = true;
 				break;
 			}
@@ -192,7 +192,7 @@ void runEngine(AppState_oxr* appState, struct android_app* app)
 			auto previousRoll = cl.viewangles[ROLL];
 			if (sys_quitcalled || sys_errormessage.length() > 0)
 			{
-				ANativeActivity_finish(app->activity);
+				GameActivity_finish(app->activity);
 				appState->CallExitFunction = true;
 				break;
 			}

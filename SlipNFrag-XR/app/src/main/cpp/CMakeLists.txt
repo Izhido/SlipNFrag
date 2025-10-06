@@ -39,15 +39,12 @@ target_link_options(slipnfrag_native PRIVATE
         -u ANativeActivity_onCreate
 )
 
-add_library(slipnfrag_app_glue STATIC
-        ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
-)
-
 find_library(ANDROID_LIBRARY NAMES android)
 find_library(ANDROID_LOG_LIBRARY NAMES log)
 
 find_package(Vulkan REQUIRED)
 find_package(OpenXR CONFIG REQUIRED)
+find_package(game-activity CONFIG REQUIRED)
 
 target_include_directories(slipnfrag_native PRIVATE
         ${OPENXR_DIR}/src
@@ -56,11 +53,10 @@ target_include_directories(slipnfrag_native PRIVATE
         ${ID1_DIR}
         ${RENDERER_DIR}
         ${STB_DIR}
-        ${ANDROID_NDK}/sources/android/native_app_glue
 )
 
 target_link_libraries(slipnfrag_native
-        slipnfrag_app_glue
+        game-activity::game-activity_static
         ${ANDROID_LIBRARY}
         ${ANDROID_LOG_LIBRARY}
         Vulkan::Vulkan

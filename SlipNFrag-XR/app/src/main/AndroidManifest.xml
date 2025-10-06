@@ -10,8 +10,8 @@
         <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2|questpro|quest3" />
         <meta-data android:name="com.oculus.ossplash" android:value="true" />
         <activity
-            android:name="android.app.NativeActivity"
-            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:name=".MainActivity"
+            android:theme="@style/Theme.SlipNFragXR"
             android:launchMode="singleTask"
             android:screenOrientation="landscape"
             android:excludeFromRecents="true"
