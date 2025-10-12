@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <application android:allowBackup="false" android:label="Slip &amp; Frag"
         android:icon="@mipmap/ic_launcher">
-        <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2|questpro|quest3" />
+        <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2|questpro|quest3|quest3s" />
         <meta-data android:name="com.oculus.ossplash" android:value="true" />
         <activity
             android:name=".MainActivity"

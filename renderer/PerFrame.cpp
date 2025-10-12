@@ -291,14 +291,8 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		if (appState.Scene.controllerVerticesSize > 0)
 		{
 			auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-			if (appState.LeftController.PoseIsValid)
-			{
-				target = appState.LeftController.WriteVertices(target);
-			}
-			if (appState.RightController.PoseIsValid)
-			{
-				target = appState.RightController.WriteVertices(target);
-			}
+			target = appState.LeftController.WriteVertices(target);
+			target = appState.RightController.WriteVertices(target);
 			offset += appState.Scene.controllerVerticesSize;
 		}
 		skyVertexBase = controllerVertexBase + appState.Scene.controllerVerticesSize;
@@ -345,14 +339,8 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	if (appState.Scene.controllerAttributesSize > 0)
 	{
 		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		if (appState.LeftController.PoseIsValid)
-		{
-			target = Controller::WriteAttributes(target);
-		}
-		if (appState.RightController.PoseIsValid)
-		{
-			target = Controller::WriteAttributes(target);
-		}
+		target = appState.LeftController.WriteAttributes(target);
+		target = appState.RightController.WriteAttributes(target);
 		offset += appState.Scene.controllerAttributesSize;
 	}
 	skyAttributeBase = controllerAttributeBase + appState.Scene.controllerAttributesSize;
@@ -3723,15 +3711,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 		{
 			vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllerIndexBase, VK_INDEX_TYPE_UINT16);
 		}
-		VkDeviceSize size = 0;
-		if (appState.LeftController.PoseIsValid)
-		{
-			size += 2 * 36;
-		}
-		if (appState.RightController.PoseIsValid)
-		{
-			size += 2 * 36;
-		}
+		VkDeviceSize size = appState.LeftController.IndicesSize() + appState.RightController.IndicesSize();
 		vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);

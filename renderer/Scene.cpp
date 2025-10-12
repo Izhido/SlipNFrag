@@ -1622,7 +1622,6 @@ void Scene::Initialize()
     sortedIndicesCount = 0;
     paletteSize = 0;
     colormapSize = 0;
-    controllerVerticesSize = 0;
 	aliasBuffers.Initialize();
     indexBuffers.Initialize();
 	lightmapChains.clear();
@@ -3569,16 +3568,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         floorVerticesSize += 3 * 4 * sizeof(float);
     }
+	controllerVerticesSize = 0;
     if (appState.Focused && (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
     {
-        if (appState.LeftController.PoseIsValid)
-        {
-            controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
-        }
-        if (appState.RightController.PoseIsValid)
-        {
-            controllerVerticesSize += 2 * 8 * 3 * sizeof(float);
-        }
+		controllerVerticesSize += appState.LeftController.VerticesSize();
+		controllerVerticesSize += appState.RightController.VerticesSize();
     }
 	skyVerticesSize = 0;
 	if (appState.Scene.lastSky >= 0)
@@ -3605,14 +3599,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     controllerAttributesSize = 0;
     if (controllerVerticesSize > 0)
     {
-        if (appState.LeftController.PoseIsValid)
-        {
-            controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
-        }
-        if (appState.RightController.PoseIsValid)
-        {
-            controllerAttributesSize += 2 * 8 * 2 * sizeof(float);
-        }
+		controllerAttributesSize += appState.LeftController.AttributesSize();
+		controllerAttributesSize += appState.RightController.AttributesSize();
     }
 	skyAttributesSize = 0;
 	if (appState.Scene.lastSky >= 0)
@@ -3645,14 +3633,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     controllerIndicesSize = 0;
     if (controllerVerticesSize > 0)
     {
-        if (appState.LeftController.PoseIsValid)
-        {
-            controllerIndicesSize += 2 * 36;
-        }
-        if (appState.RightController.PoseIsValid)
-        {
-            controllerIndicesSize += 2 * 36;
-        }
+		controllerIndicesSize += appState.LeftController.IndicesSize();
+		controllerIndicesSize += appState.RightController.IndicesSize();
     }
     coloredIndices8Size = lastColoredIndex8 + 1;
     coloredIndices16Size = (lastColoredIndex16 + 1) * sizeof(uint16_t);
