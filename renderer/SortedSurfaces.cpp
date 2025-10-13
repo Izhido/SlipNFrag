@@ -330,7 +330,7 @@ float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float attributeInde
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
     auto attributeIndexAsFloat = (float)attributeIndex;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -351,7 +351,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, st
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
     auto attributeIndexAsFloat = (float)attributeIndex;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -372,7 +372,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, st
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2Textures>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeIndexAsFloat = (float)attributeIndex;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -393,7 +393,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeIndexAsFloat = (float)attributeIndex;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -414,7 +414,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceRotated>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
     auto attributeIndexAsFloat = (float)attributeIndex;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -435,7 +435,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, st
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceRotatedColoredLights>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
     auto attributeIndexAsFloat = (float)attributeIndex;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -456,7 +456,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, st
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2Textures>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeIndexAsFloat = (float)attributeIndex;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -477,7 +477,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2TexturesColoredLights>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeIndexAsFloat = (float)attributeIndex;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -498,7 +498,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulent>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
     auto attributeIndexAsFloat = (float)attributeIndex;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -515,7 +515,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTextures& sorted, std::vector<Loa
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulentRotated>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
     auto attributeIndexAsFloat = (float)attributeIndex;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -532,7 +532,7 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTextures& sorted, std::vector<Loa
 
 void SortedSurfaces::LoadVertices(SortedSurfaceTextures& sorted, std::vector<LoadedSprite>& loaded, Buffer* stagingBuffer, VkDeviceSize& offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	for (auto t = 0; t < sorted.count; t++)
 	{
 		auto& texture = sorted.textures[t];
@@ -557,7 +557,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
 {
 	XrMatrix4x4f attributes { };
 	void* previousFace = nullptr;
-	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (XrMatrix4x4f*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -601,7 +601,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
 {
 	XrMatrix4x4f attributes { };
 	void* previousFace = nullptr;
-	auto target = (XrMatrix4x4f*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (XrMatrix4x4f*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -643,7 +643,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -684,7 +684,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightma
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -725,7 +725,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightma
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -774,7 +774,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceRotatedColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -823,7 +823,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturesWithLightmaps& 
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -872,7 +872,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightma
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -921,7 +921,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTexturePairsWithLightma
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -950,7 +950,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTextures& sorted, std::
 
 VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulentRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 	auto attributeCount = 0;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -987,7 +987,7 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTextures& sorted, std::
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -1022,7 +1022,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& s
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1057,7 +1057,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& s
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1092,7 +1092,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& s
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceRotatedColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1127,7 +1127,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& s
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1162,7 +1162,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmap
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1197,7 +1197,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmap
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1232,7 +1232,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmap
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1267,7 +1267,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmap
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -1298,7 +1298,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::v
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulentRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -1329,7 +1329,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::v
 
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::vector<LoadedSprite>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint16_t index = 0;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -1360,7 +1360,7 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::v
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1395,7 +1395,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& s
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1430,7 +1430,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& s
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1465,7 +1465,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmap
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1500,7 +1500,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmap
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1535,7 +1535,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& s
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceRotatedColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1570,7 +1570,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& s
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1605,7 +1605,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmap
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
 	for (auto t = 0; t < sorted.count; t++)
 	{
@@ -1640,7 +1640,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmap
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -1671,7 +1671,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::v
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulentRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
     for (auto t = 0; t < sorted.count; t++)
     {
@@ -1702,7 +1702,7 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::v
 
 VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::vector<LoadedSprite>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
-	auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+	auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 	uint32_t index = 0;
     for (auto t = 0; t < sorted.count; t++)
     {

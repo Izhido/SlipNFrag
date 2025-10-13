@@ -8,24 +8,18 @@ VkDeviceSize Controller::VerticesSize() const
 	return 0;
 }
 
-VkDeviceSize Controller::AttributesSize() const
+VkDeviceSize Controller::AttributesSize()
 {
-	if (PoseIsValid)
-		return 2 * 8 * 2 * sizeof(float);
-	return 0;
+	return 2 * 8 * 2 * sizeof(float);
 }
 
-VkDeviceSize Controller::IndicesSize() const
+VkDeviceSize Controller::IndicesSize()
 {
-	if (PoseIsValid)
-		return 2 * 36;
-	return 0;
+	return 2 * 36;
 }
 
-float* Controller::WriteVertices(float* vertices)
+void Controller::WriteVertices(float* vertices)
 {
-	if (!PoseIsValid) return vertices;
-
 	auto position = SpaceLocation.pose.position;
 	XrMatrix4x4f transform;
 	XrMatrix4x4f_CreateFromQuaternion(&transform, &SpaceLocation.pose.orientation);
@@ -90,14 +84,10 @@ float* Controller::WriteVertices(float* vertices)
 	*vertices++ = position.x + right.x * 0.0025 - up.x * 0.0025;
 	*vertices++ = position.y + right.y * 0.0025 - up.y * 0.0025;
 	*vertices++ = position.z + right.z * 0.0025 - up.z * 0.0025;
-
-	return vertices;
 }
 
-float* Controller::WriteAttributes(float* attributes)
+void Controller::WriteAttributes(float* attributes)
 {
-	if (!PoseIsValid) return attributes;
-
 	*attributes++ = 0;
 	*attributes++ = 0.1;
 	*attributes++ = 1;
@@ -131,11 +121,9 @@ float* Controller::WriteAttributes(float* attributes)
 	*attributes++ = 0.1;
 	*attributes++ = 1;
 	*attributes++ = 0.1;
-
-	return attributes;
 }
 
-unsigned char* Controller::WriteIndices8(unsigned char* indices, unsigned char offset)
+unsigned char* Controller::WriteIndices8(unsigned char* indices, unsigned char& offset)
 {
 	*indices++ = 0 + offset;
 	*indices++ = 1 + offset;
@@ -178,11 +166,13 @@ unsigned char* Controller::WriteIndices8(unsigned char* indices, unsigned char o
 	*indices++ = 7 + offset;
 	*indices++ = 6 + offset;
 	*indices++ = 5 + offset;
+
+	offset += 8;
 
 	return indices;
 }
 
-uint16_t* Controller::WriteIndices16(uint16_t* indices, uint16_t offset)
+uint16_t* Controller::WriteIndices16(uint16_t* indices, uint16_t& offset)
 {
 	*indices++ = 0 + offset;
 	*indices++ = 1 + offset;
@@ -225,6 +215,8 @@ uint16_t* Controller::WriteIndices16(uint16_t* indices, uint16_t offset)
 	*indices++ = 7 + offset;
 	*indices++ = 6 + offset;
 	*indices++ = 5 + offset;
+
+	offset += 8;
 
 	return indices;
 }

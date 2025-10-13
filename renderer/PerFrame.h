@@ -59,12 +59,12 @@ struct PerFrame
 	DescriptorResourcesLists colormapResources;
 	DescriptorResources floorResources;
 	DescriptorResources controllerResources;
-	VkDeviceSize controllerVertexBase;
+	VkDeviceSize controllersVertexBase;
 	VkDeviceSize skyVertexBase;
-	VkDeviceSize controllerAttributeBase;
+	VkDeviceSize controllersAttributeBase;
 	VkDeviceSize skyAttributeBase;
 	VkDeviceSize aliasAttributeBase;
-	VkDeviceSize controllerIndexBase;
+	VkDeviceSize controllersIndexBase;
 	VkDeviceSize coloredIndex8Base;
 	VkDeviceSize coloredIndex16Base;
 	VkDeviceSize cutoutIndex8Base;

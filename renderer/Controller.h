@@ -9,10 +9,10 @@ struct Controller
 	bool PoseIsValid;
 
 	VkDeviceSize VerticesSize() const;
-	VkDeviceSize AttributesSize() const;
-	VkDeviceSize IndicesSize() const;
-	float* WriteVertices(float* vertices);
-	float* WriteAttributes(float* attributes);
-	static unsigned char* WriteIndices8(unsigned char* indices, unsigned char offset);
-	static uint16_t* WriteIndices16(uint16_t* indices, uint16_t offset);
+	static VkDeviceSize AttributesSize() ;
+	static VkDeviceSize IndicesSize() ;
+	void WriteVertices(float* vertices);
+	static void WriteAttributes(float* attributes);
+	static unsigned char* WriteIndices8(unsigned char* indices, unsigned char& offset);
+	static uint16_t* WriteIndices16(uint16_t* indices, uint16_t& offset);
 };

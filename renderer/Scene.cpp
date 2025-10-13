@@ -3568,11 +3568,12 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         floorVerticesSize += 3 * 4 * sizeof(float);
     }
-	controllerVerticesSize = 0;
+	leftControllerVerticesSize = 0;
+	rightControllerVerticesSize = 0;
     if (appState.Focused && (key_dest == key_console || key_dest == key_menu || appState.Mode != AppWorldMode))
     {
-		controllerVerticesSize += appState.LeftController.VerticesSize();
-		controllerVerticesSize += appState.RightController.VerticesSize();
+		leftControllerVerticesSize = appState.LeftController.VerticesSize();
+		rightControllerVerticesSize = appState.RightController.VerticesSize();
     }
 	skyVerticesSize = 0;
 	if (appState.Scene.lastSky >= 0)
@@ -3585,7 +3586,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
 	cutoutVerticesSize = (d_lists.last_cutout_vertex + 1) * sizeof(float);
-    verticesSize = floorVerticesSize + controllerVerticesSize + skyVerticesSize + coloredVerticesSize + cutoutVerticesSize;
+    verticesSize = floorVerticesSize + leftControllerVerticesSize + rightControllerVerticesSize + skyVerticesSize + coloredVerticesSize + cutoutVerticesSize;
     if (verticesSize > 0)
     {
         perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
@@ -3596,11 +3597,15 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         floorAttributesSize += 2 * 4 * sizeof(float);
     }
-    controllerAttributesSize = 0;
-    if (controllerVerticesSize > 0)
+    leftControllerAttributesSize = 0;
+    if (leftControllerVerticesSize > 0)
     {
-		controllerAttributesSize += appState.LeftController.AttributesSize();
-		controllerAttributesSize += appState.RightController.AttributesSize();
+		leftControllerAttributesSize = Controller::AttributesSize();
+    }
+    rightControllerAttributesSize = 0;
+    if (rightControllerVerticesSize > 0)
+    {
+		rightControllerAttributesSize = Controller::AttributesSize();
     }
 	skyAttributesSize = 0;
 	if (appState.Scene.lastSky >= 0)
@@ -3612,7 +3617,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		skyAttributesSize += appState.Scene.loadedSkyRGBA.count * 2 * sizeof(float);
 	}
 	aliasAttributesSize = (d_lists.last_alias_attribute + 1) * sizeof(float);
-    attributesSize = floorAttributesSize + controllerAttributesSize + skyAttributesSize + aliasAttributesSize;
+    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + skyAttributesSize + aliasAttributesSize;
     if (attributesSize > 0)
     {
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
@@ -3630,11 +3635,15 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
         floorIndicesSize = 4;
     }
-    controllerIndicesSize = 0;
-    if (controllerVerticesSize > 0)
+    leftControllerIndicesSize = 0;
+    if (leftControllerVerticesSize > 0)
     {
-		controllerIndicesSize += appState.LeftController.IndicesSize();
-		controllerIndicesSize += appState.RightController.IndicesSize();
+		leftControllerIndicesSize += Controller::IndicesSize();
+    }
+    rightControllerIndicesSize = 0;
+    if (rightControllerVerticesSize > 0)
+    {
+		rightControllerIndicesSize += Controller::IndicesSize();
     }
     coloredIndices8Size = lastColoredIndex8 + 1;
     coloredIndices16Size = (lastColoredIndex16 + 1) * sizeof(uint16_t);
@@ -3730,15 +3739,16 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 
     if (appState.IndexTypeUInt8Enabled)
     {
-        indices8Size = floorIndicesSize + controllerIndicesSize + coloredIndices8Size + cutoutIndices8Size;
+        indices8Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + coloredIndices8Size + cutoutIndices8Size;
         indices16Size = coloredIndices16Size + cutoutIndices16Size;
     }
     else
     {
         floorIndicesSize *= sizeof(uint16_t);
-        controllerIndicesSize *= sizeof(uint16_t);
+        leftControllerIndicesSize *= sizeof(uint16_t);
+        rightControllerIndicesSize *= sizeof(uint16_t);
         indices8Size = 0;
-        indices16Size = floorIndicesSize + controllerIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
+        indices16Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
     }
 	indices32Size = coloredIndices32Size + cutoutIndices32Size;
 

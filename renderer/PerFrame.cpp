@@ -100,7 +100,7 @@ void PerFrame::GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, Loade
 	unsigned char* source = nullptr;
 	int sourceMipWidth = 0;
 	int sourceMipHeight = 0;
-	auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+	auto target = (unsigned char*)stagingBuffer->mapped + offset;
 	auto mipWidth = loadedTexture->texture->width;
 	auto mipHeight = loadedTexture->texture->height;
 	auto mips = loadedTexture->mips;
@@ -150,7 +150,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	auto loadedAliasIndexBuffer = appState.Scene.indexBuffers.firstAliasIndices8;
 	while (loadedAliasIndexBuffer != nullptr)
 	{
-		auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+		auto target = (unsigned char*)stagingBuffer->mapped + offset;
 		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->source;
 		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
@@ -178,7 +178,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	loadedAliasIndexBuffer = appState.Scene.indexBuffers.firstAliasIndices16;
 	while (loadedAliasIndexBuffer != nullptr)
 	{
-		auto target = (uint16_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->source;
 		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
@@ -206,7 +206,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	loadedAliasIndexBuffer = appState.Scene.indexBuffers.firstAliasIndices32;
 	while (loadedAliasIndexBuffer != nullptr)
 	{
-		auto target = (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto target = (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		auto aliashdr = (aliashdr_t *)loadedAliasIndexBuffer->source;
 		auto mdl = (mdl_t *)((byte *)aliashdr + aliashdr->model);
 		auto triangle = (mtriangle_t *)((byte *)aliashdr + aliashdr->triangles);
@@ -230,7 +230,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	auto loadedBuffer = appState.Scene.aliasBuffers.firstAliasVertices;
 	while (loadedBuffer != nullptr)
 	{
-		auto target = (byte*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto target = (byte*)((unsigned char*)stagingBuffer->mapped + offset);
 		auto source = (trivertx_t*)loadedBuffer->source;
 		for (auto i = 0; i < loadedBuffer->size; i += 2 * 3 * sizeof(byte))
 		{
@@ -251,7 +251,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	auto loadedTexCoordsBuffer = appState.Scene.aliasBuffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 		auto source = (stvert_t*)loadedTexCoordsBuffer->source;
 		for (auto i = 0; i < loadedTexCoordsBuffer->size; i += 2 * 2 * sizeof(float))
 		{
@@ -272,7 +272,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	{
 		if (appState.Scene.floorVerticesSize > 0)
 		{
-			auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 			*target++ = -0.5;
 			*target++ = appState.DistanceToFloor;
 			*target++ = -0.5;
@@ -287,20 +287,25 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			*target++ = 0.5;
 			offset += appState.Scene.floorVerticesSize;
 		}
-		controllerVertexBase = appState.Scene.floorVerticesSize;
-		if (appState.Scene.controllerVerticesSize > 0)
+		controllersVertexBase = appState.Scene.floorVerticesSize;
+		if (appState.Scene.leftControllerVerticesSize > 0)
 		{
-			auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-			target = appState.LeftController.WriteVertices(target);
-			target = appState.RightController.WriteVertices(target);
-			offset += appState.Scene.controllerVerticesSize;
+			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+			appState.LeftController.WriteVertices(target);
+			offset += appState.Scene.leftControllerVerticesSize;
 		}
-		skyVertexBase = controllerVertexBase + appState.Scene.controllerVerticesSize;
+		if (appState.Scene.rightControllerVerticesSize > 0)
+		{
+			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+			appState.RightController.WriteVertices(target);
+			offset += appState.Scene.rightControllerVerticesSize;
+		}
+		skyVertexBase = controllersVertexBase + appState.Scene.leftControllerVerticesSize +  + appState.Scene.rightControllerVerticesSize;
         if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
         {
 			auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
             auto source = d_lists.textured_vertices.data() + firstVertex * 3;
-            auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+            auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
             *target++ = -appState.SkyLeft + appState.SkyHorizontal * source[0];
 			*target++ = appState.SkyTop - appState.SkyVertical * source[1];
 			*target++ = -source[2];
@@ -316,15 +321,15 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
         }
 		offset += appState.Scene.skyVerticesSize;
 		auto count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
-		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
+		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 		offset += appState.Scene.coloredVerticesSize;
 		count = (size_t)appState.Scene.cutoutVerticesSize / sizeof(float);
-		std::copy(d_lists.cutout_vertices.data(), d_lists.cutout_vertices.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
+		std::copy(d_lists.cutout_vertices.data(), d_lists.cutout_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 		offset += appState.Scene.cutoutVerticesSize;
 	}
 	if (appState.Scene.floorAttributesSize > 0)
 	{
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 		*target++ = 0;
 		*target++ = 0;
 		*target++ = 1;
@@ -335,15 +340,20 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		*target++ = 1;
 		offset += appState.Scene.floorAttributesSize;
 	}
-	controllerAttributeBase = appState.Scene.floorAttributesSize;
-	if (appState.Scene.controllerAttributesSize > 0)
+	controllersAttributeBase = appState.Scene.floorAttributesSize;
+	if (appState.Scene.leftControllerAttributesSize > 0)
 	{
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
-		target = appState.LeftController.WriteAttributes(target);
-		target = appState.RightController.WriteAttributes(target);
-		offset += appState.Scene.controllerAttributesSize;
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+		Controller::WriteAttributes(target);
+		offset += appState.Scene.leftControllerAttributesSize;
 	}
-	skyAttributeBase = controllerAttributeBase + appState.Scene.controllerAttributesSize;
+	if (appState.Scene.rightControllerAttributesSize > 0)
+	{
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+		Controller::WriteAttributes(target);
+		offset += appState.Scene.rightControllerAttributesSize;
+	}
+	skyAttributeBase = controllersAttributeBase + appState.Scene.leftControllerAttributesSize + appState.Scene.rightControllerAttributesSize;
     if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
     {
         float skyTexCoordsLeft = 0.5f - appState.SkyLeft / 2;
@@ -352,7 +362,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
         float skyTexCoordsVertical = appState.SkyVertical / 2;
 		auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
         auto source = d_lists.textured_attributes.data() + firstVertex * 2;
-        auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+        auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
         *target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[0];
 		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[1];
 		*target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[2];
@@ -365,10 +375,10 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	offset += appState.Scene.skyAttributesSize;
 	aliasAttributeBase = skyAttributeBase + appState.Scene.skyAttributesSize;
 	auto count = (size_t)appState.Scene.aliasAttributesSize / sizeof(float);
-	std::copy(d_lists.alias_attributes.data(), d_lists.alias_attributes.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
+	std::copy(d_lists.alias_attributes.data(), d_lists.alias_attributes.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.aliasAttributesSize;
 	count = (size_t)appState.Scene.coloredColorsSize / sizeof(float);
-	std::copy(d_lists.colored_colors.data(), d_lists.colored_colors.data() + count, (float*)(((unsigned char*)stagingBuffer->mapped) + offset));
+	std::copy(d_lists.colored_colors.data(), d_lists.colored_colors.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.coloredColorsSize;
 	if (appState.IndexTypeUInt8Enabled)
 	{
@@ -376,38 +386,34 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		{
 			if (appState.Scene.floorIndicesSize > 0)
 			{
-				auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+				auto target = (unsigned char*)stagingBuffer->mapped + offset;
 				*target++ = 0;
 				*target++ = 1;
 				*target++ = 3;
 				*target++ = 2;
 				offset += appState.Scene.floorIndicesSize;
 			}
-			controllerIndexBase = appState.Scene.floorIndicesSize;
-			if (appState.Scene.controllerIndicesSize > 0)
+			controllersIndexBase = appState.Scene.floorIndicesSize;
+			unsigned char controllerIndexOffset = 0;
+			if (appState.Scene.leftControllerIndicesSize > 0)
 			{
-				auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
-				auto controllerOffset = 0;
-				if (appState.LeftController.PoseIsValid)
-				{
-					target = Controller::WriteIndices8(target, controllerOffset);
-					controllerOffset += 8;
-					target = Controller::WriteIndices8(target, controllerOffset);
-					controllerOffset += 8;
-				}
-				if (appState.RightController.PoseIsValid)
-				{
-					target = Controller::WriteIndices8(target, controllerOffset);
-					controllerOffset += 8;
-					target = Controller::WriteIndices8(target, controllerOffset);
-				}
-				offset += appState.Scene.controllerIndicesSize;
+				auto target = (unsigned char*)stagingBuffer->mapped + offset;
+				target = Controller::WriteIndices8(target, controllerIndexOffset);
+				target = Controller::WriteIndices8(target, controllerIndexOffset);
+				offset += appState.Scene.leftControllerIndicesSize;
 			}
-			coloredIndex8Base = controllerIndexBase + appState.Scene.controllerIndicesSize;
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices8.data(), appState.Scene.coloredIndices8Size);
+			if (appState.Scene.rightControllerIndicesSize > 0)
+			{
+				auto target = (unsigned char*)stagingBuffer->mapped + offset;
+				target = Controller::WriteIndices8(target, controllerIndexOffset);
+				target = Controller::WriteIndices8(target, controllerIndexOffset);
+				offset += appState.Scene.rightControllerIndicesSize;
+			}
+			coloredIndex8Base = controllersIndexBase + appState.Scene.leftControllerIndicesSize + appState.Scene.rightControllerIndicesSize;
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices8.data(), appState.Scene.coloredIndices8Size);
 			offset += appState.Scene.coloredIndices8Size;
 			cutoutIndex8Base = coloredIndex8Base + appState.Scene.coloredIndices8Size;
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.cutout_indices8.data(), appState.Scene.cutoutIndices8Size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.cutout_indices8.data(), appState.Scene.cutoutIndices8Size);
 			offset += appState.Scene.cutoutIndices8Size;
 			while (offset % 4 != 0)
 			{
@@ -417,10 +423,10 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		if (appState.Scene.indices16Size > 0)
 		{
 			coloredIndex16Base = 0;
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
 			offset += appState.Scene.coloredIndices16Size;
 			cutoutIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices16Size;
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
 			offset += appState.Scene.cutoutIndices16Size;
 			while (offset % 4 != 0)
 			{
@@ -432,50 +438,46 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	{
 		if (appState.Scene.floorIndicesSize > 0)
 		{
-			auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
+			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 			*target++ = 0;
 			*target++ = 1;
 			*target++ = 3;
 			*target++ = 2;
 			offset += appState.Scene.floorIndicesSize;
 		}
-		controllerIndexBase = appState.Scene.floorIndicesSize;
-		if (appState.Scene.controllerIndicesSize > 0)
+		controllersIndexBase = appState.Scene.floorIndicesSize;
+		uint16_t controllerIndexOffset = 0;
+		if (appState.Scene.leftControllerIndicesSize > 0)
 		{
-			auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
-			auto controllerOffset = 0;
-			if (appState.LeftController.PoseIsValid)
-			{
-				target = Controller::WriteIndices16(target, controllerOffset);
-				controllerOffset += 8;
-				target = Controller::WriteIndices16(target, controllerOffset);
-				controllerOffset += 8;
-			}
-			if (appState.RightController.PoseIsValid)
-			{
-				target = Controller::WriteIndices16(target, controllerOffset);
-				controllerOffset += 8;
-				target = Controller::WriteIndices16(target, controllerOffset);
-			}
-			offset += appState.Scene.controllerIndicesSize;
+			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+			target = Controller::WriteIndices16(target, controllerIndexOffset);
+			target = Controller::WriteIndices16(target, controllerIndexOffset);
+			offset += appState.Scene.leftControllerIndicesSize;
 		}
-		coloredIndex16Base = controllerIndexBase + appState.Scene.controllerIndicesSize;
-		auto target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
+		if (appState.Scene.rightControllerIndicesSize > 0)
+		{
+			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+			target = Controller::WriteIndices16(target, controllerIndexOffset);
+			target = Controller::WriteIndices16(target, controllerIndexOffset);
+			offset += appState.Scene.rightControllerIndicesSize;
+		}
+		coloredIndex16Base = controllersIndexBase + appState.Scene.leftControllerIndicesSize + appState.Scene.rightControllerIndicesSize;
+		auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < appState.Scene.coloredIndices8Size; i++)
 		{
 			*target++ = d_lists.colored_indices8[i];
 		}
 		offset += appState.Scene.coloredIndices8Size * sizeof(uint16_t);
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
+		memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
 		offset += appState.Scene.coloredIndices16Size;
 		cutoutIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices8Size * sizeof(uint16_t) + appState.Scene.coloredIndices16Size;
-		target = ((uint16_t*)stagingBuffer->mapped) + offset / sizeof(uint16_t);
+		target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < appState.Scene.cutoutIndices8Size; i++)
 		{
 			*target++ = d_lists.cutout_indices8[i];
 		}
 		offset += appState.Scene.cutoutIndices8Size * sizeof(uint16_t);
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, d_lists.cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
+		memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
 		offset += appState.Scene.cutoutIndices16Size;
 		while (offset % 4 != 0)
 		{
@@ -483,11 +485,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 	}
 	count = (size_t)appState.Scene.coloredIndices32Size / sizeof(uint32_t);
-	std::copy((uint32_t*)d_lists.colored_indices32.data(), (uint32_t*)d_lists.colored_indices32.data() + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+	std::copy((uint32_t*)d_lists.colored_indices32.data(), (uint32_t*)d_lists.colored_indices32.data() + count, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.coloredIndices32Size;
 	cutoutIndex32Base = appState.Scene.coloredIndices32Size;
 	count = (size_t)appState.Scene.cutoutIndices32Size / sizeof(uint32_t);
-	std::copy((uint32_t*)d_lists.cutout_indices32.data(), (uint32_t*)d_lists.cutout_indices32.data() + count, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+	std::copy((uint32_t*)d_lists.cutout_indices32.data(), (uint32_t*)d_lists.cutout_indices32.data() + count, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.cutoutIndices32Size;
 
 
@@ -510,7 +512,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			}
 			else
 			{
-				std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+				std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 				offset += delayedCopySize * sizeof(uint32_t);
 				delayedCopyBuffer = (uint32_t*)loaded->source;
 				delayedCopySize = count;
@@ -519,7 +521,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 		if (delayedCopyBuffer != nullptr)
 		{
-			std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+			std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 			offset += delayedCopySize * sizeof(uint32_t);
 		}
 	}
@@ -543,7 +545,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			}
 			else
 			{
-				std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+				std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 				offset += delayedCopySize * sizeof(uint32_t);
 				delayedCopyBuffer = (uint32_t*)loaded->source;
 				delayedCopySize = count;
@@ -552,7 +554,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 		if (delayedCopyBuffer != nullptr)
 		{
-			std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)(((unsigned char*)stagingBuffer->mapped) + offset));
+			std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 			offset += delayedCopySize * sizeof(uint32_t);
 		}
 	}
@@ -560,7 +562,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	if (appState.Scene.paletteSize > 0)
 	{
 		auto source = d_8to24table;
-		auto target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < 256; i++)
 		{
 			auto entry = *source++;
@@ -571,7 +573,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 		offset += appState.Scene.paletteSize;
 		source = d_8to24table;
-		target = (float*)(((unsigned char*)stagingBuffer->mapped) + offset);
+		target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < 256; i++)
 		{
 			auto entry = *source++;
@@ -584,7 +586,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 	if (appState.Scene.colormapSize > 0)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, host_colormap.data(), appState.Scene.colormapSize);
+		memcpy((unsigned char*)stagingBuffer->mapped + offset, host_colormap.data(), appState.Scene.colormapSize);
 		offset += appState.Scene.colormapSize;
 	}
 	for (auto& entry : appState.Scene.surfaceTextures)
@@ -592,7 +594,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto loadedTexture = entry.first;
 		while (loadedTexture != nullptr)
 		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, loadedTexture->source, loadedTexture->size);
 			GenerateMipmaps(stagingBuffer, offset, loadedTexture);
 			offset += loadedTexture->allocated;
 			loadedTexture = loadedTexture->next;
@@ -601,7 +603,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	auto loadedTexture = appState.Scene.textures.first;
 	while (loadedTexture != nullptr)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
+		memcpy((unsigned char*)stagingBuffer->mapped + offset, loadedTexture->source, loadedTexture->size);
 		offset += loadedTexture->size;
 		loadedTexture = loadedTexture->next;
 	}
@@ -610,7 +612,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto& alias = d_lists.alias[i];
 		if (alias.colormap != nullptr)
 		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.colormap, 16384);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, alias.colormap, 16384);
 			offset += 16384;
 		}
 	}
@@ -619,7 +621,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto& alias = d_lists.alias_alpha[i];
 		if (alias.colormap != nullptr)
 		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.colormap, 16384);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, alias.colormap, 16384);
 			offset += 16384;
 		}
 	}
@@ -628,7 +630,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto& alias = d_lists.alias_holey[i];
 		if (alias.colormap != nullptr)
 		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.colormap, 16384);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, alias.colormap, 16384);
 			offset += 16384;
 		}
 	}
@@ -637,7 +639,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto& alias = d_lists.alias_holey_alpha[i];
 		if (alias.colormap != nullptr)
 		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, alias.colormap, 16384);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, alias.colormap, 16384);
 			offset += 16384;
 		}
 	}
@@ -646,7 +648,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto& viewmodel = d_lists.viewmodels[i];
 		if (viewmodel.colormap != nullptr)
 		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, viewmodel.colormap, 16384);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, viewmodel.colormap, 16384);
 			offset += 16384;
 		}
 	}
@@ -655,14 +657,14 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto& viewmodel = d_lists.viewmodels_holey[i];
 		if (viewmodel.colormap != nullptr)
 		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, viewmodel.colormap, 16384);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, viewmodel.colormap, 16384);
 			offset += 16384;
 		}
 	}
 	if (appState.Scene.lastSky >= 0)
 	{
 		auto source = appState.Scene.loadedSky.data;
-		auto target = ((unsigned char*)stagingBuffer->mapped) + offset;
+		auto target = (unsigned char*)stagingBuffer->mapped + offset;
 		auto width = appState.Scene.loadedSky.width;
 		auto doubleWidth = width * 2;
 		auto height = appState.Scene.loadedSky.height;
@@ -680,7 +682,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 	if (appState.Scene.lastSkyRGBA >= 0)
 	{
-		memcpy(((unsigned char*)stagingBuffer->mapped) + offset, appState.Scene.loadedSkyRGBA.data, appState.Scene.loadedSkyRGBA.size);
+		memcpy((unsigned char*)stagingBuffer->mapped + offset, appState.Scene.loadedSkyRGBA.data, appState.Scene.loadedSkyRGBA.size);
 		offset += appState.Scene.loadedSkyRGBA.size;
 	}
 	for (auto& entry : appState.Scene.surfaceRGBATextures)
@@ -688,7 +690,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto loadedTexture = entry.first;
 		while (loadedTexture != nullptr)
 		{
-			memcpy(((unsigned char*)stagingBuffer->mapped) + offset, loadedTexture->source, loadedTexture->size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, loadedTexture->source, loadedTexture->size);
 			offset += loadedTexture->allocated;
 			loadedTexture = loadedTexture->next;
 		}
@@ -3672,15 +3674,15 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 		appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
 	}
-	if (appState.Scene.controllerVerticesSize > 0)
+	if (appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0)
 	{
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		renderLabel.pLabelName = CONTROLLERS_NAME;
 		appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.controllers.pipeline);
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &controllerVertexBase);
-		vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &controllerAttributeBase);
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &controllersVertexBase);
+		vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &controllersAttributeBase);
 		if (!controllerResources.created)
 		{
 			poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -3705,13 +3707,21 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.controllers.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 		if (appState.IndexTypeUInt8Enabled)
 		{
-			vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, controllerIndexBase, VK_INDEX_TYPE_UINT8_EXT);
+			vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, controllersIndexBase, VK_INDEX_TYPE_UINT8_EXT);
 		}
 		else
 		{
-			vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllerIndexBase, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllersIndexBase, VK_INDEX_TYPE_UINT16);
 		}
-		VkDeviceSize size = appState.LeftController.IndicesSize() + appState.RightController.IndicesSize();
+		VkDeviceSize size = 0;
+		if (appState.Scene.leftControllerIndicesSize > 0)
+		{
+			size += Controller::IndicesSize();
+		}
+		if (appState.Scene.rightControllerIndicesSize > 0)
+		{
+			size += Controller::IndicesSize();
+		}
 		vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
