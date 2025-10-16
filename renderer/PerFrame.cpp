@@ -1,6 +1,7 @@
 #include "AppState.h"
 #include "PerFrame.h" // This header is specified second in the list to allow headers in AppState.h to include the core engine structs
 #include "Utils.h"
+#include "Floor.h"
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 #include "RendererNames.h"
 #endif
@@ -273,18 +274,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		if (appState.Scene.floorVerticesSize > 0)
 		{
 			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
-			*target++ = -0.5;
-			*target++ = appState.DistanceToFloor;
-			*target++ = -0.5;
-			*target++ = 0.5;
-			*target++ = appState.DistanceToFloor;
-			*target++ = -0.5;
-			*target++ = 0.5;
-			*target++ = appState.DistanceToFloor;
-			*target++ = 0.5;
-			*target++ = -0.5;
-			*target++ = appState.DistanceToFloor;
-			*target++ = 0.5;
+			Floor::WriteVertices(appState, target);
 			offset += appState.Scene.floorVerticesSize;
 		}
 		controllersVertexBase = appState.Scene.floorVerticesSize;
@@ -330,14 +320,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	if (appState.Scene.floorAttributesSize > 0)
 	{
 		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
-		*target++ = 0;
-		*target++ = 0;
-		*target++ = 1;
-		*target++ = 0;
-		*target++ = 1;
-		*target++ = 1;
-		*target++ = 0;
-		*target++ = 1;
+		Floor::WriteAttributes(target);
 		offset += appState.Scene.floorAttributesSize;
 	}
 	controllersAttributeBase = appState.Scene.floorAttributesSize;
@@ -387,12 +370,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			if (appState.Scene.floorIndicesSize > 0)
 			{
 				auto target = (unsigned char*)stagingBuffer->mapped + offset;
-				*target++ = 0;
-				*target++ = 1;
-				*target++ = 2;
-				*target++ = 2;
-				*target++ = 3;
-				*target++ = 0;
+				Floor::WriteIndices8(target);
 				offset += appState.Scene.floorIndicesSize;
 			}
 			controllersIndexBase = appState.Scene.floorIndicesSize;
@@ -441,12 +419,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		if (appState.Scene.floorIndicesSize > 0)
 		{
 			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
-			*target++ = 0;
-			*target++ = 1;
-			*target++ = 2;
-			*target++ = 2;
-			*target++ = 3;
-			*target++ = 0;
+			Floor::WriteIndices16(target);
 			offset += appState.Scene.floorIndicesSize;
 		}
 		controllersIndexBase = appState.Scene.floorIndicesSize;
@@ -3675,7 +3648,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			{
 				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, 0, VK_INDEX_TYPE_UINT16);
 			}
-			vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+			VkDeviceSize size = Floor::IndicesSize();
+			vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
 		}
 		if (appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0)
 		{

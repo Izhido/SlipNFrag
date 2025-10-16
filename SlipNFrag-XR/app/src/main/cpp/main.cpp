@@ -610,6 +610,11 @@ void android_main(struct android_app* app)
 					appState.IndexTypeUInt8Enabled = true;
 					enabledExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
 				}
+				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME) == 0)
+				{
+					// UGLY HACK. Meta Quest devices require this extension, but the validation layers report that the OpenXR runtime does not enable it for you.
+					enabledExtensions.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
+				}
 				else if (strcmp(availableExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME) == 0)
 				{
 					shaderDemoteToHelperInvocation = true;

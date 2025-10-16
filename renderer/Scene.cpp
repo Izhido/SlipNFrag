@@ -5,6 +5,7 @@
 #include "ImageAsset.h"
 #include "MemoryAllocateInfo.h"
 #include "PipelineAttributes.h"
+#include "Floor.h"
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 #include "RendererNames.h"
 #endif
@@ -3556,7 +3557,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     floorVerticesSize = 0;
     if (appState.Mode != AppWorldMode)
     {
-        floorVerticesSize += 3 * 4 * sizeof(float);
+        floorVerticesSize += Floor::VerticesSize();
     }
 	leftControllerVerticesSize = 0;
 	rightControllerVerticesSize = 0;
@@ -3585,7 +3586,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     floorAttributesSize = 0;
     if (floorVerticesSize > 0)
     {
-        floorAttributesSize += 2 * 4 * sizeof(float);
+        floorAttributesSize += Floor::AttributesSize();
     }
     leftControllerAttributesSize = 0;
     if (leftControllerVerticesSize > 0)
@@ -3623,7 +3624,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     floorIndicesSize = 0;
     if (floorVerticesSize > 0)
     {
-        floorIndicesSize += 6;
+        floorIndicesSize += Floor::IndicesSize();
     }
     leftControllerIndicesSize = 0;
     if (leftControllerVerticesSize > 0)
