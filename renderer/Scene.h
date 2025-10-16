@@ -94,8 +94,7 @@ struct Scene
 	Pipeline cutout;
 	Pipeline sky;
 	Pipeline skyRGBA;
-	Pipeline controllers;
-	Pipeline floor;
+	Pipeline textured;
     std::vector<VkBuffer> paletteBuffers;
     std::vector<VkBuffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;

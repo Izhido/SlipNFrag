@@ -181,17 +181,17 @@ void Scene::Create(AppState& appState)
     ImageAsset floorImage;
     floorImage.Open("floor.png", appState.FileLoader);
     floorTexture.Create(appState, floorImage.width, floorImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-    ImageAsset controller;
-    controller.Open("controller.png", appState.FileLoader);
-    controllerTexture.Create(appState, controller.width, controller.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-    VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controller.width * controller.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
+    ImageAsset controllerImage;
+	controllerImage.Open("controller.png", appState.FileLoader);
+    controllerTexture.Create(appState, controllerImage.width, controllerImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controllerImage.width * controllerImage.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
     Buffer stagingBuffer;
     stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);
     CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer.mapped));
     memcpy(stagingBuffer.mapped, floorImage.image, floorImage.width * floorImage.height * sizeof(uint32_t));
     floorImage.Close();
     size_t offset = floorImage.width * floorImage.height;
-    memcpy((uint32_t*)stagingBuffer.mapped + offset, controller.image, controller.width * controller.height * sizeof(uint32_t));
+    memcpy((uint32_t*)stagingBuffer.mapped + offset, controllerImage.image, controllerImage.width * controllerImage.height * sizeof(uint32_t));
     offset = 0;
     floorTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
     offset += floorImage.width * floorImage.height * sizeof(uint32_t);
@@ -1445,27 +1445,17 @@ void Scene::Create(AppState& appState)
 
     pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
     pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &controllers.pipelineLayout));
+    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &textured.pipelineLayout));
     depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
-    graphicsPipelineCreateInfo.layout = controllers.pipelineLayout;
+    graphicsPipelineCreateInfo.layout = textured.pipelineLayout;
     graphicsPipelineCreateInfo.pVertexInputState = &texturedAttributes.vertexInputState;
     graphicsPipelineCreateInfo.pInputAssemblyState = &triangles;
     stages[0].module = texturedVertex;
     stages[1].module = texturedFragment;
-    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &controllers.pipeline));
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &textured.pipeline));
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-	pipelineName.objectHandle = (uint64_t)controllers.pipeline;
-	pipelineName.pObjectName = CONTROLLERS_NAME;
-	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
-#endif
-
-    CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &floor.pipelineLayout));
-    graphicsPipelineCreateInfo.layout = floor.pipelineLayout;
-    graphicsPipelineCreateInfo.pInputAssemblyState = &triangleStrip;
-    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &floor.pipeline));
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-	pipelineName.objectHandle = (uint64_t)floor.pipeline;
-	pipelineName.pObjectName = FLOOR_NAME;
+	pipelineName.objectHandle = (uint64_t)textured.pipeline;
+	pipelineName.pObjectName = TEXTURED_NAME;
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
@@ -3593,7 +3583,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
     size += verticesSize;
     floorAttributesSize = 0;
-    if (appState.Mode != AppWorldMode)
+    if (floorVerticesSize > 0)
     {
         floorAttributesSize += 2 * 4 * sizeof(float);
     }
@@ -3631,9 +3621,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
     size += colorsSize;
     floorIndicesSize = 0;
-    if (appState.Mode != AppWorldMode)
+    if (floorVerticesSize > 0)
     {
-        floorIndicesSize = 4;
+        floorIndicesSize += 6;
     }
     leftControllerIndicesSize = 0;
     if (leftControllerVerticesSize > 0)
@@ -3914,8 +3904,7 @@ void Scene::Destroy(AppState& appState)
 		vkFreeMemory(appState.Device, paletteMemory, nullptr);
 	}
 
-	floor.Delete(appState);
-	controllers.Delete(appState);
+	textured.Delete(appState);
 	skyRGBA.Delete(appState);
 	sky.Delete(appState);
 	cutout.Delete(appState);

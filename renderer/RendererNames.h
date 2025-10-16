@@ -54,5 +54,4 @@
 #define CUTOUT_NAME "Cutout"
 #define SKY_NAME "Sky"
 #define SKY_RGBA_NAME "Sky (RGBA)"
-#define CONTROLLERS_NAME "Controllers"
-#define FLOOR_NAME "Floor"
+#define TEXTURED_NAME "Textured"

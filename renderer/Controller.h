@@ -9,8 +9,8 @@ struct Controller
 	bool PoseIsValid;
 
 	VkDeviceSize VerticesSize() const;
-	static VkDeviceSize AttributesSize() ;
-	static VkDeviceSize IndicesSize() ;
+	static VkDeviceSize AttributesSize();
+	static VkDeviceSize IndicesSize();
 	void WriteVertices(float* vertices);
 	static void WriteAttributes(float* attributes);
 	static unsigned char* WriteIndices8(unsigned char* indices, unsigned char& offset);

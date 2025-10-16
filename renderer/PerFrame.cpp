@@ -389,8 +389,10 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 				auto target = (unsigned char*)stagingBuffer->mapped + offset;
 				*target++ = 0;
 				*target++ = 1;
-				*target++ = 3;
 				*target++ = 2;
+				*target++ = 2;
+				*target++ = 3;
+				*target++ = 0;
 				offset += appState.Scene.floorIndicesSize;
 			}
 			controllersIndexBase = appState.Scene.floorIndicesSize;
@@ -441,8 +443,10 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 			*target++ = 0;
 			*target++ = 1;
-			*target++ = 3;
 			*target++ = 2;
+			*target++ = 2;
+			*target++ = 3;
+			*target++ = 0;
 			offset += appState.Scene.floorIndicesSize;
 		}
 		controllersIndexBase = appState.Scene.floorIndicesSize;
@@ -3630,99 +3634,92 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 #endif
 		}
 	}
-	else
+	if (appState.Scene.floorVerticesSize > 0 || appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0)
 	{
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-		renderLabel.pLabelName = FLOOR_NAME;
+		renderLabel.pLabelName = TEXTURED_NAME;
 		appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipeline);
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-		vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &appState.NoOffset);
-		if (!floorResources.created)
-		{
-			poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSizes[0].descriptorCount = 1;
-			descriptorPoolCreateInfo.poolSizeCount = 1;
-			CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &floorResources.descriptorPool));
-			descriptorSetAllocateInfo.descriptorPool = floorResources.descriptorPool;
-			descriptorSetAllocateInfo.descriptorSetCount = 1;
-			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
-			CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &floorResources.descriptorSet));
-			textureInfo.sampler = appState.Scene.sampler;
-			textureInfo.imageView = appState.Scene.floorTexture.view;
-			writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writes[0].pImageInfo = &textureInfo;
-			writes[0].dstSet = floorResources.descriptorSet;
-			vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
-			floorResources.created = true;
-		}
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipeline);
 		VkDescriptorSet descriptorSets[2];
 		descriptorSets[0] = sceneMatricesResources.descriptorSet;
-		descriptorSets[1] = floorResources.descriptorSet;
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.floor.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
-		if (appState.IndexTypeUInt8Enabled)
+		if (appState.Scene.floorVerticesSize > 0)
 		{
-			vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, 0, VK_INDEX_TYPE_UINT8_EXT);
+			if (!floorResources.created)
+			{
+				poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				poolSizes[0].descriptorCount = 1;
+				descriptorPoolCreateInfo.poolSizeCount = 1;
+				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &floorResources.descriptorPool));
+				descriptorSetAllocateInfo.descriptorPool = floorResources.descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &floorResources.descriptorSet));
+				textureInfo.sampler = appState.Scene.sampler;
+				textureInfo.imageView = appState.Scene.floorTexture.view;
+				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[0].pImageInfo = &textureInfo;
+				writes[0].dstSet = floorResources.descriptorSet;
+				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
+				floorResources.created = true;
+			}
+			descriptorSets[1] = floorResources.descriptorSet;
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &appState.NoOffset);
+			if (appState.IndexTypeUInt8Enabled)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, 0, VK_INDEX_TYPE_UINT8_EXT);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, 0, VK_INDEX_TYPE_UINT16);
+			}
+			vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
 		}
-		else
+		if (appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0)
 		{
-			vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, 0, VK_INDEX_TYPE_UINT16);
+			if (!controllerResources.created)
+			{
+				poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				poolSizes[0].descriptorCount = 1;
+				descriptorPoolCreateInfo.poolSizeCount = 1;
+				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &controllerResources.descriptorPool));
+				descriptorSetAllocateInfo.descriptorPool = controllerResources.descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &controllerResources.descriptorSet));
+				textureInfo.sampler = appState.Scene.sampler;
+				textureInfo.imageView = appState.Scene.controllerTexture.view;
+				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[0].pImageInfo = &textureInfo;
+				writes[0].dstSet = controllerResources.descriptorSet;
+				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
+				controllerResources.created = true;
+			}
+			descriptorSets[1] = controllerResources.descriptorSet;
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &controllersVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &controllersAttributeBase);
+			if (appState.IndexTypeUInt8Enabled)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, controllersIndexBase, VK_INDEX_TYPE_UINT8_EXT);
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllersIndexBase, VK_INDEX_TYPE_UINT16);
+			}
+			VkDeviceSize size = 0;
+			if (appState.Scene.leftControllerIndicesSize > 0)
+			{
+				size += Controller::IndicesSize();
+			}
+			if (appState.Scene.rightControllerIndicesSize > 0)
+			{
+				size += Controller::IndicesSize();
+			}
+			vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
 		}
-		vkCmdDrawIndexed(commandBuffer, 4, 1, 0, 0, 0);
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-		appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
-#endif
-	}
-	if (appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0)
-	{
-#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-		renderLabel.pLabelName = CONTROLLERS_NAME;
-		appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
-#endif
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.controllers.pipeline);
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &controllersVertexBase);
-		vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &controllersAttributeBase);
-		if (!controllerResources.created)
-		{
-			poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			poolSizes[0].descriptorCount = 1;
-			descriptorPoolCreateInfo.poolSizeCount = 1;
-			CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &controllerResources.descriptorPool));
-			descriptorSetAllocateInfo.descriptorPool = controllerResources.descriptorPool;
-			descriptorSetAllocateInfo.descriptorSetCount = 1;
-			descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
-			CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &controllerResources.descriptorSet));
-			textureInfo.sampler = appState.Scene.sampler;
-			textureInfo.imageView = appState.Scene.controllerTexture.view;
-			writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writes[0].pImageInfo = &textureInfo;
-			writes[0].dstSet = controllerResources.descriptorSet;
-			vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
-			controllerResources.created = true;
-		}
-		VkDescriptorSet descriptorSets[2];
-		descriptorSets[0] = sceneMatricesResources.descriptorSet;
-		descriptorSets[1] = controllerResources.descriptorSet;
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.controllers.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
-		if (appState.IndexTypeUInt8Enabled)
-		{
-			vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, controllersIndexBase, VK_INDEX_TYPE_UINT8_EXT);
-		}
-		else
-		{
-			vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, controllersIndexBase, VK_INDEX_TYPE_UINT16);
-		}
-		VkDeviceSize size = 0;
-		if (appState.Scene.leftControllerIndicesSize > 0)
-		{
-			size += Controller::IndicesSize();
-		}
-		if (appState.Scene.rightControllerIndicesSize > 0)
-		{
-			size += Controller::IndicesSize();
-		}
-		vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
