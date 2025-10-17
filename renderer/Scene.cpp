@@ -185,7 +185,10 @@ void Scene::Create(AppState& appState)
     ImageAsset controllerImage;
 	controllerImage.Open("controller.png", appState.FileLoader);
     controllerTexture.Create(appState, controllerImage.width, controllerImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-    VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controllerImage.width * controllerImage.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
+    ImageAsset patchImage;
+	patchImage.Open("patch.png", appState.FileLoader);
+	patchTexture.Create(appState, patchImage.width, patchImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controllerImage.width * controllerImage.height + patchImage.width * patchImage.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
     Buffer stagingBuffer;
     stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);
     CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer.mapped));
@@ -193,10 +196,14 @@ void Scene::Create(AppState& appState)
     floorImage.Close();
     size_t offset = floorImage.width * floorImage.height;
     memcpy((uint32_t*)stagingBuffer.mapped + offset, controllerImage.image, controllerImage.width * controllerImage.height * sizeof(uint32_t));
+	offset += controllerImage.width * controllerImage.height;
+    memcpy((uint32_t*)stagingBuffer.mapped + offset, patchImage.image, patchImage.width * patchImage.height * sizeof(uint32_t));
     offset = 0;
     floorTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
     offset += floorImage.width * floorImage.height * sizeof(uint32_t);
     controllerTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
+    offset += controllerImage.width * controllerImage.height * sizeof(uint32_t);
+    patchTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
     CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
     CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
     CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
@@ -3557,7 +3564,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     floorVerticesSize = 0;
     if (appState.Mode != AppWorldMode)
     {
-        floorVerticesSize += Floor::VerticesSize();
+        floorVerticesSize = Floor::VerticesSize();
     }
 	leftControllerVerticesSize = 0;
 	rightControllerVerticesSize = 0;
@@ -3566,6 +3573,13 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		leftControllerVerticesSize = appState.LeftController.VerticesSize();
 		rightControllerVerticesSize = appState.RightController.VerticesSize();
     }
+	leftHandVerticesSize = 0;
+	rightHandVerticesSize = 0;
+	if ((leftControllerVerticesSize > 0 && rightControllerVerticesSize > 0) || (appState.FromEngine.immersive_hands_enabled && key_dest == key_game))
+	{
+		leftHandVerticesSize = appState.HandTrackers[LEFT_TRACKED_HAND].VerticesSize();
+		rightHandVerticesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].VerticesSize();
+	}
 	skyVerticesSize = 0;
 	if (appState.Scene.lastSky >= 0)
 	{
@@ -3577,7 +3591,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
 	cutoutVerticesSize = (d_lists.last_cutout_vertex + 1) * sizeof(float);
-    verticesSize = floorVerticesSize + leftControllerVerticesSize + rightControllerVerticesSize + skyVerticesSize + coloredVerticesSize + cutoutVerticesSize;
+    verticesSize = floorVerticesSize + leftControllerVerticesSize + rightControllerVerticesSize + leftHandVerticesSize + rightHandVerticesSize + skyVerticesSize + coloredVerticesSize + cutoutVerticesSize;
     if (verticesSize > 0)
     {
         perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
@@ -3598,6 +3612,16 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
 		rightControllerAttributesSize = Controller::AttributesSize();
     }
+    leftHandAttributesSize = 0;
+    if (leftHandVerticesSize > 0)
+    {
+		leftHandAttributesSize = appState.HandTrackers[LEFT_TRACKED_HAND].AttributesSize();
+    }
+    rightHandAttributesSize = 0;
+    if (rightHandVerticesSize > 0)
+    {
+		rightHandAttributesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].AttributesSize();
+    }
 	skyAttributesSize = 0;
 	if (appState.Scene.lastSky >= 0)
 	{
@@ -3608,7 +3632,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		skyAttributesSize += appState.Scene.loadedSkyRGBA.count * 2 * sizeof(float);
 	}
 	aliasAttributesSize = (d_lists.last_alias_attribute + 1) * sizeof(float);
-    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + skyAttributesSize + aliasAttributesSize;
+    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + leftHandAttributesSize + rightHandAttributesSize + skyAttributesSize + aliasAttributesSize;
     if (attributesSize > 0)
     {
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
@@ -3624,18 +3648,28 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     floorIndicesSize = 0;
     if (floorVerticesSize > 0)
     {
-        floorIndicesSize += Floor::IndicesSize();
+        floorIndicesSize = Floor::IndicesSize();
     }
     leftControllerIndicesSize = 0;
     if (leftControllerVerticesSize > 0)
     {
-		leftControllerIndicesSize += Controller::IndicesSize();
+		leftControllerIndicesSize = Controller::IndicesSize();
     }
     rightControllerIndicesSize = 0;
     if (rightControllerVerticesSize > 0)
     {
-		rightControllerIndicesSize += Controller::IndicesSize();
+		rightControllerIndicesSize = Controller::IndicesSize();
     }
+	leftHandIndicesSize = 0;
+	if (leftHandVerticesSize > 0)
+	{
+		leftHandIndicesSize = appState.HandTrackers[LEFT_TRACKED_HAND].IndicesSize();
+	}
+	rightHandIndicesSize = 0;
+	if (rightHandVerticesSize > 0)
+	{
+		rightHandIndicesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].IndicesSize();
+	}
     coloredIndices8Size = lastColoredIndex8 + 1;
     coloredIndices16Size = (lastColoredIndex16 + 1) * sizeof(uint16_t);
 	coloredIndices32Size = (lastColoredIndex32 + 1) * sizeof(uint32_t);
@@ -3728,10 +3762,12 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		sprites.ScaleIndexBase(sizeof(uint32_t));
     }
 
+	leftHandIndicesSize *= sizeof(uint16_t);
+	rightHandIndicesSize *= sizeof(uint16_t);
     if (appState.IndexTypeUInt8Enabled)
     {
         indices8Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + coloredIndices8Size + cutoutIndices8Size;
-        indices16Size = coloredIndices16Size + cutoutIndices16Size;
+        indices16Size = leftHandIndicesSize + rightHandIndicesSize + coloredIndices16Size + cutoutIndices16Size;
     }
     else
     {
@@ -3739,7 +3775,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         leftControllerIndicesSize *= sizeof(uint16_t);
         rightControllerIndicesSize *= sizeof(uint16_t);
         indices8Size = 0;
-        indices16Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
+        indices16Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + leftHandIndicesSize + rightHandIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
     }
 	indices32Size = coloredIndices32Size + cutoutIndices32Size;
 
@@ -3842,6 +3878,7 @@ void Scene::Destroy(AppState& appState)
 		sampler = VK_NULL_HANDLE;
 	}
 
+	patchTexture.Delete(appState);
 	controllerTexture.Delete(appState);
 	floorTexture.Delete(appState);
 

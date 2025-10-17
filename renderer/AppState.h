@@ -10,6 +10,7 @@
 #include "Scene.h"
 #include "FromEngine.h"
 #include "Controller.h"
+#include "HandTracker.h"
 #include <thread>
 
 struct AppState
@@ -23,6 +24,8 @@ struct AppState
 	bool Resumed;
 	VkDevice Device;
 	bool IndexTypeUInt8Enabled;
+	bool HandTrackingEnabled;
+	bool SimultaneousHandsAndControllersEnabled;
 	XrSession Session;
 	VkCommandPool SetupCommandPool;
 	VkQueue Queue;
@@ -101,6 +104,7 @@ struct AppState
 	std::vector<XrBool32> ActiveHands;
 	std::vector<XrMatrix4x4f> ViewMatrices;
 	std::vector<XrMatrix4x4f> ProjectionMatrices;
+	std::vector<HandTracker> HandTrackers;
 	XrSpaceLocation CameraLocation;
 	bool CameraLocationIsValid;
 	bool Focused;

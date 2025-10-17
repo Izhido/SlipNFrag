@@ -290,7 +290,20 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			appState.RightController.WriteVertices(target);
 			offset += appState.Scene.rightControllerVerticesSize;
 		}
-		skyVertexBase = controllersVertexBase + appState.Scene.leftControllerVerticesSize +  + appState.Scene.rightControllerVerticesSize;
+		handsVertexBase = controllersVertexBase + appState.Scene.leftControllerVerticesSize + appState.Scene.rightControllerVerticesSize;
+		if (appState.Scene.leftHandVerticesSize > 0)
+		{
+			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+			appState.HandTrackers[LEFT_TRACKED_HAND].WriteVertices(target);
+			offset += appState.Scene.leftHandVerticesSize;
+		}
+		if (appState.Scene.rightHandVerticesSize > 0)
+		{
+			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+			appState.HandTrackers[RIGHT_TRACKED_HAND].WriteVertices(target);
+			offset += appState.Scene.rightHandVerticesSize;
+		}
+		skyVertexBase = handsVertexBase + appState.Scene.leftHandVerticesSize + appState.Scene.rightHandVerticesSize;
         if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
         {
 			auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
@@ -310,9 +323,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			*target++ = -source[11];
         }
 		offset += appState.Scene.skyVerticesSize;
+		coloredVertexBase = skyVertexBase + appState.Scene.skyVerticesSize;
 		auto count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
 		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 		offset += appState.Scene.coloredVerticesSize;
+		cutoutVertexBase = coloredVertexBase + appState.Scene.coloredVerticesSize;
 		count = (size_t)appState.Scene.cutoutVerticesSize / sizeof(float);
 		std::copy(d_lists.cutout_vertices.data(), d_lists.cutout_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 		offset += appState.Scene.cutoutVerticesSize;
@@ -336,7 +351,20 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		Controller::WriteAttributes(target);
 		offset += appState.Scene.rightControllerAttributesSize;
 	}
-	skyAttributeBase = controllersAttributeBase + appState.Scene.leftControllerAttributesSize + appState.Scene.rightControllerAttributesSize;
+	handsAttributeBase = controllersAttributeBase + appState.Scene.leftControllerAttributesSize + appState.Scene.rightControllerAttributesSize;
+	if (appState.Scene.leftHandAttributesSize > 0)
+	{
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+		appState.HandTrackers[LEFT_TRACKED_HAND].WriteAttributes(target);
+		offset += appState.Scene.leftHandAttributesSize;
+	}
+	if (appState.Scene.rightHandAttributesSize > 0)
+	{
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+		appState.HandTrackers[RIGHT_TRACKED_HAND].WriteAttributes(target);
+		offset += appState.Scene.rightHandAttributesSize;
+	}
+	skyAttributeBase = handsAttributeBase + appState.Scene.leftHandAttributesSize + appState.Scene.rightHandAttributesSize;
     if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
     {
         float skyTexCoordsLeft = 0.5f - appState.SkyLeft / 2;
@@ -402,7 +430,21 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 		if (appState.Scene.indices16Size > 0)
 		{
-			coloredIndex16Base = 0;
+			handsIndexBase = 0;
+			uint16_t handIndexOffset = 0;
+			if (appState.Scene.leftHandIndicesSize > 0)
+			{
+				auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+				appState.HandTrackers[LEFT_TRACKED_HAND].WriteIndices16(target, handIndexOffset);
+				offset += appState.Scene.leftHandIndicesSize;
+			}
+			if (appState.Scene.rightHandIndicesSize > 0)
+			{
+				auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+				appState.HandTrackers[RIGHT_TRACKED_HAND].WriteIndices16(target, handIndexOffset);
+				offset += appState.Scene.rightHandIndicesSize;
+			}
+			coloredIndex16Base = handsIndexBase + appState.Scene.leftHandIndicesSize + appState.Scene.rightHandIndicesSize;
 			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
 			offset += appState.Scene.coloredIndices16Size;
 			cutoutIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices16Size;
@@ -438,7 +480,21 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			target = Controller::WriteIndices16(target, controllerIndexOffset);
 			offset += appState.Scene.rightControllerIndicesSize;
 		}
-		coloredIndex16Base = controllersIndexBase + appState.Scene.leftControllerIndicesSize + appState.Scene.rightControllerIndicesSize;
+		handsIndexBase = controllersIndexBase + appState.Scene.leftControllerIndicesSize + appState.Scene.rightControllerIndicesSize;
+		uint16_t handIndexOffset = 0;
+		if (appState.Scene.leftHandIndicesSize > 0)
+		{
+			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+			appState.HandTrackers[LEFT_TRACKED_HAND].WriteIndices16(target, handIndexOffset);
+			offset += appState.Scene.leftHandIndicesSize;
+		}
+		if (appState.Scene.rightHandIndicesSize > 0)
+		{
+			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+			appState.HandTrackers[RIGHT_TRACKED_HAND].WriteIndices16(target, handIndexOffset);
+			offset += appState.Scene.rightHandIndicesSize;
+		}
+		coloredIndex16Base = handsIndexBase + appState.Scene.leftHandIndicesSize + appState.Scene.rightHandIndicesSize;
 		auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < appState.Scene.coloredIndices8Size; i++)
 		{
@@ -2173,7 +2229,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipeline);
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &coloredVertexBase);
             vkCmdBindVertexBuffers(commandBuffer, 1, 1, &colors->buffer, &appState.NoOffset);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.colored.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
             if (appState.IndexTypeUInt8Enabled)
@@ -2213,7 +2269,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.cutout.pipeline);
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &cutoutVertexBase);
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.cutout.pipelineLayout, 0, 1, &sceneMatricesAndPaletteResources.descriptorSet, 0, nullptr);
             if (appState.IndexTypeUInt8Enabled)
             {
@@ -3607,7 +3663,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 #endif
 		}
 	}
-	if (appState.Scene.floorVerticesSize > 0 || appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0)
+	if (appState.Scene.floorVerticesSize > 0 || appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0 || appState.Scene.leftHandVerticesSize > 0 || appState.Scene.rightHandVerticesSize > 0)
 	{
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		renderLabel.pLabelName = TEXTURED_NAME;
@@ -3694,6 +3750,42 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
 		}
+		if (appState.Scene.leftHandVerticesSize > 0 || appState.Scene.rightHandVerticesSize > 0)
+		{
+			if (!handResources.created)
+			{
+				poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				poolSizes[0].descriptorCount = 1;
+				descriptorPoolCreateInfo.poolSizeCount = 1;
+				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &handResources.descriptorPool));
+				descriptorSetAllocateInfo.descriptorPool = handResources.descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &handResources.descriptorSet));
+				textureInfo.sampler = appState.Scene.sampler;
+				textureInfo.imageView = appState.Scene.patchTexture.view;
+				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[0].pImageInfo = &textureInfo;
+				writes[0].dstSet = handResources.descriptorSet;
+				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
+				handResources.created = true;
+			}
+			descriptorSets[1] = handResources.descriptorSet;
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &handsVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &handsAttributeBase);
+			vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, handsIndexBase, VK_INDEX_TYPE_UINT16);
+			VkDeviceSize size = 0;
+			if (appState.Scene.leftHandIndicesSize > 0)
+			{
+				size += appState.HandTrackers[LEFT_TRACKED_HAND].IndicesSize();
+			}
+			if (appState.Scene.rightHandIndicesSize > 0)
+			{
+				size += appState.HandTrackers[RIGHT_TRACKED_HAND].IndicesSize();
+			}
+			vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
+		}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
@@ -3741,6 +3833,7 @@ void PerFrame::DestroyFramebuffer(AppState& appState) const
 
 void PerFrame::Destroy(AppState& appState)
 {
+	handResources.Delete(appState);
 	controllerResources.Delete(appState);
 	floorResources.Delete(appState);
 	colormapResources.Delete(appState);

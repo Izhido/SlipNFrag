@@ -94,10 +94,10 @@ const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer
 }
 
 static VkBool32 DebugMessengerCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData)
+		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+		VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+		void* pUserData)
 {
 	std::string severityName;
 	int priority = ANDROID_LOG_UNKNOWN;
@@ -109,37 +109,37 @@ static VkBool32 DebugMessengerCallback(
 	}
 	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) != 0u)
 	{
-        severityName += "WARN:";
+		severityName += "WARN:";
 		priority = ANDROID_LOG_WARN;
 	}
 	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) != 0u)
 	{
-        severityName += "INFO:";
+		severityName += "INFO:";
 		priority = ANDROID_LOG_INFO;
 	}
-    if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) != 0u)
-    {
-        severityName += "VERB:";
-        priority = ANDROID_LOG_VERBOSE;
-    }
+	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) != 0u)
+	{
+		severityName += "VERB:";
+		priority = ANDROID_LOG_VERBOSE;
+	}
 
-    std::string typeName;
+	std::string typeName;
 	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ) != 0u)
 	{
 		typeName += "GENERAL ";
 	}
 	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) != 0u)
 	{
-        typeName += "VALIDATION ";
+		typeName += "VALIDATION ";
 	}
-    if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) != 0u)
-    {
-        typeName += "PERFORMANCE ";
-    }
-    if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT) != 0u)
-    {
-        typeName += "DEVICE ADDRESS BINDING ";
-    }
+	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) != 0u)
+	{
+		typeName += "PERFORMANCE ";
+	}
+	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT) != 0u)
+	{
+		typeName += "DEVICE ADDRESS BINDING ";
+	}
 
 	__android_log_print(priority, Logger_oxr::tag, "[%s%s] %s", typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
 	
@@ -235,7 +235,7 @@ void android_main(struct android_app* app)
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
 		PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
-        VkDebugUtilsMessengerEXT vulkanDebugMessenger = VK_NULL_HANDLE;
+		VkDebugUtilsMessengerEXT vulkanDebugMessenger = VK_NULL_HANDLE;
 #endif
 
 		PFN_xrInitializeLoaderKHR xrInitializeLoaderKHR = nullptr;
@@ -260,6 +260,8 @@ void android_main(struct android_app* app)
 
 		auto performanceSettingsEnabled = false;
 		auto colorSpacesEnabled = false;
+		auto handTrackingEnabled = false;
+		auto simultaneousHandsAndControllersEnabled = false;
 
 		uint32_t instanceExtensionCount;
 		CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(nullptr, 0, &instanceExtensionCount, nullptr));
@@ -285,6 +287,16 @@ void android_main(struct android_app* app)
 			if (strncmp(extension.extensionName, XR_FB_COLOR_SPACE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
 				colorSpacesEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_EXT_HAND_TRACKING_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				handTrackingEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_META_SIMULTANEOUS_HANDS_AND_CONTROLLERS_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				simultaneousHandsAndControllersEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 
@@ -339,8 +351,8 @@ void android_main(struct android_app* app)
 
 		std::vector<const char*> xrInstanceExtensions;
 		std::transform(xrInstanceExtensionSources.begin(), xrInstanceExtensionSources.end(), std::back_inserter(xrInstanceExtensions), [](const std::string& extension)
-		{ 
-			return extension.c_str(); 
+		{
+			return extension.c_str();
 		});
 
 		std::vector<const char*> xrInstanceApiLayers;
@@ -452,7 +464,7 @@ void android_main(struct android_app* app)
 		CHECK_XRCMD(xrGetVulkanGraphicsRequirements2KHR(instance, systemId, &graphicsRequirements));
 
 		std::vector<const char*> instanceLayerNames;
-		
+
 #if !defined(NDEBUG)
 		uint32_t layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -550,12 +562,12 @@ void android_main(struct android_app* app)
 			CHECK_VKCMD(errCreateVulkanInstance);
 
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-            vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
-            vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
-            VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
-            messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
-            messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
-            messengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
+			vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
+			vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
+			VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
+			messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+			messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
+			messengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
 			CHECK_VKCMD(vkCreateDebugUtilsMessengerEXT(vulkanInstance, &messengerCreateInfo, nullptr, &vulkanDebugMessenger));
 #endif
 
@@ -794,7 +806,7 @@ void android_main(struct android_app* app)
 
 		appState.Logger->Verbose("Supported Refresh Rates:");
 		auto highestDisplayRefreshRate = 0.0f;
-		for (uint32_t i = 0; i < numSupportedDisplayRefreshRates; i++) 
+		for (uint32_t i = 0; i < numSupportedDisplayRefreshRates; i++)
 		{
 			appState.Logger->Verbose("%d:%.1f", i, supportedDisplayRefreshRates[i]);
 			highestDisplayRefreshRate = std::max(highestDisplayRefreshRate, supportedDisplayRefreshRates[i]);
@@ -805,14 +817,14 @@ void android_main(struct android_app* app)
 
 		appState.Logger->Verbose("Requesting display refresh rate of %.1fHz...", highestDisplayRefreshRate);
 		CHECK_XRCMD(xrRequestDisplayRefreshRateFB(appState.Session, highestDisplayRefreshRate));
-		
+
 		PFN_xrGetDisplayRefreshRateFB xrGetDisplayRefreshRateFB;
 		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetDisplayRefreshRateFB", (PFN_xrVoidFunction*)(&xrGetDisplayRefreshRateFB)));
 
 		auto currentDisplayRefreshRate = 0.0f;
 		CHECK_XRCMD(xrGetDisplayRefreshRateFB(appState.Session, &currentDisplayRefreshRate));
 		appState.Logger->Verbose("Current System Display Refresh Rate: %.1fHz.", currentDisplayRefreshRate);
-		
+
 		uint32_t spaceCount;
 		CHECK_XRCMD(xrEnumerateReferenceSpaces(appState.Session, 0, &spaceCount, nullptr));
 		std::vector<XrReferenceSpaceType> spaces(spaceCount);
@@ -828,7 +840,7 @@ void android_main(struct android_app* app)
 		appState.HandSpaces.resize(2);
 		appState.HandScales.resize(2);
 		appState.ActiveHands.resize(2);
-		
+
 		XrActionSetCreateInfo actionSetInfo { XR_TYPE_ACTION_SET_CREATE_INFO };
 		strcpy(actionSetInfo.actionSetName, "gameplay");
 		strcpy(actionSetInfo.localizedActionSetName, "Gameplay");
@@ -1029,7 +1041,7 @@ void android_main(struct android_app* app)
 				{ appState.RightKeyPressAction, rightTrigger }
 			}
 		};
-		
+
 		XrInteractionProfileSuggestedBinding suggestedBindings { XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
 		suggestedBindings.interactionProfile = interaction;
 		suggestedBindings.suggestedBindings = bindings.data();
@@ -1075,11 +1087,71 @@ void android_main(struct android_app* app)
 		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &consoleKeyboardSpace));
 
 		XrSystemProperties systemProperties { XR_TYPE_SYSTEM_PROPERTIES };
+
+		void* chain = &systemProperties;
+
+		XrSystemHandTrackingPropertiesEXT handTrackingProperties { XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT };
+		if (handTrackingEnabled)
+		{
+			((XrBaseInStructure*)chain)->next = (XrBaseInStructure*)&handTrackingProperties;
+			chain = (void*)((XrBaseInStructure*)chain)->next;
+		}
+
+		XrSystemSimultaneousHandsAndControllersPropertiesMETA simultaneousHandsAndControllersProperties { XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT };
+		if (simultaneousHandsAndControllersEnabled)
+		{
+			((XrBaseInStructure*)chain)->next = (XrBaseInStructure*)&simultaneousHandsAndControllersProperties;
+			chain = (void*)((XrBaseInStructure*)chain)->next;
+		}
+
 		CHECK_XRCMD(xrGetSystemProperties(instance, systemId, &systemProperties));
 
 		appState.Logger->Info("System Properties: Name=%s VendorId=%d", systemProperties.systemName, systemProperties.vendorId);
 		appState.Logger->Info("System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
 		appState.Logger->Info("System Tracking Properties: OrientationTracking=%s PositionTracking=%s", (systemProperties.trackingProperties.orientationTracking == XR_TRUE ? "True" : "False"), (systemProperties.trackingProperties.positionTracking == XR_TRUE ? "True" : "False"));
+		appState.Logger->Info("Hand Tracking Properties: SupportsHandTracking=%s", (handTrackingProperties.supportsHandTracking == XR_TRUE ? "True" : "False"));
+		appState.Logger->Info("Simultaneous Hand and Controllers Properties: SupportsSimultaneousHandsAndControllers=%s", (simultaneousHandsAndControllersProperties.supportsSimultaneousHandsAndControllers == XR_TRUE ? "True" : "False"));
+
+		appState.HandTrackingEnabled = (handTrackingProperties.supportsHandTracking == XR_TRUE);
+		appState.SimultaneousHandsAndControllersEnabled = (simultaneousHandsAndControllersProperties.supportsSimultaneousHandsAndControllers == XR_TRUE);
+
+		PFN_xrDestroyHandTrackerEXT xrDestroyHandTrackerEXT = nullptr;
+		PFN_xrLocateHandJointsEXT xrLocateHandJointsEXT = nullptr;
+		if (appState.HandTrackingEnabled)
+		{
+			PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrCreateHandTrackerEXT", reinterpret_cast<PFN_xrVoidFunction*>(&xrCreateHandTrackerEXT)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrLocateHandJointsEXT", reinterpret_cast<PFN_xrVoidFunction*>(&xrLocateHandJointsEXT)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrDestroyHandTrackerEXT", reinterpret_cast<PFN_xrVoidFunction*>(&xrDestroyHandTrackerEXT)));
+
+			appState.HandTrackers.resize(2);
+
+			XrHandTrackerCreateInfoEXT handTrackerCreateInfo { XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT };
+			handTrackerCreateInfo.hand = XR_HAND_LEFT_EXT;
+			CHECK_XRCMD(xrCreateHandTrackerEXT(appState.Session, &handTrackerCreateInfo, &appState.HandTrackers[LEFT_TRACKED_HAND].tracker));
+
+			handTrackerCreateInfo.hand = XR_HAND_RIGHT_EXT;
+			CHECK_XRCMD(xrCreateHandTrackerEXT(appState.Session, &handTrackerCreateInfo, &appState.HandTrackers[RIGHT_TRACKED_HAND].tracker));
+
+			appState.HandTrackers[LEFT_TRACKED_HAND].locations.type = XR_TYPE_HAND_JOINT_LOCATIONS_EXT;
+			appState.HandTrackers[LEFT_TRACKED_HAND].locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
+			appState.HandTrackers[LEFT_TRACKED_HAND].locations.jointLocations = appState.HandTrackers[LEFT_TRACKED_HAND].jointLocations;
+
+			appState.HandTrackers[RIGHT_TRACKED_HAND].locations.type = XR_TYPE_HAND_JOINT_LOCATIONS_EXT;
+			appState.HandTrackers[RIGHT_TRACKED_HAND].locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
+			appState.HandTrackers[RIGHT_TRACKED_HAND].locations.jointLocations = appState.HandTrackers[RIGHT_TRACKED_HAND].jointLocations;
+		}
+
+		PFN_xrResumeSimultaneousHandsAndControllersTrackingMETA xrResumeSimultaneousHandsAndControllersTrackingMETA = nullptr;
+		PFN_xrPauseSimultaneousHandsAndControllersTrackingMETA xrPauseSimultaneousHandsAndControllersTrackingMETA = nullptr;
+		if (appState.HandTrackingEnabled && appState.SimultaneousHandsAndControllersEnabled)
+		{
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrResumeSimultaneousHandsAndControllersTrackingMETA", reinterpret_cast<PFN_xrVoidFunction*>(&xrResumeSimultaneousHandsAndControllersTrackingMETA)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrPauseSimultaneousHandsAndControllersTrackingMETA", reinterpret_cast<PFN_xrVoidFunction*>(&xrPauseSimultaneousHandsAndControllersTrackingMETA)));
+
+			XrSimultaneousHandsAndControllersTrackingResumeInfoMETA resumeInfo { XR_TYPE_SIMULTANEOUS_HANDS_AND_CONTROLLERS_TRACKING_RESUME_INFO_META };
+			CHECK_XRCMD(xrResumeSimultaneousHandsAndControllersTrackingMETA(appState.Session, &resumeInfo));
+		}
 
 		uint32_t viewCount;
 		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigurationType, 0, &viewCount, nullptr));
@@ -1129,7 +1201,7 @@ void android_main(struct android_app* app)
 		appState.SwapchainRect.extent.width = configViews[0].recommendedImageRectWidth;
 		appState.SwapchainRect.extent.height = configViews[0].recommendedImageRectHeight;
 		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;
-		
+
 		appState.Logger->Info("Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
 
 		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
@@ -1242,7 +1314,7 @@ void android_main(struct android_app* app)
 
 		XrEventDataBuffer eventDataBuffer { };
 
-        appState.VertexTransform.m[15] = 1;
+		appState.VertexTransform.m[15] = 1;
 
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		appState.vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(vulkanInstance, "vkSetDebugUtilsObjectNameEXT");
@@ -1256,19 +1328,19 @@ void android_main(struct android_app* app)
 
 		while (app->destroyRequested == 0)
 		{
-            struct android_poll_source* poll_source;
-            const int timeoutMilliseconds = ((!appState.Resumed && !sessionRunning && app->destroyRequested == 0) ? -1 : 0);
-            auto result = ALooper_pollOnce(timeoutMilliseconds, nullptr, nullptr, (void**) &poll_source);
+			struct android_poll_source* poll_source;
+			const int timeoutMilliseconds = ((!appState.Resumed && !sessionRunning && app->destroyRequested == 0) ? -1 : 0);
+			auto result = ALooper_pollOnce(timeoutMilliseconds, nullptr, nullptr, (void**) &poll_source);
 
-            if (result == ALOOPER_POLL_ERROR)
-            {
-                THROW("ALooper_pollOnce returned ALOOPER_POLL_ERROR");
-            }
+			if (result == ALOOPER_POLL_ERROR)
+			{
+				THROW("ALooper_pollOnce returned ALOOPER_POLL_ERROR");
+			}
 
-            if (poll_source != nullptr)
-            {
-                poll_source->process(app, poll_source);
-            }
+			if (poll_source != nullptr)
+			{
+				poll_source->process(app, poll_source);
+			}
 
 			auto exitRenderLoop = false;
 			auto requestRestart = false;
@@ -1335,7 +1407,7 @@ void android_main(struct android_app* app)
 								}
 
 								CHECK_XRCMD(appState.xrSetAndroidApplicationThreadKHR(appState.Session, XR_ANDROID_THREAD_TYPE_RENDERER_MAIN_KHR, appState.RenderThreadId));
-								
+
 								break;
 							}
 							case XR_SESSION_STATE_STOPPING:
@@ -1765,25 +1837,35 @@ void android_main(struct android_app* app)
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
 
-                        float angleHorizontal = FLT_MIN;
-                        float angleUp = 0;
-                        float angleDown = 0;
+						float angleHorizontal = FLT_MIN;
+						float angleUp = 0;
+						float angleDown = 0;
 						for (size_t i = 0; i < viewCountOutput; i++)
 						{
-                            angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleLeft));
-                            angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleRight));
-                            angleUp += fabs(views[i].fov.angleUp);
-                            angleDown += fabs(views[i].fov.angleDown);
+							angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleLeft));
+							angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleRight));
+							angleUp += fabs(views[i].fov.angleUp);
+							angleDown += fabs(views[i].fov.angleDown);
 						}
 						appState.FOV = 2 * (int)floor(angleHorizontal * 180 / M_PI);
-                        appState.SkyLeft = tan(angleHorizontal);
-                        appState.SkyHorizontal = 2 * appState.SkyLeft;
-                        appState.SkyTop = tan(angleUp / (float)viewCountOutput);
-                        appState.SkyVertical = appState.SkyTop + tan(angleDown / (float)viewCountOutput);
+						appState.SkyLeft = tan(angleHorizontal);
+						appState.SkyHorizontal = 2 * appState.SkyLeft;
+						appState.SkyTop = tan(angleUp / (float)viewCountOutput);
+						appState.SkyVertical = appState.SkyTop + tan(angleDown / (float)viewCountOutput);
 					}
-					
+
+					if (appState.HandTrackingEnabled)
+					{
+						XrHandJointsLocateInfoEXT locateInfo { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
+						locateInfo.baseSpace = appSpace;
+						locateInfo.time = frameState.predictedDisplayTime;
+
+						CHECK_XRCMD(xrLocateHandJointsEXT(appState.HandTrackers[LEFT_TRACKED_HAND].tracker, &locateInfo, &appState.HandTrackers[LEFT_TRACKED_HAND].locations));
+						CHECK_XRCMD(xrLocateHandJointsEXT(appState.HandTrackers[RIGHT_TRACKED_HAND].tracker, &locateInfo, &appState.HandTrackers[RIGHT_TRACKED_HAND].locations));
+					}
+
 					projectionLayerViews.resize(viewCountOutput);
-					
+
 					uint32_t swapchainImageIndex;
 					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, nullptr, &swapchainImageIndex));
 
@@ -1811,9 +1893,9 @@ void android_main(struct android_app* app)
 					float clearG = 0;
 					float clearB = 0;
 					float clearA = 1;
-					
+
 					auto readClearColor = false;
-					
+
 					if (appState.Mode != AppWorldMode || appState.Scene.skybox != nullptr)
 					{
 						clearA = 0;
@@ -1843,13 +1925,13 @@ void android_main(struct android_app* app)
 
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
 
-                        stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
-                        stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
-                        if (stagingBuffer->mapped == nullptr)
-                        {
-                            CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
-                        }
-                        perFrame.LoadStagingBuffer(appState, stagingBuffer);
+						stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
+						stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
+						if (stagingBuffer->mapped == nullptr)
+						{
+							CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
+						}
+						perFrame.LoadStagingBuffer(appState, stagingBuffer);
 						if ((stagingBuffer->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
 						{
 							VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
@@ -1910,7 +1992,7 @@ void android_main(struct android_app* app)
 
 					CHECK_VKCMD(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 
-                    perFrame.FillFromStagingBuffer(appState, stagingBuffer, swapchainImageIndex);
+					perFrame.FillFromStagingBuffer(appState, stagingBuffer, swapchainImageIndex);
 
 					clearValues[0].color.float32[0] = clearR;
 					clearValues[0].color.float32[1] = clearG;
@@ -1950,7 +2032,7 @@ void android_main(struct android_app* app)
 						}
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.colorMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.colorImage, perFrame.colorMemory, 0));
-						
+
 						vkGetImageMemoryRequirements(appState.Device, perFrame.depthImage, &memRequirements);
 						properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
 						if (!updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, false))
@@ -2344,9 +2426,9 @@ void android_main(struct android_app* app)
 						leftArrowsLayer.space = appSpace;
 						leftArrowsLayer.layerFlags = 0;
 						leftArrowsLayer.pose = { };
-						
+
 						XrMatrix4x4f rotation;
-						
+
 						XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
 						XrMatrix4x4f_GetRotation(&leftArrowsLayer.pose.orientation, &rotation);
 
@@ -2367,7 +2449,7 @@ void android_main(struct android_app* app)
 
 						layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsLayer));
 					}
-					
+
 					if (appState.Mode == AppWorldMode)
 					{
 						if (d_lists.last_skybox >= 0 && appState.Scene.skybox == nullptr)
@@ -2399,7 +2481,7 @@ void android_main(struct android_app* app)
 							if (width > 0 && height > 0)
 							{
 								appState.Scene.skybox = new Skybox { };
-								
+
 								XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 								swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
 								swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
@@ -2490,7 +2572,7 @@ void android_main(struct android_app* app)
 								commandBufferAllocateInfo.commandPool = appState.SetupCommandPool;
 								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
-								
+
 								appState.copyBarrier.image = appState.Scene.skybox->images[swapchainImageIndex].image;
 								appState.submitBarrier.image = appState.copyBarrier.image;
 
@@ -2580,7 +2662,7 @@ void android_main(struct android_app* app)
 			frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 			frameEndInfo.layerCount = (uint32_t)layers.size();
 			frameEndInfo.layers = layers.data();
-			
+
 			CHECK_XRCMD(xrEndFrame(appState.Session, &frameEndInfo));
 		}
 
@@ -2602,6 +2684,14 @@ void android_main(struct android_app* app)
 		if (swapchain != XR_NULL_HANDLE)
 		{
 			xrDestroySwapchain(swapchain);
+		}
+
+		if (appState.HandTrackingEnabled)
+		{
+			for (auto& handTracker : appState.HandTrackers)
+			{
+				xrDestroyHandTrackerEXT(handTracker.tracker);
+			}
 		}
 
 		if (worldSpace != XR_NULL_HANDLE)

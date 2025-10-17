@@ -135,6 +135,7 @@ struct Scene
 	std::unordered_map<void*, SharedMemoryTexture*> aliasTextureCache;
 	Texture floorTexture;
 	Texture controllerTexture;
+	Texture patchTexture;
 	VkSampler sampler;
 	std::vector<std::list<UsedInSharedMemory>> latestMemory;
 	SharedMemoryBuffer* latestIndexBuffer8;
@@ -149,6 +150,8 @@ struct Scene
 	VkDeviceSize floorVerticesSize;
 	VkDeviceSize leftControllerVerticesSize;
 	VkDeviceSize rightControllerVerticesSize;
+	VkDeviceSize leftHandVerticesSize;
+	VkDeviceSize rightHandVerticesSize;
 	VkDeviceSize skyVerticesSize;
 	VkDeviceSize coloredVerticesSize;
 	VkDeviceSize cutoutVerticesSize;
@@ -156,6 +159,8 @@ struct Scene
 	VkDeviceSize floorAttributesSize;
 	VkDeviceSize leftControllerAttributesSize;
 	VkDeviceSize rightControllerAttributesSize;
+	VkDeviceSize leftHandAttributesSize;
+	VkDeviceSize rightHandAttributesSize;
 	VkDeviceSize skyAttributesSize;
 	VkDeviceSize aliasAttributesSize;
 	VkDeviceSize attributesSize;
@@ -164,6 +169,8 @@ struct Scene
 	VkDeviceSize floorIndicesSize;
 	VkDeviceSize leftControllerIndicesSize;
 	VkDeviceSize rightControllerIndicesSize;
+	VkDeviceSize leftHandIndicesSize;
+	VkDeviceSize rightHandIndicesSize;
 	VkDeviceSize coloredIndices8Size;
 	VkDeviceSize coloredIndices16Size;
 	VkDeviceSize coloredIndices32Size;
