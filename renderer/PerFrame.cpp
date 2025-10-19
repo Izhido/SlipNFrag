@@ -294,13 +294,13 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		if (appState.Scene.leftHandVerticesSize > 0)
 		{
 			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
-			appState.HandTrackers[LEFT_TRACKED_HAND].WriteVertices(target);
+			appState.HandTrackers[LEFT_TRACKED_HAND].WriteVertices(false, target);
 			offset += appState.Scene.leftHandVerticesSize;
 		}
 		if (appState.Scene.rightHandVerticesSize > 0)
 		{
 			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
-			appState.HandTrackers[RIGHT_TRACKED_HAND].WriteVertices(target);
+			appState.HandTrackers[RIGHT_TRACKED_HAND].WriteVertices(true, target);
 			offset += appState.Scene.rightHandVerticesSize;
 		}
 		skyVertexBase = handsVertexBase + appState.Scene.leftHandVerticesSize + appState.Scene.rightHandVerticesSize;
@@ -435,13 +435,13 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			if (appState.Scene.leftHandIndicesSize > 0)
 			{
 				auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
-				appState.HandTrackers[LEFT_TRACKED_HAND].WriteIndices16(target, handIndexOffset);
+				appState.HandTrackers[LEFT_TRACKED_HAND].WriteIndices16(false, target, handIndexOffset);
 				offset += appState.Scene.leftHandIndicesSize;
 			}
 			if (appState.Scene.rightHandIndicesSize > 0)
 			{
 				auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
-				appState.HandTrackers[RIGHT_TRACKED_HAND].WriteIndices16(target, handIndexOffset);
+				appState.HandTrackers[RIGHT_TRACKED_HAND].WriteIndices16(true, target, handIndexOffset);
 				offset += appState.Scene.rightHandIndicesSize;
 			}
 			coloredIndex16Base = handsIndexBase + appState.Scene.leftHandIndicesSize + appState.Scene.rightHandIndicesSize;
@@ -485,13 +485,13 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		if (appState.Scene.leftHandIndicesSize > 0)
 		{
 			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
-			appState.HandTrackers[LEFT_TRACKED_HAND].WriteIndices16(target, handIndexOffset);
+			appState.HandTrackers[LEFT_TRACKED_HAND].WriteIndices16(false, target, handIndexOffset);
 			offset += appState.Scene.leftHandIndicesSize;
 		}
 		if (appState.Scene.rightHandIndicesSize > 0)
 		{
 			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
-			appState.HandTrackers[RIGHT_TRACKED_HAND].WriteIndices16(target, handIndexOffset);
+			appState.HandTrackers[RIGHT_TRACKED_HAND].WriteIndices16(true, target, handIndexOffset);
 			offset += appState.Scene.rightHandIndicesSize;
 		}
 		coloredIndex16Base = handsIndexBase + appState.Scene.leftHandIndicesSize + appState.Scene.rightHandIndicesSize;

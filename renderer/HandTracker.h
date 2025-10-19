@@ -20,6 +20,9 @@ struct HandTracker
 	XrVector3f jointUp[XR_HAND_JOINT_COUNT_EXT];
 	int nearJoints[XR_HAND_JOINT_COUNT_EXT];
 	int farJoints[XR_HAND_JOINT_COUNT_EXT];
+	int palmJoints[12];
+	bool palmAvailable;
+	XrVector3f palmBack;
 	VkDeviceSize attributeCount;
 	VkDeviceSize indexCount;
 	size_t jointCount;
@@ -27,7 +30,7 @@ struct HandTracker
 	VkDeviceSize VerticesSize();
 	VkDeviceSize AttributesSize() const;
 	VkDeviceSize IndicesSize() const;
-	void WriteVertices(float* vertices);
-	void WriteAttributes(float* attributes);
-	void WriteIndices16(uint16_t* indices, uint16_t& offset) const;
+	void WriteVertices(bool isRightHand, float* vertices);
+	void WriteAttributes(float* attributes) const;
+	void WriteIndices16(bool isRightHand, uint16_t* indices, uint16_t& offset) const;
 };
