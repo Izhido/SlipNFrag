@@ -1605,7 +1605,7 @@ void android_main(struct android_app* app)
 							strcpy(sys_argv[i], arguments[i].c_str());
 						}
 						Sys_Init(sys_argc, sys_argv);
-						if (sys_errormessage.length() > 0)
+						if (!sys_errormessage.empty())
 						{
 							if (sys_nogamedata)
 							{
@@ -2737,6 +2737,11 @@ void android_main(struct android_app* app)
 		if (vulkanInstance != VK_NULL_HANDLE)
 		{
 			vkDestroyInstance(vulkanInstance, nullptr);
+		}
+
+		if (!sys_errormessage.empty())
+		{
+			throw std::runtime_error(sys_errormessage);
 		}
 	}
 	catch (const std::exception& ex)

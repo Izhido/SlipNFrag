@@ -37,13 +37,13 @@ LPWAVEHDR cdaudio_waveheaderptr2 = NULL;
 int cdaudio_lastCopied;
 
 static qboolean cdaudio_cdValid = false;
-static qboolean	cdaudio_playing = false;
+qboolean	cdaudio_playing = false;
 static qboolean	cdaudio_wasPlaying = false;
 static qboolean	cdaudio_initialized = false;
 static qboolean	cdaudio_enabled = false;
 static qboolean cdaudio_playLooping = false;
 static float	cdaudio_cdvolume;
-static byte		cdaudio_playTrack;
+byte		cdaudio_playTrack;
 
 void CDAudio_DisposeBuffers()
 {
@@ -213,40 +213,13 @@ static int CDAudio_GetAudioDiskInfo(void)
 	return 0;
 }
 
-void CDAudio_Play(byte track, qboolean looping)
+bool CDAudio_Start(byte track)
 {
-	if (!cdaudio_enabled)
-		return;
-
-	if (!cdaudio_cdValid)
-	{
-		CDAudio_GetAudioDiskInfo();
-		if (!cdaudio_cdValid)
-			return;
-	}
-
-	if (cdaudio_playing)
-	{
-		if (cdaudio_playTrack == track)
-			return;
-
-		std::lock_guard<std::mutex> lock(Locks::SoundMutex);
-
-		CDAudio_DisposeBuffers();
-	}
-
-	auto entry = cdaudio_tracks.find(track);
-	if (entry == cdaudio_tracks.end())
-	{
-		Con_Printf("CDAudio: Track %u not found.\n", track);
-		return;
-	}
-
 	COM_LoadFile(cdaudio_tracks[track].c_str(), cdaudio_trackContents);
 	if (cdaudio_trackContents.size() == 0)
 	{
 		Con_DPrintf("CDAudio: Empty file for track %u.\n", track);
-		return;
+		return false;
 	}
 
 	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
@@ -257,7 +230,7 @@ void CDAudio_Play(byte track, qboolean looping)
 	{
 		Con_DPrintf("CDAudio: Error %i opening track %u.\n", error, track);
 		cdaudio_stream = nullptr;
-		return;
+		return false;
 	}
 	cdaudio_info = stb_vorbis_get_info(cdaudio_stream);
 
@@ -306,32 +279,32 @@ void CDAudio_Play(byte track, qboolean looping)
 	if (result != MMSYSERR_NOERROR)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 
 	cdaudio_wavebuffer1 = GlobalAlloc(GMEM_MOVEABLE | GMEM_SHARE, samples >> 2);
 	if (cdaudio_wavebuffer1 == NULL)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_wavedata1 = (LPSTR)GlobalLock(cdaudio_wavebuffer1);
 	if (cdaudio_wavebuffer1 == NULL)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_waveheader1 = GlobalAlloc(GMEM_MOVEABLE | GMEM_SHARE, (DWORD)sizeof(WAVEHDR));
 	if (cdaudio_waveheader1 == NULL)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_waveheaderptr1 = (LPWAVEHDR)GlobalLock(cdaudio_waveheader1);
 	if (cdaudio_waveheaderptr1 == NULL)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_waveheaderptr1->lpData = cdaudio_wavedata1;
 	cdaudio_waveheaderptr1->dwBufferLength = (samples >> 2);
@@ -341,39 +314,39 @@ void CDAudio_Play(byte track, qboolean looping)
 	if (result != MMSYSERR_NOERROR)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 
 	result = waveOutWrite(cdaudio_waveout, cdaudio_waveheaderptr1, sizeof(WAVEHDR));
 	if (result != MMSYSERR_NOERROR)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 
 	cdaudio_wavebuffer2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_SHARE, samples >> 2);
 	if (cdaudio_wavebuffer2 == NULL)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_wavedata2 = (LPSTR)GlobalLock(cdaudio_wavebuffer2);
 	if (cdaudio_wavebuffer2 == NULL)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_waveheader2 = GlobalAlloc(GMEM_MOVEABLE | GMEM_SHARE, (DWORD)sizeof(WAVEHDR));
 	if (cdaudio_waveheader2 == NULL)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_waveheaderptr2 = (LPWAVEHDR)GlobalLock(cdaudio_waveheader2);
 	if (cdaudio_waveheaderptr2 == NULL)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_waveheaderptr2->lpData = cdaudio_wavedata2;
 	cdaudio_waveheaderptr2->dwBufferLength = (samples >> 2);
@@ -383,17 +356,54 @@ void CDAudio_Play(byte track, qboolean looping)
 	if (result != MMSYSERR_NOERROR)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 
 	result = waveOutWrite(cdaudio_waveout, cdaudio_waveheaderptr2, sizeof(WAVEHDR));
 	if (result != MMSYSERR_NOERROR)
 	{
 		CDAudio_DisposeBuffers();
-		return;
+		return false;
 	}
 	cdaudio_stagingBuffer.resize(samples >> 3);
 	cdaudio_lastCopied = -1;
+
+	return true;
+}
+
+void CDAudio_Play(byte track, qboolean looping)
+{
+	if (!cdaudio_enabled)
+		return;
+
+	if (!cdaudio_cdValid)
+	{
+		CDAudio_GetAudioDiskInfo();
+		if (!cdaudio_cdValid)
+			return;
+	}
+
+	if (cdaudio_playing)
+	{
+		if (cdaudio_playTrack == track)
+			return;
+
+		std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
+		CDAudio_DisposeBuffers();
+	}
+
+	auto entry = cdaudio_tracks.find(track);
+	if (entry == cdaudio_tracks.end())
+	{
+		Con_Printf("CDAudio: Track %u not found.\n", track);
+		return;
+	}
+
+	if (!CDAudio_Start(track))
+	{
+		return;
+	}
 
 	cdaudio_playLooping = looping;
 	cdaudio_playTrack = track;

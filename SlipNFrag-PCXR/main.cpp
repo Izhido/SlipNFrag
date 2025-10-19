@@ -15,6 +15,14 @@
 #include "MemoryAllocateInfo.h"
 
 wchar_t snd_audio_output_device_id[XR_MAX_AUDIO_DEVICE_STR_SIZE_OCULUS];
+extern int sound_started;
+
+extern byte cdaudio_playTrack;
+extern qboolean cdaudio_playing;
+
+void CDAudio_DisposeBuffers();
+
+qboolean CDAudio_Start(byte track);
 
 std::string GetXrVersionString(XrVersion ver)
 {
@@ -84,10 +92,10 @@ const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer
 }
 
 static VkBool32 DebugMessengerCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData)
+		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+		VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+		void* pUserData)
 {
 	std::string severityName;
 	const char* priority = "LOG_UNKNOWN";
@@ -99,37 +107,37 @@ static VkBool32 DebugMessengerCallback(
 	}
 	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) != 0u)
 	{
-        severityName += "WARN:";
+		severityName += "WARN:";
 		priority = "LOG_WARN";
 	}
 	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) != 0u)
 	{
-        severityName += "INFO:";
+		severityName += "INFO:";
 		priority = "LOG_INFO";
 	}
-    if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) != 0u)
-    {
-        severityName += "VERB:";
-        priority = "LOG_VERBOSE";
-    }
+	if ((messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) != 0u)
+	{
+		severityName += "VERB:";
+		priority = "LOG_VERBOSE";
+	}
 
-    std::string typeName;
+	std::string typeName;
 	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ) != 0u)
 	{
 		typeName += "GENERAL ";
 	}
 	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) != 0u)
 	{
-        typeName += "VALIDATION ";
+		typeName += "VALIDATION ";
 	}
-    if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) != 0u)
-    {
-        typeName += "PERFORMANCE ";
-    }
-    if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT) != 0u)
-    {
-        typeName += "DEVICE ADDRESS BINDING ";
-    }
+	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) != 0u)
+	{
+		typeName += "PERFORMANCE ";
+	}
+	if ((messageTypes & VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT) != 0u)
+	{
+		typeName += "DEVICE ADDRESS BINDING ";
+	}
 
 	printf("[%s] %s: [%s%s] %s\n", priority, Logger_pcxr::tag, typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
 	
@@ -274,7 +282,7 @@ int main(int argc, char* argv[])
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
 		PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
-        VkDebugUtilsMessengerEXT vulkanDebugMessenger = VK_NULL_HANDLE;
+		VkDebugUtilsMessengerEXT vulkanDebugMessenger = VK_NULL_HANDLE;
 #endif
 
 		std::vector<std::string> xrInstanceExtensionSources
@@ -288,6 +296,8 @@ int main(int argc, char* argv[])
 
 		auto performanceSettingsEnabled = false;
 		auto colorSpacesEnabled = false;
+		auto handTrackingEnabled = false;
+		auto simultaneousHandsAndControllersEnabled = false;
 
 		uint32_t instanceExtensionCount;
 		CHECK_XRCMD(xrEnumerateInstanceExtensionProperties(nullptr, 0, &instanceExtensionCount, nullptr));
@@ -313,6 +323,16 @@ int main(int argc, char* argv[])
 			if (strncmp(extension.extensionName, XR_FB_COLOR_SPACE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
 				colorSpacesEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_EXT_HAND_TRACKING_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				handTrackingEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_META_SIMULTANEOUS_HANDS_AND_CONTROLLERS_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				simultaneousHandsAndControllersEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 
@@ -367,8 +387,8 @@ int main(int argc, char* argv[])
 
 		std::vector<const char*> xrInstanceExtensions;
 		std::transform(xrInstanceExtensionSources.begin(), xrInstanceExtensionSources.end(), std::back_inserter(xrInstanceExtensions), [](const std::string& extension)
-		{ 
-			return extension.c_str(); 
+		{
+			return extension.c_str();
 		});
 
 		std::vector<const char*> xrInstanceApiLayers;
@@ -475,7 +495,7 @@ int main(int argc, char* argv[])
 		CHECK_XRCMD(xrGetVulkanGraphicsRequirements2KHR(instance, systemId, &graphicsRequirements));
 
 		std::vector<const char*> instanceLayerNames;
-		
+
 #if !defined(NDEBUG)
 		uint32_t layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -578,12 +598,12 @@ int main(int argc, char* argv[])
 			CHECK_VKCMD(errCreateVulkanInstance);
 
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-            vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
-            vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
-            VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
-            messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
-            messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
-            messengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
+			vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
+			vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
+			VkDebugUtilsMessengerCreateInfoEXT messengerCreateInfo { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
+			messengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+			messengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT/* | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT*/;
+			messengerCreateInfo.pfnUserCallback = &DebugMessengerCallback;
 			CHECK_VKCMD(vkCreateDebugUtilsMessengerEXT(vulkanInstance, &messengerCreateInfo, nullptr, &vulkanDebugMessenger));
 #endif
 
@@ -623,8 +643,10 @@ int main(int argc, char* argv[])
 			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
 			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
 
-			auto indexTypeUInt8Enabled = false;
-			
+			auto shaderDemoteToHelperInvocation = false;
+			auto shaderTerminateInvocation = false;
+			std::vector<const char*> enabledExtensions;
+
 			const std::string indentStr(4, ' ');
 			appState.Logger->Verbose("%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
 			for (uint32_t i = 0; i < availableExtensionCount; ++i)
@@ -633,37 +655,65 @@ int main(int argc, char* argv[])
 
 				if (strcmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME) == 0)
 				{
-					indexTypeUInt8Enabled = true;
+					appState.IndexTypeUInt8Enabled = true;
+					enabledExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
+				}
+				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME) == 0)
+				{
+					// UGLY HACK. Meta Quest devices require this extension, but the validation layers report that the OpenXR runtime does not enable it for you.
+					enabledExtensions.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
+				}
+				else if (strcmp(availableExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME) == 0)
+				{
+					shaderDemoteToHelperInvocation = true;
+					enabledExtensions.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
+				}
+				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME) == 0)
+				{
+					shaderTerminateInvocation = true;
+					enabledExtensions.push_back(VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME);
 				}
 			}
-
-			std::vector<const char*> deviceExtensions;
-
-			if (indexTypeUInt8Enabled)
-			{
-				deviceExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
-				appState.IndexTypeUInt8Enabled = true;
-			}
-
-			VkPhysicalDeviceFeatures features { };
-			features.samplerAnisotropy = VK_TRUE;
-
-			VkPhysicalDeviceMultiviewFeatures multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
-			multiviewFeatures.multiview = VK_TRUE;
 
 			VkDeviceCreateInfo deviceInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 			deviceInfo.queueCreateInfoCount = 1;
 			deviceInfo.pQueueCreateInfos = &queueInfo;
-			deviceInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
-			deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
-			deviceInfo.pEnabledFeatures = &features;
-			deviceInfo.pNext = &multiviewFeatures;
+			deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
+			deviceInfo.ppEnabledExtensionNames = enabledExtensions.data();
 
-			VkPhysicalDeviceIndexTypeUint8FeaturesEXT indexTypeUint8Feature { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT };
-			if (indexTypeUInt8Enabled)
+			void* chain = &deviceInfo;
+
+			VkPhysicalDeviceFeatures2 features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+			((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&features;
+			chain = (void*)((VkBaseInStructure*)chain)->pNext;
+
+			VkPhysicalDeviceMultiviewFeatures multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
+			multiviewFeatures.multiview = VK_TRUE;
+			((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&multiviewFeatures;
+			chain = (void*)((VkBaseInStructure*)chain)->pNext;
+
+			VkPhysicalDeviceIndexTypeUint8FeaturesEXT indexTypeUint8Features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT };
+			if (appState.IndexTypeUInt8Enabled)
 			{
-				indexTypeUint8Feature.indexTypeUint8 = VK_TRUE;
-				multiviewFeatures.pNext = &indexTypeUint8Feature;
+				indexTypeUint8Features.indexTypeUint8 = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&indexTypeUint8Features;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceShaderDemoteToHelperInvocationFeaturesEXT shaderDemoteToHelperInvocationFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT };
+			if (shaderDemoteToHelperInvocation)
+			{
+				shaderDemoteToHelperInvocationFeatures.shaderDemoteToHelperInvocation = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&shaderDemoteToHelperInvocationFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceShaderTerminateInvocationFeaturesKHR shaderTerminateInvocationFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES_KHR };
+			if (shaderTerminateInvocation)
+			{
+				shaderTerminateInvocationFeatures.shaderTerminateInvocation = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&shaderTerminateInvocationFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
 			}
 
 			XrVulkanDeviceCreateInfoKHR deviceCreateInfo { XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR };
@@ -792,7 +842,7 @@ int main(int argc, char* argv[])
 
 		appState.Logger->Verbose("Supported Refresh Rates:");
 		auto highestDisplayRefreshRate = 0.0f;
-		for (uint32_t i = 0; i < numSupportedDisplayRefreshRates; i++) 
+		for (uint32_t i = 0; i < numSupportedDisplayRefreshRates; i++)
 		{
 			appState.Logger->Verbose("%d:%.1f", i, supportedDisplayRefreshRates[i]);
 			highestDisplayRefreshRate = std::max(highestDisplayRefreshRate, supportedDisplayRefreshRates[i]);
@@ -803,14 +853,14 @@ int main(int argc, char* argv[])
 
 		appState.Logger->Verbose("Requesting display refresh rate of %.1fHz...", highestDisplayRefreshRate);
 		CHECK_XRCMD(xrRequestDisplayRefreshRateFB(appState.Session, highestDisplayRefreshRate));
-		
+
 		PFN_xrGetDisplayRefreshRateFB xrGetDisplayRefreshRateFB;
 		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetDisplayRefreshRateFB", (PFN_xrVoidFunction*)(&xrGetDisplayRefreshRateFB)));
 
 		auto currentDisplayRefreshRate = 0.0f;
 		CHECK_XRCMD(xrGetDisplayRefreshRateFB(appState.Session, &currentDisplayRefreshRate));
 		appState.Logger->Verbose("Current System Display Refresh Rate: %.1fHz.", currentDisplayRefreshRate);
-		
+
 		uint32_t spaceCount;
 		CHECK_XRCMD(xrEnumerateReferenceSpaces(appState.Session, 0, &spaceCount, nullptr));
 		std::vector<XrReferenceSpaceType> spaces(spaceCount);
@@ -826,7 +876,7 @@ int main(int argc, char* argv[])
 		appState.HandSpaces.resize(2);
 		appState.HandScales.resize(2);
 		appState.ActiveHands.resize(2);
-		
+
 		XrActionSetCreateInfo actionSetInfo { XR_TYPE_ACTION_SET_CREATE_INFO };
 		strcpy(actionSetInfo.actionSetName, "gameplay");
 		strcpy(actionSetInfo.localizedActionSetName, "Gameplay");
@@ -1027,7 +1077,7 @@ int main(int argc, char* argv[])
 				{ appState.RightKeyPressAction, rightTrigger }
 			}
 		};
-		
+
 		XrInteractionProfileSuggestedBinding suggestedBindings { XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
 		suggestedBindings.interactionProfile = interaction;
 		suggestedBindings.suggestedBindings = bindings.data();
@@ -1073,11 +1123,71 @@ int main(int argc, char* argv[])
 		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &consoleKeyboardSpace));
 
 		XrSystemProperties systemProperties { XR_TYPE_SYSTEM_PROPERTIES };
+
+		void* chain = &systemProperties;
+
+		XrSystemHandTrackingPropertiesEXT handTrackingProperties { XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT };
+		if (handTrackingEnabled)
+		{
+			((XrBaseInStructure*)chain)->next = (XrBaseInStructure*)&handTrackingProperties;
+			chain = (void*)((XrBaseInStructure*)chain)->next;
+		}
+
+		XrSystemSimultaneousHandsAndControllersPropertiesMETA simultaneousHandsAndControllersProperties { XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT };
+		if (simultaneousHandsAndControllersEnabled)
+		{
+			((XrBaseInStructure*)chain)->next = (XrBaseInStructure*)&simultaneousHandsAndControllersProperties;
+			chain = (void*)((XrBaseInStructure*)chain)->next;
+		}
+
 		CHECK_XRCMD(xrGetSystemProperties(instance, systemId, &systemProperties));
 
 		appState.Logger->Info("System Properties: Name=%s VendorId=%d", systemProperties.systemName, systemProperties.vendorId);
 		appState.Logger->Info("System Graphics Properties: MaxWidth=%d MaxHeight=%d MaxLayers=%d", systemProperties.graphicsProperties.maxSwapchainImageWidth, systemProperties.graphicsProperties.maxSwapchainImageHeight, systemProperties.graphicsProperties.maxLayerCount);
 		appState.Logger->Info("System Tracking Properties: OrientationTracking=%s PositionTracking=%s", (systemProperties.trackingProperties.orientationTracking == XR_TRUE ? "True" : "False"), (systemProperties.trackingProperties.positionTracking == XR_TRUE ? "True" : "False"));
+		appState.Logger->Info("Hand Tracking Properties: SupportsHandTracking=%s", (handTrackingProperties.supportsHandTracking == XR_TRUE ? "True" : "False"));
+		appState.Logger->Info("Simultaneous Hand and Controllers Properties: SupportsSimultaneousHandsAndControllers=%s", (simultaneousHandsAndControllersProperties.supportsSimultaneousHandsAndControllers == XR_TRUE ? "True" : "False"));
+
+		appState.HandTrackingEnabled = (handTrackingProperties.supportsHandTracking == XR_TRUE);
+		appState.SimultaneousHandsAndControllersEnabled = (simultaneousHandsAndControllersProperties.supportsSimultaneousHandsAndControllers == XR_TRUE);
+
+		PFN_xrDestroyHandTrackerEXT xrDestroyHandTrackerEXT = nullptr;
+		PFN_xrLocateHandJointsEXT xrLocateHandJointsEXT = nullptr;
+		if (appState.HandTrackingEnabled)
+		{
+			PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrCreateHandTrackerEXT", reinterpret_cast<PFN_xrVoidFunction*>(&xrCreateHandTrackerEXT)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrLocateHandJointsEXT", reinterpret_cast<PFN_xrVoidFunction*>(&xrLocateHandJointsEXT)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrDestroyHandTrackerEXT", reinterpret_cast<PFN_xrVoidFunction*>(&xrDestroyHandTrackerEXT)));
+
+			appState.HandTrackers.resize(2);
+
+			XrHandTrackerCreateInfoEXT handTrackerCreateInfo { XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT };
+			handTrackerCreateInfo.hand = XR_HAND_LEFT_EXT;
+			CHECK_XRCMD(xrCreateHandTrackerEXT(appState.Session, &handTrackerCreateInfo, &appState.HandTrackers[LEFT_TRACKED_HAND].tracker));
+
+			handTrackerCreateInfo.hand = XR_HAND_RIGHT_EXT;
+			CHECK_XRCMD(xrCreateHandTrackerEXT(appState.Session, &handTrackerCreateInfo, &appState.HandTrackers[RIGHT_TRACKED_HAND].tracker));
+
+			appState.HandTrackers[LEFT_TRACKED_HAND].locations.type = XR_TYPE_HAND_JOINT_LOCATIONS_EXT;
+			appState.HandTrackers[LEFT_TRACKED_HAND].locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
+			appState.HandTrackers[LEFT_TRACKED_HAND].locations.jointLocations = appState.HandTrackers[LEFT_TRACKED_HAND].jointLocations;
+
+			appState.HandTrackers[RIGHT_TRACKED_HAND].locations.type = XR_TYPE_HAND_JOINT_LOCATIONS_EXT;
+			appState.HandTrackers[RIGHT_TRACKED_HAND].locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
+			appState.HandTrackers[RIGHT_TRACKED_HAND].locations.jointLocations = appState.HandTrackers[RIGHT_TRACKED_HAND].jointLocations;
+		}
+
+		PFN_xrResumeSimultaneousHandsAndControllersTrackingMETA xrResumeSimultaneousHandsAndControllersTrackingMETA = nullptr;
+		PFN_xrPauseSimultaneousHandsAndControllersTrackingMETA xrPauseSimultaneousHandsAndControllersTrackingMETA = nullptr;
+		if (appState.HandTrackingEnabled && appState.SimultaneousHandsAndControllersEnabled)
+		{
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrResumeSimultaneousHandsAndControllersTrackingMETA", reinterpret_cast<PFN_xrVoidFunction*>(&xrResumeSimultaneousHandsAndControllersTrackingMETA)));
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrPauseSimultaneousHandsAndControllersTrackingMETA", reinterpret_cast<PFN_xrVoidFunction*>(&xrPauseSimultaneousHandsAndControllersTrackingMETA)));
+
+			XrSimultaneousHandsAndControllersTrackingResumeInfoMETA resumeInfo { XR_TYPE_SIMULTANEOUS_HANDS_AND_CONTROLLERS_TRACKING_RESUME_INFO_META };
+			CHECK_XRCMD(xrResumeSimultaneousHandsAndControllersTrackingMETA(appState.Session, &resumeInfo));
+		}
 
 		uint32_t viewCount;
 		CHECK_XRCMD(xrEnumerateViewConfigurationViews(instance, systemId, viewConfigurationType, 0, &viewCount, nullptr));
@@ -1127,7 +1237,7 @@ int main(int argc, char* argv[])
 		appState.SwapchainRect.extent.width = configViews[0].recommendedImageRectWidth;
 		appState.SwapchainRect.extent.height = configViews[0].recommendedImageRectHeight;
 		appState.SwapchainSampleCount = vulkanSwapchainSampleCount;
-		
+
 		appState.Logger->Info("Creating swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
 
 		XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
@@ -1222,6 +1332,7 @@ int main(int argc, char* argv[])
 		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
 
 		XrCompositionLayerCubeKHR skyboxLayer { XR_TYPE_COMPOSITION_LAYER_CUBE_KHR };
+		skyboxLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 
 		XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
 		waitInfo.timeout = XR_INFINITE_DURATION;
@@ -1239,7 +1350,7 @@ int main(int argc, char* argv[])
 
 		XrEventDataBuffer eventDataBuffer { };
 
-        appState.VertexTransform.m[15] = 1;
+		appState.VertexTransform.m[15] = 1;
 
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		appState.vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(vulkanInstance, "vkSetDebugUtilsObjectNameEXT");
@@ -1429,6 +1540,14 @@ int main(int argc, char* argv[])
 				if (snd_initialized) // If the sound system was already initialized in a previous call to android_main():
 				{
 					S_Startup ();
+				}
+
+				if (cdaudio_playing)
+				{
+					if (!CDAudio_Start (cdaudio_playTrack))
+					{
+						cdaudio_playing = false;
+					}
 				}
 
 				appState.EngineThread = std::thread(runEngine, &appState);
@@ -1687,25 +1806,35 @@ int main(int argc, char* argv[])
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
 
-                        float angleHorizontal = FLT_MIN;
-                        float angleUp = 0;
-                        float angleDown = 0;
+						float angleHorizontal = FLT_MIN;
+						float angleUp = 0;
+						float angleDown = 0;
 						for (size_t i = 0; i < viewCountOutput; i++)
 						{
-                            angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleLeft));
-                            angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleRight));
-                            angleUp += fabs(views[i].fov.angleUp);
-                            angleDown += fabs(views[i].fov.angleDown);
+							angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleLeft));
+							angleHorizontal = std::max(angleHorizontal, fabs(views[i].fov.angleRight));
+							angleUp += fabs(views[i].fov.angleUp);
+							angleDown += fabs(views[i].fov.angleDown);
 						}
 						appState.FOV = 2 * (int)floor(angleHorizontal * 180 / M_PI);
-                        appState.SkyLeft = tan(angleHorizontal);
-                        appState.SkyHorizontal = 2 * appState.SkyLeft;
-                        appState.SkyTop = tan(angleUp / (float)viewCountOutput);
-                        appState.SkyVertical = appState.SkyTop + tan(angleDown / (float)viewCountOutput);
+						appState.SkyLeft = tan(angleHorizontal);
+						appState.SkyHorizontal = 2 * appState.SkyLeft;
+						appState.SkyTop = tan(angleUp / (float)viewCountOutput);
+						appState.SkyVertical = appState.SkyTop + tan(angleDown / (float)viewCountOutput);
 					}
-					
+
+					if (appState.HandTrackingEnabled)
+					{
+						XrHandJointsLocateInfoEXT locateInfo { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
+						locateInfo.baseSpace = appSpace;
+						locateInfo.time = frameState.predictedDisplayTime;
+
+						CHECK_XRCMD(xrLocateHandJointsEXT(appState.HandTrackers[LEFT_TRACKED_HAND].tracker, &locateInfo, &appState.HandTrackers[LEFT_TRACKED_HAND].locations));
+						CHECK_XRCMD(xrLocateHandJointsEXT(appState.HandTrackers[RIGHT_TRACKED_HAND].tracker, &locateInfo, &appState.HandTrackers[RIGHT_TRACKED_HAND].locations));
+					}
+
 					projectionLayerViews.resize(viewCountOutput);
-					
+
 					uint32_t swapchainImageIndex;
 					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, nullptr, &swapchainImageIndex));
 
@@ -1733,9 +1862,9 @@ int main(int argc, char* argv[])
 					float clearG = 0;
 					float clearB = 0;
 					float clearA = 1;
-					
+
 					auto readClearColor = false;
-					
+
 					if (appState.Mode != AppWorldMode || appState.Scene.skybox != nullptr)
 					{
 						clearA = 0;
@@ -1765,13 +1894,13 @@ int main(int argc, char* argv[])
 
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
 
-                        stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
-                        stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
-                        if (stagingBuffer->mapped == nullptr)
-                        {
-                            CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
-                        }
-                        perFrame.LoadStagingBuffer(appState, stagingBuffer);
+						stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
+						stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
+						if (stagingBuffer->mapped == nullptr)
+						{
+							CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
+						}
+						perFrame.LoadStagingBuffer(appState, stagingBuffer);
 						if ((stagingBuffer->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
 						{
 							VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
@@ -1832,7 +1961,7 @@ int main(int argc, char* argv[])
 
 					CHECK_VKCMD(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 
-                    perFrame.FillFromStagingBuffer(appState, stagingBuffer, swapchainImageIndex);
+					perFrame.FillFromStagingBuffer(appState, stagingBuffer, swapchainImageIndex);
 
 					clearValues[0].color.float32[0] = clearR;
 					clearValues[0].color.float32[1] = clearG;
@@ -1872,7 +2001,7 @@ int main(int argc, char* argv[])
 						}
 						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.colorMemory));
 						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.colorImage, perFrame.colorMemory, 0));
-						
+
 						vkGetImageMemoryRequirements(appState.Device, perFrame.depthImage, &memRequirements);
 						properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
 						if (!updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, false))
@@ -1952,14 +2081,13 @@ int main(int argc, char* argv[])
 
 					if (appState.Mode != AppWorldMode || appState.Scene.skybox != nullptr)
 					{
-						worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+						worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 					}
 					else
 					{
 						worldLayer.layerFlags = 0;
 					}
-					worldLayer.layerFlags |= XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
-					
+
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
 					worldRendered = true;
@@ -2095,7 +2223,7 @@ int main(int argc, char* argv[])
 					{
 						if (appState.CameraLocationIsValid)
 						{
-							screenLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+							screenLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 							screenLayer.pose = appState.CameraLocation.pose;
 
 							layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenLayer));
@@ -2235,7 +2363,7 @@ int main(int argc, char* argv[])
 							}
 							if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 							{
-								keyboardLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+								keyboardLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 								keyboardLayer.pose = keyboardLocation.pose;
 
 								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardLayer));
@@ -2267,9 +2395,9 @@ int main(int argc, char* argv[])
 						leftArrowsLayer.space = appSpace;
 						leftArrowsLayer.layerFlags = 0;
 						leftArrowsLayer.pose = { };
-						
+
 						XrMatrix4x4f rotation;
-						
+
 						XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
 						XrMatrix4x4f_GetRotation(&leftArrowsLayer.pose.orientation, &rotation);
 
@@ -2290,7 +2418,7 @@ int main(int argc, char* argv[])
 
 						layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsLayer));
 					}
-					
+
 					if (appState.Mode == AppWorldMode)
 					{
 						if (d_lists.last_skybox >= 0 && appState.Scene.skybox == nullptr)
@@ -2322,7 +2450,7 @@ int main(int argc, char* argv[])
 							if (width > 0 && height > 0)
 							{
 								appState.Scene.skybox = new Skybox { };
-								
+
 								XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 								swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
 								swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
@@ -2413,7 +2541,7 @@ int main(int argc, char* argv[])
 								commandBufferAllocateInfo.commandPool = appState.SetupCommandPool;
 								CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
 								CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
-								
+
 								appState.copyBarrier.image = appState.Scene.skybox->images[swapchainImageIndex].image;
 								appState.submitBarrier.image = appState.copyBarrier.image;
 
@@ -2503,7 +2631,7 @@ int main(int argc, char* argv[])
 			frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 			frameEndInfo.layerCount = (uint32_t)layers.size();
 			frameEndInfo.layers = layers.data();
-			
+
 			CHECK_XRCMD(xrEndFrame(appState.Session, &frameEndInfo));
 		}
 
@@ -2525,6 +2653,14 @@ int main(int argc, char* argv[])
 		if (swapchain != XR_NULL_HANDLE)
 		{
 			xrDestroySwapchain(swapchain);
+		}
+
+		if (appState.HandTrackingEnabled)
+		{
+			for (auto& handTracker : appState.HandTrackers)
+			{
+				xrDestroyHandTrackerEXT(handTracker.tracker);
+			}
 		}
 
 		if (worldSpace != XR_NULL_HANDLE)
@@ -2607,6 +2743,17 @@ int main(int argc, char* argv[])
 	{
 		PrintErrorMessage("Application closed. Press Enter to close this window.");
 	}
+
+	if (sound_started)
+	{
+		SNDDMA_Shutdown();
+	}
+
+	delete appState.Logger;
+	appState.Logger = nullptr;
+
+	delete appState.FileLoader;
+	appState.FileLoader = nullptr;
 
 	CoUninitialize();
 
