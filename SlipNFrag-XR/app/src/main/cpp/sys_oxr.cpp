@@ -237,6 +237,111 @@ void Sys_EndClearMemory()
     Locks::RenderMutex.unlock();
 }
 
+extern void M_Menu_Options_f (void);
+extern void M_Print (int cx, int cy, const char *str);
+extern void M_DrawCharacter (int cx, int line, int num);
+extern void M_DrawTransPic (int x, int y, qpic_t *pic);
+extern void M_DrawPic (int x, int y, qpic_t *pic);
+extern void M_DrawCheckbox (int x, int y, int on);
+
+extern qboolean	m_entersound;
+
+int		imm_cursor;
+
+void CL_ImmersiveMenuDraw ()
+{
+	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	auto p = Draw_CachePic ("gfx/p_option.lmp");
+	M_DrawPic ( (320-p->width)/2, 4, p);
+
+	M_Print (16, 32, "      Immersive:      ");
+
+	M_Print (16, 48, "               Enabled");
+	M_DrawCheckbox (220, 48, cl_immersive_enabled.value);
+
+	M_Print (16, 56, "      Weapons in hands");
+	M_DrawCheckbox (220, 56, cl_immersive_hands_enabled.value);
+
+	M_Print (16, 64, "         Dominant hand");
+	auto hand = Cvar_VariableString ("dominant_hand");
+	if (Q_strncmp(hand, "left", 4) == 0)
+		M_Print (220, 64, "Left");
+	else
+		M_Print (220, 64, "Right");
+
+	M_Print (16, 72, "            Show hands");
+	M_DrawCheckbox (220, 72, cl_immersive_show_hands.value);
+
+	M_Print (16, 80, "      Sbar in off-hand");
+	M_DrawCheckbox (220, 80, cl_immersive_sbar_on_hand.value);
+
+// cursor
+	M_DrawCharacter (200, 48 + imm_cursor*8, 12+((int)(realtime*4)&1));
+}
+
+void CL_ImmersiveToggle ()
+{
+	const char* hand;
+
+	switch (imm_cursor)
+	{
+	case 0:
+		Cvar_SetValue ("immersive_enabled", !cl_immersive_enabled.value);
+		break;
+	case 1:
+		Cvar_SetValue ("hands_enabled", !cl_immersive_hands_enabled.value);
+		break;
+	case 2:
+		hand = Cvar_VariableString ("dominant_hand");
+		if (Q_strncmp(hand, "left", 4) == 0)
+			Cvar_Set("dominant_hand", "right");
+		else
+			Cvar_Set ("dominant_hand", "left");
+		break;
+	case 3:
+		Cvar_SetValue ("show_hands", !cl_immersive_show_hands.value);
+		break;
+	default:
+		Cvar_SetValue ("sbar_on_hand", !cl_immersive_sbar_on_hand.value);
+		break;
+	}
+
+}
+void CL_ImmersiveMenuKey (int k)
+{
+	switch (k)
+	{
+	case K_ESCAPE:
+		M_Menu_Options_f ();
+		break;
+
+	case K_ENTER:
+		m_entersound = true;
+		CL_ImmersiveToggle();
+		return;
+
+	case K_UPARROW:
+		S_LocalSound ("misc/menu1.wav");
+		imm_cursor--;
+		if (imm_cursor < 0)
+			imm_cursor = 5-1;
+		break;
+
+	case K_DOWNARROW:
+		S_LocalSound ("misc/menu1.wav");
+		imm_cursor++;
+		if (imm_cursor >= 5)
+			imm_cursor = 0;
+		break;
+
+	case K_LEFTARROW:
+	case K_RIGHTARROW:
+		S_LocalSound ("misc/menu3.wav");
+		CL_ImmersiveToggle();
+		break;
+	}
+}
+
 void Sys_Init(int argc, char** argv)
 {
     static quakeparms_t parms;
@@ -246,4 +351,6 @@ void Sys_Init(int argc, char** argv)
     parms.argv = com_argv;
     __android_log_print(ANDROID_LOG_VERBOSE, Logger_oxr::tag, "Host_Init");
     Host_Init(&parms);
+	cl_immersivemenudrawfn = CL_ImmersiveMenuDraw;
+	cl_immersivemenukeyfn = CL_ImmersiveMenuKey;
 }

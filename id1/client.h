@@ -276,7 +276,11 @@ extern	cvar_t	m_yaw;
 extern	cvar_t	m_forward;
 extern	cvar_t	m_side;
 
+extern	cvar_t	cl_immersive_enabled;
+extern	cvar_t	cl_immersive_hands_enabled;
 extern	cvar_t	cl_immersive_dominant_hand;
+extern	cvar_t	cl_immersive_show_hands;
+extern	cvar_t	cl_immersive_sbar_on_hand;
 
 //
 // menu

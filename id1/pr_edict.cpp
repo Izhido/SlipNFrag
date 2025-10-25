@@ -1121,7 +1121,7 @@ void PR_LoadProgs (void)
 
 	pr_player_run_function = -1;
 
-	qboolean allow_immersive = ((int)Cvar_VariableValue("sv_allow_immersive"));
+	qboolean allow_immersive = (Cvar_VariableValue("sv_allow_immersive") != 0);
 
 	for (i=0 ; i<progs->numfunctions; i++)
 	{

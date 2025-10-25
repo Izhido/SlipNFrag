@@ -40,7 +40,11 @@ cvar_t	m_yaw = {"m_yaw","0.022", true};
 cvar_t	m_forward = {"m_forward","1", true};
 cvar_t	m_side = {"m_side","0.8", true};
 
+cvar_t	cl_immersive_enabled = {"immersive_enabled", "1", true};
+cvar_t	cl_immersive_hands_enabled = {"hands_enabled", "1", true};
 cvar_t	cl_immersive_dominant_hand = {"dominant_hand", "right", true};
+cvar_t	cl_immersive_show_hands = {"show_hands", "1", true};
+cvar_t	cl_immersive_sbar_on_hand = {"sbar_on_hand", "1", true};
 
 
 client_static_t	cls;
@@ -912,7 +916,11 @@ void CL_Init (void)
 
 //	Cvar_RegisterVariable (&cl_autofire);
 	
+	Cvar_RegisterVariable (&cl_immersive_enabled);
+	Cvar_RegisterVariable (&cl_immersive_hands_enabled);
 	Cvar_RegisterVariable (&cl_immersive_dominant_hand);
+	Cvar_RegisterVariable (&cl_immersive_show_hands);
+	Cvar_RegisterVariable (&cl_immersive_sbar_on_hand);
 
 	Cmd_AddCommand ("entities", CL_PrintEntities_f);
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);

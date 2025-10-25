@@ -3575,7 +3575,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
 	leftHandVerticesSize = 0;
 	rightHandVerticesSize = 0;
-	if (appState.HandTrackingEnabled && appState.Focused)
+	if (appState.HandTrackingEnabled && appState.Focused && (appState.Mode != AppWorldMode || ((Cvar_VariableValue("show_hands") != 0) && !(!appState.FromEngine.immersive_hands_enabled && key_dest == key_game))))
 	{
 		leftHandVerticesSize = appState.HandTrackers[LEFT_TRACKED_HAND].VerticesSize();
 		rightHandVerticesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].VerticesSize();

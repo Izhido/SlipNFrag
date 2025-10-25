@@ -680,6 +680,7 @@ void SV_RunClients (void)
 
 		host_client->immersive.hands_allowed = (pr_immersive_allowed &&
 			host_client->immersive.received &&
+			(host_client->immersive.left_handed || host_client->immersive.right_handed) &&
 			SV_ValidImmersiveViewmodel (host_client));
 
 		if (!host_client->spawned)

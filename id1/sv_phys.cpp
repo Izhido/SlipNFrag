@@ -1813,7 +1813,7 @@ void SV_Physics (void)
 			}
 
 			immer.previous_hands_allowed = immer.hands_allowed;
-			immer.previous_left_handed = immer.previous_left_handed;
+			immer.previous_left_handed = immer.left_handed;
 			immer.previous_right_handed = immer.right_handed;
 		}
 	}
