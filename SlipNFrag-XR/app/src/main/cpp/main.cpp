@@ -1923,25 +1923,6 @@ void android_main(struct android_app* app)
 							clearA = (float)(color >> 24) / 255.0f;
 						}
 
-						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
-
-						stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
-						stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
-						if (stagingBuffer->mapped == nullptr)
-						{
-							CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
-						}
-						perFrame.LoadStagingBuffer(appState, stagingBuffer);
-						if ((stagingBuffer->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-						{
-							VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-							range.memory = stagingBuffer->memory;
-							range.size = VK_WHOLE_SIZE;
-							CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
-						}
-
-						perFrame.LoadNonStagedResources(appState);
-
 						if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 						{
 							std::copy(d_8to24table, d_8to24table + 256, appState.Scene.paletteData);
@@ -1961,6 +1942,25 @@ void android_main(struct android_app* app)
 							}
 							memcpy(appState.Scene.consoleData.data(), con_buffer.data(), consoleSize);
 						}
+
+						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
+
+						stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
+						stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
+						if (stagingBuffer->mapped == nullptr)
+						{
+							CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
+						}
+						perFrame.LoadStagingBuffer(appState, stagingBuffer);
+						if ((stagingBuffer->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
+						{
+							VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
+							range.memory = stagingBuffer->memory;
+							range.size = VK_WHOLE_SIZE;
+							CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
+						}
+
+						perFrame.LoadNonStagedResources(appState);
 					}
 
 					if (perFrame.commandBuffer == VK_NULL_HANDLE)

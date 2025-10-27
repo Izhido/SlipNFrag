@@ -207,6 +207,7 @@ struct dlists_t
 	float viewmodel_scale0;
 	float viewmodel_scale1;
 	float viewmodel_scale2;
+	qboolean sbar_on_hand;
 	std::vector<dsurface_t> surfaces;
 	std::vector<dsurface_t> surfaces_colored_lights;
 	std::vector<dsurfacewithglow_t> surfaces_rgba;

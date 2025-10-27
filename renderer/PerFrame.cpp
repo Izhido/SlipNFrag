@@ -5,6 +5,7 @@
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 #include "RendererNames.h"
 #endif
+#include "Constants.h"
 
 float PerFrame::GammaCorrect(float component)
 {
@@ -303,7 +304,87 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			appState.HandTrackers[RIGHT_TRACKED_HAND].WriteVertices(true, target);
 			offset += appState.Scene.rightHandVerticesSize;
 		}
-		skyVertexBase = handsVertexBase + appState.Scene.leftHandVerticesSize + appState.Scene.rightHandVerticesSize;
+		statusBarVertexBase = handsVertexBase + appState.Scene.leftHandVerticesSize + appState.Scene.rightHandVerticesSize;
+		if (appState.Scene.statusBarVerticesSize > 0)
+		{
+			XrVector3f position;
+			XrQuaternionf orientation;
+			double factor;
+			if (appState.FromEngine.dominant_hand_left)
+			{
+				position = appState.RightController.SpaceLocation.pose.position;
+				orientation = appState.RightController.SpaceLocation.pose.orientation;
+				factor = -1;
+			}
+			else
+			{
+				position = appState.LeftController.SpaceLocation.pose.position;
+				orientation = appState.LeftController.SpaceLocation.pose.orientation;
+				factor = 1;
+			}
+
+			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+
+			XrMatrix4x4f transform;
+			XrMatrix4x4f_CreateFromQuaternion(&transform, &orientation);
+
+			XrVector3f untransformedForward { 0, 0, -1 };
+			XrVector3f untransformedRight { -1, 0, 0 };
+			XrVector3f untransformedUp { 0, 1, 0 };
+
+			XrVector3f forward;
+			XrMatrix4x4f_TransformVector3f(&forward, &transform, &untransformedForward);
+			XrVector3f right;
+			XrMatrix4x4f_TransformVector3f(&right, &transform, &untransformedRight);
+			XrVector3f up;
+			XrMatrix4x4f_TransformVector3f(&up, &transform, &untransformedUp);
+
+			auto side = 0.05;
+			auto aspectRatioCorrection = 0.025 * (double)(appState.ConsoleWidth) / (double)(SBAR_HEIGHT + 24);
+
+			auto verticalNear = -0.025;
+			auto verticalFar = -0.05;
+
+			auto horizontalNear = 0.175;
+			auto horizontalFar = horizontalNear + aspectRatioCorrection;
+
+			*target++ = position.x + right.x * factor * side + up.x * verticalFar - forward.x * horizontalFar;
+			*target++ = position.y + right.y * factor * side + up.y * verticalFar - forward.y * horizontalFar;
+			*target++ = position.z + right.z * factor * side + up.z * verticalFar - forward.z * horizontalFar;
+			*target++ = position.x + right.x * factor * side + up.x * verticalFar - forward.x * horizontalNear;
+			*target++ = position.y + right.y * factor * side + up.y * verticalFar - forward.y * horizontalNear;
+			*target++ = position.z + right.z * factor * side + up.z * verticalFar - forward.z * horizontalNear;
+			*target++ = position.x + right.x * factor * side + up.x * verticalNear - forward.x * horizontalNear;
+			*target++ = position.y + right.y * factor * side + up.y * verticalNear - forward.y * horizontalNear;
+			*target++ = position.z + right.z * factor * side + up.z * verticalNear - forward.z * horizontalNear;
+			*target++ = position.x + right.x * factor * side + up.x * verticalNear - forward.x * horizontalFar;
+			*target++ = position.y + right.y * factor * side + up.y * verticalNear - forward.y * horizontalFar;
+			*target++ = position.z + right.z * factor * side + up.z * verticalNear - forward.z * horizontalFar;
+
+			side = 0.015;
+
+			verticalNear = 0.175;
+			verticalFar = 0.2;
+
+			horizontalNear = aspectRatioCorrection / 2;
+			horizontalFar = -aspectRatioCorrection / 2;
+
+			*target++ = position.x + right.x * factor * side + up.x * horizontalNear - forward.x * verticalNear;
+			*target++ = position.y + right.y * factor * side + up.y * horizontalNear - forward.y * verticalNear;
+			*target++ = position.z + right.z * factor * side + up.z * horizontalNear - forward.z * verticalNear;
+			*target++ = position.x + right.x * factor * side + up.x * horizontalFar - forward.x * verticalNear;
+			*target++ = position.y + right.y * factor * side + up.y * horizontalFar - forward.y * verticalNear;
+			*target++ = position.z + right.z * factor * side + up.z * horizontalFar - forward.z * verticalNear;
+			*target++ = position.x + right.x * factor * side + up.x * horizontalFar - forward.x * verticalFar;
+			*target++ = position.y + right.y * factor * side + up.y * horizontalFar - forward.y * verticalFar;
+			*target++ = position.z + right.z * factor * side + up.z * horizontalFar - forward.z * verticalFar;
+			*target++ = position.x + right.x * factor * side + up.x * horizontalNear - forward.x * verticalFar;
+			*target++ = position.y + right.y * factor * side + up.y * horizontalNear - forward.y * verticalFar;
+			*target++ = position.z + right.z * factor * side + up.z * horizontalNear - forward.z * verticalFar;
+
+			offset += appState.Scene.statusBarVerticesSize;
+		}
+		skyVertexBase = statusBarVertexBase + appState.Scene.statusBarVerticesSize;
         if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
         {
 			auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
@@ -364,7 +445,53 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		appState.HandTrackers[RIGHT_TRACKED_HAND].WriteAttributes(target);
 		offset += appState.Scene.rightHandAttributesSize;
 	}
-	skyAttributeBase = handsAttributeBase + appState.Scene.leftHandAttributesSize + appState.Scene.rightHandAttributesSize;
+	statusBarAttributeBase = handsAttributeBase + appState.Scene.leftHandAttributesSize + appState.Scene.rightHandAttributesSize;
+	if (appState.Scene.statusBarAttributesSize > 0)
+	{
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+		if (appState.FromEngine.dominant_hand_left)
+		{
+			*target++ = 1;
+			*target++ = 0;
+			*target++ = 0;
+			*target++ = 0;
+			*target++ = 0;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+
+			*target++ = 1;
+			*target++ = 0;
+			*target++ = 0;
+			*target++ = 0;
+			*target++ = 0;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+		}
+		else
+		{
+			*target++ = 0;
+			*target++ = 0;
+			*target++ = 1;
+			*target++ = 0;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 0;
+			*target++ = 1;
+
+			*target++ = 0;
+			*target++ = 0;
+			*target++ = 1;
+			*target++ = 0;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 0;
+			*target++ = 1;
+		}
+		offset += appState.Scene.statusBarAttributesSize;
+	}
+	skyAttributeBase = statusBarAttributeBase + appState.Scene.statusBarAttributesSize;
     if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
     {
         float skyTexCoordsLeft = 0.5f - appState.SkyLeft / 2;
@@ -444,7 +571,45 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 				appState.HandTrackers[RIGHT_TRACKED_HAND].WriteIndices16(true, target, handIndexOffset);
 				offset += appState.Scene.rightHandIndicesSize;
 			}
-			coloredIndex16Base = handsIndexBase + appState.Scene.leftHandIndicesSize + appState.Scene.rightHandIndicesSize;
+			statusBarIndexBase = handsIndexBase + appState.Scene.leftHandIndicesSize + appState.Scene.rightHandIndicesSize;
+			if (appState.Scene.statusBarIndicesSize > 0)
+			{
+				auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+				if (appState.FromEngine.dominant_hand_left)
+				{
+					*target++ = 0;
+					*target++ = 3;
+					*target++ = 2;
+					*target++ = 2;
+					*target++ = 1;
+					*target++ = 0;
+
+					*target++ = 4;
+					*target++ = 7;
+					*target++ = 6;
+					*target++ = 6;
+					*target++ = 5;
+					*target++ = 4;
+				}
+				else
+				{
+					*target++ = 0;
+					*target++ = 1;
+					*target++ = 2;
+					*target++ = 2;
+					*target++ = 3;
+					*target++ = 0;
+
+					*target++ = 4;
+					*target++ = 5;
+					*target++ = 6;
+					*target++ = 6;
+					*target++ = 7;
+					*target++ = 4;
+				}
+				offset += appState.Scene.statusBarIndicesSize;
+			}
+			coloredIndex16Base = statusBarIndexBase + appState.Scene.statusBarIndicesSize;
 			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
 			offset += appState.Scene.coloredIndices16Size;
 			cutoutIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices16Size;
@@ -494,7 +659,45 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			appState.HandTrackers[RIGHT_TRACKED_HAND].WriteIndices16(true, target, handIndexOffset);
 			offset += appState.Scene.rightHandIndicesSize;
 		}
-		coloredIndex16Base = handsIndexBase + appState.Scene.leftHandIndicesSize + appState.Scene.rightHandIndicesSize;
+		statusBarIndexBase = handsIndexBase + appState.Scene.leftHandIndicesSize + appState.Scene.rightHandIndicesSize;
+		if (appState.Scene.statusBarIndicesSize > 0)
+		{
+			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+			if (appState.FromEngine.dominant_hand_left)
+			{
+				*target++ = 0;
+				*target++ = 3;
+				*target++ = 2;
+				*target++ = 2;
+				*target++ = 1;
+				*target++ = 0;
+
+				*target++ = 0;
+				*target++ = 3;
+				*target++ = 2;
+				*target++ = 2;
+				*target++ = 1;
+				*target++ = 0;
+			}
+			else
+			{
+				*target++ = 0;
+				*target++ = 1;
+				*target++ = 2;
+				*target++ = 2;
+				*target++ = 3;
+				*target++ = 0;
+
+				*target++ = 0;
+				*target++ = 1;
+				*target++ = 2;
+				*target++ = 2;
+				*target++ = 3;
+				*target++ = 0;
+			}
+			offset += appState.Scene.statusBarIndicesSize;
+		}
+		coloredIndex16Base = statusBarIndexBase + appState.Scene.statusBarIndicesSize;
 		auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < appState.Scene.coloredIndices8Size; i++)
 		{
@@ -693,6 +896,27 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			memcpy((unsigned char*)stagingBuffer->mapped + offset, viewmodel.colormap, 16384);
 			offset += 16384;
 		}
+	}
+	while (offset % 4 != 0)
+	{
+		offset++;
+	}
+	if (appState.Scene.statusBarVerticesSize > 0)
+	{
+		auto source = appState.Scene.consoleData.data() + (appState.ConsoleHeight - (SBAR_HEIGHT + 24)) * appState.ConsoleWidth;
+		auto target = (unsigned char*)stagingBuffer->mapped + offset;
+		for (auto y = 0; y < SBAR_HEIGHT + 24; y++)
+		{
+			for (auto x = 0; x < appState.ConsoleWidth; x++)
+			{
+				auto color = d_8to24table[*source++];
+				*target++ = color & 255;
+				*target++ = color >> 8 & 255;
+				*target++ = color >> 16 & 255;
+				*target++ = color >> 24;
+			}
+		}
+		offset += appState.ConsoleWidth * (SBAR_HEIGHT + 24) * 4;
 	}
 	if (appState.Scene.lastSky >= 0)
 	{
@@ -1345,6 +1569,22 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	for (auto i = 0; i <= appState.Scene.viewmodelsHoley.last; i++)
 	{
 		FillColormapTextures(appState, appState.Scene.viewmodelsHoley.loaded[i]);
+	}
+
+	while (appState.Scene.stagingBuffer.offset % 4 != 0)
+	{
+		appState.Scene.stagingBuffer.offset++;
+	}
+
+	if (appState.Scene.statusBarVerticesSize > 0)
+	{
+		if (statusBar == nullptr)
+		{
+			statusBar = new Texture();
+			statusBar->Create(appState, appState.ConsoleWidth, SBAR_HEIGHT + 24, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		}
+		statusBar->Fill(appState, appState.Scene.stagingBuffer);
+		appState.Scene.stagingBuffer.offset += (appState.ConsoleWidth * (SBAR_HEIGHT + 24) * 4);
 	}
 
 	if (appState.Scene.lastSky >= 0)
@@ -3663,7 +3903,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 #endif
 		}
 	}
-	if (appState.Scene.floorVerticesSize > 0 || appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0 || appState.Scene.leftHandVerticesSize > 0 || appState.Scene.rightHandVerticesSize > 0)
+	if (appState.Scene.floorVerticesSize > 0 || appState.Scene.leftControllerVerticesSize > 0 || appState.Scene.rightControllerVerticesSize > 0 || appState.Scene.leftHandVerticesSize > 0 || appState.Scene.rightHandVerticesSize > 0 || appState.Scene.statusBarVerticesSize > 0)
 	{
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		renderLabel.pLabelName = TEXTURED_NAME;
@@ -3786,6 +4026,34 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
 		}
+		if (appState.Scene.statusBarVerticesSize > 0)
+		{
+			if (!statusBarResources.created)
+			{
+				poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				poolSizes[0].descriptorCount = 1;
+				descriptorPoolCreateInfo.poolSizeCount = 1;
+				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &statusBarResources.descriptorPool));
+				descriptorSetAllocateInfo.descriptorPool = statusBarResources.descriptorPool;
+				descriptorSetAllocateInfo.descriptorSetCount = 1;
+				descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.singleImageLayout;
+				CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &statusBarResources.descriptorSet));
+				textureInfo.sampler = appState.Scene.sampler;
+				textureInfo.imageView = statusBar->view;
+				writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writes[0].pImageInfo = &textureInfo;
+				writes[0].dstSet = statusBarResources.descriptorSet;
+				vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
+				statusBarResources.created = true;
+			}
+			descriptorSets[1] = statusBarResources.descriptorSet;
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.textured.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &statusBarVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &statusBarAttributeBase);
+			vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, statusBarIndexBase, VK_INDEX_TYPE_UINT16);
+			VkDeviceSize size = 12;
+			vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
+		}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 		appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
@@ -3833,6 +4101,7 @@ void PerFrame::DestroyFramebuffer(AppState& appState) const
 
 void PerFrame::Destroy(AppState& appState)
 {
+	statusBarResources.Delete(appState);
 	handResources.Delete(appState);
 	controllerResources.Delete(appState);
 	floorResources.Delete(appState);
@@ -3845,13 +4114,20 @@ void PerFrame::Destroy(AppState& appState)
 	host_colormapResources.Delete(appState);
 	skyRGBAResources.Delete(appState);
 	skyResources.Delete(appState);
+	if (statusBar != nullptr)
+	{
+		statusBar->Delete(appState);
+		delete statusBar;
+	}
 	if (skyRGBA != nullptr)
 	{
 		skyRGBA->Delete(appState);
+		delete skyRGBA;
 	}
 	if (sky != nullptr)
 	{
 		sky->Delete(appState);
+		delete sky;
 	}
 	colormaps.Delete(appState);
 	stagingBuffers.Delete(appState);

@@ -2912,6 +2912,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	appState.FromEngine.viewmodel_scale0 = d_lists.viewmodel_scale0;
 	appState.FromEngine.viewmodel_scale1 = d_lists.viewmodel_scale1;
 	appState.FromEngine.viewmodel_scale2 = d_lists.viewmodel_scale2;
+	appState.FromEngine.sbar_on_hand = d_lists.sbar_on_hand;
 
     appState.VertexTransform.m[0] = appState.Scale;
     appState.VertexTransform.m[6] = -appState.Scale;
@@ -3580,6 +3581,21 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		leftHandVerticesSize = appState.HandTrackers[LEFT_TRACKED_HAND].VerticesSize();
 		rightHandVerticesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].VerticesSize();
 	}
+	statusBarVerticesSize = 0;
+	if (appState.HandTrackingEnabled && appState.Focused && appState.Mode == AppWorldMode && !(!appState.FromEngine.immersive_hands_enabled && key_dest == key_game))
+	{
+		if (appState.FromEngine.dominant_hand_left)
+		{
+			if (appState.RightController.PoseIsValid)
+			{
+				statusBarVerticesSize = 8 * 3 * sizeof(float);
+			}
+		}
+		else if (appState.LeftController.PoseIsValid)
+		{
+			statusBarVerticesSize = 8 * 3 * sizeof(float);
+		}
+	}
 	skyVerticesSize = 0;
 	if (appState.Scene.lastSky >= 0)
 	{
@@ -3591,7 +3607,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	}
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
 	cutoutVerticesSize = (d_lists.last_cutout_vertex + 1) * sizeof(float);
-    verticesSize = floorVerticesSize + leftControllerVerticesSize + rightControllerVerticesSize + leftHandVerticesSize + rightHandVerticesSize + skyVerticesSize + coloredVerticesSize + cutoutVerticesSize;
+    verticesSize = floorVerticesSize + leftControllerVerticesSize + rightControllerVerticesSize + leftHandVerticesSize + rightHandVerticesSize + statusBarVerticesSize + skyVerticesSize + coloredVerticesSize + cutoutVerticesSize;
     if (verticesSize > 0)
     {
         perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
@@ -3622,6 +3638,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     {
 		rightHandAttributesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].AttributesSize();
     }
+	statusBarAttributesSize = 0;
+	if (statusBarVerticesSize > 0)
+	{
+		statusBarAttributesSize = 8 * 2 * sizeof(float);
+	}
 	skyAttributesSize = 0;
 	if (appState.Scene.lastSky >= 0)
 	{
@@ -3632,7 +3653,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		skyAttributesSize += appState.Scene.loadedSkyRGBA.count * 2 * sizeof(float);
 	}
 	aliasAttributesSize = (d_lists.last_alias_attribute + 1) * sizeof(float);
-    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + leftHandAttributesSize + rightHandAttributesSize + skyAttributesSize + aliasAttributesSize;
+    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + leftHandAttributesSize + rightHandAttributesSize + statusBarAttributesSize + skyAttributesSize + aliasAttributesSize;
     if (attributesSize > 0)
     {
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
@@ -3669,6 +3690,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	if (rightHandVerticesSize > 0)
 	{
 		rightHandIndicesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].IndicesSize();
+	}
+	statusBarIndicesSize = 0;
+	if (statusBarVerticesSize > 0)
+	{
+		statusBarIndicesSize = 12;
 	}
     coloredIndices8Size = lastColoredIndex8 + 1;
     coloredIndices16Size = (lastColoredIndex16 + 1) * sizeof(uint16_t);
@@ -3764,10 +3790,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 
 	leftHandIndicesSize *= sizeof(uint16_t);
 	rightHandIndicesSize *= sizeof(uint16_t);
+	statusBarIndicesSize *= sizeof(uint16_t);
     if (appState.IndexTypeUInt8Enabled)
     {
         indices8Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + coloredIndices8Size + cutoutIndices8Size;
-        indices16Size = leftHandIndicesSize + rightHandIndicesSize + coloredIndices16Size + cutoutIndices16Size;
+        indices16Size = leftHandIndicesSize + rightHandIndicesSize + statusBarIndicesSize + coloredIndices16Size + cutoutIndices16Size;
     }
     else
     {
@@ -3775,7 +3802,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         leftControllerIndicesSize *= sizeof(uint16_t);
         rightControllerIndicesSize *= sizeof(uint16_t);
         indices8Size = 0;
-        indices16Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + leftHandIndicesSize + rightHandIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
+        indices16Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + leftHandIndicesSize + rightHandIndicesSize + statusBarIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
     }
 	indices32Size = coloredIndices32Size + cutoutIndices32Size;
 
@@ -3796,6 +3823,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         perFrame.indices32 = perFrame.cachedIndices32.GetIndexBuffer(appState, indices32Size);
     }
     size += indices32Size;
+
+	if (statusBarVerticesSize > 0)
+	{
+		size += appState.ConsoleWidth * (SBAR_HEIGHT + 24) * 4;
+	}
 
     // Add extra space (and also realign to a 8-byte boundary) to compensate for alignment among 8-, 16-, 32- and 64-bit data:
     size += 32;

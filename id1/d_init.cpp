@@ -191,6 +191,8 @@ void D_SetupFrame (void)
 			d_lists.viewmodel_scale0 = cl.immersive_viewmodel_scale[0];
 			d_lists.viewmodel_scale1 = cl.immersive_viewmodel_scale[1];
 			d_lists.viewmodel_scale2 = cl.immersive_viewmodel_scale[2];
+
+			d_lists.sbar_on_hand = (cl_immersive_sbar_on_hand.value != 0);
 		}
 	}
 }

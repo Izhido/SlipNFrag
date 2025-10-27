@@ -152,6 +152,7 @@ struct Scene
 	VkDeviceSize rightControllerVerticesSize;
 	VkDeviceSize leftHandVerticesSize;
 	VkDeviceSize rightHandVerticesSize;
+	VkDeviceSize statusBarVerticesSize;
 	VkDeviceSize skyVerticesSize;
 	VkDeviceSize coloredVerticesSize;
 	VkDeviceSize cutoutVerticesSize;
@@ -161,6 +162,7 @@ struct Scene
 	VkDeviceSize rightControllerAttributesSize;
 	VkDeviceSize leftHandAttributesSize;
 	VkDeviceSize rightHandAttributesSize;
+	VkDeviceSize statusBarAttributesSize;
 	VkDeviceSize skyAttributesSize;
 	VkDeviceSize aliasAttributesSize;
 	VkDeviceSize attributesSize;
@@ -171,6 +173,7 @@ struct Scene
 	VkDeviceSize rightControllerIndicesSize;
 	VkDeviceSize leftHandIndicesSize;
 	VkDeviceSize rightHandIndicesSize;
+	VkDeviceSize statusBarIndicesSize;
 	VkDeviceSize coloredIndices8Size;
 	VkDeviceSize coloredIndices16Size;
 	VkDeviceSize coloredIndices32Size;
