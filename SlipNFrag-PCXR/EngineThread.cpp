@@ -109,7 +109,7 @@ void runEngine(AppState_pcxr* appState)
 				originDeltaX = appState->CameraLocation.pose.position.x / scale;
 				originDeltaY = -appState->CameraLocation.pose.position.z / scale;
 				originDeltaZ = appState->CameraLocation.pose.position.y / scale;
-				handsAvailable = (appState->LeftController.PoseIsValid && appState->RightController.PoseIsValid);
+				handsAvailable = ((Cvar_VariableValue("hands_enabled") != 0) && appState->LeftController.PoseIsValid && appState->RightController.PoseIsValid);
 				if (handsAvailable)
 				{
 					AppState::AnglesFromQuaternion(appState->LeftController.SpaceLocation.pose.orientation, leftHandYaw, leftHandPitch, leftHandRoll);
@@ -155,25 +155,28 @@ void runEngine(AppState_pcxr* appState)
 			cl.viewangles[YAW] = yaw;
 			cl.viewangles[PITCH] = pitch;
 			cl.viewangles[ROLL] = roll;
-			cl_allow_immersive = true;
-			cl_immersive_origin_delta[0] = originDeltaX;
-			cl_immersive_origin_delta[1] = originDeltaY;
-			cl_immersive_origin_delta[2] = originDeltaZ;
-			cl_immersive_hands_available = handsAvailable;
-			if (cl_immersive_hands_available)
+			cl_allow_immersive = (Cvar_VariableValue("immersive_enabled") != 0);
+			if (cl_allow_immersive)
 			{
-				cl_immersive_left_hand_delta[0] = leftHandDeltaX;
-				cl_immersive_left_hand_delta[1] = leftHandDeltaY;
-				cl_immersive_left_hand_delta[2] = leftHandDeltaZ;
-				cl_immersive_left_hand_angles[YAW] = leftHandYaw;
-				cl_immersive_left_hand_angles[PITCH] = leftHandPitch;
-				cl_immersive_left_hand_angles[ROLL] = leftHandRoll;
-				cl_immersive_right_hand_delta[0] = rightHandDeltaX;
-				cl_immersive_right_hand_delta[1] = rightHandDeltaY;
-				cl_immersive_right_hand_delta[2] = rightHandDeltaZ;
-				cl_immersive_right_hand_angles[YAW] = rightHandYaw;
-				cl_immersive_right_hand_angles[PITCH] = rightHandPitch;
-				cl_immersive_right_hand_angles[ROLL] = rightHandRoll;
+				cl_immersive_origin_delta[0] = originDeltaX;
+				cl_immersive_origin_delta[1] = originDeltaY;
+				cl_immersive_origin_delta[2] = originDeltaZ;
+				cl_immersive_hands_available = handsAvailable;
+				if (cl_immersive_hands_available)
+				{
+					cl_immersive_left_hand_delta[0] = leftHandDeltaX;
+					cl_immersive_left_hand_delta[1] = leftHandDeltaY;
+					cl_immersive_left_hand_delta[2] = leftHandDeltaZ;
+					cl_immersive_left_hand_angles[YAW] = leftHandYaw;
+					cl_immersive_left_hand_angles[PITCH] = leftHandPitch;
+					cl_immersive_left_hand_angles[ROLL] = leftHandRoll;
+					cl_immersive_right_hand_delta[0] = rightHandDeltaX;
+					cl_immersive_right_hand_delta[1] = rightHandDeltaY;
+					cl_immersive_right_hand_delta[2] = rightHandDeltaZ;
+					cl_immersive_right_hand_angles[YAW] = rightHandYaw;
+					cl_immersive_right_hand_angles[PITCH] = rightHandPitch;
+					cl_immersive_right_hand_angles[ROLL] = rightHandRoll;
+				}
 			}
 			auto updated = Host_FrameUpdate(frame_lapse);
 			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:

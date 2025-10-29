@@ -68,7 +68,7 @@ void runEngine(AppState_oxr* appState, struct android_app* app)
 			}
 			cl_allow_immersive = false;
 			auto updated = Host_FrameUpdate(frame_lapse);
-			if (sys_quitcalled || sys_errormessage.length() > 0)
+			if (sys_quitcalled || !sys_errormessage.empty())
 			{
 				GameActivity_finish(app->activity);
 				appState->CallExitFunction = true;
@@ -193,7 +193,7 @@ void runEngine(AppState_oxr* appState, struct android_app* app)
 			auto previousYaw = cl.viewangles[YAW];
 			auto previousPitch = cl.viewangles[PITCH];
 			auto previousRoll = cl.viewangles[ROLL];
-			if (sys_quitcalled || sys_errormessage.length() > 0)
+			if (sys_quitcalled || !sys_errormessage.empty())
 			{
 				GameActivity_finish(app->activity);
 				appState->CallExitFunction = true;

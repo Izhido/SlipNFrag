@@ -144,30 +144,63 @@ void AppState_pcxr::RenderScreen(ScreenPerFrame& perFrame)
 		{
 			auto source = Scene.consoleData.data();
 			auto target = (uint32_t*)(perFrame.stagingBuffer.mapped);
-			auto count = ConsoleWidth * ConsoleHeight;
-			auto found = false;
-			while (count > 0)
+			if (Scene.statusBarVerticesSize > 0)
 			{
-				auto entry = *source++;
-				count--;
-				if (entry != 255)
+				auto count = ConsoleWidth * (ConsoleHeight - (SBAR_HEIGHT + 24));
+				auto found = false;
+				while (count > 0)
 				{
-					found = true;
-					auto leading = ConsoleWidth * ConsoleHeight - count + 1;
-					std::fill(target, target + leading, 0);
-					target += leading;
-					*target++ = Scene.paletteData[entry];
-					while (count > 0)
+					auto entry = *source++;
+					count--;
+					if (entry != 255)
 					{
-						entry = *source++;
+						found = true;
+						auto leading = ConsoleWidth * (ConsoleHeight - (SBAR_HEIGHT + 24)) - count + 1;
+						std::fill(target, target + leading, 0);
+						target += leading;
 						*target++ = Scene.paletteData[entry];
-						count--;
+						while (count > 0)
+						{
+							entry = *source++;
+							*target++ = Scene.paletteData[entry];
+							count--;
+						}
 					}
 				}
+				if (!found)
+				{
+					std::fill(target, target + ConsoleWidth * (ConsoleHeight - (SBAR_HEIGHT + 24)), 0);
+					target += ConsoleWidth * (ConsoleHeight - (SBAR_HEIGHT + 24));
+				}
+				std::fill(target, target + ConsoleWidth * (SBAR_HEIGHT + 24), 0);
 			}
-			if (!found)
+			else
 			{
-				std::fill(target, target + ConsoleWidth * ConsoleHeight, 0);
+				auto count = ConsoleWidth * ConsoleHeight;
+				auto found = false;
+				while (count > 0)
+				{
+					auto entry = *source++;
+					count--;
+					if (entry != 255)
+					{
+						found = true;
+						auto leading = ConsoleWidth * ConsoleHeight - count + 1;
+						std::fill(target, target + leading, 0);
+						target += leading;
+						*target++ = Scene.paletteData[entry];
+						while (count > 0)
+						{
+							entry = *source++;
+							*target++ = Scene.paletteData[entry];
+							count--;
+						}
+					}
+				}
+				if (!found)
+				{
+					std::fill(target, target + ConsoleWidth * ConsoleHeight, 0);
+				}
 			}
 			{
 				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);

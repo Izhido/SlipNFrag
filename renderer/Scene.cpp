@@ -3582,7 +3582,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 		rightHandVerticesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].VerticesSize();
 	}
 	statusBarVerticesSize = 0;
-	if (appState.HandTrackingEnabled && appState.Focused && appState.Mode == AppWorldMode && !(!appState.FromEngine.immersive_hands_enabled && key_dest == key_game))
+	if (appState.Focused && appState.Mode == AppWorldMode && !(!appState.FromEngine.immersive_hands_enabled && key_dest == key_game))
 	{
 		if (appState.FromEngine.dominant_hand_left)
 		{
