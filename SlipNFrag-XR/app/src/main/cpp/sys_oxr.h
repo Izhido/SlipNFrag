@@ -10,3 +10,4 @@ extern int sys_nogamedata;
 extern int sys_quitcalled;
 
 void Sys_Init(int argc, char** argv);
+void Sys_Terminate();

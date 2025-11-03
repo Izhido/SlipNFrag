@@ -354,3 +354,51 @@ void Sys_Init(int argc, char** argv)
 	cl_immersivemenudrawfn = CL_ImmersiveMenuDraw;
 	cl_immersivemenukeyfn = CL_ImmersiveMenuKey;
 }
+
+extern std::unordered_map<std::string_view, xcommand_t>	cmd_functions;
+extern std::unordered_map<std::string_view, cvar_t*> cvar_index;
+
+void COM_ClearFilesystem (void);
+
+extern int	m_main_cursor;
+extern int	m_singleplayer_cursor;
+extern int		load_cursor;
+extern int	m_multiplayer_cursor;
+extern int	m_net_cursor;
+extern int		options_cursor;
+extern int		keys_cursor;
+extern int		serialConfig_cursor;
+extern int		modemConfig_cursor;
+extern int		gameoptions_cursor;
+extern int		slist_cursor;
+
+void Sys_Terminate()
+{
+	sys_quitcalled = 0;
+	sys_errormessage = "";
+	imm_cursor = 0;
+	slist_cursor = 0;
+	gameoptions_cursor = 0;
+	modemConfig_cursor = 0;
+	serialConfig_cursor = 0;
+	keys_cursor = 0;
+	options_cursor = 0;
+	m_net_cursor = 0;
+	m_multiplayer_cursor = 0;
+	load_cursor = 0;
+	m_singleplayer_cursor = 0;
+	m_main_cursor = 0;
+	cmd_functions.clear();
+	cvar_index.clear();
+	cvar_vars = nullptr;
+	COM_ClearFilesystem ();
+	for (auto& handle : sys_handles)
+	{
+		if (handle != nullptr)
+		{
+			fclose(handle);
+		}
+	}
+	sys_handles.clear();
+	frame_lapse = 1.0f / 60;
+}

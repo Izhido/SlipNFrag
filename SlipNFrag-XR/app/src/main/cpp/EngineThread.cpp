@@ -70,8 +70,8 @@ void runEngine(AppState_oxr* appState, struct android_app* app)
 			auto updated = Host_FrameUpdate(frame_lapse);
 			if (sys_quitcalled || !sys_errormessage.empty())
 			{
+				appState->Terminated = true;
 				GameActivity_finish(app->activity);
-				appState->CallExitFunction = true;
 				break;
 			}
 			if (updated)
@@ -195,8 +195,8 @@ void runEngine(AppState_oxr* appState, struct android_app* app)
 			auto previousRoll = cl.viewangles[ROLL];
 			if (sys_quitcalled || !sys_errormessage.empty())
 			{
+				appState->Terminated = true;
 				GameActivity_finish(app->activity);
-				appState->CallExitFunction = true;
 				break;
 			}
 			if (updated)

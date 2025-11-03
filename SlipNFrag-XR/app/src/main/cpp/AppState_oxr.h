@@ -8,7 +8,7 @@ struct AppState_oxr : public AppState
 	pid_t EngineThreadId;
 	pid_t RenderThreadId;
 	PFN_xrSetAndroidApplicationThreadKHR xrSetAndroidApplicationThreadKHR;
-	bool CallExitFunction;
+	bool Terminated;
 
 	void RenderScreen(ScreenPerFrame& perFrame);
 };

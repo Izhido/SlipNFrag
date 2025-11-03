@@ -188,7 +188,6 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 		case APP_CMD_DESTROY:
 			appState->Logger->Info("onDestroy()");
 			appState->Logger->Info("    APP_CMD_DESTROY");
-			appState->CallExitFunction = true;
 			break;
 
 		case APP_CMD_INIT_WINDOW:
@@ -215,6 +214,13 @@ void android_main(struct android_app* app)
 	app->activity->vm->AttachCurrentThread(&Env, nullptr);
 
 	prctl(PR_SET_NAME, (long)"android_main", 0, 0, 0);
+
+	if (appState.Terminated)
+	{
+		// If the app was marked as terminated but still in memory, clean everything up
+		// to allow it to start from scratch:
+		appState = { };
+	}
 
 	appState.FileLoader = new FileLoader_oxr(app);
 	appState.Logger = new Logger_oxr();
@@ -1674,7 +1680,7 @@ void android_main(struct android_app* app)
 						D_ResetLists();
 						d_uselists = false;
 						sb_onconsole = false;
-						appState.CallExitFunction = true;
+						appState.Terminated = true;
 					}
 					appState.PreviousMode = appState.Mode;
 				}
@@ -2747,12 +2753,12 @@ void android_main(struct android_app* app)
 	catch (const std::exception& ex)
 	{
 		appState.Logger->Error("Caught exception: %s", ex.what());
-		appState.CallExitFunction = true;
+		appState.Terminated = true;
 	}
 	catch (...)
 	{
 		appState.Logger->Error("Caught unknown exception");
-		appState.CallExitFunction = true;
+		appState.Terminated = true;
 	}
 
 	{
@@ -2765,6 +2771,11 @@ void android_main(struct android_app* app)
 		SNDDMA_Shutdown();
 	}
 
+	if (appState.Terminated)
+	{
+		Sys_Terminate();
+	}
+
 	delete appState.Logger;
 	appState.Logger = nullptr;
 
@@ -2772,10 +2783,4 @@ void android_main(struct android_app* app)
 	appState.FileLoader = nullptr;
 
 	app->activity->vm->DetachCurrentThread();
-
-	if (appState.CallExitFunction)
-	{
-		__android_log_print(ANDROID_LOG_ERROR, Logger_oxr::tag, "exit(-1) called");
-		exit(-1); // Not redundant - app won't truly exit Android unless forcefully terminated
-	}
 }

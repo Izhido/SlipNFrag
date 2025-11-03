@@ -1893,4 +1893,31 @@ void COM_InitFilesystem (void)
 		proghack = true;
 }
 
+void COM_ClearFilesystem (void)
+{
+	searchpath_t    *s;
+
+	for (s=com_searchpaths ; s ; s=s->next)
+	{
+		if (s->pack != NULL)
+		{
+			delete[] s->pack->files;
+		}
+	}
+	while (com_searchpaths != NULL)
+	{
+		auto next = com_searchpaths->next;
+		delete com_searchpaths;
+		com_searchpaths = next;
+	}
+	com_cmdline = "";
+	hipnotic = false;
+	rogue = false;
+	standard_quake = true;
+	msg_suppress_1 = 0;
+	static_registered = 1;
+	proghack = false;
+	com_modified = false;
+	largv.clear();
+}
 
