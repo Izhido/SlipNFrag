@@ -1,10 +1,10 @@
-#include "AppState_oxr.h"
-#include "vid_oxr.h"
+#include "AppState_xr.h"
+#include "vid_xr.h"
 #include "Constants.h"
 #include "DirectRect.h"
 #include "Locks.h"
 
-void AppState_oxr::RenderScreen(ScreenPerFrame& perFrame)
+void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 {
 	if (Mode == AppScreenMode || Mode == AppWorldMode)
 	{

@@ -275,7 +275,7 @@ void SV_LoadImmersiveViewmodels (void)
 // LibreQuake
 	imm_viewmodels.insert({"progs/v_shot.mdl,17894",{{ 0, 0, 0 }, { -3, 0, 10 }, { 1, 1, 1 }}});
 	imm_viewmodels.insert({"progs/v_shot2.mdl,9073",{{ 0, 0, 0 }, { -1, 0, 10 }, { 1, 1, 1 }}});
-	imm_viewmodels.insert({"progs/v_nail.mdl,53996",{{ 0, 0, 0 }, { 14, 0, 18 }, { 1, 1, 1 }}});
+	imm_viewmodels.insert({"progs/v_nail.mdl,53996",{{ 0, 0, 0 }, { -14, 0, 18 }, { 1, 1, 1 }}});
 	imm_viewmodels.insert({"progs/v_nail2.mdl,2792",{{ 0, 0, 0 }, { 1, 0, 21 }, { 1, 1, 1 }}});
 	imm_viewmodels.insert({"progs/v_rock.mdl,4650",{{ 0, 0, 0 }, { -6, 0, 16 }, { 1, 1, 1 }}});
 	imm_viewmodels.insert({"progs/v_rock2.mdl,8174",{{ -2, 0, 0 }, { -6, 0, 24 }, { 1, 1, 1 }}});

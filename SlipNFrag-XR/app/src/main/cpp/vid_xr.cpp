@@ -1,5 +1,5 @@
 #include "quakedef.h"
-#include "vid_oxr.h"
+#include "vid_xr.h"
 #include "d_local.h"
 #include "DirectRect.h"
 #include "Locks.h"

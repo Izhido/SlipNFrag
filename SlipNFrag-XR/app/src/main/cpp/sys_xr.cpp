@@ -1,10 +1,10 @@
 #include "quakedef.h"
-#include "sys_oxr.h"
+#include "sys_xr.h"
 #include <cerrno>
 #include <sys/stat.h>
 #include <android/log.h>
 #include "Locks.h"
-#include "Logger_oxr.h"
+#include "Logger_xr.h"
 
 int sys_argc;
 char** sys_argv;
@@ -140,7 +140,7 @@ void Sys_Error(const char* error, ...)
         }
         string.resize(needed + 1);
     }
-    __android_log_print(ANDROID_LOG_ERROR, Logger_oxr::tag, "Sys_Error: %s", string.data());
+    __android_log_print(ANDROID_LOG_ERROR, Logger_xr::tag, "Sys_Error: %s", string.data());
     sys_errormessage = string.data();
     Host_Shutdown();
 #ifdef USE_LONGJMP
@@ -178,7 +178,7 @@ void Sys_Printf(const char* fmt, ...)
         if (buffered[i] == '\n')
         {
             buffered[i] = 0;
-            __android_log_print(ANDROID_LOG_VERBOSE, Logger_oxr::tag, "%s", buffered.data() + start);
+            __android_log_print(ANDROID_LOG_VERBOSE, Logger_xr::tag, "%s", buffered.data() + start);
             start = i + 1;
         }
     }
@@ -349,7 +349,7 @@ void Sys_Init(int argc, char** argv)
     COM_InitArgv(argc, argv);
     parms.argc = com_argc;
     parms.argv = com_argv;
-    __android_log_print(ANDROID_LOG_VERBOSE, Logger_oxr::tag, "Host_Init");
+    __android_log_print(ANDROID_LOG_VERBOSE, Logger_xr::tag, "Host_Init");
     Host_Init(&parms);
 	cl_immersivemenudrawfn = CL_ImmersiveMenuDraw;
 	cl_immersivemenukeyfn = CL_ImmersiveMenuKey;
@@ -360,6 +360,8 @@ extern std::unordered_map<std::string_view, cvar_t*> cvar_index;
 
 void COM_ClearFilesystem (void);
 
+extern qboolean	scr_initialized;
+extern m_state_t m_state;
 extern int	m_main_cursor;
 extern int	m_singleplayer_cursor;
 extern int		load_cursor;
@@ -371,12 +373,27 @@ extern int		serialConfig_cursor;
 extern int		modemConfig_cursor;
 extern int		gameoptions_cursor;
 extern int		slist_cursor;
+extern double		oldrealtime;
+extern qboolean	r_skyinitialized;
+extern qboolean	r_skyRGBAinitialized;
+extern qboolean	r_skyboxinitialized;
+extern std::vector<byte> r_24to8table;
+extern std::unordered_map<std::string, qpic_t*> menu_cachepics;
+extern std::list<sfx_t> known_sfx;
+extern std::unordered_map<std::string, std::list<sfx_t>::iterator> known_sfx_index;
+extern sfx_t		*ambient_sfx[NUM_AMBIENTS];
 
 void Sys_Terminate()
 {
 	sys_quitcalled = 0;
 	sys_errormessage = "";
+	sys_nogamedata = 0;
+	known_sfx_index.clear();
+	known_sfx.clear();
+	Q_memset(ambient_sfx, 0, sizeof(ambient_sfx));
 	imm_cursor = 0;
+	oldrealtime = 0;
+	realtime = 0;
 	slist_cursor = 0;
 	gameoptions_cursor = 0;
 	modemConfig_cursor = 0;
@@ -388,10 +405,47 @@ void Sys_Terminate()
 	load_cursor = 0;
 	m_singleplayer_cursor = 0;
 	m_main_cursor = 0;
+	m_state = m_none;
+	key_dest = key_game;
+	for (auto& keybinding : keybindings)
+	{
+		delete[] keybinding;
+		keybinding = nullptr;
+	}
+	for (auto& entry : menu_cachepics)
+	{
+		auto data = (byte*)entry.second;
+		delete[] data;
+	}
+	menu_cachepics.clear();
+	snd_initialized = false;
+	r_skyinitialized = false;
+	r_skyRGBAinitialized = false;
+	r_skyboxinitialized = false;
+	host_initialized = false;
+	scr_disabled_for_loading = false;
+	scr_fullupdate = 0;
+	con_initialized = false;
+	scr_initialized = false;
+	Key_ClearStates ();
+	Cmd_ClearAliases ();
 	cmd_functions.clear();
 	cvar_index.clear();
 	cvar_vars = nullptr;
 	COM_ClearFilesystem ();
+	r_24to8table.clear();
+	cls = { };
+	cl.Clear();
+	sv.Clear();
+    com_token = "";
+    com_gamedir = "";
+    com_filesize = 0;
+    standard_quake = false;
+    rogue = false;
+    hipnotic = false;
+    msg_readcount = 0;
+    msg_badread = false;
+    cmd_source = src_command;
 	for (auto& handle : sys_handles)
 	{
 		if (handle != nullptr)
@@ -402,3 +456,4 @@ void Sys_Terminate()
 	sys_handles.clear();
 	frame_lapse = 1.0f / 60;
 }
+

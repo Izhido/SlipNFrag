@@ -626,3 +626,22 @@ int Cmd_CheckParm (char *parm)
 			
 	return 0;
 }
+
+
+/*
+================
+Cmd_ClearAliases
+================
+*/
+
+void Cmd_ClearAliases (void)
+{
+	cmdalias_t	*a;
+
+	while (cmd_alias != nullptr)
+	{
+		a = cmd_alias;
+		cmd_alias = cmd_alias->next;
+		delete a;
+	}
+}

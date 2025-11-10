@@ -1,7 +1,7 @@
 #include "EngineThread.h"
-#include "AppState_oxr.h"
-#include "sys_oxr.h"
-#include "vid_oxr.h"
+#include "AppState_xr.h"
+#include "sys_xr.h"
+#include "vid_xr.h"
 #include "AppInput.h"
 #include "r_local.h"
 #include <pthread.h>
@@ -11,7 +11,7 @@
 #include <game-activity/native_app_glue/android_native_app_glue.h>
 #include "Locks.h"
 
-void runEngine(AppState_oxr* appState, struct android_app* app)
+void runEngine(AppState_xr* appState, struct android_app* app)
 {
 	prctl(PR_SET_NAME, (long)"runEngine", 0, 0, 0);
 
@@ -48,11 +48,11 @@ void runEngine(AppState_oxr* appState, struct android_app* app)
 		}
 		if (mode == AppScreenMode)
 		{
-			if (appState->PreviousTime < 0)
+			if (appState->PreviousTime == 0)
 			{
 				appState->PreviousTime = GetTime();
 			}
-			else if (appState->CurrentTime < 0)
+			else if (appState->CurrentTime == 0)
 			{
 				appState->CurrentTime = GetTime();
 			}

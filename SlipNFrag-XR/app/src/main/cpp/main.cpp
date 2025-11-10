@@ -1,7 +1,7 @@
-#include "AppState_oxr.h"
+#include "AppState_xr.h"
 #include "Utils.h"
-#include "FileLoader_oxr.h"
-#include "Logger_oxr.h"
+#include "FileLoader_xr.h"
+#include "Logger_xr.h"
 #include <android/log.h>
 #include <game-activity/native_app_glue/android_native_app_glue.h>
 #include <sys/prctl.h>
@@ -11,10 +11,10 @@
 #include "AppInput.h"
 #include "EngineThread.h"
 #include "Locks.h"
-#include "sys_oxr.h"
+#include "sys_xr.h"
 #include "r_local.h"
-#include "in_oxr.h"
-#include "vid_oxr.h"
+#include "in_xr.h"
+#include "vid_xr.h"
 #include "MemoryAllocateInfo.h"
 
 extern int sound_started;
@@ -81,7 +81,7 @@ const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer
 		if (baseHeader->type == XR_TYPE_EVENT_DATA_EVENTS_LOST)
 		{
 			auto const eventsLost = reinterpret_cast<const XrEventDataEventsLost*>(baseHeader);
-			__android_log_print(ANDROID_LOG_WARN, Logger_oxr::tag, "%d events lost", eventsLost->lostEventCount);
+			__android_log_print(ANDROID_LOG_WARN, Logger_xr::tag, "%d events lost", eventsLost->lostEventCount);
 		}
 
 		return baseHeader;
@@ -141,14 +141,14 @@ static VkBool32 DebugMessengerCallback(
 		typeName += "DEVICE ADDRESS BINDING ";
 	}
 
-	__android_log_print(priority, Logger_oxr::tag, "[%s%s] %s", typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
+	__android_log_print(priority, Logger_xr::tag, "[%s%s] %s", typeName.c_str(), severityName.c_str(), pCallbackData->pMessage);
 	
 	return VK_FALSE;
 }
 
 static void AppHandleCommand(struct android_app* app, int32_t cmd)
 {
-	auto appState = (AppState_oxr*)app->userData;
+	auto appState = (AppState_xr*)app->userData;
 	double delta;
 
 	switch (cmd)
@@ -206,7 +206,7 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 	}
 }
 
-AppState_oxr appState { -1, -1, -1 };
+AppState_xr appState {-1, -1, -1 };
 
 void android_main(struct android_app* app)
 {
@@ -222,8 +222,8 @@ void android_main(struct android_app* app)
 		appState = { };
 	}
 
-	appState.FileLoader = new FileLoader_oxr(app);
-	appState.Logger = new Logger_oxr();
+	appState.FileLoader = new FileLoader_xr(app);
+	appState.Logger = new Logger_xr();
 
 	try
 	{
@@ -1558,7 +1558,7 @@ void android_main(struct android_app* app)
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "OXR 1.0.30";
+						sys_version = "XR 1.1.31";
 						const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 						std::vector<std::string> arguments;
 						arguments.emplace_back("SlipNFrag");

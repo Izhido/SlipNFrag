@@ -1,6 +1,6 @@
 #include "AppInput.h"
-#include "AppState_oxr.h"
-#include "in_oxr.h"
+#include "AppState_xr.h"
+#include "in_xr.h"
 #include "Utils.h"
 #include "Locks.h"
 
@@ -35,7 +35,7 @@ void AppInput::AddCommandInput(const char* command)
 	entry.command = command;
 }
 
-void AppInput::Handle(AppState_oxr& appState, bool keyPressHandled)
+void AppInput::Handle(AppState_xr& appState, bool keyPressHandled)
 {
 	std::lock_guard<std::mutex> lock(Locks::InputMutex);
 	

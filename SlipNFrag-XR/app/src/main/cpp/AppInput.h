@@ -14,5 +14,5 @@ struct AppInput
 
 	static void AddKeyInput(int key, int down);
 	static void AddCommandInput(const char* command);
-	static void Handle(struct AppState_oxr& appState, bool triggerHandled);
+	static void Handle(struct AppState_xr& appState, bool triggerHandled);
 };

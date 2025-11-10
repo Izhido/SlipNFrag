@@ -1,9 +1,9 @@
-#include "Logger_oxr.h"
+#include "Logger_xr.h"
 #include <android/log.h>
 
-const char* Logger_oxr::tag = "slipnfrag_native";
+const char* Logger_xr::tag = "slipnfrag_native";
 
-void Logger_oxr::Verbose(const char* message, ...)
+void Logger_xr::Verbose(const char* message, ...)
 {
 	va_list vl;
 	va_start(vl, message);
@@ -11,7 +11,7 @@ void Logger_oxr::Verbose(const char* message, ...)
 	va_end(vl);
 }
 
-void Logger_oxr::Info(const char* message, ...)
+void Logger_xr::Info(const char* message, ...)
 {
 	va_list vl;
 	va_start(vl, message);
@@ -19,7 +19,7 @@ void Logger_oxr::Info(const char* message, ...)
 	va_end(vl);
 }
 
-void Logger_oxr::Warn(const char* message, ...)
+void Logger_xr::Warn(const char* message, ...)
 {
 	va_list vl;
 	va_start(vl, message);
@@ -27,7 +27,7 @@ void Logger_oxr::Warn(const char* message, ...)
 	va_end(vl);
 }
 
-void Logger_oxr::Error(const char* message, ...)
+void Logger_xr::Error(const char* message, ...)
 {
 	va_list vl;
 	va_start(vl, message);

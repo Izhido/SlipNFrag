@@ -2,7 +2,7 @@
 
 #include "Logger.h"
 
-struct Logger_oxr : public Logger
+struct Logger_xr : public Logger
 {
 	static const char* tag;
 

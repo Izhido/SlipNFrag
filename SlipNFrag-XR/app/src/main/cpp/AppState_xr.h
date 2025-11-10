@@ -3,7 +3,7 @@
 #include "AppState.h"
 #include "FileLoader.h"
 
-struct AppState_oxr : public AppState
+struct AppState_xr : public AppState
 {
 	pid_t EngineThreadId;
 	pid_t RenderThreadId;
