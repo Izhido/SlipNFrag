@@ -109,7 +109,7 @@ cd C:\Folder\Where\Everything\Is\Installed
 
 ### PCXR
 
-* Extract and copy all files in the package anywhere you wish in your machine. (If desired, you can also copy them in your `ID1` folder - just be aware that there are several PNG files and an extra `shaders` folder which might overwrite stuff in your existing Quake folder.)
+* Extract and copy all files in the package anywhere you wish in your machine. (If desired, you can also copy them in your `ID1` folder.)
 
 * Connect your Meta Quest device to your computer via Meta Quest Link. Ensure that your boundaries and the ground level in your device fits the area you'll use to play the game.
 

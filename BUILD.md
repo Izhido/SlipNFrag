@@ -76,7 +76,7 @@ The following is the list of components, and their version numbers, required to 
 
 * Android SDK Build-Tools **36.0.0**
 
-* OpenXR SDK **1.1.47**
+* OpenXR SDK **1.1.53**
 
 * stb (latest version gathered from https://github.com/nothings/stb )
 
