@@ -759,17 +759,17 @@ int ED_NewString(int size)
 		}
 	}
 	auto offset = pr_string_block_used;
+	Q_memset(pr_strings + offset, 0, size);
 	pr_string_block_used += size;
 	return offset;
 }
 
 void PR_LoadStrings(char* source, int size)
 {
-	auto to_use = (size + 15) & ~15;
-	auto to_allocate = to_use;
-	if (pr_string_block_used + to_allocate > pr_string_block.size())
+	auto to_allocate = (size + 15) & ~15;
+	if (to_allocate > pr_string_block.size())
 	{
-		pr_string_block.resize(pr_string_block.size() + to_allocate);
+		pr_string_block.resize(to_allocate);
 		pr_strings = pr_string_block.data();
 		if (pr_fielddefs != nullptr)
 		{
@@ -780,8 +780,13 @@ void PR_LoadStrings(char* source, int size)
 			}
 		}
 	}
-	pr_string_block_used += to_use;
+	pr_string_block_used = to_allocate;
 	Q_memcpy(pr_strings, source, size);
+	auto remaining = pr_string_block.size() - pr_string_block_used;
+	if (remaining > 0)
+	{
+		Q_memset(pr_strings + pr_string_block_used, 0, (int)remaining);
+	}
 }
 
 /*

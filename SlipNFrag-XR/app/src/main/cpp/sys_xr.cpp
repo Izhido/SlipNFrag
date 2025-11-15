@@ -5,6 +5,7 @@
 #include <android/log.h>
 #include "Locks.h"
 #include "Logger_xr.h"
+#include "d_lists.h"
 
 int sys_argc;
 char** sys_argv;
@@ -389,6 +390,16 @@ void Sys_Terminate()
 	sys_quitcalled = 0;
 	sys_errormessage = "";
 	sys_nogamedata = 0;
+	pr_edict_size = 0;
+	pr_globals = nullptr;
+	pr_global_struct = nullptr;
+	pr_statements = nullptr;
+	pr_globaldefs = nullptr;
+	pr_fielddefs = nullptr;
+	pr_strings = nullptr;
+	pr_functions = nullptr;
+	progs = nullptr;
+	D_ResetLists();
 	delete shm;
 	shm = nullptr;
 	known_sfx_index.clear();

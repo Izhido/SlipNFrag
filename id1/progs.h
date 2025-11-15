@@ -90,7 +90,6 @@ char	*ED_NewString (const char *string);
 // returns a copy of the string allocated from the server's string heap
 
 int ED_NewString(int size);
-void ED_LoadStrings(char* source, int size);
 
 void ED_Print (edict_t *ed);
 void ED_Write (int f, edict_t *ed);
