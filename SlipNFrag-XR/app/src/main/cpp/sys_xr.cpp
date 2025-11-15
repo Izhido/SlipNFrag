@@ -379,6 +379,7 @@ extern qboolean	r_skyRGBAinitialized;
 extern qboolean	r_skyboxinitialized;
 extern std::vector<byte> r_24to8table;
 extern std::unordered_map<std::string, qpic_t*> menu_cachepics;
+extern std::list<model_t> mod_known;
 extern std::list<sfx_t> known_sfx;
 extern std::unordered_map<std::string, std::list<sfx_t>::iterator> known_sfx_index;
 extern sfx_t		*ambient_sfx[NUM_AMBIENTS];
@@ -388,9 +389,20 @@ void Sys_Terminate()
 	sys_quitcalled = 0;
 	sys_errormessage = "";
 	sys_nogamedata = 0;
+	delete shm;
+	shm = nullptr;
 	known_sfx_index.clear();
+	for (auto& s : known_sfx)
+	{
+		delete[] s.data;
+	}
 	known_sfx.clear();
 	Q_memset(ambient_sfx, 0, sizeof(ambient_sfx));
+	for (auto& mod : mod_known)
+	{
+		if (mod.type == mod_alias) delete[] mod.extradata;
+	}
+	mod_known.clear();
 	imm_cursor = 0;
 	oldrealtime = 0;
 	realtime = 0;
