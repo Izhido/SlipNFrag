@@ -272,7 +272,7 @@ void SV_LoadImmersiveViewmodels (void)
 	imm_viewmodels.insert({"progs/v_laserg40fps.mdl,18484",{{ 5, 0, 0 }, { -7, 0, 14 }, { 1, 1, 1 }}});
 	imm_viewmodels.insert({"progs/v_plasma.mdl,25190",{{ 1, 0, 0 }, { 9, 0, 14 }, { 1, 1, 1 }}});
 
-// LibreQuake
+// LibreQuake (0.0.9)
 	imm_viewmodels.insert({"progs/v_shot.mdl,17894",{{ 0, 0, 0 }, { -3, 0, 10 }, { 1, 1, 1 }}});
 	imm_viewmodels.insert({"progs/v_shot2.mdl,9073",{{ 0, 0, 0 }, { -1, 0, 10 }, { 1, 1, 1 }}});
 	imm_viewmodels.insert({"progs/v_nail.mdl,53996",{{ 0, 0, 0 }, { -14, 0, 18 }, { 1, 1, 1 }}});

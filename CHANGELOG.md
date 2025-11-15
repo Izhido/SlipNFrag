@@ -1,6 +1,23 @@
 # Changelog
 
-## Version **1.0.30**:
+## Version **1.1.31**:
+
+* Weapons in the game can now be wielded in the hands of the player, in the (now renamed as) XR and PCXR versions. Support for most weapons in the original game, the Mission Packs, and mods based on the latest version of Arcane Dimensions, Alkaline, Copper and LibreQuake is included within the engine. (Axe-style weapons are not, however, supported in this release.)
+    * Players can add support for other weapons in other mods by uploading a "viewmodels.txt" file with the weapon definition and transformations. 
+    * Mod creators are also encouraged to add a "viewmodels.txt" file with their own weapon definitions to their pakfiles.
+* Player's hands will also be displayed along with the weapon, for any devices running the XR version that supports the functionality (which, unfortunately, do not include the original Meta Quest.)
+* The player is also able to configure which hand can be used to hold the weapon (right or left) in the new "Immersive" options menu in game. This also includes options on whether to show the player's hands, or to turn off the functionality off entirely.
+* The in-game status bar will now be tied to the player's off hand - left hand for right hand weapon players, and viceversa. 
+* BREAKING CHANGE: Increased the version number from the network protocol from 'SnF'17 to 'SnF'18, to accomodate for the new weapons in hands functionality.
+* The PCXR version will now be able to connect, as a client, to a server in the network (or through Internet), as well as act as a server for other clients to connect to it.
+* All assets in the PCXR version (images, shaders) will now be stored into a single "slipnfrag_assets" folder next to the executable.
+* Fix to the code that handles transparent surfaces, that will allow Alkaline to display properly the start map and a few maps within.
+* Fix to the code that handles the surfaces below a few maps (ad_tears, alk_dancing, alk_tellus) so they are not shown anymore, instead of being displayed as black squares.
+* Removed limits for amount of sound effects and total of particles in large maps, using the implemented expanded protocol.
+* The XR version will now follow Android's app lifecycle recommendations. Meaning, among other things, it will be kept in memory for as long as the device deems it necessary. To allow for this, a new cleanup routine was implemented to clear completely the game's state after "Quit" is chosen in menu.
+* Other miscellaneous stability fixes applied as well.
+
+### Version **1.0.30**:
 
 * Support for demo files created using other sourceports (using protocol 666 or 999), through the use of a translation layer that converts all instructions in the demo to ones that the core engine is able to understand.
 * BREAKING CHANGE: Increased, one more time, the version number from the expanded network protocol from 'SnF'16 to 'SnF'17, to include fixes in the data types of entities, alias models, sounds and particles sent using the expanded network protocol, whose identifiers are larger than 8 or 16 bits in size, to support more custom maps & mods. NOTE: This means, once again, clients from older versions will no longer be able to connect via network to this new version.

@@ -25,7 +25,7 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Quake is Copyright © 1996 Id Software, inc. All rights reserved. Slip &amp; Frag is Copyright © 2019, 2024 Heriberto Delgado. All rights reserved.</string>
+	<string>Quake is Copyright © 1996 Id Software, inc. All rights reserved. Slip &amp; Frag is Copyright © 2019, 2025 Heriberto Delgado. All rights reserved.</string>
 	<key>NSMainStoryboardFile</key>
 	<string>Main</string>
 	<key>NSPrincipalClass</key>

@@ -8,11 +8,11 @@ Slip & Frag aims to be two things:
 
 * An engine that allows you to play Quake, the game, as closely as it was when published in 1996 for the DOS platform. This means somewhat low resolution textures, low polygon count, colorful and high-contrast worlds, with sharp-edged, dangerous-looking creatures. That, and messages with large white (or brown) letters.
 
-* An engine that runs in modern operating systems (MacOS 10.14 and later, Windows 10 and later, Meta Quest/2/3 v62 and later, and others), removing the limitations that restricted the original engine to run in a limited, fixed amount of memory, thus allowing it to accept the content created during these years by the user community.
+* An engine that runs in modern operating systems (MacOS 10.14 and later, Windows 10 and later, Meta Quest/2/3/Pro/3s v62 and later, and others), removing the limitations that restricted the original engine to run in a limited, fixed amount of memory, thus allowing it to accept the content created during these years by the user community.
 
 ## What is available
 
-Latest version: **1.0.30** - see [Changelog](CHANGELOG.md) for details.
+Latest version: **1.1.31** - see [Changelog](CHANGELOG.md) for details.
 
 Releases are available [here](https://github.com/Izhido/SlipNFrag/releases/latest). They are:
 
@@ -20,7 +20,7 @@ Releases are available [here](https://github.com/Izhido/SlipNFrag/releases/lates
 
 * **MacOS**: Desktop version for MacOS. Plays in both Intel and Apple Silicon machines. Also playable with keyboard, mouse, and Xbox One controller.
 
-* **OXR**: VR version that runs as a standalone application in Meta Quest devices (1, 2, Pro, 3, 3s). Uses OpenXR / Vulkan to render the game. Playable with the controllers supplied with your VR device.
+* **XR**: VR version that runs as a standalone application in Meta Quest devices (1, 2, Pro, 3, 3s). Uses OpenXR / Vulkan to render the game. Playable with the controllers supplied with your VR device.
 
 * **PCXR**: VR version that runs in Windows as a PCVR application, that sends its output to a connected Meta Quest device (same as above). Uses the OpenXR runtime exposed by the Meta Quest Link app, and renders using Vulkan. Playable also using the controllers supplied with your VR device.
 
@@ -32,7 +32,7 @@ Quake can be purchased from several venues (Steam, GOG, marketplaces within Amaz
 
 *IMPORTANT*: Slip & Frag does not currently support the .pak files from the Quake re-release, issued for the 25th anniversary of the game. The original .pak files, however, can still be found in the folder where the new game is installed.
 
-For the **OXR** release, you'll need a Meta Quest device (1, 2, Pro, 3, 3s), updated to the latest available version.
+For the **XR** release, you'll need a Meta Quest device (1, 2, Pro, 3, 3s), updated to the latest available version.
 
 Additionally, in order to play the **PCXR** release, you need:
 

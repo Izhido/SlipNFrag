@@ -62,17 +62,17 @@ To generate a Release build of either the MacOS or iOS target, ensure that your 
 
 In the particular case of the MacOS executable, the .dmg file that is used to distribute the project can be generated from the Disk Utility in MacOS. Follow the instructions in "Create a disk image from a folder or connected device" specified [here](https://support.apple.com/guide/disk-utility/create-a-disk-image-dskutl11888/mac) to do so.
  
-### Meta Quest/2/3
+### Meta Quest/2/3/Pro/3s
 
 Setting up the environment to debug, test or create a release of the Meta Quest, Quest 2 and Quest 3 versions involves more steps than the versions above, due to the amount of external components involved in the compile & release process.
 
-The OXR version is an Android Studio project that can be found at `SlipNFrag-XR` folder from the root of the source code folder. The minimum required version of Android Studio is version *2024.1.1*, due to recent updates in the project components. The project itself is a CMake-backed native activity project, configured with special settings that allow it to run in standalone VR headsets such as the Meta Quest/2/3.
+The XR version is an Android Studio project that can be found at `SlipNFrag-XR` folder from the root of the source code folder. The minimum required version of Android Studio is version *2024.1.1*, due to recent updates in the project components. The project itself is a CMake-backed native activity project, configured with special settings that allow it to run in standalone VR headsets such as the Meta Quest/2/3/Pro/3s.
 
 The following is the list of components, and their version numbers, required to build the Android project, as of this writing:
 
-* Android SDK Platform **16.0** (R) API level **36**
+* Android SDK Platform **16.0** (R) API level **36.1**
 
-* NDK (Side by Side) **28.1.13356709**
+* NDK (Side by Side) **29.0.14206865**
 
 * Android SDK Build-Tools **36.0.0**
 
@@ -80,7 +80,7 @@ The following is the list of components, and their version numbers, required to 
 
 * stb (latest version gathered from https://github.com/nothings/stb )
 
-* CMake **4.0.2** (or later)
+* CMake **4.1.2** (or later)
 
 > (Versions for other components can be checked in *Project Structure* in the Android Studio project.)
 
