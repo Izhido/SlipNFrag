@@ -39,11 +39,11 @@ void runEngine(AppState_pcxr* appState)
 		}
 		if (mode == AppScreenMode)
 		{
-			if (appState->PreviousTime < 0)
+			if (appState->PreviousTime == 0)
 			{
 				appState->PreviousTime = GetTime();
 			}
-			else if (appState->CurrentTime < 0)
+			else if (appState->CurrentTime == 0)
 			{
 				appState->CurrentTime = GetTime();
 			}
@@ -128,11 +128,11 @@ void runEngine(AppState_pcxr* appState)
 					rightHandDeltaZ = appState->RightController.SpaceLocation.pose.position.y / scale;
 				}
 			}
-			if (appState->PreviousTime < 0)
+			if (appState->PreviousTime == 0)
 			{
 				appState->PreviousTime = GetTime();
 			}
-			else if (appState->CurrentTime < 0)
+			else if (appState->CurrentTime == 0)
 			{
 				appState->CurrentTime = GetTime();
 			}
