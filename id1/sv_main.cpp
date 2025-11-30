@@ -1476,13 +1476,13 @@ void SV_SpawnServer (char *server)
 	SV_ResizeEdicts(sv.max_edicts * pr_edict_size);
 	sv.edicts_reallocation_sequence++;
 
-	sv.datagram.maxsize = MAX_DATAGRAM;
+	sv.datagram.maxsize = 0;
 	sv.datagram.cursize = 0;
 
 	sv.datagram_expanded.maxsize = 0;
 	sv.datagram_expanded.cursize = 0;
 
-	sv.reliable_datagram.maxsize = MAX_DATAGRAM;
+	sv.reliable_datagram.maxsize = 0;
 	sv.reliable_datagram.cursize = 0;
 	
 	sv.reliable_datagram_expanded.maxsize = 0;
@@ -1626,8 +1626,8 @@ void SV_SpawnServer (char *server)
 // create a baseline for more efficient communications
 	SV_CreateBaseline ();
 
-// use signon message for second protocol version adjustment
-	if (sv_protocol_version == PROTOCOL_VERSION && sv.signon.cursize > NET_MAXMESSAGE)
+// use signon and datagram messages (both reliable and unreliable) for second protocol version adjustment
+	if (sv_protocol_version == PROTOCOL_VERSION && (sv.signon.cursize > NET_MAXMESSAGE || sv.datagram.cursize > MAX_DATAGRAM || sv.reliable_datagram.cursize > MAX_DATAGRAM))
 	{
 		sv_protocol_version = EXPANDED_PROTOCOL_VERSION;
 	}
@@ -1661,6 +1661,8 @@ void SV_SpawnServer (char *server)
 	if (sv_protocol_version == PROTOCOL_VERSION)
 	{
 		sv.signon.maxsize = NET_MAXMESSAGE;
+		sv.datagram.maxsize = MAX_DATAGRAM;
+		sv.reliable_datagram.maxsize = MAX_DATAGRAM;
 	}
 
 	SV_LoadImmersiveViewmodels ();

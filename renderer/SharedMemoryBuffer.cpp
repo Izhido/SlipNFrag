@@ -49,16 +49,14 @@ void SharedMemoryBuffer::Create(AppState& appState, VkDeviceSize size, VkBufferU
 	{
 		sharedMemory = new SharedMemory { };
 		sharedMemory->size = Constants::memoryBlockSize;
-		auto add = true;
-		if (sharedMemory->size < memoryAllocateInfo.allocationSize)
+		while (sharedMemory->size < memoryAllocateInfo.allocationSize)
 		{
-			sharedMemory->size = memoryAllocateInfo.allocationSize;
-			add = false;
+			sharedMemory->size += Constants::memoryBlockSize;
 		}
 		auto memoryBlockAllocateInfo = memoryAllocateInfo;
 		memoryBlockAllocateInfo.allocationSize = sharedMemory->size;
 		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryBlockAllocateInfo, nullptr, &sharedMemory->memory));
-		if (add)
+		if (sharedMemory->size > memoryAllocateInfo.allocationSize)
 		{
 			latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
 			sharedMemory->referenceCount++;

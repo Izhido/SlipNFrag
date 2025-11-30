@@ -138,11 +138,11 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 					rightHandDeltaZ = appState->RightController.SpaceLocation.pose.position.y / scale;
 				}
 			}
-			if (appState->PreviousTime < 0)
+			if (appState->PreviousTime == 0)
 			{
 				appState->PreviousTime = GetTime();
 			}
-			else if (appState->CurrentTime < 0)
+			else if (appState->CurrentTime == 0)
 			{
 				appState->CurrentTime = GetTime();
 			}

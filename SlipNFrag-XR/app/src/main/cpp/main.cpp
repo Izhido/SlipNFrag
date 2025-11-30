@@ -206,7 +206,7 @@ static void AppHandleCommand(struct android_app* app, int32_t cmd)
 	}
 }
 
-AppState_xr appState {-1, -1, -1 };
+AppState_xr appState { };
 
 void android_main(struct android_app* app)
 {
