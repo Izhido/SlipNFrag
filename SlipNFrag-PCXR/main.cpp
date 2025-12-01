@@ -260,7 +260,7 @@ void PrintErrorMessage(const std::string& message)
 	printf("\n");
 }
 
-AppState_pcxr appState { -1, -1, -1 };
+AppState_pcxr appState { };
 
 int main(int argc, char* argv[])
 {
