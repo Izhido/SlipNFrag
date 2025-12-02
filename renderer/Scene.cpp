@@ -512,7 +512,7 @@ void Scene::Create(AppState& appState)
     VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo { VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO };
     depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
     depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
-    depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+    depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
     depthStencilStateCreateInfo.front.compareOp = VK_COMPARE_OP_ALWAYS;
     depthStencilStateCreateInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
     depthStencilStateCreateInfo.maxDepthBounds = 1;

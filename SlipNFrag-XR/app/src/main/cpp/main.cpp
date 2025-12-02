@@ -1283,6 +1283,7 @@ void android_main(struct android_app* app)
 		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
 
 		VkClearValue clearValues[2] { };
+		clearValues[1].depthStencil.depth = 1.0f;
 
 		VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		renderPassBeginInfo.clearValueCount = 2;
@@ -1774,39 +1775,7 @@ void android_main(struct android_app* app)
 						XrMatrix4x4f translation;
 						XrMatrix4x4f_CreateTranslation(&translation, -views[i].pose.position.x, -views[i].pose.position.y, -views[i].pose.position.z);
 						XrMatrix4x4f_Multiply(&appState.ViewMatrices[i], &transposedRotation, &translation);
-
-						// Copied from xr_linear.h and modified to create an infinite far plane, reversed-z depth projection matrix:
-						const float tanAngleLeft = tanf(views[i].fov.angleLeft);
-						const float tanAngleRight = tanf(views[i].fov.angleRight);
-
-						const float tanAngleDown = tanf(views[i].fov.angleDown);
-						const float tanAngleUp = tanf(views[i].fov.angleUp);
-
-						const float tanAngleWidth = tanAngleRight - tanAngleLeft;
-
-						const float tanAngleHeight = tanAngleDown - tanAngleUp;
-
-						const float nearZ = 0.05f;
-
-						appState.ProjectionMatrices[i].m[0] = 2.0f / tanAngleWidth;
-						appState.ProjectionMatrices[i].m[4] = 0.0f;
-						appState.ProjectionMatrices[i].m[8] = (tanAngleRight + tanAngleLeft) / tanAngleWidth;
-						appState.ProjectionMatrices[i].m[12] = 0.0f;
-
-						appState.ProjectionMatrices[i].m[1] = 0.0f;
-						appState.ProjectionMatrices[i].m[5] = 2.0f / tanAngleHeight;
-						appState.ProjectionMatrices[i].m[9] = (tanAngleUp + tanAngleDown) / tanAngleHeight;
-						appState.ProjectionMatrices[i].m[13] = 0.0f;
-
-						appState.ProjectionMatrices[i].m[2] = 0.0f;
-						appState.ProjectionMatrices[i].m[6] = 0.0f;
-						appState.ProjectionMatrices[i].m[10] = 0.0f;
-						appState.ProjectionMatrices[i].m[14] = nearZ;
-
-						appState.ProjectionMatrices[i].m[3] = 0.0f;
-						appState.ProjectionMatrices[i].m[7] = 0.0f;
-						appState.ProjectionMatrices[i].m[11] = -1.0f;
-						appState.ProjectionMatrices[i].m[15] = 0.0f;
+						XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, views[i].fov, 0.05f, 0);
 					}
 
 					{
