@@ -23,6 +23,7 @@ struct AppState
 	bool StartupButtonsPressed;
 	bool Resumed;
 	VkDevice Device;
+	bool CylinderCompositionLayersEnabled;
 	bool IndexTypeUInt8Enabled;
 	bool HandTrackingEnabled;
 	bool SimultaneousHandsAndControllersEnabled;

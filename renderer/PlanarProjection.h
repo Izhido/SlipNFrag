@@ -4,10 +4,9 @@
 
 struct AppState;
 
-struct CylinderProjection
+struct PlanarProjection
 {
-	static const float radius;
-	static const float horizontalAngle;
+	static const float distance;
 	static const float verticalAngle;
 	static const float screenLowerLimit;
 	static const float keyboardLowerLimit;

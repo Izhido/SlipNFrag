@@ -1,6 +1,7 @@
 #include "Keyboard.h"
 #include "AppState.h"
 #include "CylinderProjection.h"
+#include "PlanarProjection.h"
 #include "AppInput.h"
 #include "Utils.h"
 
@@ -352,11 +353,22 @@ bool Keyboard::Handle(AppState& appState)
 	}
 	if (appState.Mode == AppWorldMode && key_dest == key_console)
 	{
-		appState.KeyboardHitOffsetY = -CylinderProjection::keyboardLowerLimit / 6;
+		if (appState.CylinderCompositionLayersEnabled)
+		{
+			appState.KeyboardHitOffsetY = -CylinderProjection::keyboardLowerLimit / 6;
+		}
+		else
+		{
+			appState.KeyboardHitOffsetY = -PlanarProjection::keyboardLowerLimit / 6;
+		}
+	}
+	else if (appState.CylinderCompositionLayersEnabled)
+	{
+		appState.KeyboardHitOffsetY = -CylinderProjection::screenLowerLimit;
 	}
 	else
 	{
-		appState.KeyboardHitOffsetY = -CylinderProjection::screenLowerLimit;
+		appState.KeyboardHitOffsetY = -PlanarProjection::screenLowerLimit;
 	}
 	leftHighlighted = -1;
 	if (appState.LeftController.PoseIsValid)
@@ -366,11 +378,22 @@ bool Keyboard::Handle(AppState& appState)
 		bool hit;
 		if (appState.Mode == AppScreenMode)
 		{
-			hit = CylinderProjection::HitPointForScreenMode(appState, appState.LeftController, x, y);
+			if (appState.CylinderCompositionLayersEnabled)
+			{
+				hit = CylinderProjection::HitPointForScreenMode(appState, appState.LeftController, x, y);
+			}
+			else
+			{
+				hit = PlanarProjection::HitPointForScreenMode(appState, appState.LeftController, x, y);
+			}
+		}
+		else if (appState.CylinderCompositionLayersEnabled)
+		{
+			hit = CylinderProjection::HitPoint(appState, appState.LeftController, x, y);
 		}
 		else
 		{
-			hit = CylinderProjection::HitPoint(appState, appState.LeftController, x, y);
+			hit = PlanarProjection::HitPoint(appState, appState.LeftController, x, y);
 		}
 		if (hit)
 		{
@@ -396,11 +419,22 @@ bool Keyboard::Handle(AppState& appState)
 		bool hit;
 		if (appState.Mode == AppScreenMode)
 		{
-			hit = CylinderProjection::HitPointForScreenMode(appState, appState.RightController, x, y);
+			if (appState.CylinderCompositionLayersEnabled)
+			{
+				hit = CylinderProjection::HitPointForScreenMode(appState, appState.RightController, x, y);
+			}
+			else
+			{
+				hit = PlanarProjection::HitPointForScreenMode(appState, appState.RightController, x, y);
+			}
+		}
+		else if (appState.CylinderCompositionLayersEnabled)
+		{
+			hit = CylinderProjection::HitPoint(appState, appState.RightController, x, y);
 		}
 		else
 		{
-			hit = CylinderProjection::HitPoint(appState, appState.RightController, x, y);
+			hit = PlanarProjection::HitPoint(appState, appState.RightController, x, y);
 		}
 		if (hit)
 		{

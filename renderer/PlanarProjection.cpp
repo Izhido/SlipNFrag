@@ -1,15 +1,35 @@
-#include "CylinderProjection.h"
+#include "PlanarProjection.h"
 #include "AppState.h"
 
-const float CylinderProjection::radius = 1.0f;
-const float CylinderProjection::horizontalAngle = 60 * M_PI / 180;
-const float CylinderProjection::verticalAngle = CylinderProjection::horizontalAngle / 1.6f;
-const float CylinderProjection::screenLowerLimit = CylinderProjection::radius * tan(CylinderProjection::verticalAngle / 2);
-const float CylinderProjection::keyboardLowerLimit = CylinderProjection::screenLowerLimit / 2;
-const float CylinderProjection::epsilon = 1e-5;
+const float PlanarProjection::distance = 1.0f;
+const float PlanarProjection::verticalAngle = (60 * M_PI / 180) / 1.6;
+const float PlanarProjection::screenLowerLimit = PlanarProjection::distance * tan(PlanarProjection::verticalAngle / 2);
+const float PlanarProjection::keyboardLowerLimit = PlanarProjection::screenLowerLimit / 2;
+const float PlanarProjection::epsilon = 1e-5;
 
-bool CylinderProjection::HitPoint(AppState& appState, const XrVector4f& controllerOrigin, const XrVector4f& controllerDirection, float& x, float& y)
+bool PlanarProjection::HitPoint(AppState& appState, const XrVector4f& controllerOrigin, const XrVector4f& controllerDirection, float& x, float& y)
 {
+	const XrVector3f planeNormal { 0, 0, -PlanarProjection::distance };
+	XrVector3f controllerDirection3 { controllerDirection.x, controllerDirection.y, controllerDirection.z };
+	auto dotNormal = XrVector3f_Dot(&planeNormal, &controllerDirection3);
+	if (fabs(dotNormal) < epsilon)
+	{
+		return false;
+	}
+	XrVector3f planeOrigin { 0, 0, -PlanarProjection::distance };
+	XrVector3f delta { planeOrigin.x - controllerOrigin.x, planeOrigin.y - controllerOrigin.y, planeOrigin.z - controllerOrigin.z };
+	auto dotDelta = XrVector3f_Dot(&planeNormal, &delta);
+	float t = dotDelta / dotNormal;
+	if (t <= 0)
+	{
+		return false;
+	}
+	XrVector3f intersection { controllerOrigin.x + t * controllerDirection.x, controllerOrigin.y + t * controllerDirection.y, controllerOrigin.z + t * controllerDirection.z };
+	if (intersection.x < -0.5 || intersection.x > 0.5)
+	{
+		return false;
+	}
+	x = intersection.x + 0.5f;
 	auto lengthSquared2d = controllerDirection.x * controllerDirection.x + controllerDirection.z * controllerDirection.z;
 	if (lengthSquared2d < epsilon)
 	{
@@ -20,24 +40,17 @@ bool CylinderProjection::HitPoint(AppState& appState, const XrVector4f& controll
 	auto projection2d = -controllerOrigin.x * controllerDirection2d.x - controllerOrigin.z * controllerDirection2d.y;
 	XrVector2f projected2d { controllerOrigin.x + controllerDirection2d.x * projection2d, controllerOrigin.z + controllerDirection2d.y * projection2d };
 	auto rejection2d = sqrt(projected2d.x * projected2d.x + projected2d.y * projected2d.y);
-	if (rejection2d >= radius)
+	if (rejection2d >= distance)
 	{
 		return false;
 	}
-	auto distanceToHitPoint = sqrt(radius * radius - rejection2d * rejection2d);
-	XrVector2f hitPoint2d { projected2d.x + controllerDirection2d.x * distanceToHitPoint, projected2d.y + controllerDirection2d.y * distanceToHitPoint };
-	auto angle = atan2(hitPoint2d.y, hitPoint2d.x);
-	if (angle < -M_PI / 2 - horizontalAngle / 2 || angle >= -M_PI / 2 + horizontalAngle / 2)
-	{
-		return false;
-	}
+	auto distanceToHitPoint = sqrt(distance * distance - rejection2d * rejection2d);
 	auto vertical = controllerOrigin.y - appState.KeyboardHitOffsetY + controllerDirection.y * (projection2d + distanceToHitPoint) / length2d;
-	x = (angle + M_PI / 2 + horizontalAngle / 2) / horizontalAngle;
-	y = (radius * verticalAngle / 2 - vertical) / (radius * verticalAngle);
-	return true;
+	y = (distance * verticalAngle / 2 - vertical) / (distance * verticalAngle);
+    return true;
 }
 
-bool CylinderProjection::HitPoint(AppState& appState, const Controller& controller, float& x, float& y)
+bool PlanarProjection::HitPoint(AppState& appState, const Controller& controller, float& x, float& y)
 {
 	if (!appState.CameraLocationIsValid)
 	{
@@ -73,7 +86,7 @@ bool CylinderProjection::HitPoint(AppState& appState, const Controller& controll
 	return HitPoint(appState, controllerOrigin, controllerDirection, x, y);
 }
 
-bool CylinderProjection::HitPointForScreenMode(AppState& appState, const Controller& controller, float& x, float& y)
+bool PlanarProjection::HitPointForScreenMode(AppState& appState, const Controller& controller, float& x, float& y)
 {
 	XrMatrix4x4f controllerTransform;
 	XrMatrix4x4f_CreateFromQuaternion(&controllerTransform, &controller.SpaceLocation.pose.orientation);
