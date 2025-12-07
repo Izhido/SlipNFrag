@@ -4,6 +4,7 @@
 #include "Logger_pcxr.h"
 #include <locale>
 #include "CylinderProjection.h"
+#include "PlanarProjection.h"
 #include "Constants.h"
 #include "AppInput.h"
 #include "EngineThread.h"
@@ -288,7 +289,6 @@ int main(int argc, char* argv[])
 		std::vector<std::string> xrInstanceExtensionSources
 		{
 			XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
-			XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME,
 			XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME,
 			XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME,
 			XR_OCULUS_AUDIO_DEVICE_GUID_EXTENSION_NAME
@@ -319,8 +319,7 @@ int main(int argc, char* argv[])
 				performanceSettingsEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
-
-			if (strncmp(extension.extensionName, XR_FB_COLOR_SPACE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			else if (strncmp(extension.extensionName, XR_FB_COLOR_SPACE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
 				colorSpacesEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
@@ -1114,12 +1113,26 @@ int main(int argc, char* argv[])
 
 		XrSpace keyboardSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-		referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
+		if (appState.CylinderCompositionLayersEnabled)
+		{
+			referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
+		}
+		else
+		{
+			referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -PlanarProjection::screenLowerLimit - PlanarProjection::keyboardLowerLimit;
+		}
 		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &keyboardSpace));
 
 		XrSpace consoleKeyboardSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-		referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::keyboardLowerLimit;
+		if (appState.CylinderCompositionLayersEnabled)
+		{
+			referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::keyboardLowerLimit;
+		}
+		else
+		{
+			referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -PlanarProjection::keyboardLowerLimit;
+		}
 		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &consoleKeyboardSpace));
 
 		XrSystemProperties systemProperties { XR_TYPE_SYSTEM_PROPERTIES };
@@ -1313,6 +1326,7 @@ int main(int argc, char* argv[])
 		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
 
 		VkClearValue clearValues[2] { };
+		clearValues[1].depthStencil.depth = 1.0f;
 
 		VkRenderPassBeginInfo renderPassBeginInfo { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
 		renderPassBeginInfo.clearValueCount = 2;
@@ -1323,10 +1337,14 @@ int main(int argc, char* argv[])
 		std::vector<XrCompositionLayerBaseHeader*> layers;
 
 		XrCompositionLayerProjection worldLayer { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
-		XrCompositionLayerCylinderKHR screenLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerCylinderKHR leftArrowsLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerCylinderKHR rightArrowsLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerCylinderKHR keyboardLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		XrCompositionLayerCylinderKHR screenCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		XrCompositionLayerQuad screenPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		XrCompositionLayerCylinderKHR leftArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		XrCompositionLayerQuad leftArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		XrCompositionLayerCylinderKHR rightArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		XrCompositionLayerQuad rightArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		XrCompositionLayerCylinderKHR keyboardCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		XrCompositionLayerQuad keyboardPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
 
 		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
 
@@ -1737,39 +1755,7 @@ int main(int argc, char* argv[])
 						XrMatrix4x4f translation;
 						XrMatrix4x4f_CreateTranslation(&translation, -views[i].pose.position.x, -views[i].pose.position.y, -views[i].pose.position.z);
 						XrMatrix4x4f_Multiply(&appState.ViewMatrices[i], &transposedRotation, &translation);
-
-						// Copied from xr_linear.h and modified to create an infinite far plane, reversed-z depth projection matrix:
-						const float tanAngleLeft = tanf(views[i].fov.angleLeft);
-						const float tanAngleRight = tanf(views[i].fov.angleRight);
-
-						const float tanAngleDown = tanf(views[i].fov.angleDown);
-						const float tanAngleUp = tanf(views[i].fov.angleUp);
-
-						const float tanAngleWidth = tanAngleRight - tanAngleLeft;
-
-						const float tanAngleHeight = tanAngleDown - tanAngleUp;
-
-						const float nearZ = 0.05f;
-
-						appState.ProjectionMatrices[i].m[0] = 2.0f / tanAngleWidth;
-						appState.ProjectionMatrices[i].m[4] = 0.0f;
-						appState.ProjectionMatrices[i].m[8] = (tanAngleRight + tanAngleLeft) / tanAngleWidth;
-						appState.ProjectionMatrices[i].m[12] = 0.0f;
-
-						appState.ProjectionMatrices[i].m[1] = 0.0f;
-						appState.ProjectionMatrices[i].m[5] = 2.0f / tanAngleHeight;
-						appState.ProjectionMatrices[i].m[9] = (tanAngleUp + tanAngleDown) / tanAngleHeight;
-						appState.ProjectionMatrices[i].m[13] = 0.0f;
-
-						appState.ProjectionMatrices[i].m[2] = 0.0f;
-						appState.ProjectionMatrices[i].m[6] = 0.0f;
-						appState.ProjectionMatrices[i].m[10] = 0.0f;
-						appState.ProjectionMatrices[i].m[14] = nearZ;
-
-						appState.ProjectionMatrices[i].m[3] = 0.0f;
-						appState.ProjectionMatrices[i].m[7] = 0.0f;
-						appState.ProjectionMatrices[i].m[11] = -1.0f;
-						appState.ProjectionMatrices[i].m[15] = 0.0f;
+						XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, views[i].fov, 0.05f, 0);
 					}
 
 					{
@@ -2242,31 +2228,75 @@ int main(int argc, char* argv[])
 					appState.submitBarrier.image = screenPerFrame.image;
 					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
-					screenLayer.radius = CylinderProjection::radius;
-					screenLayer.aspectRatio = (float)appState.ScreenWidth / (float)appState.ScreenHeight;
-					screenLayer.centralAngle = CylinderProjection::horizontalAngle;
-					screenLayer.subImage.swapchain = appState.Screen.swapchain;
-					screenLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
-					screenLayer.subImage.imageRect.extent.height = appState.ScreenHeight;
-					screenLayer.space = appSpace;
-
-					if (appState.Mode == AppWorldMode)
+					if (appState.CylinderCompositionLayersEnabled)
 					{
-						if (appState.CameraLocationIsValid)
-						{
-							screenLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
-							screenLayer.pose = appState.CameraLocation.pose;
+						screenCylinderLayer.radius = CylinderProjection::radius;
+						screenCylinderLayer.aspectRatio = (float)appState.ScreenWidth / (float)appState.ScreenHeight;
+						screenCylinderLayer.centralAngle = CylinderProjection::horizontalAngle;
+						screenCylinderLayer.subImage.swapchain = appState.Screen.swapchain;
+						screenCylinderLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
+						screenCylinderLayer.subImage.imageRect.extent.height = appState.ScreenHeight;
+						screenCylinderLayer.space = appSpace;
 
-							layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenLayer));
+						if (appState.Mode == AppWorldMode)
+						{
+							if (appState.CameraLocationIsValid)
+							{
+								screenCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+								screenCylinderLayer.pose = appState.CameraLocation.pose;
+
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
+							}
+						}
+						else
+						{
+							screenCylinderLayer.layerFlags = 0;
+							screenCylinderLayer.pose = { };
+							screenCylinderLayer.pose.orientation.w = 1;
+
+							layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
 						}
 					}
 					else
 					{
-						screenLayer.layerFlags = 0;
-						screenLayer.pose = { };
-						screenLayer.pose.orientation.w = 1;
+						screenPlanarLayer.size.width = PlanarProjection::distance;
+						screenPlanarLayer.size.height = PlanarProjection::distance * (float)appState.ScreenHeight / (float)appState.ScreenWidth;
+						screenPlanarLayer.subImage.swapchain = appState.Screen.swapchain;
+						screenPlanarLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
+						screenPlanarLayer.subImage.imageRect.extent.height = appState.ScreenHeight;
+						screenPlanarLayer.space = appSpace;
 
-						layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenLayer));
+						if (appState.Mode == AppWorldMode)
+						{
+							if (appState.CameraLocationIsValid)
+							{
+								screenPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+								screenPlanarLayer.pose = appState.CameraLocation.pose;
+
+								XrMatrix4x4f rotation;
+								XrMatrix4x4f_CreateFromQuaternion(&rotation, &screenPlanarLayer.pose.orientation);
+
+								XrVector3f translation { 0, 0, -PlanarProjection::distance };
+								XrVector3f translated;
+								XrMatrix4x4f_TransformVector3f(&translated, &rotation, &translation);
+
+								XrVector3f position;
+								XrVector3f_Add(&position, &screenPlanarLayer.pose.position, &translated);
+
+								screenPlanarLayer.pose.position = position;
+
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenPlanarLayer));
+							}
+						}
+						else
+						{
+							screenPlanarLayer.layerFlags = 0;
+							screenPlanarLayer.pose = { };
+							screenPlanarLayer.pose.position.z = -PlanarProjection::distance;
+							screenPlanarLayer.pose.orientation.w = 1;
+
+							layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenPlanarLayer));
+						}
 					}
 
 					screenRendered = true;
@@ -2371,43 +2401,99 @@ int main(int argc, char* argv[])
 						appState.submitBarrier.image = keyboardPerFrame.image;
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
-						keyboardLayer.radius = CylinderProjection::radius;
-						keyboardLayer.aspectRatio = (float)appState.ScreenWidth / (float)(appState.ScreenHeight / 2);
-						keyboardLayer.centralAngle = CylinderProjection::horizontalAngle;
-						keyboardLayer.subImage.swapchain = appState.Keyboard.Screen.swapchain;
-						keyboardLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
-						keyboardLayer.subImage.imageRect.extent.height = appState.ScreenHeight / 2;
-						keyboardLayer.space = appSpace;
-
-						if (appState.Mode == AppWorldMode)
+						if (appState.CylinderCompositionLayersEnabled)
 						{
-							XrSpaceLocation keyboardLocation { XR_TYPE_SPACE_LOCATION };
-							if (key_dest == key_console)
+							keyboardCylinderLayer.radius = CylinderProjection::radius;
+							keyboardCylinderLayer.aspectRatio = (float)appState.ScreenWidth / ((float)appState.ScreenHeight / 2);
+							keyboardCylinderLayer.centralAngle = CylinderProjection::horizontalAngle;
+							keyboardCylinderLayer.subImage.swapchain = appState.Keyboard.Screen.swapchain;
+							keyboardCylinderLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
+							keyboardCylinderLayer.subImage.imageRect.extent.height = appState.ScreenHeight / 2;
+							keyboardCylinderLayer.space = appSpace;
+
+							if (appState.Mode == AppWorldMode)
 							{
-								res = xrLocateSpace(consoleKeyboardSpace, appSpace, frameState.predictedDisplayTime, &keyboardLocation);
-								CHECK_XRRESULT(res, "xrLocateSpace(consoleKeyboardSpace, appSpace)");
+								XrSpaceLocation keyboardLocation { XR_TYPE_SPACE_LOCATION };
+								if (key_dest == key_console)
+								{
+									res = xrLocateSpace(consoleKeyboardSpace, appSpace, frameState.predictedDisplayTime, &keyboardLocation);
+									CHECK_XRRESULT(res, "xrLocateSpace(consoleKeyboardSpace, appSpace)");
+								}
+								else
+								{
+									res = xrLocateSpace(keyboardSpace, appSpace, frameState.predictedDisplayTime, &keyboardLocation);
+									CHECK_XRRESULT(res, "xrLocateSpace(keyboardSpace, appSpace)");
+								}
+								if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+								{
+									keyboardCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+									keyboardCylinderLayer.pose = keyboardLocation.pose;
+
+									layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
+								}
 							}
 							else
 							{
-								res = xrLocateSpace(keyboardSpace, appSpace, frameState.predictedDisplayTime, &keyboardLocation);
-								CHECK_XRRESULT(res, "xrLocateSpace(keyboardSpace, appSpace)");
-							}
-							if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
-							{
-								keyboardLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
-								keyboardLayer.pose = keyboardLocation.pose;
+								keyboardCylinderLayer.layerFlags = 0;
+								keyboardCylinderLayer.pose = { };
+								keyboardCylinderLayer.pose.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
+								keyboardCylinderLayer.pose.orientation.w = 1;
 
-								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardLayer));
+								layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
 							}
 						}
 						else
 						{
-							keyboardLayer.layerFlags = 0;
-							keyboardLayer.pose = { };
-							keyboardLayer.pose.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
-							keyboardLayer.pose.orientation.w = 1;
+							keyboardPlanarLayer.size.width = PlanarProjection::distance;
+							keyboardPlanarLayer.size.height = PlanarProjection::distance * (float)appState.ScreenHeight / (float)appState.ScreenWidth / 2;
+							keyboardPlanarLayer.subImage.swapchain = appState.Keyboard.Screen.swapchain;
+							keyboardPlanarLayer.subImage.imageRect.extent.width = appState.ScreenWidth;
+							keyboardPlanarLayer.subImage.imageRect.extent.height = appState.ScreenHeight / 2;
+							keyboardPlanarLayer.space = appSpace;
 
-							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardLayer));
+							if (appState.Mode == AppWorldMode)
+							{
+								XrSpaceLocation keyboardLocation { XR_TYPE_SPACE_LOCATION };
+								if (key_dest == key_console)
+								{
+									res = xrLocateSpace(consoleKeyboardSpace, appSpace, frameState.predictedDisplayTime, &keyboardLocation);
+									CHECK_XRRESULT(res, "xrLocateSpace(consoleKeyboardSpace, appSpace)");
+								}
+								else
+								{
+									res = xrLocateSpace(keyboardSpace, appSpace, frameState.predictedDisplayTime, &keyboardLocation);
+									CHECK_XRRESULT(res, "xrLocateSpace(keyboardSpace, appSpace)");
+								}
+								if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+								{
+									keyboardPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+									keyboardPlanarLayer.pose = keyboardLocation.pose;
+
+									XrMatrix4x4f rotation;
+									XrMatrix4x4f_CreateFromQuaternion(&rotation, &keyboardPlanarLayer.pose.orientation);
+
+									XrVector3f translation { 0, 0, -PlanarProjection::distance };
+									XrVector3f translated;
+									XrMatrix4x4f_TransformVector3f(&translated, &rotation, &translation);
+
+									XrVector3f position;
+									XrVector3f_Add(&position, &keyboardPlanarLayer.pose.position, &translated);
+
+									keyboardPlanarLayer.pose.position = position;
+
+									layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardPlanarLayer));
+								}
+							}
+							else
+							{
+								keyboardPlanarLayer.layerFlags = 0;
+								keyboardPlanarLayer.pose = { };
+								keyboardPlanarLayer.pose.position.y = -PlanarProjection::screenLowerLimit - PlanarProjection::keyboardLowerLimit;
+								keyboardPlanarLayer.pose.position.z = -PlanarProjection::distance;
+								keyboardPlanarLayer.pose.orientation.w = 1;
+
+								layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardPlanarLayer));
+							}
 						}
 
 						keyboardRendered = true;
@@ -2417,37 +2503,83 @@ int main(int argc, char* argv[])
 
 					if (appState.Mode != AppWorldMode)
 					{
-						leftArrowsLayer.radius = CylinderProjection::radius;
-						leftArrowsLayer.aspectRatio = 450 / 150;
-						leftArrowsLayer.centralAngle = CylinderProjection::horizontalAngle * 450 / 960;
-						leftArrowsLayer.subImage.swapchain = appState.LeftArrowsSwapchain;
-						leftArrowsLayer.subImage.imageRect.extent.width = 450;
-						leftArrowsLayer.subImage.imageRect.extent.height = 150;
-						leftArrowsLayer.space = appSpace;
-						leftArrowsLayer.layerFlags = 0;
-						leftArrowsLayer.pose = { };
+						if (appState.CylinderCompositionLayersEnabled)
+						{
+							leftArrowsCylinderLayer.radius = CylinderProjection::radius;
+							leftArrowsCylinderLayer.aspectRatio = 450.0f / 150.0f;
+							leftArrowsCylinderLayer.centralAngle = CylinderProjection::horizontalAngle * 450.0f / 960.0f;
+							leftArrowsCylinderLayer.subImage.swapchain = appState.LeftArrowsSwapchain;
+							leftArrowsCylinderLayer.subImage.imageRect.extent.width = 450;
+							leftArrowsCylinderLayer.subImage.imageRect.extent.height = 150;
+							leftArrowsCylinderLayer.space = appSpace;
+							leftArrowsCylinderLayer.layerFlags = 0;
+							leftArrowsCylinderLayer.pose = { };
 
-						XrMatrix4x4f rotation;
+							XrMatrix4x4f rotation;
+							XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
+							XrMatrix4x4f_GetRotation(&leftArrowsCylinderLayer.pose.orientation, &rotation);
 
-						XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
-						XrMatrix4x4f_GetRotation(&leftArrowsLayer.pose.orientation, &rotation);
+							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsCylinderLayer));
+						}
+						else
+						{
+							leftArrowsPlanarLayer.size.width = 450.0f / 960.0f;
+							leftArrowsPlanarLayer.size.height = (450.0f / 960.0f) * 150.0f / 450.0f;
+							leftArrowsPlanarLayer.subImage.swapchain = appState.LeftArrowsSwapchain;
+							leftArrowsPlanarLayer.subImage.imageRect.extent.width = 450;
+							leftArrowsPlanarLayer.subImage.imageRect.extent.height = 150;
+							leftArrowsPlanarLayer.space = appSpace;
+							leftArrowsPlanarLayer.layerFlags = 0;
+							leftArrowsPlanarLayer.pose = { };
 
-						layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsLayer));
+							XrMatrix4x4f rotation;
+							XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
+							XrMatrix4x4f_GetRotation(&leftArrowsPlanarLayer.pose.orientation, &rotation);
 
-						rightArrowsLayer.radius = CylinderProjection::radius;
-						rightArrowsLayer.aspectRatio = 450 / 150;
-						rightArrowsLayer.centralAngle = CylinderProjection::horizontalAngle * 450 / 960;
-						rightArrowsLayer.subImage.swapchain = appState.RightArrowsSwapchain;
-						rightArrowsLayer.subImage.imageRect.extent.width = 450;
-						rightArrowsLayer.subImage.imageRect.extent.height = 150;
-						rightArrowsLayer.space = appSpace;
-						rightArrowsLayer.layerFlags = 0;
-						rightArrowsLayer.pose = { };
+							XrVector3f position { 0, 0, -PlanarProjection::distance };
+							XrMatrix4x4f_TransformVector3f(&leftArrowsPlanarLayer.pose.position, &rotation, &position);
 
-						XrMatrix4x4f_CreateRotation(&rotation, 0, -120, 0);
-						XrMatrix4x4f_GetRotation(&rightArrowsLayer.pose.orientation, &rotation);
+							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
+						}
 
-						layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsLayer));
+						if (appState.CylinderCompositionLayersEnabled)
+						{
+							rightArrowsCylinderLayer.radius = CylinderProjection::radius;
+							rightArrowsCylinderLayer.aspectRatio = 450.0f / 150.0f;
+							rightArrowsCylinderLayer.centralAngle = CylinderProjection::horizontalAngle * 450.0f / 960.0f;
+							rightArrowsCylinderLayer.subImage.swapchain = appState.RightArrowsSwapchain;
+							rightArrowsCylinderLayer.subImage.imageRect.extent.width = 450;
+							rightArrowsCylinderLayer.subImage.imageRect.extent.height = 150;
+							rightArrowsCylinderLayer.space = appSpace;
+							rightArrowsCylinderLayer.layerFlags = 0;
+							rightArrowsCylinderLayer.pose = { };
+
+							XrMatrix4x4f rotation;
+							XrMatrix4x4f_CreateRotation(&rotation, 0, -120, 0);
+							XrMatrix4x4f_GetRotation(&rightArrowsCylinderLayer.pose.orientation, &rotation);
+
+							layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsCylinderLayer));
+						}
+						else
+						{
+							rightArrowsPlanarLayer.size.width =  450.0f / 960.0f;
+							rightArrowsPlanarLayer.size.height = (450.0f / 960.0f) * 150.0f / 450.0f;
+							rightArrowsPlanarLayer.subImage.swapchain = appState.RightArrowsSwapchain;
+							rightArrowsPlanarLayer.subImage.imageRect.extent.width = 450;
+							rightArrowsPlanarLayer.subImage.imageRect.extent.height = 150;
+							rightArrowsPlanarLayer.space = appSpace;
+							rightArrowsPlanarLayer.layerFlags = 0;
+							rightArrowsPlanarLayer.pose = { };
+
+							XrMatrix4x4f rotation;
+							XrMatrix4x4f_CreateRotation(&rotation, 0, -120, 0);
+							XrMatrix4x4f_GetRotation(&rightArrowsPlanarLayer.pose.orientation, &rotation);
+
+							XrVector3f position { 0, 0, -PlanarProjection::distance };
+							XrMatrix4x4f_TransformVector3f(&rightArrowsPlanarLayer.pose.position, &rotation, &position);
+
+							layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsPlanarLayer));
+						}
 					}
 
 					if (appState.Mode == AppWorldMode)
