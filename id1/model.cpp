@@ -2466,7 +2466,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer, int buf_size)
 	numskins = pmodel->numskins;
 	numframes = pmodel->numframes;
 
-	if (pmodel->skinwidth & 0x03)
+	if (r_pixbytes != 1 && pmodel->skinwidth & 0x03)
 		Sys_Error ("Mod_LoadAliasModel: skinwidth not multiple of 4");
 
 	pheader->model = (byte *)pmodel - (byte *)pheader;
