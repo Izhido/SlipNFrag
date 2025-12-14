@@ -1033,7 +1033,6 @@ void R_DrawBEntitiesForLists (void)
 							{
 								if (r_skyboxinitialized)
 								{
-									D_AddSkyboxToLists(r_skytexinfo);
 									if ((psurf->flags & SURF_DRAWSKYBOX) == 0)
 									{
 										D_AddCutoutSurfaceToLists (psurf, currententity);
