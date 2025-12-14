@@ -389,7 +389,8 @@ void android_main(struct android_app* app)
 		createInfo.enabledApiLayerNames = xrInstanceApiLayers.data();
 
 		strcpy(createInfo.applicationInfo.applicationName, "SlipNFrag-XR");
-		createInfo.applicationInfo.apiVersion = USE_OPENXR_VERSION;
+
+		createInfo.applicationInfo.apiVersion = XR_MAKE_VERSION(1, 0, 34);
 
 		CHECK_XRCMD(xrCreateInstance(&createInfo, &instance));
 
@@ -525,7 +526,7 @@ void android_main(struct android_app* app)
 			appInfo.applicationVersion = 1;
 			appInfo.pEngineName = "slipnfrag_xr";
 			appInfo.engineVersion = 1;
-			appInfo.apiVersion = USE_VULKAN_VERSION;
+			appInfo.apiVersion = VK_MAKE_API_VERSION(0, 1, 1, 0);
 
 			VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 			instInfo.pApplicationInfo = &appInfo;
