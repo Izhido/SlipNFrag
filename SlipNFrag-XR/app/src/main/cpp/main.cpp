@@ -2785,11 +2785,7 @@ void android_main(struct android_app* app)
 						{
 							XrMatrix4x4f rotation;
 							XrMatrix4x4f_CreateRotation(&rotation, 0, 90, 0);
-							XrMatrix4x4f scale;
-							XrMatrix4x4f_CreateScale(&scale, 1, 1, 1);
-							XrMatrix4x4f transform;
-							XrMatrix4x4f_Multiply(&transform, &rotation, &scale);
-							XrMatrix4x4f_GetRotation(&skyboxLayer.orientation, &transform);
+							XrMatrix4x4f_GetRotation(&skyboxLayer.orientation, &rotation);
 
 							skyboxLayer.space = appSpace;
 							skyboxLayer.swapchain = appState.Scene.skybox->swapchain;
