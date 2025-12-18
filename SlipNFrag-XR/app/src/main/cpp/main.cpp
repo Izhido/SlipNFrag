@@ -260,7 +260,6 @@ void android_main(struct android_app* app)
 			XR_KHR_ANDROID_CREATE_INSTANCE_EXTENSION_NAME,
 			XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
 			XR_KHR_ANDROID_THREAD_SETTINGS_EXTENSION_NAME,
-			XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME,
 			XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME
 		};
 
@@ -296,7 +295,12 @@ void android_main(struct android_app* app)
 			}
 			else if (strncmp(extension.extensionName, XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
-				appState.CylinderCompositionLayersEnabled = true;
+				appState.CylinderCompositionLayerEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				appState.CubeCompositionLayerEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 			else if (strncmp(extension.extensionName, XR_EXT_HAND_TRACKING_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
@@ -1089,7 +1093,7 @@ void android_main(struct android_app* app)
 
 		XrSpace keyboardSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-		if (appState.CylinderCompositionLayersEnabled)
+		if (appState.CylinderCompositionLayerEnabled)
 		{
 			referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
 		}
@@ -1101,7 +1105,7 @@ void android_main(struct android_app* app)
 
 		XrSpace consoleKeyboardSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-		if (appState.CylinderCompositionLayersEnabled)
+		if (appState.CylinderCompositionLayerEnabled)
 		{
 			referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::keyboardLowerLimit;
 		}
@@ -2271,7 +2275,7 @@ void android_main(struct android_app* app)
 					appState.submitBarrier.image = screenPerFrame.image;
 					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
-					if (appState.CylinderCompositionLayersEnabled)
+					if (appState.CylinderCompositionLayerEnabled)
 					{
 						screenCylinderLayer.radius = CylinderProjection::radius;
 						screenCylinderLayer.aspectRatio = (float)appState.ScreenWidth / (float)appState.ScreenHeight;
@@ -2444,7 +2448,7 @@ void android_main(struct android_app* app)
 						appState.submitBarrier.image = keyboardPerFrame.image;
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
-						if (appState.CylinderCompositionLayersEnabled)
+						if (appState.CylinderCompositionLayerEnabled)
 						{
 							keyboardCylinderLayer.radius = CylinderProjection::radius;
 							keyboardCylinderLayer.aspectRatio = (float)appState.ScreenWidth / ((float)appState.ScreenHeight / 2);
@@ -2546,7 +2550,7 @@ void android_main(struct android_app* app)
 
 					if (appState.Mode != AppWorldMode)
 					{
-						if (appState.CylinderCompositionLayersEnabled)
+						if (appState.CylinderCompositionLayerEnabled)
 						{
 							leftArrowsCylinderLayer.radius = CylinderProjection::radius;
 							leftArrowsCylinderLayer.aspectRatio = 450.0f / 150.0f;
@@ -2585,7 +2589,7 @@ void android_main(struct android_app* app)
 							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
 						}
 
-						if (appState.CylinderCompositionLayersEnabled)
+						if (appState.CylinderCompositionLayerEnabled)
 						{
 							rightArrowsCylinderLayer.radius = CylinderProjection::radius;
 							rightArrowsCylinderLayer.aspectRatio = 450.0f / 150.0f;
@@ -2625,7 +2629,7 @@ void android_main(struct android_app* app)
 						}
 					}
 
-					if (appState.Mode == AppWorldMode)
+					if (appState.CubeCompositionLayerEnabled && appState.Mode == AppWorldMode)
 					{
 						if (d_lists.last_skybox >= 0 && appState.Scene.skybox == nullptr)
 						{

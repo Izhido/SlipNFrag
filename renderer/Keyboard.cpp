@@ -353,7 +353,7 @@ bool Keyboard::Handle(AppState& appState)
 	}
 	if (appState.Mode == AppWorldMode && key_dest == key_console)
 	{
-		if (appState.CylinderCompositionLayersEnabled)
+		if (appState.CylinderCompositionLayerEnabled)
 		{
 			appState.KeyboardHitOffsetY = -CylinderProjection::keyboardLowerLimit / 6;
 		}
@@ -362,7 +362,7 @@ bool Keyboard::Handle(AppState& appState)
 			appState.KeyboardHitOffsetY = -PlanarProjection::keyboardLowerLimit / 6;
 		}
 	}
-	else if (appState.CylinderCompositionLayersEnabled)
+	else if (appState.CylinderCompositionLayerEnabled)
 	{
 		appState.KeyboardHitOffsetY = -CylinderProjection::screenLowerLimit;
 	}
@@ -378,7 +378,7 @@ bool Keyboard::Handle(AppState& appState)
 		bool hit;
 		if (appState.Mode == AppScreenMode)
 		{
-			if (appState.CylinderCompositionLayersEnabled)
+			if (appState.CylinderCompositionLayerEnabled)
 			{
 				hit = CylinderProjection::HitPointForScreenMode(appState, appState.LeftController, x, y);
 			}
@@ -387,7 +387,7 @@ bool Keyboard::Handle(AppState& appState)
 				hit = PlanarProjection::HitPointForScreenMode(appState, appState.LeftController, x, y);
 			}
 		}
-		else if (appState.CylinderCompositionLayersEnabled)
+		else if (appState.CylinderCompositionLayerEnabled)
 		{
 			hit = CylinderProjection::HitPoint(appState, appState.LeftController, x, y);
 		}
@@ -419,7 +419,7 @@ bool Keyboard::Handle(AppState& appState)
 		bool hit;
 		if (appState.Mode == AppScreenMode)
 		{
-			if (appState.CylinderCompositionLayersEnabled)
+			if (appState.CylinderCompositionLayerEnabled)
 			{
 				hit = CylinderProjection::HitPointForScreenMode(appState, appState.RightController, x, y);
 			}
@@ -428,7 +428,7 @@ bool Keyboard::Handle(AppState& appState)
 				hit = PlanarProjection::HitPointForScreenMode(appState, appState.RightController, x, y);
 			}
 		}
-		else if (appState.CylinderCompositionLayersEnabled)
+		else if (appState.CylinderCompositionLayerEnabled)
 		{
 			hit = CylinderProjection::HitPoint(appState, appState.RightController, x, y);
 		}
