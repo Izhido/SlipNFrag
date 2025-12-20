@@ -400,7 +400,10 @@ void Sys_Terminate()
 	pr_functions = nullptr;
 	progs = nullptr;
 	D_ResetLists();
-	delete shm;
+	if (fakedma)
+	{
+		delete shm;
+	}
 	shm = nullptr;
 	known_sfx_index.clear();
 	for (auto& s : known_sfx)

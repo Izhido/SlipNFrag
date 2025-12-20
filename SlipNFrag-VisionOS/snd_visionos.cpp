@@ -41,7 +41,7 @@ qboolean SNDDMA_Init(void)
 {
 	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 	
-	shm = new dma_t;
+	shm = &sn;
 	shm->splitbuffer = 0;
 	shm->samplebits = 32;
 	shm->speed = 44100;

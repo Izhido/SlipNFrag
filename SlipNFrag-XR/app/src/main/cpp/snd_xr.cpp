@@ -64,7 +64,7 @@ void SNDDMA_DisposeBuffers()
 
 qboolean SNDDMA_Init(void)
 {
-    shm = new dma_t;
+    shm = &sn;
     shm->splitbuffer = 0;
     shm->samplebits = 32;
     shm->speed = 44100;

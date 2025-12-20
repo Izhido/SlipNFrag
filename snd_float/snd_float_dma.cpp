@@ -214,6 +214,10 @@ void S_Shutdown(void)
 	if (shm)
 		shm->gamealive = 0;
 
+	if (fakedma)
+	{
+		delete shm;
+	}
 	shm = 0;
 	sound_started = 0;
 

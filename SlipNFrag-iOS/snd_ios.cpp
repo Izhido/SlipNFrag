@@ -42,7 +42,7 @@ qboolean SNDDMA_Init(void)
 {
     pthread_mutex_init(&snd_lock, NULL);
     pthread_mutex_lock(&snd_lock);
-    shm = new dma_t;
+	shm = &sn;
     shm->splitbuffer = 0;
     shm->samplebits = 32;
     shm->speed = 44100;
