@@ -289,13 +289,12 @@ int main(int argc, char* argv[])
 		std::vector<std::string> xrInstanceExtensionSources
 		{
 			XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
-			XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME,
-			XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME,
-			XR_OCULUS_AUDIO_DEVICE_GUID_EXTENSION_NAME
+			XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME
 		};
 
 		auto performanceSettingsEnabled = false;
 		auto colorSpacesEnabled = false;
+		auto audioDeviceGuidEnabled = false;
 		auto handTrackingEnabled = false;
 		auto simultaneousHandsAndControllersEnabled = false;
 
@@ -322,6 +321,21 @@ int main(int argc, char* argv[])
 			else if (strncmp(extension.extensionName, XR_FB_COLOR_SPACE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
 				colorSpacesEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				appState.CylinderCompositionLayerEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				appState.CubeCompositionLayerEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_OCULUS_AUDIO_DEVICE_GUID_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				audioDeviceGuidEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 			else if (strncmp(extension.extensionName, XR_EXT_HAND_TRACKING_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
@@ -409,7 +423,8 @@ int main(int argc, char* argv[])
 		createInfo.enabledApiLayerNames = xrInstanceApiLayers.data();
 
 		strcpy(createInfo.applicationInfo.applicationName, "SlipNFrag-PCXR");
-		createInfo.applicationInfo.apiVersion = USE_OPENXR_VERSION;
+
+		createInfo.applicationInfo.apiVersion = XR_MAKE_VERSION(1, 0, 34);
 
 		CHECK_XRCMD(xrCreateInstance(&createInfo, &instance));
 
@@ -546,7 +561,7 @@ int main(int argc, char* argv[])
 			appInfo.applicationVersion = 1;
 			appInfo.pEngineName = "slipnfrag_xr";
 			appInfo.engineVersion = 1;
-			appInfo.apiVersion = USE_VULKAN_VERSION;
+			appInfo.apiVersion = VK_MAKE_API_VERSION(0, 1, 1, 0);
 
 			VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 			instInfo.pApplicationInfo = &appInfo;
@@ -1113,7 +1128,7 @@ int main(int argc, char* argv[])
 
 		XrSpace keyboardSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-		if (appState.CylinderCompositionLayersEnabled)
+		if (appState.CylinderCompositionLayerEnabled)
 		{
 			referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
 		}
@@ -1125,7 +1140,7 @@ int main(int argc, char* argv[])
 
 		XrSpace consoleKeyboardSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-		if (appState.CylinderCompositionLayersEnabled)
+		if (appState.CylinderCompositionLayerEnabled)
 		{
 			referenceSpaceCreateInfo.poseInReferenceSpace.position.y = -CylinderProjection::keyboardLowerLimit;
 		}
@@ -1376,10 +1391,13 @@ int main(int argc, char* argv[])
 		appState.vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdEndDebugUtilsLabelEXT");
 #endif
 
-		PFN_xrGetAudioOutputDeviceGuidOculus xrGetAudioOutputDeviceGuidOculus = nullptr;
-		CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetAudioOutputDeviceGuidOculus", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetAudioOutputDeviceGuidOculus)));
+		if (audioDeviceGuidEnabled)
+		{
+			PFN_xrGetAudioOutputDeviceGuidOculus xrGetAudioOutputDeviceGuidOculus = nullptr;
+			CHECK_XRCMD(xrGetInstanceProcAddr(instance, "xrGetAudioOutputDeviceGuidOculus", reinterpret_cast<PFN_xrVoidFunction*>(&xrGetAudioOutputDeviceGuidOculus)));
 
-		CHECK_XRCMD(xrGetAudioOutputDeviceGuidOculus(instance, snd_audio_output_device_id));
+			CHECK_XRCMD(xrGetAudioOutputDeviceGuidOculus(instance, snd_audio_output_device_id));
+		}
 
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
@@ -2228,7 +2246,7 @@ int main(int argc, char* argv[])
 					appState.submitBarrier.image = screenPerFrame.image;
 					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
-					if (appState.CylinderCompositionLayersEnabled)
+					if (appState.CylinderCompositionLayerEnabled)
 					{
 						screenCylinderLayer.radius = CylinderProjection::radius;
 						screenCylinderLayer.aspectRatio = (float)appState.ScreenWidth / (float)appState.ScreenHeight;
@@ -2401,7 +2419,7 @@ int main(int argc, char* argv[])
 						appState.submitBarrier.image = keyboardPerFrame.image;
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
-						if (appState.CylinderCompositionLayersEnabled)
+						if (appState.CylinderCompositionLayerEnabled)
 						{
 							keyboardCylinderLayer.radius = CylinderProjection::radius;
 							keyboardCylinderLayer.aspectRatio = (float)appState.ScreenWidth / ((float)appState.ScreenHeight / 2);
@@ -2503,7 +2521,7 @@ int main(int argc, char* argv[])
 
 					if (appState.Mode != AppWorldMode)
 					{
-						if (appState.CylinderCompositionLayersEnabled)
+						if (appState.CylinderCompositionLayerEnabled)
 						{
 							leftArrowsCylinderLayer.radius = CylinderProjection::radius;
 							leftArrowsCylinderLayer.aspectRatio = 450.0f / 150.0f;
@@ -2542,7 +2560,7 @@ int main(int argc, char* argv[])
 							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
 						}
 
-						if (appState.CylinderCompositionLayersEnabled)
+						if (appState.CylinderCompositionLayerEnabled)
 						{
 							rightArrowsCylinderLayer.radius = CylinderProjection::radius;
 							rightArrowsCylinderLayer.aspectRatio = 450.0f / 150.0f;
@@ -2582,7 +2600,7 @@ int main(int argc, char* argv[])
 						}
 					}
 
-					if (appState.Mode == AppWorldMode)
+					if (appState.CubeCompositionLayerEnabled && appState.Mode == AppWorldMode)
 					{
 						if (d_lists.last_skybox >= 0 && appState.Scene.skybox == nullptr)
 						{
@@ -2742,11 +2760,7 @@ int main(int argc, char* argv[])
 						{
 							XrMatrix4x4f rotation;
 							XrMatrix4x4f_CreateRotation(&rotation, 0, 90, 0);
-							XrMatrix4x4f scale;
-							XrMatrix4x4f_CreateScale(&scale, 1, 1, 1);
-							XrMatrix4x4f transform;
-							XrMatrix4x4f_Multiply(&transform, &rotation, &scale);
-							XrMatrix4x4f_GetRotation(&skyboxLayer.orientation, &transform);
+							XrMatrix4x4f_GetRotation(&skyboxLayer.orientation, &rotation);
 
 							skyboxLayer.space = appSpace;
 							skyboxLayer.swapchain = appState.Scene.skybox->swapchain;
