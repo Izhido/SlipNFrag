@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2800455E2AB4DAB1001091C7 /* Sky.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2800455D2AB4DAB1001091C7 /* Sky.mm */; };
 		2803CF5B2A6E1480006AC44F /* Engine.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2803CF5A2A6E1480006AC44F /* Engine.mm */; };
+		280B5A142EF9981C008ED334 /* Locks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 280B5A122EF9981C008ED334 /* Locks.cpp */; };
 		2811E5292A6C722300B1498E /* SlipNFrag_VisionOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2811E5282A6C722300B1498E /* SlipNFrag_VisionOSApp.swift */; };
 		2811E52B2A6C722300B1498E /* PlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2811E52A2A6C722300B1498E /* PlayView.swift */; };
 		2811E5312A6C722700B1498E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2811E5302A6C722700B1498E /* Assets.xcassets */; };
@@ -389,6 +390,8 @@
 		2800455D2AB4DAB1001091C7 /* Sky.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Sky.mm; sourceTree = "<group>"; };
 		2803CF592A6E1468006AC44F /* Engine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Engine.h; sourceTree = "<group>"; };
 		2803CF5A2A6E1480006AC44F /* Engine.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Engine.mm; sourceTree = "<group>"; };
+		280B5A122EF9981C008ED334 /* Locks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Locks.cpp; sourceTree = "<group>"; };
+		280B5A132EF9981C008ED334 /* Locks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Locks.h; sourceTree = "<group>"; };
 		2811E5222A6C722300B1498E /* SlipNFrag-VisionOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SlipNFrag-VisionOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2811E5282A6C722300B1498E /* SlipNFrag_VisionOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlipNFrag_VisionOSApp.swift; sourceTree = "<group>"; };
 		2811E52A2A6C722300B1498E /* PlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayView.swift; sourceTree = "<group>"; };
@@ -823,6 +826,8 @@
 		282AF2AB250E5B8100E171DA /* SlipNFrag-iOS */ = {
 			isa = PBXGroup;
 			children = (
+				280B5A122EF9981C008ED334 /* Locks.cpp */,
+				280B5A132EF9981C008ED334 /* Locks.h */,
 				282AF2AC250E5B8100E171DA /* AppDelegate.h */,
 				282AF2AD250E5B8100E171DA /* AppDelegate.m */,
 				282AF2AF250E5B8100E171DA /* SceneDelegate.h */,
@@ -1472,6 +1477,7 @@
 				282AF2EE250E773500E171DA /* r_alias.cpp in Sources */,
 				282AF300250E774A00E171DA /* sv_main.cpp in Sources */,
 				282AF304250E774A00E171DA /* view.cpp in Sources */,
+				280B5A142EF9981C008ED334 /* Locks.cpp in Sources */,
 				282AF2F8250E773500E171DA /* r_sprite.cpp in Sources */,
 				28E95FAA260C50A0000DDF6C /* cd_ios.cpp in Sources */,
 				28DFCC462E6009AA00AE2461 /* sv_immer.cpp in Sources */,

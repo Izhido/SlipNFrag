@@ -14,15 +14,16 @@ AudioQueueRef snd_audioqueue = NULL;
 
 qboolean snd_forceclear;
 
+extern int sound_started;
+
 void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef buffer)
 {
-	if (shm == NULL || snd_audioqueue == nil)
+	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
+
+	if (snd_audioqueue == nil || shm == nullptr || !sound_started)
 	{
 		return;
 	}
-
-	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
-	
 	if (snd_forceclear)
 	{
 		std::fill(shm->buffer.begin(), shm->buffer.end(), 0);
@@ -40,7 +41,7 @@ void SNDDMA_Callback(void *userdata, AudioQueueRef queue, AudioQueueBufferRef bu
 qboolean SNDDMA_Init(void)
 {
 	std::lock_guard<std::mutex> lock(Locks::SoundMutex);
-	
+
 	shm = &sn;
 	shm->splitbuffer = 0;
 	shm->samplebits = 32;

@@ -20,7 +20,7 @@ void SNDDMA_Callback(SLAndroidSimpleBufferQueueItf /*bufferQueue*/, void* /*cont
 {
     std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
-    if (audioPlayer == nullptr)
+    if (audioPlayer == nullptr || shm == nullptr || !sound_started)
     {
         return;
     }
