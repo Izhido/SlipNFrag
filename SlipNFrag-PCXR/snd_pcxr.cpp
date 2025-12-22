@@ -17,6 +17,9 @@ extern wchar_t snd_audio_output_device_id[XR_MAX_AUDIO_DEVICE_STR_SIZE_OCULUS];
 qboolean snd_delaytoobig;
 
 qboolean snd_forceclear;
+
+extern int sound_started;
+
 WAVEFORMATEX snd_waveformat{ };
 HWAVEOUT snd_waveout = NULL;
 HANDLE snd_wavebuffer1 = NULL;
@@ -72,7 +75,7 @@ void SNDDMA_Callback(void* waveHeader)
 {
     std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
-    if (shm == NULL || snd_waveout == NULL)
+    if (snd_waveout == NULL || shm == NULL || !sound_started)
     {
         return;
     }

@@ -6,6 +6,9 @@
 #include "Locks.h"
 
 qboolean snd_forceclear;
+
+extern int sound_started;
+
 WAVEFORMATEX snd_waveformat { };
 HWAVEOUT snd_waveout = NULL;
 HANDLE snd_wavebuffer1 = NULL;
@@ -61,7 +64,7 @@ void SNDDMA_Callback(void* waveOut, void* waveHeader)
 {
     std::lock_guard<std::mutex> lock(Locks::SoundMutex);
 
-    if (shm == NULL || snd_waveout == NULL || snd_waveout != waveOut)
+    if (snd_waveout == NULL || snd_waveout != waveOut || shm == nullptr || !sound_started)
     {
         return;
     }

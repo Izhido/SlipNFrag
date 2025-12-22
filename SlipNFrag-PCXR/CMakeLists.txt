@@ -50,29 +50,25 @@ endif()
 
 find_package(Vulkan REQUIRED)
 
-function(compile_glsl_use_extension run_target_name)
+set(COMPILED_SHADERS "")
+foreach(shader_file IN LISTS SHADERS_SOURCE)
+    get_filename_component(shader_name ${shader_file} NAME_WE)
+    get_filename_component(shader_ext ${shader_file} EXT)
+    string(REPLACE "." "" shader_stage ${shader_ext})
+    set(output_file ${CMAKE_CURRENT_BINARY_DIR}/slipnfrag_assets/shaders/${shader_name}.${shader_stage}.spv)
+    
+    add_custom_command(
+        OUTPUT ${output_file}
+        COMMAND Vulkan::glslc -fshader-stage=${shader_stage} ${shader_file} -o ${output_file}
+        DEPENDS ${shader_file}
+    )
+    list(APPEND COMPILED_SHADERS ${output_file})
+endforeach()
 
-    set(glsl_output_files "")
-    foreach(in_file IN LISTS ARGN)
-        get_filename_component(glsl_name ${in_file} NAME_WE)
-        get_filename_component(glsl_stage ${in_file} EXT)
-        string(REPLACE "." "" glsl_stage ${glsl_stage})
-        set(out_file ${CMAKE_CURRENT_BINARY_DIR}/slipnfrag_assets/shaders/${glsl_name}.${glsl_stage}.spv)
-        add_custom_command(
-            OUTPUT ${out_file}
-            COMMAND Vulkan::glslc -fshader-stage=${glsl_stage} ${in_file} -o ${out_file}
-            DEPENDS ${in_file}
-        )
-        list(APPEND glsl_output_files ${out_file})
-    endforeach()
-    add_custom_target(${run_target_name} ALL DEPENDS ${glsl_output_files})
-
-endfunction()
-
-compile_glsl_use_extension(run_slipnfrag_pcxr_glsl_compiles ${SHADERS_SOURCE})
+add_custom_target(compile_shaders ALL DEPENDS ${COMPILED_SHADERS})
 
 add_dependencies(slipnfrag_pcxr
-    run_slipnfrag_pcxr_glsl_compiles
+    compile_shaders
 )
 
 target_include_directories(slipnfrag_pcxr PRIVATE
