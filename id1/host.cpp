@@ -542,6 +542,15 @@ void Host_ClearMemory (void)
 	r_skyRGBAinitialized = false;
 	r_skyboxinitialized = false;
 	r_skyboxprefix = "";
+	for (auto& entry : r_skyboxtexsources)
+	{
+		for (size_t i=0 ; i<6 ; i++)
+		{
+			delete[] entry.second[i];
+		}
+		delete[] entry.second;
+	}
+	r_skyboxtexsources.clear();
 	r_worldwateralpha = -1;
 	r_worldlavaalpha = -1;
 	r_worldtelealpha = -1;

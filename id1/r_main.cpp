@@ -268,6 +268,8 @@ void R_Init (void)
 	r_worldslimealpha = -1;
 
 	D_Init ();
+
+	Cmd_AddCommand ("sky", R_Sky_f);
 }
 
 /*

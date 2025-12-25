@@ -13,6 +13,7 @@ struct Skybox
 {
 	Skybox* next;
 	int unusedCount;
+	std::vector<void*> sources;
 	XrSwapchain swapchain;
 	std::vector<XrSwapchainImageVulkan2KHR> images;
 	

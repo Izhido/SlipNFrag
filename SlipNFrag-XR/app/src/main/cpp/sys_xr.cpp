@@ -378,6 +378,8 @@ extern double		oldrealtime;
 extern qboolean	r_skyinitialized;
 extern qboolean	r_skyRGBAinitialized;
 extern qboolean	r_skyboxinitialized;
+extern std::string r_skyboxprefix;
+extern std::unordered_map<std::string, texture_t**> r_skyboxtexsources;
 extern std::vector<byte> r_24to8table;
 extern std::unordered_map<std::string, qpic_t*> menu_cachepics;
 extern std::list<model_t> mod_known;
@@ -448,6 +450,15 @@ void Sys_Terminate()
 	r_skyinitialized = false;
 	r_skyRGBAinitialized = false;
 	r_skyboxinitialized = false;
+	r_skyboxprefix = "";
+	for (auto& entry : r_skyboxtexsources)
+	{
+		for (size_t i=0 ; i<6 ; i++)
+		{
+			delete[] entry.second[i];
+		}
+		delete[] entry.second;
+	}
 	host_initialized = false;
 	scr_disabled_for_loading = false;
 	scr_fullupdate = 0;

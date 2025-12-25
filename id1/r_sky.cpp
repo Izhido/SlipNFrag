@@ -42,6 +42,7 @@ qboolean r_skyinitialized;
 qboolean r_skyRGBAinitialized;
 qboolean r_skyboxinitialized;
 std::string r_skyboxprefix;
+std::unordered_map<std::string, texture_t**> r_skyboxtexsources;
 
 // TODO: clean up these routines
 
@@ -469,11 +470,6 @@ qboolean R_LoadSkyImage(std::string& path, const std::string& prefix, texture_t*
 	int width;
 	int height;
 
-	if (texture != nullptr)
-	{
-		delete[] texture;
-		texture = nullptr;
-	}
 	if (r_load_as_rgba)
 	{
 		pic = nullptr;
@@ -583,14 +579,50 @@ int	r_skysideimage[6] = {5, 2, 4, 1, 0, 3};
 
 qboolean R_SetSkyBox (float rotate, const vec3_t axis)
 {
-	r_skyrotate = rotate;
-	VectorCopy (axis, r_skyaxis);
-
-	for (auto i=0 ; i<6 ; i++)
+	if (r_skyboxprefix == "")
 	{
-		std::string prefix = suf[r_skysideimage[i]];
-		std::string path = "gfx/env/" + r_skyboxprefix + prefix + ".tga";
-		if (R_LoadSkyImage(path, prefix, r_skytexinfo[i].texture))
+		return false;
+	}
+	auto allLoaded = true;
+	auto entry = r_skyboxtexsources.find(r_skyboxprefix);
+	if (entry == r_skyboxtexsources.end())
+	{
+		r_skyrotate = rotate;
+		VectorCopy (axis, r_skyaxis);
+
+		for (auto& t : r_skytexinfo)
+		{
+			t.texture = nullptr;
+		}
+		for (size_t i=0 ; i<6 ; i++)
+		{
+			std::string prefix = suf[r_skysideimage[i]];
+			std::string path = "gfx/env/" + r_skyboxprefix + prefix + ".tga";
+			if (R_LoadSkyImage(path, prefix, r_skytexinfo[i].texture))
+			{
+				r_skyfaces[i].texturemins[0] = -(int)r_skytexinfo[i].texture->width / 2;
+				r_skyfaces[i].texturemins[1] = -(int)r_skytexinfo[i].texture->height / 2;
+				r_skyfaces[i].extents[0] = r_skytexinfo[i].texture->width;
+				r_skyfaces[i].extents[1] = r_skytexinfo[i].texture->height;
+			}
+			else
+			{
+				allLoaded = false;
+				break;
+			}
+		}
+		auto textures = new texture_t*[6];
+		for (size_t i=0 ; i<6 ; i++)
+		{
+			textures[i] = r_skytexinfo[i].texture;
+		}
+		r_skyboxtexsources.insert({ r_skyboxprefix, textures });
+		return allLoaded;
+	}
+	for (size_t i=0 ; i<6 ; i++)
+	{
+		r_skytexinfo[i].texture = entry->second[i];
+		if (r_skytexinfo[i].texture != nullptr)
 		{
 			r_skyfaces[i].texturemins[0] = -(int)r_skytexinfo[i].texture->width / 2;
 			r_skyfaces[i].texturemins[1] = -(int)r_skytexinfo[i].texture->height / 2;
@@ -599,10 +631,11 @@ qboolean R_SetSkyBox (float rotate, const vec3_t axis)
 		}
 		else
 		{
-			return false;
+			allLoaded = false;
+			break;
 		}
 	}
-	return true;
+	return allLoaded;
 }
 
 /*
@@ -655,6 +688,44 @@ void R_EmitSkyBox (void)
 		R_RenderFace (face, 15);
 	}
 	r_currentkey = oldkey;		// bsp sorting order
+}
+
+/*
+================
+R_Sky_f
+================
+*/
+void R_Sky_f (void)
+{
+	float rotate;
+	vec3_t axis;
+	std::string newprefix;
+
+	switch (Cmd_Argc())
+	{
+		case 1:
+			Con_Printf("\"sky\" is \"%s\"\n", r_skyboxprefix.c_str());
+			break;
+		case 2:
+			if (!r_skyboxinitialized)
+			{
+				return;
+			}
+			newprefix = Cmd_Argv(1);
+			if (newprefix == r_skyboxprefix)
+			{
+				return;
+			}
+			r_skyboxprefix = newprefix;
+			rotate = 0;
+			axis[0] = 0;
+			axis[1] = 1;
+			axis[2] = 0;
+			r_skyboxinitialized = R_SetSkyBox (rotate, axis);
+			break;
+		default:
+			Con_Printf("usage: sky <skyname>\n");
+	}
 }
 
 
