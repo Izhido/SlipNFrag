@@ -12,7 +12,7 @@ Slip & Frag aims to be two things:
 
 ## What is available
 
-Latest version: **1.1.31** - see [Changelog](CHANGELOG.md) for details.
+Latest version: **1.1.32** - see [Changelog](CHANGELOG.md) for details.
 
 Releases are available [here](https://github.com/Izhido/SlipNFrag/releases/latest). They are:
 

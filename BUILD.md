@@ -74,9 +74,9 @@ The following is the list of components, and their version numbers, required to 
 
 * NDK (Side by Side) **29.0.14206865**
 
-* Android SDK Build-Tools **36.0.0**
+* Android SDK Build-Tools **36.1.0**
 
-* OpenXR SDK **1.1.53**
+* OpenXR SDK **1.1.54**
 
 * stb (latest version gathered from https://github.com/nothings/stb )
 

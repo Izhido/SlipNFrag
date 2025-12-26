@@ -1,6 +1,16 @@
 # Changelog
 
-## Version **1.1.31**:
+## Version **1.1.32**:
+
+* Removed no longer needed check for textures in alias (weapons, monsters, items and so on) models for their size to be a multiple of 4, which prevents crashing on an increasing number of newer maps / mods.
+* Added "sky" command to the core engine, allowing skyboxes to be changed at any time during play, either by hand or when the map / mod requires it.
+* Fixed issue when shutting down the audio engine in the core engine, preventing potential crashes when closing the game (or when switching between maps / levels.)
+* UI elements in the XR and PCXR versions can now be presented in a planar surface, instead of a curved one, depending on optional support for "cylinder composition layers" in the OpenXR runtime.
+* Skyboxes in the XR and PCXR versions will now be rendered only if there is (optional) support in the OpenXR runtime for "cube composition layers" - displaying a gray sky if there is no support for it.
+* Reverted changes that make the XR and PCXR versions use OpenXR 1.1 as a base version - instead, 1.0 will be used as base. This should restore support for Meta Quest 1 devices once again.
+* Minor, but important misc. fixes applied as well.
+
+### Version **1.1.31**:
 
 * Weapons in the game can now be wielded in the hands of the player, in the (now renamed as) XR and PCXR versions. Support for most weapons in the original game, the Mission Packs, and mods based on the latest version of Arcane Dimensions, Alkaline, Copper and LibreQuake is included within the engine. (Axe-style weapons are not, however, supported in this release.)
     * Players can add support for other weapons in other mods by uploading a "viewmodels.txt" file with the weapon definition and transformations. 
