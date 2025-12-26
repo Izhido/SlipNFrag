@@ -1613,7 +1613,7 @@ int main(int argc, char* argv[])
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "PCXR 1.1.31";
+						sys_version = "PCXR 1.1.32";
 						sys_argc = argc;
 						sys_argv = argv;
 						Sys_Init(sys_argc, sys_argv);
