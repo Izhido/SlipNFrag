@@ -8,7 +8,7 @@ set(ID1_DIR "${ROOT_DIR}/id1")
 set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(STB_DIR "${ROOT_DIR}/stb")
-set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.53")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.54")
 
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")

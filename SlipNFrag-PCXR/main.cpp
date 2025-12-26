@@ -630,6 +630,9 @@ int main(int argc, char* argv[])
 
 			CHECK_XRCMD(xrGetVulkanGraphicsDevice2KHR(instance, &deviceGetInfo, &vulkanPhysicalDevice));
 
+			VkPhysicalDeviceFeatures2 physicalDeviceFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+			vkGetPhysicalDeviceFeatures2(vulkanPhysicalDevice, &physicalDeviceFeatures);
+
 			VkDeviceQueueCreateInfo queueInfo { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 			float queuePriorities = 0;
 			queueInfo.queueCount = 1;
@@ -699,6 +702,10 @@ int main(int argc, char* argv[])
 
 			VkPhysicalDeviceFeatures2 features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 			((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&features;
+
+			// shaderStorageImageMultisample is required by the Meta OpenXR runtime:
+			features.features.shaderStorageImageMultisample = physicalDeviceFeatures.features.shaderStorageImageMultisample;
+
 			chain = (void*)((VkBaseInStructure*)chain)->pNext;
 
 			VkPhysicalDeviceMultiviewFeatures multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
@@ -2084,23 +2091,6 @@ int main(int argc, char* argv[])
 						framebufferInfo.height = appState.SwapchainRect.extent.height;
 						framebufferInfo.layers = 1;
 						CHECK_VKCMD(vkCreateFramebuffer(appState.Device, &framebufferInfo, nullptr, &perFrame.framebuffer));
-
-						VkImageMemoryBarrier colorBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
-						colorBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-						colorBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-						colorBarrier.image = perFrame.colorImage;
-						colorBarrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 2 };
-						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorBarrier);
-
-						colorBarrier.image = perFrame.resolveImage;
-						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorBarrier);
-
-						VkImageMemoryBarrier depthBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
-						depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-						depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-						depthBarrier.image = perFrame.depthImage;
-						depthBarrier.subresourceRange = { VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 2 };
-						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &depthBarrier);
 					}
 
 					renderPassBeginInfo.framebuffer = perFrame.framebuffer;
@@ -2602,35 +2592,83 @@ int main(int argc, char* argv[])
 
 					if (appState.CubeCompositionLayerEnabled && appState.Mode == AppWorldMode)
 					{
-						if (d_lists.last_skybox >= 0 && appState.Scene.skybox == nullptr)
+						if (d_lists.last_skybox >= 0)
 						{
 							int width = -1;
 							int height = -1;
-							auto& skybox = d_lists.skyboxes[0];
-							for (auto i = 0; i < 6; i++)
+							auto& skybox = d_lists.skyboxes[d_lists.last_skybox];
+							if (appState.Scene.skybox == nullptr)
 							{
-								auto texture = skybox.textures[i].texture;
-								if (texture == nullptr)
+								for (size_t i = 0; i < 6; i++)
 								{
-									width = -1;
-									height = -1;
-									break;
+									auto texture = skybox.textures[i].texture;
+									if (texture == nullptr)
+									{
+										width = -1;
+										height = -1;
+										break;
+									}
+									if (width < 0 && height < 0)
+									{
+										width = texture->width;
+										height = texture->height;
+									}
+									else if (width != texture->width || height != texture->height)
+									{
+										width = -1;
+										height = -1;
+										break;
+									}
 								}
-								if (width < 0 && height < 0)
+							}
+							else
+							{
+								auto same = true;
+								for (size_t i = 0; i < 6; i++)
 								{
-									width = texture->width;
-									height = texture->height;
+									auto texture = skybox.textures[i].texture;
+									if (texture != appState.Scene.skybox->sources[i])
+									{
+										same = false;
+										break;
+									}
 								}
-								else if (width != texture->width || height != texture->height)
+								if (!same)
 								{
-									width = -1;
-									height = -1;
-									break;
+									Skybox::MoveToPrevious(appState.Scene);
+									for (size_t i = 0; i < 6; i++)
+									{
+										auto texture = skybox.textures[i].texture;
+										if (texture == nullptr)
+										{
+											width = -1;
+											height = -1;
+											break;
+										}
+										if (width < 0 && height < 0)
+										{
+											width = texture->width;
+											height = texture->height;
+										}
+										else if (width != texture->width || height != texture->height)
+										{
+											width = -1;
+											height = -1;
+											break;
+										}
+									}
 								}
 							}
 							if (width > 0 && height > 0)
 							{
 								appState.Scene.skybox = new Skybox { };
+
+								appState.Scene.skybox->sources.resize(6);
+
+								for (size_t i = 0; i < 6; i++)
+								{
+									appState.Scene.skybox->sources[i] = skybox.textures[i].texture;
+								}
 
 								XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 								swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
@@ -2657,7 +2695,7 @@ int main(int argc, char* argv[])
 
 								auto target = (uint32_t*)buffer.mapped;
 
-								for (auto i = 0; i < 6; i++)
+								for (size_t i = 0; i < 6; i++)
 								{
 									std::string name;
 									switch (i)
