@@ -24,7 +24,6 @@ struct AppState
 	bool Resumed;
 	VkDevice Device;
 	bool CylinderCompositionLayerEnabled;
-	bool CubeCompositionLayerEnabled;
 	bool IndexTypeUInt8Enabled;
 	bool HandTrackingEnabled;
 	bool SimultaneousHandsAndControllersEnabled;
@@ -41,6 +40,8 @@ struct AppState
 	VkRect2D SwapchainRect;
 	uint32_t SwapchainSampleCount;
 	std::vector<XrSwapchainImageVulkan2KHR> SwapchainImages;
+	std::vector<XrSwapchainImageVulkan2KHR> DepthSwapchainImages;
+	std::vector<VkImageView> DepthSwapchainImageViews;
 	Screen Screen;
 	std::vector<uint32_t> ScreenData;
 	std::vector<Texture> ConsoleTextures;

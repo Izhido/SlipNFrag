@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 struct Constants
 {
 	static const VkFormat colorFormat = VK_FORMAT_R8G8B8A8_SRGB;
@@ -14,4 +16,7 @@ struct Constants
 	static const int minimumBufferAllocation = 4096;
     static const int sortedSurfaceElementIncrement = 32;
 	static const int lightmapBufferSize = 32 * 1024;
+	static constexpr float nearPlaneForProjection = 0.05f;
+	static constexpr float farPlaneForProjection = 0;
+	static constexpr float farPlaneForDepthCompositionLayer = INFINITY;
 };
