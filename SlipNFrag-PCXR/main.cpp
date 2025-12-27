@@ -294,6 +294,8 @@ int main(int argc, char* argv[])
 
 		auto performanceSettingsEnabled = false;
 		auto colorSpacesEnabled = false;
+		auto cubeCompositionLayerEnabled = false;
+		auto depthCompositionLayerEnabled = false;
 		auto audioDeviceGuidEnabled = false;
 		auto handTrackingEnabled = false;
 		auto simultaneousHandsAndControllersEnabled = false;
@@ -330,7 +332,13 @@ int main(int argc, char* argv[])
 			}
 			else if (strncmp(extension.extensionName, XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
-				appState.CubeCompositionLayerEnabled = true;
+				cubeCompositionLayerEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
+			else if (strncmp(extension.extensionName, XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				// Temporarily disabled - the current implementation induces wobbling when moving around the scene:
+				//depthCompositionLayerEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 			else if (strncmp(extension.extensionName, XR_OCULUS_AUDIO_DEVICE_GUID_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
@@ -548,6 +556,8 @@ int main(int argc, char* argv[])
 		}
 #endif
 
+		auto createRenderPass2 = false;
+		auto depthStencilResolve = false;
 		uint32_t vulkanSwapchainSampleCount;
 		{
 			std::vector<const char*> vulkanExtensions;
@@ -689,6 +699,16 @@ int main(int argc, char* argv[])
 				{
 					shaderTerminateInvocation = true;
 					enabledExtensions.push_back(VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME);
+				}
+				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME) == 0)
+				{
+					createRenderPass2 = true;
+					enabledExtensions.push_back(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
+				}
+				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME) == 0)
+				{
+					depthStencilResolve = true;
+					enabledExtensions.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
 				}
 			}
 
@@ -1293,59 +1313,166 @@ int main(int argc, char* argv[])
 		appState.SwapchainImages.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 		CHECK_XRCMD(xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.SwapchainImages.data()));
 
-		VkAttachmentReference colorReference { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference depthReference { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference resolveReference { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+		XrSwapchain depthSwapchain = VK_NULL_HANDLE;
+		if (createRenderPass2)
+		{
+			if (depthStencilResolve && depthCompositionLayerEnabled)
+			{
+				appState.Logger->Info("Creating depth swapchain with dimensions Width=%d Height=%d", appState.SwapchainRect.extent.width, appState.SwapchainRect.extent.height);
 
-		VkAttachmentDescription attachments[3] { };
+				swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+				swapchainCreateInfo.format = Constants::depthFormat;
+				CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &depthSwapchain));
 
-		attachments[0].format = Constants::colorFormat;
-		attachments[0].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
-		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				uint32_t depthImageCount;
+				CHECK_XRCMD(xrEnumerateSwapchainImages(depthSwapchain, 0, &depthImageCount, nullptr));
 
-		attachments[1].format = Constants::depthFormat;
-		attachments[1].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
-		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+				appState.DepthSwapchainImages.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
+				CHECK_XRCMD(xrEnumerateSwapchainImages(depthSwapchain, depthImageCount, &depthImageCount, (XrSwapchainImageBaseHeader*)appState.DepthSwapchainImages.data()));
 
-		attachments[2].format = Constants::colorFormat;
-		attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[2].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				appState.DepthSwapchainImageViews.resize(imageCount);
+			}
 
-		VkSubpassDescription subpass { };
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorReference;
-		subpass.pDepthStencilAttachment = &depthReference;
-		subpass.pResolveAttachments = &resolveReference;
+			VkAttachmentReference2 colorReference { VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2 };
+			colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		VkRenderPassCreateInfo renderPassInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-		renderPassInfo.attachmentCount = 3;
-		renderPassInfo.pAttachments = attachments;
-		renderPassInfo.subpassCount = 1;
-		renderPassInfo.pSubpasses = &subpass;
+			VkAttachmentReference2 depthReference { VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2 };
+			depthReference.attachment = 1;
+			depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-		const uint32_t viewMask = 3;
+			VkAttachmentReference2 resolveReference { VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2 };
+			resolveReference.attachment = 2;
+			resolveReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		VkRenderPassMultiviewCreateInfo multiviewCreateInfo { VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO };
-		multiviewCreateInfo.subpassCount = 1;
-		multiviewCreateInfo.pViewMasks = &viewMask;
-		multiviewCreateInfo.correlationMaskCount = 1;
-		multiviewCreateInfo.pCorrelationMasks = &viewMask;
-		renderPassInfo.pNext = &multiviewCreateInfo;
+			VkAttachmentReference2 resolveDepthReference { VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2 };
+			resolveDepthReference.attachment = 3;
+			resolveDepthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-		CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
+			VkSubpassDescriptionDepthStencilResolve depthStencilResolveForSubpass { VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE };
+			depthStencilResolveForSubpass.depthResolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
+			depthStencilResolveForSubpass.stencilResolveMode = VK_RESOLVE_MODE_NONE;
+			depthStencilResolveForSubpass.pDepthStencilResolveAttachment = &resolveDepthReference;
+
+			const uint32_t viewMask = 3;
+
+			VkSubpassDescription2 subpass { VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2 };
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.colorAttachmentCount = 1;
+			subpass.pColorAttachments = &colorReference;
+			subpass.pDepthStencilAttachment = &depthReference;
+			subpass.pResolveAttachments = &resolveReference;
+			subpass.viewMask = viewMask;
+			if (depthStencilResolve && depthCompositionLayerEnabled)
+			{
+				subpass.pNext = &depthStencilResolveForSubpass;
+			}
+
+			VkAttachmentDescription2 attachments[4] { };
+
+			attachments[0].sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
+			attachments[0].format = Constants::colorFormat;
+			attachments[0].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
+			attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			attachments[1].sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
+			attachments[1].format = Constants::depthFormat;
+			attachments[1].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
+			attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			attachments[2].sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
+			attachments[2].format = Constants::colorFormat;
+			attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
+			attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[2].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			attachments[3].sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
+			attachments[3].format = Constants::depthFormat;
+			attachments[3].samples = VK_SAMPLE_COUNT_1_BIT;
+			attachments[3].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[3].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			attachments[3].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[3].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[3].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			VkRenderPassCreateInfo2 renderPassInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2 };
+			renderPassInfo.attachmentCount = (depthStencilResolve && depthCompositionLayerEnabled ? 4 : 3);
+			renderPassInfo.pAttachments = attachments;
+			renderPassInfo.subpassCount = 1;
+			renderPassInfo.pSubpasses = &subpass;
+			renderPassInfo.pCorrelatedViewMasks = &viewMask;
+			renderPassInfo.correlatedViewMaskCount = 1;
+
+			auto vkCreateRenderPass2KHR = (PFN_vkCreateRenderPass2KHR)vkGetDeviceProcAddr(appState.Device, "vkCreateRenderPass2KHR");
+
+			CHECK_VKCMD(vkCreateRenderPass2KHR(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
+		}
+		else
+		{
+			VkAttachmentReference colorReference { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+			VkAttachmentReference depthReference { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
+			VkAttachmentReference resolveReference { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+
+			VkAttachmentDescription attachments[3] { };
+
+			attachments[0].format = Constants::colorFormat;
+			attachments[0].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
+			attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			attachments[1].format = Constants::depthFormat;
+			attachments[1].samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
+			attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			attachments[2].format = Constants::colorFormat;
+			attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
+			attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			attachments[2].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			VkSubpassDescription subpass { };
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.colorAttachmentCount = 1;
+			subpass.pColorAttachments = &colorReference;
+			subpass.pDepthStencilAttachment = &depthReference;
+			subpass.pResolveAttachments = &resolveReference;
+
+			VkRenderPassCreateInfo renderPassInfo { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
+			renderPassInfo.attachmentCount = 3;
+			renderPassInfo.pAttachments = attachments;
+			renderPassInfo.subpassCount = 1;
+			renderPassInfo.pSubpasses = &subpass;
+
+			const uint32_t viewMask = 3;
+
+			VkRenderPassMultiviewCreateInfo multiviewCreateInfo { VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO };
+			multiviewCreateInfo.subpassCount = 1;
+			multiviewCreateInfo.pViewMasks = &viewMask;
+			multiviewCreateInfo.correlationMaskCount = 1;
+			multiviewCreateInfo.pCorrelationMasks = &viewMask;
+			renderPassInfo.pNext = &multiviewCreateInfo;
+
+			CHECK_VKCMD(vkCreateRenderPass(appState.Device, &renderPassInfo, nullptr, &appState.RenderPass));
+		}
 
 		VkClearValue clearValues[2] { };
 		clearValues[1].depthStencil.depth = 1.0f;
@@ -1369,6 +1496,7 @@ int main(int argc, char* argv[])
 		XrCompositionLayerQuad keyboardPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
 
 		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
+		std::vector<XrCompositionLayerDepthInfoKHR> depthInfoForProjectionLayerViews;
 
 		XrCompositionLayerCubeKHR skyboxLayer { XR_TYPE_COMPOSITION_LAYER_CUBE_KHR };
 		skyboxLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
@@ -1780,7 +1908,7 @@ int main(int argc, char* argv[])
 						XrMatrix4x4f translation;
 						XrMatrix4x4f_CreateTranslation(&translation, -views[i].pose.position.x, -views[i].pose.position.y, -views[i].pose.position.z);
 						XrMatrix4x4f_Multiply(&appState.ViewMatrices[i], &transposedRotation, &translation);
-						XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, views[i].fov, 0.05f, 0);
+						XrMatrix4x4f_CreateProjectionFov(&appState.ProjectionMatrices[i], GRAPHICS_VULKAN, views[i].fov, Constants::nearPlaneForProjection, Constants::farPlaneForProjection);
 					}
 
 					{
@@ -1876,9 +2004,20 @@ int main(int argc, char* argv[])
 					}
 
 					projectionLayerViews.resize(viewCountOutput);
+					depthInfoForProjectionLayerViews.resize(viewCountOutput);
 
 					uint32_t swapchainImageIndex;
 					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, nullptr, &swapchainImageIndex));
+
+					uint32_t depthSwapchainImageIndex;
+					if (depthSwapchain != VK_NULL_HANDLE)
+					{
+						CHECK_XRCMD(xrAcquireSwapchainImage(depthSwapchain, nullptr, &depthSwapchainImageIndex));
+						if (depthSwapchainImageIndex != swapchainImageIndex)
+						{
+							appState.Logger->Warn("Image indices for swapchain and depth swapchain do not match: %i vs %i", swapchainImageIndex, depthSwapchainImageIndex);
+						}
+					}
 
 					auto& perFrame = appState.PerFrame[swapchainImageIndex];
 
@@ -1898,6 +2037,20 @@ int main(int argc, char* argv[])
 						projectionLayerViews[i].subImage.imageRect.extent.width = appState.SwapchainRect.extent.width;
 						projectionLayerViews[i].subImage.imageRect.extent.height = appState.SwapchainRect.extent.height;
 						projectionLayerViews[i].subImage.imageArrayIndex = i;
+
+						if (depthSwapchain != VK_NULL_HANDLE)
+						{
+							projectionLayerViews[i].next = &depthInfoForProjectionLayerViews[i];
+
+							depthInfoForProjectionLayerViews[i].type = XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR;
+							depthInfoForProjectionLayerViews[i].subImage.swapchain = depthSwapchain;
+							depthInfoForProjectionLayerViews[i].subImage.imageRect.extent.width = appState.SwapchainRect.extent.width;
+							depthInfoForProjectionLayerViews[i].subImage.imageRect.extent.height = appState.SwapchainRect.extent.height;
+							depthInfoForProjectionLayerViews[i].subImage.imageArrayIndex = i;
+							depthInfoForProjectionLayerViews[i].maxDepth = 1;
+							depthInfoForProjectionLayerViews[i].nearZ = Constants::nearPlaneForProjection;
+							depthInfoForProjectionLayerViews[i].farZ = Constants::farPlaneForDepthCompositionLayer;
+						}
 					}
 
 					float clearR = 0;
@@ -2018,7 +2171,7 @@ int main(int argc, char* argv[])
 						imageInfo.extent.height = appState.SwapchainRect.extent.height;
 						imageInfo.extent.depth = 1;
 						imageInfo.mipLevels = 1;
-						imageInfo.arrayLayers = 2;
+						imageInfo.arrayLayers = viewCount;
 						imageInfo.samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 
 						imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
@@ -2078,14 +2231,26 @@ int main(int argc, char* argv[])
 						viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 						CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &perFrame.resolveView));
 
-						VkImageView attachments[3];
+						if (depthSwapchain != VK_NULL_HANDLE)
+						{
+							viewInfo.image = appState.DepthSwapchainImages[depthSwapchainImageIndex].image;
+							viewInfo.format = Constants::depthFormat;
+							viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+							CHECK_VKCMD(vkCreateImageView(appState.Device, &viewInfo, nullptr, &appState.DepthSwapchainImageViews[depthSwapchainImageIndex]));
+						}
+
+						VkImageView attachments[4];
 						attachments[0] = perFrame.colorView;
 						attachments[1] = perFrame.depthView;
 						attachments[2] = perFrame.resolveView;
+						if (depthSwapchain != VK_NULL_HANDLE)
+						{
+							attachments[3] = appState.DepthSwapchainImageViews[depthSwapchainImageIndex];
+						}
 
 						VkFramebufferCreateInfo framebufferInfo { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
 						framebufferInfo.renderPass = appState.RenderPass;
-						framebufferInfo.attachmentCount = 3;
+						framebufferInfo.attachmentCount = (depthSwapchain != VK_NULL_HANDLE ? 4 : 3);
 						framebufferInfo.pAttachments = attachments;
 						framebufferInfo.width = appState.SwapchainRect.extent.width;
 						framebufferInfo.height = appState.SwapchainRect.extent.height;
@@ -2590,7 +2755,7 @@ int main(int argc, char* argv[])
 						}
 					}
 
-					if (appState.CubeCompositionLayerEnabled && appState.Mode == AppWorldMode)
+					if (cubeCompositionLayerEnabled && appState.Mode == AppWorldMode)
 					{
 						if (d_lists.last_skybox >= 0)
 						{
@@ -2670,23 +2835,20 @@ int main(int argc, char* argv[])
 									appState.Scene.skybox->sources[i] = skybox.textures[i].texture;
 								}
 
-								XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
 								swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
 								swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
 								swapchainCreateInfo.format = Constants::colorFormat;
-								swapchainCreateInfo.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 								swapchainCreateInfo.width = width;
 								swapchainCreateInfo.height = height;
 								swapchainCreateInfo.faceCount = 6;
 								swapchainCreateInfo.arraySize = 1;
-								swapchainCreateInfo.mipCount = 1;
 								CHECK_XRCMD(xrCreateSwapchain(appState.Session, &swapchainCreateInfo, &appState.Scene.skybox->swapchain));
 
-								uint32_t imageCount;
-								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, 0, &imageCount, nullptr));
+								uint32_t skyboxImageCount;
+								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, 0, &skyboxImageCount, nullptr));
 
-								appState.Scene.skybox->images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
-								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, imageCount, &imageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
+								appState.Scene.skybox->images.resize(skyboxImageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
+								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, skyboxImageCount, &skyboxImageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
 
 								Buffer buffer;
 								buffer.CreateSourceBuffer(appState, 6 * width * height * 4);
@@ -2812,6 +2974,10 @@ int main(int argc, char* argv[])
 			if (worldRendered)
 			{
 				CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
+				if (depthSwapchain != VK_NULL_HANDLE)
+				{
+					CHECK_XRCMD(xrWaitSwapchainImage(depthSwapchain, &waitInfo));
+				}
 			}
 			if (screenRendered)
 			{
@@ -2831,6 +2997,10 @@ int main(int argc, char* argv[])
 			if (worldRendered)
 			{
 				CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
+				if (depthSwapchain != VK_NULL_HANDLE)
+				{
+					CHECK_XRCMD(xrReleaseSwapchainImage(depthSwapchain, &releaseInfo));
+				}
 			}
 			if (screenRendered)
 			{
@@ -2864,6 +3034,19 @@ int main(int argc, char* argv[])
 		}
 
 		appState.Destroy();
+
+		for (auto imageView : appState.DepthSwapchainImageViews)
+		{
+			if (imageView != VK_NULL_HANDLE)
+			{
+				vkDestroyImageView(appState.Device, imageView, nullptr);
+			}
+		}
+
+		if (depthSwapchain != XR_NULL_HANDLE)
+		{
+			xrDestroySwapchain(depthSwapchain);
+		}
 
 		if (swapchain != XR_NULL_HANDLE)
 		{
