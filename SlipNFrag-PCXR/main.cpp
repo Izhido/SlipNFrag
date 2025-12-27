@@ -1705,9 +1705,9 @@ int main(int argc, char* argv[])
 				appState.Scene.Create(appState);
 			}
 
-			if (appState.EngineThreadCreated && !appState.EngineThreadStarted) // That is, if a previous call to android_main() already created an instance of EngineThread, but had to be closed:
+			if (appState.EngineThreadCreated && !appState.EngineThreadStarted)
 			{
-				if (snd_initialized) // If the sound system was already initialized in a previous call to android_main():
+				if (snd_initialized)
 				{
 					S_Startup ();
 				}
@@ -1860,17 +1860,49 @@ int main(int argc, char* argv[])
 			XrFrameState frameState { XR_TYPE_FRAME_STATE };
 			CHECK_XRCMD(xrWaitFrame(appState.Session, &frameWaitInfo, &frameState));
 
+			uint32_t swapchainImageIndex;
+			CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, nullptr, &swapchainImageIndex));
+
+			uint32_t depthSwapchainImageIndex;
+			if (depthSwapchain != VK_NULL_HANDLE)
+			{
+				CHECK_XRCMD(xrAcquireSwapchainImage(depthSwapchain, nullptr, &depthSwapchainImageIndex));
+				if (depthSwapchainImageIndex != swapchainImageIndex)
+				{
+					appState.Logger->Warn("Image indices for swapchain and depth swapchain do not match: %i vs %i", swapchainImageIndex, depthSwapchainImageIndex);
+				}
+			}
+
+			auto& perFrame = appState.PerFrame[swapchainImageIndex];
+
+			if (perFrame.fence == VK_NULL_HANDLE)
+			{
+				VkFenceCreateInfo fenceCreate{ VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+				CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreate, nullptr, &perFrame.fence));
+			}
+			else
+			{
+				uint64_t timeout = UINT64_MAX;
+				CHECK_VKCMD(vkWaitForFences(appState.Device, 1, &perFrame.fence, VK_TRUE, timeout));
+			}
+
 			XrFrameBeginInfo frameBeginInfo { XR_TYPE_FRAME_BEGIN_INFO };
 			CHECK_XRCMD(xrBeginFrame(appState.Session, &frameBeginInfo));
 
+			CHECK_VKCMD(vkResetFences(appState.Device, 1, &perFrame.fence));
+
+			CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
+			if (depthSwapchain != VK_NULL_HANDLE)
+			{
+				CHECK_XRCMD(xrWaitSwapchainImage(depthSwapchain, &waitInfo));
+			}
+
 			layers.clear();
 
-			auto worldRendered = false;
 			auto screenRendered = false;
 			auto keyboardRendered = false;
 
 			VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
-			VkFence fence = VK_NULL_HANDLE;
 
 			if (frameState.shouldRender)
 			{
@@ -2006,21 +2038,6 @@ int main(int argc, char* argv[])
 					projectionLayerViews.resize(viewCountOutput);
 					depthInfoForProjectionLayerViews.resize(viewCountOutput);
 
-					uint32_t swapchainImageIndex;
-					CHECK_XRCMD(xrAcquireSwapchainImage(swapchain, nullptr, &swapchainImageIndex));
-
-					uint32_t depthSwapchainImageIndex;
-					if (depthSwapchain != VK_NULL_HANDLE)
-					{
-						CHECK_XRCMD(xrAcquireSwapchainImage(depthSwapchain, nullptr, &depthSwapchainImageIndex));
-						if (depthSwapchainImageIndex != swapchainImageIndex)
-						{
-							appState.Logger->Warn("Image indices for swapchain and depth swapchain do not match: %i vs %i", swapchainImageIndex, depthSwapchainImageIndex);
-						}
-					}
-
-					auto& perFrame = appState.PerFrame[swapchainImageIndex];
-
 					if (perFrame.matrices == nullptr)
 					{
 						perFrame.matrices = new Buffer();
@@ -2136,21 +2153,6 @@ int main(int argc, char* argv[])
 					}
 
 					commandBuffer = perFrame.commandBuffer;
-
-					if (perFrame.fence == VK_NULL_HANDLE)
-					{
-						VkFenceCreateInfo fenceCreate {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-						CHECK_VKCMD(vkCreateFence(appState.Device, &fenceCreate, nullptr, &perFrame.fence));
-					}
-					else
-					{
-						uint64_t timeout = UINT64_MAX;
-						CHECK_VKCMD(vkWaitForFences(appState.Device, 1, &perFrame.fence, VK_TRUE, timeout));
-					}
-
-					fence = perFrame.fence;
-
-					CHECK_VKCMD(vkResetFences(appState.Device, 1, &fence));
 
 					CHECK_VKCMD(vkResetCommandPool(appState.Device, perFrame.commandPool, 0));
 
@@ -2279,8 +2281,6 @@ int main(int argc, char* argv[])
 					}
 
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
-
-					worldRendered = true;
 
 					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.swapchain, nullptr, &swapchainImageIndex));
 
@@ -2971,14 +2971,6 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			if (worldRendered)
-			{
-				CHECK_XRCMD(xrWaitSwapchainImage(swapchain, &waitInfo));
-				if (depthSwapchain != VK_NULL_HANDLE)
-				{
-					CHECK_XRCMD(xrWaitSwapchainImage(depthSwapchain, &waitInfo));
-				}
-			}
 			if (screenRendered)
 			{
 				CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.swapchain, &waitInfo));
@@ -2988,19 +2980,21 @@ int main(int argc, char* argv[])
 				CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.swapchain, &waitInfo));
 			}
 
-			if (commandBuffer != VK_NULL_HANDLE && fence != VK_NULL_HANDLE)
+			if (commandBuffer != VK_NULL_HANDLE)
 			{
 				submitInfo.pCommandBuffers = &commandBuffer;
-				CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, fence));
+				CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &submitInfo, perFrame.fence));
+			}
+			else
+			{
+				submitInfo.pCommandBuffers = VK_NULL_HANDLE;
+				CHECK_VKCMD(vkQueueSubmit(appState.Queue, 0, &submitInfo, perFrame.fence));
 			}
 
-			if (worldRendered)
+			CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
+			if (depthSwapchain != VK_NULL_HANDLE)
 			{
-				CHECK_XRCMD(xrReleaseSwapchainImage(swapchain, &releaseInfo));
-				if (depthSwapchain != VK_NULL_HANDLE)
-				{
-					CHECK_XRCMD(xrReleaseSwapchainImage(depthSwapchain, &releaseInfo));
-				}
+				CHECK_XRCMD(xrReleaseSwapchainImage(depthSwapchain, &releaseInfo));
 			}
 			if (screenRendered)
 			{
@@ -3024,7 +3018,7 @@ int main(int argc, char* argv[])
 		{
 			appState.EngineThreadStopped = true;
 			appState.EngineThread.join();
-			appState.EngineThreadStopped = false; // By doing this, EngineThread is allowed to be recreated and resumed the next time android_main() is called.
+			appState.EngineThreadStopped = false;
 			appState.EngineThreadStarted = false;
 		}
 
