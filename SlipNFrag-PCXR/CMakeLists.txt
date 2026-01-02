@@ -16,7 +16,7 @@ file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
 file(GLOB RENDERER_SOURCE "${RENDERER_DIR}/*.cpp")
 file(GLOB SND_FLOAT_SOURCE "${SND_FLOAT_DIR}/*.cpp")
 file(GLOB SHADERS_SOURCE "${SHADERS_DIR}/*.vert" "${SHADERS_DIR}/*.frag")
-file(GLOB SLIPNFRAG_XR_ASSETS "${ROOT_DIR}/SlipNFrag-XR/app/src/main/assets/*")
+file(GLOB SLIPNFRAG_XR_ASSETS "${ROOT_DIR}/SlipNFrag-XR/app/src/main/assets/*.png")
 
 list(FILTER ID1_SOURCE EXCLUDE REGEX "net_udp")
 list(FILTER ID1_SOURCE EXCLUDE REGEX "snd_")

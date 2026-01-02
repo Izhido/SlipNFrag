@@ -1724,7 +1724,7 @@ int main(int argc, char* argv[])
 
 			{
 				std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
-				if (appState.Mode != AppStartupMode && appState.Mode != AppNoGameDataMode)
+				if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 				{
 					if (cls.demoplayback || cl.intermission || con_forcedup || scr_disabled_for_loading)
 					{
@@ -1745,14 +1745,9 @@ int main(int argc, char* argv[])
 						Sys_Init(sys_argc, sys_argv);
 						if (!sys_errormessage.empty())
 						{
-							if (sys_nogamedata)
-							{
-								appState.Mode = AppNoGameDataMode;
-							}
-							else
-							{
-								Throw(Fmt("Sys_Error: %s", sys_errormessage.c_str()), nullptr, FILE_AND_LINE);
-							}
+							xrRequestExitSession(appState.Session);
+							sessionRunning = false;
+							continue;
 						}
 						appState.DefaultFOV = (int)Cvar_VariableValue("fov");
 						r_load_as_rgba = true;
@@ -3100,7 +3095,14 @@ int main(int argc, char* argv[])
 
 		if (!sys_errormessage.empty())
 		{
-			throw std::runtime_error(sys_errormessage);
+			if (sys_nogamedata)
+			{
+				Throw("No game data found in the current directory.", nullptr, FILE_AND_LINE);
+			}
+			else
+			{
+				Throw(Fmt("Sys_Error: %s", sys_errormessage.c_str()), nullptr, FILE_AND_LINE);
+			}
 		}
 	}
 	catch (const std::exception& ex)

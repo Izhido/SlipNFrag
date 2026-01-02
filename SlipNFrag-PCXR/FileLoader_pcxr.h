@@ -4,5 +4,7 @@
 
 struct FileLoader_pcxr : public FileLoader
 {
-    void Load(const char* filename, std::vector<unsigned char>& data);
+	bool Exists(const char* filename);
+
+	void Load(const char* filename, std::vector<unsigned char>& data);
 };
