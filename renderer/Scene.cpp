@@ -209,12 +209,34 @@ void Scene::Create(AppState& appState)
     CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
     vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
     stagingBuffer.Delete(appState);
-    appState.NoGameDataData.resize(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
+
+    appState.NoGameDataImageSource = new std::vector<uint32_t>(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
     ImageAsset noGameData;
     noGameData.Open("nogamedata.png", appState.FileLoader);
-    CopyImage(appState, noGameData.image, appState.NoGameDataData.data() + ((appState.ScreenHeight - noGameData.height) * appState.ScreenWidth + appState.ScreenWidth - noGameData.width) / 2, noGameData.width, noGameData.height);
+    CopyImage(appState, noGameData.image, appState.NoGameDataImageSource->data() + ((appState.ScreenHeight - noGameData.height) * appState.ScreenWidth + appState.ScreenWidth - noGameData.width) / 2, noGameData.width, noGameData.height);
     noGameData.Close();
-    AddBorder(appState, appState.NoGameDataData);
+    AddBorder(appState, *appState.NoGameDataImageSource);
+
+    appState.NoGameDataUncompressImageSource = new std::vector<uint32_t>(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
+    ImageAsset noGameDataUncompress;
+	noGameDataUncompress.Open("nogamedata_uncompress.png", appState.FileLoader);
+    CopyImage(appState, noGameDataUncompress.image, appState.NoGameDataUncompressImageSource->data() + ((appState.ScreenHeight - noGameDataUncompress.height) * appState.ScreenWidth + appState.ScreenWidth - noGameDataUncompress.width) / 2, noGameDataUncompress.width, noGameDataUncompress.height);
+	noGameDataUncompress.Close();
+    AddBorder(appState, *appState.NoGameDataUncompressImageSource);
+
+    appState.InvalidGameDataUncompressImageSource = new std::vector<uint32_t>(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
+    ImageAsset invalidGameDataUncompress;
+	invalidGameDataUncompress.Open("invalidgamedata_uncompress.png", appState.FileLoader);
+    CopyImage(appState, invalidGameDataUncompress.image, appState.InvalidGameDataUncompressImageSource->data() + ((appState.ScreenHeight - invalidGameDataUncompress.height) * appState.ScreenWidth + appState.ScreenWidth - invalidGameDataUncompress.width) / 2, invalidGameDataUncompress.width, invalidGameDataUncompress.height);
+	invalidGameDataUncompress.Close();
+    AddBorder(appState, *appState.InvalidGameDataUncompressImageSource);
+
+    appState.SharewareGameDataImageSource = new std::vector<uint32_t>(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
+    ImageAsset sharewareGameData;
+	sharewareGameData.Open("sharewaregamedata.png", appState.FileLoader);
+    CopyImage(appState, sharewareGameData.image, appState.SharewareGameDataImageSource->data() + ((appState.ScreenHeight - sharewareGameData.height) * appState.ScreenWidth + appState.ScreenWidth - sharewareGameData.width) / 2, sharewareGameData.width, sharewareGameData.height);
+	sharewareGameData.Close();
+    AddBorder(appState, *appState.SharewareGameDataImageSource);
 
     swapchainCreateInfo.createFlags = XR_SWAPCHAIN_CREATE_STATIC_IMAGE_BIT;
     swapchainCreateInfo.width = 450;

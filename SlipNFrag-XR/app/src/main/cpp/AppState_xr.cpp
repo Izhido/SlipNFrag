@@ -364,10 +364,41 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 	}
 	else
 	{
-		if (Mode == AppNoGameDataMode && !NoGameDataLoaded)
+		if (Mode == AppNoGameDataMode)
 		{
-			std::copy(NoGameDataData.data(), NoGameDataData.data() + NoGameDataData.size(), ScreenData.data());
-			NoGameDataLoaded = true;
+			if (NoGameDataImageSource != nullptr)
+			{
+				std::copy(NoGameDataImageSource->data(), NoGameDataImageSource->data() + NoGameDataImageSource->size(), ScreenData.data());
+				delete NoGameDataImageSource;
+				NoGameDataImageSource = nullptr;
+			}
+		}
+		else if (Mode == AppNoGameDataUncompressMode)
+		{
+			if (NoGameDataUncompressImageSource != nullptr)
+			{
+				std::copy(NoGameDataUncompressImageSource->data(), NoGameDataUncompressImageSource->data() + NoGameDataUncompressImageSource->size(), ScreenData.data());
+				delete NoGameDataUncompressImageSource;
+				NoGameDataUncompressImageSource = nullptr;
+			}
+		}
+		else if (Mode == AppInvalidGameDataUncompressMode)
+		{
+			if (InvalidGameDataUncompressImageSource != nullptr)
+			{
+				std::copy(InvalidGameDataUncompressImageSource->data(), InvalidGameDataUncompressImageSource->data() + InvalidGameDataUncompressImageSource->size(), ScreenData.data());
+				delete InvalidGameDataUncompressImageSource;
+				InvalidGameDataUncompressImageSource = nullptr;
+			}
+		}
+		else if (Mode == AppSharewareGameDataMode)
+		{
+			if (SharewareGameDataImageSource != nullptr)
+			{
+				std::copy(SharewareGameDataImageSource->data(), SharewareGameDataImageSource->data() + SharewareGameDataImageSource->size(), ScreenData.data());
+				delete SharewareGameDataImageSource;
+				SharewareGameDataImageSource = nullptr;
+			}
 		}
 		auto count = (size_t)perFrame.stagingBuffer.size / sizeof(uint32_t);
 		std::copy(ScreenData.data(), ScreenData.data() + count, (uint32_t*)perFrame.stagingBuffer.mapped);

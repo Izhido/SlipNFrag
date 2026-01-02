@@ -21,6 +21,9 @@ struct AppState
 	AppMode Mode;
 	AppMode PreviousMode;
 	bool StartupButtonsPressed;
+	bool UncompressButtonsPressed;
+	bool SharewareGameDataButtonsPressed;
+	bool IsRegistered;
 	bool Resumed;
 	VkDevice Device;
 	bool CylinderCompositionLayerEnabled;
@@ -72,7 +75,10 @@ struct AppState
 	int ScreenHeight;
 	int ConsoleWidth;
 	int ConsoleHeight;
-	std::vector<uint32_t> NoGameDataData;
+	std::vector<uint32_t>* NoGameDataImageSource;
+	std::vector<uint32_t>* NoGameDataUncompressImageSource;
+	std::vector<uint32_t>* InvalidGameDataUncompressImageSource;
+	std::vector<uint32_t>* SharewareGameDataImageSource;
 	Controller LeftController;
 	Controller RightController;
 	XrVector2f PreviousThumbstick;
@@ -119,9 +125,9 @@ struct AppState
 	PFN_vkCmdInsertDebugUtilsLabelEXT vkCmdInsertDebugUtilsLabelEXT;
 	PFN_vkCmdEndDebugUtilsLabelEXT vkCmdEndDebugUtilsLabelEXT;
 #endif
-	bool NoGameDataLoaded;
 
 	static void AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitch, float& roll);
 	void RenderKeyboard(ScreenPerFrame& perFrame);
+	void DestroyImageSources();
 	void Destroy();
 };

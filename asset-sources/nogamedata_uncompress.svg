@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
+    <text font-family="Arial" text-anchor="middle" font-weight="bold" font-size="56" x="480" y="104" fill="gray">Game data not found</text>
+    <text font-family="Arial" text-anchor="middle" font-size="30" x="480" y="182" fill="gray">The Quake Shareware episode game data, however, is available.</text>
+    <text font-family="Arial" text-anchor="middle" font-size="24" x="480" y="280" fill="gray">Press ( A ) + ( X ) to install a fresh copy of the Shareware episode files at:</text>
+    <text font-family="Courier New" text-anchor="middle" font-size="24" x="480" y="330" fill="gray">/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files</text>
+    <text font-family="Arial" text-anchor="middle" font-size="24" x="480" y="380" fill="gray">to begin playing.</text>
+    <text font-family="Arial" text-anchor="middle" font-size="20" x="480" y="462" fill="gray">IMPORTANT: Custom maps / mods are not available when using the Shareware episode.</text>
+    <text font-family="Arial" text-anchor="middle" font-size="24" x="480" y="540" fill="gray">Exit the application to quit without installing.</text>
+ </svg>

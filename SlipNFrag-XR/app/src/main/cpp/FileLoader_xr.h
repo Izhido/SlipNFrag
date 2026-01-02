@@ -9,5 +9,7 @@ struct FileLoader_xr : public FileLoader
 
     explicit FileLoader_xr(android_app* app);
 
+	bool Exists(const char* filename) override;
+
     void Load(const char* filename, std::vector<unsigned char>& data) override;
 };

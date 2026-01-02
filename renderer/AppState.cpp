@@ -49,6 +49,21 @@ void AppState::RenderKeyboard(ScreenPerFrame& perFrame)
 	}
 }
 
+void AppState::DestroyImageSources()
+{
+	delete SharewareGameDataImageSource;
+	SharewareGameDataImageSource = nullptr;
+
+	delete InvalidGameDataUncompressImageSource;
+	InvalidGameDataUncompressImageSource = nullptr;
+
+	delete NoGameDataUncompressImageSource;
+	NoGameDataUncompressImageSource = nullptr;
+
+	delete NoGameDataImageSource;
+	NoGameDataImageSource = nullptr;
+}
+
 void AppState::Destroy()
 {
 	if (Device != VK_NULL_HANDLE)
@@ -149,4 +164,6 @@ void AppState::Destroy()
 		xrDestroySwapchain(Screen.swapchain);
 		Screen.swapchain = XR_NULL_HANDLE;
 	}
+
+	DestroyImageSources();
 }

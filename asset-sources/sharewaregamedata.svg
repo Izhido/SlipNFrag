@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
+    <text font-family="Arial" text-anchor="middle" font-weight="bold" font-size="42" x="480" y="136" fill="gray">Shareware episode detected</text>
+    <circle stroke="gray" stroke-width="3" fill="transparent" cx="480" cy="300" r="73.5" />
+    <path stroke="gray" stroke-width="3" fill="transparent" d="M 460 270 L 510 300 L 460 330 z" />
+    <text font-family="Arial" text-anchor="middle" font-size="20" x="480" y="470" fill="gray">Custom maps / mods are not available when using the Shareware episode.</text>
+    <text font-family="Arial" text-anchor="middle" font-size="24" x="480" y="530" fill="gray">Press ( A ) + ( X ) to begin playing anyway.</text>
+</svg>

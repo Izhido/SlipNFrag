@@ -223,8 +223,17 @@ void android_main(struct android_app* app)
 		appState = { };
 	}
 
+	if (appState.Mode != AppWorldMode && appState.Mode != AppScreenMode)
+	{
+		// If we're on any of the non-playing modes at this point, reset the mode to startup,
+		// to avoid confusing the player:
+		appState.Mode = AppStartupMode;
+	}
+
 	appState.FileLoader = new FileLoader_xr(app);
 	appState.Logger = new Logger_xr();
+
+	auto terminateWithError = false;
 
 	try
 	{
@@ -1483,6 +1492,8 @@ void android_main(struct android_app* app)
 		appState.vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdEndDebugUtilsLabelEXT");
 #endif
 
+		const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
+
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
 
@@ -1656,7 +1667,7 @@ void android_main(struct android_app* app)
 			CHECK_XRCMD(xrSyncActions(appState.Session, &syncInfo));
 
 			auto keyPressHandled = appState.Keyboard.Handle(appState);
-			AppInput::Handle(appState, keyPressHandled);
+			AppInput::Handle(appState, keyPressHandled, basedir);
 
 			XrActionStatePose poseState { XR_TYPE_ACTION_STATE_POSE };
 
@@ -1697,7 +1708,7 @@ void android_main(struct android_app* app)
 
 			{
 				std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
-				if (appState.Mode != AppStartupMode && appState.Mode != AppNoGameDataMode)
+				if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 				{
 					if (cls.demoplayback || cl.intermission || con_forcedup || scr_disabled_for_loading)
 					{
@@ -1710,52 +1721,54 @@ void android_main(struct android_app* app)
 				}
 				if (appState.PreviousMode != appState.Mode)
 				{
-					if (appState.PreviousMode == AppStartupMode)
+					if (appState.Mode == AppWorldMode && (appState.PreviousMode == AppStartupMode || appState.PreviousMode == AppSharewareGameDataMode || appState.PreviousMode == AppNoGameDataUncompressMode || appState.PreviousMode == AppInvalidGameDataUncompressMode))
 					{
 						sys_version = "XR 1.1.32";
-						const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 						std::vector<std::string> arguments;
 						arguments.emplace_back("SlipNFrag");
 						arguments.emplace_back("-basedir");
 						arguments.emplace_back(basedir);
-						std::vector<unsigned char> commandline;
-						auto file = fopen((std::string(basedir) + "/commandline.txt").c_str(), "rb");
-						if (file != nullptr)
+						if (appState.IsRegistered)
 						{
-							fseek(file, 0, SEEK_END);
-							auto length = ftell(file);
-							if (length > 0)
+							std::vector<unsigned char> commandline;
+							auto file = fopen((std::string(basedir) + "/commandline.txt").c_str(), "rb");
+							if (file != nullptr)
 							{
-								fseek(file, 0, SEEK_SET);
-								commandline.resize(length);
-								fread(commandline.data(), length, 1, file);
-							}
-							fclose(file);
-						}
-						arguments.emplace_back();
-						auto word_count = 0;
-						for (auto c : commandline)
-						{
-							if (c <= ' ')
-							{
-								if (word_count == 0 && Q_strcasecmp(arguments[arguments.size() - 1].c_str(), "quake") == 0)
+								fseek(file, 0, SEEK_END);
+								auto length = ftell(file);
+								if (length > 0)
 								{
-									arguments[arguments.size() - 1].clear();
+									fseek(file, 0, SEEK_SET);
+									commandline.resize(length);
+									fread(commandline.data(), length, 1, file);
 								}
-								else if (!arguments[arguments.size() - 1].empty())
-								{
-									arguments.emplace_back();
-									word_count++;
-								}
+								fclose(file);
 							}
-							else
+							arguments.emplace_back();
+							auto word_count = 0;
+							for (auto c : commandline)
 							{
-								arguments[arguments.size() - 1] += c;
+								if (c <= ' ')
+								{
+									if (word_count == 0 && Q_strcasecmp(arguments[arguments.size() - 1].c_str(), "quake") == 0)
+									{
+										arguments[arguments.size() - 1].clear();
+									}
+									else if (!arguments[arguments.size() - 1].empty())
+									{
+										arguments.emplace_back();
+										word_count++;
+									}
+								}
+								else
+								{
+									arguments[arguments.size() - 1] += c;
+								}
 							}
-						}
-						if (arguments[arguments.size() - 1].empty())
-						{
-							arguments.pop_back();
+							if (arguments[arguments.size() - 1].empty())
+							{
+								arguments.pop_back();
+							}
 						}
 						sys_argc = (int)arguments.size();
 						sys_argv = new char*[sys_argc];
@@ -3130,11 +3143,13 @@ void android_main(struct android_app* app)
 	{
 		appState.Logger->Error("Caught exception: %s", ex.what());
 		appState.Terminated = true;
+		terminateWithError = true;
 	}
 	catch (...)
 	{
 		appState.Logger->Error("Caught unknown exception");
 		appState.Terminated = true;
+		terminateWithError = true;
 	}
 
 	{
@@ -3159,4 +3174,10 @@ void android_main(struct android_app* app)
 	appState.FileLoader = nullptr;
 
 	app->activity->vm->DetachCurrentThread();
+
+	if (terminateWithError)
+	{
+		// Make sure that the app forcefully terminates if there was an error:
+		exit(-1);
+	}
 }

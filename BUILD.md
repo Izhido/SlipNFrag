@@ -78,9 +78,13 @@ The following is the list of components, and their version numbers, required to 
 
 * OpenXR SDK **1.1.54**
 
+* CMake **4.1.2** (or later)
+
 * stb (latest version gathered from https://github.com/nothings/stb )
 
-* CMake **4.1.2** (or later)
+* Minizip (latest version gathered from https://github.com/domoticz/minizip )
+
+* lhasa **0.5.0** (or later, gathered from https://github.com/fragglet/lhasa )
 
 > (Versions for other components can be checked in *Project Structure* in the Android Studio project.)
 
@@ -93,6 +97,33 @@ To set up the environment to build, debug and test the project for the first tim
 >(If the name of the folder from the OpenXR SDK references a newer version than the specified above, modify the path to the SDK specified in `SlipNFrag-XR/app/src/main/cpp/CMakeLists.txt` file and change it so it points to the new version.)
  
 * Clone or download the latest version of stb (as stated above). Create a *stb* folder at the root source folder, next to the *OpenXR-SDK-release-xxx* folder. Ensure that the "stb_xxx.h" files are located at the root of the *stb* folder to ensure proper compilation.
+
+* Clone or download the latest version of Minizip (as stated above). Create a *minizip* folder at the root source folder, next to the *stb* folder. Ensure that "ioapi.c" and "unzip.c" files are located at the root of the *minizip* folder, along with all other files. 
+
+* Clone or download the version above mentioned of lhasa. Create a *lhasa-x.x.x* folder (with x.x.x representing the version above) at the root source folder, next to the *minizip* folder. Ensure that the "lib" folder is located at the root of the *lhasa-x.x.x* folder, along with all other files.
+
+The folder structure, so far, should look like this:
+
+```
+/path/to/SlipNFrag/
+   OpenXR-SDK-release-x.x.x/
+      ...
+   stb/
+      stb_vorbis.c
+      ...
+   minizip/
+      ioapi.c
+      unzip.c
+      ...
+   lhasa-x.x.x/
+      lib/
+         public/
+         ...
+      ...
+   id1
+   renderer
+   ...
+```
 
 * Open Android Studio 2024.1.1 (or newer), then open the project in the `SlipNFrag-XR` folder. Wait for Gradle to finish configuring the environment for the project, and follow the prompts if instructed to do so.
 >(Check that your environment has the components described above, with their respective versions.)

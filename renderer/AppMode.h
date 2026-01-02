@@ -5,5 +5,8 @@ enum AppMode
 	AppStartupMode,
 	AppScreenMode,
 	AppWorldMode,
-	AppNoGameDataMode
+	AppNoGameDataMode,
+	AppNoGameDataUncompressMode,
+	AppInvalidGameDataUncompressMode,
+	AppSharewareGameDataMode
 };

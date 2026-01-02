@@ -3,6 +3,11 @@
 #include "in_xr.h"
 #include "Utils.h"
 #include "Locks.h"
+#include <fstream>
+#include <minizip/unzip.h>
+#include <lhasa.h>
+#include <Logger.h>
+#include <sys/stat.h>
 
 extern m_state_t m_state;
 
@@ -35,13 +40,15 @@ void AppInput::AddCommandInput(const char* command)
 	entry.command = command;
 }
 
-void AppInput::Handle(AppState_xr& appState, bool keyPressHandled)
+void AppInput::Handle(AppState_xr& appState, bool keyPressHandled, const char* basedir)
 {
 	std::lock_guard<std::mutex> lock(Locks::InputMutex);
 	
 	XrActionStateGetInfo actionGetInfo { XR_TYPE_ACTION_STATE_GET_INFO };
 	XrActionStateBoolean booleanActionState { XR_TYPE_ACTION_STATE_BOOLEAN };
 	XrActionStateFloat floatActionState { XR_TYPE_ACTION_STATE_FLOAT };
+
+	const char* sharewarePath = "quake106.zip";
 
 	if (appState.Mode == AppStartupMode)
 	{
@@ -62,8 +69,273 @@ void AppInput::Handle(AppState_xr& appState, bool keyPressHandled)
 			}
 			if (count > 1)
 			{
-				appState.Mode = AppWorldMode;
 				appState.StartupButtonsPressed = true;
+				auto sharewareExists = appState.FileLoader->Exists(sharewarePath);
+				if (sharewareExists)
+				{
+					auto isEmpty = true;
+					auto isDamaged = true;
+					unsigned short pak0DirCRC = 0;
+					const auto pak0Path = std::string(basedir) + "/id1/pak0.pak";
+					std::ifstream pak0File(pak0Path, std::ios::binary);
+					if (pak0File)
+					{
+						isEmpty = false;
+						pak0File.seekg(0, std::ios::end);
+						const auto pak0Size = pak0File.tellg();
+						if (pak0Size > 12)
+						{
+							std::vector<unsigned char> contents;
+							contents.resize(12);
+							pak0File.seekg(0, std::ios::beg);
+							pak0File.read((char*)contents.data(), 12);
+							if (contents[0] == 'P' && contents[1] == 'A' && contents[2] == 'C' && contents[3] == 'K')
+							{
+								int dirofs = ((int)contents[4]) | (((int)contents[5]) << 8) | (((int)contents[6]) << 16) | (((int)contents[7]) << 24);
+								int dirlen = ((int)contents[8]) | (((int)contents[9]) << 8) | (((int)contents[10]) << 16) | (((int)contents[11]) << 24);
+								if (dirofs >= 12 && dirlen > 0 && (dirlen % 64) == 0 && (dirofs + dirlen) <= pak0Size)
+								{
+									contents.resize(dirlen);
+									pak0File.seekg(dirofs, std::ios::beg);
+									pak0File.read((char*)contents.data(), dirlen);
+									pak0File.close();
+									CRC_Init (&pak0DirCRC);
+									for (auto b : contents)
+									{
+										CRC_ProcessByte (&pak0DirCRC, b);
+									}
+									const auto pak1Path = std::string(basedir) + "/id1/pak1.pak";
+									std::ifstream pak1File(pak1Path, std::ios::binary);
+									if (pak1File)
+									{
+										pak1File.seekg(0, std::ios::end);
+										const auto pak1Size = pak1File.tellg();
+										if (pak1Size > 12)
+										{
+											std::vector<unsigned char> pak1Contents;
+											pak1Contents.resize(pak1Size);
+											pak1File.seekg(0, std::ios::beg);
+											pak1File.read((char*)pak1Contents.data(), pak1Size);
+											pak1File.close();
+											if (pak1Contents[0] == 'P' && pak1Contents[1] == 'A' && pak1Contents[2] == 'C' && pak1Contents[3] == 'K')
+											{
+												dirofs = ((int)pak1Contents[4]) | (((int)pak1Contents[5]) << 8) | (((int)pak1Contents[6]) << 16) | (((int)pak1Contents[7]) << 24);
+												dirlen = ((int)pak1Contents[8]) | (((int)pak1Contents[9]) << 8) | (((int)pak1Contents[10]) << 16) | (((int)pak1Contents[11]) << 24);
+												if (dirofs >= 12 && dirlen > 0 && (dirlen % 64) == 0 && (dirofs + dirlen) <= pak1Size)
+												{
+													auto dirlast = dirofs + dirlen;
+													auto i = dirofs;
+													char name[57];
+													name[56] = 0;
+													int popofs = -1;
+													int poplen = -1;
+													do
+													{
+														std::copy(pak1Contents.begin() + i, pak1Contents.begin() + i + 56, name);
+														if (strncmp(name, "gfx/pop.lmp", 11) == 0)
+														{
+															popofs = ((int)pak1Contents[i + 56]) | (((int)pak1Contents[i + 57]) << 8) | (((int)pak1Contents[i + 58]) << 16) | (((int)pak1Contents[i + 59]) << 24);
+															poplen = ((int)pak1Contents[i + 60]) | (((int)pak1Contents[i + 61]) << 8) | (((int)pak1Contents[i + 62]) << 16) | (((int)pak1Contents[i + 63]) << 24);
+															break;
+														}
+														i += 64;
+													} while (i < dirlast);
+													if (popofs < 0 && poplen < 0)
+													{
+														isDamaged = false;
+													}
+													else if (popofs >= 12 && poplen > 0 && (popofs + poplen) <= pak1Size)
+													{
+														isDamaged = false;
+														if (poplen == 256)
+														{
+															extern unsigned short pop[];
+															int j = 0;
+															for (i = 0; i < 256; i += 2)
+															{
+																auto p = (((unsigned short)pak1Contents[popofs + i]) << 8) | ((unsigned short)pak1Contents[popofs + i + 1]);
+																if (p != pop[j])
+																{
+																	break;
+																}
+																j++;
+															}
+															if (j == 128)
+															{
+																appState.IsRegistered = true;
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+									else
+									{
+										isDamaged = false;
+									}
+								}
+							}
+						}
+					}
+					if (appState.IsRegistered)
+					{
+						appState.DestroyImageSources();
+						appState.Mode = AppWorldMode;
+					}
+					else if (!isEmpty && !isDamaged)
+					{
+						if (pak0DirCRC == 32981)
+						{
+							appState.Mode = AppSharewareGameDataMode;
+						}
+						else
+						{
+							appState.Mode = AppInvalidGameDataUncompressMode;
+						}
+					}
+					else if (isEmpty)
+					{
+						appState.Mode = AppNoGameDataUncompressMode;
+					}
+					else
+					{
+						appState.Mode = AppInvalidGameDataUncompressMode;
+					}
+				}
+				else
+				{
+					appState.Mode = AppWorldMode;
+				}
+			}
+		}
+	}
+	else if (appState.Mode == AppSharewareGameDataMode)
+	{
+		if (!appState.SharewareGameDataButtonsPressed)
+		{
+			auto count = 0;
+			actionGetInfo.action = appState.Play1Action;
+			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+			if (booleanActionState.isActive && booleanActionState.currentState)
+			{
+				count++;
+			}
+			actionGetInfo.action = appState.Play2Action;
+			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+			if (booleanActionState.isActive && booleanActionState.currentState)
+			{
+				count++;
+			}
+			if (count > 1)
+			{
+				if (!appState.StartupButtonsPressed)
+				{
+					appState.SharewareGameDataButtonsPressed = true;
+					appState.DestroyImageSources();
+					appState.Mode = AppWorldMode;
+				}
+			}
+			else
+			{
+				appState.StartupButtonsPressed = false;
+			}
+		}
+	}
+	else if (appState.Mode == AppNoGameDataUncompressMode || appState.Mode == AppInvalidGameDataUncompressMode)
+	{
+		if (!appState.UncompressButtonsPressed)
+		{
+			auto count = 0;
+			actionGetInfo.action = appState.Play1Action;
+			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+			if (booleanActionState.isActive && booleanActionState.currentState)
+			{
+				count++;
+			}
+			actionGetInfo.action = appState.Play2Action;
+			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+			if (booleanActionState.isActive && booleanActionState.currentState)
+			{
+				count++;
+			}
+			if (count > 1)
+			{
+				if (!appState.StartupButtonsPressed)
+				{
+					appState.UncompressButtonsPressed = true;
+
+					std::vector<unsigned char> sharewareContents;
+					appState.FileLoader->Load(sharewarePath, sharewareContents);
+					std::string sharewareLocalPath = std::string(basedir) + "/" + sharewarePath;
+					std::ofstream sharewareFile(sharewareLocalPath, std::ios::binary);
+					sharewareFile.write((char*)sharewareContents.data(), sharewareContents.size());
+					sharewareFile.close();
+					unzFile sharewareZipFile = unzOpen(sharewareLocalPath.c_str());
+					unz_global_info sharewareGlobalInfo;
+					unzGetGlobalInfo(sharewareZipFile, &sharewareGlobalInfo);
+					for (uLong i = 0; i < sharewareGlobalInfo.number_entry; i++)
+					{
+						unz_file_info localFileInfo;
+						unzGetCurrentFileInfo(sharewareZipFile, &localFileInfo, NULL, 0, NULL, 0, NULL, 0);
+						std::vector<char> localFilename(localFileInfo.size_filename);
+						unzGetCurrentFileInfo(sharewareZipFile, &localFileInfo, localFilename.data(), localFileInfo.size_filename, NULL, 0, NULL, 0);
+						if (localFilename.back() == '/')
+						{
+							continue;
+						}
+						unzOpenCurrentFile(sharewareZipFile);
+						std::ofstream localFile(std::string(basedir) + "/" + std::string(localFilename.data(), localFilename.size()), std::ios::binary);
+						std::vector<char> localFileContents(1024 * 1024);
+						int localFileReadBytes;
+						do
+						{
+							localFileReadBytes = unzReadCurrentFile(sharewareZipFile, localFileContents.data(), localFileContents.size());
+							if (localFileReadBytes > 0)
+							{
+								localFile.write(localFileContents.data(), localFileReadBytes);
+							}
+						} while (localFileReadBytes > 0);
+						unzCloseCurrentFile(sharewareZipFile);
+						if (i < sharewareGlobalInfo.number_entry - 1)
+						{
+							unzGoToNextFile(sharewareZipFile);
+						}
+					}
+					unzClose(sharewareZipFile);
+
+					std::string resource1Path = std::string(basedir) + "/resource.1";
+					auto resource1File = fopen(resource1Path.c_str(), "rb");
+					auto resource1Stream = lha_input_stream_from_FILE(resource1File);
+					auto resource1Reader = lha_reader_new(resource1Stream);
+					auto resource1Header = lha_reader_next_file(resource1Reader);
+					while (resource1Header != NULL)
+					{
+						std::string localSubdirectory;
+						if (resource1Header->path != NULL)
+						{
+							localSubdirectory = std::string("/") + resource1Header->path;
+							mkdir((std::string(basedir) + localSubdirectory).c_str(), 0770);
+							if (localSubdirectory.back() == '/')
+							{
+								localSubdirectory.pop_back();
+							}
+						}
+						std::string localPath = std::string(basedir) + localSubdirectory + "/" + resource1Header->filename;
+						lha_reader_extract(resource1Reader, (char*)localPath.c_str(), NULL, NULL);
+						resource1Header = lha_reader_next_file(resource1Reader);
+					}
+					lha_reader_free(resource1Reader);
+					lha_input_stream_free(resource1Stream);
+					fclose(resource1File);
+
+					appState.DestroyImageSources();
+					appState.Mode = AppWorldMode;
+				}
+			}
+			else
+			{
+				appState.StartupButtonsPressed = false;
 			}
 		}
 	}
