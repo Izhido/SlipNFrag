@@ -282,6 +282,8 @@ extern	cvar_t	cl_immersive_dominant_hand;
 extern	cvar_t	cl_immersive_show_hands;
 extern	cvar_t	cl_immersive_sbar_on_hand;
 
+extern	cvar_t	cl_bobdisabled;
+
 //
 // menu
 //

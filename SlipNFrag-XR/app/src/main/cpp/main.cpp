@@ -1777,6 +1777,7 @@ void android_main(struct android_app* app)
 							sys_argv[i] = new char[arguments[i].length() + 1];
 							strcpy(sys_argv[i], arguments[i].c_str());
 						}
+						cl_bobdisabled.default_value = "1";
 						Sys_Init(sys_argc, sys_argv);
 						if (!sys_errormessage.empty())
 						{

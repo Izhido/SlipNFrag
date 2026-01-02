@@ -41,6 +41,7 @@ cvar_t	scr_ofsz = {"scr_ofsz","0", false};
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "2.0"};
 
+cvar_t	cl_bobdisabled = {"cl_bobdisabled", "0", true};
 cvar_t	cl_bob = {"cl_bob","0.02", false};
 cvar_t	cl_bobcycle = {"cl_bobcycle","0.6", false};
 cvar_t	cl_bobup = {"cl_bobup","0.5", false};
@@ -113,7 +114,10 @@ float V_CalcBob (void)
 {
 	float	bob;
 	float	cycle;
-	
+
+	if (cl_bobdisabled.value)
+		return 0;
+
 	cycle = cl.time - (int)(cl.time/cl_bobcycle.value)*cl_bobcycle.value;
 	cycle /= cl_bobcycle.value;
 	if (cycle < cl_bobup.value)
@@ -1122,6 +1126,7 @@ void V_Init (void)
 	Cvar_RegisterVariable (&scr_ofsz);
 	Cvar_RegisterVariable (&cl_rollspeed);
 	Cvar_RegisterVariable (&cl_rollangle);
+	Cvar_RegisterVariable (&cl_bobdisabled);
 	Cvar_RegisterVariable (&cl_bob);
 	Cvar_RegisterVariable (&cl_bobcycle);
 	Cvar_RegisterVariable (&cl_bobup);

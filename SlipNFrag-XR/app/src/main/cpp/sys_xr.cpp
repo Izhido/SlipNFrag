@@ -61,6 +61,19 @@ int Sys_FileOpenWrite(const char* path, qboolean abortonfail)
 {
     auto i = findhandle();
     auto f = fopen(path, "wb");
+	if (f == nullptr)
+	{
+		// UGLY HACK. If the file cannot be opened because of EACCES, the existing file might not
+		// have the proper permissions from the tool that originally copied it. Since currently
+		// no files opened for writing are have Sys_FileSeek() called on them, it can be safely
+		// assumed that any files opened using Sys_FileOpenWrite() will be written from scratch.
+		// Thus, delete the existing file, and try opening it again.
+		if (errno == EACCES)
+		{
+			remove(path);
+			f = fopen(path, "wb");
+		}
+	}
     if (f == nullptr)
     {
         if (abortonfail)
@@ -276,6 +289,9 @@ void CL_ImmersiveMenuDraw ()
 	M_Print (16, 80, "      Sbar in off-hand");
 	M_DrawCheckbox (220, 80, cl_immersive_sbar_on_hand.value);
 
+	M_Print (16, 88, "          Head bobbing");
+	M_DrawCheckbox (220, 88, (cl_bobdisabled.value == 0));
+
 // cursor
 	M_DrawCharacter (200, 48 + imm_cursor*8, 12+((int)(realtime*4)&1));
 }
@@ -302,8 +318,11 @@ void CL_ImmersiveToggle ()
 	case 3:
 		Cvar_SetValue ("show_hands", !cl_immersive_show_hands.value);
 		break;
-	default:
+	case 4:
 		Cvar_SetValue ("sbar_on_hand", !cl_immersive_sbar_on_hand.value);
+		break;
+	default:
+		Cvar_SetValue ("cl_bobdisabled", !cl_bobdisabled.value);
 		break;
 	}
 
@@ -325,13 +344,13 @@ void CL_ImmersiveMenuKey (int k)
 		S_LocalSound ("misc/menu1.wav");
 		imm_cursor--;
 		if (imm_cursor < 0)
-			imm_cursor = 5-1;
+			imm_cursor = 6-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
 		imm_cursor++;
-		if (imm_cursor >= 5)
+		if (imm_cursor >= 6)
 			imm_cursor = 0;
 		break;
 
