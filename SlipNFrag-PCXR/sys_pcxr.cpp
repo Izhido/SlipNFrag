@@ -151,7 +151,11 @@ void Sys_Error(const char* error, ...)
     sys_errormessage = string.data();
     Host_Shutdown();
 	sys_errorcalled = 1;
-    throw std::runtime_error("Sys_Error called");
+#ifdef USE_LONGJMP
+	longjmp (host_abortserver, 1);
+#else
+	throw std::runtime_error("Sys_Error called");
+#endif
 }
 
 void Sys_Printf(const char* fmt, ...)
@@ -253,6 +257,9 @@ void CL_ImmersiveMenuDraw ()
 	M_Print (16, 80, "      Sbar in off-hand");
 	M_DrawCheckbox (220, 80, cl_immersive_sbar_on_hand.value);
 
+	M_Print (16, 88, "          Head bobbing");
+	M_DrawCheckbox (220, 88, (cl_bobdisabled.value == 0));
+
 // cursor
 	M_DrawCharacter (200, 48 + imm_cursor*8, 12+((int)(realtime*4)&1));
 }
@@ -279,8 +286,11 @@ void CL_ImmersiveToggle ()
 	case 3:
 		Cvar_SetValue ("show_hands", !cl_immersive_show_hands.value);
 		break;
-	default:
+	case 4:
 		Cvar_SetValue ("sbar_on_hand", !cl_immersive_sbar_on_hand.value);
+		break;
+	default:
+		Cvar_SetValue ("cl_bobdisabled", !cl_bobdisabled.value);
 		break;
 	}
 
@@ -302,13 +312,13 @@ void CL_ImmersiveMenuKey (int k)
 		S_LocalSound ("misc/menu1.wav");
 		imm_cursor--;
 		if (imm_cursor < 0)
-			imm_cursor = 5-1;
+			imm_cursor = 6-1;
 		break;
 
 	case K_DOWNARROW:
 		S_LocalSound ("misc/menu1.wav");
 		imm_cursor++;
-		if (imm_cursor >= 5)
+		if (imm_cursor >= 6)
 			imm_cursor = 0;
 		break;
 

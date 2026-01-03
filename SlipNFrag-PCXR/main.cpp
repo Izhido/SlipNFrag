@@ -1749,6 +1749,7 @@ int main(int argc, char* argv[])
 						sys_version = "PCXR 1.1.32";
 						sys_argc = argc;
 						sys_argv = argv;
+						cl_bobdisabled.default_value = "1";
 						Sys_Init(sys_argc, sys_argv);
 						if (sys_errorcalled)
 						{
