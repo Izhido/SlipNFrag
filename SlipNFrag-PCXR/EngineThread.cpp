@@ -59,9 +59,8 @@ void runEngine(AppState_pcxr* appState)
 			}
 			cl_allow_immersive = false;
 			auto updated = Host_FrameUpdate(frame_lapse);
-			if (sys_quitcalled || !sys_errormessage.empty())
+			if (sys_quitcalled || sys_errorcalled)
 			{
-				appState->DestroyRequested = true;
 				break;
 			}
 			if (updated)
@@ -76,8 +75,16 @@ void runEngine(AppState_pcxr* appState)
 				r_modelorg_delta[1] = 0;
 				r_modelorg_delta[2] = 0;
 				Host_FrameRender();
+				if (sys_quitcalled || sys_errorcalled)
+				{
+					break;
+				}
 			}
 			Host_FrameFinish(updated);
+			if (sys_quitcalled || sys_errorcalled)
+			{
+				break;
+			}
 		}
 		else if (mode == AppWorldMode)
 		{
@@ -179,15 +186,14 @@ void runEngine(AppState_pcxr* appState)
 				}
 			}
 			auto updated = Host_FrameUpdate(frame_lapse);
+			if (sys_quitcalled || sys_errorcalled)
+			{
+				break;
+			}
 			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:
 			auto previousYaw = cl.viewangles[YAW];
 			auto previousPitch = cl.viewangles[PITCH];
 			auto previousRoll = cl.viewangles[ROLL];
-			if (sys_quitcalled || !sys_errormessage.empty())
-			{
-				appState->DestroyRequested = true;
-				break;
-			}
 			if (updated)
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -207,6 +213,10 @@ void runEngine(AppState_pcxr* appState)
 				cl.nodrift = true;
 				D_ResetLists();
 				Host_FrameRender();
+				if (sys_quitcalled || sys_errorcalled)
+				{
+					break;
+				}
 				cl.nodrift = nodrift;
 				// Restoring potential changes performed by server in view angles,
 				// to allow code outside Host_***() calls to act upon them:
@@ -215,6 +225,10 @@ void runEngine(AppState_pcxr* appState)
 				cl.viewangles[ROLL] = previousRoll;
 			}
 			Host_FrameFinish(updated);
+			if (sys_quitcalled || sys_errorcalled)
+			{
+				break;
+			}
 		}
 		std::this_thread::yield();
 	}

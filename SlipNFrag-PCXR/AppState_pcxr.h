@@ -4,7 +4,5 @@
 
 struct AppState_pcxr : public AppState
 {
-	bool DestroyRequested;
-
 	void RenderScreen(ScreenPerFrame& perFrame);
 };

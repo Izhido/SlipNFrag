@@ -1535,11 +1535,11 @@ int main(int argc, char* argv[])
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
 		auto sessionRunning = false;
 
-		while (!appState.DestroyRequested)
-		{
-			auto exitRenderLoop = false;
-			auto requestRestart = false;
+		auto exitRenderLoop = false;
+		auto requestRestart = false;
 
+		do
+		{
 			while (const XrEventDataBaseHeader* event = TryReadNextEvent(eventDataBuffer, instance))
 			{
 				switch (event->type)
@@ -1601,7 +1601,7 @@ int main(int argc, char* argv[])
 							{
 								CHECK(appState.Session != XR_NULL_HANDLE);
 								sessionRunning = false;
-								appState.DestroyRequested = true;
+								exitRenderLoop = true;
 								CHECK_XRCMD(xrEndSession(appState.Session));
 								break;
 							}
@@ -1671,8 +1671,15 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			if ((sys_errorcalled || sys_quitcalled) && sessionRunning)
+			{
+				xrRequestExitSession(appState.Session);
+				sessionRunning = false;
+			}
+
 			if (!sessionRunning)
 			{
+				std::this_thread::yield();
 				continue;
 			}
 
@@ -1743,10 +1750,11 @@ int main(int argc, char* argv[])
 						sys_argc = argc;
 						sys_argv = argv;
 						Sys_Init(sys_argc, sys_argv);
-						if (!sys_errormessage.empty())
+						if (sys_errorcalled)
 						{
 							xrRequestExitSession(appState.Session);
 							sessionRunning = false;
+							std::this_thread::yield();
 							continue;
 						}
 						appState.DefaultFOV = (int)Cvar_VariableValue("fov");
@@ -3005,7 +3013,8 @@ int main(int argc, char* argv[])
 			frameEndInfo.layers = layers.data();
 
 			CHECK_XRCMD(xrEndFrame(appState.Session, &frameEndInfo));
-		}
+
+		} while (!exitRenderLoop);
 
 		if (appState.EngineThread.joinable())
 		{
@@ -3093,16 +3102,13 @@ int main(int argc, char* argv[])
 			vkDestroyInstance(vulkanInstance, nullptr);
 		}
 
-		if (!sys_errormessage.empty())
+		if (sys_nogamedata)
 		{
-			if (sys_nogamedata)
-			{
-				Throw("No game data found in the current directory.", nullptr, FILE_AND_LINE);
-			}
-			else
-			{
-				Throw(Fmt("Sys_Error: %s", sys_errormessage.c_str()), nullptr, FILE_AND_LINE);
-			}
+			Throw("No game data found in the current directory.", nullptr, FILE_AND_LINE);
+		}
+		else if (sys_errorcalled)
+		{
+			Throw(Fmt("Sys_Error: %s", sys_errormessage.c_str()), nullptr, FILE_AND_LINE);
 		}
 	}
 	catch (const std::exception& ex)

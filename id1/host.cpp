@@ -820,7 +820,25 @@ qboolean _Host_FrameUpdate (float time)
 
 void _Host_FrameRender (void)
 {
+#ifdef USE_LONGJMP
+	if (setjmp (host_abortserver) )
+	{
+		_Host_FrameReset();
+		return;
+	}
+
+#else
+	try
+    {
+#endif
 	SCR_UpdateScreen ();
+#ifndef USE_LONGJMP
+	}
+	catch (...)
+	{
+		_Host_FrameReset();
+	}
+#endif
 }
 
 void _Host_FrameFinish (void)

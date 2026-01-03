@@ -19,6 +19,7 @@ std::vector<FILE*> sys_handles;
 std::string sys_errormessage;
 
 int sys_nogamedata;
+int sys_errorcalled;
 int sys_quitcalled;
 
 unsigned int sys_randseed;
@@ -149,6 +150,7 @@ void Sys_Error(const char* error, ...)
     printf("\n");
     sys_errormessage = string.data();
     Host_Shutdown();
+	sys_errorcalled = 1;
     throw std::runtime_error("Sys_Error called");
 }
 
