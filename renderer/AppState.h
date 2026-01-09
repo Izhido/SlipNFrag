@@ -23,6 +23,7 @@ struct AppState
 	bool StartupButtonsPressed;
 	bool UncompressButtonsPressed;
 	bool SharewareGameDataButtonsPressed;
+	bool SharewareExists;
 	bool IsRegistered;
 	bool Resumed;
 	VkDevice Device;

@@ -17,6 +17,7 @@ std::vector<FILE*> sys_handles;
 std::string sys_errormessage;
 
 int sys_nogamedata;
+int sys_errorcalled;
 int sys_quitcalled;
 
 unsigned int sys_randseed;
@@ -157,6 +158,7 @@ void Sys_Error(const char* error, ...)
     __android_log_print(ANDROID_LOG_ERROR, Logger_xr::tag, "Sys_Error: %s", string.data());
     sys_errormessage = string.data();
     Host_Shutdown();
+	sys_errorcalled = 1;
 #ifdef USE_LONGJMP
 	longjmp (host_abortserver, 1);
 #else
@@ -409,6 +411,7 @@ extern sfx_t		*ambient_sfx[NUM_AMBIENTS];
 void Sys_Terminate()
 {
 	sys_quitcalled = 0;
+	sys_errorcalled = 0;
 	sys_errormessage = "";
 	sys_nogamedata = 0;
 	pr_edict_size = 0;

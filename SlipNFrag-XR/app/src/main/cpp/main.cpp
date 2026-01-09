@@ -1728,7 +1728,7 @@ void android_main(struct android_app* app)
 						arguments.emplace_back("SlipNFrag");
 						arguments.emplace_back("-basedir");
 						arguments.emplace_back(basedir);
-						if (appState.IsRegistered)
+						if (!appState.SharewareExists || (appState.SharewareExists && appState.IsRegistered))
 						{
 							std::vector<unsigned char> commandline;
 							auto file = fopen((std::string(basedir) + "/commandline.txt").c_str(), "rb");

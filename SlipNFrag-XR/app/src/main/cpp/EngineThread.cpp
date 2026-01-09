@@ -68,7 +68,7 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 			}
 			cl_allow_immersive = false;
 			auto updated = Host_FrameUpdate(frame_lapse);
-			if (sys_quitcalled || !sys_errormessage.empty())
+			if (sys_quitcalled || sys_errorcalled)
 			{
 				appState->Terminated = true;
 				GameActivity_finish(app->activity);
@@ -86,8 +86,20 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				r_modelorg_delta[1] = 0;
 				r_modelorg_delta[2] = 0;
 				Host_FrameRender();
+				if (sys_quitcalled || sys_errorcalled)
+				{
+					appState->Terminated = true;
+					GameActivity_finish(app->activity);
+					break;
+				}
 			}
 			Host_FrameFinish(updated);
+			if (sys_quitcalled || sys_errorcalled)
+			{
+				appState->Terminated = true;
+				GameActivity_finish(app->activity);
+				break;
+			}
 		}
 		else if (mode == AppWorldMode)
 		{
@@ -189,16 +201,16 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				}
 			}
 			auto updated = Host_FrameUpdate(frame_lapse);
-			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:
-			auto previousYaw = cl.viewangles[YAW];
-			auto previousPitch = cl.viewangles[PITCH];
-			auto previousRoll = cl.viewangles[ROLL];
-			if (sys_quitcalled || !sys_errormessage.empty())
+			if (sys_quitcalled || sys_errorcalled)
 			{
 				appState->Terminated = true;
 				GameActivity_finish(app->activity);
 				break;
 			}
+			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:
+			auto previousYaw = cl.viewangles[YAW];
+			auto previousPitch = cl.viewangles[PITCH];
+			auto previousRoll = cl.viewangles[ROLL];
 			if (updated)
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
@@ -218,6 +230,12 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				cl.nodrift = true;
 				D_ResetLists();
 				Host_FrameRender();
+				if (sys_quitcalled || sys_errorcalled)
+				{
+					appState->Terminated = true;
+					GameActivity_finish(app->activity);
+					break;
+				}
 				cl.nodrift = nodrift;
 				// Restoring potential changes performed by server in view angles,
 				// to allow code outside Host_***() calls to act upon them:
@@ -226,6 +244,12 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				cl.viewangles[ROLL] = previousRoll;
 			}
 			Host_FrameFinish(updated);
+			if (sys_quitcalled || sys_errorcalled)
+			{
+				appState->Terminated = true;
+				GameActivity_finish(app->activity);
+				break;
+			}
 		}
 		std::this_thread::yield();
 	}

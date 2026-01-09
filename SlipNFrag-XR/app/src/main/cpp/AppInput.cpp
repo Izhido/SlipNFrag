@@ -70,8 +70,8 @@ void AppInput::Handle(AppState_xr& appState, bool keyPressHandled, const char* b
 			if (count > 1)
 			{
 				appState.StartupButtonsPressed = true;
-				auto sharewareExists = appState.FileLoader->Exists(sharewarePath);
-				if (sharewareExists)
+				appState.SharewareExists = appState.FileLoader->Exists(sharewarePath);
+				if (appState.SharewareExists)
 				{
 					auto isEmpty = true;
 					auto isDamaged = true;
