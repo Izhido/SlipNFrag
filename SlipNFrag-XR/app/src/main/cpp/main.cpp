@@ -613,6 +613,9 @@ void android_main(struct android_app* app)
 
 			CHECK_XRCMD(xrGetVulkanGraphicsDevice2KHR(instance, &deviceGetInfo, &vulkanPhysicalDevice));
 
+			VkPhysicalDeviceFeatures2 physicalDeviceFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+			vkGetPhysicalDeviceFeatures2(vulkanPhysicalDevice, &physicalDeviceFeatures);
+
 			VkDeviceQueueCreateInfo queueInfo { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
 			float queuePriorities = 0;
 			queueInfo.queueCount = 1;
@@ -692,6 +695,13 @@ void android_main(struct android_app* app)
 
 			VkPhysicalDeviceFeatures2 features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 			((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&features;
+
+			features.features.fragmentStoresAndAtomics = physicalDeviceFeatures.features.fragmentStoresAndAtomics;
+			features.features.robustBufferAccess = physicalDeviceFeatures.features.robustBufferAccess;
+			features.features.independentBlend = physicalDeviceFeatures.features.independentBlend;
+			features.features.sampleRateShading = physicalDeviceFeatures.features.sampleRateShading;
+			features.features.multiViewport = physicalDeviceFeatures.features.multiViewport;
+
 			chain = (void*)((VkBaseInStructure*)chain)->pNext;
 
 			VkPhysicalDeviceMultiviewFeatures multiviewFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES };
