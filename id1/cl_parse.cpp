@@ -190,9 +190,21 @@ void CL_ParseStartSoundPacket(void)
 
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadCoord ();
- 
-    S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
-}       
+
+	if (cl.sound_precache.size() <= (size_t)sound_num)
+	{
+		if (sound_num < MAX_SOUNDS)
+		{
+			cl.sound_precache.resize((size_t)sound_num + 1, nullptr);
+		}
+		else
+		{
+			Sys_Error ("CL_ParseStartSoundPacket: sound_num %i >= %i cached sounds", sound_num, (int)cl.sound_precache.size());
+		}
+	}
+
+	S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+}
 
 
 /*
@@ -228,6 +240,18 @@ void CL_ParseExpandedStartSoundPacket(void)
 
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadFloat ();
+
+	if (cl.sound_precache.size() <= (size_t)sound_num)
+	{
+		if (sound_num < MAX_SOUNDS)
+		{
+			cl.sound_precache.resize((size_t)sound_num + 1, nullptr);
+		}
+		else
+		{
+			Sys_Error ("CL_ParseExpandedStartSoundPacket: sound_num %i >= %i cached sounds", sound_num, (int)cl.sound_precache.size());
+		}
+	}
  
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 }       
@@ -379,7 +403,7 @@ void CL_ParseServerInfo (void)
 		cl.model_precache.push_back(m);
 		if (cl.model_precache[i] == NULL)
 		{
-			Con_Printf("Model %s not found\n", model_precache[i-1].c_str());
+			Host_Error ("Model %s not found", model_precache[i-1].c_str());
 			return;
 		}
 		CL_KeepaliveMessage ();
@@ -618,6 +642,18 @@ if (bits&(1<<i))
 	else
 		modnum = ent->baseline.modelindex;
 		
+	if (cl.model_precache.size() <= (size_t)modnum)
+	{
+		if (modnum < MAX_MODELS)
+		{
+			cl.model_precache.resize((size_t)modnum + 1, nullptr);
+		}
+		else
+		{
+			Sys_Error ("CL_ParseExpandedUpdate: modelindex %i >= %i cached models", modnum, (int)cl.model_precache.size());
+		}
+	}
+
 	model = cl.model_precache[modnum];
 	if (model != ent->model)
 	{
@@ -1074,6 +1110,18 @@ void CL_ParseStatic (void)
 	ent = &cl_static_entities.back();
 	CL_ParseBaseline (ent);
 
+	if (cl.model_precache.size() <= (size_t)ent->baseline.modelindex)
+	{
+		if (ent->baseline.modelindex < MAX_MODELS)
+		{
+			cl.model_precache.resize((size_t)ent->baseline.modelindex + 1, nullptr);
+		}
+		else
+		{
+			Sys_Error ("CL_ParseStatic: modelindex %i >= %i cached models", ent->baseline.modelindex, (int)cl.model_precache.size());
+		}
+	}
+	
 // copy it to the current state
 	ent->model = cl.model_precache[ent->baseline.modelindex];
 	ent->frame = ent->baseline.frame;
@@ -1094,6 +1142,18 @@ void CL_ParseExpandedStatic (void)
 	ent = &cl_static_entities.back();
 	CL_ParseExpandedBaseline(ent);
 
+	if (cl.model_precache.size() <= (size_t)ent->baseline.modelindex)
+	{
+		if (ent->baseline.modelindex < MAX_MODELS)
+		{
+			cl.model_precache.resize((size_t)ent->baseline.modelindex + 1, nullptr);
+		}
+		else
+		{
+			Sys_Error ("CL_ParseExpandedStatic: modelindex %i >= %i cached models", ent->baseline.modelindex, (int)cl.model_precache.size());
+		}
+	}
+	
 // copy it to the current state
 	ent->model = cl.model_precache[ent->baseline.modelindex];
 	ent->frame = ent->baseline.frame;
@@ -1122,7 +1182,19 @@ void CL_ParseStaticSound (void)
 	sound_num = MSG_ReadByte ();
 	vol = MSG_ReadByte ();
 	atten = MSG_ReadByte ();
-	
+
+	if (cl.sound_precache.size() <= (size_t)sound_num)
+	{
+		if (sound_num < MAX_SOUNDS)
+		{
+			cl.sound_precache.resize((size_t)sound_num + 1, nullptr);
+		}
+		else
+		{
+			Sys_Error ("CL_ParseStaticSound: sound_num %i >= %i cached sounds", sound_num, (int)cl.sound_precache.size());
+		}
+	}
+
 	S_StaticSound (cl.sound_precache[sound_num], org, vol, atten);
 }
 
@@ -1137,6 +1209,18 @@ void CL_ParseExpandedStaticSound (void)
 	sound_num = MSG_ReadLong ();
 	vol = MSG_ReadByte ();
 	atten = MSG_ReadByte ();
+	
+	if (cl.sound_precache.size() <= (size_t)sound_num)
+	{
+		if (sound_num < MAX_SOUNDS)
+		{
+			cl.sound_precache.resize((size_t)sound_num + 1, nullptr);
+		}
+		else
+		{
+			Sys_Error ("CL_ParseExpandedStaticSound: sound_num %i >= %i cached sounds", sound_num, (int)cl.sound_precache.size());
+		}
+	}
 	
 	S_StaticSound (cl.sound_precache[sound_num], org, vol, atten);
 }
