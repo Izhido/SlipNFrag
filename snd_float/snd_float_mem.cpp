@@ -327,7 +327,7 @@ wavinfo_t GetWavinfo (const char *name, byte *wav, int wavlength)
 
 	// if the next chunk is a LIST chunk, look for a cue length marker
 		FindNextChunk ("LIST");
-		if (data_p)
+		if (data_p && iff_chunk_len >= 24)
 		{
 			if (!strncmp ((char*)data_p + 28, "mark", 4))
 			{	// this is not a proper parse, but it works with cooledit...
