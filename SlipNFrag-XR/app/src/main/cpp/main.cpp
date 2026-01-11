@@ -1509,20 +1509,21 @@ void android_main(struct android_app* app)
 
 		while (app->destroyRequested == 0)
 		{
-			struct android_poll_source* poll_source;
-			const int timeoutMilliseconds = ((!appState.Resumed && !sessionRunning && app->destroyRequested == 0) ? -1 : 0);
-			auto result = ALooper_pollOnce(timeoutMilliseconds, nullptr, nullptr, (void**) &poll_source);
-
-			if (result == ALOOPER_POLL_ERROR)
+			int ident = 0;
+			do
 			{
-				THROW("ALooper_pollOnce returned ALOOPER_POLL_ERROR");
-			}
+				struct android_poll_source* source;
+				const int timeout = ((!appState.Resumed && !sessionRunning && app->destroyRequested == 0) ? -1 : 0);
 
-			if (poll_source != nullptr)
-			{
-				poll_source->process(app, poll_source);
-			}
+				ident = ALooper_pollOnce(timeout, nullptr, nullptr, (void**) &source);
 
+				if (ident > 0 && source != nullptr)
+				{
+					source->process(app, source);
+				}
+			} while (ident > 0);
+
+			auto lossPending = false;
 			auto exitRenderLoop = false;
 			auto requestRestart = false;
 
@@ -1536,6 +1537,7 @@ void android_main(struct android_app* app)
 						appState.Logger->Warn("XrEventDataInstanceLossPending by %ld", instanceLossPending.lossTime);
 						exitRenderLoop = true;
 						requestRestart = true;
+						lossPending = true;
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
@@ -1595,7 +1597,7 @@ void android_main(struct android_app* app)
 							{
 								CHECK(appState.Session != XR_NULL_HANDLE);
 								sessionRunning = false;
-								GameActivity_finish(app->activity);
+								exitRenderLoop = true;
 								CHECK_XRCMD(xrEndSession(appState.Session));
 								break;
 							}
@@ -1610,6 +1612,10 @@ void android_main(struct android_app* app)
 								exitRenderLoop = true;
 								requestRestart = true;
 								break;
+							}
+							default:
+							{
+								appState.Logger->Error("Ignoring session state %d", sessionState);
 							}
 						}
 						break;
@@ -1655,18 +1661,34 @@ void android_main(struct android_app* app)
 						break;
 					}
 					default:
+					{
 						appState.Logger->Verbose("Ignoring event type %d", event->type);
-						break;
+					}
 				}
 
-				if (exitRenderLoop || requestRestart)
+				if (lossPending)
 				{
 					break;
 				}
 			}
 
+			if (((sys_errorcalled && !sys_nogamedata) || sys_quitcalled) && sessionRunning)
+			{
+				appState.Terminated = true;
+				xrRequestExitSession(appState.Session);
+				sessionRunning = false;
+			}
+
+			if (exitRenderLoop || requestRestart)
+			{
+				GameActivity_finish(app->activity);
+				std::this_thread::yield();
+				continue;
+			}
+
 			if (!sessionRunning)
 			{
+				std::this_thread::yield();
 				continue;
 			}
 

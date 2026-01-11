@@ -70,8 +70,6 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 			auto updated = Host_FrameUpdate(frame_lapse);
 			if (sys_quitcalled || sys_errorcalled)
 			{
-				appState->Terminated = true;
-				GameActivity_finish(app->activity);
 				break;
 			}
 			if (updated)
@@ -88,16 +86,12 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				Host_FrameRender();
 				if (sys_quitcalled || sys_errorcalled)
 				{
-					appState->Terminated = true;
-					GameActivity_finish(app->activity);
 					break;
 				}
 			}
 			Host_FrameFinish(updated);
 			if (sys_quitcalled || sys_errorcalled)
 			{
-				appState->Terminated = true;
-				GameActivity_finish(app->activity);
 				break;
 			}
 		}
@@ -203,8 +197,6 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 			auto updated = Host_FrameUpdate(frame_lapse);
 			if (sys_quitcalled || sys_errorcalled)
 			{
-				appState->Terminated = true;
-				GameActivity_finish(app->activity);
 				break;
 			}
 			// After Host_FrameUpdate() is called, view angles can change due to commands sent by the server:
@@ -232,8 +224,6 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				Host_FrameRender();
 				if (sys_quitcalled || sys_errorcalled)
 				{
-					appState->Terminated = true;
-					GameActivity_finish(app->activity);
 					break;
 				}
 				cl.nodrift = nodrift;
@@ -246,8 +236,6 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 			Host_FrameFinish(updated);
 			if (sys_quitcalled || sys_errorcalled)
 			{
-				appState->Terminated = true;
-				GameActivity_finish(app->activity);
 				break;
 			}
 		}
