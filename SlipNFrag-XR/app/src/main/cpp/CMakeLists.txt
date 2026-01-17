@@ -45,7 +45,7 @@ target_compile_options(slipnfrag_native PRIVATE
 )
 
 target_link_options(slipnfrag_native PRIVATE
-        -u ANativeActivity_onCreate
+        -u Java_com_google_androidgamesdk_GameActivity_initializeNativeCode
 )
 
 find_library(ANDROID_LIBRARY NAMES android)
@@ -53,8 +53,8 @@ find_library(ANDROID_LOG_LIBRARY NAMES log)
 find_library(ZLIB_LIBRARY NAMES z)
 
 find_package(Vulkan REQUIRED)
-find_package(OpenXR CONFIG REQUIRED)
-find_package(game-activity CONFIG REQUIRED)
+find_package(OpenXR REQUIRED CONFIG)
+find_package(game-activity REQUIRED CONFIG)
 
 target_include_directories(slipnfrag_native PRIVATE
         ${OPENXR_DIR}/src

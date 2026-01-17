@@ -66,7 +66,7 @@ In the particular case of the MacOS executable, the .dmg file that is used to di
 
 Setting up the environment to debug, test or create a release of the Meta Quest, Quest 2 and Quest 3 versions involves more steps than the versions above, due to the amount of external components involved in the compile & release process.
 
-The XR version is an Android Studio project that can be found at `SlipNFrag-XR` folder from the root of the source code folder. The minimum required version of Android Studio is version *2024.1.1*, due to recent updates in the project components. The project itself is a CMake-backed native activity project, configured with special settings that allow it to run in standalone VR headsets such as the Meta Quest/2/3/Pro/3s.
+The XR version is an Android Studio project that can be found at `SlipNFrag-XR` folder from the root of the source code folder. The minimum required version of Android Studio is version *2025.2.3*. The project itself is a CMake-backed native activity project, configured with special settings that allow it to run in standalone VR headsets such as the Meta Quest/2/3/Pro/3s.
 
 The following is the list of components, and their version numbers, required to build the Android project, as of this writing:
 
@@ -75,6 +75,10 @@ The following is the list of components, and their version numbers, required to 
 * NDK (Side by Side) **29.0.14206865**
 
 * Android SDK Build-Tools **36.1.0**
+
+* Gradle **9.1.0**
+
+* Android Gradle Plugin **9.0.0**
 
 * OpenXR SDK **1.1.54**
 
@@ -125,7 +129,7 @@ The folder structure, so far, should look like this:
    ...
 ```
 
-* Open Android Studio 2024.1.1 (or newer), then open the project in the `SlipNFrag-XR` folder. Wait for Gradle to finish configuring the environment for the project, and follow the prompts if instructed to do so.
+* Open Android Studio 2025.2.3 (or newer), then open the project in the `SlipNFrag-XR` folder. Wait for Gradle to finish configuring the environment for the project, and follow the prompts if instructed to do so.
 >(Check that your environment has the components described above, with their respective versions.)
 
 * Locate the Build Variants tab in Android Studio, ensure that you have selected the following:

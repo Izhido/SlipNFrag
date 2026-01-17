@@ -1,8 +1,5 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
 }
 
 android {
@@ -39,11 +36,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlin {
-        compilerOptions {
-            jvmTarget = JvmTarget.fromTarget("1.8")
-        }
-    }
     buildFeatures {
         prefab = true
         shaders = true
@@ -56,7 +48,9 @@ android {
     }
     sourceSets {
         named("main") {
-            shaders.srcDir("../../shaders/")
+            shaders {
+                directories.add("../../shaders/")
+            }
         }
     }
     ndkVersion = "29.0.14206865"
@@ -65,7 +59,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
