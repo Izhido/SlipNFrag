@@ -1652,6 +1652,20 @@ void android_main(struct android_app* app)
 						SwitchBoundInput(appState, appState.PoseAction, "Hand pose");
 						SwitchBoundInput(appState, appState.LeftKeyPressAction, "Left key press");
 						SwitchBoundInput(appState, appState.RightKeyPressAction, "Right key press");
+
+						sys_bindingstext.clear();
+						sys_bindingstext.emplace_back("Fixed controls:");
+						sys_bindingstext.emplace_back("");
+						sys_bindingstext.emplace_back("Left or Right Joysticks:");
+						sys_bindingstext.emplace_back("Walk Forward / Backpedal,");
+						sys_bindingstext.emplace_back("   Step Left / Step Right");
+						sys_bindingstext.emplace_back("");
+						sys_bindingstext.emplace_back("(B) / (Y): Jump");
+						sys_bindingstext.emplace_back("(A) / (X): Swim down");
+						sys_bindingstext.emplace_back("");
+						sys_bindingstext.emplace_back("Triggers: Attack");
+						sys_bindingstext.emplace_back("Grip Triggers: Run");
+						sys_bindingstext.emplace_back("Click Joysticks: Change Weapon");
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:

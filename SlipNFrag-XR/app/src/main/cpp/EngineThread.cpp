@@ -157,12 +157,6 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				appState->PreviousTime = appState->CurrentTime;
 				appState->CurrentTime = GetTime();
 				frame_lapse = (float) (appState->CurrentTime - appState->PreviousTime);
-				appState->TimeInWorldMode += frame_lapse;
-				if (!appState->ControlsMessageDisplayed && appState->TimeInWorldMode > 4)
-				{
-					SCR_InterruptableCenterPrint("Controls:\n\nLeft or Right Joysticks:\nWalk Forward / Backpedal, \n   Step Left / Step Right \n\n[B] / [Y]: Jump     \n[A] / [X]: Swim down\nTriggers: Attack  \nGrip Triggers: Run          \nClick Joysticks: Change Weapon  \n\nFire weapon to close");
-					appState->ControlsMessageDisplayed = true;
-				}
 			}
 			if (r_cache_thrash)
 			{

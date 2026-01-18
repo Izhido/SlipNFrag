@@ -1402,6 +1402,7 @@ void M_Keys_Draw (void)
 	if (in_menudrawfn)
 	{
 		(*in_menudrawfn) ();
+		return;
 	}
 
 	int		i;
@@ -1455,6 +1456,7 @@ void M_Keys_Key (int k)
 	if (in_menukeyfn)
 	{
 		(*in_menukeyfn) (k);
+		return;
 	}
 
 	char	cmd[80];

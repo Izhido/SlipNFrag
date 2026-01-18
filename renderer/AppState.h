@@ -83,8 +83,6 @@ struct AppState
 	Controller LeftController;
 	Controller RightController;
 	XrVector2f PreviousThumbstick;
-	double TimeInWorldMode;
-	bool ControlsMessageDisplayed;
 	std::thread EngineThread;
 	bool EngineThreadCreated;
 	bool EngineThreadStarted;

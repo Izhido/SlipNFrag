@@ -9,6 +9,7 @@ extern std::string sys_errormessage;
 extern int sys_nogamedata;
 extern int sys_errorcalled;
 extern int sys_quitcalled;
+extern std::vector<std::string> sys_bindingstext;
 
 void Sys_Init(int argc, char** argv);
 void Sys_Terminate();

@@ -580,14 +580,7 @@ void AppInput::Handle(AppState_xr& appState, bool keyPressHandled, const char* b
 					{
 						if (booleanActionState.currentState)
 						{
-							if (appState.ControlsMessageDisplayed && !scr_interrupted)
-							{
-								SCR_Interrupt();
-							}
-							else
-							{
-								AddCommandInput("+attack");
-							}
+							AddCommandInput("+attack");
 						}
 						else
 						{
