@@ -22,6 +22,8 @@ int sys_nogamedata;
 int sys_errorcalled;
 int sys_quitcalled;
 
+std::vector<std::string> sys_bindingstext;
+
 unsigned int sys_randseed;
 
 int findhandle()
@@ -330,6 +332,28 @@ void CL_ImmersiveMenuKey (int k)
 	}
 }
 
+void IN_MenuDraw ()
+{
+	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
+	auto p = Draw_CachePic ("gfx/p_option.lmp");
+	M_DrawPic ( (320-p->width)/2, 4, p);
+
+	for (int i = 0; i < (int)sys_bindingstext.size(); i++)
+	{
+		M_Print (48, 32 + i * 8, sys_bindingstext[i].c_str());
+	}
+}
+
+void IN_MenuKey (int k)
+{
+	switch (k)
+	{
+	case K_ESCAPE:
+		M_Menu_Options_f ();
+		break;
+	}
+}
+
 void Sys_Init(int argc, char** argv)
 {
     static quakeparms_t parms;
@@ -343,4 +367,6 @@ void Sys_Init(int argc, char** argv)
     Host_Init(&parms);
 	cl_immersivemenudrawfn = CL_ImmersiveMenuDraw;
 	cl_immersivemenukeyfn = CL_ImmersiveMenuKey;
+	in_menudrawfn = IN_MenuDraw;
+	in_menukeyfn = IN_MenuKey;
 }

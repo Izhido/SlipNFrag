@@ -91,7 +91,7 @@ if(TARGET openxr-gfxwrapper)
     target_link_libraries(slipnfrag_pcxr openxr-gfxwrapper)
 endif()
 
-target_compile_features(slipnfrag_pcxr PUBLIC cxx_std_17)
+target_compile_features(slipnfrag_pcxr PUBLIC cxx_std_20)
 
 target_compile_definitions(slipnfrag_pcxr PRIVATE _CRT_SECURE_NO_WARNINGS)
 
