@@ -5,7 +5,5 @@
 struct ScreenPerFrame
 {
 	VkImage image;
-	VkBuffer buffer;
-	VmaAllocation allocation;
-	VkDeviceSize size;
+	Buffer stagingBuffer;
 };

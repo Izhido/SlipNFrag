@@ -42,7 +42,7 @@ void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkForm
 	CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &view));
 }
 
-void Texture::Fill(AppState& appState, VkBuffer buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
+void Texture::Fill(AppState& appState, Buffer& buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
 {
 	VkImageMemoryBarrier imageMemoryBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 	if (filled)
@@ -65,7 +65,7 @@ void Texture::Fill(AppState& appState, VkBuffer buffer, VkDeviceSize offset, VkC
 	region.imageExtent.width = width;
 	region.imageExtent.height = height;
 	region.imageExtent.depth = 1;
-	vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+	vkCmdCopyBufferToImage(commandBuffer, buffer.buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 	imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;

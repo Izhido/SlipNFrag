@@ -3,64 +3,58 @@
 #include "MemoryAllocateInfo.h"
 #include "Utils.h"
 
-void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage)
 {
 	this->size = size;
-	this->properties = properties;
 
-	VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-	bufferCreateInfo.size = size;
-	bufferCreateInfo.usage = usage;
-	CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &buffer));
+	VkBufferCreateInfo bufferInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+	bufferInfo.size = size;
+	bufferInfo.usage = usage;
 
-	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(appState.Device, buffer, &memoryRequirements);
+	VmaAllocationCreateInfo allocInfo { };
+	allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+	allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
-	VkMemoryAllocateInfo memoryAllocateInfo { };
-	updateMemoryAllocateInfo(appState, memoryRequirements, this->properties, memoryAllocateInfo, true);
-
-	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memory));
-
-	CHECK_VKCMD(vkBindBufferMemory(appState.Device, buffer, memory, 0));
+	CHECK_VKCMD(vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr));
 }
 
 void Buffer::CreateStagingBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 }
 
 void Buffer::CreateHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 }
 
 void Buffer::CreateHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 }
 
 void Buffer::CreateHostVisibleIndexBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 }
 
 void Buffer::CreateHostVisibleUniformBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+}
+
+void Buffer::Map(AppState& appState)
+{
+	CHECK_VKCMD(vmaMapMemory(appState.Allocator, allocation, &mapped));
+}
+
+void Buffer::UnmapAndFlush(AppState &appState) const
+{
+	vmaUnmapMemory(appState.Allocator, allocation);
+	CHECK_VKCMD(vmaFlushAllocation(appState.Allocator, allocation, 0, VK_WHOLE_SIZE));
 }
 
 void Buffer::Delete(AppState& appState) const
 {
-	if (mapped != nullptr)
-	{
-		vkUnmapMemory(appState.Device, memory);
-	}
-	if (buffer != VK_NULL_HANDLE)
-	{
-		vkDestroyBuffer(appState.Device, buffer, nullptr);
-	}
-	if (memory != VK_NULL_HANDLE)
-	{
-		vkFreeMemory(appState.Device, memory, nullptr);
-	}
+	vmaDestroyBuffer(appState.Allocator, buffer, allocation);
 }

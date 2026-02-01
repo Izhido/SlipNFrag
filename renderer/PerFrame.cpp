@@ -956,27 +956,19 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 
 void PerFrame::LoadNonStagedResources(AppState &appState)
 {
+	matrices->Map(appState);
 	auto mapped = (float*)matrices->mapped;
 	memcpy(mapped, appState.ViewMatrices.data(), 2 * sizeof(XrMatrix4x4f));
 	mapped += 2 * 16;
 	memcpy(mapped, appState.ProjectionMatrices.data(), 2 * sizeof(XrMatrix4x4f));
 	mapped += 2 * 16;
 	memcpy(mapped, &appState.VertexTransform, sizeof(XrMatrix4x4f));
-	if ((matrices->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-	{
-		VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-		range.memory = matrices->memory;
-		range.size = VK_WHOLE_SIZE;
-		CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
-	}
+	matrices->UnmapAndFlush(appState);
 
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
 		sortedVertices = cachedSortedVertices.GetHostVisibleVertexBuffer(appState, appState.Scene.sortedVerticesSize);
-		if (sortedVertices->mapped == nullptr)
-		{
-			CHECK_VKCMD(vkMapMemory(appState.Device, sortedVertices->memory, 0, VK_WHOLE_SIZE, 0, &sortedVertices->mapped));
-		}
+		sortedVertices->Map(appState);
 		uint32_t attributeIndex = 0;
 		VkDeviceSize offset = 0;
 		SortedSurfaces::LoadVertices(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, attributeIndex, sortedVertices, offset);
@@ -1021,22 +1013,13 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 			auto count = (d_lists.last_particle + 1);
 			std::copy(d_lists.particles.data(), d_lists.particles.data() + count, (float*)(((unsigned char*)sortedVertices->mapped) + offset));
 		}
-		if ((sortedVertices->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-		{
-			VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-			range.memory = sortedVertices->memory;
-			range.size = VK_WHOLE_SIZE;
-			CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
-		}
+		sortedVertices->UnmapAndFlush(appState);
 	}
 
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
 		sortedAttributes = cachedSortedAttributes.GetHostVisibleStorageBuffer(appState, appState.Scene.sortedAttributesSize);
-		if (sortedAttributes->mapped == nullptr)
-		{
-			CHECK_VKCMD(vkMapMemory(appState.Device, sortedAttributes->memory, 0, VK_WHOLE_SIZE, 0, &sortedAttributes->mapped));
-		}
+		sortedAttributes->Map(appState);
 		VkDeviceSize offset = 0;
 		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedAttributes, offset);
 		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedAttributes, offset);
@@ -1074,13 +1057,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedAttributes, offset);
 		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedAttributes, offset);
 		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedAttributes, offset);
-		if ((sortedAttributes->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-		{
-			VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-			range.memory = sortedAttributes->memory;
-			range.size = VK_WHOLE_SIZE;
-			CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
-		}
+		sortedAttributes->UnmapAndFlush(appState);
 	}
 
 	if (appState.Scene.sortedIndicesCount > 0)
@@ -1088,10 +1065,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		if (appState.Scene.sortedIndices16Size > 0)
 		{
 			sortedIndices16 = cachedSortedIndices16.GetHostVisibleIndexBuffer(appState, appState.Scene.sortedIndices16Size);
-			if (sortedIndices16->mapped == nullptr)
-			{
-				CHECK_VKCMD(vkMapMemory(appState.Device, sortedIndices16->memory, 0, VK_WHOLE_SIZE, 0, &sortedIndices16->mapped));
-			}
+			sortedIndices16->Map(appState);
 			VkDeviceSize offset = 0;
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedIndices16, offset);
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedIndices16, offset);
@@ -1130,21 +1104,12 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedIndices16, offset);
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedIndices16, offset);
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedIndices16, offset);
-			if ((sortedIndices16->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-			{
-				VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-				range.memory = sortedIndices16->memory;
-				range.size = VK_WHOLE_SIZE;
-				CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
-			}
+			sortedIndices16->UnmapAndFlush(appState);
 		}
 		else
 		{
 			sortedIndices32 = cachedSortedIndices32.GetHostVisibleIndexBuffer(appState, appState.Scene.sortedIndices32Size);
-			if (sortedIndices32->mapped == nullptr)
-			{
-				CHECK_VKCMD(vkMapMemory(appState.Device, sortedIndices32->memory, 0, VK_WHOLE_SIZE, 0, &sortedIndices32->mapped));
-			}
+			sortedIndices32->Map(appState);
 			VkDeviceSize offset = 0;
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedIndices32, offset);
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedIndices32, offset);
@@ -1183,13 +1148,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedIndices32, offset);
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedIndices32, offset);
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedIndices32, offset);
-			if ((sortedIndices32->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-			{
-				VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-				range.memory = sortedIndices32->memory;
-				range.size = VK_WHOLE_SIZE;
-				CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
-			}
+			sortedIndices32->UnmapAndFlush(appState);
 		}
 	}
 }

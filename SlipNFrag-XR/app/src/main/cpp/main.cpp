@@ -2172,7 +2172,6 @@ void android_main(struct android_app* app)
 					{
 						perFrame.matrices = new Buffer();
 						perFrame.matrices->CreateHostVisibleUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
-						CHECK_VKCMD(vkMapMemory(appState.Device, perFrame.matrices->memory, 0, VK_WHOLE_SIZE, 0, &perFrame.matrices->mapped));
 					}
 
 					for (auto i = 0; i < viewCountOutput; i++)
@@ -2258,18 +2257,9 @@ void android_main(struct android_app* app)
 
 						stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
 						stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
-						if (stagingBuffer->mapped == nullptr)
-						{
-							CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
-						}
+						stagingBuffer->Map(appState);
 						perFrame.LoadStagingBuffer(appState, stagingBuffer);
-						if ((stagingBuffer->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-						{
-							VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-							range.memory = stagingBuffer->memory;
-							range.size = VK_WHOLE_SIZE;
-							CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
-						}
+						stagingBuffer->UnmapAndFlush(appState);
 
 						perFrame.LoadNonStagedResources(appState);
 					}
@@ -2421,19 +2411,9 @@ void android_main(struct android_app* app)
 						screenPerFrame.image = appState.Screen.swapchainImages[swapchainImageIndex].image;
 					}
 
-					if (screenPerFrame.buffer == VK_NULL_HANDLE)
+					if (screenPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 					{
-						screenPerFrame.size = appState.ScreenData.size() * sizeof(uint32_t);
-
-						VkBufferCreateInfo bufferInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-						bufferInfo.size = screenPerFrame.size;
-						bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-						VmaAllocationCreateInfo allocInfo { };
-						allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-						allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
-
-						vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &screenPerFrame.buffer, &screenPerFrame.allocation, nullptr);
+						screenPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
 					}
 
 					appState.RenderScreen(screenPerFrame);
@@ -2467,7 +2447,7 @@ void android_main(struct android_app* app)
 						region.imageExtent.width = appState.ConsoleWidth;
 						region.imageExtent.height = appState.ConsoleHeight - (SBAR_HEIGHT + 24);
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.buffer, consoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.stagingBuffer.buffer, consoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						consoleTexture.filled = true;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -2495,7 +2475,7 @@ void android_main(struct android_app* app)
 						region.bufferOffset = region.imageExtent.width * sizeof(uint32_t) * region.imageExtent.height;
 						region.imageOffset.y = (SBAR_HEIGHT + 24) * (Constants::screenToConsoleMultiplier - 1);
 						region.imageExtent.height = SBAR_HEIGHT + 24;
-						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.buffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.stagingBuffer.buffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						statusBarTexture.filled = true;
 						region.imageOffset.y = 0;
 
@@ -2534,7 +2514,7 @@ void android_main(struct android_app* app)
 						region.imageExtent.width = appState.ScreenWidth;
 						region.imageExtent.height = appState.ScreenHeight;
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.buffer, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.stagingBuffer.buffer, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 					}
 
 					appState.submitBarrier.image = screenPerFrame.image;
@@ -2624,19 +2604,9 @@ void android_main(struct android_app* app)
 							keyboardPerFrame.image = appState.Keyboard.Screen.swapchainImages[swapchainImageIndex].image;
 						}
 
-						if (keyboardPerFrame.buffer == VK_NULL_HANDLE)
+						if (keyboardPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 						{
-							keyboardPerFrame.size = appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t);
-
-							VkBufferCreateInfo bufferInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-							bufferInfo.size = keyboardPerFrame.size;
-							bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-							VmaAllocationCreateInfo allocInfo { };
-							allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-							allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
-
-							vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &keyboardPerFrame.buffer, &keyboardPerFrame.allocation, nullptr);
+							keyboardPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 						}
 
 						auto& keyboardTexture = appState.KeyboardTextures[swapchainImageIndex];
@@ -2697,7 +2667,7 @@ void android_main(struct android_app* app)
 						region.imageExtent.width = appState.ConsoleWidth;
 						region.imageExtent.height = appState.ConsoleHeight / 2;
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(commandBuffer, keyboardPerFrame.buffer, keyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(commandBuffer, keyboardPerFrame.stagingBuffer.buffer, keyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						keyboardTexture.filled = true;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -2998,22 +2968,12 @@ void android_main(struct android_app* app)
 								appState.Scene.skybox->images.resize(skyboxImageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, skyboxImageCount, &skyboxImageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
 
-								VkBufferCreateInfo bufferInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-								bufferInfo.size = 6 * width * height * 4;
-								bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+								Buffer stagingBuffer;
+								stagingBuffer.CreateStagingBuffer(appState, 6 * width * height * sizeof(uint32_t));
 
-								VmaAllocationCreateInfo allocInfo { };
-								allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-								allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+								stagingBuffer.Map(appState);
 
-								VkBuffer buffer;
-								VmaAllocation allocation;
-								vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
-
-								void* mapped;
-								CHECK_VKCMD(vmaMapMemory(appState.Allocator, allocation, &mapped));
-
-								auto target = (uint32_t*)mapped;
+								auto target = (uint32_t*)stagingBuffer.mapped;
 
 								for (size_t i = 0; i < 6; i++)
 								{
@@ -3064,8 +3024,7 @@ void android_main(struct android_app* app)
 									}
 								}
 
-								vmaUnmapMemory(appState.Allocator, allocation);
-								CHECK_VKCMD(vmaFlushAllocation(appState.Allocator, allocation, 0, VK_WHOLE_SIZE));
+								stagingBuffer.UnmapAndFlush(appState);
 
 								VkBufferImageCopy region { };
 								region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -3092,7 +3051,7 @@ void android_main(struct android_app* app)
 									appState.copyBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
 									region.imageSubresource.baseArrayLayer = i;
-									vkCmdCopyBufferToImage(setupCommandBuffer, buffer, appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+									vkCmdCopyBufferToImage(setupCommandBuffer, stagingBuffer.buffer, appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 									region.bufferOffset += width * height * 4;
 									appState.submitBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
@@ -3114,7 +3073,7 @@ void android_main(struct android_app* app)
 
 								vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
 
-								vmaDestroyBuffer(appState.Allocator, buffer, allocation);
+								stagingBuffer.Delete(appState);
 							}
 						}
 						if (appState.Scene.skybox != VK_NULL_HANDLE)

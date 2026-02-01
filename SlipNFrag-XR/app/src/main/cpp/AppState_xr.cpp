@@ -16,9 +16,8 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 				auto console = Scene.consoleData.data();
 				auto previousConsole = console;
 				auto screen = Scene.screenData.data();
-				void* mapped;
-				CHECK_VKCMD(vmaMapMemory(Allocator, perFrame.allocation, &mapped));
-				auto target = (uint32_t*)mapped;
+				perFrame.stagingBuffer.Map(*this);
+				auto target = (uint32_t*)perFrame.stagingBuffer.mapped;
 				auto y = 0;
 				while (y < vid_height)
 				{
@@ -55,17 +54,15 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 						console = previousConsole;
 					}
 				}
-				vmaUnmapMemory(Allocator, perFrame.allocation);
-				CHECK_VKCMD(vmaFlushAllocation(Allocator, perFrame.allocation, 0, VK_WHOLE_SIZE));
+				perFrame.stagingBuffer.UnmapAndFlush(*this);
 			}
 			else
 			{
 				auto console = Scene.consoleData.data();
 				auto previousConsole = console;
 				auto screen = Scene.screenData.data();
-				void* mapped;
-				CHECK_VKCMD(vmaMapMemory(Allocator, perFrame.allocation, &mapped));
-				auto target = (uint32_t*)mapped;
+				perFrame.stagingBuffer.Map(*this);
+				auto target = (uint32_t*)perFrame.stagingBuffer.mapped;
 				auto black = Scene.paletteData[0];
 				auto y = 0;
 				while (y < vid_height)
@@ -112,8 +109,7 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 						console = previousConsole;
 					}
 				}
-				vmaUnmapMemory(Allocator, perFrame.allocation);
-				CHECK_VKCMD(vmaFlushAllocation(Allocator, perFrame.allocation, 0, VK_WHOLE_SIZE));
+				perFrame.stagingBuffer.UnmapAndFlush(*this);
 			}
 			{
 				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
@@ -122,9 +118,8 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 					auto width = directRect.width * Constants::screenToConsoleMultiplier;
 					auto height = directRect.height * Constants::screenToConsoleMultiplier;
 					auto source = directRect.data;
-					void* mapped;
-					CHECK_VKCMD(vmaMapMemory(Allocator, perFrame.allocation, &mapped));
-					auto target = (uint32_t*)mapped + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
+					perFrame.stagingBuffer.Map(*this);
+					auto target = (uint32_t*)perFrame.stagingBuffer.mapped + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
 					auto y = 0;
 					while (y < height)
 					{
@@ -148,17 +143,15 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 						}
 						target += ScreenWidth - width;
 					}
-					vmaUnmapMemory(Allocator, perFrame.allocation);
-					CHECK_VKCMD(vmaFlushAllocation(Allocator, perFrame.allocation, 0, VK_WHOLE_SIZE));
+					perFrame.stagingBuffer.UnmapAndFlush(*this);
 				}
 			}
 		}
 		else if (key_dest == key_game)
 		{
 			auto source = Scene.consoleData.data();
-			void* mapped;
-			CHECK_VKCMD(vmaMapMemory(Allocator, perFrame.allocation, &mapped));
-			auto target = (uint32_t*)mapped;
+			perFrame.stagingBuffer.Map(*this);
+			auto target = (uint32_t*)perFrame.stagingBuffer.mapped;
 			if (Scene.statusBarVerticesSize > 0)
 			{
 				auto count = ConsoleWidth * (ConsoleHeight - (SBAR_HEIGHT + 24));
@@ -217,15 +210,14 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 					std::fill(target, target + ConsoleWidth * ConsoleHeight, 0);
 				}
 			}
-			vmaUnmapMemory(Allocator, perFrame.allocation);
-			CHECK_VKCMD(vmaFlushAllocation(Allocator, perFrame.allocation, 0, VK_WHOLE_SIZE));
+			perFrame.stagingBuffer.UnmapAndFlush(*this);
 			{
 				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
 				for (auto& directRect : DirectRect::directRects)
 				{
 					source = directRect.data;
-					CHECK_VKCMD(vmaMapMemory(Allocator, perFrame.allocation, &mapped));
-					target = (uint32_t*)mapped + directRect.y * ConsoleWidth + directRect.x;
+					perFrame.stagingBuffer.Map(*this);
+					target = (uint32_t*)perFrame.stagingBuffer.mapped + directRect.y * ConsoleWidth + directRect.x;
 					for (auto y = 0; y < directRect.height; y++)
 					{
 						for (auto x = 0; x < directRect.width; x++)
@@ -234,8 +226,7 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 						}
 						target += ConsoleWidth - directRect.width;
 					}
-					vmaUnmapMemory(Allocator, perFrame.allocation);
-					CHECK_VKCMD(vmaFlushAllocation(Allocator, perFrame.allocation, 0, VK_WHOLE_SIZE));
+					perFrame.stagingBuffer.UnmapAndFlush(*this);
 				}
 			}
 		}
@@ -243,9 +234,8 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 		{
 			auto source = Scene.consoleData.data();
 			auto previousSource = source;
-			void* mapped;
-			CHECK_VKCMD(vmaMapMemory(Allocator, perFrame.allocation, &mapped));
-			auto target = (uint32_t*)mapped;
+			perFrame.stagingBuffer.Map(*this);
+			auto target = (uint32_t*)perFrame.stagingBuffer.mapped;
 			auto black = Scene.paletteData[0];
 			auto y = 0;
 			auto limit = ScreenHeight - (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
@@ -349,8 +339,7 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 				}
 				y++;
 			}
-			vmaUnmapMemory(Allocator, perFrame.allocation);
-			CHECK_VKCMD(vmaFlushAllocation(Allocator, perFrame.allocation, 0, VK_WHOLE_SIZE));
+			perFrame.stagingBuffer.UnmapAndFlush(*this);
 			{
 				std::lock_guard<std::mutex> lock(Locks::DirectRectMutex);
 				for (auto& directRect : DirectRect::directRects)
@@ -358,8 +347,8 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 					auto width = directRect.width * Constants::screenToConsoleMultiplier;
 					auto height = directRect.height * Constants::screenToConsoleMultiplier;
 					source = directRect.data;
-					CHECK_VKCMD(vmaMapMemory(Allocator, perFrame.allocation, &mapped));
-					target = (uint32_t*)mapped + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
+					perFrame.stagingBuffer.Map(*this);
+					target = (uint32_t*)perFrame.stagingBuffer.mapped + (directRect.y * ScreenWidth + directRect.x) * Constants::screenToConsoleMultiplier;
 					auto y = 0;
 					while (y < height)
 					{
@@ -383,8 +372,7 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 						}
 						target += ScreenWidth - width;
 					}
-					vmaUnmapMemory(Allocator, perFrame.allocation);
-					CHECK_VKCMD(vmaFlushAllocation(Allocator, perFrame.allocation, 0, VK_WHOLE_SIZE));
+					perFrame.stagingBuffer.UnmapAndFlush(*this);
 				}
 			}
 		}
@@ -427,7 +415,7 @@ void AppState_xr::RenderScreen(ScreenPerFrame& perFrame)
 				SharewareGameDataImageSource = nullptr;
 			}
 		}
-		CHECK_VKCMD(vmaCopyMemoryToAllocation(Allocator, ScreenData.data(), perFrame.allocation, 0, perFrame.size));
+		CHECK_VKCMD(vmaCopyMemoryToAllocation(Allocator, ScreenData.data(), perFrame.stagingBuffer.allocation, 0, perFrame.stagingBuffer.size));
 	}
 }
 
