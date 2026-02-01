@@ -49,11 +49,6 @@ void Buffer::CreateHostVisibleUniformBuffer(AppState& appState, VkDeviceSize siz
 	Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 }
 
-void Buffer::CreateSourceBuffer(AppState& appState, VkDeviceSize size)
-{
-	Create(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-}
-
 void Buffer::Delete(AppState& appState) const
 {
 	if (mapped != nullptr)

@@ -19,6 +19,5 @@ struct Buffer
 	void CreateHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size);
 	void CreateHostVisibleIndexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateHostVisibleUniformBuffer(AppState& appState, VkDeviceSize size);
-	void CreateSourceBuffer(AppState& appState, VkDeviceSize size);
 	void Delete(AppState& appState) const;
 };

@@ -533,6 +533,10 @@ void android_main(struct android_app* app)
 		}
 #endif
 
+		auto dedicatedAllocation = false;
+		auto bindMemory2 = false;
+		auto maintenance4 = false;
+		auto bufferDeviceAddress = false;
 		auto createRenderPass2 = false;
 		auto depthStencilResolve = false;
 		uint32_t vulkanSwapchainSampleCount;
@@ -653,32 +657,52 @@ void android_main(struct android_app* app)
 			{
 				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
 
-				if (strcmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME) == 0)
+				if (strncmp(availableExtensions[i].extensionName, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					dedicatedAllocation = true;
+					enabledExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_BIND_MEMORY_2_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					bindMemory2 = true;
+					enabledExtensions.push_back(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_MAINTENANCE_4_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					maintenance4 = true;
+					enabledExtensions.push_back(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					bufferDeviceAddress = true;
+					enabledExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					appState.IndexTypeUInt8Enabled = true;
 					enabledExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					// UGLY HACK. Meta Quest devices require this extension, but the validation layers report that the OpenXR runtime does not enable it for you.
 					enabledExtensions.push_back(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					shaderDemoteToHelperInvocation = true;
 					enabledExtensions.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					shaderTerminateInvocation = true;
 					enabledExtensions.push_back(VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					createRenderPass2 = true;
 					enabledExtensions.push_back(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					depthStencilResolve = true;
 					enabledExtensions.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
@@ -730,6 +754,14 @@ void android_main(struct android_app* app)
 			{
 				shaderTerminateInvocationFeatures.shaderTerminateInvocation = VK_TRUE;
 				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&shaderTerminateInvocationFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES };
+			if (bufferDeviceAddress)
+			{
+				bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&bufferDeviceAddressFeatures;
 				chain = (void*)((VkBaseInStructure*)chain)->pNext;
 			}
 
@@ -1501,6 +1533,23 @@ void android_main(struct android_app* app)
 		appState.vkCmdInsertDebugUtilsLabelEXT = (PFN_vkCmdInsertDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdInsertDebugUtilsLabelEXT");
 		appState.vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdEndDebugUtilsLabelEXT");
 #endif
+
+		VmaVulkanFunctions vulkanFunctions { };
+		vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+		vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+		VmaAllocatorCreateInfo allocatorCreateInfo { };
+		if (dedicatedAllocation) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
+		if (bindMemory2) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_BIND_MEMORY2_BIT;
+		if (maintenance4) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT;
+		if (bufferDeviceAddress) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+		allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_1;
+		allocatorCreateInfo.physicalDevice = vulkanPhysicalDevice;
+		allocatorCreateInfo.device = appState.Device;
+		allocatorCreateInfo.instance = vulkanInstance;
+		allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+
+		CHECK_VKCMD(vmaCreateAllocator(&allocatorCreateInfo, &appState.Allocator));
 
 		const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 
@@ -2372,10 +2421,19 @@ void android_main(struct android_app* app)
 						screenPerFrame.image = appState.Screen.swapchainImages[swapchainImageIndex].image;
 					}
 
-					if (screenPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
+					if (screenPerFrame.buffer == VK_NULL_HANDLE)
 					{
-						screenPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
-						CHECK_VKCMD(vkMapMemory(appState.Device, screenPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &screenPerFrame.stagingBuffer.mapped));
+						screenPerFrame.size = appState.ScreenData.size() * sizeof(uint32_t);
+
+						VkBufferCreateInfo bufferInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+						bufferInfo.size = screenPerFrame.size;
+						bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+						VmaAllocationCreateInfo allocInfo { };
+						allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+						allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+
+						vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &screenPerFrame.buffer, &screenPerFrame.allocation, nullptr);
 					}
 
 					appState.RenderScreen(screenPerFrame);
@@ -2409,7 +2467,7 @@ void android_main(struct android_app* app)
 						region.imageExtent.width = appState.ConsoleWidth;
 						region.imageExtent.height = appState.ConsoleHeight - (SBAR_HEIGHT + 24);
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.stagingBuffer.buffer, consoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.buffer, consoleTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						consoleTexture.filled = true;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -2437,7 +2495,7 @@ void android_main(struct android_app* app)
 						region.bufferOffset = region.imageExtent.width * sizeof(uint32_t) * region.imageExtent.height;
 						region.imageOffset.y = (SBAR_HEIGHT + 24) * (Constants::screenToConsoleMultiplier - 1);
 						region.imageExtent.height = SBAR_HEIGHT + 24;
-						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.stagingBuffer.buffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.buffer, statusBarTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						statusBarTexture.filled = true;
 						region.imageOffset.y = 0;
 
@@ -2476,7 +2534,7 @@ void android_main(struct android_app* app)
 						region.imageExtent.width = appState.ScreenWidth;
 						region.imageExtent.height = appState.ScreenHeight;
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.stagingBuffer.buffer, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(commandBuffer, screenPerFrame.buffer, screenPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 					}
 
 					appState.submitBarrier.image = screenPerFrame.image;
@@ -2566,10 +2624,19 @@ void android_main(struct android_app* app)
 							keyboardPerFrame.image = appState.Keyboard.Screen.swapchainImages[swapchainImageIndex].image;
 						}
 
-						if (keyboardPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
+						if (keyboardPerFrame.buffer == VK_NULL_HANDLE)
 						{
-							keyboardPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
-							CHECK_VKCMD(vkMapMemory(appState.Device, keyboardPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &keyboardPerFrame.stagingBuffer.mapped));
+							keyboardPerFrame.size = appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t);
+
+							VkBufferCreateInfo bufferInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+							bufferInfo.size = keyboardPerFrame.size;
+							bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+							VmaAllocationCreateInfo allocInfo { };
+							allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+							allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+
+							vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &keyboardPerFrame.buffer, &keyboardPerFrame.allocation, nullptr);
 						}
 
 						auto& keyboardTexture = appState.KeyboardTextures[swapchainImageIndex];
@@ -2630,7 +2697,7 @@ void android_main(struct android_app* app)
 						region.imageExtent.width = appState.ConsoleWidth;
 						region.imageExtent.height = appState.ConsoleHeight / 2;
 						region.imageExtent.depth = 1;
-						vkCmdCopyBufferToImage(commandBuffer, keyboardPerFrame.stagingBuffer.buffer, keyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+						vkCmdCopyBufferToImage(commandBuffer, keyboardPerFrame.buffer, keyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 						keyboardTexture.filled = true;
 
 						imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -2931,12 +2998,22 @@ void android_main(struct android_app* app)
 								appState.Scene.skybox->images.resize(skyboxImageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, skyboxImageCount, &skyboxImageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
 
-								Buffer buffer;
-								buffer.CreateSourceBuffer(appState, 6 * width * height * 4);
+								VkBufferCreateInfo bufferInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+								bufferInfo.size = 6 * width * height * 4;
+								bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-								CHECK_VKCMD(vkMapMemory(appState.Device, buffer.memory, 0, VK_WHOLE_SIZE, 0, &buffer.mapped));
+								VmaAllocationCreateInfo allocInfo { };
+								allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+								allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
-								auto target = (uint32_t*)buffer.mapped;
+								VkBuffer buffer;
+								VmaAllocation allocation;
+								vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
+
+								void* mapped;
+								CHECK_VKCMD(vmaMapMemory(appState.Allocator, allocation, &mapped));
+
+								auto target = (uint32_t*)mapped;
 
 								for (size_t i = 0; i < 6; i++)
 								{
@@ -2987,6 +3064,9 @@ void android_main(struct android_app* app)
 									}
 								}
 
+								vmaUnmapMemory(appState.Allocator, allocation);
+								CHECK_VKCMD(vmaFlushAllocation(appState.Allocator, allocation, 0, VK_WHOLE_SIZE));
+
 								VkBufferImageCopy region { };
 								region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 								region.imageSubresource.layerCount = 1;
@@ -3012,7 +3092,7 @@ void android_main(struct android_app* app)
 									appState.copyBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
 									region.imageSubresource.baseArrayLayer = i;
-									vkCmdCopyBufferToImage(setupCommandBuffer, buffer.buffer, appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+									vkCmdCopyBufferToImage(setupCommandBuffer, buffer, appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 									region.bufferOffset += width * height * 4;
 									appState.submitBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
@@ -3034,7 +3114,7 @@ void android_main(struct android_app* app)
 
 								vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
 
-								buffer.Delete(appState);
+								vmaDestroyBuffer(appState.Allocator, buffer, allocation);
 							}
 						}
 						if (appState.Scene.skybox != VK_NULL_HANDLE)

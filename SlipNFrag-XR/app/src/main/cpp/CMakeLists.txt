@@ -9,6 +9,7 @@ set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.54")
+set(VMA_DIR "${ROOT_DIR}/VulkanMemoryAllocator-3.3.0")
 set(MINIZIP_DIR "${ROOT_DIR}/minizip")
 set(LHASA_DIR "${ROOT_DIR}/lhasa-0.5.0")
 
@@ -63,6 +64,7 @@ target_include_directories(slipnfrag_native PRIVATE
         ${ID1_DIR}
         ${RENDERER_DIR}
         ${STB_DIR}
+        ${VMA_DIR}/include
         ${MINIZIP_DIR}
         ${LHASA_DIR}/lib
         ${LHASA_DIR}/lib/public

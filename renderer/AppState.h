@@ -12,6 +12,7 @@
 #include "Controller.h"
 #include "HandTracker.h"
 #include <thread>
+#include <vk_mem_alloc.h>
 
 struct AppState
 {
@@ -118,6 +119,7 @@ struct AppState
 	bool Focused;
 	VkImageMemoryBarrier copyBarrier;
 	VkImageMemoryBarrier submitBarrier;
+	VmaAllocator Allocator;
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
 	PFN_vkCmdBeginDebugUtilsLabelEXT vkCmdBeginDebugUtilsLabelEXT;

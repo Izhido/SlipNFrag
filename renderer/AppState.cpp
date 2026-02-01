@@ -1,5 +1,6 @@
 #include "AppState.h"
 #include "FileLoader.h"
+#include "Utils.h"
 
 void AppState::AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitch, float& roll)
 {
@@ -39,7 +40,9 @@ void AppState::AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitc
 void AppState::RenderKeyboard(ScreenPerFrame& perFrame)
 {
 	auto source = Keyboard.buffer.data();
-	auto target = (uint32_t*)(perFrame.stagingBuffer.mapped);
+	void* mapped;
+	CHECK_VKCMD(vmaMapMemory(Allocator, perFrame.allocation, &mapped));
+	auto target = (uint32_t*)mapped;
 	auto count = ConsoleWidth * ConsoleHeight / 2;
 	while (count > 0)
 	{
@@ -47,6 +50,8 @@ void AppState::RenderKeyboard(ScreenPerFrame& perFrame)
 		*target++ = Scene.paletteData[entry];
 		count--;
 	}
+	vmaUnmapMemory(Allocator, perFrame.allocation);
+	CHECK_VKCMD(vmaFlushAllocation(Allocator, perFrame.allocation, 0, VK_WHOLE_SIZE));
 }
 
 void AppState::DestroyImageSources()
@@ -83,7 +88,7 @@ void AppState::Destroy()
 
 		for (auto& perFrame : Keyboard.Screen.perFrame)
 		{
-			perFrame.second.stagingBuffer.Delete(*this);
+			vmaDestroyBuffer(Allocator, perFrame.second.buffer, perFrame.second.allocation);
 		}
 		Keyboard.Screen.perFrame.clear();
 
@@ -101,7 +106,7 @@ void AppState::Destroy()
 
 		for (auto& perFrame : Screen.perFrame)
 		{
-			perFrame.second.stagingBuffer.Delete(*this);
+			vmaDestroyBuffer(Allocator, perFrame.second.buffer, perFrame.second.allocation);
 		}
 		Screen.perFrame.clear();
 
@@ -166,4 +171,9 @@ void AppState::Destroy()
 	}
 
 	DestroyImageSources();
+
+	if (Allocator != VK_NULL_HANDLE)
+	{
+		vmaDestroyAllocator(Allocator);
+	}
 }

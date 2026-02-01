@@ -182,33 +182,62 @@ void Scene::Create(AppState& appState)
     ImageAsset floorImage;
     floorImage.Open("floor.png", appState.FileLoader);
     floorTexture.Create(appState, floorImage.width, floorImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
     ImageAsset controllerImage;
 	controllerImage.Open("controller.png", appState.FileLoader);
     controllerTexture.Create(appState, controllerImage.width, controllerImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
     ImageAsset patchImage;
 	patchImage.Open("patch.png", appState.FileLoader);
 	patchTexture.Create(appState, patchImage.width, patchImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-    VkDeviceSize stagingBufferSize = (floorImage.width * floorImage.height + controllerImage.width * controllerImage.height + patchImage.width * patchImage.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
-    Buffer stagingBuffer;
-    stagingBuffer.CreateStagingBuffer(appState, stagingBufferSize);
-    CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer.mapped));
-    memcpy(stagingBuffer.mapped, floorImage.image, floorImage.width * floorImage.height * sizeof(uint32_t));
+
+	VkBufferCreateInfo bufferInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+	bufferInfo.size = (floorImage.width * floorImage.height + controllerImage.width * controllerImage.height + patchImage.width * patchImage.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t);
+	bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+	VmaAllocationCreateInfo allocInfo { };
+	allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+	allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+
+	VkBuffer buffer;
+	VmaAllocation allocation;
+	vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
+
+	void* mapped;
+    CHECK_VKCMD(vmaMapMemory(appState.Allocator, allocation, &mapped));
+
+    memcpy(mapped, floorImage.image, floorImage.width * floorImage.height * sizeof(uint32_t));
     floorImage.Close();
+
     size_t offset = floorImage.width * floorImage.height;
-    memcpy((uint32_t*)stagingBuffer.mapped + offset, controllerImage.image, controllerImage.width * controllerImage.height * sizeof(uint32_t));
+
+    memcpy((uint32_t*)mapped + offset, controllerImage.image, controllerImage.width * controllerImage.height * sizeof(uint32_t));
+	controllerImage.Close();
+
 	offset += controllerImage.width * controllerImage.height;
-    memcpy((uint32_t*)stagingBuffer.mapped + offset, patchImage.image, patchImage.width * patchImage.height * sizeof(uint32_t));
+
+    memcpy((uint32_t*)mapped + offset, patchImage.image, patchImage.width * patchImage.height * sizeof(uint32_t));
+	patchImage.Close();
+
+	vmaUnmapMemory(appState.Allocator, allocation);
+	CHECK_VKCMD(vmaFlushAllocation(appState.Allocator, allocation, 0, VK_WHOLE_SIZE));
+
     offset = 0;
-    floorTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
+    floorTexture.Fill(appState, buffer, offset, setupCommandBuffer);
+
     offset += floorImage.width * floorImage.height * sizeof(uint32_t);
-    controllerTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
+
+    controllerTexture.Fill(appState, buffer, offset, setupCommandBuffer);
+
     offset += controllerImage.width * controllerImage.height * sizeof(uint32_t);
-    patchTexture.Fill(appState, &stagingBuffer, offset, setupCommandBuffer);
+
+    patchTexture.Fill(appState, buffer, offset, setupCommandBuffer);
+
     CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
     CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
     CHECK_VKCMD(vkQueueWaitIdle(appState.Queue));
     vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
-    stagingBuffer.Delete(appState);
+	vmaDestroyBuffer(appState.Allocator, buffer, allocation);
 
     appState.NoGameDataImageSource = new std::vector<uint32_t>(appState.ScreenWidth * appState.ScreenHeight, 255 << 24);
     ImageAsset noGameData;
@@ -265,20 +294,19 @@ void Scene::Create(AppState& appState)
     CHECK_VKCMD(vkAllocateCommandBuffers(appState.Device, &commandBufferAllocateInfo, &setupCommandBuffer));
     CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 
-	Buffer buffer;
-	buffer.CreateSourceBuffer(appState, swapchainCreateInfo.width * swapchainCreateInfo.height * 4);
+	bufferInfo.size = swapchainCreateInfo.width * swapchainCreateInfo.height * 4;
 
-    CHECK_VKCMD(vkMapMemory(appState.Device, buffer.memory, 0, VK_WHOLE_SIZE, 0, &buffer.mapped));
+	vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
 
-    ImageAsset leftArrows;
+	ImageAsset leftArrows;
     leftArrows.Open("leftarrows.png", appState.FileLoader);
-    memcpy(buffer.mapped, leftArrows.image, leftArrows.width * leftArrows.height * leftArrows.components);
+	CHECK_VKCMD(vmaCopyMemoryToAllocation(appState.Allocator, leftArrows.image, allocation, 0, leftArrows.width * leftArrows.height * leftArrows.components));
 
     appState.copyBarrier.image = swapchainImages[swapchainImageIndex].image;
     vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
 
     region.imageSubresource.baseArrayLayer = 0;
-    vkCmdCopyBufferToImage(setupCommandBuffer, buffer.buffer, swapchainImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    vkCmdCopyBufferToImage(setupCommandBuffer, buffer, swapchainImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
     appState.submitBarrier.image = swapchainImages[swapchainImageIndex].image;
     vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
@@ -309,13 +337,13 @@ void Scene::Create(AppState& appState)
 
     ImageAsset rightArrows;
     rightArrows.Open("rightarrows.png", appState.FileLoader);
-    memcpy(buffer.mapped, rightArrows.image, rightArrows.width * rightArrows.height * rightArrows.components);
+	CHECK_VKCMD(vmaCopyMemoryToAllocation(appState.Allocator, rightArrows.image, allocation, 0, rightArrows.width * rightArrows.height * rightArrows.components));
 
     appState.copyBarrier.image = swapchainImages[swapchainImageIndex].image;
     vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
 
     region.imageSubresource.baseArrayLayer = 0;
-    vkCmdCopyBufferToImage(setupCommandBuffer, buffer.buffer, swapchainImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    vkCmdCopyBufferToImage(setupCommandBuffer, buffer, swapchainImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
     appState.submitBarrier.image = swapchainImages[swapchainImageIndex].image;
     vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
@@ -329,7 +357,7 @@ void Scene::Create(AppState& appState)
 
     vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
 
-	buffer.Delete(appState);
+	vmaDestroyBuffer(appState.Allocator, buffer, allocation);
 
     VkShaderModule surfaceVertex;
     CreateShader(appState, "shaders/surface.vert.spv", &surfaceVertex);
