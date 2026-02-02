@@ -2664,7 +2664,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             loaded.indices.size = alias.count;
             if (latestIndexBuffer8 == nullptr || usedInLatestIndexBuffer8 + loaded.indices.size > latestIndexBuffer8->size)
             {
-                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+                loaded.indices.indices.buffer = new Buffer { };
                 loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer8BitSize);
                 indexBuffers.MoveToFront(loaded.indices.indices.buffer);
                 latestIndexBuffer8 = loaded.indices.indices.buffer;
@@ -2687,7 +2687,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             loaded.indices.size = alias.count * sizeof(uint16_t);
             if (latestIndexBuffer16 == nullptr || usedInLatestIndexBuffer16 + loaded.indices.size > latestIndexBuffer16->size)
             {
-                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+                loaded.indices.indices.buffer = new Buffer { };
                 loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer16BitSize);
                 indexBuffers.MoveToFront(loaded.indices.indices.buffer);
                 latestIndexBuffer16 = loaded.indices.indices.buffer;
@@ -2710,7 +2710,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             loaded.indices.size = alias.count * sizeof(uint32_t);
             if (latestIndexBuffer32 == nullptr || usedInLatestIndexBuffer32 + loaded.indices.size > latestIndexBuffer32->size)
             {
-                loaded.indices.indices.buffer = new SharedMemoryBuffer { };
+                loaded.indices.indices.buffer = new Buffer { };
                 loaded.indices.indices.buffer->CreateIndexBuffer(appState, Constants::indexBuffer32BitSize);
                 indexBuffers.MoveToFront(loaded.indices.indices.buffer);
                 latestIndexBuffer32 = loaded.indices.indices.buffer;

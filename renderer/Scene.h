@@ -138,11 +138,11 @@ struct Scene
 	Texture patchTexture;
 	VkSampler sampler;
 	std::vector<std::list<UsedInSharedMemory>> latestMemory;
-	SharedMemoryBuffer* latestIndexBuffer8;
+	Buffer* latestIndexBuffer8;
 	VkDeviceSize usedInLatestIndexBuffer8;
-	SharedMemoryBuffer* latestIndexBuffer16;
+	Buffer* latestIndexBuffer16;
 	VkDeviceSize usedInLatestIndexBuffer16;
-	SharedMemoryBuffer* latestIndexBuffer32;
+	Buffer* latestIndexBuffer32;
 	VkDeviceSize usedInLatestIndexBuffer32;
 	DescriptorSets* latestTextureDescriptorSets;
 	Skybox* previousSkyboxes;

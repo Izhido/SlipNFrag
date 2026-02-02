@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CachedBuffers.h"
-#include "CachedSharedMemoryBuffers.h"
 #include "CachedTextures.h"
 #include "DescriptorResources.h"
 #include "DescriptorResourcesLists.h"
@@ -25,10 +24,10 @@ struct PerFrame
 	CachedBuffers cachedSortedVertices;
 	CachedBuffers cachedAttributes;
     CachedBuffers cachedSortedAttributes;
-	CachedSharedMemoryBuffers cachedIndices8;
-	CachedSharedMemoryBuffers cachedIndices16;
+	CachedBuffers cachedIndices8;
+	CachedBuffers cachedIndices16;
 	CachedBuffers cachedSortedIndices16;
-	CachedSharedMemoryBuffers cachedIndices32;
+	CachedBuffers cachedIndices32;
 	CachedBuffers cachedSortedIndices32;
 	CachedBuffers cachedColors;
 	CachedBuffers stagingBuffers;
@@ -39,10 +38,10 @@ struct PerFrame
 	Buffer* sortedVertices;
 	Buffer* attributes;
 	Buffer* sortedAttributes;
-	SharedMemoryBuffer* indices8;
-	SharedMemoryBuffer* indices16;
+	Buffer* indices8;
+	Buffer* indices16;
 	Buffer* sortedIndices16;
-	SharedMemoryBuffer* indices32;
+	Buffer* indices32;
 	Buffer* sortedIndices32;
 	Buffer* colors;
 	Texture* sky;
@@ -89,7 +88,7 @@ struct PerFrame
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void LoadNonStagedResources(AppState& appState);
 	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
-	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const;
+	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
 	static void SetPushConstants(const LoadedAliasColoredLights& alias, float pushConstants[]);

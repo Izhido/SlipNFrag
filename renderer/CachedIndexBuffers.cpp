@@ -55,7 +55,7 @@ void CachedIndexBuffers::SetupAliasIndices32(LoadedIndexBuffer& loaded)
 
 void CachedIndexBuffers::DisposeFront()
 {
-	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
+	for (Buffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->next = oldBuffers;
@@ -64,7 +64,7 @@ void CachedIndexBuffers::DisposeFront()
 	buffers = nullptr;
 }
 
-void CachedIndexBuffers::MoveToFront(SharedMemoryBuffer* buffer)
+void CachedIndexBuffers::MoveToFront(Buffer* buffer)
 {
 	buffer->unusedCount = 0;
 	buffer->next = buffers;
@@ -73,14 +73,14 @@ void CachedIndexBuffers::MoveToFront(SharedMemoryBuffer* buffer)
 
 void CachedIndexBuffers::Delete(AppState& appState)
 {
-	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
+	for (Buffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);
 		delete b;
 	}
 	buffers = nullptr;
-	for (SharedMemoryBuffer* b = oldBuffers, *next; b != nullptr; b = next)
+	for (Buffer* b = oldBuffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);

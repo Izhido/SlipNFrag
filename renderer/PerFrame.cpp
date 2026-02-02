@@ -1177,7 +1177,7 @@ void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 	colormapCount++;
 }
 
-void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, SharedMemoryBuffer*& previousBuffer) const
+void PerFrame::FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const
 {
 	auto loaded = first;
 	auto delayed = false;
@@ -1231,7 +1231,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 
 	VkBufferCopy bufferCopy { };
 
-	SharedMemoryBuffer* previousBuffer = nullptr;
+	Buffer* previousBuffer = nullptr;
 	FillAliasFromStagingBuffer(appState, stagingBuffer, appState.Scene.indexBuffers.firstAliasIndices8, bufferCopy, previousBuffer);
 
 	while (bufferCopy.srcOffset % 2 != 0)
@@ -2275,7 +2275,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.alias.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.alias.sorted.textures[t];
@@ -2356,7 +2356,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousVertices = nullptr;
 			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasColoredLights.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.aliasColoredLights.sorted.textures[t];
@@ -3182,7 +3182,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasAlpha.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.aliasAlpha.sorted.textures[t];
@@ -3263,7 +3263,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasHoley.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.aliasHoley.sorted.textures[t];
@@ -3344,7 +3344,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasHoleyAlpha.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.aliasHoleyAlpha.sorted.textures[t];
@@ -3425,7 +3425,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousVertices = nullptr;
 			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasAlphaColoredLights.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.aliasAlphaColoredLights.sorted.textures[t];
@@ -3483,7 +3483,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousVertices = nullptr;
 			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasHoleyColoredLights.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.aliasHoleyColoredLights.sorted.textures[t];
@@ -3541,7 +3541,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousVertices = nullptr;
 			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasHoleyAlphaColoredLights.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.aliasHoleyAlphaColoredLights.sorted.textures[t];
@@ -3599,7 +3599,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.viewmodels.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.viewmodels.sorted.textures[t];
@@ -3680,7 +3680,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.viewmodelsHoley.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.viewmodelsHoley.sorted.textures[t];
@@ -3761,7 +3761,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousVertices = nullptr;
 			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.viewmodelsColoredLights.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.viewmodelsColoredLights.sorted.textures[t];
@@ -3819,7 +3819,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			Buffer* previousVertices = nullptr;
 			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
-			SharedMemoryBuffer* previousIndices = nullptr;
+			Buffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.viewmodelsHoleyColoredLights.sorted.count; t++)
 			{
 				auto& texture = appState.Scene.viewmodelsHoleyColoredLights.sorted.textures[t];

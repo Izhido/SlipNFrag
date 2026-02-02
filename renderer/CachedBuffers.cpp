@@ -65,6 +65,18 @@ Buffer* CachedBuffers::GetMappableVertexBuffer(AppState& appState, VkDeviceSize 
 	return buffer;
 }
 
+Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer { };
+		buffer->CreateIndexBuffer(appState, MinimumAllocationFor(size));
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
 Buffer* CachedBuffers::GetMappableIndexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(size);

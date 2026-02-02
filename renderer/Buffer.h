@@ -18,6 +18,7 @@ struct Buffer
 	void CreateStagingBuffer(AppState& appState, VkDeviceSize size);
 	void CreateVertexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateMappableVertexBuffer(AppState& appState, VkDeviceSize size);
+	void CreateIndexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateMappableIndexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateMappableUniformBuffer(AppState& appState, VkDeviceSize size);
 	void CreateMappableStorageBuffer(AppState& appState, VkDeviceSize size);
