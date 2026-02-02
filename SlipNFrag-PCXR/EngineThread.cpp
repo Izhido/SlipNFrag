@@ -18,6 +18,7 @@ void runEngine(AppState_pcxr* appState)
 		}
 		{
 			std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
 			for (auto i = 0; i <= AppInput::lastInputQueueItem; i++)
 			{
 				auto& input = AppInput::inputQueue[i];

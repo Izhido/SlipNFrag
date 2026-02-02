@@ -11,6 +11,8 @@ int AppInput::lastInputQueueItem = -1;
 
 void AppInput::AddKeyInput(int key, int down)
 {
+	std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
 	lastInputQueueItem++;
 	if (lastInputQueueItem >= inputQueue.size())
 	{
@@ -24,6 +26,8 @@ void AppInput::AddKeyInput(int key, int down)
 
 void AppInput::AddCommandInput(const char* command)
 {
+	std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
 	lastInputQueueItem++;
 	if (lastInputQueueItem >= inputQueue.size())
 	{
@@ -37,8 +41,6 @@ void AppInput::AddCommandInput(const char* command)
 
 void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 {
-	std::lock_guard<std::mutex> lock(Locks::InputMutex);
-	
 	XrActionStateGetInfo actionGetInfo { XR_TYPE_ACTION_STATE_GET_INFO };
 	XrActionStateBoolean booleanActionState { XR_TYPE_ACTION_STATE_BOOLEAN };
 	XrActionStateFloat floatActionState { XR_TYPE_ACTION_STATE_FLOAT };

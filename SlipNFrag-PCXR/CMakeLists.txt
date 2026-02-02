@@ -10,6 +10,7 @@ set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(SHADERS_DIR "${ROOT_DIR}/shaders")
 set(STB_DIR "${ROOT_DIR}/stb")
 set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.54")
+set(VMA_DIR "${ROOT_DIR}/VulkanMemoryAllocator-3.3.0")
 
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
@@ -79,6 +80,7 @@ target_include_directories(slipnfrag_pcxr PRIVATE
         ${ID1_DIR}
         ${RENDERER_DIR}
         ${STB_DIR}
+        ${VMA_DIR}/include
 )
 
 target_link_libraries(slipnfrag_pcxr PRIVATE 

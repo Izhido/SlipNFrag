@@ -556,6 +556,10 @@ int main(int argc, char* argv[])
 		}
 #endif
 
+		auto dedicatedAllocation = false;
+		auto bindMemory2 = false;
+		auto maintenance4 = false;
+		auto bufferDeviceAddress = false;
 		auto createRenderPass2 = false;
 		auto depthStencilResolve = false;
 		uint32_t vulkanSwapchainSampleCount;
@@ -680,27 +684,47 @@ int main(int argc, char* argv[])
 			{
 				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
 
-				if (strcmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME) == 0)
+				if (strncmp(availableExtensions[i].extensionName, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					dedicatedAllocation = true;
+					enabledExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_BIND_MEMORY_2_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					bindMemory2 = true;
+					enabledExtensions.push_back(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_MAINTENANCE_4_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					maintenance4 = true;
+					enabledExtensions.push_back(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					bufferDeviceAddress = true;
+					enabledExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					appState.IndexTypeUInt8Enabled = true;
 					enabledExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					shaderDemoteToHelperInvocation = true;
 					enabledExtensions.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					shaderTerminateInvocation = true;
 					enabledExtensions.push_back(VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					createRenderPass2 = true;
 					enabledExtensions.push_back(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 				}
-				else if (strcmp(availableExtensions[i].extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME) == 0)
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					depthStencilResolve = true;
 					enabledExtensions.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
@@ -752,6 +776,14 @@ int main(int argc, char* argv[])
 			{
 				shaderTerminateInvocationFeatures.shaderTerminateInvocation = VK_TRUE;
 				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&shaderTerminateInvocationFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES };
+			if (bufferDeviceAddress)
+			{
+				bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&bufferDeviceAddressFeatures;
 				chain = (void*)((VkBaseInStructure*)chain)->pNext;
 			}
 
@@ -1524,6 +1556,23 @@ int main(int argc, char* argv[])
 		appState.vkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(vulkanInstance, "vkCmdEndDebugUtilsLabelEXT");
 #endif
 
+		VmaVulkanFunctions vulkanFunctions { };
+		vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+		vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+		VmaAllocatorCreateInfo allocatorCreateInfo { };
+		if (dedicatedAllocation) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
+		if (bindMemory2) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_BIND_MEMORY2_BIT;
+		if (maintenance4) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT;
+		if (bufferDeviceAddress) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+		allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_1;
+		allocatorCreateInfo.physicalDevice = vulkanPhysicalDevice;
+		allocatorCreateInfo.device = appState.Device;
+		allocatorCreateInfo.instance = vulkanInstance;
+		allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+
+		CHECK_VKCMD(vmaCreateAllocator(&allocatorCreateInfo, &appState.Allocator));
+
 		if (audioDeviceGuidEnabled)
 		{
 			PFN_xrGetAudioOutputDeviceGuidOculus xrGetAudioOutputDeviceGuidOculus = nullptr;
@@ -2062,8 +2111,7 @@ int main(int argc, char* argv[])
 					if (perFrame.matrices == nullptr)
 					{
 						perFrame.matrices = new Buffer();
-						perFrame.matrices->CreateHostVisibleUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
-						CHECK_VKCMD(vkMapMemory(appState.Device, perFrame.matrices->memory, 0, VK_WHOLE_SIZE, 0, &perFrame.matrices->mapped));
+						perFrame.matrices->CreateMappableUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
 					}
 
 					for (auto i = 0; i < viewCountOutput; i++)
@@ -2149,18 +2197,9 @@ int main(int argc, char* argv[])
 
 						stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
 						stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
-						if (stagingBuffer->mapped == nullptr)
-						{
-							CHECK_VKCMD(vkMapMemory(appState.Device, stagingBuffer->memory, 0, VK_WHOLE_SIZE, 0, &stagingBuffer->mapped));
-						}
+						stagingBuffer->Map(appState);
 						perFrame.LoadStagingBuffer(appState, stagingBuffer);
-						if ((stagingBuffer->properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-						{
-							VkMappedMemoryRange range { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE };
-							range.memory = stagingBuffer->memory;
-							range.size = VK_WHOLE_SIZE;
-							CHECK_VKCMD(vkFlushMappedMemoryRanges(appState.Device, 1, &range));
-						}
+						stagingBuffer->UnmapAndFlush(appState);
 
 						perFrame.LoadNonStagedResources(appState);
 					}
@@ -2315,7 +2354,6 @@ int main(int argc, char* argv[])
 					if (screenPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 					{
 						screenPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
-						CHECK_VKCMD(vkMapMemory(appState.Device, screenPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &screenPerFrame.stagingBuffer.mapped));
 					}
 
 					appState.RenderScreen(screenPerFrame);
@@ -2509,7 +2547,6 @@ int main(int argc, char* argv[])
 						if (keyboardPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
 						{
 							keyboardPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
-							CHECK_VKCMD(vkMapMemory(appState.Device, keyboardPerFrame.stagingBuffer.memory, 0, VK_WHOLE_SIZE, 0, &keyboardPerFrame.stagingBuffer.mapped));
 						}
 
 						auto& keyboardTexture = appState.KeyboardTextures[swapchainImageIndex];
@@ -2871,12 +2908,12 @@ int main(int argc, char* argv[])
 								appState.Scene.skybox->images.resize(skyboxImageCount, { XR_TYPE_SWAPCHAIN_IMAGE_VULKAN2_KHR });
 								CHECK_XRCMD(xrEnumerateSwapchainImages(appState.Scene.skybox->swapchain, skyboxImageCount, &skyboxImageCount, (XrSwapchainImageBaseHeader*)appState.Scene.skybox->images.data()));
 
-								Buffer buffer;
-								buffer.CreateSourceBuffer(appState, 6 * width * height * 4);
+								Buffer stagingBuffer;
+								stagingBuffer.CreateStagingBuffer(appState, 6 * width * height * sizeof(uint32_t));
 
-								CHECK_VKCMD(vkMapMemory(appState.Device, buffer.memory, 0, VK_WHOLE_SIZE, 0, &buffer.mapped));
+								stagingBuffer.Map(appState);
 
-								auto target = (uint32_t*)buffer.mapped;
+								auto target = (uint32_t*)stagingBuffer.mapped;
 
 								for (size_t i = 0; i < 6; i++)
 								{
@@ -2927,6 +2964,8 @@ int main(int argc, char* argv[])
 									}
 								}
 
+								stagingBuffer.UnmapAndFlush(appState);
+
 								VkBufferImageCopy region { };
 								region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 								region.imageSubresource.layerCount = 1;
@@ -2952,7 +2991,7 @@ int main(int argc, char* argv[])
 									appState.copyBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
 									region.imageSubresource.baseArrayLayer = i;
-									vkCmdCopyBufferToImage(setupCommandBuffer, buffer.buffer, appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+									vkCmdCopyBufferToImage(setupCommandBuffer, stagingBuffer.buffer, appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 									region.bufferOffset += width * height * 4;
 									appState.submitBarrier.subresourceRange.baseArrayLayer = i;
 									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
@@ -2974,7 +3013,7 @@ int main(int argc, char* argv[])
 
 								vkFreeCommandBuffers(appState.Device, appState.SetupCommandPool, 1, &setupCommandBuffer);
 
-								buffer.Delete(appState);
+								stagingBuffer.Delete(appState);
 							}
 						}
 						if (appState.Scene.skybox != VK_NULL_HANDLE)
