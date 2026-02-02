@@ -2577,14 +2577,14 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
         {
             auto vertexSize = 3 * sizeof(byte);
             loaded.vertices.size = alias.vertex_count * 2 * vertexSize;
-            loaded.vertices.buffer = new SharedMemoryBuffer { };
+            loaded.vertices.buffer = new Buffer { };
             loaded.vertices.buffer->CreateVertexBuffer(appState, loaded.vertices.size);
 			aliasBuffers.MoveToFront(loaded.vertices.buffer);
             size += loaded.vertices.size;
             loaded.vertices.source = alias.apverts;
 			aliasBuffers.SetupAliasVertices(loaded.vertices);
             loaded.texCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
-            loaded.texCoords.buffer = new SharedMemoryBuffer { };
+            loaded.texCoords.buffer = new Buffer { };
             loaded.texCoords.buffer->CreateVertexBuffer(appState, loaded.texCoords.size);
 			aliasBuffers.MoveToFront(loaded.texCoords.buffer);
             size += loaded.texCoords.size;

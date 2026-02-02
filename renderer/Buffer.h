@@ -7,18 +7,20 @@ struct AppState;
 
 struct Buffer
 {
+	Buffer* next;
 	int unusedCount;
 	VkDeviceSize size;
 	VkBuffer buffer;
 	VmaAllocation allocation;
 	void* mapped;
 
-	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage);
+	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, bool mappable);
 	void CreateStagingBuffer(AppState& appState, VkDeviceSize size);
-	void CreateHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size);
-	void CreateHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size);
-	void CreateHostVisibleIndexBuffer(AppState& appState, VkDeviceSize size);
-	void CreateHostVisibleUniformBuffer(AppState& appState, VkDeviceSize size);
+	void CreateVertexBuffer(AppState& appState, VkDeviceSize size);
+	void CreateMappableVertexBuffer(AppState& appState, VkDeviceSize size);
+	void CreateMappableIndexBuffer(AppState& appState, VkDeviceSize size);
+	void CreateMappableUniformBuffer(AppState& appState, VkDeviceSize size);
+	void CreateMappableStorageBuffer(AppState& appState, VkDeviceSize size);
 	void Map(AppState& appState);
 	void UnmapAndFlush(AppState& appState) const;
 	void Delete(AppState& appState) const;

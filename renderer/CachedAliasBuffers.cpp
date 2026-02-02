@@ -39,7 +39,7 @@ void CachedAliasBuffers::SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer &
 
 void CachedAliasBuffers::DisposeFront()
 {
-	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
+	for (Buffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->next = oldBuffers;
@@ -48,7 +48,7 @@ void CachedAliasBuffers::DisposeFront()
 	buffers = nullptr;
 }
 
-void CachedAliasBuffers::MoveToFront(SharedMemoryBuffer* buffer)
+void CachedAliasBuffers::MoveToFront(Buffer* buffer)
 {
 	buffer->unusedCount = 0;
 	buffer->next = buffers;
@@ -57,14 +57,14 @@ void CachedAliasBuffers::MoveToFront(SharedMemoryBuffer* buffer)
 
 void CachedAliasBuffers::Delete(AppState& appState)
 {
-	for (SharedMemoryBuffer* b = buffers, *next; b != nullptr; b = next)
+	for (Buffer* b = buffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);
 		delete b;
 	}
 	buffers = nullptr;
-	for (SharedMemoryBuffer* b = oldBuffers, *next; b != nullptr; b = next)
+	for (Buffer* b = oldBuffers, *next; b != nullptr; b = next)
 	{
 		next = b->next;
 		b->Delete(appState);

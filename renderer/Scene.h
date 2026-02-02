@@ -194,8 +194,8 @@ struct Scene
 	StagingBuffer stagingBuffer;
 	void* previousTexture;
 	void* previousApverts;
-	SharedMemoryBuffer* previousVertexBuffer;
-	SharedMemoryBuffer* previousTexCoordsBuffer;
+	Buffer* previousVertexBuffer;
+	Buffer* previousTexCoordsBuffer;
 	SharedMemoryTexture* previousSharedMemoryTexture;
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	unsigned int paletteData[256];

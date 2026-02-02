@@ -5,8 +5,8 @@
 
 struct CachedAliasBuffers
 {
-	SharedMemoryBuffer* buffers;
-	SharedMemoryBuffer* oldBuffers;
+	Buffer* buffers;
+	Buffer* oldBuffers;
 	LoadedSharedMemoryBuffer* firstAliasVertices;
 	LoadedSharedMemoryBuffer* currentAliasVertices;
 	LoadedSharedMemoryTexCoordsBuffer* firstAliasTexCoords;
@@ -16,7 +16,7 @@ struct CachedAliasBuffers
 	void SetupAliasVertices(LoadedSharedMemoryBuffer& loaded);
 	void SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer& loaded);
 	void DisposeFront();
-	void MoveToFront(SharedMemoryBuffer* buffer);
+	void MoveToFront(Buffer* buffer);
 	void Delete(AppState& appState);
 	void DeleteOld(AppState& appState);
 };

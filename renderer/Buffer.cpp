@@ -3,7 +3,7 @@
 #include "MemoryAllocateInfo.h"
 #include "Utils.h"
 
-void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage)
+void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, bool mappable)
 {
 	this->size = size;
 
@@ -13,34 +13,39 @@ void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags us
 
 	VmaAllocationCreateInfo allocInfo { };
 	allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-	allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+	if (mappable) allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
 
 	CHECK_VKCMD(vmaCreateBuffer(appState.Allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr));
 }
 
 void Buffer::CreateStagingBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
 }
 
-void Buffer::CreateHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size)
+void Buffer::CreateVertexBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false);
 }
 
-void Buffer::CreateHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size)
+void Buffer::CreateMappableVertexBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, true);
 }
 
-void Buffer::CreateHostVisibleIndexBuffer(AppState& appState, VkDeviceSize size)
+void Buffer::CreateMappableIndexBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, true);
 }
 
-void Buffer::CreateHostVisibleUniformBuffer(AppState& appState, VkDeviceSize size)
+void Buffer::CreateMappableUniformBuffer(AppState& appState, VkDeviceSize size)
 {
-	Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+}
+
+void Buffer::CreateMappableStorageBuffer(AppState& appState, VkDeviceSize size)
+{
+	Create(appState, size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
 }
 
 void Buffer::Map(AppState& appState)

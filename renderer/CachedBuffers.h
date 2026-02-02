@@ -11,9 +11,10 @@ struct CachedBuffers
 	Buffer* Get(VkDeviceSize size);
 	static VkDeviceSize MinimumAllocationFor(VkDeviceSize size);
 	Buffer* GetStagingBuffer(AppState& appState, VkDeviceSize size);
-	Buffer* GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size);
-	Buffer* GetHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size);
-	Buffer* GetHostVisibleIndexBuffer(AppState& appState, VkDeviceSize size);
+	Buffer* GetVertexBuffer(AppState& appState, VkDeviceSize size);
+	Buffer* GetMappableVertexBuffer(AppState& appState, VkDeviceSize size);
+	Buffer* GetMappableIndexBuffer(AppState& appState, VkDeviceSize size);
+	Buffer* GetMappableStorageBuffer(AppState& appState, VkDeviceSize size);
 	void Reset(AppState& appState);
 	void MoveToFront(Buffer* buffer);
 	void Delete(AppState& appState);

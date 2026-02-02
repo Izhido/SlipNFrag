@@ -967,7 +967,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
-		sortedVertices = cachedSortedVertices.GetHostVisibleVertexBuffer(appState, appState.Scene.sortedVerticesSize);
+		sortedVertices = cachedSortedVertices.GetMappableVertexBuffer(appState, appState.Scene.sortedVerticesSize);
 		sortedVertices->Map(appState);
 		uint32_t attributeIndex = 0;
 		VkDeviceSize offset = 0;
@@ -1018,7 +1018,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
-		sortedAttributes = cachedSortedAttributes.GetHostVisibleStorageBuffer(appState, appState.Scene.sortedAttributesSize);
+		sortedAttributes = cachedSortedAttributes.GetMappableStorageBuffer(appState, appState.Scene.sortedAttributesSize);
 		sortedAttributes->Map(appState);
 		VkDeviceSize offset = 0;
 		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedAttributes, offset);
@@ -1064,7 +1064,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 	{
 		if (appState.Scene.sortedIndices16Size > 0)
 		{
-			sortedIndices16 = cachedSortedIndices16.GetHostVisibleIndexBuffer(appState, appState.Scene.sortedIndices16Size);
+			sortedIndices16 = cachedSortedIndices16.GetMappableIndexBuffer(appState, appState.Scene.sortedIndices16Size);
 			sortedIndices16->Map(appState);
 			VkDeviceSize offset = 0;
 			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedIndices16, offset);
@@ -1108,7 +1108,7 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		}
 		else
 		{
-			sortedIndices32 = cachedSortedIndices32.GetHostVisibleIndexBuffer(appState, appState.Scene.sortedIndices32Size);
+			sortedIndices32 = cachedSortedIndices32.GetMappableIndexBuffer(appState, appState.Scene.sortedIndices32Size);
 			sortedIndices32->Map(appState);
 			VkDeviceSize offset = 0;
 			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedIndices32, offset);
@@ -2271,8 +2271,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -2353,8 +2353,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
 			SetTintPushConstants(pushConstants, 16);
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasColoredLights.sorted.count; t++)
@@ -3178,8 +3178,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -3259,8 +3259,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -3340,8 +3340,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -3422,8 +3422,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
 			SetTintPushConstants(pushConstants, 16);
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasAlphaColoredLights.sorted.count; t++)
@@ -3480,8 +3480,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
 			SetTintPushConstants(pushConstants, 16);
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasHoleyColoredLights.sorted.count; t++)
@@ -3538,8 +3538,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
 			SetTintPushConstants(pushConstants, 16);
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.aliasHoleyAlphaColoredLights.sorted.count; t++)
@@ -3595,8 +3595,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -3676,8 +3676,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[7] = 0;
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
@@ -3758,8 +3758,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
 			SetTintPushConstants(pushConstants, 16);
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.viewmodelsColoredLights.sorted.count; t++)
@@ -3816,8 +3816,8 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			pushConstants[11] = 0;
 			pushConstants[15] = 1;
 			SetTintPushConstants(pushConstants, 16);
-			SharedMemoryBuffer* previousVertices = nullptr;
-			SharedMemoryBuffer* previousTexCoords = nullptr;
+			Buffer* previousVertices = nullptr;
+			Buffer* previousTexCoords = nullptr;
 			SharedMemoryTexture* previousTexture = nullptr;
 			SharedMemoryBuffer* previousIndices = nullptr;
 			for (auto t = 0; t < appState.Scene.viewmodelsHoleyColoredLights.sorted.count; t++)

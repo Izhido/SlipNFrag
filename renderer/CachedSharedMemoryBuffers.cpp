@@ -29,18 +29,6 @@ VkDeviceSize CachedSharedMemoryBuffers::MinimumAllocationFor(VkDeviceSize size)
 	return result;
 }
 
-SharedMemoryBuffer* CachedSharedMemoryBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
-{
-	auto buffer = Get(size);
-	if (buffer == nullptr)
-	{
-		buffer = new SharedMemoryBuffer { };
-		buffer->CreateVertexBuffer(appState, MinimumAllocationFor(size));
-	}
-	MoveToFront(buffer);
-	return buffer;
-}
-
 SharedMemoryBuffer* CachedSharedMemoryBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(size);
@@ -48,18 +36,6 @@ SharedMemoryBuffer* CachedSharedMemoryBuffers::GetIndexBuffer(AppState& appState
 	{
 		buffer = new SharedMemoryBuffer { };
 		buffer->CreateIndexBuffer(appState, MinimumAllocationFor(size));
-	}
-	MoveToFront(buffer);
-	return buffer;
-}
-
-SharedMemoryBuffer* CachedSharedMemoryBuffers::GetStorageBuffer(AppState& appState, VkDeviceSize size)
-{
-	auto buffer = Get(size);
-	if (buffer == nullptr)
-	{
-		buffer = new SharedMemoryBuffer { };
-		buffer->CreateStorageBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
 	return buffer;

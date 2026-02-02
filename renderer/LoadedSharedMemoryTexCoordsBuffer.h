@@ -4,7 +4,7 @@
 
 struct LoadedSharedMemoryTexCoordsBuffer
 {
-	SharedMemoryBuffer* buffer;
+	Buffer* buffer;
 	int width;
 	int height;
 	VkDeviceSize size;

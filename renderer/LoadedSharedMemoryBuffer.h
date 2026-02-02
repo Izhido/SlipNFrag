@@ -1,10 +1,10 @@
 #pragma once
 
-#include "SharedMemoryBuffer.h"
+#include "Buffer.h"
 
 struct LoadedSharedMemoryBuffer
 {
-	SharedMemoryBuffer* buffer;
+	Buffer* buffer;
 	VkDeviceSize size;
 	void* source;
 	LoadedSharedMemoryBuffer* next;

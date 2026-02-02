@@ -41,37 +41,49 @@ Buffer* CachedBuffers::GetStagingBuffer(AppState& appState, VkDeviceSize size)
 	return buffer;
 }
 
-Buffer* CachedBuffers::GetHostVisibleVertexBuffer(AppState& appState, VkDeviceSize size)
+Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer { };
-		buffer->CreateHostVisibleVertexBuffer(appState, MinimumAllocationFor(size));
+		buffer->CreateVertexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
 	return buffer;
 }
 
-Buffer* CachedBuffers::GetHostVisibleStorageBuffer(AppState& appState, VkDeviceSize size)
+Buffer* CachedBuffers::GetMappableVertexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer { };
-		buffer->CreateHostVisibleStorageBuffer(appState, size);
+		buffer->CreateMappableVertexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
 	return buffer;
 }
 
-Buffer* CachedBuffers::GetHostVisibleIndexBuffer(AppState& appState, VkDeviceSize size)
+Buffer* CachedBuffers::GetMappableIndexBuffer(AppState& appState, VkDeviceSize size)
 {
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
 		buffer = new Buffer { };
-		buffer->CreateHostVisibleIndexBuffer(appState, MinimumAllocationFor(size));
+		buffer->CreateMappableIndexBuffer(appState, MinimumAllocationFor(size));
+	}
+	MoveToFront(buffer);
+	return buffer;
+}
+
+Buffer* CachedBuffers::GetMappableStorageBuffer(AppState& appState, VkDeviceSize size)
+{
+	auto buffer = Get(size);
+	if (buffer == nullptr)
+	{
+		buffer = new Buffer { };
+		buffer->CreateMappableStorageBuffer(appState, size);
 	}
 	MoveToFront(buffer);
 	return buffer;

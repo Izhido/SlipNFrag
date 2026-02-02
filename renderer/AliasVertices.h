@@ -2,6 +2,6 @@
 
 struct AliasVertices
 {
-	SharedMemoryBuffer* vertices;
-	SharedMemoryBuffer* texCoords;
+	Buffer* vertices;
+	Buffer* texCoords;
 };

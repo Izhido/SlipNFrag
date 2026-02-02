@@ -2171,7 +2171,7 @@ void android_main(struct android_app* app)
 					if (perFrame.matrices == nullptr)
 					{
 						perFrame.matrices = new Buffer();
-						perFrame.matrices->CreateHostVisibleUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
+						perFrame.matrices->CreateMappableUniformBuffer(appState, (2 * 2 + 1) * sizeof(XrMatrix4x4f));
 					}
 
 					for (auto i = 0; i < viewCountOutput; i++)
