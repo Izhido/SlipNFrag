@@ -1,20 +1,20 @@
 #pragma once
 
-#include "LoadedSharedMemoryBuffer.h"
-#include "LoadedSharedMemoryTexCoordsBuffer.h"
+#include "LoadedBuffer.h"
+#include "LoadedTexCoordsBuffer.h"
 
 struct CachedAliasBuffers
 {
 	Buffer* buffers;
 	Buffer* oldBuffers;
-	LoadedSharedMemoryBuffer* firstAliasVertices;
-	LoadedSharedMemoryBuffer* currentAliasVertices;
-	LoadedSharedMemoryTexCoordsBuffer* firstAliasTexCoords;
-	LoadedSharedMemoryTexCoordsBuffer* currentAliasTexCoords;
+	LoadedBuffer* firstAliasVertices;
+	LoadedBuffer* currentAliasVertices;
+	LoadedTexCoordsBuffer* firstAliasTexCoords;
+	LoadedTexCoordsBuffer* currentAliasTexCoords;
 
 	void Initialize();
-	void SetupAliasVertices(LoadedSharedMemoryBuffer& loaded);
-	void SetupAliasTexCoords(LoadedSharedMemoryTexCoordsBuffer& loaded);
+	void SetupAliasVertices(LoadedBuffer& loaded);
+	void SetupAliasTexCoords(LoadedTexCoordsBuffer& loaded);
 	void DisposeFront();
 	void MoveToFront(Buffer* buffer);
 	void Delete(AppState& appState);

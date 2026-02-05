@@ -21,6 +21,7 @@ struct Buffer
 	void CreateIndexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateMappableIndexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateMappableUniformBuffer(AppState& appState, VkDeviceSize size);
+	void CreateStorageBuffer(AppState& appState, VkDeviceSize size);
 	void CreateMappableStorageBuffer(AppState& appState, VkDeviceSize size);
 	void Map(AppState& appState);
 	void UnmapAndFlush(AppState& appState) const;

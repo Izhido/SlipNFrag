@@ -2,10 +2,12 @@
 
 #include "Buffer.h"
 
-struct LoadedSharedMemoryBuffer
+struct LoadedTexCoordsBuffer
 {
 	Buffer* buffer;
+	int width;
+	int height;
 	VkDeviceSize size;
 	void* source;
-	LoadedSharedMemoryBuffer* next;
+	LoadedTexCoordsBuffer* next;
 };

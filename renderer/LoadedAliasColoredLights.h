@@ -1,13 +1,13 @@
 #pragma once
 
-#include "LoadedSharedMemoryBuffer.h"
-#include "LoadedSharedMemoryTexCoordsBuffer.h"
+#include "LoadedBuffer.h"
+#include "LoadedTexCoordsBuffer.h"
 #include "LoadedIndexBuffer.h"
 
 struct LoadedAliasColoredLights
 {
-	LoadedSharedMemoryBuffer vertices;
-	LoadedSharedMemoryTexCoordsBuffer texCoords;
+	LoadedBuffer vertices;
+	LoadedTexCoordsBuffer texCoords;
 	LoadedIndexBuffer indices;
 	LoadedSharedMemoryTexture texture;
 	int firstAttribute;

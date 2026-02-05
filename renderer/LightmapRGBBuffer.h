@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vector>
-#include <SharedMemoryBuffer.h>
+#include <Buffer.h>
 
 struct LightmapRGBBuffer
 {
-	SharedMemoryBuffer buffer;
+	Buffer buffer;
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet descriptorSet;
 	VkDeviceSize used;
