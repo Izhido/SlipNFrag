@@ -1,9 +1,8 @@
 #include "Texture.h"
 #include "AppState.h"
 #include "Utils.h"
-#include "MemoryAllocateInfo.h"
 
-void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage)
+void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, VkImageUsageFlags usage, bool withImageView)
 {
 	this->width = width;
 	this->height = height;
@@ -16,30 +15,28 @@ void Texture::Create(AppState& appState, uint32_t width, uint32_t height, VkForm
 	imageCreateInfo.extent.width = this->width;
 	imageCreateInfo.extent.height = this->height;
 	imageCreateInfo.extent.depth = 1;
+	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.mipLevels = this->mipCount;
 	imageCreateInfo.arrayLayers = this->layerCount;
-	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.usage = usage;
-	CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &image));
 
-	VkMemoryRequirements memoryRequirements;
-	vkGetImageMemoryRequirements(appState.Device, image, &memoryRequirements);
+	VmaAllocationCreateInfo allocInfo { };
+	allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
 
-	VkMemoryAllocateInfo memoryAllocateInfo { };
-	properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-	updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
+	CHECK_VKCMD(vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &image, &allocation, nullptr));
 
-	CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &memory));
-	CHECK_VKCMD(vkBindImageMemory(appState.Device, image, memory, 0));
+	if (withImageView)
+	{
+		VkImageViewCreateInfo imageViewCreateInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+		imageViewCreateInfo.image = image;
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.format = imageCreateInfo.format;
+		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageViewCreateInfo.subresourceRange.levelCount = mipCount;
+		imageViewCreateInfo.subresourceRange.layerCount = layerCount;
 
-	VkImageViewCreateInfo imageViewCreateInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-	imageViewCreateInfo.image = image;
-	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	imageViewCreateInfo.format = imageCreateInfo.format;
-	imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageViewCreateInfo.subresourceRange.levelCount = mipCount;
-	imageViewCreateInfo.subresourceRange.layerCount = layerCount;
-	CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &view));
+		CHECK_VKCMD(vkCreateImageView(appState.Device, &imageViewCreateInfo, nullptr, &view));
+	}
 }
 
 void Texture::Fill(AppState& appState, Buffer& buffer, VkDeviceSize offset, VkCommandBuffer commandBuffer)
@@ -125,19 +122,12 @@ void Texture::Fill(AppState& appState, StagingBuffer& buffer)
 void Texture::Delete(AppState& appState)
 {
 	filled = false;
+
 	if (view != VK_NULL_HANDLE)
 	{
 		vkDestroyImageView(appState.Device, view, nullptr);
         view = VK_NULL_HANDLE;
 	}
-	if (image != VK_NULL_HANDLE)
-	{
-		vkDestroyImage(appState.Device, image, nullptr);
-        image = VK_NULL_HANDLE;
-	}
-	if (memory != VK_NULL_HANDLE)
-	{
-		vkFreeMemory(appState.Device, memory, nullptr);
-        memory = VK_NULL_HANDLE;
-	}
+
+	vmaDestroyImage(appState.Allocator, image, allocation);
 }

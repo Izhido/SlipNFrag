@@ -1,6 +1,5 @@
 #include "Buffer.h"
 #include "AppState.h"
-#include "MemoryAllocateInfo.h"
 #include "Utils.h"
 
 void Buffer::Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, bool mappable)
@@ -41,6 +40,11 @@ void Buffer::CreateIndexBuffer(AppState& appState, VkDeviceSize size)
 void Buffer::CreateMappableIndexBuffer(AppState& appState, VkDeviceSize size)
 {
 	Create(appState, size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, true);
+}
+
+void Buffer::CreateUniformBuffer(AppState& appState, VkDeviceSize size)
+{
+	Create(appState, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false);
 }
 
 void Buffer::CreateMappableUniformBuffer(AppState& appState, VkDeviceSize size)

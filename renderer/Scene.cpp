@@ -106,51 +106,17 @@ void Scene::Create(AppState& appState)
     play.Close();
     AddBorder(appState, appState.ScreenData);
 
-    VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageCreateInfo.format = Constants::colorFormat;
-    imageCreateInfo.extent.depth = 1;
-    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-
-    VkMemoryRequirements memoryRequirements;
-    VkMemoryAllocateInfo memoryAllocateInfo { };
-
     appState.ConsoleTextures.resize(imageCount);
     appState.StatusBarTextures.resize(imageCount);
     for (auto i = 0; i < imageCount; i++)
     {
         auto& consoleTexture = appState.ConsoleTextures[i];
-        consoleTexture.width = appState.ConsoleWidth;
-        consoleTexture.height = appState.ConsoleHeight;
-        consoleTexture.mipCount = 1;
-        consoleTexture.layerCount = 1;
-        imageCreateInfo.extent.width = consoleTexture.width;
-        imageCreateInfo.extent.height = consoleTexture.height;
-        imageCreateInfo.mipLevels = consoleTexture.mipCount;
-        imageCreateInfo.arrayLayers = consoleTexture.layerCount;
-        CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &consoleTexture.image));
-        vkGetImageMemoryRequirements(appState.Device, consoleTexture.image, &memoryRequirements);
-		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-        updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
-        CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &consoleTexture.memory));
-        CHECK_VKCMD(vkBindImageMemory(appState.Device, consoleTexture.image, consoleTexture.memory, 0));
+
+		consoleTexture.Create(appState, appState.ConsoleWidth, appState.ConsoleHeight, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
 
         auto& statusBarTexture = appState.StatusBarTextures[i];
-        statusBarTexture.width = appState.ScreenWidth;
-        statusBarTexture.height = (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier;
-        statusBarTexture.mipCount = 1;
-        statusBarTexture.layerCount = 1;
-        imageCreateInfo.extent.width = statusBarTexture.width;
-        imageCreateInfo.extent.height = statusBarTexture.height;
-        imageCreateInfo.mipLevels = statusBarTexture.mipCount;
-        imageCreateInfo.arrayLayers = statusBarTexture.layerCount;
-        CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &statusBarTexture.image));
-        vkGetImageMemoryRequirements(appState.Device, statusBarTexture.image, &memoryRequirements);
-		properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-        updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
-        CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &statusBarTexture.memory));
-        CHECK_VKCMD(vkBindImageMemory(appState.Device, statusBarTexture.image, statusBarTexture.memory, 0));
+
+		statusBarTexture.Create(appState, appState.ScreenWidth, (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
     }
 
     swapchainCreateInfo.width = appState.ScreenWidth;
@@ -181,15 +147,15 @@ void Scene::Create(AppState& appState)
 
     ImageAsset floorImage;
     floorImage.Open("floor.png", appState.FileLoader);
-    floorTexture.Create(appState, floorImage.width, floorImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    floorTexture.Create(appState, floorImage.width, floorImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
 
     ImageAsset controllerImage;
 	controllerImage.Open("controller.png", appState.FileLoader);
-    controllerTexture.Create(appState, controllerImage.width, controllerImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    controllerTexture.Create(appState, controllerImage.width, controllerImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
 
     ImageAsset patchImage;
 	patchImage.Open("patch.png", appState.FileLoader);
-	patchTexture.Create(appState, patchImage.width, patchImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	patchTexture.Create(appState, patchImage.width, patchImage.height, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
 
 	Buffer buffer;
 	buffer.CreateStagingBuffer(appState, (floorImage.width * floorImage.height + controllerImage.width * controllerImage.height + patchImage.width * patchImage.height + 2 * appState.ScreenWidth * appState.ScreenHeight) * sizeof(uint32_t));
@@ -1582,51 +1548,20 @@ void Scene::Create(AppState& appState)
 	samplerCreateInfo.maxLod = VK_LOD_CLAMP_NONE;
 	CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &sampler));
 
-    auto screenImageCount = appState.Screen.swapchainImages.size();
+	paletteBufferSize = 256 * 4 * sizeof(float);
 
-	VkBufferCreateInfo bufferCreateInfo { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    bufferCreateInfo.size = 256 * 4 * sizeof(float);
-	bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	auto screenImageCount = appState.Screen.swapchainImages.size();
+
     paletteBuffers.resize(screenImageCount);
-    for (uint32_t i = 0; i < screenImageCount; i++)
+    for (auto& palette : paletteBuffers)
     {
-        CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &paletteBuffers[i]));
+		palette.CreateUniformBuffer(appState, paletteBufferSize);
     }
+
     neutralPaletteBuffers.resize(screenImageCount);
-    for (uint32_t i = 0; i < screenImageCount; i++)
+    for (auto& palette : neutralPaletteBuffers)
     {
-        CHECK_VKCMD(vkCreateBuffer(appState.Device, &bufferCreateInfo, nullptr, &neutralPaletteBuffers[i]));
-    }
-    vkGetBufferMemoryRequirements(appState.Device, paletteBuffers[0], &memoryRequirements);
-    paletteBufferSize = memoryRequirements.size;
-    memoryAllocateInfo.allocationSize = paletteBufferSize * 2 * screenImageCount;
-	auto properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    auto found = false;
-    for (auto i = 0; i < appState.MemoryProperties.memoryTypeCount; i++)
-    {
-        if ((memoryRequirements.memoryTypeBits & (1 << i)) != 0)
-        {
-            const VkFlags propertyFlags = appState.MemoryProperties.memoryTypes[i].propertyFlags;
-            if ((propertyFlags & properties) == properties)
-            {
-                found = true;
-                memoryAllocateInfo.memoryTypeIndex = i;
-                break;
-            }
-        }
-    }
-    if (!found)
-    {
-        THROW(Fmt("Scene::Create(): Memory type %d with properties %d not found.", memoryRequirements.memoryTypeBits, properties));
-    }
-    CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &paletteMemory));
-	VkDeviceSize memoryOffset = 0;
-    for (uint32_t i = 0; i < screenImageCount; i++)
-    {
-        CHECK_VKCMD(vkBindBufferMemory(appState.Device, paletteBuffers[i], paletteMemory, memoryOffset));
-        memoryOffset += paletteBufferSize;
-        CHECK_VKCMD(vkBindBufferMemory(appState.Device, neutralPaletteBuffers[i], paletteMemory, memoryOffset));
-        memoryOffset += paletteBufferSize;
+		palette.CreateUniformBuffer(appState, paletteBufferSize);
     }
 
     appState.Keyboard.Create(appState);
@@ -2969,7 +2904,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
     }
     if (!host_colormap.empty() && colormap.image == VK_NULL_HANDLE)
     {
-        colormap.Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        colormap.Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
         colormapSize = 16384;
         size += colormapSize;
     }
@@ -3581,7 +3516,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         if (perFrame.sky == nullptr)
         {
             perFrame.sky = new Texture { };
-            perFrame.sky->Create(appState, loadedSky.width, loadedSky.height, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+            perFrame.sky->Create(appState, loadedSky.width, loadedSky.height, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
         }
         size += loadedSky.size;
     }
@@ -3596,7 +3531,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         if (perFrame.skyRGBA == nullptr)
         {
             perFrame.skyRGBA = new Texture { };
-            perFrame.skyRGBA->Create(appState, loadedSkyRGBA.width * 2, loadedSkyRGBA.height, VK_FORMAT_R8G8B8A8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+            perFrame.skyRGBA->Create(appState, loadedSkyRGBA.width * 2, loadedSkyRGBA.height, VK_FORMAT_R8G8B8A8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
         }
         size += loadedSkyRGBA.size;
     }
@@ -3993,23 +3928,14 @@ void Scene::Destroy(AppState& appState)
 		colormap.Delete(appState);
 	}
 
-	for (auto& buffer : neutralPaletteBuffers)
+	for (auto& palette : neutralPaletteBuffers)
 	{
-		if (buffer != VK_NULL_HANDLE)
-		{
-			vkDestroyBuffer(appState.Device, buffer, nullptr);
-		}
+		palette.Delete(appState);
 	}
-	for (auto& buffer : paletteBuffers)
+
+	for (auto& palette : paletteBuffers)
 	{
-		if (buffer != VK_NULL_HANDLE)
-		{
-			vkDestroyBuffer(appState.Device, buffer, nullptr);
-		}
-	}
-	if (paletteMemory != VK_NULL_HANDLE)
-	{
-		vkFreeMemory(appState.Device, paletteMemory, nullptr);
+		palette.Delete(appState);
 	}
 
 	textured.Delete(appState);

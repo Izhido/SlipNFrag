@@ -95,10 +95,9 @@ struct Scene
 	Pipeline sky;
 	Pipeline skyRGBA;
 	Pipeline textured;
-    std::vector<VkBuffer> paletteBuffers;
-    std::vector<VkBuffer> neutralPaletteBuffers;
+    std::vector<Buffer> paletteBuffers;
+    std::vector<Buffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;
-    VkDeviceMemory paletteMemory;
     Texture colormap;
 	int hostClearCount;
 	CachedAliasBuffers aliasBuffers;

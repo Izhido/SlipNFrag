@@ -1168,7 +1168,7 @@ void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
 	else
 	{
 		texture = new Texture { };
-		texture->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		texture->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
 	}
 	texture->Fill(appState, appState.Scene.stagingBuffer);
 	appState.Scene.stagingBuffer.offset += 16384;
@@ -1453,21 +1453,21 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
     if (appState.Scene.paletteSize > 0)
 	{
 		bufferCopy.size = appState.Scene.paletteSize;
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.paletteBuffers[swapchainImageIndex], 1, &bufferCopy);
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.paletteBuffers[swapchainImageIndex].buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
 
 		VkBufferMemoryBarrier barrier { };
 		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.buffer = appState.Scene.paletteBuffers[swapchainImageIndex];
+		barrier.buffer = appState.Scene.paletteBuffers[swapchainImageIndex].buffer;
 		barrier.size = VK_WHOLE_SIZE;
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
 
-		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.neutralPaletteBuffers[swapchainImageIndex], 1, &bufferCopy);
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.neutralPaletteBuffers[swapchainImageIndex].buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
 
-		barrier.buffer = appState.Scene.paletteBuffers[swapchainImageIndex];
+		barrier.buffer = appState.Scene.paletteBuffers[swapchainImageIndex].buffer;
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
 	}
 
@@ -1540,7 +1540,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		if (statusBar == nullptr)
 		{
 			statusBar = new Texture();
-			statusBar->Create(appState, appState.ConsoleWidth, SBAR_HEIGHT + 24, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+			statusBar->Create(appState, appState.ConsoleWidth, SBAR_HEIGHT + 24, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
 		}
 		statusBar->Fill(appState, appState.Scene.stagingBuffer);
 		appState.Scene.stagingBuffer.offset += (appState.ConsoleWidth * (SBAR_HEIGHT + 24) * 4);
@@ -1706,7 +1706,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			writes[1].pBufferInfo = bufferInfo + 1;
 			if (!sceneMatricesAndPaletteResources.created)
 			{
-				bufferInfo[1].buffer = appState.Scene.paletteBuffers[swapchainImageIndex];
+				bufferInfo[1].buffer = appState.Scene.paletteBuffers[swapchainImageIndex].buffer;
 				bufferInfo[1].range = appState.Scene.paletteBufferSize;
 				descriptorPoolCreateInfo.poolSizeCount = 2;
 				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesAndPaletteResources.descriptorPool));
@@ -1720,7 +1720,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			if (!sceneMatricesAndNeutralPaletteResources.created)
 			{
-				bufferInfo[1].buffer = appState.Scene.neutralPaletteBuffers[swapchainImageIndex];
+				bufferInfo[1].buffer = appState.Scene.neutralPaletteBuffers[swapchainImageIndex].buffer;
 				bufferInfo[1].range = appState.Scene.paletteBufferSize;
 				descriptorPoolCreateInfo.poolSizeCount = 2;
 				CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesAndNeutralPaletteResources.descriptorPool));
@@ -1734,7 +1734,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 			if (!sceneMatricesAndColormapResources.created && appState.Scene.colormap.image != VK_NULL_HANDLE)
 			{
-				bufferInfo[1].buffer = appState.Scene.paletteBuffers[swapchainImageIndex];
+				bufferInfo[1].buffer = appState.Scene.paletteBuffers[swapchainImageIndex].buffer;
 				bufferInfo[1].range = appState.Scene.paletteBufferSize;
 				poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 				poolSizes[2].descriptorCount = 1;

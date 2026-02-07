@@ -1570,7 +1570,7 @@ void android_main(struct android_app* app)
 				{
 					source->process(app, source);
 				}
-			} while (ident > 0);
+			} while (ident >= 0);
 
 			auto lossPending = false;
 			auto exitRenderLoop = false;
@@ -2612,32 +2612,7 @@ void android_main(struct android_app* app)
 						auto& keyboardTexture = appState.KeyboardTextures[swapchainImageIndex];
 						if (keyboardTexture.image == VK_NULL_HANDLE)
 						{
-							keyboardTexture.width = appState.ConsoleWidth;
-							keyboardTexture.height = appState.ConsoleHeight / 2;
-							keyboardTexture.mipCount = 1;
-							keyboardTexture.layerCount = 1;
-
-							VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-							imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-							imageCreateInfo.format = Constants::colorFormat;
-							imageCreateInfo.extent.depth = 1;
-							imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-							imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-							imageCreateInfo.extent.width = keyboardTexture.width;
-							imageCreateInfo.extent.height = keyboardTexture.height;
-							imageCreateInfo.mipLevels = keyboardTexture.mipCount;
-							imageCreateInfo.arrayLayers = keyboardTexture.layerCount;
-							CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &keyboardTexture.image));
-
-							VkMemoryRequirements memoryRequirements;
-							vkGetImageMemoryRequirements(appState.Device, keyboardTexture.image, &memoryRequirements);
-
-							VkMemoryAllocateInfo memoryAllocateInfo { };
-							VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-							updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
-
-							CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &keyboardTexture.memory));
-							CHECK_VKCMD(vkBindImageMemory(appState.Device, keyboardTexture.image, keyboardTexture.memory, 0));
+							keyboardTexture.Create(appState, appState.ConsoleWidth, appState.ConsoleHeight / 2, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
 						}
 
 						appState.RenderKeyboard(keyboardPerFrame);
