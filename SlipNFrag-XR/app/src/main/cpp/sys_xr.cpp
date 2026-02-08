@@ -508,6 +508,7 @@ void Sys_Terminate()
 		delete[] entry.second;
 	}
 	host_initialized = false;
+	con_forcedup = false;
 	scr_disabled_for_loading = false;
 	scr_fullupdate = 0;
 	con_initialized = false;
