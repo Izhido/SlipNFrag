@@ -1,7 +1,6 @@
 #include "SharedMemoryTexture.h"
 #include "AppState.h"
 #include "Utils.h"
-#include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
 void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, uint32_t layerCount, VkImageUsageFlags usage)
@@ -14,68 +13,19 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 
 	VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
 	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageCreateInfo.format = format;
-	imageCreateInfo.extent.width = width;
-	imageCreateInfo.extent.height = height;
+	imageCreateInfo.format = this->format;
+	imageCreateInfo.extent.width = this->width;
+	imageCreateInfo.extent.height = this->height;
 	imageCreateInfo.extent.depth = 1;
-	imageCreateInfo.mipLevels = mipCount;
-	imageCreateInfo.arrayLayers = layerCount;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageCreateInfo.mipLevels = this->mipCount;
+	imageCreateInfo.arrayLayers = this->layerCount;
 	imageCreateInfo.usage = usage;
-	CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &image));
 
-	VkMemoryRequirements memoryRequirements;
-	vkGetImageMemoryRequirements(appState.Device, image, &memoryRequirements);
+	VmaAllocationCreateInfo allocInfo { };
+	allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
 
-	VkMemoryAllocateInfo memoryAllocateInfo { };
-	properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-	updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
-
-	auto create = true;
-	auto& latestMemory = appState.Scene.latestMemory[memoryAllocateInfo.memoryTypeIndex];
-	for (auto entry = latestMemory.begin(); entry != latestMemory.end(); entry++)
-	{
-		VkDeviceSize alignmentCorrection = 0;
-		VkDeviceSize alignmentExcess = entry->used % memoryRequirements.alignment;
-		if (alignmentExcess > 0)
-		{
-			alignmentCorrection = memoryRequirements.alignment - alignmentExcess;
-		}
-		if (entry->used + alignmentCorrection + memoryAllocateInfo.allocationSize <= entry->memory->size)
-		{
-			create = false;
-			sharedMemory = entry->memory;
-			CHECK_VKCMD(vkBindImageMemory(appState.Device, image, sharedMemory->memory, entry->used + alignmentCorrection));
-			entry->used += (alignmentCorrection + memoryAllocateInfo.allocationSize);
-			if (entry->used >= entry->memory->size)
-			{
-				sharedMemory->referenceCount--;
-				latestMemory.erase(entry);
-			}
-			break;
-		}
-	}
-
-	if (create)
-	{
-		sharedMemory = new SharedMemory { };
-		sharedMemory->size = Constants::memoryBlockSize;
-		while (sharedMemory->size < memoryAllocateInfo.allocationSize)
-		{
-			sharedMemory->size += Constants::memoryBlockSize;
-		}
-		auto memoryBlockAllocateInfo = memoryAllocateInfo;
-		memoryBlockAllocateInfo.allocationSize = sharedMemory->size;
-		CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryBlockAllocateInfo, nullptr, &sharedMemory->memory));
-		if (sharedMemory->size > memoryAllocateInfo.allocationSize)
-		{
-			latestMemory.push_back({ sharedMemory, memoryAllocateInfo.allocationSize });
-			sharedMemory->referenceCount++;
-		}
-		CHECK_VKCMD(vkBindImageMemory(appState.Device, image, sharedMemory->memory, 0));
-	}
-
-	sharedMemory->referenceCount++;
+	CHECK_VKCMD(vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &image, &allocation, nullptr));
 
 	VkImageViewCreateInfo imageViewCreateInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 	imageViewCreateInfo.image = image;
@@ -348,18 +298,11 @@ void SharedMemoryTexture::Delete(AppState& appState) const
 		vkDestroyDescriptorPool(appState.Device, descriptorSets->descriptorPool, nullptr);
 		delete descriptorSets;
 	}
+
 	if (view != VK_NULL_HANDLE)
 	{
 		vkDestroyImageView(appState.Device, view, nullptr);
 	}
-	if (image != VK_NULL_HANDLE)
-	{
-		vkDestroyImage(appState.Device, image, nullptr);
-	}
-	sharedMemory->referenceCount--;
-	if (sharedMemory->referenceCount == 0)
-	{
-		vkFreeMemory(appState.Device, sharedMemory->memory, nullptr);
-		delete sharedMemory;
-	}
+
+	vmaDestroyImage(appState.Allocator, image, allocation);
 }

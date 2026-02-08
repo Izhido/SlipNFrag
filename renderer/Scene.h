@@ -22,7 +22,6 @@
 #include "SurfaceTexture.h"
 #include "Skybox.h"
 #include <common/xr_linear.h>
-#include "UsedInSharedMemory.h"
 #include "PerFrame.h"
 #include "SortedSurfaces.h"
 #include "LightmapChain.h"
@@ -136,7 +135,6 @@ struct Scene
 	Texture controllerTexture;
 	Texture patchTexture;
 	VkSampler sampler;
-	std::vector<std::list<UsedInSharedMemory>> latestMemory;
 	Buffer* latestIndexBuffer8;
 	VkDeviceSize usedInLatestIndexBuffer8;
 	Buffer* latestIndexBuffer16;

@@ -1,7 +1,6 @@
 #include "LightmapRGB.h"
 #include "AppState.h"
 #include "Utils.h"
-#include "MemoryAllocateInfo.h"
 #include "Constants.h"
 
 bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, void* texture)

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Buffer.h"
-#include "SharedMemory.h"
 #include "StagingBuffer.h"
 #include "DescriptorSets.h"
 
@@ -14,8 +13,8 @@ struct SharedMemoryTexture
 	VkFormat format;
 	int mipCount;
 	int layerCount;
+	VmaAllocation allocation;
 	VkImage image;
-	SharedMemory* sharedMemory;
 	VkImageView view;
 	VkDescriptorSet descriptorSet;
 	DescriptorSets* descriptorSets;

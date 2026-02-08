@@ -3,7 +3,6 @@
 #include "Utils.h"
 #include "Constants.h"
 #include "ImageAsset.h"
-#include "MemoryAllocateInfo.h"
 #include "PipelineAttributes.h"
 #include "Floor.h"
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -59,8 +58,6 @@ void Scene::AddBorder(AppState& appState, std::vector<uint32_t>& target)
 
 void Scene::Create(AppState& appState)
 {
-	latestMemory.resize(appState.MemoryProperties.memoryTypeCount);
-
     appState.ConsoleWidth = 320;
     appState.ConsoleHeight = 200;
     appState.ScreenWidth = appState.ConsoleWidth * Constants::screenToConsoleMultiplier;
@@ -3858,18 +3855,6 @@ void Scene::Reset(AppState& appState)
     usedInLatestIndexBuffer16 = 0;
     latestIndexBuffer8 = nullptr;
     usedInLatestIndexBuffer8 = 0;
-	for (auto& entry : latestMemory)
-	{
-		for (auto& used : entry)
-		{
-			used.memory->referenceCount--;
-			if (used.memory->referenceCount == 0)
-			{
-				vkFreeMemory(appState.Device, used.memory->memory, nullptr);
-			}
-		}
-		entry.clear();
-	}
     Skybox::MoveToPrevious(*this);
     aliasIndexCache.clear();
     aliasVertexCache.clear();
