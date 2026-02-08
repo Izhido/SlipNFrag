@@ -4042,19 +4042,11 @@ void PerFrame::DestroyFramebuffer(AppState& appState) const
 	}
 	if (depthImage != VK_NULL_HANDLE)
 	{
-		vkDestroyImage(appState.Device, depthImage, nullptr);
-	}
-	if (depthMemory != VK_NULL_HANDLE)
-	{
-		vkFreeMemory(appState.Device, depthMemory, nullptr);
+		vmaDestroyImage(appState.Allocator, depthImage, depthAllocation);
 	}
 	if (colorImage != VK_NULL_HANDLE)
 	{
-		vkDestroyImage(appState.Device, colorImage, nullptr);
-	}
-	if (colorMemory != VK_NULL_HANDLE)
-	{
-		vkFreeMemory(appState.Device, colorMemory, nullptr);
+		vmaDestroyImage(appState.Allocator, colorImage, colorAllocation);
 	}
 }
 

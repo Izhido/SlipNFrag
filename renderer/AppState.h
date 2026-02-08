@@ -35,7 +35,6 @@ struct AppState
 	XrSession Session;
 	VkCommandPool SetupCommandPool;
 	VkQueue Queue;
-	VkPhysicalDeviceMemoryProperties MemoryProperties;
 	int DefaultFOV;
 	int FOV;
 	float SkyLeft;

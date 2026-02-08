@@ -13,8 +13,8 @@ struct PerFrame
 	VkImage colorImage;
 	VkImage depthImage;
 	VkImage resolveImage;
-	VkDeviceMemory colorMemory;
-	VkDeviceMemory depthMemory;
+	VmaAllocation colorAllocation;
+	VmaAllocation depthAllocation;
 	VkImageView colorView;
 	VkImageView depthView;
 	VkImageView resolveView;
