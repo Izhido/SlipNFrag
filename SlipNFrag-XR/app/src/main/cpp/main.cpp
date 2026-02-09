@@ -532,8 +532,6 @@ void android_main(struct android_app* app)
 		}
 #endif
 
-		auto dedicatedAllocation = false;
-		auto bindMemory2 = false;
 		auto maintenance4 = false;
 		auto bufferDeviceAddress = false;
 		auto createRenderPass2 = false;
@@ -656,17 +654,7 @@ void android_main(struct android_app* app)
 			{
 				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
 
-				if (strncmp(availableExtensions[i].extensionName, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
-				{
-					dedicatedAllocation = true;
-					enabledExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
-				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_BIND_MEMORY_2_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
-				{
-					bindMemory2 = true;
-					enabledExtensions.push_back(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
-				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_MAINTENANCE_4_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				if (strncmp(availableExtensions[i].extensionName, VK_KHR_MAINTENANCE_4_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
 					maintenance4 = true;
 					enabledExtensions.push_back(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
@@ -1536,8 +1524,6 @@ void android_main(struct android_app* app)
 		vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
 
 		VmaAllocatorCreateInfo allocatorCreateInfo { };
-		if (dedicatedAllocation) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
-		if (bindMemory2) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_BIND_MEMORY2_BIT;
 		if (maintenance4) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT;
 		if (bufferDeviceAddress) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 		allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_1;
@@ -2316,7 +2302,7 @@ void android_main(struct android_app* app)
 						if (createRes != VK_SUCCESS)
 						{
 							allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-							if (dedicatedAllocation) allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+							allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 							CHECK_VKCMD(vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &perFrame.depthImage, &perFrame.depthAllocation, nullptr));
 						}
 
