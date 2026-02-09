@@ -13,7 +13,6 @@
 #include "r_local.h"
 #include "in_pcxr.h"
 #include "vid_pcxr.h"
-#include "MemoryAllocateInfo.h"
 
 wchar_t snd_audio_output_device_id[XR_MAX_AUDIO_DEVICE_STR_SIZE_OCULUS];
 extern int sound_started;
@@ -801,8 +800,6 @@ int main(int argc, char* argv[])
 			CHECK_VKCMD(errCreateVulkanDevice);
 
 			vkGetDeviceQueue(appState.Device, queueInfo.queueFamilyIndex, 0, &appState.Queue);
-
-			vkGetPhysicalDeviceMemoryProperties(vulkanPhysicalDevice, &appState.MemoryProperties);
 
 			graphicsBinding.instance = vulkanInstance;
 			graphicsBinding.physicalDevice = vulkanPhysicalDevice;
@@ -2227,47 +2224,43 @@ int main(int argc, char* argv[])
 
 					if (perFrame.framebuffer == VK_NULL_HANDLE)
 					{
-						VkImageCreateInfo imageInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-						imageInfo.imageType = VK_IMAGE_TYPE_2D;
-						imageInfo.extent.width = appState.SwapchainRect.extent.width;
-						imageInfo.extent.height = appState.SwapchainRect.extent.height;
-						imageInfo.extent.depth = 1;
-						imageInfo.mipLevels = 1;
-						imageInfo.arrayLayers = viewCount;
-						imageInfo.samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
+						VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+						imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+						imageCreateInfo.extent.width = appState.SwapchainRect.extent.width;
+						imageCreateInfo.extent.height = appState.SwapchainRect.extent.height;
+						imageCreateInfo.extent.depth = 1;
+						imageCreateInfo.mipLevels = 1;
+						imageCreateInfo.arrayLayers = viewCount;
+						imageCreateInfo.samples = (VkSampleCountFlagBits)appState.SwapchainSampleCount;
 
-						imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
-						imageInfo.format = Constants::colorFormat;
-						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perFrame.colorImage));
+						imageCreateInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+						imageCreateInfo.format = Constants::colorFormat;
 
-						imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
-						imageInfo.format = Constants::depthFormat;
-						CHECK_VKCMD(vkCreateImage(appState.Device, &imageInfo, nullptr, &perFrame.depthImage));
+						VmaAllocationCreateInfo allocInfo { };
+						allocInfo.usage = VMA_MEMORY_USAGE_GPU_LAZILY_ALLOCATED;
+
+						auto createRes = vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &perFrame.colorImage, &perFrame.colorAllocation, nullptr);
+						if (createRes != VK_SUCCESS)
+						{
+							allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+							allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+							CHECK_VKCMD(vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &perFrame.colorImage, &perFrame.colorAllocation, nullptr));
+							allocInfo.flags = 0;
+							allocInfo.usage = VMA_MEMORY_USAGE_GPU_LAZILY_ALLOCATED;
+						}
+
+						imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+						imageCreateInfo.format = Constants::depthFormat;
+
+						createRes = vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &perFrame.depthImage, &perFrame.depthAllocation, nullptr);
+						if (createRes != VK_SUCCESS)
+						{
+							allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+							if (dedicatedAllocation) allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+							CHECK_VKCMD(vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &perFrame.depthImage, &perFrame.depthAllocation, nullptr));
+						}
 
 						perFrame.resolveImage = appState.SwapchainImages[swapchainImageIndex].image;
-
-						VkMemoryRequirements memRequirements { };
-						VkMemoryAllocateInfo memoryAllocateInfo { };
-
-						vkGetImageMemoryRequirements(appState.Device, perFrame.colorImage, &memRequirements);
-						VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
-						if (!updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, false))
-						{
-							properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-							updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, true);
-						}
-						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.colorMemory));
-						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.colorImage, perFrame.colorMemory, 0));
-
-						vkGetImageMemoryRequirements(appState.Device, perFrame.depthImage, &memRequirements);
-						properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
-						if (!updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, false))
-						{
-							properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-							updateMemoryAllocateInfo(appState, memRequirements, properties, memoryAllocateInfo, true);
-						}
-						CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &perFrame.depthMemory));
-						CHECK_VKCMD(vkBindImageMemory(appState.Device, perFrame.depthImage, perFrame.depthMemory, 0));
 
 						VkImageViewCreateInfo viewInfo { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
 						viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
@@ -2552,32 +2545,7 @@ int main(int argc, char* argv[])
 						auto& keyboardTexture = appState.KeyboardTextures[swapchainImageIndex];
 						if (keyboardTexture.image == VK_NULL_HANDLE)
 						{
-							keyboardTexture.width = appState.ConsoleWidth;
-							keyboardTexture.height = appState.ConsoleHeight / 2;
-							keyboardTexture.mipCount = 1;
-							keyboardTexture.layerCount = 1;
-
-							VkImageCreateInfo imageCreateInfo { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
-							imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-							imageCreateInfo.format = Constants::colorFormat;
-							imageCreateInfo.extent.depth = 1;
-							imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-							imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-							imageCreateInfo.extent.width = keyboardTexture.width;
-							imageCreateInfo.extent.height = keyboardTexture.height;
-							imageCreateInfo.mipLevels = keyboardTexture.mipCount;
-							imageCreateInfo.arrayLayers = keyboardTexture.layerCount;
-							CHECK_VKCMD(vkCreateImage(appState.Device, &imageCreateInfo, nullptr, &keyboardTexture.image));
-
-							VkMemoryRequirements memoryRequirements;
-							vkGetImageMemoryRequirements(appState.Device, keyboardTexture.image, &memoryRequirements);
-
-							VkMemoryAllocateInfo memoryAllocateInfo { };
-							VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-							updateMemoryAllocateInfo(appState, memoryRequirements, properties, memoryAllocateInfo, true);
-
-							CHECK_VKCMD(vkAllocateMemory(appState.Device, &memoryAllocateInfo, nullptr, &keyboardTexture.memory));
-							CHECK_VKCMD(vkBindImageMemory(appState.Device, keyboardTexture.image, keyboardTexture.memory, 0));
+							keyboardTexture.Create(appState, appState.ConsoleWidth, appState.ConsoleHeight / 2, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
 						}
 
 						appState.RenderKeyboard(keyboardPerFrame);

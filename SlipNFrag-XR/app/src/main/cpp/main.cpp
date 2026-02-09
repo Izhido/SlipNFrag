@@ -2317,7 +2317,7 @@ void android_main(struct android_app* app)
 						{
 							allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
 							if (dedicatedAllocation) allocInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
-							CHECK_VKCMD(vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &perFrame.colorImage, &perFrame.colorAllocation, nullptr));
+							CHECK_VKCMD(vmaCreateImage(appState.Allocator, &imageCreateInfo, &allocInfo, &perFrame.depthImage, &perFrame.depthAllocation, nullptr));
 						}
 
 						perFrame.resolveImage = appState.SwapchainImages[swapchainImageIndex].image;
