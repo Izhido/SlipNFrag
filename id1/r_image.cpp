@@ -77,16 +77,17 @@ qboolean R_LoadTGA (const char *name, int start, qboolean extra, int mips, qbool
 	targa_header.attributes = *buf_p++;
 
 	if (targa_header.image_type!=2
+		&& targa_header.image_type!=3
 		&& targa_header.image_type!=10)
 	{
-		Con_Printf ("R_LoadTGA: %s - Only type 2 and 10 targa RGB images supported\n", name);
+		Con_Printf ("R_LoadTGA: %s - Only type 2, 3 and 10 targa RGB images supported\n", name);
 		return false;
 	}
 
 	if (targa_header.colormap_type !=0
-		|| (targa_header.pixel_size!=32 && targa_header.pixel_size!=24))
+		|| (targa_header.pixel_size!=32 && targa_header.pixel_size!=24 && !(targa_header.image_type==3 && targa_header.pixel_size==8)))
 	{
-		Con_Printf ("R_LoadTGA: %s - Only 32 or 24 bit images supported (no colormaps)\n", name);
+		Con_Printf ("R_LoadTGA: %s - Only 32 or 24 bit (or monochrome 8 bit) images supported (no colormaps)\n", name);
 		return false;
 	}
 
@@ -167,6 +168,25 @@ qboolean R_LoadTGA (const char *name, int start, qboolean extra, int mips, qbool
 					*pixbuf++ = blue;
 					*pixbuf++ = alpha;
 				}
+			}
+		}
+	}
+	else if (targa_header.image_type==3)
+	{
+	// From quakespasm, modified to use buf_p:
+		for(row=rows-1; row>=0; row--)
+		{
+			//johnfitz -- fix for upside-down targas
+			realrow = upside_down ? row : rows - 1 - row;
+			pixbuf = targa_rgba + offset + realrow*columns*4;
+			//johnfitz
+			for(column=0; column<columns; column++)
+			{
+				auto gray = *buf_p++;
+				*pixbuf++ = gray; // R
+				*pixbuf++ = gray; // G
+				*pixbuf++ = gray; // B
+				*pixbuf++ = 255; // A
 			}
 		}
 	}
