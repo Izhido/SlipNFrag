@@ -138,7 +138,7 @@ void Sys_Error(const char* error, ...)
     }
     printf("Sys_Error: %s", string.data());
     sys_errormessage = string.data();
-    sys_errorcalled = true;
+    sys_errorcalled = 1;
     Host_Shutdown();
 #ifdef USE_LONGJMP
 	longjmp (host_abortserver, 1);
