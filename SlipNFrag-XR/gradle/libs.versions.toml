@@ -5,7 +5,7 @@ coreKtx = "1.17.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 gamesActivity = "4.0.0"
-openxr_loader_for_android = "1.1.54"
+openxr_loader_for_android = "1.1.57"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

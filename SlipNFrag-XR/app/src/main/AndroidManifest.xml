@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <application android:allowBackup="false" android:label="Slip &amp; Frag"
         android:icon="@mipmap/ic_launcher">
+        <uses-native-library android:name="libopenxr.google.so" android:required="false" />
         <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2|questpro|quest3|quest3s" />
         <meta-data android:name="com.oculus.ossplash" android:value="true" />
         <activity
@@ -24,8 +25,9 @@
             <meta-data android:name="com.oculus.vr.focusaware" android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
+                <category android:name="com.google.android.xr.intent.category.IMMERSIVE" />
             </intent-filter>
         </activity>
     </application>

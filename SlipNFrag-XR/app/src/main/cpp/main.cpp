@@ -2382,6 +2382,7 @@ void android_main(struct android_app* app)
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
 					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.swapchain, nullptr, &swapchainImageIndex));
+					CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.swapchain, &waitInfo));
 
 					auto& screenPerFrame = appState.Screen.perFrame[swapchainImageIndex];
 
@@ -2398,7 +2399,7 @@ void android_main(struct android_app* app)
 					appState.RenderScreen(screenPerFrame);
 
 					appState.copyBarrier.image = screenPerFrame.image;
-					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
+					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
 
 					VkBufferImageCopy region { };
 					region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -2497,7 +2498,7 @@ void android_main(struct android_app* app)
 					}
 
 					appState.submitBarrier.image = screenPerFrame.image;
-					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
+					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
 					if (appState.CylinderCompositionLayerEnabled)
 					{
@@ -2575,6 +2576,7 @@ void android_main(struct android_app* app)
 					if (appState.Keyboard.Draw(appState))
 					{
 						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.swapchain, nullptr, &swapchainImageIndex));
+						CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.swapchain, &waitInfo));
 
 						auto& keyboardPerFrame = appState.Keyboard.Screen.perFrame[swapchainImageIndex];
 
@@ -2597,7 +2599,7 @@ void android_main(struct android_app* app)
 						appState.RenderKeyboard(keyboardPerFrame);
 
 						appState.copyBarrier.image = keyboardPerFrame.image;
-						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
+						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
 
 						VkBufferImageCopy region { };
 						region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -2644,7 +2646,7 @@ void android_main(struct android_app* app)
 						vkCmdBlitImage(commandBuffer, keyboardTexture.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, keyboardPerFrame.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_NEAREST);
 
 						appState.submitBarrier.image = keyboardPerFrame.image;
-						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
+						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 
 						if (appState.CylinderCompositionLayerEnabled)
 						{
@@ -3008,7 +3010,7 @@ void android_main(struct android_app* app)
 									vkCmdCopyBufferToImage(setupCommandBuffer, stagingBuffer.buffer, appState.Scene.skybox->images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 									region.bufferOffset += width * height * 4;
 									appState.submitBarrier.subresourceRange.baseArrayLayer = i;
-									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
+									vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
 								}
 
 								appState.copyBarrier.subresourceRange.baseArrayLayer = 0;
@@ -3043,15 +3045,6 @@ void android_main(struct android_app* app)
 						}
 					}
 				}
-			}
-
-			if (screenRendered)
-			{
-				CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.swapchain, &waitInfo));
-			}
-			if (keyboardRendered)
-			{
-				CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.swapchain, &waitInfo));
 			}
 
 			if (commandBuffer != VK_NULL_HANDLE)
