@@ -2322,6 +2322,7 @@ int main(int argc, char* argv[])
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
 					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.swapchain, nullptr, &swapchainImageIndex));
+					CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.swapchain, &waitInfo));
 
 					auto& screenPerFrame = appState.Screen.perFrame[swapchainImageIndex];
 
@@ -2515,6 +2516,7 @@ int main(int argc, char* argv[])
 					if (appState.Keyboard.Draw(appState))
 					{
 						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.swapchain, nullptr, &swapchainImageIndex));
+						CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.swapchain, &waitInfo));
 
 						auto& keyboardPerFrame = appState.Keyboard.Screen.perFrame[swapchainImageIndex];
 
@@ -2983,15 +2985,6 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
-			}
-
-			if (screenRendered)
-			{
-				CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.swapchain, &waitInfo));
-			}
-			if (keyboardRendered)
-			{
-				CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.swapchain, &waitInfo));
 			}
 
 			if (commandBuffer != VK_NULL_HANDLE)
