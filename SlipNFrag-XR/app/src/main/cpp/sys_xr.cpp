@@ -20,8 +20,6 @@ int sys_nogamedata;
 int sys_errorcalled;
 int sys_quitcalled;
 
-std::vector<std::string> sys_bindingstext;
-
 unsigned int sys_randseed;
 
 int findhandle()
@@ -372,9 +370,51 @@ void IN_MenuDraw ()
 	auto p = Draw_CachePic ("gfx/p_option.lmp");
 	M_DrawPic ( (320-p->width)/2, 4, p);
 
-	for (int i = 0; i < (int)sys_bindingstext.size(); i++)
+	std::vector<std::string> bindingstext;
+
+	auto hand = Cvar_VariableString ("dominant_hand");
+	auto isLeftHanded = (Q_strncmp(hand, "left", 4) == 0);
+
+	if (isLeftHanded)
 	{
-		M_Print (48, 32 + i * 8, sys_bindingstext[i].c_str());
+		bindingstext.emplace_back("Left handed controls:");
+	}
+	else
+	{
+		bindingstext.emplace_back("Right handed controls:");
+	}
+	bindingstext.emplace_back("");
+	bindingstext.emplace_back("Left or Right Joysticks:");
+	bindingstext.emplace_back("Walk Forward / Backpedal,");
+	bindingstext.emplace_back("   Step Left / Step Right");
+	bindingstext.emplace_back("");
+	if (isLeftHanded)
+	{
+		bindingstext.emplace_back("(Y): Jump");
+		bindingstext.emplace_back("(X): Swim down");
+	}
+	else
+	{
+		bindingstext.emplace_back("(B): Jump");
+		bindingstext.emplace_back("(A): Swim down");
+	}
+	bindingstext.emplace_back("");
+	bindingstext.emplace_back("Triggers: Attack");
+	bindingstext.emplace_back("Grip Triggers: Run");
+	bindingstext.emplace_back("Click Joysticks: Change Weapon");
+	bindingstext.emplace_back("");
+	if (isLeftHanded)
+	{
+		bindingstext.emplace_back("(A): Toggle Main Menu");
+	}
+	else
+	{
+		bindingstext.emplace_back("(X): Toggle Main Menu");
+	}
+
+	for (int i = 0; i < (int)bindingstext.size(); i++)
+	{
+		M_Print (48, 32 + i * 8, bindingstext[i].c_str());
 	}
 }
 
