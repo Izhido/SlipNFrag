@@ -1880,7 +1880,7 @@ void android_main(struct android_app* app)
 						}
 						cl_bobdisabled.default_value = "1";
 						Sys_Init(sys_argc, sys_argv);
-						if (!sys_errormessage.empty())
+						if (sys_errorcalled)
 						{
 							if (sys_nogamedata)
 							{

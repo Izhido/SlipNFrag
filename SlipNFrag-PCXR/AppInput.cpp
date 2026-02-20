@@ -45,6 +45,9 @@ void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 	XrActionStateBoolean booleanActionState { XR_TYPE_ACTION_STATE_BOOLEAN };
 	XrActionStateFloat floatActionState { XR_TYPE_ACTION_STATE_FLOAT };
 
+	auto hand = Cvar_VariableString ("dominant_hand");
+	auto isLeftHanded = (Q_strncmp(hand, "left", 4) == 0);
+
 	if (appState.Mode == AppStartupMode)
 	{
 		if (!appState.StartupButtonsPressed)
@@ -118,18 +121,60 @@ void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 					}
 				}
 			}
+			auto escapeDown = false;
+			auto escapeUp = false;
 			actionGetInfo.action = appState.MenuAction;
 			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
 			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 			{
 				if (booleanActionState.currentState)
 				{
-					AddKeyInput(K_ESCAPE, true);
+					escapeDown = true;
 				}
 				else
 				{
-					AddKeyInput(K_ESCAPE, false);
+					escapeUp = true;
 				}
+			}
+			if (isLeftHanded)
+			{
+				actionGetInfo.action = appState.MenuLeftHandedAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
+					{
+						escapeDown = true;
+					}
+					else
+					{
+						escapeUp = true;
+					}
+				}
+			}
+			else
+			{
+				actionGetInfo.action = appState.MenuRightHandedAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				{
+					if (booleanActionState.currentState)
+					{
+						escapeDown = true;
+					}
+					else
+					{
+						escapeUp = true;
+					}
+				}
+			}
+			if (escapeDown)
+			{
+				AddKeyInput(K_ESCAPE, true);
+			}
+			if (escapeUp)
+			{
+				AddKeyInput(K_ESCAPE, false);
 			}
 			auto thumbstick = appState.PreviousThumbstick;
 			actionGetInfo.action = appState.MoveXAction;
@@ -195,17 +240,36 @@ void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 					}
 				}
 			}
-			actionGetInfo.action = appState.EnterNonTriggerAction;
-			CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-			if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+			if (isLeftHanded)
 			{
-				if (booleanActionState.currentState)
+				actionGetInfo.action = appState.EnterNonTriggerLeftHandedAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 				{
-					enterDown = true;
+					if (booleanActionState.currentState)
+					{
+						enterDown = true;
+					}
+					else
+					{
+						enterUp = true;
+					}
 				}
-				else
+			}
+			else
+			{
+				actionGetInfo.action = appState.EnterNonTriggerRightHandedAction;
+				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 				{
-					enterUp = true;
+					if (booleanActionState.currentState)
+					{
+						enterDown = true;
+					}
+					else
+					{
+						enterUp = true;
+					}
 				}
 			}
 			if (enterDown)
@@ -257,9 +321,9 @@ void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 						}
 					}
 				}
-				else
+				else if (isLeftHanded)
 				{
-					actionGetInfo.action = appState.JumpAction;
+					actionGetInfo.action = appState.JumpLeftHandedAction;
 					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
 					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
@@ -273,18 +337,76 @@ void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 						}
 					}
 				}
+				else
+				{
+					actionGetInfo.action = appState.JumpRightHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							AddCommandInput("+jump");
+						}
+						else
+						{
+							AddCommandInput("-jump");
+						}
+					}
+				}
+				auto escapeDown = false;
+				auto escapeUp = false;
 				actionGetInfo.action = appState.MenuAction;
 				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
 				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 				{
 					if (booleanActionState.currentState)
 					{
-						AddKeyInput(K_ESCAPE, true);
+						escapeDown = true;
 					}
 					else
 					{
-						AddKeyInput(K_ESCAPE, false);
+						escapeUp = true;
 					}
+				}
+				if (isLeftHanded)
+				{
+					actionGetInfo.action = appState.MenuLeftHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							escapeDown = true;
+						}
+						else
+						{
+							escapeUp = true;
+						}
+					}
+				}
+				else
+				{
+					actionGetInfo.action = appState.MenuRightHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							escapeDown = true;
+						}
+						else
+						{
+							escapeUp = true;
+						}
+					}
+				}
+				if (escapeDown)
+				{
+					AddKeyInput(K_ESCAPE, true);
+				}
+				if (escapeUp)
+				{
+					AddKeyInput(K_ESCAPE, false);
 				}
 				if (joy_initialized)
 				{
@@ -337,17 +459,36 @@ void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 				{
 					AddCommandInput("impulse 10");
 				}
-				actionGetInfo.action = appState.SwimDownAction;
-				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				if (isLeftHanded)
 				{
-					if (booleanActionState.currentState)
+					actionGetInfo.action = appState.SwimDownLeftHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
-						AddCommandInput("+movedown");
+						if (booleanActionState.currentState)
+						{
+							AddCommandInput("+movedown");
+						}
+						else
+						{
+							AddCommandInput("-movedown");
+						}
 					}
-					else
+				}
+				else
+				{
+					actionGetInfo.action = appState.SwimDownRightHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
-						AddCommandInput("-movedown");
+						if (booleanActionState.currentState)
+						{
+							AddCommandInput("+movedown");
+						}
+						else
+						{
+							AddCommandInput("-movedown");
+						}
 					}
 				}
 			}
@@ -398,18 +539,60 @@ void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 						}
 					}
 				}
+				auto escapeDown = false;
+				auto escapeUp = false;
 				actionGetInfo.action = appState.MenuAction;
 				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
 				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 				{
 					if (booleanActionState.currentState)
 					{
-						AddKeyInput(K_ESCAPE, true);
+						escapeDown = true;
 					}
 					else
 					{
-						AddKeyInput(K_ESCAPE, false);
+						escapeUp = true;
 					}
+				}
+				if (isLeftHanded)
+				{
+					actionGetInfo.action = appState.MenuLeftHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							escapeDown = true;
+						}
+						else
+						{
+							escapeUp = true;
+						}
+					}
+				}
+				else
+				{
+					actionGetInfo.action = appState.MenuRightHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+					{
+						if (booleanActionState.currentState)
+						{
+							escapeDown = true;
+						}
+						else
+						{
+							escapeUp = true;
+						}
+					}
+				}
+				if (escapeDown)
+				{
+					AddKeyInput(K_ESCAPE, true);
+				}
+				if (escapeUp)
+				{
+					AddKeyInput(K_ESCAPE, false);
 				}
 				auto thumbstick = appState.PreviousThumbstick;
 				actionGetInfo.action = appState.MoveXAction;
@@ -475,17 +658,36 @@ void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 						}
 					}
 				}
-				actionGetInfo.action = appState.EnterNonTriggerAction;
-				CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
-				if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
+				if (isLeftHanded)
 				{
-					if (booleanActionState.currentState)
+					actionGetInfo.action = appState.EnterNonTriggerLeftHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
-						enterDown = true;
+						if (booleanActionState.currentState)
+						{
+							enterDown = true;
+						}
+						else
+						{
+							enterUp = true;
+						}
 					}
-					else
+				}
+				else
+				{
+					actionGetInfo.action = appState.EnterNonTriggerRightHandedAction;
+					CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
+					if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 					{
-						enterUp = true;
+						if (booleanActionState.currentState)
+						{
+							enterDown = true;
+						}
+						else
+						{
+							enterUp = true;
+						}
 					}
 				}
 				if (enterDown)

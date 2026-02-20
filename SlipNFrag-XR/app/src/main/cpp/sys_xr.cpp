@@ -142,7 +142,7 @@ void Sys_MakeCodeWriteable(unsigned long /*startaddr*/, unsigned long /*length*/
 void Sys_Error(const char* error, ...)
 {
     va_list argptr;
-    static std::vector<char> string(1024);
+    std::vector<char> string(1024);
     
     while (true)
     {

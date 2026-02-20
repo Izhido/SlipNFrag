@@ -957,17 +957,29 @@ int main(int argc, char* argv[])
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.Play2Action));
 
-		strcpy(actionInfo.actionName, "jump");
-		strcpy(actionInfo.localizedActionName, "Jump");
+		strcpy(actionInfo.actionName, "jump_left_handed");
+		strcpy(actionInfo.localizedActionName, "Jump (left handed)");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.JumpAction));
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.JumpLeftHandedAction));
 
-		strcpy(actionInfo.actionName, "swim_down");
-		strcpy(actionInfo.localizedActionName, "Swim down");
+		strcpy(actionInfo.actionName, "jump_right_handed");
+		strcpy(actionInfo.localizedActionName, "Jump (right handed)");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.SwimDownAction));
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.JumpRightHandedAction));
+
+		strcpy(actionInfo.actionName, "swim_down_left_handed");
+		strcpy(actionInfo.localizedActionName, "Swim down (left handed)");
+		actionInfo.countSubactionPaths = 0;
+		actionInfo.subactionPaths = nullptr;
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.SwimDownLeftHandedAction));
+
+		strcpy(actionInfo.actionName, "swim_down_right_handed");
+		strcpy(actionInfo.localizedActionName, "Swim down (right handed)");
+		actionInfo.countSubactionPaths = 0;
+		actionInfo.subactionPaths = nullptr;
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.SwimDownRightHandedAction));
 
 		strcpy(actionInfo.actionName, "run");
 		strcpy(actionInfo.localizedActionName, "Run");
@@ -1007,17 +1019,35 @@ int main(int argc, char* argv[])
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MenuAction));
 
+		strcpy(actionInfo.actionName, "menu_left_handed");
+		strcpy(actionInfo.localizedActionName, "Menu (left handed)");
+		actionInfo.countSubactionPaths = 0;
+		actionInfo.subactionPaths = nullptr;
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MenuLeftHandedAction));
+
+		strcpy(actionInfo.actionName, "menu_right_handed");
+		strcpy(actionInfo.localizedActionName, "Menu (right handed)");
+		actionInfo.countSubactionPaths = 0;
+		actionInfo.subactionPaths = nullptr;
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MenuRightHandedAction));
+
 		strcpy(actionInfo.actionName, "enter_trigger");
 		strcpy(actionInfo.localizedActionName, "Enter (with triggers)");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
 		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterTriggerAction));
 
-		strcpy(actionInfo.actionName, "enter_non_trigger");
-		strcpy(actionInfo.localizedActionName, "Enter (without triggers)");
+		strcpy(actionInfo.actionName, "enter_non_trigger_left_handed");
+		strcpy(actionInfo.localizedActionName, "Enter (without triggers, left handed)");
 		actionInfo.countSubactionPaths = 0;
 		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterNonTriggerAction));
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterNonTriggerLeftHandedAction));
+
+		strcpy(actionInfo.actionName, "enter_non_trigger_right_handed");
+		strcpy(actionInfo.localizedActionName, "Enter (without triggers, right handed)");
+		actionInfo.countSubactionPaths = 0;
+		actionInfo.subactionPaths = nullptr;
+		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterNonTriggerRightHandedAction));
 
 		strcpy(actionInfo.actionName, "escape_y");
 		strcpy(actionInfo.localizedActionName, "Escape (plus Y)");
@@ -1098,12 +1128,12 @@ int main(int argc, char* argv[])
 		std::vector<XrActionSuggestedBinding> bindings
 		{
 			{
-				{ appState.Play1Action, aClick },
-				{ appState.Play2Action, xClick },
-				{ appState.JumpAction, bClick },
-				{ appState.JumpAction, yClick },
-				{ appState.SwimDownAction, aClick },
-				{ appState.SwimDownAction, xClick },
+				{ appState.Play1Action, xClick },
+				{ appState.Play2Action, aClick },
+				{ appState.JumpLeftHandedAction, yClick },
+				{ appState.JumpRightHandedAction, bClick },
+				{ appState.SwimDownLeftHandedAction, xClick },
+				{ appState.SwimDownRightHandedAction, aClick },
 				{ appState.RunAction, leftSqueeze },
 				{ appState.RunAction, rightSqueeze },
 				{ appState.FireAction, leftTrigger },
@@ -1115,10 +1145,12 @@ int main(int argc, char* argv[])
 				{ appState.SwitchWeaponAction, leftThumbstickClick },
 				{ appState.SwitchWeaponAction, rightThumbstickClick },
 				{ appState.MenuAction, menuClick },
+				{ appState.MenuLeftHandedAction, aClick },
+				{ appState.MenuRightHandedAction, xClick },
 				{ appState.EnterTriggerAction, leftTrigger },
 				{ appState.EnterTriggerAction, rightTrigger },
-				{ appState.EnterNonTriggerAction, aClick },
-				{ appState.EnterNonTriggerAction, xClick },
+				{ appState.EnterNonTriggerLeftHandedAction, xClick },
+				{ appState.EnterNonTriggerRightHandedAction, aClick },
 				{ appState.EscapeYAction, leftSqueeze },
 				{ appState.EscapeYAction, rightSqueeze },
 				{ appState.EscapeYAction, bClick },
@@ -1672,36 +1704,27 @@ int main(int argc, char* argv[])
 					{
 						SwitchBoundInput(appState, appState.Play1Action, "Play 1");
 						SwitchBoundInput(appState, appState.Play2Action, "Play 2");
-						SwitchBoundInput(appState, appState.JumpAction, "Jump");
-						SwitchBoundInput(appState, appState.SwimDownAction, "Swim down");
+						SwitchBoundInput(appState, appState.JumpLeftHandedAction, "Jump (left handed)");
+						SwitchBoundInput(appState, appState.JumpRightHandedAction, "Jump (right handed)");
+						SwitchBoundInput(appState, appState.SwimDownLeftHandedAction, "Swim down (left handed)");
+						SwitchBoundInput(appState, appState.SwimDownRightHandedAction, "Swim down (right handed)");
 						SwitchBoundInput(appState, appState.RunAction, "Run");
 						SwitchBoundInput(appState, appState.FireAction, "Fire");
 						SwitchBoundInput(appState, appState.MoveXAction, "Move X");
 						SwitchBoundInput(appState, appState.MoveYAction, "Move Y");
 						SwitchBoundInput(appState, appState.SwitchWeaponAction, "Switch weapon");
 						SwitchBoundInput(appState, appState.MenuAction, "Menu");
+						SwitchBoundInput(appState, appState.MenuLeftHandedAction, "Menu (left handed)");
+						SwitchBoundInput(appState, appState.MenuRightHandedAction, "Menu (right handed)");
 						SwitchBoundInput(appState, appState.EnterTriggerAction, "Enter (with triggers)");
-						SwitchBoundInput(appState, appState.EnterNonTriggerAction, "Enter (without triggers)");
+						SwitchBoundInput(appState, appState.EnterNonTriggerLeftHandedAction, "Enter (without triggers, left handed)");
+						SwitchBoundInput(appState, appState.EnterNonTriggerRightHandedAction, "Enter (without triggers, right handed)");
 						SwitchBoundInput(appState, appState.EscapeYAction, "Escape (plus Y)");
 						SwitchBoundInput(appState, appState.EscapeNonYAction, "Escape (minus Y)");
 						SwitchBoundInput(appState, appState.QuitAction, "Quit");
 						SwitchBoundInput(appState, appState.PoseAction, "Hand pose");
 						SwitchBoundInput(appState, appState.LeftKeyPressAction, "Left key press");
 						SwitchBoundInput(appState, appState.RightKeyPressAction, "Right key press");
-
-						sys_bindingstext.clear();
-						sys_bindingstext.emplace_back("Fixed controls:");
-						sys_bindingstext.emplace_back("");
-						sys_bindingstext.emplace_back("Left or Right Joysticks:");
-						sys_bindingstext.emplace_back("Walk Forward / Backpedal,");
-						sys_bindingstext.emplace_back("   Step Left / Step Right");
-						sys_bindingstext.emplace_back("");
-						sys_bindingstext.emplace_back("(B) / (Y): Jump");
-						sys_bindingstext.emplace_back("(A) / (X): Swim down");
-						sys_bindingstext.emplace_back("");
-						sys_bindingstext.emplace_back("Triggers: Attack");
-						sys_bindingstext.emplace_back("Grip Triggers: Run");
-						sys_bindingstext.emplace_back("Click Joysticks: Change Weapon");
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
