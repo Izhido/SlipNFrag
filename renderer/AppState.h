@@ -11,6 +11,7 @@
 #include "FromEngine.h"
 #include "Controller.h"
 #include "HandTracker.h"
+#include "Actions.h"
 #include <thread>
 #include <vk_mem_alloc.h>
 
@@ -94,33 +95,9 @@ struct AppState
 	bool EngineThreadCreated;
 	bool EngineThreadStarted;
 	bool EngineThreadStopped;
-	XrActionSet ActionSet;
-	XrAction Play1Action;
-	XrAction Play2Action;
-	XrAction JumpLeftHandedAction;
-	XrAction JumpRightHandedAction;
-	XrAction SwimDownLeftHandedAction;
-	XrAction SwimDownRightHandedAction;
-	XrAction RunAction;
-	XrAction FireAction;
-	XrAction MoveXAction;
-	XrAction MoveYAction;
-	XrAction SwitchWeaponAction;
-	XrAction MenuAction;
-	XrAction MenuLeftHandedAction;
-	XrAction MenuRightHandedAction;
-	XrAction EnterTriggerAction;
-	XrAction EnterNonTriggerLeftHandedAction;
-	XrAction EnterNonTriggerRightHandedAction;
-	XrAction EscapeYAction;
-	XrAction EscapeNonYAction;
-	XrAction QuitAction;
-	XrAction PoseAction;
-	XrAction LeftKeyPressAction;
-	XrAction RightKeyPressAction;
+	Actions Actions;
 	std::vector<XrPath> SubactionPaths;
 	std::vector<XrSpace> HandSpaces;
-	std::vector<float> HandScales;
 	std::vector<XrBool32> ActiveHands;
 	std::vector<XrMatrix4x4f> ViewMatrices;
 	std::vector<XrMatrix4x4f> ProjectionMatrices;

@@ -458,7 +458,7 @@ bool Keyboard::Handle(AppState& appState)
 	XrActionStateGetInfo actionGetInfo { XR_TYPE_ACTION_STATE_GET_INFO };
 	XrActionStateBoolean booleanActionState { XR_TYPE_ACTION_STATE_BOOLEAN };
 	
-	actionGetInfo.action = appState.LeftKeyPressAction;
+	actionGetInfo.action = appState.Actions.LeftKeyPress;
 	CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
 	if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 	{
@@ -479,7 +479,7 @@ bool Keyboard::Handle(AppState& appState)
 		}
 	}
 
-	actionGetInfo.action = appState.RightKeyPressAction;
+	actionGetInfo.action = appState.Actions.RightKeyPress;
 	CHECK_XRCMD(xrGetActionStateBoolean(appState.Session, &actionGetInfo, &booleanActionState));
 	if (booleanActionState.isActive && booleanActionState.changedSinceLastSync)
 	{

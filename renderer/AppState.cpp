@@ -132,14 +132,14 @@ void AppState::Destroy()
 
 	Scene.created = false;
 
-	if (ActionSet != XR_NULL_HANDLE)
+	if (Actions.ActionSet != XR_NULL_HANDLE)
 	{
 		xrDestroySpace(HandSpaces[0]);
 		xrDestroySpace(HandSpaces[1]);
 		HandSpaces.clear();
 
-		xrDestroyActionSet(ActionSet);
-		ActionSet = XR_NULL_HANDLE;
+		xrDestroyActionSet(Actions.ActionSet);
+		Actions.ActionSet = XR_NULL_HANDLE;
 	}
 
 	Skybox::DeleteAll(*this);

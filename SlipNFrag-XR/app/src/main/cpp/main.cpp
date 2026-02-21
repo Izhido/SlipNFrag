@@ -31,46 +31,6 @@ std::string GetXrVersionString(XrVersion ver)
 	return Fmt("%d.%d.%d", XR_VERSION_MAJOR(ver), XR_VERSION_MINOR(ver), XR_VERSION_PATCH(ver));
 }
 
-void SwitchBoundInput(AppState& appState, XrAction action, const char* name)
-{
-	XrBoundSourcesForActionEnumerateInfo getInfo { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
-	getInfo.action = action;
-	uint32_t pathCount = 0;
-	CHECK_XRCMD(xrEnumerateBoundSourcesForAction(appState.Session, &getInfo, 0, &pathCount, nullptr));
-	std::vector<XrPath> paths(pathCount);
-	CHECK_XRCMD(xrEnumerateBoundSourcesForAction(appState.Session, &getInfo, uint32_t(paths.size()), &pathCount, paths.data()));
-
-	std::string sourceName;
-	for (uint32_t i = 0; i < pathCount; ++i)
-	{
-		constexpr XrInputSourceLocalizedNameFlags all = XR_INPUT_SOURCE_LOCALIZED_NAME_USER_PATH_BIT |
-														XR_INPUT_SOURCE_LOCALIZED_NAME_INTERACTION_PROFILE_BIT |
-														XR_INPUT_SOURCE_LOCALIZED_NAME_COMPONENT_BIT;
-
-		XrInputSourceLocalizedNameGetInfo nameInfo { XR_TYPE_INPUT_SOURCE_LOCALIZED_NAME_GET_INFO };
-		nameInfo.sourcePath = paths[i];
-		nameInfo.whichComponents = all;
-
-		uint32_t size = 0;
-		CHECK_XRCMD(xrGetInputSourceLocalizedName(appState.Session, &nameInfo, 0, &size, nullptr));
-		if (size < 1)
-		{
-			continue;
-		}
-		std::vector<char> grabSource(size);
-		CHECK_XRCMD(xrGetInputSourceLocalizedName(appState.Session, &nameInfo, uint32_t(grabSource.size()), &size, grabSource.data()));
-		if (!sourceName.empty())
-		{
-			sourceName += " and ";
-		}
-		sourceName += "'";
-		sourceName += std::string(grabSource.data(), size - 1);
-		sourceName += "'";
-	}
-
-	appState.Logger->Info((std::string(name) + " action is bound to %s").c_str(), (!sourceName.empty() ? sourceName.c_str() : "nothing"));
-}
-
 const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer, XrInstance& instance)
 {
 	auto baseHeader = reinterpret_cast<XrEventDataBaseHeader*>(&eventDataBuffer);
@@ -907,251 +867,15 @@ void android_main(struct android_app* app)
 		}
 
 		appState.SubactionPaths.resize(2);
-		appState.HandSpaces.resize(2);
-		appState.HandScales.resize(2);
-		appState.ActiveHands.resize(2);
-
-		XrActionSetCreateInfo actionSetInfo { XR_TYPE_ACTION_SET_CREATE_INFO };
-		strcpy(actionSetInfo.actionSetName, "gameplay");
-		strcpy(actionSetInfo.localizedActionSetName, "Gameplay");
-		actionSetInfo.priority = 0;
-		CHECK_XRCMD(xrCreateActionSet(instance, &actionSetInfo, &appState.ActionSet));
-
 		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left", &appState.SubactionPaths[0]));
 		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right", &appState.SubactionPaths[1]));
 
-		XrActionCreateInfo actionInfo { XR_TYPE_ACTION_CREATE_INFO };
+		appState.Actions.Create(appState, instance);
 
-		actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-		strcpy(actionInfo.actionName, "play_1");
-		strcpy(actionInfo.localizedActionName, "Play 1");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.Play1Action));
-
-		strcpy(actionInfo.actionName, "play_2");
-		strcpy(actionInfo.localizedActionName, "Play 2");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.Play2Action));
-
-		strcpy(actionInfo.actionName, "jump_left_handed");
-		strcpy(actionInfo.localizedActionName, "Jump (left handed)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.JumpLeftHandedAction));
-
-		strcpy(actionInfo.actionName, "jump_right_handed");
-		strcpy(actionInfo.localizedActionName, "Jump (right handed)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.JumpRightHandedAction));
-
-		strcpy(actionInfo.actionName, "swim_down_left_handed");
-		strcpy(actionInfo.localizedActionName, "Swim down (left handed)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.SwimDownLeftHandedAction));
-
-		strcpy(actionInfo.actionName, "swim_down_right_handed");
-		strcpy(actionInfo.localizedActionName, "Swim down (right handed)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.SwimDownRightHandedAction));
-
-		strcpy(actionInfo.actionName, "run");
-		strcpy(actionInfo.localizedActionName, "Run");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.RunAction));
-
-		strcpy(actionInfo.actionName, "fire");
-		strcpy(actionInfo.localizedActionName, "Fire");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.FireAction));
-
-		actionInfo.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
-		strcpy(actionInfo.actionName, "move_x");
-		strcpy(actionInfo.localizedActionName, "Move X");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MoveXAction));
-
-		strcpy(actionInfo.actionName, "move_y");
-		strcpy(actionInfo.localizedActionName, "Move Y");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MoveYAction));
-
-		actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-		strcpy(actionInfo.actionName, "switch_weapon");
-		strcpy(actionInfo.localizedActionName, "Switch weapon");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.SwitchWeaponAction));
-
-		strcpy(actionInfo.actionName, "menu");
-		strcpy(actionInfo.localizedActionName, "Menu");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MenuAction));
-
-		strcpy(actionInfo.actionName, "menu_left_handed");
-		strcpy(actionInfo.localizedActionName, "Menu (left handed)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MenuLeftHandedAction));
-
-		strcpy(actionInfo.actionName, "menu_right_handed");
-		strcpy(actionInfo.localizedActionName, "Menu (right handed)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.MenuRightHandedAction));
-
-		strcpy(actionInfo.actionName, "enter_trigger");
-		strcpy(actionInfo.localizedActionName, "Enter (with triggers)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterTriggerAction));
-
-		strcpy(actionInfo.actionName, "enter_non_trigger_left_handed");
-		strcpy(actionInfo.localizedActionName, "Enter (without triggers, left handed)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterNonTriggerLeftHandedAction));
-
-		strcpy(actionInfo.actionName, "enter_non_trigger_right_handed");
-		strcpy(actionInfo.localizedActionName, "Enter (without triggers, right handed)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EnterNonTriggerRightHandedAction));
-
-		strcpy(actionInfo.actionName, "escape_y");
-		strcpy(actionInfo.localizedActionName, "Escape (plus Y)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EscapeYAction));
-
-		strcpy(actionInfo.actionName, "escape_non_y");
-		strcpy(actionInfo.localizedActionName, "Escape (minus Y)");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.EscapeNonYAction));
-
-		actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-		strcpy(actionInfo.actionName, "quit");
-		strcpy(actionInfo.localizedActionName, "Quit");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.QuitAction));
-
-		actionInfo.actionType = XR_ACTION_TYPE_POSE_INPUT;
-		strcpy(actionInfo.actionName, "hand_pose");
-		strcpy(actionInfo.localizedActionName, "Hand pose");
-		actionInfo.countSubactionPaths = (uint32_t)appState.SubactionPaths.size();
-		actionInfo.subactionPaths = appState.SubactionPaths.data();
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.PoseAction));
-
-		actionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-		strcpy(actionInfo.actionName, "left_key_press");
-		strcpy(actionInfo.localizedActionName, "Left key press");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.LeftKeyPressAction));
-
-		strcpy(actionInfo.actionName, "right_key_press");
-		strcpy(actionInfo.localizedActionName, "Right key press");
-		actionInfo.countSubactionPaths = 0;
-		actionInfo.subactionPaths = nullptr;
-		CHECK_XRCMD(xrCreateAction(appState.ActionSet, &actionInfo, &appState.RightKeyPressAction));
-
-		XrPath aClick;
-		XrPath bClick;
-		XrPath xClick;
-		XrPath yClick;
-		XrPath leftTrigger;
-		XrPath rightTrigger;
-		XrPath leftSqueeze;
-		XrPath rightSqueeze;
-		XrPath leftThumbstickX;
-		XrPath leftThumbstickY;
-		XrPath rightThumbstickX;
-		XrPath rightThumbstickY;
-		XrPath leftThumbstickClick;
-		XrPath rightThumbstickClick;
-		XrPath menuClick;
-		XrPath leftPose;
-		XrPath rightPose;
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/a/click", &aClick));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/b/click", &bClick));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/x/click", &xClick));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/y/click", &yClick));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/trigger/value", &leftTrigger));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/trigger/value", &rightTrigger));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/squeeze/value", &leftSqueeze));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/squeeze/value", &rightSqueeze));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/x", &leftThumbstickX));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/y", &leftThumbstickY));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/x", &rightThumbstickX));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/y", &rightThumbstickY));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/click", &leftThumbstickClick));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/click", &rightThumbstickClick));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/menu/click", &menuClick));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/aim/pose", &leftPose));
-		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/aim/pose", &rightPose));
-
-		XrPath interaction;
-		CHECK_XRCMD(xrStringToPath(instance, "/interaction_profiles/oculus/touch_controller", &interaction));
-		std::vector<XrActionSuggestedBinding> bindings
-		{
-			{
-				{ appState.Play1Action, xClick },
-				{ appState.Play2Action, aClick },
-				{ appState.JumpLeftHandedAction, yClick },
-				{ appState.JumpRightHandedAction, bClick },
-				{ appState.SwimDownLeftHandedAction, xClick },
-				{ appState.SwimDownRightHandedAction, aClick },
-				{ appState.RunAction, leftSqueeze },
-				{ appState.RunAction, rightSqueeze },
-				{ appState.FireAction, leftTrigger },
-				{ appState.FireAction, rightTrigger },
-				{ appState.MoveXAction, leftThumbstickX },
-				{ appState.MoveXAction, rightThumbstickX },
-				{ appState.MoveYAction, leftThumbstickY },
-				{ appState.MoveYAction, rightThumbstickY },
-				{ appState.SwitchWeaponAction, leftThumbstickClick },
-				{ appState.SwitchWeaponAction, rightThumbstickClick },
-				{ appState.MenuAction, menuClick },
-				{ appState.MenuLeftHandedAction, aClick },
-				{ appState.MenuRightHandedAction, xClick },
-				{ appState.EnterTriggerAction, leftTrigger },
-				{ appState.EnterTriggerAction, rightTrigger },
-				{ appState.EnterNonTriggerLeftHandedAction, xClick },
-				{ appState.EnterNonTriggerRightHandedAction, aClick },
-				{ appState.EscapeYAction, leftSqueeze },
-				{ appState.EscapeYAction, rightSqueeze },
-				{ appState.EscapeYAction, bClick },
-				{ appState.EscapeYAction, yClick },
-				{ appState.EscapeNonYAction, leftSqueeze },
-				{ appState.EscapeNonYAction, rightSqueeze },
-				{ appState.EscapeNonYAction, bClick },
-				{ appState.QuitAction, yClick },
-				{ appState.PoseAction, leftPose },
-				{ appState.PoseAction, rightPose },
-				{ appState.LeftKeyPressAction, leftTrigger },
-				{ appState.RightKeyPressAction, rightTrigger }
-			}
-		};
-
-		XrInteractionProfileSuggestedBinding suggestedBindings { XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
-		suggestedBindings.interactionProfile = interaction;
-		suggestedBindings.suggestedBindings = bindings.data();
-		suggestedBindings.countSuggestedBindings = (uint32_t)bindings.size();
-		CHECK_XRCMD(xrSuggestInteractionProfileBindings(instance, &suggestedBindings));
+		appState.HandSpaces.resize(2);
 
 		XrActionSpaceCreateInfo actionSpaceInfo { XR_TYPE_ACTION_SPACE_CREATE_INFO };
-		actionSpaceInfo.action = appState.PoseAction;
+		actionSpaceInfo.action = appState.Actions.Pose;
 		actionSpaceInfo.poseInActionSpace.orientation.w = 1.f;
 		actionSpaceInfo.subactionPath = appState.SubactionPaths[0];
 		CHECK_XRCMD(xrCreateActionSpace(appState.Session, &actionSpaceInfo, &appState.HandSpaces[0]));
@@ -1160,7 +884,7 @@ void android_main(struct android_app* app)
 
 		XrSessionActionSetsAttachInfo attachInfo { XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO };
 		attachInfo.countActionSets = 1;
-		attachInfo.actionSets = &appState.ActionSet;
+		attachInfo.actionSets = &appState.Actions.ActionSet;
 		CHECK_XRCMD(xrAttachSessionActionSets(appState.Session, &attachInfo));
 
 		XrReferenceSpaceCreateInfo referenceSpaceCreateInfo { XR_TYPE_REFERENCE_SPACE_CREATE_INFO };
@@ -1566,6 +1290,8 @@ void android_main(struct android_app* app)
 
 		CHECK_VKCMD(vmaCreateAllocator(&allocatorCreateInfo, &appState.Allocator));
 
+		appState.ActiveHands.resize(2);
+
 		const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
@@ -1587,7 +1313,6 @@ void android_main(struct android_app* app)
 				}
 			} while (ident >= 0);
 
-			auto lossPending = false;
 			auto exitRenderLoop = false;
 			auto requestRestart = false;
 
@@ -1601,7 +1326,6 @@ void android_main(struct android_app* app)
 						appState.Logger->Warn("XrEventDataInstanceLossPending by %ld", instanceLossPending.lossTime);
 						exitRenderLoop = true;
 						requestRestart = true;
-						lossPending = true;
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
@@ -1698,29 +1422,7 @@ void android_main(struct android_app* app)
 					}
 					case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
 					{
-						SwitchBoundInput(appState, appState.Play1Action, "Play 1");
-						SwitchBoundInput(appState, appState.Play2Action, "Play 2");
-						SwitchBoundInput(appState, appState.JumpLeftHandedAction, "Jump (left handed)");
-						SwitchBoundInput(appState, appState.JumpRightHandedAction, "Jump (right handed)");
-						SwitchBoundInput(appState, appState.SwimDownLeftHandedAction, "Swim down (left handed)");
-						SwitchBoundInput(appState, appState.SwimDownRightHandedAction, "Swim down (right handed)");
-						SwitchBoundInput(appState, appState.RunAction, "Run");
-						SwitchBoundInput(appState, appState.FireAction, "Fire");
-						SwitchBoundInput(appState, appState.MoveXAction, "Move X");
-						SwitchBoundInput(appState, appState.MoveYAction, "Move Y");
-						SwitchBoundInput(appState, appState.SwitchWeaponAction, "Switch weapon");
-						SwitchBoundInput(appState, appState.MenuAction, "Menu");
-						SwitchBoundInput(appState, appState.MenuLeftHandedAction, "Menu (left handed)");
-						SwitchBoundInput(appState, appState.MenuRightHandedAction, "Menu (right handed)");
-						SwitchBoundInput(appState, appState.EnterTriggerAction, "Enter (with triggers)");
-						SwitchBoundInput(appState, appState.EnterNonTriggerLeftHandedAction, "Enter (without triggers, left handed)");
-						SwitchBoundInput(appState, appState.EnterNonTriggerRightHandedAction, "Enter (without triggers, right handed)");
-						SwitchBoundInput(appState, appState.EscapeYAction, "Escape (plus Y)");
-						SwitchBoundInput(appState, appState.EscapeNonYAction, "Escape (minus Y)");
-						SwitchBoundInput(appState, appState.QuitAction, "Quit");
-						SwitchBoundInput(appState, appState.PoseAction, "Hand pose");
-						SwitchBoundInput(appState, appState.LeftKeyPressAction, "Left key press");
-						SwitchBoundInput(appState, appState.RightKeyPressAction, "Right key press");
+						appState.Actions.Log(appState);
 						break;
 					}
 					case XR_TYPE_EVENT_DATA_REFERENCE_SPACE_CHANGE_PENDING:
@@ -1733,11 +1435,6 @@ void android_main(struct android_app* app)
 					{
 						appState.Logger->Verbose("Ignoring event type %d", event->type);
 					}
-				}
-
-				if (lossPending)
-				{
-					break;
 				}
 			}
 
@@ -1761,7 +1458,7 @@ void android_main(struct android_app* app)
 				continue;
 			}
 
-			const XrActiveActionSet activeActionSet { appState.ActionSet, XR_NULL_PATH };
+			const XrActiveActionSet activeActionSet { appState.Actions.ActionSet, XR_NULL_PATH };
 			XrActionsSyncInfo syncInfo { XR_TYPE_ACTIONS_SYNC_INFO };
 			syncInfo.countActiveActionSets = 1;
 			syncInfo.activeActionSets = &activeActionSet;
@@ -1773,7 +1470,7 @@ void android_main(struct android_app* app)
 			XrActionStatePose poseState { XR_TYPE_ACTION_STATE_POSE };
 
 			XrActionStateGetInfo getInfo { XR_TYPE_ACTION_STATE_GET_INFO };
-			getInfo.action = appState.PoseAction;
+			getInfo.action = appState.Actions.Pose;
 
 			getInfo.subactionPath = appState.SubactionPaths[0];
 			CHECK_XRCMD(xrGetActionStatePose(appState.Session, &getInfo, &poseState));
@@ -2617,6 +2314,18 @@ void android_main(struct android_app* app)
 						if (keyboardTexture.image == VK_NULL_HANDLE)
 						{
 							keyboardTexture.Create(appState, appState.ConsoleWidth, appState.ConsoleHeight / 2, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+							while (appState.KeyboardTextureNames.size() <= swapchainImageIndex)
+							{
+								appState.KeyboardTextureNames.push_back("");
+							}
+							appState.KeyboardTextureNames[swapchainImageIndex] = "Keyboard texture " + std::to_string(swapchainImageIndex);
+							VkDebugUtilsObjectNameInfoEXT textureName { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
+							textureName.objectType = VK_OBJECT_TYPE_IMAGE;
+							textureName.objectHandle = (uint64_t)keyboardTexture.image;
+							textureName.pObjectName = appState.KeyboardTextureNames[swapchainImageIndex].c_str();
+							CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &textureName));
+#endif
 						}
 
 						appState.RenderKeyboard(keyboardPerFrame);
