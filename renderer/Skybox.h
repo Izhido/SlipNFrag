@@ -6,9 +6,6 @@
 #include <openxr/openxr_platform.h>
 #include <vector>
 
-struct AppState;
-struct Scene;
-
 struct Skybox
 {
 	Skybox* next;
@@ -16,9 +13,10 @@ struct Skybox
 	std::vector<void*> sources;
 	XrSwapchain swapchain;
 	std::vector<XrSwapchainImageVulkan2KHR> images;
-	
+
+	void Create(struct AppState& appState, int width, int height, struct dskybox_t& skybox, uint32_t swapchainImageIndex);
 	void Delete(AppState& appState) const;
-	static void MoveToPrevious(Scene& scene);
+	static void MoveToPrevious(struct Scene& scene);
 	static void DeleteOld(AppState& appState);
 	static void DeleteAll(AppState& appState);
 };
