@@ -2899,7 +2899,7 @@ void android_main(struct android_app* app)
 			vkDestroyInstance(vulkanInstance, nullptr);
 		}
 
-		if (!sys_errormessage.empty())
+		if (sys_errorcalled)
 		{
 			throw std::runtime_error(sys_errormessage);
 		}
