@@ -112,22 +112,22 @@ void Skybox::Create(AppState &appState, int width, int height, dskybox_t& skybox
 	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	CHECK_VKCMD(vkBeginCommandBuffer(setupCommandBuffer, &commandBufferBeginInfo));
 
-	appState.copyBarrier.image = images[swapchainImageIndex].image;
-	appState.submitBarrier.image = appState.copyBarrier.image;
+	appState.CopyBarrier.image = images[swapchainImageIndex].image;
+	appState.SubmitBarrier.image = appState.CopyBarrier.image;
 
 	for (auto i = 0; i < 6; i++)
 	{
-		appState.copyBarrier.subresourceRange.baseArrayLayer = i;
-		vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
+		appState.CopyBarrier.subresourceRange.baseArrayLayer = i;
+		vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.CopyBarrier);
 		region.imageSubresource.baseArrayLayer = i;
 		vkCmdCopyBufferToImage(setupCommandBuffer, stagingBuffer.buffer, images[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 		region.bufferOffset += width * height * 4;
-		appState.submitBarrier.subresourceRange.baseArrayLayer = i;
-		vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
+		appState.SubmitBarrier.subresourceRange.baseArrayLayer = i;
+		vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.SubmitBarrier);
 	}
 
-	appState.copyBarrier.subresourceRange.baseArrayLayer = 0;
-	appState.submitBarrier.subresourceRange.baseArrayLayer = 0;
+	appState.CopyBarrier.subresourceRange.baseArrayLayer = 0;
+	appState.SubmitBarrier.subresourceRange.baseArrayLayer = 0;
 
 	CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
 

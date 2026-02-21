@@ -114,87 +114,173 @@ void Actions::Create(AppState& appState, XrInstance instance)
 	strcpy(actionInfo.localizedActionName, "Right key press");
 	CHECK_XRCMD(xrCreateAction(ActionSet, &actionInfo, &RightKeyPress));
 
-	XrPath aClick;
-	XrPath bClick;
-	XrPath xClick;
-	XrPath yClick;
-	XrPath leftTrigger;
-	XrPath rightTrigger;
-	XrPath leftSqueeze;
-	XrPath rightSqueeze;
-	XrPath leftThumbstickX;
-	XrPath leftThumbstickY;
-	XrPath rightThumbstickX;
-	XrPath rightThumbstickY;
-	XrPath leftThumbstickClick;
-	XrPath rightThumbstickClick;
-	XrPath menuClick;
-	XrPath leftPose;
-	XrPath rightPose;
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/a/click", &aClick));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/b/click", &bClick));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/x/click", &xClick));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/y/click", &yClick));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/trigger/value", &leftTrigger));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/trigger/value", &rightTrigger));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/squeeze/value", &leftSqueeze));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/squeeze/value", &rightSqueeze));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/x", &leftThumbstickX));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/y", &leftThumbstickY));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/x", &rightThumbstickX));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/y", &rightThumbstickY));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/click", &leftThumbstickClick));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/click", &rightThumbstickClick));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/menu/click", &menuClick));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/aim/pose", &leftPose));
-	CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/aim/pose", &rightPose));
-
-	XrPath interaction;
-	CHECK_XRCMD(xrStringToPath(instance, "/interaction_profiles/oculus/touch_controller", &interaction));
-	std::vector<XrActionSuggestedBinding> bindings
+	// Oculus Touch bindings:
 	{
-		{ Play1, xClick },
-		{ Play2, aClick },
-		{ JumpLeftHanded, yClick },
-		{ JumpRightHanded, bClick },
-		{ SwimDownLeftHanded, xClick },
-		{ SwimDownRightHanded, aClick },
-		{ Run, leftSqueeze },
-		{ Run, rightSqueeze },
-		{ Fire, leftTrigger },
-		{ Fire, rightTrigger },
-		{ MoveX, leftThumbstickX },
-		{ MoveX, rightThumbstickX },
-		{ MoveY, leftThumbstickY },
-		{ MoveY, rightThumbstickY },
-		{ SwitchWeapon, leftThumbstickClick },
-		{ SwitchWeapon, rightThumbstickClick },
-		{ Menu, menuClick },
-		{ MenuLeftHanded, aClick },
-		{ MenuRightHanded, xClick },
-		{ EnterTrigger, leftTrigger },
-		{ EnterTrigger, rightTrigger },
-		{ EnterNonTriggerLeftHanded, xClick },
-		{ EnterNonTriggerRightHanded, aClick },
-		{ EscapeY, leftSqueeze },
-		{ EscapeY, rightSqueeze },
-		{ EscapeY, bClick },
-		{ EscapeY, yClick },
-		{ EscapeNonY, leftSqueeze },
-		{ EscapeNonY, rightSqueeze },
-		{ EscapeNonY, bClick },
-		{ Quit, yClick },
-		{ Pose, leftPose },
-		{ Pose, rightPose },
-		{ LeftKeyPress, leftTrigger },
-		{ RightKeyPress, rightTrigger }
-	};
+		XrPath aClick;
+		XrPath bClick;
+		XrPath xClick;
+		XrPath yClick;
+		XrPath leftTrigger;
+		XrPath rightTrigger;
+		XrPath leftSqueeze;
+		XrPath rightSqueeze;
+		XrPath leftThumbstickX;
+		XrPath leftThumbstickY;
+		XrPath rightThumbstickX;
+		XrPath rightThumbstickY;
+		XrPath leftThumbstickClick;
+		XrPath rightThumbstickClick;
+		XrPath menuClick;
+		XrPath leftPose;
+		XrPath rightPose;
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/a/click", &aClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/b/click", &bClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/x/click", &xClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/y/click", &yClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/trigger/value", &leftTrigger));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/trigger/value", &rightTrigger));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/squeeze/value", &leftSqueeze));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/squeeze/value", &rightSqueeze));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/x", &leftThumbstickX));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/y", &leftThumbstickY));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/x", &rightThumbstickX));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/y", &rightThumbstickY));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/click", &leftThumbstickClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/click", &rightThumbstickClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/menu/click", &menuClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/aim/pose", &leftPose));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/aim/pose", &rightPose));
 
-	XrInteractionProfileSuggestedBinding suggestedBindings { XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
-	suggestedBindings.interactionProfile = interaction;
-	suggestedBindings.suggestedBindings = bindings.data();
-	suggestedBindings.countSuggestedBindings = (uint32_t)bindings.size();
-	CHECK_XRCMD(xrSuggestInteractionProfileBindings(instance, &suggestedBindings));
+		XrPath interaction;
+		CHECK_XRCMD(xrStringToPath(instance, "/interaction_profiles/oculus/touch_controller", &interaction));
+		std::vector<XrActionSuggestedBinding> bindings
+		{
+			{ Play1, xClick },
+			{ Play2, aClick },
+			{ JumpLeftHanded, yClick },
+			{ JumpRightHanded, bClick },
+			{ SwimDownLeftHanded, xClick },
+			{ SwimDownRightHanded, aClick },
+			{ Run, leftSqueeze },
+			{ Run, rightSqueeze },
+			{ Fire, leftTrigger },
+			{ Fire, rightTrigger },
+			{ MoveX, leftThumbstickX },
+			{ MoveX, rightThumbstickX },
+			{ MoveY, leftThumbstickY },
+			{ MoveY, rightThumbstickY },
+			{ SwitchWeapon, leftThumbstickClick },
+			{ SwitchWeapon, rightThumbstickClick },
+			{ Menu, menuClick },
+			{ MenuLeftHanded, aClick },
+			{ MenuRightHanded, xClick },
+			{ EnterTrigger, leftTrigger },
+			{ EnterTrigger, rightTrigger },
+			{ EnterNonTriggerLeftHanded, xClick },
+			{ EnterNonTriggerRightHanded, aClick },
+			{ EscapeY, leftSqueeze },
+			{ EscapeY, rightSqueeze },
+			{ EscapeY, bClick },
+			{ EscapeY, yClick },
+			{ EscapeNonY, leftSqueeze },
+			{ EscapeNonY, rightSqueeze },
+			{ EscapeNonY, bClick },
+			{ Quit, yClick },
+			{ Pose, leftPose },
+			{ Pose, rightPose },
+			{ LeftKeyPress, leftTrigger },
+			{ RightKeyPress, rightTrigger }
+		};
+
+		XrInteractionProfileSuggestedBinding suggestedBindings { XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
+		suggestedBindings.interactionProfile = interaction;
+		suggestedBindings.suggestedBindings = bindings.data();
+		suggestedBindings.countSuggestedBindings = (uint32_t)bindings.size();
+		CHECK_XRCMD(xrSuggestInteractionProfileBindings(instance, &suggestedBindings));
+	}
+
+	// Generic controller bindings:
+	if (appState.GenericControllerEnabled)
+	{
+		XrPath leftPrimaryClick;
+		XrPath leftSecondaryClick;
+		XrPath rightPrimaryClick;
+		XrPath rightSecondaryClick;
+		XrPath leftTrigger;
+		XrPath rightTrigger;
+		XrPath leftSqueeze;
+		XrPath rightSqueeze;
+		XrPath leftThumbstickX;
+		XrPath leftThumbstickY;
+		XrPath rightThumbstickX;
+		XrPath rightThumbstickY;
+		XrPath leftThumbstickClick;
+		XrPath rightThumbstickClick;
+		XrPath leftPose;
+		XrPath rightPose;
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/primary/click", &leftPrimaryClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/secondary/click", &leftSecondaryClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/primary/click", &rightPrimaryClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/secondary/click", &rightSecondaryClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/trigger/value", &leftTrigger));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/trigger/value", &rightTrigger));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/squeeze/value", &leftSqueeze));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/squeeze/value", &rightSqueeze));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/x", &leftThumbstickX));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/y", &leftThumbstickY));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/x", &rightThumbstickX));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/y", &rightThumbstickY));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/thumbstick/click", &leftThumbstickClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/thumbstick/click", &rightThumbstickClick));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/left/input/aim/pose", &leftPose));
+		CHECK_XRCMD(xrStringToPath(instance, "/user/hand/right/input/aim/pose", &rightPose));
+
+		XrPath interaction;
+		CHECK_XRCMD(xrStringToPath(instance, "/interaction_profiles/khr/generic_controller", &interaction));
+		std::vector<XrActionSuggestedBinding> bindings
+		{
+			{ Play1, leftPrimaryClick },
+			{ Play2, rightPrimaryClick },
+			{ JumpLeftHanded, leftSecondaryClick },
+			{ JumpRightHanded, rightSecondaryClick },
+			{ SwimDownLeftHanded, leftPrimaryClick },
+			{ SwimDownRightHanded, rightPrimaryClick },
+			{ Run, leftSqueeze },
+			{ Run, rightSqueeze },
+			{ Fire, leftTrigger },
+			{ Fire, rightTrigger },
+			{ MoveX, leftThumbstickX },
+			{ MoveX, rightThumbstickX },
+			{ MoveY, leftThumbstickY },
+			{ MoveY, rightThumbstickY },
+			{ SwitchWeapon, leftThumbstickClick },
+			{ SwitchWeapon, rightThumbstickClick },
+			{ MenuLeftHanded, rightPrimaryClick },
+			{ MenuRightHanded, leftPrimaryClick },
+			{ EnterTrigger, leftTrigger },
+			{ EnterTrigger, rightTrigger },
+			{ EnterNonTriggerLeftHanded, leftPrimaryClick },
+			{ EnterNonTriggerRightHanded, rightPrimaryClick },
+			{ EscapeY, leftSqueeze },
+			{ EscapeY, rightSqueeze },
+			{ EscapeY, rightSecondaryClick },
+			{ EscapeY, leftSecondaryClick },
+			{ EscapeNonY, leftSqueeze },
+			{ EscapeNonY, rightSqueeze },
+			{ EscapeNonY, rightSecondaryClick },
+			{ Quit, leftSecondaryClick },
+			{ Pose, leftPose },
+			{ Pose, rightPose },
+			{ LeftKeyPress, leftTrigger },
+			{ RightKeyPress, rightTrigger }
+		};
+
+		XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
+		suggestedBindings.interactionProfile = interaction;
+		suggestedBindings.suggestedBindings = bindings.data();
+		suggestedBindings.countSuggestedBindings = (uint32_t)bindings.size();
+		CHECK_XRCMD(xrSuggestInteractionProfileBindings(instance, &suggestedBindings));
+	}
 }
 
 void Actions::LogAction(AppState& appState, XrAction action, const char* name)

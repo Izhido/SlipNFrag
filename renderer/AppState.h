@@ -30,6 +30,7 @@ struct AppState
 	bool Resumed;
 	VkDevice Device;
 	bool CylinderCompositionLayerEnabled;
+	bool GenericControllerEnabled;
 	bool IndexTypeUInt8Enabled;
 	bool HandTrackingEnabled;
 	bool SimultaneousHandsAndControllersEnabled;
@@ -105,8 +106,8 @@ struct AppState
 	XrSpaceLocation CameraLocation;
 	bool CameraLocationIsValid;
 	bool Focused;
-	VkImageMemoryBarrier copyBarrier;
-	VkImageMemoryBarrier submitBarrier;
+	VkImageMemoryBarrier CopyBarrier;
+	VkImageMemoryBarrier SubmitBarrier;
 	VmaAllocator Allocator;
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;

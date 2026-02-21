@@ -63,20 +63,20 @@ void Scene::Create(AppState& appState)
     appState.ScreenWidth = appState.ConsoleWidth * Constants::screenToConsoleMultiplier;
     appState.ScreenHeight = appState.ConsoleHeight * Constants::screenToConsoleMultiplier;
 
-    appState.copyBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    appState.copyBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    appState.copyBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    appState.copyBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    appState.copyBarrier.subresourceRange.levelCount = 1;
-    appState.copyBarrier.subresourceRange.layerCount = 1;
+    appState.CopyBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    appState.CopyBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    appState.CopyBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    appState.CopyBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    appState.CopyBarrier.subresourceRange.levelCount = 1;
+    appState.CopyBarrier.subresourceRange.layerCount = 1;
 
-    appState.submitBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    appState.submitBarrier.srcAccessMask = appState.copyBarrier.dstAccessMask;
-    appState.submitBarrier.oldLayout = appState.copyBarrier.newLayout;
-    appState.submitBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    appState.submitBarrier.subresourceRange.aspectMask = appState.copyBarrier.subresourceRange.aspectMask;
-    appState.submitBarrier.subresourceRange.levelCount = appState.copyBarrier.subresourceRange.levelCount;
-    appState.submitBarrier.subresourceRange.layerCount = appState.copyBarrier.subresourceRange.layerCount;
+    appState.SubmitBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    appState.SubmitBarrier.srcAccessMask = appState.CopyBarrier.dstAccessMask;
+    appState.SubmitBarrier.oldLayout = appState.CopyBarrier.newLayout;
+    appState.SubmitBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    appState.SubmitBarrier.subresourceRange.aspectMask = appState.CopyBarrier.subresourceRange.aspectMask;
+    appState.SubmitBarrier.subresourceRange.levelCount = appState.CopyBarrier.subresourceRange.levelCount;
+    appState.SubmitBarrier.subresourceRange.layerCount = appState.CopyBarrier.subresourceRange.layerCount;
 
     XrSwapchainCreateInfo swapchainCreateInfo { XR_TYPE_SWAPCHAIN_CREATE_INFO };
     swapchainCreateInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
@@ -267,14 +267,14 @@ void Scene::Create(AppState& appState)
     leftArrows.Open("leftarrows.png", appState.FileLoader);
 	CHECK_VKCMD(vmaCopyMemoryToAllocation(appState.Allocator, leftArrows.image, buffer.allocation, 0, leftArrows.width * leftArrows.height * leftArrows.components));
 
-    appState.copyBarrier.image = swapchainImages[swapchainImageIndex].image;
-    vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
+    appState.CopyBarrier.image = swapchainImages[swapchainImageIndex].image;
+    vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.CopyBarrier);
 
     region.imageSubresource.baseArrayLayer = 0;
     vkCmdCopyBufferToImage(setupCommandBuffer, buffer.buffer, swapchainImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-    appState.submitBarrier.image = swapchainImages[swapchainImageIndex].image;
-    vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
+    appState.SubmitBarrier.image = swapchainImages[swapchainImageIndex].image;
+    vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.SubmitBarrier);
 
     CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
     CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
@@ -304,14 +304,14 @@ void Scene::Create(AppState& appState)
     rightArrows.Open("rightarrows.png", appState.FileLoader);
 	CHECK_VKCMD(vmaCopyMemoryToAllocation(appState.Allocator, rightArrows.image, buffer.allocation, 0, rightArrows.width * rightArrows.height * rightArrows.components));
 
-    appState.copyBarrier.image = swapchainImages[swapchainImageIndex].image;
-    vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.copyBarrier);
+    appState.CopyBarrier.image = swapchainImages[swapchainImageIndex].image;
+    vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.CopyBarrier);
 
     region.imageSubresource.baseArrayLayer = 0;
     vkCmdCopyBufferToImage(setupCommandBuffer, buffer.buffer, swapchainImages[swapchainImageIndex].image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-    appState.submitBarrier.image = swapchainImages[swapchainImageIndex].image;
-    vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.submitBarrier);
+    appState.SubmitBarrier.image = swapchainImages[swapchainImageIndex].image;
+    vkCmdPipelineBarrier(setupCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.SubmitBarrier);
 
     CHECK_VKCMD(vkEndCommandBuffer(setupCommandBuffer));
     CHECK_VKCMD(vkQueueSubmit(appState.Queue, 1, &setupSubmitInfo, VK_NULL_HANDLE));
