@@ -110,10 +110,24 @@ void Scene::Create(AppState& appState)
         auto& consoleTexture = appState.ConsoleTextures[i];
 
 		consoleTexture.Create(appState, appState.ConsoleWidth, appState.ConsoleHeight, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+		appState.ConsoleTextureNames.push_back("Console texture " + std::to_string(i));
+	    VkDebugUtilsObjectNameInfoEXT textureName { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
+        textureName.objectType = VK_OBJECT_TYPE_IMAGE;
+        textureName.objectHandle = (uint64_t)consoleTexture.image;
+        textureName.pObjectName = appState.ConsoleTextureNames.back().c_str();
+	    CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &textureName));
+#endif
 
         auto& statusBarTexture = appState.StatusBarTextures[i];
 
 		statusBarTexture.Create(appState, appState.ScreenWidth, (SBAR_HEIGHT + 24) * Constants::screenToConsoleMultiplier, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+        appState.StatusBarTextureNames.push_back("Status bar texture " + std::to_string(i));
+        textureName.objectHandle = (uint64_t)statusBarTexture.image;
+        textureName.pObjectName = appState.StatusBarTextureNames.back().c_str();
+        CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &textureName));
+#endif
     }
 
     swapchainCreateInfo.width = appState.ScreenWidth;

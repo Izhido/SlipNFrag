@@ -50,8 +50,15 @@ struct AppState
 	std::vector<uint32_t> ScreenData;
 	std::vector<Texture> ConsoleTextures;
 	std::vector<Texture> StatusBarTextures;
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	std::vector<std::string> ConsoleTextureNames;
+	std::vector<std::string> StatusBarTextureNames;
+#endif
 	Keyboard Keyboard;
 	std::unordered_map<uint32_t, Texture> KeyboardTextures;
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	std::vector<std::string> KeyboardTextureNames;
+#endif
 	float KeyboardHitOffsetY;
 	XrSwapchain LeftArrowsSwapchain;
 	XrSwapchain RightArrowsSwapchain;

@@ -2557,6 +2557,18 @@ int main(int argc, char* argv[])
 						if (keyboardTexture.image == VK_NULL_HANDLE)
 						{
 							keyboardTexture.Create(appState, appState.ConsoleWidth, appState.ConsoleHeight / 2, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+							while (appState.KeyboardTextureNames.size() <= swapchainImageIndex)
+							{
+								appState.KeyboardTextureNames.push_back("");
+							}
+							appState.KeyboardTextureNames[swapchainImageIndex] = "Keyboard texture " + std::to_string(swapchainImageIndex);
+							VkDebugUtilsObjectNameInfoEXT textureName { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
+							textureName.objectType = VK_OBJECT_TYPE_IMAGE;
+							textureName.objectHandle = (uint64_t)keyboardTexture.image;
+							textureName.pObjectName = appState.KeyboardTextureNames[swapchainImageIndex].c_str();
+							CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &textureName));
+#endif
 						}
 
 						appState.RenderKeyboard(keyboardPerFrame);
