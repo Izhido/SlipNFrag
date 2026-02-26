@@ -29,46 +29,6 @@ std::string GetXrVersionString(XrVersion ver)
 	return Fmt("%d.%d.%d", XR_VERSION_MAJOR(ver), XR_VERSION_MINOR(ver), XR_VERSION_PATCH(ver));
 }
 
-void SwitchBoundInput(AppState& appState, XrAction action, const char* name)
-{
-	XrBoundSourcesForActionEnumerateInfo getInfo { XR_TYPE_BOUND_SOURCES_FOR_ACTION_ENUMERATE_INFO };
-	getInfo.action = action;
-	uint32_t pathCount = 0;
-	CHECK_XRCMD(xrEnumerateBoundSourcesForAction(appState.Session, &getInfo, 0, &pathCount, nullptr));
-	std::vector<XrPath> paths(pathCount);
-	CHECK_XRCMD(xrEnumerateBoundSourcesForAction(appState.Session, &getInfo, uint32_t(paths.size()), &pathCount, paths.data()));
-
-	std::string sourceName;
-	for (uint32_t i = 0; i < pathCount; ++i)
-	{
-		constexpr XrInputSourceLocalizedNameFlags all = XR_INPUT_SOURCE_LOCALIZED_NAME_USER_PATH_BIT |
-														XR_INPUT_SOURCE_LOCALIZED_NAME_INTERACTION_PROFILE_BIT |
-														XR_INPUT_SOURCE_LOCALIZED_NAME_COMPONENT_BIT;
-
-		XrInputSourceLocalizedNameGetInfo nameInfo { XR_TYPE_INPUT_SOURCE_LOCALIZED_NAME_GET_INFO };
-		nameInfo.sourcePath = paths[i];
-		nameInfo.whichComponents = all;
-
-		uint32_t size = 0;
-		CHECK_XRCMD(xrGetInputSourceLocalizedName(appState.Session, &nameInfo, 0, &size, nullptr));
-		if (size < 1)
-		{
-			continue;
-		}
-		std::vector<char> grabSource(size);
-		CHECK_XRCMD(xrGetInputSourceLocalizedName(appState.Session, &nameInfo, uint32_t(grabSource.size()), &size, grabSource.data()));
-		if (!sourceName.empty())
-		{
-			sourceName += " and ";
-		}
-		sourceName += "'";
-		sourceName += std::string(grabSource.data(), size - 1);
-		sourceName += "'";
-	}
-
-	appState.Logger->Info((std::string(name) + " action is bound to %s").c_str(), (!sourceName.empty() ? sourceName.c_str() : "nothing"));
-}
-
 const XrEventDataBaseHeader* TryReadNextEvent(XrEventDataBuffer& eventDataBuffer, XrInstance& instance)
 {
 	auto baseHeader = reinterpret_cast<XrEventDataBaseHeader*>(&eventDataBuffer);
@@ -1302,20 +1262,37 @@ int main(int argc, char* argv[])
 		std::vector<XrCompositionLayerBaseHeader*> layers;
 
 		XrCompositionLayerProjection worldLayer { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
-		XrCompositionLayerCylinderKHR screenCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerQuad screenPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
-		XrCompositionLayerCylinderKHR leftArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerQuad leftArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
-		XrCompositionLayerCylinderKHR rightArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerQuad rightArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
-		XrCompositionLayerCylinderKHR keyboardCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerQuad keyboardPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 
-		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
-		std::vector<XrCompositionLayerDepthInfoKHR> depthInfoForProjectionLayerViews;
+		XrCompositionLayerCylinderKHR screenCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		screenCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerQuad screenPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		screenPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerCylinderKHR keyboardCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		keyboardCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+
+		XrCompositionLayerQuad keyboardPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		keyboardPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+
+		XrCompositionLayerCylinderKHR leftArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		leftArrowsCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerQuad leftArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		leftArrowsPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerCylinderKHR rightArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		rightArrowsCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerQuad rightArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		rightArrowsPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
 
 		XrCompositionLayerCubeKHR skyboxLayer { XR_TYPE_COMPOSITION_LAYER_CUBE_KHR };
 		skyboxLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+
+		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
+		std::vector<XrCompositionLayerDepthInfoKHR> depthInfoForProjectionLayerViews;
 
 		XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
 		waitInfo.timeout = XR_INFINITE_DURATION;
@@ -2082,15 +2059,6 @@ int main(int argc, char* argv[])
 					worldLayer.viewCount = (uint32_t) projectionLayerViews.size();
 					worldLayer.views = projectionLayerViews.data();
 
-					if (appState.Mode != AppWorldMode || appState.Scene.skybox != nullptr)
-					{
-						worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
-					}
-					else
-					{
-						worldLayer.layerFlags = 0;
-					}
-
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
 					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.swapchain, nullptr, &swapchainImageIndex));
@@ -2226,7 +2194,6 @@ int main(int argc, char* argv[])
 						{
 							if (appState.CameraLocationIsValid)
 							{
-								screenCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 								screenCylinderLayer.pose = appState.CameraLocation.pose;
 
 								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
@@ -2234,11 +2201,17 @@ int main(int argc, char* argv[])
 						}
 						else
 						{
-							screenCylinderLayer.layerFlags = 0;
 							screenCylinderLayer.pose = { };
 							screenCylinderLayer.pose.orientation.w = 1;
 
-							layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
+							}
 						}
 					}
 					else
@@ -2254,7 +2227,6 @@ int main(int argc, char* argv[])
 						{
 							if (appState.CameraLocationIsValid)
 							{
-								screenPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 								screenPlanarLayer.pose = appState.CameraLocation.pose;
 
 								XrMatrix4x4f rotation;
@@ -2274,12 +2246,18 @@ int main(int argc, char* argv[])
 						}
 						else
 						{
-							screenPlanarLayer.layerFlags = 0;
 							screenPlanarLayer.pose = { };
 							screenPlanarLayer.pose.position.z = -PlanarProjection::distance;
 							screenPlanarLayer.pose.orientation.w = 1;
 
-							layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenPlanarLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenPlanarLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenPlanarLayer));
+							}
 						}
 					}
 
@@ -2397,7 +2375,6 @@ int main(int argc, char* argv[])
 								}
 								if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 								{
-									keyboardCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 									keyboardCylinderLayer.pose = keyboardLocation.pose;
 
 									layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
@@ -2405,12 +2382,18 @@ int main(int argc, char* argv[])
 							}
 							else
 							{
-								keyboardCylinderLayer.layerFlags = 0;
 								keyboardCylinderLayer.pose = { };
 								keyboardCylinderLayer.pose.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
 								keyboardCylinderLayer.pose.orientation.w = 1;
 
-								layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
+								if (layers.empty())
+								{
+									layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
+								}
+								else
+								{
+									layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
+								}
 							}
 						}
 						else
@@ -2437,7 +2420,6 @@ int main(int argc, char* argv[])
 								}
 								if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 								{
-									keyboardPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 									keyboardPlanarLayer.pose = keyboardLocation.pose;
 
 									XrMatrix4x4f rotation;
@@ -2457,13 +2439,19 @@ int main(int argc, char* argv[])
 							}
 							else
 							{
-								keyboardPlanarLayer.layerFlags = 0;
 								keyboardPlanarLayer.pose = { };
 								keyboardPlanarLayer.pose.position.y = -PlanarProjection::screenLowerLimit - PlanarProjection::keyboardLowerLimit;
 								keyboardPlanarLayer.pose.position.z = -PlanarProjection::distance;
 								keyboardPlanarLayer.pose.orientation.w = 1;
 
-								layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardPlanarLayer));
+								if (layers.empty())
+								{
+									layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardPlanarLayer));
+								}
+								else
+								{
+									layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardPlanarLayer));
+								}
 							}
 						}
 
@@ -2483,14 +2471,20 @@ int main(int argc, char* argv[])
 							leftArrowsCylinderLayer.subImage.imageRect.extent.width = 450;
 							leftArrowsCylinderLayer.subImage.imageRect.extent.height = 150;
 							leftArrowsCylinderLayer.space = appSpace;
-							leftArrowsCylinderLayer.layerFlags = 0;
 							leftArrowsCylinderLayer.pose = { };
 
 							XrMatrix4x4f rotation;
 							XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
 							XrMatrix4x4f_GetRotation(&leftArrowsCylinderLayer.pose.orientation, &rotation);
 
-							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsCylinderLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsCylinderLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsCylinderLayer));
+							}
 						}
 						else
 						{
@@ -2500,7 +2494,6 @@ int main(int argc, char* argv[])
 							leftArrowsPlanarLayer.subImage.imageRect.extent.width = 450;
 							leftArrowsPlanarLayer.subImage.imageRect.extent.height = 150;
 							leftArrowsPlanarLayer.space = appSpace;
-							leftArrowsPlanarLayer.layerFlags = 0;
 							leftArrowsPlanarLayer.pose = { };
 
 							XrMatrix4x4f rotation;
@@ -2510,7 +2503,14 @@ int main(int argc, char* argv[])
 							XrVector3f position { 0, 0, -PlanarProjection::distance };
 							XrMatrix4x4f_TransformVector3f(&leftArrowsPlanarLayer.pose.position, &rotation, &position);
 
-							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
+							}
 						}
 
 						if (appState.CylinderCompositionLayerEnabled)
@@ -2522,14 +2522,20 @@ int main(int argc, char* argv[])
 							rightArrowsCylinderLayer.subImage.imageRect.extent.width = 450;
 							rightArrowsCylinderLayer.subImage.imageRect.extent.height = 150;
 							rightArrowsCylinderLayer.space = appSpace;
-							rightArrowsCylinderLayer.layerFlags = 0;
 							rightArrowsCylinderLayer.pose = { };
 
 							XrMatrix4x4f rotation;
 							XrMatrix4x4f_CreateRotation(&rotation, 0, -120, 0);
 							XrMatrix4x4f_GetRotation(&rightArrowsCylinderLayer.pose.orientation, &rotation);
 
-							layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsCylinderLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsCylinderLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsCylinderLayer));
+							}
 						}
 						else
 						{
@@ -2539,7 +2545,6 @@ int main(int argc, char* argv[])
 							rightArrowsPlanarLayer.subImage.imageRect.extent.width = 450;
 							rightArrowsPlanarLayer.subImage.imageRect.extent.height = 150;
 							rightArrowsPlanarLayer.space = appSpace;
-							rightArrowsPlanarLayer.layerFlags = 0;
 							rightArrowsPlanarLayer.pose = { };
 
 							XrMatrix4x4f rotation;
@@ -2549,7 +2554,14 @@ int main(int argc, char* argv[])
 							XrVector3f position { 0, 0, -PlanarProjection::distance };
 							XrMatrix4x4f_TransformVector3f(&rightArrowsPlanarLayer.pose.position, &rotation, &position);
 
-							layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsPlanarLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsPlanarLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsPlanarLayer));
+							}
 						}
 					}
 

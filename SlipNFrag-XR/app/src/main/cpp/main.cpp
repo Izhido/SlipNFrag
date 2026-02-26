@@ -288,6 +288,11 @@ void android_main(struct android_app* app)
 				simultaneousHandsAndControllersEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
+			else if (strncmp(extension.extensionName, XR_KHR_GENERIC_CONTROLLER_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				appState.GenericControllerEnabled = true;
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
 
 			appState.Logger->Verbose("  Name=%s SpecVersion=%d", extension.extensionName, extension.extensionVersion);
 		}
