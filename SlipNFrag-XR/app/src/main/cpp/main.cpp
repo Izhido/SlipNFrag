@@ -1235,20 +1235,37 @@ void android_main(struct android_app* app)
 		std::vector<XrCompositionLayerBaseHeader*> layers;
 
 		XrCompositionLayerProjection worldLayer { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
-		XrCompositionLayerCylinderKHR screenCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerQuad screenPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
-		XrCompositionLayerCylinderKHR leftArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerQuad leftArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
-		XrCompositionLayerCylinderKHR rightArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerQuad rightArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
-		XrCompositionLayerCylinderKHR keyboardCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
-		XrCompositionLayerQuad keyboardPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 
-		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
-		std::vector<XrCompositionLayerDepthInfoKHR> depthInfoForProjectionLayerViews;
+		XrCompositionLayerCylinderKHR screenCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		screenCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerQuad screenPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		screenPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerCylinderKHR keyboardCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		keyboardCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+
+		XrCompositionLayerQuad keyboardPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		keyboardPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+
+		XrCompositionLayerCylinderKHR leftArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		leftArrowsCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerQuad leftArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		leftArrowsPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerCylinderKHR rightArrowsCylinderLayer { XR_TYPE_COMPOSITION_LAYER_CYLINDER_KHR };
+		rightArrowsCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+
+		XrCompositionLayerQuad rightArrowsPlanarLayer { XR_TYPE_COMPOSITION_LAYER_QUAD };
+		rightArrowsPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
 
 		XrCompositionLayerCubeKHR skyboxLayer { XR_TYPE_COMPOSITION_LAYER_CUBE_KHR };
 		skyboxLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+
+		std::vector<XrCompositionLayerProjectionView> projectionLayerViews;
+		std::vector<XrCompositionLayerDepthInfoKHR> depthInfoForProjectionLayerViews;
 
 		XrSwapchainImageWaitInfo waitInfo { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
 		waitInfo.timeout = XR_INFINITE_DURATION;
@@ -2090,15 +2107,6 @@ void android_main(struct android_app* app)
 					worldLayer.viewCount = (uint32_t) projectionLayerViews.size();
 					worldLayer.views = projectionLayerViews.data();
 
-					if (appState.Mode != AppWorldMode || appState.Scene.skybox != nullptr)
-					{
-						worldLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
-					}
-					else
-					{
-						worldLayer.layerFlags = 0;
-					}
-
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
 					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.swapchain, nullptr, &swapchainImageIndex));
@@ -2234,7 +2242,6 @@ void android_main(struct android_app* app)
 						{
 							if (appState.CameraLocationIsValid)
 							{
-								screenCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 								screenCylinderLayer.pose = appState.CameraLocation.pose;
 
 								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
@@ -2242,11 +2249,17 @@ void android_main(struct android_app* app)
 						}
 						else
 						{
-							screenCylinderLayer.layerFlags = 0;
 							screenCylinderLayer.pose = { };
 							screenCylinderLayer.pose.orientation.w = 1;
 
-							layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenCylinderLayer));
+							}
 						}
 					}
 					else
@@ -2262,7 +2275,6 @@ void android_main(struct android_app* app)
 						{
 							if (appState.CameraLocationIsValid)
 							{
-								screenPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 								screenPlanarLayer.pose = appState.CameraLocation.pose;
 
 								XrMatrix4x4f rotation;
@@ -2282,12 +2294,18 @@ void android_main(struct android_app* app)
 						}
 						else
 						{
-							screenPlanarLayer.layerFlags = 0;
 							screenPlanarLayer.pose = { };
 							screenPlanarLayer.pose.position.z = -PlanarProjection::distance;
 							screenPlanarLayer.pose.orientation.w = 1;
 
-							layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenPlanarLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenPlanarLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&screenPlanarLayer));
+							}
 						}
 					}
 
@@ -2405,7 +2423,6 @@ void android_main(struct android_app* app)
 								}
 								if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 								{
-									keyboardCylinderLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 									keyboardCylinderLayer.pose = keyboardLocation.pose;
 
 									layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
@@ -2413,12 +2430,18 @@ void android_main(struct android_app* app)
 							}
 							else
 							{
-								keyboardCylinderLayer.layerFlags = 0;
 								keyboardCylinderLayer.pose = { };
 								keyboardCylinderLayer.pose.position.y = -CylinderProjection::screenLowerLimit - CylinderProjection::keyboardLowerLimit;
 								keyboardCylinderLayer.pose.orientation.w = 1;
 
-								layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
+								if (layers.empty())
+								{
+									layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
+								}
+								else
+								{
+									layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardCylinderLayer));
+								}
 							}
 						}
 						else
@@ -2445,7 +2468,6 @@ void android_main(struct android_app* app)
 								}
 								if (XR_UNQUALIFIED_SUCCESS(res) && (keyboardLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 								{
-									keyboardPlanarLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
 									keyboardPlanarLayer.pose = keyboardLocation.pose;
 
 									XrMatrix4x4f rotation;
@@ -2465,13 +2487,19 @@ void android_main(struct android_app* app)
 							}
 							else
 							{
-								keyboardPlanarLayer.layerFlags = 0;
 								keyboardPlanarLayer.pose = { };
 								keyboardPlanarLayer.pose.position.y = -PlanarProjection::screenLowerLimit - PlanarProjection::keyboardLowerLimit;
 								keyboardPlanarLayer.pose.position.z = -PlanarProjection::distance;
 								keyboardPlanarLayer.pose.orientation.w = 1;
 
-								layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardPlanarLayer));
+								if (layers.empty())
+								{
+									layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardPlanarLayer));
+								}
+								else
+								{
+									layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&keyboardPlanarLayer));
+								}
 							}
 						}
 
@@ -2491,14 +2519,20 @@ void android_main(struct android_app* app)
 							leftArrowsCylinderLayer.subImage.imageRect.extent.width = 450;
 							leftArrowsCylinderLayer.subImage.imageRect.extent.height = 150;
 							leftArrowsCylinderLayer.space = appSpace;
-							leftArrowsCylinderLayer.layerFlags = 0;
 							leftArrowsCylinderLayer.pose = { };
 
 							XrMatrix4x4f rotation;
 							XrMatrix4x4f_CreateRotation(&rotation, 0, 120, 0);
 							XrMatrix4x4f_GetRotation(&leftArrowsCylinderLayer.pose.orientation, &rotation);
 
-							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsCylinderLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsCylinderLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsCylinderLayer));
+							}
 						}
 						else
 						{
@@ -2508,7 +2542,6 @@ void android_main(struct android_app* app)
 							leftArrowsPlanarLayer.subImage.imageRect.extent.width = 450;
 							leftArrowsPlanarLayer.subImage.imageRect.extent.height = 150;
 							leftArrowsPlanarLayer.space = appSpace;
-							leftArrowsPlanarLayer.layerFlags = 0;
 							leftArrowsPlanarLayer.pose = { };
 
 							XrMatrix4x4f rotation;
@@ -2518,7 +2551,14 @@ void android_main(struct android_app* app)
 							XrVector3f position { 0, 0, -PlanarProjection::distance };
 							XrMatrix4x4f_TransformVector3f(&leftArrowsPlanarLayer.pose.position, &rotation, &position);
 
-							layers.insert(layers.begin() + 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&leftArrowsPlanarLayer));
+							}
 						}
 
 						if (appState.CylinderCompositionLayerEnabled)
@@ -2530,14 +2570,20 @@ void android_main(struct android_app* app)
 							rightArrowsCylinderLayer.subImage.imageRect.extent.width = 450;
 							rightArrowsCylinderLayer.subImage.imageRect.extent.height = 150;
 							rightArrowsCylinderLayer.space = appSpace;
-							rightArrowsCylinderLayer.layerFlags = 0;
 							rightArrowsCylinderLayer.pose = { };
 
 							XrMatrix4x4f rotation;
 							XrMatrix4x4f_CreateRotation(&rotation, 0, -120, 0);
 							XrMatrix4x4f_GetRotation(&rightArrowsCylinderLayer.pose.orientation, &rotation);
 
-							layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsCylinderLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsCylinderLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsCylinderLayer));
+							}
 						}
 						else
 						{
@@ -2547,7 +2593,6 @@ void android_main(struct android_app* app)
 							rightArrowsPlanarLayer.subImage.imageRect.extent.width = 450;
 							rightArrowsPlanarLayer.subImage.imageRect.extent.height = 150;
 							rightArrowsPlanarLayer.space = appSpace;
-							rightArrowsPlanarLayer.layerFlags = 0;
 							rightArrowsPlanarLayer.pose = { };
 
 							XrMatrix4x4f rotation;
@@ -2557,7 +2602,14 @@ void android_main(struct android_app* app)
 							XrVector3f position { 0, 0, -PlanarProjection::distance };
 							XrMatrix4x4f_TransformVector3f(&rightArrowsPlanarLayer.pose.position, &rotation, &position);
 
-							layers.insert(layers.begin() + 2, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsPlanarLayer));
+							if (layers.empty())
+							{
+								layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsPlanarLayer));
+							}
+							else
+							{
+								layers.insert(layers.end() - 1, reinterpret_cast<XrCompositionLayerBaseHeader*>(&rightArrowsPlanarLayer));
+							}
 						}
 					}
 
