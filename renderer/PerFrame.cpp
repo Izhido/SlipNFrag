@@ -1227,7 +1227,6 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	appState.Scene.stagingBuffer.lastStartBarrier = -1;
 	appState.Scene.stagingBuffer.lastEndBarrier = -1;
     appState.Scene.stagingBuffer.lastVertexShaderEndBarrier = -1;
-	appState.Scene.stagingBuffer.descriptorSetsInUse.clear();
 
 	VkBufferCopy bufferCopy { };
 

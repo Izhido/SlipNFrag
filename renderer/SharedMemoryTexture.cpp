@@ -101,8 +101,16 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	if (filled)
+	{
+		barrier.subresourceRange.baseArrayLayer = layer;
+		barrier.subresourceRange.layerCount = 1;
+	}
+	else
+	{
+		barrier.subresourceRange.layerCount = layerCount;
+	}
 	barrier.subresourceRange.levelCount = mipCount;
-	barrier.subresourceRange.layerCount = layerCount;
 	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 	auto offset = 0;
@@ -215,11 +223,28 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 
 void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffer, int layer)
 {
-	std::vector<VkBufferImageCopy> regions(mipCount);
+	VkImageMemoryBarrier barrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+	barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.image = image;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	if (filled)
+	{
+		barrier.subresourceRange.baseArrayLayer = layer;
+		barrier.subresourceRange.layerCount = 1;
+	}
+	else
+	{
+		barrier.subresourceRange.layerCount = layerCount;
+	}
+	barrier.subresourceRange.levelCount = mipCount;
+	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
 	auto offset = 0;
 	auto mipWidth = width;
 	auto mipHeight = height;
 	auto componentCount = (format == VK_FORMAT_R8_UINT ? 1 : 4);
+	std::vector<VkBufferImageCopy> regions(mipCount);
 	for (int i = 0; i < regions.size(); i++)
 	{
 		auto& region = regions[i];
@@ -243,49 +268,13 @@ void SharedMemoryTexture::FillMipmapped(AppState& appState, StagingBuffer& buffe
 			mipHeight = 1;
 		}
 	}
+	vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
 
-	if (buffer.descriptorSetsInUse.find(descriptorSet) == buffer.descriptorSetsInUse.end())
-	{
-		buffer.lastEndBarrier++;
-		if (buffer.imageEndBarriers.size() <= buffer.lastEndBarrier)
-		{
-			buffer.imageEndBarriers.emplace_back();
-		}
-
-		auto& barrier = buffer.imageEndBarriers[buffer.lastEndBarrier];
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		if (filled)
-		{
-			barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		}
-		else
-		{
-			barrier.srcAccessMask = 0;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		}
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.image = image;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = mipCount;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = layerCount;
-		vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
-
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		buffer.descriptorSetsInUse.insert(descriptorSet);
-	}
-	else
-	{
-		vkCmdCopyBufferToImage(buffer.commandBuffer, buffer.buffer->buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
-	}
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	vkCmdPipelineBarrier(buffer.commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
 	filled = true;
 }
