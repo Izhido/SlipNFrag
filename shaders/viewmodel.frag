@@ -1,4 +1,4 @@
-#version 460
+#version 450
 
 precision mediump float;
 precision mediump int;
@@ -32,11 +32,14 @@ void main()
 	}
 	vec2 level = textureQueryLod(fragmentTexture, fragmentCoords.xy);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
-	uvec4 lowEntry = textureLod(fragmentTexture, fragmentCoords.xy, mip.x);
-	uvec4 highEntry = textureLod(fragmentTexture, fragmentCoords.xy, mip.y);
+	float levels = float(textureQueryLevels(fragmentTexture));
+	float maxLevel = levels - 1;
+	vec2 mipXY = clamp(mip, 0.0, maxLevel);
+	uvec4 lowEntry = textureLod(fragmentTexture, fragmentCoords.xy, mipXY.x);
+	uvec4 highEntry = textureLod(fragmentTexture, fragmentCoords.xy, mipXY.y);
 	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowEntry.x, fragmentLight), 0);
 	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x, fragmentLight), 0);
 	vec4 lowColor = palette[lowColormapped.x];
 	vec4 highColor = palette[highColormapped.x];
-	outColor = mix(lowColor, highColor, level.y - mip.x);
+	outColor = mix(lowColor, highColor, fract(level.y));
 }

@@ -1,4 +1,4 @@
-#version 460
+#version 450
 
 precision highp float;
 precision highp int;
@@ -41,9 +41,12 @@ void main()
 	uint lightNextInt = min(lightBaseInt + 1, 63);
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentCoords.zw);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
+	float levels = float(textureQueryLevels(fragmentTexture));
+	float maxLevel = levels - 1;
+	vec2 texMipXY = clamp(texMip, 0.0, maxLevel);
 	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentFlat.y);
-	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
-	uvec4 highTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
+	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMipXY.x);
+	uvec4 highTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMipXY.y);
 	uvec4 lowColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, lightBaseInt), 0);
 	uvec4 lowNextColormapped = texelFetch(fragmentColormap, ivec2(lowTexEntry.x, lightNextInt), 0);
 	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highTexEntry.x, lightBaseInt), 0);
@@ -56,5 +59,5 @@ void main()
 	vec4 lowNextColor = palette[lowNextColormapped.x];
 	vec4 highColor = palette[highColormapped.x];
 	vec4 highNextColor = palette[highNextColormapped.x];
-	outColor = mix(mix(lowColor, lowNextColor, lightFrac), mix(highColor, highNextColor, lightFrac), texLevel.y - texMip.x);
+	outColor = mix(mix(lowColor, lowNextColor, lightFrac), mix(highColor, highNextColor, lightFrac), fract(texLevel.y));
 }

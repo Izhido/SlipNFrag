@@ -1,4 +1,4 @@
-#version 460
+#version 450
 
 precision highp float;
 precision highp int;
@@ -25,10 +25,13 @@ void main()
 	vec2 texCoords = fragmentTexCoords.xy + distortion.yx;
 	vec2 level = textureQueryLod(fragmentTexture, texCoords);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
+	float levels = float(textureQueryLevels(fragmentTexture));
+	float maxLevel = levels - 1;
+	vec2 mipXY = clamp(mip, 0.0, maxLevel);
 	vec3 fragmentTextureCoords = vec3(texCoords, fragmentTextureIndex);
-	uvec4 lowEntry = textureLod(fragmentTexture, fragmentTextureCoords, mip.x);
-	uvec4 highEntry = textureLod(fragmentTexture, fragmentTextureCoords, mip.y);
+	uvec4 lowEntry = textureLod(fragmentTexture, fragmentTextureCoords, mipXY.x);
+	uvec4 highEntry = textureLod(fragmentTexture, fragmentTextureCoords, mipXY.y);
 	vec4 lowColor = palette[lowEntry.x];
 	vec4 highColor = palette[highEntry.x];
-	outColor = mix(lowColor, highColor, level.y - mip.x);
+	outColor = mix(lowColor, highColor, fract(level.y));
 }

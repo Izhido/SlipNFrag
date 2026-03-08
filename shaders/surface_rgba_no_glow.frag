@@ -1,4 +1,4 @@
-#version 460
+#version 450
 
 precision highp float;
 precision highp int;
@@ -37,10 +37,13 @@ void main()
 	float light = 2 - lightmapEntry / (32 * 256);
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentCoords.zw);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
+	float levels = float(textureQueryLevels(fragmentTexture));
+	float maxLevel = levels - 1;
+	vec2 texMipXY = clamp(texMip, 0.0, maxLevel);
 	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentFlat.y);
-	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
-	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
-	vec4 color = mix(lowColor, highColor, texLevel.y - texMip.x) * vec4(light, light, light, 1);
+	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, texMipXY.x);
+	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, texMipXY.y);
+	vec4 color = mix(lowColor, highColor, fract(texLevel.y)) * vec4(light, light, light, 1);
 	vec4 tinted = mix(color, tint, tint.a);
 	vec4 gammaCorrected = vec4(
 		clamp((gamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , gamma ) + 0.5), 0, 255),
