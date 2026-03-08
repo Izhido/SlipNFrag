@@ -42,12 +42,9 @@ void main()
 	vec4 light = lightmapEntry / 128;
 	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentCoords.zw);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
-	float levels = float(textureQueryLevels(fragmentTexture));
-	float maxLevel = levels - 1;
-	vec2 texMipXY = clamp(texMip, 0.0, maxLevel);
 	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentFlat.y);
-	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMipXY.x);
-	uvec4 highTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMipXY.y);
+	uvec4 lowTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
+	uvec4 highTexEntry = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
 	vec4 lowColor = palette[lowTexEntry.x];
 	vec4 highColor = palette[highTexEntry.x];
 	vec4 color =

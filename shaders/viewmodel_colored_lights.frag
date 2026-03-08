@@ -37,11 +37,8 @@ void main()
 	}
 	vec2 level = textureQueryLod(fragmentTexture, fragmentCoords.xy);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
-	float levels = float(textureQueryLevels(fragmentTexture));
-	float maxLevel = levels - 1;
-	vec2 mipXY = clamp(mip, 0.0, maxLevel);
-	uvec4 lowEntry = textureLod(fragmentTexture, fragmentCoords.xy, mipXY.x);
-	uvec4 highEntry = textureLod(fragmentTexture, fragmentCoords.xy, mipXY.y);
+	uvec4 lowEntry = textureLod(fragmentTexture, fragmentCoords.xy, mip.x);
+	uvec4 highEntry = textureLod(fragmentTexture, fragmentCoords.xy, mip.y);
 	vec4 lowColor = palette[lowEntry.x];
 	vec4 highColor = palette[highEntry.x];
 	vec4 color = min(vec4(255, 255, 255, 255),

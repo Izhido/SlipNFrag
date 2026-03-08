@@ -25,12 +25,9 @@ void main()
 	vec2 texCoords = fragmentTexCoords + distortion.yx;
 	vec2 level = textureQueryLod(fragmentTexture, fragmentTexCoords);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
-	float levels = float(textureQueryLevels(fragmentTexture));
-	float maxLevel = levels - 1;
-	vec2 mipXY = clamp(mip, 0.0, maxLevel);
 	vec3 fragmentTextureCoords = vec3(texCoords, fragmentTextureIndex);
-	uvec4 lowEntry = textureLod(fragmentTexture, fragmentTextureCoords, mipXY.x);
-	uvec4 highEntry = textureLod(fragmentTexture, fragmentTextureCoords, mipXY.y);
+	uvec4 lowEntry = textureLod(fragmentTexture, fragmentTextureCoords, mip.x);
+	uvec4 highEntry = textureLod(fragmentTexture, fragmentTextureCoords, mip.y);
 	vec4 lowColor = palette[lowEntry.x];
 	vec4 highColor = palette[highEntry.x];
 	outColor = mix(lowColor, highColor, fract(level.y));
