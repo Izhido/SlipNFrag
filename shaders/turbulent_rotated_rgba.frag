@@ -35,8 +35,8 @@ void main()
 		}
 	}
 	vec2 distortion = sin(mod(time + fragmentTexCoords * 5, 3.14159*2)) / 10;
-	vec2 texCoords = fragmentTexCoords.xy + distortion.yx;
-	vec2 level = textureQueryLod(fragmentTexture, texCoords);
+	vec2 texCoords = fragmentTexCoords + distortion.yx;
+	vec2 level = textureQueryLod(fragmentTexture, fragmentTexCoords);
 	vec2 mip = vec2(floor(level.y), ceil(level.y));
 	float levels = float(textureQueryLevels(fragmentTexture));
 	float maxLevel = levels - 1;

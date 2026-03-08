@@ -43,7 +43,7 @@ void main()
 	vec4 light = lightmapEntry / 128;
 	vec2 distortion = sin(mod(time + fragmentCoords.zw * 5, 3.14159*2)) / 10;
 	vec2 texCoords = fragmentCoords.zw + distortion.yx;
-	vec2 texLevel = textureQueryLod(fragmentTexture, texCoords);
+	vec2 texLevel = textureQueryLod(fragmentTexture, fragmentCoords.zw);
 	vec2 texMip = vec2(floor(texLevel.y), ceil(texLevel.y));
 	vec3 fragmentTextureCoords = vec3(texCoords, fragmentFlat.y);
 	float levels = float(textureQueryLevels(fragmentTexture));
