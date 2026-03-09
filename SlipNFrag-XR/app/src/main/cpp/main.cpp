@@ -2620,6 +2620,8 @@ void android_main(struct android_app* app)
 
 					if (cubeCompositionLayerEnabled && appState.Mode == AppWorldMode)
 					{
+						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+
 						if (d_lists.last_skybox >= 0)
 						{
 							int width = -1;
