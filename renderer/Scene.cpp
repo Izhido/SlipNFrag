@@ -1908,11 +1908,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
         if (entry == surfaceTextureCache.end())
         {
             CachedSharedMemoryTextures* cached = nullptr;
-            for (auto& entry : surfaceTextures)
+            for (auto& texture : surfaceTextures)
             {
-                if (entry.width == turbulent.width && entry.height == turbulent.height)
+                if (texture.width == turbulent.width && texture.height == turbulent.height)
                 {
-                    cached = &entry;
+                    cached = &texture;
                     break;
                 }
             }
@@ -1968,11 +1968,11 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
 		if (entry == surfaceTextureCache.end())
 		{
             CachedSharedMemoryTextures* cached = nullptr;
-            for (auto& entry : surfaceRGBATextures)
+            for (auto& texture : surfaceRGBATextures)
             {
-                if (entry.width == turbulent.width && entry.height == turbulent.height)
+                if (texture.width == turbulent.width && texture.height == turbulent.height)
                 {
-                    cached = &entry;
+                    cached = &texture;
                     break;
                 }
             }
@@ -2040,11 +2040,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		if (entry == surfaceTextureCache.end())
 		{
 			CachedSharedMemoryTextures* cached = nullptr;
-			for (auto& entry : surfaceRGBATextures)
+			for (auto& texture : surfaceRGBATextures)
 			{
-				if (entry.width == surface.width && entry.height == surface.height)
+				if (texture.width == surface.width && texture.height == surface.height)
 				{
-					cached = &entry;
+					cached = &texture;
 					break;
 				}
 			}
@@ -2095,11 +2095,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		if (entry == surfaceTextureCache.end())
 		{
 			CachedSharedMemoryTextures* cached = nullptr;
-			for (auto& entry : surfaceRGBATextures)
+			for (auto& texture : surfaceRGBATextures)
 			{
-				if (entry.width == surface.width && entry.height == surface.height)
+				if (texture.width == surface.width && texture.height == surface.height)
 				{
-					cached = &entry;
+					cached = &texture;
 					break;
 				}
 			}
@@ -2156,11 +2156,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		if (entry == surfaceTextureCache.end())
 		{
 			CachedSharedMemoryTextures* cached = nullptr;
-			for (auto& entry : surfaceRGBATextures)
+			for (auto& texture : surfaceRGBATextures)
 			{
-				if (entry.width == surface.width && entry.height == surface.height)
+				if (texture.width == surface.width && texture.height == surface.height)
 				{
- 					cached = &entry;
+ 					cached = &texture;
 					break;
 				}
 			}
@@ -2211,11 +2211,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 		if (entry == surfaceTextureCache.end())
 		{
 			CachedSharedMemoryTextures* cached = nullptr;
-			for (auto& entry : surfaceRGBATextures)
+			for (auto& texture : surfaceRGBATextures)
 			{
-				if (entry.width == surface.width && entry.height == surface.height)
+				if (texture.width == surface.width && texture.height == surface.height)
 				{
-					cached = &entry;
+					cached = &texture;
 					break;
 				}
 			}
@@ -2272,11 +2272,11 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 		if (entry == surfaceTextureCache.end())
 		{
 			CachedSharedMemoryTextures* cached = nullptr;
-			for (auto& entry : surfaceRGBATextures)
+			for (auto& texture : surfaceRGBATextures)
 			{
-				if (entry.width == surface.width && entry.height == surface.height)
+				if (texture.width == surface.width && texture.height == surface.height)
 				{
-					cached = &entry;
+					cached = &texture;
 					break;
 				}
 			}
@@ -2333,11 +2333,11 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 		if (entry == surfaceTextureCache.end())
 		{
 			CachedSharedMemoryTextures* cached = nullptr;
-			for (auto& entry : surfaceRGBATextures)
+			for (auto& texture : surfaceRGBATextures)
 			{
-				if (entry.width == surface.width && entry.height == surface.height)
+				if (texture.width == surface.width && texture.height == surface.height)
 				{
-					cached = &entry;
+					cached = &texture;
 					break;
 				}
 			}
