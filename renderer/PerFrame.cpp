@@ -404,7 +404,91 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			*target++ = -source[11];
         }
 		offset += appState.Scene.skyVerticesSize;
-		coloredVertexBase = skyVertexBase + appState.Scene.skyVerticesSize;
+		skyboxVertexBase = skyVertexBase + appState.Scene.skyVerticesSize;
+		if (!appState.CubeCompositionLayerEnabled && appState.Scene.skybox != nullptr)
+		{
+			auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = -1;
+
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = -1;
+
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = -1;
+
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = 1;
+			*target++ = -1;
+			*target++ = -1;
+			*target++ = 1;
+		}
+		offset += appState.Scene.skyboxVerticesSize;
+		coloredVertexBase = skyboxVertexBase + appState.Scene.skyboxVerticesSize;
 		auto count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
 		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 		offset += appState.Scene.coloredVerticesSize;
@@ -511,7 +595,91 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[7];
     }
 	offset += appState.Scene.skyAttributesSize;
-	aliasAttributeBase = skyAttributeBase + appState.Scene.skyAttributesSize;
+	skyboxAttributeBase = skyAttributeBase + appState.Scene.skyAttributesSize;
+	if (!appState.CubeCompositionLayerEnabled && appState.Scene.skybox != nullptr)
+	{
+		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 1;
+
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 0;
+
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 5;
+		*target++ = 0;
+		*target++ = 1;
+		*target++ = 5;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 5;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 5;
+
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 4;
+		*target++ = 0;
+		*target++ = 1;
+		*target++ = 4;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 4;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 4;
+
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 2;
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 2;
+		*target++ = 0;
+		*target++ = 1;
+		*target++ = 2;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 2;
+
+		*target++ = 0;
+		*target++ = 1;
+		*target++ = 3;
+		*target++ = 0;
+		*target++ = 0;
+		*target++ = 3;
+		*target++ = 1;
+		*target++ = 0;
+		*target++ = 3;
+		*target++ = 1;
+		*target++ = 1;
+		*target++ = 3;
+	}
+	offset += appState.Scene.skyboxAttributesSize;
+	aliasAttributeBase = skyboxAttributeBase + appState.Scene.skyboxAttributesSize;
 	auto count = (size_t)appState.Scene.aliasAttributesSize / sizeof(float);
 	std::copy(d_lists.alias_attributes.data(), d_lists.alias_attributes.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.aliasAttributesSize;
@@ -544,7 +712,55 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 				target = Controller::WriteIndices8(target, controllerIndexOffset);
 				offset += appState.Scene.rightControllerIndicesSize;
 			}
-			coloredIndex8Base = controllersIndexBase + appState.Scene.leftControllerIndicesSize + appState.Scene.rightControllerIndicesSize;
+			skyboxIndexBase = controllersIndexBase + appState.Scene.leftControllerIndicesSize + appState.Scene.rightControllerIndicesSize;
+			if (appState.Scene.skyboxIndicesSize > 0)
+			{
+				auto target = (unsigned char*)stagingBuffer->mapped + offset;
+
+				*target++ = 0;
+				*target++ = 1;
+				*target++ = 2;
+				*target++ = 0;
+				*target++ = 2;
+				*target++ = 3;
+
+				*target++ = 4;
+				*target++ = 5;
+				*target++ = 6;
+				*target++ = 4;
+				*target++ = 6;
+				*target++ = 7;
+
+				*target++ = 8;
+				*target++ = 9;
+				*target++ = 10;
+				*target++ = 8;
+				*target++ = 10;
+				*target++ = 11;
+
+				*target++ = 12;
+				*target++ = 13;
+				*target++ = 14;
+				*target++ = 12;
+				*target++ = 14;
+				*target++ = 15;
+
+				*target++ = 16;
+				*target++ = 17;
+				*target++ = 18;
+				*target++ = 16;
+				*target++ = 18;
+				*target++ = 19;
+
+				*target++ = 20;
+				*target++ = 21;
+				*target++ = 22;
+				*target++ = 20;
+				*target++ = 22;
+				*target++ = 23;
+			}
+			offset += appState.Scene.skyboxIndicesSize;
+			coloredIndex8Base = skyboxIndexBase + appState.Scene.skyboxIndicesSize;
 			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices8.data(), appState.Scene.coloredIndices8Size);
 			offset += appState.Scene.coloredIndices8Size;
 			cutoutIndex8Base = coloredIndex8Base + appState.Scene.coloredIndices8Size;
@@ -697,7 +913,55 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			}
 			offset += appState.Scene.statusBarIndicesSize;
 		}
-		coloredIndex16Base = statusBarIndexBase + appState.Scene.statusBarIndicesSize;
+		skyboxIndexBase = statusBarIndexBase + appState.Scene.statusBarIndicesSize;
+		if (appState.Scene.skyboxIndicesSize > 0)
+		{
+			auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
+
+			*target++ = 0;
+			*target++ = 1;
+			*target++ = 2;
+			*target++ = 0;
+			*target++ = 2;
+			*target++ = 3;
+
+			*target++ = 4;
+			*target++ = 5;
+			*target++ = 6;
+			*target++ = 4;
+			*target++ = 6;
+			*target++ = 7;
+
+			*target++ = 8;
+			*target++ = 9;
+			*target++ = 10;
+			*target++ = 8;
+			*target++ = 10;
+			*target++ = 11;
+
+			*target++ = 12;
+			*target++ = 13;
+			*target++ = 14;
+			*target++ = 12;
+			*target++ = 14;
+			*target++ = 15;
+
+			*target++ = 16;
+			*target++ = 17;
+			*target++ = 18;
+			*target++ = 16;
+			*target++ = 18;
+			*target++ = 19;
+
+			*target++ = 20;
+			*target++ = 21;
+			*target++ = 22;
+			*target++ = 20;
+			*target++ = 22;
+			*target++ = 23;
+		}
+		offset += appState.Scene.skyboxIndicesSize;
+		coloredIndex16Base = skyboxIndexBase + appState.Scene.skyboxIndicesSize;
 		auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < appState.Scene.coloredIndices8Size; i++)
 		{
@@ -1795,6 +2059,35 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		writes[0].pImageInfo = &textureInfo;
 		float pushConstants[21];
+		if (!appState.CubeCompositionLayerEnabled && appState.Scene.skyboxVerticesSize > 0)
+		{
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			renderLabel.pLabelName = SKYBOX_RGBA_NAME;
+			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
+#endif
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.skyboxRGBA.pipeline);
+			VkDescriptorSet descriptorSets[2];
+			descriptorSets[0] = sceneMatricesResources.descriptorSet;
+			descriptorSets[1] = appState.Scene.skybox->texture->descriptorSet;
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.skyboxRGBA.pipelineLayout, 0, 2, descriptorSets, 0, nullptr);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &skyboxVertexBase);
+			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &skyboxAttributeBase);
+			VkDeviceSize size;
+			if (appState.IndexTypeUInt8Enabled)
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, skyboxIndexBase, VK_INDEX_TYPE_UINT8_EXT);
+				size = appState.Scene.skyboxIndicesSize;
+			}
+			else
+			{
+				vkCmdBindIndexBuffer(commandBuffer, indices16->buffer, skyboxIndexBase, VK_INDEX_TYPE_UINT16);
+				size = appState.Scene.skyboxIndicesSize / 2;
+			}
+			vkCmdDrawIndexed(commandBuffer, size, 1, 0, 0, 0);
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+#endif
+		}
 		if (appState.Scene.lastSky >= 0)
 		{
 			poolSizes[0].descriptorCount = 1;

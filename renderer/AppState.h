@@ -30,6 +30,7 @@ struct AppState
 	bool Resumed;
 	VkDevice Device;
 	bool CylinderCompositionLayerEnabled;
+	bool CubeCompositionLayerEnabled;
 	bool GenericControllerEnabled;
 	bool IndexTypeUInt8Enabled;
 	bool HandTrackingEnabled;

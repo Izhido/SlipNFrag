@@ -55,3 +55,4 @@
 #define SKY_NAME "Sky"
 #define SKY_RGBA_NAME "Sky (RGBA)"
 #define TEXTURED_NAME "Textured"
+#define SKYBOX_RGBA_NAME "Skybox (RGBA)"

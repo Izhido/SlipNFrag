@@ -3,7 +3,7 @@
 #include "Utils.h"
 #include "Constants.h"
 
-void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, uint32_t layerCount, VkImageUsageFlags usage)
+void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t height, VkFormat format, uint32_t mipCount, uint32_t layerCount, VkImageUsageFlags usage, bool asSkybox)
 {
 	this->width = width;
 	this->height = height;
@@ -83,7 +83,7 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 
 	VkDescriptorImageInfo textureInfo { };
 	textureInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	textureInfo.sampler = appState.Scene.sampler;
+	textureInfo.sampler = (asSkybox ? appState.Scene.skyboxSampler : appState.Scene.sampler);
 	textureInfo.imageView = view;
 
 	VkWriteDescriptorSet write { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };

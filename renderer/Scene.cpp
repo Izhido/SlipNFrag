@@ -468,6 +468,10 @@ void Scene::Create(AppState& appState)
     CreateShader(appState, "shaders/textured.vert.spv", &texturedVertex);
     VkShaderModule texturedFragment;
     CreateShader(appState, "shaders/textured.frag.spv", &texturedFragment);
+    VkShaderModule skyboxRGBAVertex;
+    CreateShader(appState, "shaders/skybox_rgba.vert.spv", &skyboxRGBAVertex);
+    VkShaderModule skyboxRGBAFragment;
+    CreateShader(appState, "shaders/skybox_rgba.frag.spv", &skyboxRGBAFragment);
 
     VkDescriptorSetLayoutBinding descriptorSetBindings[3] { };
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
@@ -748,6 +752,22 @@ void Scene::Create(AppState& appState)
     cutoutAttributes.vertexInputState.pVertexBindingDescriptions = cutoutAttributes.vertexBindings.data();
     cutoutAttributes.vertexInputState.vertexAttributeDescriptionCount = cutoutAttributes.vertexAttributes.size();
     cutoutAttributes.vertexInputState.pVertexAttributeDescriptions = cutoutAttributes.vertexAttributes.data();
+
+	PipelineAttributes skyboxAttributes { };
+    skyboxAttributes.vertexAttributes.resize(2);
+    skyboxAttributes.vertexBindings.resize(2);
+    skyboxAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    skyboxAttributes.vertexBindings[0].stride = 3 * sizeof(float);
+    skyboxAttributes.vertexAttributes[1].location = 1;
+    skyboxAttributes.vertexAttributes[1].binding = 1;
+    skyboxAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+    skyboxAttributes.vertexBindings[1].binding = 1;
+    skyboxAttributes.vertexBindings[1].stride = 3 * sizeof(float);
+    skyboxAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    skyboxAttributes.vertexInputState.vertexBindingDescriptionCount = skyboxAttributes.vertexBindings.size();
+    skyboxAttributes.vertexInputState.pVertexBindingDescriptions = skyboxAttributes.vertexBindings.data();
+    skyboxAttributes.vertexInputState.vertexAttributeDescriptionCount = skyboxAttributes.vertexAttributes.size();
+    skyboxAttributes.vertexInputState.pVertexAttributeDescriptions = skyboxAttributes.vertexAttributes.data();
 
     descriptorSetLayouts.resize(5);
 
@@ -1482,6 +1502,22 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &skyboxRGBA.pipelineLayout));
+	depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
+	depthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
+	graphicsPipelineCreateInfo.layout = skyboxRGBA.pipelineLayout;
+	graphicsPipelineCreateInfo.pVertexInputState = &skyboxAttributes.vertexInputState;
+	stages[0].module = skyboxRGBAVertex;
+	stages[1].module = skyboxRGBAFragment;
+    CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &skyboxRGBA.pipeline));
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	pipelineName.objectHandle = (uint64_t)skyboxRGBA.pipeline;
+	pipelineName.pObjectName = SKYBOX_RGBA_NAME;
+	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
+#endif
+
+    vkDestroyShaderModule(appState.Device, skyboxRGBAFragment, nullptr);
+    vkDestroyShaderModule(appState.Device, skyboxRGBAVertex, nullptr);
     vkDestroyShaderModule(appState.Device, texturedFragment, nullptr);
     vkDestroyShaderModule(appState.Device, texturedVertex, nullptr);
     vkDestroyShaderModule(appState.Device, cutoutFragment, nullptr);
@@ -1558,6 +1594,14 @@ void Scene::Create(AppState& appState)
     VkSamplerCreateInfo samplerCreateInfo { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
 	samplerCreateInfo.maxLod = VK_LOD_CLAMP_NONE;
 	CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &sampler));
+
+    samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+	samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+	samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	CHECK_VKCMD(vkCreateSampler(appState.Device, &samplerCreateInfo, nullptr, &skyboxSampler));
 
 	paletteBufferSize = 256 * 4 * sizeof(float);
 
@@ -2814,7 +2858,7 @@ void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_
 	R_ConcatTransforms (viewmodel.transform2, viewmodel.transform, loaded.transform);
 }
 
-VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
+VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame, uint32_t swapchainImageIndex)
 {
 	frameCount++;
     surfaces.Allocate(d_lists.last_surface);
@@ -3546,6 +3590,89 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         }
         size += loadedSkyRGBA.size;
     }
+
+	if (appState.Mode == AppWorldMode && d_lists.last_skybox >= 0)
+	{
+		int width = -1;
+		int height = -1;
+		auto& skybox = d_lists.skyboxes[d_lists.last_skybox];
+		if (appState.Scene.skybox == nullptr)
+		{
+			for (size_t i = 0; i < 6; i++)
+			{
+				auto texture = skybox.textures[i].texture;
+				if (texture == nullptr)
+				{
+					width = -1;
+					height = -1;
+					break;
+				}
+				if (width < 0 && height < 0)
+				{
+					width = texture->width;
+					height = texture->height;
+				}
+				else if (width != texture->width || height != texture->height)
+				{
+					width = -1;
+					height = -1;
+					break;
+				}
+			}
+		}
+		else
+		{
+			auto same = true;
+			for (size_t i = 0; i < 6; i++)
+			{
+				auto texture = skybox.textures[i].texture;
+				if (texture != appState.Scene.skybox->sources[i])
+				{
+					same = false;
+					break;
+				}
+			}
+			if (!same)
+			{
+				Skybox::MoveToPrevious(appState.Scene);
+				for (size_t i = 0; i < 6; i++)
+				{
+					auto texture = skybox.textures[i].texture;
+					if (texture == nullptr)
+					{
+						width = -1;
+						height = -1;
+						break;
+					}
+					if (width < 0 && height < 0)
+					{
+						width = texture->width;
+						height = texture->height;
+					}
+					else if (width != texture->width || height != texture->height)
+					{
+						width = -1;
+						height = -1;
+						break;
+					}
+				}
+			}
+		}
+		if (width > 0 && height > 0)
+		{
+			appState.Scene.skybox = new Skybox { };
+
+			if (appState.CubeCompositionLayerEnabled)
+			{
+				appState.Scene.skybox->Create(appState, width, height, skybox, swapchainImageIndex);
+			}
+			else
+			{
+				appState.Scene.skybox->Create(appState, width, height, skybox);
+			}
+		}
+	}
+
     floorVerticesSize = 0;
     if (appState.Mode != AppWorldMode)
     {
@@ -3589,9 +3716,14 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		skyVerticesSize += appState.Scene.loadedSkyRGBA.count * 3 * sizeof(float);
 	}
+	skyboxVerticesSize = 0;
+	if (!appState.CubeCompositionLayerEnabled && appState.Scene.skybox != nullptr)
+	{
+		skyboxVerticesSize += 6 * 4 * 3 * sizeof(float);
+	}
     coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
 	cutoutVerticesSize = (d_lists.last_cutout_vertex + 1) * sizeof(float);
-    verticesSize = floorVerticesSize + leftControllerVerticesSize + rightControllerVerticesSize + leftHandVerticesSize + rightHandVerticesSize + statusBarVerticesSize + skyVerticesSize + coloredVerticesSize + cutoutVerticesSize;
+    verticesSize = floorVerticesSize + leftControllerVerticesSize + rightControllerVerticesSize + leftHandVerticesSize + rightHandVerticesSize + statusBarVerticesSize + skyVerticesSize + skyboxVerticesSize + coloredVerticesSize + cutoutVerticesSize;
     if (verticesSize > 0)
     {
         perFrame.vertices = perFrame.cachedVertices.GetVertexBuffer(appState, verticesSize);
@@ -3636,8 +3768,13 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	{
 		skyAttributesSize += appState.Scene.loadedSkyRGBA.count * 2 * sizeof(float);
 	}
+	skyboxAttributesSize = 0;
+	if (!appState.CubeCompositionLayerEnabled && appState.Scene.skybox != nullptr)
+	{
+		skyboxAttributesSize += 6 * 4 * 3 * sizeof(float);
+	}
 	aliasAttributesSize = (d_lists.last_alias_attribute + 1) * sizeof(float);
-    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + leftHandAttributesSize + rightHandAttributesSize + statusBarAttributesSize + skyAttributesSize + aliasAttributesSize;
+    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + leftHandAttributesSize + rightHandAttributesSize + statusBarAttributesSize + skyAttributesSize + skyboxAttributesSize + aliasAttributesSize;
     if (attributesSize > 0)
     {
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
@@ -3679,6 +3816,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	if (statusBarVerticesSize > 0)
 	{
 		statusBarIndicesSize = 12;
+	}
+	skyboxIndicesSize = 0;
+	if (!appState.CubeCompositionLayerEnabled && appState.Scene.skybox != nullptr)
+	{
+		skyboxIndicesSize = 6 * 6;
 	}
     coloredIndices8Size = lastColoredIndex8 + 1;
     coloredIndices16Size = (lastColoredIndex16 + 1) * sizeof(uint16_t);
@@ -3777,7 +3919,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
 	statusBarIndicesSize *= sizeof(uint16_t);
     if (appState.IndexTypeUInt8Enabled)
     {
-        indices8Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + coloredIndices8Size + cutoutIndices8Size;
+        indices8Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + skyboxIndicesSize + coloredIndices8Size + cutoutIndices8Size;
         indices16Size = leftHandIndicesSize + rightHandIndicesSize + statusBarIndicesSize + coloredIndices16Size + cutoutIndices16Size;
     }
     else
@@ -3785,8 +3927,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame)
         floorIndicesSize *= sizeof(uint16_t);
         leftControllerIndicesSize *= sizeof(uint16_t);
         rightControllerIndicesSize *= sizeof(uint16_t);
+		skyboxIndicesSize *= sizeof(uint16_t);
         indices8Size = 0;
-        indices16Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + leftHandIndicesSize + rightHandIndicesSize + statusBarIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
+        indices16Size = floorIndicesSize + leftControllerIndicesSize + rightControllerIndicesSize + leftHandIndicesSize + rightHandIndicesSize + statusBarIndicesSize + skyboxIndicesSize + coloredIndices8Size * sizeof(uint16_t) + coloredIndices16Size + cutoutIndices8Size * sizeof(uint16_t) + cutoutIndices16Size;
     }
 	indices32Size = coloredIndices32Size + cutoutIndices32Size;
 
@@ -3876,6 +4019,12 @@ void Scene::Reset(AppState& appState)
 
 void Scene::Destroy(AppState& appState)
 {
+	if (skyboxSampler != VK_NULL_HANDLE)
+	{
+		vkDestroySampler(appState.Device, skyboxSampler, nullptr);
+		skyboxSampler = VK_NULL_HANDLE;
+	}
+
 	if (sampler != VK_NULL_HANDLE)
 	{
 		vkDestroySampler(appState.Device, sampler, nullptr);
@@ -3937,6 +4086,7 @@ void Scene::Destroy(AppState& appState)
 		palette.Delete(appState);
 	}
 
+	skyboxRGBA.Delete(appState);
 	textured.Delete(appState);
 	skyRGBA.Delete(appState);
 	sky.Delete(appState);

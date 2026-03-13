@@ -94,6 +94,7 @@ struct Scene
 	Pipeline sky;
 	Pipeline skyRGBA;
 	Pipeline textured;
+	Pipeline skyboxRGBA;
     std::vector<Buffer> paletteBuffers;
     std::vector<Buffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;
@@ -135,6 +136,7 @@ struct Scene
 	Texture controllerTexture;
 	Texture patchTexture;
 	VkSampler sampler;
+	VkSampler skyboxSampler;
 	Buffer* latestIndexBuffer8;
 	VkDeviceSize usedInLatestIndexBuffer8;
 	Buffer* latestIndexBuffer16;
@@ -151,6 +153,7 @@ struct Scene
 	VkDeviceSize rightHandVerticesSize;
 	VkDeviceSize statusBarVerticesSize;
 	VkDeviceSize skyVerticesSize;
+	VkDeviceSize skyboxVerticesSize;
 	VkDeviceSize coloredVerticesSize;
 	VkDeviceSize cutoutVerticesSize;
 	VkDeviceSize verticesSize;
@@ -161,6 +164,7 @@ struct Scene
 	VkDeviceSize rightHandAttributesSize;
 	VkDeviceSize statusBarAttributesSize;
 	VkDeviceSize skyAttributesSize;
+	VkDeviceSize skyboxAttributesSize;
 	VkDeviceSize aliasAttributesSize;
 	VkDeviceSize attributesSize;
 	VkDeviceSize coloredColorsSize;
@@ -171,6 +175,7 @@ struct Scene
 	VkDeviceSize leftHandIndicesSize;
 	VkDeviceSize rightHandIndicesSize;
 	VkDeviceSize statusBarIndicesSize;
+	VkDeviceSize skyboxIndicesSize;
 	VkDeviceSize coloredIndices8Size;
 	VkDeviceSize coloredIndices16Size;
 	VkDeviceSize coloredIndices32Size;
@@ -236,7 +241,7 @@ struct Scene
 	void GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmodel, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded, VkDeviceSize& size);
 	void RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded);
-	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame);
+	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
 	void Destroy(AppState& appState);
 };
