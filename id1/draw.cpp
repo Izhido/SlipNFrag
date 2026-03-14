@@ -830,34 +830,34 @@ void Draw_ConsoleBackground (int lines)
 
 	conback = Draw_CachePic ("gfx/conback.lmp");
 
-	auto scalex = conback->width / 320;
-	auto scaley = conback->height / 200;
+	auto scalex = conback->width*0x10000/320;
+	auto scaley = conback->height*0x10000/200;
 
 // hack the version number directly into the pic
 	if (!sys_version.empty())
 	{
 		sprintf (ver, "%s", sys_version.c_str());
-		dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
+		dest = conback->data + conback->width*(conback->height - ((14 * scaley)>>16)) + conback->width - ((11 * scalex)>>16) - ((8*scalex*strlen(ver))>>16);
 	}
 	else
 	{
 #ifdef _WIN32
 	sprintf (ver, "(WinQuake) %4.2f", (float)VERSION);
-	dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
+	dest = conback->data + conback->width*(conback->height - ((14 * scaley)>>16)) + conback->width - ((11 * scalex)>>16) - ((8*scalex*strlen(ver))>>16);
 #elif defined(X11)
 	sprintf (ver, "(X11 Quake %2.2f) %4.2f", (float)X11_VERSION, (float)VERSION);
-	dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
+	dest = conback->data + conback->width*(conback->height - ((14 * scaley)>>16)) + conback->width - ((11 * scalex)>>16) - ((8*scalex*strlen(ver))>>16);
 #elif defined(__linux__)
 	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
-	dest = conback->data + conback->width*(conback->height - 14 * scaley) + conback->width - 11 * scalex - 8*scalex*strlen(ver);
+	dest = conback->data + conback->width*(conback->height - ((14 * scaley)>>16)) + conback->width - ((11 * scalex)>>16) - ((8*scalex*strlen(ver))>>16);
 #else
-	dest = conback->data + conback->width - 43 * scalex + conback->width*(conback->height - 14 * scaley);
+	dest = conback->data + conback->width - ((43 * scalex)>>16) + conback->width*(conback->height - ((14 * scaley)>>16));
 	sprintf (ver, "%4.2f", VERSION);
 #endif
 	}
 
 	for (x=0 ; x<strlen(ver) ; x++)
-		Draw_CharToConback (ver[x], dest+(x<<3)*scalex, conback->width, conback->height);
+		Draw_CharToConback (ver[x], dest+(((x<<3)*scalex)>>16), conback->width, conback->height);
 	
 // draw the pic
 	auto width = vid.conwidth - vid.conwidth % 3;
