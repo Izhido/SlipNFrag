@@ -214,8 +214,7 @@ void android_main(struct android_app* app)
 #endif
 
 		PFN_xrInitializeLoaderKHR xrInitializeLoaderKHR = nullptr;
-		XrResult res = xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*) (&xrInitializeLoaderKHR));
-		CHECK_XRRESULT(res, "xrGetInstanceProcAddr");
+		CHECK_XRCMD(xrGetInstanceProcAddr(XR_NULL_HANDLE, "xrInitializeLoaderKHR", (PFN_xrVoidFunction*) (&xrInitializeLoaderKHR)));
 
 		XrLoaderInitInfoAndroidKHR loaderInitInfoAndroid { };
 		loaderInitInfoAndroid.type = XR_TYPE_LOADER_INIT_INFO_ANDROID_KHR;
@@ -1769,7 +1768,7 @@ void android_main(struct android_app* app)
 				viewLocateInfo.displayTime = frameState.predictedDisplayTime;
 				viewLocateInfo.space = appSpace;
 
-				res = xrLocateViews(appState.Session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, views.data());
+				auto res = xrLocateViews(appState.Session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, views.data());
 				CHECK_XRRESULT(res, "xrLocateViews");
 				if ((viewState.viewStateFlags & (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT)) == (XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT))
 				{
