@@ -253,7 +253,6 @@ int main(int argc, char* argv[])
 
 		auto performanceSettingsEnabled = false;
 		auto colorSpacesEnabled = false;
-		auto cubeCompositionLayerEnabled = false;
 		auto depthCompositionLayerEnabled = false;
 		auto audioDeviceGuidEnabled = false;
 		auto handTrackingEnabled = false;
@@ -291,7 +290,7 @@ int main(int argc, char* argv[])
 			}
 			else if (strncmp(extension.extensionName, XR_KHR_COMPOSITION_LAYER_CUBE_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
 			{
-				cubeCompositionLayerEnabled = true;
+				appState.CubeCompositionLayerEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
 			else if (strncmp(extension.extensionName, XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
@@ -1925,7 +1924,7 @@ int main(int argc, char* argv[])
 							memcpy(appState.Scene.consoleData.data(), con_buffer.data(), consoleSize);
 						}
 
-						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame);
+						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame, swapchainImageIndex);
 
 						stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
 						stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
@@ -2565,93 +2564,16 @@ int main(int argc, char* argv[])
 						}
 					}
 
-					if (cubeCompositionLayerEnabled && appState.Mode == AppWorldMode)
+					if (appState.CubeCompositionLayerEnabled && appState.Mode == AppWorldMode && appState.Scene.skybox != nullptr)
 					{
-						if (d_lists.last_skybox >= 0)
-						{
-							int width = -1;
-							int height = -1;
-							auto& skybox = d_lists.skyboxes[d_lists.last_skybox];
-							if (appState.Scene.skybox == nullptr)
-							{
-								for (size_t i = 0; i < 6; i++)
-								{
-									auto texture = skybox.textures[i].texture;
-									if (texture == nullptr)
-									{
-										width = -1;
-										height = -1;
-										break;
-									}
-									if (width < 0 && height < 0)
-									{
-										width = texture->width;
-										height = texture->height;
-									}
-									else if (width != texture->width || height != texture->height)
-									{
-										width = -1;
-										height = -1;
-										break;
-									}
-								}
-							}
-							else
-							{
-								auto same = true;
-								for (size_t i = 0; i < 6; i++)
-								{
-									auto texture = skybox.textures[i].texture;
-									if (texture != appState.Scene.skybox->sources[i])
-									{
-										same = false;
-										break;
-									}
-								}
-								if (!same)
-								{
-									Skybox::MoveToPrevious(appState.Scene);
-									for (size_t i = 0; i < 6; i++)
-									{
-										auto texture = skybox.textures[i].texture;
-										if (texture == nullptr)
-										{
-											width = -1;
-											height = -1;
-											break;
-										}
-										if (width < 0 && height < 0)
-										{
-											width = texture->width;
-											height = texture->height;
-										}
-										else if (width != texture->width || height != texture->height)
-										{
-											width = -1;
-											height = -1;
-											break;
-										}
-									}
-								}
-							}
-							if (width > 0 && height > 0)
-							{
-								appState.Scene.skybox = new Skybox { };
+						XrMatrix4x4f rotation;
+						XrMatrix4x4f_CreateRotation(&rotation, 0, 90, 0);
+						XrMatrix4x4f_GetRotation(&skyboxLayer.orientation, &rotation);
 
-								appState.Scene.skybox->Create(appState, width, height, skybox, swapchainImageIndex);
-							}
-						}
-						if (appState.Scene.skybox != VK_NULL_HANDLE)
-						{
-							XrMatrix4x4f rotation;
-							XrMatrix4x4f_CreateRotation(&rotation, 0, 90, 0);
-							XrMatrix4x4f_GetRotation(&skyboxLayer.orientation, &rotation);
+						skyboxLayer.space = appSpace;
+						skyboxLayer.swapchain = appState.Scene.skybox->swapchain;
 
-							skyboxLayer.space = appSpace;
-							skyboxLayer.swapchain = appState.Scene.skybox->swapchain;
-
-							layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&skyboxLayer));
-						}
+						layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&skyboxLayer));
 					}
 				}
 			}
