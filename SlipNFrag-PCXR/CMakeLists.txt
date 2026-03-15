@@ -66,6 +66,25 @@ foreach(shader_file IN LISTS SHADERS_SOURCE)
     list(APPEND COMPILED_SHADERS ${output_file})
 endforeach()
 
+set(RESOURCES_RC ${CMAKE_CURRENT_BINARY_DIR}/resources.rc)
+file(WRITE ${RESOURCES_RC} "")
+
+foreach(spv_file IN LISTS COMPILED_SHADERS)
+    get_filename_component(spv_filename ${spv_file} NAME)
+
+    file(APPEND ${RESOURCES_RC}
+        "\"shaders/${spv_filename}\" RCDATA \"${spv_file}\"\n"
+    )
+endforeach()
+
+foreach(png_file IN LISTS SLIPNFRAG_XR_ASSETS)
+    get_filename_component(png_filename ${png_file} NAME)
+
+    file(APPEND ${RESOURCES_RC}
+        "\"${png_filename}\" RCDATA \"${png_file}\"\n"
+    )
+endforeach()
+
 add_custom_target(compile_shaders ALL DEPENDS ${COMPILED_SHADERS})
 
 add_dependencies(slipnfrag_pcxr
@@ -97,8 +116,4 @@ target_compile_features(slipnfrag_pcxr PUBLIC cxx_std_20)
 
 target_compile_definitions(slipnfrag_pcxr PRIVATE _CRT_SECURE_NO_WARNINGS)
 
-add_custom_command(
-    TARGET slipnfrag_pcxr POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-            ${SLIPNFRAG_XR_ASSETS}
-            ${CMAKE_CURRENT_BINARY_DIR}/slipnfrag_assets)
+target_sources(slipnfrag_pcxr PRIVATE ${RESOURCES_RC})

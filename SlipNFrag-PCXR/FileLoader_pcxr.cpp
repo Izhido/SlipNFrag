@@ -1,27 +1,32 @@
 #include "FileLoader_pcxr.h"
-
-#include <fstream>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <algorithm>
+#include <string>
+#include <stdexcept>
 
 bool FileLoader_pcxr::Exists(const char* filename)
 {
-    const std::string assets = "slipnfrag_assets/";
-    std::ifstream file(assets + filename, std::ios::binary);
-    if (file)
-    {
-        file.close();
-		return true;
-    }
-    return false;
+	std::string toSearch = std::string("\"") + filename + "\"";
+    auto res = FindResource(NULL, toSearch.c_str(), RT_RCDATA);
+    return (res != NULL);
 }
 
 void FileLoader_pcxr::Load(const char* filename, std::vector<unsigned char>& data)
 {
-    const std::string assets = "slipnfrag_assets/";
-    std::ifstream file(assets + filename, std::ios::binary);
-    file.seekg(0, std::ios::end);
-    auto length = file.tellg();
-    file.seekg(0);
-    data.resize(length);
-    file.read((char*)data.data(), length);
-    file.close();
+    std::string toSearch = std::string("\"") + filename + "\"";
+    auto res = FindResource(NULL, toSearch.c_str(), RT_RCDATA);
+    if (res == NULL)
+    {
+        throw std::runtime_error("Resource " + toSearch + " could not be found.");
+	}   
+    auto hData = LoadResource(nullptr, res);
+    if (hData == NULL)
+    {
+        throw std::runtime_error("Resource " + toSearch + " could not be loaded.");
+    }
+    auto size = SizeofResource(nullptr, res);
+    auto ptr = (unsigned char*)LockResource(hData);
+    data.resize(size);
+    std::copy(ptr, ptr + size, data.data());
 }
