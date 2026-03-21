@@ -119,6 +119,7 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 			float rightHandDeltaZ;
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderInputMutex);
+
 				yaw = appState->Yaw * 180 / M_PI + 90;
 				pitch = -appState->Pitch * 180 / M_PI;
 				roll = -appState->Roll * 180 / M_PI;
@@ -126,17 +127,23 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				originDeltaX = appState->CameraLocation.pose.position.x / scale;
 				originDeltaY = -appState->CameraLocation.pose.position.z / scale;
 				originDeltaZ = appState->CameraLocation.pose.position.y / scale;
+
 				handsAvailable = ((Cvar_VariableValue("hands_enabled") != 0) && appState->LeftController.PoseIsValid && appState->RightController.PoseIsValid);
 				if (handsAvailable)
 				{
-					AppState::AnglesFromQuaternion(appState->LeftController.SpaceLocation.pose.orientation, leftHandYaw, leftHandPitch, leftHandRoll);
+					leftHandYaw = appState->LeftController.Yaw;
+					leftHandPitch = appState->LeftController.Pitch;
+					leftHandRoll = appState->LeftController.Roll;
 					leftHandYaw = leftHandYaw * 180 / M_PI + 90;
 					leftHandPitch = -leftHandPitch * 180 / M_PI;
 					leftHandRoll = -leftHandRoll * 180 / M_PI;
 					leftHandDeltaX = appState->LeftController.SpaceLocation.pose.position.x / scale;
 					leftHandDeltaY = -appState->LeftController.SpaceLocation.pose.position.z / scale;
 					leftHandDeltaZ = appState->LeftController.SpaceLocation.pose.position.y / scale;
-					AppState::AnglesFromQuaternion(appState->RightController.SpaceLocation.pose.orientation, rightHandYaw, rightHandPitch, rightHandRoll);
+
+					rightHandYaw = appState->RightController.Yaw;
+					rightHandPitch = appState->RightController.Pitch;
+					rightHandRoll = appState->RightController.Roll;
 					rightHandYaw = rightHandYaw * 180 / M_PI + 90;
 					rightHandPitch = -rightHandPitch * 180 / M_PI;
 					rightHandRoll = -rightHandRoll * 180 / M_PI;

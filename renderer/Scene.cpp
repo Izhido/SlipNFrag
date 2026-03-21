@@ -2824,16 +2824,20 @@ void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_
 		float handDeltaZ;
 		if (appState.FromEngine.dominant_hand_left)
 		{
+			yaw = appState.LeftController.Yaw;
+			pitch = appState.LeftController.Pitch;
+			roll = appState.LeftController.Roll;
 			auto& pose = appState.LeftController.SpaceLocation.pose;
-			AppState::AnglesFromQuaternion(pose.orientation, yaw, pitch, roll);
 			handDeltaX = pose.position.x / scale;
 			handDeltaY = -pose.position.z / scale;
 			handDeltaZ = pose.position.y / scale;
 		}
 		else
 		{
+			yaw = appState.RightController.Yaw;
+			pitch = appState.RightController.Pitch;
+			roll = appState.RightController.Roll;
 			auto& pose = appState.RightController.SpaceLocation.pose;
-			AppState::AnglesFromQuaternion(pose.orientation, yaw, pitch, roll);
 			handDeltaX = pose.position.x / scale;
 			handDeltaY = -pose.position.z / scale;
 			handDeltaZ = pose.position.y / scale;

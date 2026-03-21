@@ -240,7 +240,7 @@ struct Scene
 	void GetStagingBufferSize(AppState& appState, const daliascoloredlights_t& alias, LoadedAliasColoredLights& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmodel, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded, VkDeviceSize& size);
-	void RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded);
+	static void RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
 	void Destroy(AppState& appState);

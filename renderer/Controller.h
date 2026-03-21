@@ -7,6 +7,9 @@ struct Controller
 {
 	XrSpaceLocation SpaceLocation;
 	bool PoseIsValid;
+	float Yaw;
+	float Pitch;
+	float Roll;
 
 	VkDeviceSize VerticesSize() const;
 	static VkDeviceSize AttributesSize();
