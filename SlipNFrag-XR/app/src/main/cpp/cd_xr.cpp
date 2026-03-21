@@ -8,7 +8,7 @@
 stb_vorbis* cdaudio_stream;
 stb_vorbis_info cdaudio_info;
 
-std::unordered_map<int, std::string> cdaudio_tracks;
+Q_HASHMAP<int, std::string> cdaudio_tracks;
 std::vector<byte> cdaudio_trackContents;
 std::vector<float> cdaudio_stagingBuffer;
 
@@ -145,7 +145,14 @@ void CDAudio_DisposeBuffers()
 
 qboolean CDAudio_Start (byte track)
 {
-    COM_LoadFile(cdaudio_tracks[track].c_str(), cdaudio_trackContents);
+    auto entry = cdaudio_tracks.find(track);
+    if (entry == cdaudio_tracks.end())
+    {
+        Con_Printf("CDAudio: Track %u not found.\n", track);
+        return false;
+    }
+
+    COM_LoadFile(entry->second.c_str(), cdaudio_trackContents);
     if (cdaudio_trackContents.size() == 0)
     {
         Con_DPrintf("CDAudio: Empty file for track %u.\n", track);
@@ -299,13 +306,6 @@ void CDAudio_Play(byte track, qboolean looping)
 
         cdaudio_playing = false;
         CDAudio_DisposeBuffers();
-    }
-
-    auto entry = cdaudio_tracks.find(track);
-    if (entry == cdaudio_tracks.end())
-    {
-        Con_Printf("CDAudio: Track %u not found.\n", track);
-        return;
     }
 
     if (!CDAudio_Start(track))

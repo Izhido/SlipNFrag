@@ -9,7 +9,7 @@ struct immviewmodeldata_t
 
 model_t *Mod_FindName (const char *name);
 
-std::unordered_map<std::string, immviewmodeldata_t> imm_viewmodels;
+Q_HASHMAP<std::string, immviewmodeldata_t> imm_viewmodels;
 
 void TrimText(std::string& text)
 {

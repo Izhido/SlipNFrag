@@ -443,8 +443,8 @@ void Sys_Init(int argc, char** argv)
 	in_menukeyfn = IN_MenuKey;
 }
 
-extern std::unordered_map<std::string_view, xcommand_t>	cmd_functions;
-extern std::unordered_map<std::string_view, cvar_t*> cvar_index;
+extern Q_HASHMAP<std::string_view, xcommand_t>	cmd_functions;
+extern Q_HASHMAP<std::string_view, cvar_t*> cvar_index;
 
 void COM_ClearFilesystem (void);
 
@@ -466,12 +466,12 @@ extern qboolean	r_skyinitialized;
 extern qboolean	r_skyRGBAinitialized;
 extern qboolean	r_skyboxinitialized;
 extern std::string r_skyboxprefix;
-extern std::unordered_map<std::string, texture_t**> r_skyboxtexsources;
+extern Q_HASHMAP<std::string, texture_t**> r_skyboxtexsources;
 extern std::vector<byte> r_24to8table;
-extern std::unordered_map<std::string, qpic_t*> menu_cachepics;
+extern Q_HASHMAP<std::string, qpic_t*> menu_cachepics;
 extern std::list<model_t> mod_known;
 extern std::list<sfx_t> known_sfx;
-extern std::unordered_map<std::string, std::list<sfx_t>::iterator> known_sfx_index;
+extern Q_HASHMAP<std::string, std::list<sfx_t>::iterator> known_sfx_index;
 extern sfx_t		*ambient_sfx[NUM_AMBIENTS];
 
 void Sys_Terminate()

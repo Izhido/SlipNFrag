@@ -35,7 +35,7 @@ int   		paintedtime; 	// sample PAIRS
 
 
 std::list<sfx_t> known_sfx;
-std::unordered_map<std::string, std::list<sfx_t>::iterator> known_sfx_index;
+Q_HASHMAP<std::string, std::list<sfx_t>::iterator> known_sfx_index;
 
 sfx_t		*ambient_sfx[NUM_AMBIENTS];
 

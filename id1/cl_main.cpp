@@ -55,7 +55,7 @@ std::vector<entity_t>		cl_entities(MAX_EDICTS);
 std::list<entity_t>		cl_static_entities;
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 std::vector<dlight_t>		cl_dlights;
-std::unordered_map<int, int>	cl_dlight_index;
+Q_HASHMAP<int, int>	cl_dlight_index;
 
 int				cl_numvisedicts;
 std::vector<entity_t*>		cl_visedicts(MAX_VISEDICTS);
@@ -415,7 +415,7 @@ dlight_t *CL_AllocDlight (int key)
 		{
 			memset (dl, 0, sizeof(*dl));
 			dl->key = key;
-			cl_dlight_index[key] = i;
+			cl_dlight_index.insert({ key, i });
 			return dl;
 		}
 	}
@@ -424,7 +424,7 @@ dlight_t *CL_AllocDlight (int key)
 	dl = &cl_dlights.back();
 	memset (dl, 0, sizeof(*dl));
 	dl->key = key;
-	cl_dlight_index[key] = cl_dlights.size() - 1;
+	cl_dlight_index.insert({ key, cl_dlights.size() - 1 });
 	return dl;
 }
 

@@ -368,7 +368,7 @@ static	const char		*cmd_args = NULL;
 cmd_source_t	cmd_source;
 
 
-std::unordered_map<std::string_view, xcommand_t>	cmd_functions;		// possible commands to execute
+Q_HASHMAP<std::string_view, xcommand_t>	cmd_functions;		// possible commands to execute
 
 /*
 ============

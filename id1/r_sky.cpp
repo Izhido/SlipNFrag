@@ -42,7 +42,7 @@ qboolean r_skyinitialized;
 qboolean r_skyRGBAinitialized;
 qboolean r_skyboxinitialized;
 std::string r_skyboxprefix;
-std::unordered_map<std::string, texture_t**> r_skyboxtexsources;
+Q_HASHMAP<std::string, texture_t**> r_skyboxtexsources;
 
 // TODO: clean up these routines
 

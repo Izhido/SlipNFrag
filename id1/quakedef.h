@@ -41,8 +41,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string>
 #include <vector>
 #include <list>
+#ifdef USE_CUSTOM_HASHMAP_INCLUDE
+#include USE_CUSTOM_HASHMAP_INCLUDE
+#else
 #include <unordered_map>
-#include <unordered_set>
+#endif
+#ifdef USE_CUSTOM_HASHMAP
+#define Q_HASHMAP USE_CUSTOM_HASHMAP
+#else
+#define Q_HASHMAP std::unordered_map
+#endif
 #include <algorithm>
 #include <stdexcept>
 #include <math.h>

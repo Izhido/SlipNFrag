@@ -51,7 +51,7 @@ struct server_t
 	char		modelname[64];		// maps/<name>.bsp, for model_precache[0]
 	struct model_s 	*worldmodel;
 	std::vector<std::string>		model_precache;
-	std::unordered_map<std::string, int> model_index;
+	Q_HASHMAP<std::string, int>		model_index;
 	std::vector<struct model_s*>	models;
 	std::vector<std::string>		sound_precache;
 	std::vector<std::string>		lightstyles;

@@ -38,7 +38,7 @@ int 			pr_gravity_ofs;
 int 			pr_alpha_ofs;
 int 			pr_scale_ofs;
 
-std::unordered_map<std::string_view, int> pr_fielddefs_index;
+Q_HASHMAP<std::string_view, int> pr_fielddefs_index;
 
 int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
 

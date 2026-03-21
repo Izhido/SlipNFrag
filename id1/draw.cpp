@@ -42,7 +42,7 @@ std::string	sys_version;
 //=============================================================================
 /* Support Routines */
 
-std::unordered_map<std::string, qpic_t*> menu_cachepics;
+Q_HASHMAP<std::string, qpic_t*> menu_cachepics;
 
 qboolean d_skipfade = false;
 

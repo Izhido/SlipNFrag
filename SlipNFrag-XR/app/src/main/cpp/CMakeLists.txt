@@ -12,6 +12,7 @@ set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.57")
 set(VMA_DIR "${ROOT_DIR}/VulkanMemoryAllocator-3.3.0")
 set(MINIZIP_DIR "${ROOT_DIR}/minizip")
 set(LHASA_DIR "${ROOT_DIR}/lhasa-0.5.0")
+set(UNORDERED_DENSE_DIR "${ROOT_DIR}/unordered_dense-4.8.1")
 
 file(GLOB LOCAL_SOURCE "${LOCAL_DIR}/*.cpp")
 file(GLOB ID1_SOURCE "${ID1_DIR}/*.cpp")
@@ -43,6 +44,8 @@ target_compile_options(slipnfrag_native PRIVATE
         -DANDROID_STL=c++_shared
         -DXR_USE_PLATFORM_ANDROID=1
         -DXR_USE_GRAPHICS_API_VULKAN=1
+        "-DUSE_CUSTOM_HASHMAP_INCLUDE=<ankerl/unordered_dense.h>"
+        -DUSE_CUSTOM_HASHMAP=ankerl::unordered_dense::map
 )
 
 target_link_options(slipnfrag_native PRIVATE
@@ -68,6 +71,7 @@ target_include_directories(slipnfrag_native PRIVATE
         ${MINIZIP_DIR}
         ${LHASA_DIR}/lib
         ${LHASA_DIR}/lib/public
+        ${UNORDERED_DENSE_DIR}/include
 )
 
 target_link_libraries(slipnfrag_native

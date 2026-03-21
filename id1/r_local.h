@@ -376,7 +376,7 @@ extern qboolean r_skyinitialized;
 extern qboolean r_skyRGBAinitialized;
 extern qboolean r_skyboxinitialized;
 extern std::string r_skyboxprefix;
-extern std::unordered_map<std::string, texture_t**> r_skyboxtexsources;
+extern Q_HASHMAP<std::string, texture_t**> r_skyboxtexsources;
 
 qboolean R_SetSkyBox (float rotate, const vec3_t axis);
 void R_EmitSkyBox (void);
