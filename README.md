@@ -12,17 +12,22 @@ Slip & Frag aims to be two things:
 
 ## What is available
 
-Latest version: **1.1.32** - see [Changelog](CHANGELOG.md) for details.
+Latest version: **1.1.33** - see [Changelog](CHANGELOG.md) for details.
 
 Releases are available [here](https://github.com/Izhido/SlipNFrag/releases/latest). They are:
 
-* **Win64**: Desktop version for Windows. Uses the original software renderer to bring the game as closely as possible as when it was played in 1997. Playable with a keyboard, mouse, and optionally an Xbox One (or compatible) controller. (At least one user reported to me that this version can also be played in Linux machines through Wine.)
+* **Win64**: Desktop version for Windows. Uses the original software renderer to bring the game as closely as possible as when it was played in 1997. Playable with a keyboard, mouse, and optionally an Xbox One (or compatible) controller. *(At least one user reported to me that this version can also be played in Linux machines through Wine.)*
 
 * **MacOS**: Desktop version for MacOS. Plays in both Intel and Apple Silicon machines. Also playable with keyboard, mouse, and Xbox One controller.
 
 * **XR**: VR version that runs as a standalone application in Meta Quest devices (1, 2, Pro, 3, 3s). Uses OpenXR / Vulkan to render the game. Playable with the controllers supplied with your VR device.
 
-* **PCXR**: VR version that runs in Windows as a PCVR application, that sends its output to a connected Meta Quest device (same as above). Uses the OpenXR runtime exposed by the Meta Quest Link app, and renders using Vulkan. Playable also using the controllers supplied with your VR device.
+* **PCXR**: VR version that runs in Windows as a PCVR application, that sends its output to a connected Meta Quest device (same as above). Uses the OpenXR runtime exposed by either:
+
+  * The Meta Horizon Link app;
+  * SteamVR as provided by Valve;
+  
+  and renders using Vulkan. Playable also using the controllers supplied with your VR device.
 
 ## What do you need
 
@@ -38,11 +43,11 @@ Additionally, in order to play the **PCXR** release, you need:
 
 * A fairly recent PC running Windows, with a video card no more than 5 years old;
 
-* Meta Quest Link installed and running;
+* Meta Horizon Link installed and running;
 
-* A Meta Quest device connected to the PC in Link mode;
+* (Optional) SteamVR installed and running;
 
-* OpenXR runtime set up to be the one provided by Meta. (**This is important** - the OpenXR runtime provided by SteamVR is currently not compatible with Slip & Frag.)
+* A Meta Quest device connected to the PC in Link mode.
 
 ## What to do
 
@@ -84,7 +89,7 @@ cd C:\Folder\Where\Everything\Is\Installed
     * SideQuest (https://sidequestvr.com/setup-howto);
     * Your favorite .apk installation tool.
 
-* Start Slip & Frag from your device *once*, from the Unknown sources screen or tab. When you do this, the following folder will be automatically created in your device:
+* Start *Slip & Frag* from your device *once*, from the Unknown sources screen or tab. When you do this, the following folder will be automatically created in your device:
 
 ```
 /sdcard/android/data/com.heribertodelgado.slipnfrag-xr/files
@@ -109,36 +114,55 @@ cd C:\Folder\Where\Everything\Is\Installed
 
 ### PCXR
 
-* Extract and copy all files in the package anywhere you wish in your machine. (If desired, you can also copy them in your `ID1` folder.)
+* Extract and copy the SlipNFrag-PCXR.exe executable into the same folder as your ID1 folder.
 
-* Connect your Meta Quest device to your computer via Meta Quest Link. Ensure that your boundaries and the ground level in your device fits the area you'll use to play the game.
+* Connect your Meta Quest device to your computer via Meta Horizon Link (and, optionally, via SteamVR). Ensure that your boundaries and the ground level in your device fits the area you'll use to play the game.
 
-* Open Powershell (or your favorite command-line prompt), and type the following to start playing:
+* Double click on the executable to start playing.
+
+* Optionally, you can do the following from Powershell (or your favorite command-line prompt):
 
 ```
 cd C:\Folder\Where\Everything\Is\Installed
-.\SlipNFrag-PXCR.exe -basedir "C:\Program Files\Steam\steamapps\common\Quake" -game alkaline +map start
+.\SlipNFrag-PCXR.exe -basedir "C:\Program Files\Steam\steamapps\common\Quake" -game alkaline +map start
 ```
 > (Standard command-line options and rules from the game still apply. Feel free to experiment as you wish with custom maps / mods.)
 
 ## Game controller bindings
 
-Thw Win64 and MacOS releases of Slip & Frag can be played, in addition to mouse and keyboard, by using an "extended profile" game controller, such as the Xbox One controller (or similar controllers).
+The **XR** and **PCXR** releases of Slip & Frag have a fixed controller schema, that varies only on whether the game is configured to use left-handed settings vs. right-handed settings.
+
+The bindings of the controllers to play the game are the following:
+
+| Control | Left-handed action | Right-handed action |
+| ------- | ------------------ | ------------------- |
+| Left / Right Joysticks | Walk forward / Backpedal, Step Left / Step Right |
+| [**A**] | Toggle Main Menu | Swim down |
+| [**B**] | | Jump |
+| [**X**] | Swim down | Toggle Main Menu |
+| [**Y**] | Jump | |
+| [**Triggers**] | Attack / fire |
+| [**Grip Triggers**] | Run |
+| [**Click Joysticks**] | Cycle among weapons |
+
+On the other hand, the **Win64** and **MacOS** releases of Slip & Frag can be played, in addition to mouse and keyboard, by using an "extended profile" game controller, such as the Xbox One controller (or similar controllers).
 
 The (fixed) bindings of the game controller to play the game are the following:
 
-* [**A**] : Jump / Swim up
-* [**B**] : Swim down
-* [**X**] : Hold to Run
-* [**Y**] : Swim Up (also, quit the game upon menu)
-* (**DPad**) : Arrow keys (move and turn in game, select and scroll in console and menu)
-* [**Triggers**] : Attack / fire
-* [**Shoulders**] : Cycle among weapons
-* (**Left thumbstick**) : Move forward, backward, sidestep
-* (**Right thumbstick**) : Turn left or right / look up or down (if mlook is enabled)
-* [**Left thumbstick click**] : Reset look to center
-* [**Right thumbstick click**] : Hold to enable mlook, release to disable
-* [**Menu**] : Display game's main menu
+| Control | Action |
+| ------- | ------ |
+| [**A**] | Jump / Swim up |
+| [**B**] | Swim down |
+| [**X**] | Hold to Run |
+| [**Y**] | Swim Up (also, quit the game upon menu) |
+| (**DPad**) | Arrow keys (move and turn in game, select and scroll in console and menu) |
+| [**Triggers**] | Attack / fire |
+| [**Shoulders**] | Cycle among weapons |
+| (**Left thumbstick**) | Move forward, backward, sidestep |
+| (**Right thumbstick**) | Turn left or right / look up or down (if mlook is enabled) |
+| [**Left thumbstick click**] | Reset look to center |
+| [**Right thumbstick click**] | Hold to enable mlook, release to disable |
+| [**Menu**] | Display game's main menu |
 
 When in the game menu, button [**B**] can also be used to move one menu back. Also, if it wasn't clear enough, in the Quit menu, button [**Y**] can be used to exit the game.
 

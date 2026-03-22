@@ -6,21 +6,65 @@ Source code for the project is provided [here](https://github.com/Izhido/SlipNFr
 
 ### Windows (x64)
 
-A Visual Studio 2022 solution file is provided at the root of the source code folder, called *SlipNFrag.sln*. The solution contains a single project, located at *SlipNFrag-Win64/SlipNFrag-Win64.vcxproj*. This is a Win32 project configured to run as a 64-bit application, that does not depend on any other APIs other than the ones that came with a Windows 10 or later machine. (A few uses have reported that this executable, as it is, can also be made to run in a Linux environment properly configured.)
+A Visual Studio 2022 solution file is provided at the root of the source code folder, called *SlipNFrag.sln*. The solution contains a single project, located at *SlipNFrag-Win64/SlipNFrag-Win64.vcxproj*. This is a Win32 project configured to run as a 64-bit application, that does not depend on any other APIs other than the ones that came with a Windows 10 or later machine - as well as the components listed below.
+
+> (A few users have reported that this executable, as it is, can also run in a Linux environment properly configured.)
+
+The following is the list of components, and their version numbers, required to build the Win64 project, as of this writing:
+
+| Component | Version |
+| --------- | ------- |
+| stb | latest version gathered from https://github.com/nothings/stb |
+| ankerl::unordered_dense::{map, set} | 4.8.1 |
 
 To set up the environment to build, debug and test the project for the first time:
 
 * Clone or download the latest version of stb (as found in https://github.com/nothings/stb ). Create a stb folder at the root source folder, next to the `SlipNFrag-Win64` folder. Ensure that the "stb_xxx.h" files are located at the root of the stb folder to ensure proper compilation.
 
+* Clone or download the version above mentioned of ankerl::unordered_dense::{map, set}. Copy the contents of the *unordered_dense-x.x.x* folder from the .zip file at the root source folder. Ensure that the "include" folder containing "ankerl/unordered_dense.h" is located at the root of the *unordered_dense-x.x.x* folder to ensure proper compilation.
+
+The folder structure, so far, should look like this:
+
+```
+/path/to/SlipNFrag/
+   SlipNFrag-Win64/
+      ...
+   stb/
+      stb_vorbis.c
+      ...
+   unordered_dense-x.x.x
+      include/
+         ankerl
+            unordered_dense.h
+         ...
+      ...
+   id1
+   ...
+```
+
 * Open Visual Studio 2022 (or newer), then open the *SlipNFrag.sln* solution in the top folder.
 
 * Compile and run the project as usual for Visual Studio to debug or test it.
 
-To generate a Release build of the project, ensure that you selected the Release configuration in the IDE, then right-click on the project file - Publish - Create app packages, and follow the prompts.  
+Generating a Release build of the project is as simple as choosing the "Release" mode of the project, and compiling the project again.
 
 ### Windows PCXR
 
-The code is provided as a CMake project, residing at `SlipNFrag-PCXR` folder from the root of the source code folder. This project creates a console-based Windows executable that uses both OpenXR and Vulkan to perform the rendering of the game. The OpenXR runtime used is the one provided by Meta through their own Meta Quest Link application, that connects your VR device to the executable and plays the game through the runtime into your device.
+The code is provided as a CMake project, residing at `SlipNFrag-PCXR` folder from the root of the source code folder. This project creates a console-based Windows executable that uses both OpenXR and Vulkan to perform the rendering of the game. 
+
+As of this writing, the PCXR project is able to run using either:
+* The OpenXR runtime provided by Meta through Meta Horizon Link; or
+* The OpenXR runtime provided by Valve using SteamVR.
+
+Both of them connect your VR device to the executable and play the game through any of the chosen runtimes into your device.
+
+The following is the list of components, and their version numbers, required to build the PCXR project, as of this writing:
+
+| Component | Version |
+| --------- | ------- |
+| stb | latest version gathered from https://github.com/nothings/stb |
+| Vulkan Memory Allocator | 3.3.0 |
+| ankerl::unordered_dense::{map, set} | 4.8.1 |
 
 To set up the environment to build, debug and test the project for the first time:
 
@@ -28,19 +72,51 @@ To set up the environment to build, debug and test the project for the first tim
 
 * Open the newly downloaded OpenXR SDK in Visual Studio (2022 or newer), configure the CMake project and run the `Install OPENXR` target (both Debug and Release mode). Close Visual Studio.
 
+* Clone or download the latest version of stb (as found in https://github.com/nothings/stb ). Create a *stb* folder at the root source folder. Ensure that the "stb_xxx.h" files are located at the root of the *stb* folder to ensure proper compilation.
+
+* Clone or download the version above mentioned of Vulkan Memory Allocator. Copy the contents of the *VulkanMemoryAllocator-x.x.x* folder from the .zip file at the root source folder. Ensure that the "include" folder containing "vk_mem_alloc.h" is located at the root of the *VulkanMemoryAllocator-x.x.x* folder to ensure proper compilation.
+
+* Clone or download the version above mentioned of ankerl::unordered_dense::{map, set}. Copy the contents of the *unordered_dense-x.x.x* folder from the .zip file at the root source folder. Ensure that the "include" folder containing "ankerl/unordered_dense.h" is located at the root of the *unordered_dense-x.x.x* folder to ensure proper compilation.
+
+The folder structure, so far, should look like this:
+
+```
+/path/to/SlipNFrag/
+   SlipNFrag-PCXR/
+      ...
+   OpenXR-SDK-release-x.x.x/
+      ...
+   stb/
+      stb_vorbis.c
+      ...
+   VulkanMemoryAllocator-x.x.x
+      include/
+         vk_mem_alloc.h
+      ...
+   unordered_dense-x.x.x
+      include/
+         ankerl
+            unordered_dense.h
+         ...
+      ...
+   id1
+   renderer
+   ...
+```
+
 * Open `SlipNFrag-PCXR` in Visual Studio, and configure CMake.
 
 * Go to Debug - Debug and Launch Settings for... to specify the command-line arguments for the project. (Standard command-line rules for the game apply; -basedir, -game, +map, the usual commands are in effect as expected.)
 
 * Locate and compile (or run) the `slipnfrag-pcxr.exe` target from within Visual Studio.
 
-Generating a Release build of the project is as simple as choosing the "Release" mode of the project, and compiling the project again. Make sure to copy also the PNG assets and the `shaders` folder created when compiling the project, and packaging them as part of the new release.
+Generating a Release build of the project is as simple as choosing the "Release" mode of the project, and compiling the project again. 
 
 ### MacOS
 
-You will find a project package called *SlipNFrag.xcodeproj* at the root of the source code folder. Open this package using Xcode 12 or newer. The source files that this project references are in the *SlipNFrag-MacOS* folder - or, if you intend to build the experimental iOS target, in the *SlipNFrag-iOS* folder. 
+You will find a project package called *SlipNFrag.xcodeproj* at the root of the source code folder. Open this package using Xcode 12 or newer. The source files that this project references are in the *SlipNFrag-MacOS* folder - or, if you intend to build the experimental iOS or VisionOS targets, in the *SlipNFrag-iOS* or *SlipNFrag-VisionOS* folders respectively. 
 
-The project itself has 3 targets:
+The project itself has 4 targets:
 
 * One with just the source code of the engine and minimal, almost empty porting helper .cpp files (**SlipNFrag**);
 
@@ -48,15 +124,49 @@ The project itself has 3 targets:
 
 * One with all the sources required to build the experimental iOS version (**SlipNFrag-iOS**).
 
+* One with all the sources required to build the experimental VisionOS version (**SlipNFrag-VisionOS**).
+
+The following is the list of components, and their version numbers, required to build the MacOS / iOS / VisionOS projects, as of this writing:
+
+| Component | Version |
+| --------- | ------- |
+| stb | latest version gathered from https://github.com/nothings/stb |
+| ankerl::unordered_dense::{map, set} | 4.8.1 |
+
 To set up the environment to build, debug and test the project for the first time, for either target:
 
-* Clone or download the latest version of stb (as found in https://github.com/nothings/stb ). Create a stb folder at the root source folder, next to the `SlipNFrag-MacOS` and `SlipNFrag-iOS` folders. Ensure that the "stb_xxx.h" files are located at the root of the stb folder to ensure proper compilation.
+* Clone or download the latest version of stb (as found in https://github.com/nothings/stb ). Create a stb folder at the root source folder, next to the `SlipNFrag-MacOS` / `SlipNFrag-iOS` / `SlipNFrag-VisionOS` folders. Ensure that the "stb_xxx.h" files are located at the root of the stb folder to ensure proper compilation.
+
+* Clone or download the version above mentioned of ankerl::unordered_dense::{map, set}. Copy the contents of the *unordered_dense-x.x.x* folder from the .zip file at the root source folder. Ensure that the "include" folder containing "ankerl/unordered_dense.h" is located at the root of the *unordered_dense-x.x.x* folder to ensure proper compilation.
+
+The folder structure, so far, should look like this:
+
+```
+/path/to/SlipNFrag/
+   SlipNFrag-MacOS/
+      ...
+   SlipNFrag-iOS/
+      ...
+   SlipNFrag-VisionOS/
+      ...
+   stb/
+      stb_vorbis.c
+      ...
+   unordered_dense-x.x.x
+      include/
+         ankerl
+            unordered_dense.h
+         ...
+      ...
+   id1
+   ...
+```
 
 * Open Xcode 12 (or newer), then open the *SlipNFrag.xcodeproj* project in the top folder.
 
-* Choose your target (MacOS or iOS) from the Target selector at the top of the main Xcode screen.
+* Choose your target (MacOS, iOS, VisionOS) from the Target selector at the top of the main Xcode screen.
 
-* Compile and run the project as usual for Xcode to debug or test it. For MacOS, pressing the Play button at the top of the screen should suffice. For iOS, you will need to setup the Signing configuration of the project with your own Apple Developer account before compiling.
+* Compile and run the project as usual for Xcode to debug or test it. For MacOS, pressing the Play button at the top of the screen should suffice. For iOS or VisionOS, you will need to setup the Signing configuration of the project with your own Apple Developer account before compiling.
 
 To generate a Release build of either the MacOS or iOS target, ensure that your target's schema has the Build Configuration of its Run settings in Release, instead of Debug, mode. After that, generate an Archive of the project, follow the prompts if required, then Distribute App / Copy App in Organizer.
 
@@ -70,34 +180,28 @@ The XR version is an Android Studio project that can be found at `SlipNFrag-XR` 
 
 The following is the list of components, and their version numbers, required to build the Android project, as of this writing:
 
-* Android SDK Platform **16.0** (R) API level **36.1**
-
-* NDK (Side by Side) **29.0.14206865**
-
-* Android SDK Build-Tools **36.1.0**
-
-* Gradle **9.1.0**
-
-* Android Gradle Plugin **9.0.0**
-
-* OpenXR SDK **1.1.54**
-
-* CMake **4.1.2** (or later)
-
-* stb (latest version gathered from https://github.com/nothings/stb )
-
-* Minizip (latest version gathered from https://github.com/domoticz/minizip )
-
-* lhasa **0.5.0** (or later, gathered from https://github.com/fragglet/lhasa )
+| Component | Version |
+| --------- | ------- |
+| Android SDK Platform | 16.0 API level 36.1
+| NDK (Side by Side) | 29.0.14206865 |
+| Android SDK Build-Tools | 36.1.0 |
+| Gradle | 9.3.1 |
+| Android Gradle Plugin | 9.1.0 |
+| OpenXR SDK | 1.1.57 |
+| CMake | 4.1.2 or later |
+| stb | latest version gathered from https://github.com/nothings/stb |
+| Minizip | latest version gathered from https://github.com/domoticz/minizip |
+| lhasa | 0.5.0 or later, gathered from https://github.com/fragglet/lhasa |
+| Vulkan Memory Allocator | 3.3.0 |
+| ankerl::unordered_dense::{map, set} | 4.8.1 |
 
 > (Versions for other components can be checked in *Project Structure* in the Android Studio project.)
 
 To set up the environment to build, debug and test the project for the first time:
-> (There used to be a dependency on the Oculus OpenXR Mobile SDK for building. This dependency was removed, and now all it is needed is Khronos OpenXR SDK.)
 
 * Ensure that your VR headset is in Developer mode, and that it can run applications from Unknown sources. (See the [Readme](README.md) for details).
 
-* Download the latest release of the OpenXR SDK (as stated above). Copy the contents of the *OpenXR-SDK-release-xxx* from the .zip file at the root source folder.
+* Download the latest release of the OpenXR SDK (as stated above). Copy the contents of the *OpenXR-SDK-release-xxx* folder from the .zip file at the root source folder.
 >(If the name of the folder from the OpenXR SDK references a newer version than the specified above, modify the path to the SDK specified in `SlipNFrag-XR/app/src/main/cpp/CMakeLists.txt` file and change it so it points to the new version.)
  
 * Clone or download the latest version of stb (as stated above). Create a *stb* folder at the root source folder, next to the *OpenXR-SDK-release-xxx* folder. Ensure that the "stb_xxx.h" files are located at the root of the *stb* folder to ensure proper compilation.
@@ -106,10 +210,16 @@ To set up the environment to build, debug and test the project for the first tim
 
 * Clone or download the version above mentioned of lhasa. Create a *lhasa-x.x.x* folder (with x.x.x representing the version above) at the root source folder, next to the *minizip* folder. Ensure that the "lib" folder is located at the root of the *lhasa-x.x.x* folder, along with all other files.
 
+* Clone or download the version above mentioned of Vulkan Memory Allocator. Copy the contents of the *VulkanMemoryAllocator-x.x.x* folder from the .zip file at the root source folder. Ensure that the "include" folder containing "vk_mem_alloc.h" is located at the root of the *VulkanMemoryAllocator-x.x.x* folder to ensure proper compilation.
+
+* Clone or download the version above mentioned of ankerl::unordered_dense::{map, set}. Copy the contents of the *unordered_dense-x.x.x* folder from the .zip file at the root source folder. Ensure that the "include" folder containing "ankerl/unordered_dense.h" is located at the root of the *unordered_dense-x.x.x* folder to ensure proper compilation.
+
 The folder structure, so far, should look like this:
 
 ```
 /path/to/SlipNFrag/
+   SlipNFrag-XR/
+      ...
    OpenXR-SDK-release-x.x.x/
       ...
    stb/
@@ -122,6 +232,16 @@ The folder structure, so far, should look like this:
    lhasa-x.x.x/
       lib/
          public/
+         ...
+      ...
+   VulkanMemoryAllocator-x.x.x
+      include/
+         vk_mem_alloc.h
+      ...
+   unordered_dense-x.x.x
+      include/
+         ankerl
+            unordered_dense.h
          ...
       ...
    id1

@@ -1,6 +1,21 @@
 # Changelog
 
-## Version **1.1.32**:
+## Version **1.1.33**:
+
+* The XR version will now be distributed in two flavors: one *with*, and one *without* the shareware episode of Quake pre-packaged in, to allow the player to begin playing away immediately, with no need to transfer any data until they get the full game.
+* Support for **SteamVR** is now available for the PCXR version (and, potentially, the XR version), so the player has no need to switch between OpenXR runtimes anymore - also, in preparation for the newly announced headsets as of this writing.
+* The PCXR version will no longer require extra assets from separate folders - everything the executable needs is now inside it as resources. (Except, of course, for the game data files.)
+* Support for *generic controllers* in the XR and PCXR versions, also in preparation for the newest announced headsets.
+* Added depth information in composition layers to the XR version, to allow for a more stable VR experience while playing. (Pending change to the PCXR version.)
+* Head bobbing, in the game, is now **disabled** by default - you will now have to go to the Options menu to re-enable it.
+* Controls for left-handed players are now different from right-handed people in at least 3 of the buttons in the controllers for the XR and PCXR version. This allowed the app to have an extra button that **toggles the Main Menu** from the game, since the OpenXR runtime for SteamVR, as of this writing, does not allow the app to use the Menu button in Meta Quest controllers.
+* The initial message displaying the controller schema in the XR and PCXR version will no longer be shown - players can now see the bindings for the current left- or right-handedness in the "Customize controls" section of the Main Menu.
+* Fixed bug in audio file handling that caused a crash with sound effects with special markers (such as LIST) not being set as expected by the core engine.
+* Fixed bug when loading sounds and entities in the core engine that caused a few mods (such as Copper) to crash the core engine without having a chance to go to the Main Menu.
+* Added support for Targa type 3 images in the core engine, allowing it to support more of the existing mods & maps released today.
+* Other minor, but also important fixes and optimizations applied to all versions as well.
+
+### Version **1.1.32**:
 
 * Removed no longer needed check for textures in alias (weapons, monsters, items and so on) models for their size to be a multiple of 4, which prevents crashing on an increasing number of newer maps / mods.
 * Added "sky" command to the core engine, allowing skyboxes to be changed at any time during play, either by hand or when the map / mod requires it.
