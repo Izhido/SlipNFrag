@@ -19,7 +19,7 @@ qboolean cdaudio_delaytoobig;
 stb_vorbis* cdaudio_stream;
 stb_vorbis_info cdaudio_info;
 
-std::unordered_map<int, std::string> cdaudio_tracks;
+Q_HASHMAP<int, std::string> cdaudio_tracks;
 std::vector<byte> cdaudio_trackContents;
 std::vector<float> cdaudio_stagingBuffer;
 

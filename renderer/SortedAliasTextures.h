@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SortedAliasTexture.h"
+#include <unordered_map>
 
 struct SortedAliasTextures
 {

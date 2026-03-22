@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SortedSurfaceTextureWithLightmaps.h"
+#include <unordered_map>
 
 struct SortedSurfaceTexturesWithLightmaps
 {

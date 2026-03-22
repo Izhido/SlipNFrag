@@ -1756,6 +1756,7 @@ int main(int argc, char* argv[])
 							if ((appState.LeftController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 							{
 								appState.LeftController.PoseIsValid = true;
+								AppState::AnglesFromQuaternion(appState.LeftController.SpaceLocation.pose.orientation, appState.LeftController.Yaw, appState.LeftController.Pitch, appState.LeftController.Roll);
 							}
 						}
 						else if (appState.ActiveHands[0])
@@ -1772,6 +1773,7 @@ int main(int argc, char* argv[])
 							if ((appState.RightController.SpaceLocation.locationFlags & (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) == (XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 							{
 								appState.RightController.PoseIsValid = true;
+								AppState::AnglesFromQuaternion(appState.RightController.SpaceLocation.pose.orientation, appState.RightController.Yaw, appState.RightController.Pitch, appState.RightController.Roll);
 							}
 						}
 						else if (appState.ActiveHands[1])
