@@ -1545,7 +1545,7 @@ int main(int argc, char* argv[])
 				{
 					if (appState.PreviousMode == AppStartupMode)
 					{
-						sys_version = "PCXR 1.1.32";
+						sys_version = "PCXR 1.1.33";
 						sys_argc = argc;
 						sys_argv = argv;
 						cl_bobdisabled.default_value = "1";
