@@ -6,6 +6,7 @@
 #include "RendererNames.h"
 #endif
 #include "Constants.h"
+#include <unordered_set>
 
 float PerFrame::GammaCorrect(float component)
 {
@@ -1592,9 +1593,10 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	fillLabel.pLabelName = "Lightmaps";
 	appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &fillLabel);
 #endif
+	std::unordered_set<void*> lightmapsInUse;
 	for (auto& chain : appState.Scene.lightmapChains)
 	{
-		std::unordered_set<LightmapBuffer*> inUse;
+		lightmapsInUse.clear();
 		VkBuffer delayedCopyBuffer = VK_NULL_HANDLE;
 		VkDeviceSize delayedCopyOffset = 0;
 		VkDeviceSize delayedCopySize = 0;
@@ -1602,7 +1604,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		while (loaded != nullptr)
 		{
 			auto buffer = loaded->lightmap->buffer;
-			if (inUse.insert(buffer).second)
+			if (lightmapsInUse.insert(buffer).second)
 			{
 				appState.Scene.AddToVertexShaderBarriers(buffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
 			}
@@ -1652,7 +1654,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 #endif
 	for (auto& chain : appState.Scene.lightmapRGBChains)
 	{
-		std::unordered_set<LightmapRGBBuffer*> inUse;
+		lightmapsInUse.clear();
 		VkBuffer delayedCopyBuffer = VK_NULL_HANDLE;
 		VkDeviceSize delayedCopyOffset = 0;
 		VkDeviceSize delayedCopySize = 0;
@@ -1660,7 +1662,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		while (loaded != nullptr)
 		{
 			auto buffer = loaded->lightmap->buffer;
-			if (inUse.insert(buffer).second)
+			if (lightmapsInUse.insert(buffer).second)
 			{
 				appState.Scene.AddToVertexShaderBarriers(buffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
 			}

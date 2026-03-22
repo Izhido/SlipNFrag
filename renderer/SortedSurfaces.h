@@ -1,6 +1,5 @@
 #pragma once
 
-#include <unordered_map>
 #include <list>
 #include <vulkan/vulkan.h>
 #include "SortedSurfaceTexturesWithLightmaps.h"

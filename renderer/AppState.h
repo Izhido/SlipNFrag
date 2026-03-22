@@ -58,7 +58,7 @@ struct AppState
 	std::vector<std::string> StatusBarTextureNames;
 #endif
 	Keyboard Keyboard;
-	std::unordered_map<uint32_t, Texture> KeyboardTextures;
+	Q_HASHMAP<uint32_t, Texture> KeyboardTextures;
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	std::vector<std::string> KeyboardTextureNames;
 #endif
@@ -69,7 +69,7 @@ struct AppState
 	struct Logger* Logger;
 	Scene Scene;
 	FromEngine FromEngine;
-	std::unordered_map<uint32_t, PerFrame> PerFrame;
+	Q_HASHMAP<uint32_t, PerFrame> PerFrame;
 	uint32_t EyeTextureWidth;
 	uint32_t EyeTextureHeight;
 	uint32_t EyeTextureMaxDimension;
