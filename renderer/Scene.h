@@ -5,6 +5,8 @@
 #include "PipelineWithSortedAlias.h"
 #include "CachedAliasBuffers.h"
 #include "CachedIndexBuffers.h"
+#include "quakedef.h"
+#include "d_lists.h"
 #include "PerSurfaceData.h"
 #include "AliasVertices.h"
 #include "LoadedSurfaceRotatedColoredLights.h"

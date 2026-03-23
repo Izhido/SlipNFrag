@@ -1,5 +1,5 @@
+#include "PerFrame.h"
 #include "AppState.h"
-#include "PerFrame.h" // This header is specified second in the list to allow headers in AppState.h to include the core engine structs
 #include "Utils.h"
 #include "Floor.h"
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -1588,12 +1588,13 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		appState.Scene.AddToVertexInputBarriers(indices32->buffer, VK_ACCESS_INDEX_READ_BIT);
 	}
 
+	std::unordered_set<void*> lightmapsInUse;
+
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	if (!appState.Scene.lightmapChains.empty()) {
 	fillLabel.pLabelName = "Lightmaps";
 	appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &fillLabel);
 #endif
-	std::unordered_set<void*> lightmapsInUse;
 	for (auto& chain : appState.Scene.lightmapChains)
 	{
 		lightmapsInUse.clear();

@@ -4,8 +4,6 @@
 #include <common/xr_dependencies.h>
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
-#include "quakedef.h"
-#include "d_lists.h"
 #include "Keyboard.h"
 #include "Scene.h"
 #include "FromEngine.h"

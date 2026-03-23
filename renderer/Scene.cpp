@@ -1,5 +1,5 @@
+#include "Scene.h"
 #include "AppState.h"
-#include "Scene.h" // This header is specified second in the list to allow headers in AppState.h to include the core engine structs
 #include "Utils.h"
 #include "Constants.h"
 #include "ImageAsset.h"

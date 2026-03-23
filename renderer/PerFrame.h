@@ -87,14 +87,14 @@ struct PerFrame
 
 	static float GammaCorrect(float component);
 	static unsigned char AveragePixels(std::vector<unsigned char>& pixdata);
-	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture);
+	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, struct LoadedSharedMemoryTexture* loadedTexture);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void LoadNonStagedResources(AppState& appState);
-	void FillColormapTextures(AppState& appState, LoadedAlias& loaded);
-	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const;
+	void FillColormapTextures(AppState& appState, struct LoadedAlias& loaded);
+	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, struct LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
-	static void SetPushConstants(const LoadedAliasColoredLights& alias, float pushConstants[]);
+	static void SetPushConstants(const struct LoadedAliasColoredLights& alias, float pushConstants[]);
 	static void SetTintPushConstants(float pushConstants[], size_t offset = 0);
 	void Render(AppState& appState, uint32_t swapchainImageIndex);
 	void DestroyFramebuffer(AppState& appState) const;
