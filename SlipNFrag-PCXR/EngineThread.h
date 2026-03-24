@@ -1,3 +1,3 @@
 #pragma once
 
-void runEngine(struct AppState_pcxr* appState);
+void runEngine(struct AppState* appState);

@@ -1,5 +1,5 @@
 #include "AppInput.h"
-#include "AppState_pcxr.h"
+#include "AppState.h"
 #include "in_pcxr.h"
 #include "Utils.h"
 #include "Locks.h"
@@ -39,7 +39,7 @@ void AppInput::AddCommandInput(const char* command)
 	entry.command = command;
 }
 
-void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
+void AppInput::Handle(AppState& appState, bool keyPressHandled)
 {
 	XrActionStateGetInfo actionGetInfo { XR_TYPE_ACTION_STATE_GET_INFO };
 	XrActionStateBoolean booleanActionState { XR_TYPE_ACTION_STATE_BOOLEAN };

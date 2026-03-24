@@ -1,5 +1,5 @@
 #include "EngineThread.h"
-#include "AppState_pcxr.h"
+#include "AppState.h"
 #include "sys_pcxr.h"
 #include "vid_pcxr.h"
 #include "AppInput.h"
@@ -7,7 +7,7 @@
 #include "Utils.h"
 #include "Locks.h"
 
-void runEngine(AppState_pcxr* appState)
+void runEngine(AppState* appState)
 {
 	while (!appState->EngineThreadStopped)
 	{

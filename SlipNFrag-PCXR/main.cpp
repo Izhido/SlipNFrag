@@ -1,4 +1,4 @@
-#include "AppState_pcxr.h"
+#include "AppState.h"
 #include "Utils.h"
 #include "FileLoader_pcxr.h"
 #include "Logger_pcxr.h"
@@ -220,7 +220,7 @@ void PrintErrorMessage(const std::string& message)
 	printf("\n");
 }
 
-AppState_pcxr appState { };
+AppState appState { };
 
 int main(int argc, char* argv[])
 {
@@ -2077,7 +2077,7 @@ int main(int argc, char* argv[])
 						screenPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
 					}
 
-					appState.RenderScreen(screenPerFrame);
+					appState.RenderScreen(screenPerFrame, vid_width, vid_height);
 
 					appState.CopyBarrier.image = screenPerFrame.image;
 					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.CopyBarrier);
