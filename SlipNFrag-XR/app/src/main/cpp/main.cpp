@@ -2129,7 +2129,7 @@ void android_main(struct android_app* app)
 						screenPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ScreenData.size() * sizeof(uint32_t));
 					}
 
-					appState.RenderScreen(screenPerFrame);
+					appState.RenderScreen(screenPerFrame, vid_width, vid_height);
 
 					appState.CopyBarrier.image = screenPerFrame.image;
 					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &appState.CopyBarrier);

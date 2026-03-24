@@ -8,6 +8,7 @@
 #include <lhasa.h>
 #include <Logger.h>
 #include <sys/stat.h>
+#include "FileLoader.h"
 
 extern m_state_t m_state;
 

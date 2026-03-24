@@ -116,6 +116,7 @@ struct AppState
 #endif
 
 	static void AnglesFromQuaternion(XrQuaternionf& quat, float& yaw, float& pitch, float& roll);
+	void RenderScreen(ScreenPerFrame& perFrame, int width, int height);
 	void RenderKeyboard(ScreenPerFrame& perFrame);
 	void DestroyImageSources();
 	void Destroy();
