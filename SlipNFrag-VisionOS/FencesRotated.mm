@@ -156,7 +156,7 @@ void FencesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightmap>
 					{
 						auto newLightmap = [Lightmap new];
 						newLightmap.descriptor = [MTLTextureDescriptor new];
-						newLightmap.descriptor.pixelFormat = MTLPixelFormatR16Unorm;
+						newLightmap.descriptor.pixelFormat = MTLPixelFormatR32Uint;
 						newLightmap.descriptor.width = fence.lightmap_width;
 						newLightmap.descriptor.height = fence.lightmap_height;
 						newLightmap.descriptor.resourceOptions = MTLResourceStorageModePrivate;
@@ -172,14 +172,14 @@ void FencesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightmap>
 						
 						[perDrawable.lightmapCache addObject:newLightmap];
 
-						uint32_t bytesPerRow = fence.lightmap_width * sizeof(uint16_t);
+						uint32_t bytesPerRow = fence.lightmap_width * sizeof(uint32_t);
 						uint32_t lightmapSize = bytesPerRow * fence.lightmap_height;
 						lightmapBufferSize += lightmapSize;
 						
 						lightmapCopying.emplace_back();
 						auto& lightmapCopyingEntry = lightmapCopying.back();
 						lightmapCopyingEntry.lightmap = lightmap.second.lightmap;
-						lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + fence.lightmap_texels;
+						lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + fence.first_lightmap_texel;
 						lightmapCopyingEntry.width = fence.lightmap_width;
 						lightmapCopyingEntry.height = fence.lightmap_height;
 						lightmapCopyingEntry.size = lightmapSize;
@@ -192,14 +192,14 @@ void FencesRotated::Fill(std::unordered_map<void*, SortedSurfaceRotatedLightmap>
 						auto existingLightmap = perDrawable.lightmapCache[lightmap.second.lightmap];
 						if (existingLightmap.createdCount != fence.created)
 						{
-							uint32_t bytesPerRow = fence.lightmap_width * sizeof(uint16_t);
+							uint32_t bytesPerRow = fence.lightmap_width * sizeof(uint32_t);
 							uint32_t lightmapSize = bytesPerRow * fence.lightmap_height;
 							lightmapBufferSize += lightmapSize;
 							
 							lightmapCopying.emplace_back();
 							auto& lightmapCopyingEntry = lightmapCopying.back();
 							lightmapCopyingEntry.lightmap = lightmap.second.lightmap;
-							lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + fence.lightmap_texels;
+							lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + fence.first_lightmap_texel;
 							lightmapCopyingEntry.width = fence.lightmap_width;
 							lightmapCopyingEntry.height = fence.lightmap_height;
 							lightmapCopyingEntry.size = lightmapSize;

@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+    <rect fill="black" x="0" y="0" width="1024" height="1024"/>
     <ellipse stroke="lightgray" stroke-width="16" fill="dimgray" cx="512" cy="512" rx="504" ry="504"/>
     <text font-family="Arial" font-size="584" x="64" y="724" fill="gold">S</text>
     <text font-family="Arial" font-size="196" x="480" y="576" fill="white">&amp;</text>

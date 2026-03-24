@@ -1,8 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "appicon.png",
-      "idiom" : "reality",
+      "filename" : "logoround_opaque.png",
+      "idiom" : "vision",
       "scale" : "2x"
     }
   ],

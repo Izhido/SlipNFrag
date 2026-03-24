@@ -41,7 +41,7 @@ struct PlayView: View {
 						}
 					}
 				}, label: {
-					Image("play")
+					Image("Play")
 				})
 
 				VStack {

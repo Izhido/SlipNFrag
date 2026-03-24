@@ -145,7 +145,7 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 					{
 						auto newLightmap = [Lightmap new];
 						newLightmap.descriptor = [MTLTextureDescriptor new];
-						newLightmap.descriptor.pixelFormat = MTLPixelFormatR16Unorm;
+						newLightmap.descriptor.pixelFormat = MTLPixelFormatR32Uint;
 						newLightmap.descriptor.width = surface.lightmap_width;
 						newLightmap.descriptor.height = surface.lightmap_height;
 						newLightmap.descriptor.resourceOptions = MTLResourceStorageModePrivate;
@@ -161,14 +161,14 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 						
 						[perDrawable.lightmapCache addObject:newLightmap];
 
-						uint32_t bytesPerRow = surface.lightmap_width * sizeof(uint16_t);
+						uint32_t bytesPerRow = surface.lightmap_width * sizeof(uint32_t);
 						uint32_t lightmapSize = bytesPerRow * surface.lightmap_height;
 						lightmapBufferSize += lightmapSize;
 						
 						lightmapCopying.emplace_back();
 						auto& lightmapCopyingEntry = lightmapCopying.back();
 						lightmapCopyingEntry.lightmap = lightmap.second.lightmap;
-						lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+						lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 						lightmapCopyingEntry.width = surface.lightmap_width;
 						lightmapCopyingEntry.height = surface.lightmap_height;
 						lightmapCopyingEntry.size = lightmapSize;
@@ -181,14 +181,14 @@ void Surfaces::Fill(std::unordered_map<void*, SortedSurfaceLightmap>& sorted, fl
 						auto existingLightmap = perDrawable.lightmapCache[lightmap.second.lightmap];
 						if (existingLightmap.createdCount != surface.created)
 						{
-							uint32_t bytesPerRow = surface.lightmap_width * sizeof(uint16_t);
+							uint32_t bytesPerRow = surface.lightmap_width * sizeof(uint32_t);
 							uint32_t lightmapSize = bytesPerRow * surface.lightmap_height;
 							lightmapBufferSize += lightmapSize;
 							
 							lightmapCopying.emplace_back();
 							auto& lightmapCopyingEntry = lightmapCopying.back();
 							lightmapCopyingEntry.lightmap = lightmap.second.lightmap;
-							lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + surface.lightmap_texels;
+							lightmapCopyingEntry.data = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 							lightmapCopyingEntry.width = surface.lightmap_width;
 							lightmapCopyingEntry.height = surface.lightmap_height;
 							lightmapCopyingEntry.size = lightmapSize;

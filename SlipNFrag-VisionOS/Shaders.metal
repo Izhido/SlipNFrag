@@ -180,12 +180,12 @@ struct ParticleVertexOut
 	return outVertex;
 }
 
-[[fragment]] half4 surfaceFragmentMain(SurfaceVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<float> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler surfaceSampler [[sampler(3)]])
+[[fragment]] half4 surfaceFragmentMain(SurfaceVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<uint> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler surfaceSampler [[sampler(3)]])
 {
 	auto lightmapCoords = floor(input.lightmapCoords * input.lightmapSize) / input.lightmapSize;
-	auto light = lightmapTexture.sample(lightmapSampler, lightmapCoords)[0] * 4;
+	auto light = lightmapTexture.sample(lightmapSampler, lightmapCoords)[0];
 	auto textureEntry = surfaceTexture.sample(surfaceSampler, input.texCoords)[0];
-	auto colormapCoords = float2(textureEntry, light);
+	auto colormapCoords = float2(textureEntry, (float)light / (256.f * 64.f));
 	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, colormapped);
 	return color;
@@ -212,25 +212,25 @@ struct ParticleVertexOut
 	return outVertex;
 }
 
-[[fragment]] half4 fenceFragmentMain(SurfaceVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<float> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler surfaceSampler [[sampler(3)]])
+[[fragment]] half4 fenceFragmentMain(SurfaceVertexOut input [[stage_in]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<uint> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler surfaceSampler [[sampler(3)]])
 {
 	auto lightmapCoords = floor(input.lightmapCoords * input.lightmapSize) / input.lightmapSize;
-	auto light = lightmapTexture.sample(lightmapSampler, lightmapCoords)[0] * 4;
+	auto light = lightmapTexture.sample(lightmapSampler, lightmapCoords)[0];
 	auto textureEntry = surfaceTexture.sample(surfaceSampler, input.texCoords)[0];
-	auto colormapCoords = float2(textureEntry, light);
+	auto colormapCoords = float2(textureEntry, (float)light / (256.f * 64.f));
 	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, colormapped);
 	return color;
 }
 
-[[fragment]] half4 turbulentLitFragmentMain(SurfaceVertexOut input [[stage_in]], constant float& time [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<float> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler surfaceSampler [[sampler(3)]])
+[[fragment]] half4 turbulentLitFragmentMain(SurfaceVertexOut input [[stage_in]], constant float& time [[buffer(0)]], texture1d<half> paletteTexture [[texture(0)]], texture2d<half> colormapTexture [[texture(1)]], texture2d<uint> lightmapTexture [[texture(2)]], texture2d<half> surfaceTexture [[texture(3)]], sampler paletteSampler [[sampler(0)]], sampler colormapSampler [[sampler(1)]], sampler lightmapSampler [[sampler(2)]], sampler surfaceSampler [[sampler(3)]])
 {
 	auto lightmapCoords = floor(input.lightmapCoords * input.lightmapSize) / input.lightmapSize;
-	auto light = lightmapTexture.sample(lightmapSampler, lightmapCoords)[0] * 4;
+	auto light = lightmapTexture.sample(lightmapSampler, lightmapCoords)[0];
 	auto distortion = sin(fmod(time + input.texCoords * 5, 3.14159*2)) / 10;
 	auto texCoords = input.texCoords.xy + distortion.yx;
 	auto textureEntry = surfaceTexture.sample(surfaceSampler, texCoords)[0];
-	auto colormapCoords = float2(textureEntry, light);
+	auto colormapCoords = float2(textureEntry, (float)light / (256.f * 64.f));
 	auto colormapped = colormapTexture.sample(colormapSampler, colormapCoords)[0];
 	auto color = paletteTexture.sample(paletteSampler, colormapped);
 	return color;

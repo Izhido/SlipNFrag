@@ -93,7 +93,7 @@ void Alias::Fill(std::unordered_map<void*, SortedAliasTexture>& sorted, float*& 
 			
 			auto vertexSource = alias.apverts;
 			auto texCoordsSource = alias.texture_coordinates;
-			auto lightsSource = d_lists.colormapped_attributes.data() + alias.first_attribute;
+			auto lightsSource = d_lists.alias_attributes.data() + alias.first_attribute;
 			for (auto i = 0; i < alias.vertex_count; i++)
 			{
 				auto x = vertexSource->v[0];

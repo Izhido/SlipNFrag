@@ -12,7 +12,7 @@
 
 void Particles::Sort(std::vector<ParticlesEntry>& particleEntries, NSUInteger& verticesSize, NSUInteger& indicesSize)
 {
-	if (d_lists.last_particle_color >= 0)
+	if (d_lists.last_particle >= 0)
 	{
 		if (particleEntries.size() == 0)
 		{
@@ -21,7 +21,7 @@ void Particles::Sort(std::vector<ParticlesEntry>& particleEntries, NSUInteger& v
 		
 		auto& entry = particleEntries.back();
 
-		auto particles = d_lists.last_particle_color + 1;
+		auto particles = d_lists.last_particle + 1;
 		
 		entry.indices += 6 * particles;
 
@@ -34,17 +34,16 @@ void Particles::Fill(std::vector<ParticlesEntry>& particleEntries, float*& verti
 {
 	if (particleEntries.size() > 0)
 	{
-		auto verticesSource = d_lists.particle_positions.data();
-		auto colorsSource = d_lists.particle_colors.data();
+		auto particlesSource = d_lists.particles.data();
 		
 		uint32_t indexBase = 0;
 		
-		for (auto p = 0; p <= d_lists.last_particle_color; p++)
+		for (auto p = 0; p <= d_lists.last_particle; p++)
 		{
-			auto x = *verticesSource++;
-			auto y = *verticesSource++;
-			auto z = *verticesSource++;
-			auto color = *colorsSource++;
+			auto x = *particlesSource++;
+			auto y = *particlesSource++;
+			auto z = *particlesSource++;
+			auto color = *particlesSource++;
 			
 			*vertices++ = x - 0.5 * d_lists.vright0 + 0.5 * d_lists.vup0;
 			*vertices++ = y - 0.5 * d_lists.vright1 + 0.5 * d_lists.vup1;

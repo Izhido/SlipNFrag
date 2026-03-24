@@ -1,15 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "play.png",
+      "filename" : "play_notext150.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "play_notext300.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "play_notext450.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

@@ -93,7 +93,7 @@ void Viewmodel::Fill(std::unordered_map<void*, SortedAliasTexture>& sorted, floa
 			
 			auto vertexSource = viewmodel.apverts;
 			auto texCoordsSource = viewmodel.texture_coordinates;
-			auto lightsSource = d_lists.colormapped_attributes.data() + viewmodel.first_attribute;
+			auto lightsSource = d_lists.alias_attributes.data() + viewmodel.first_attribute;
 			for (auto i = 0; i < viewmodel.vertex_count; i++)
 			{
 				auto x = vertexSource->v[0];
