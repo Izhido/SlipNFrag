@@ -3,8 +3,6 @@
 #include <list>
 #include "LightmapRGBBuffer.h"
 
-struct AppState;
-
 struct LightmapRGB
 {
 	LightmapRGB* next;

@@ -14,8 +14,6 @@
 #include "LoadedSprite.h"
 #include "LoadedAliasColoredLights.h"
 
-struct AppState;
-
 struct SortedSurfaces
 {
     static void Initialize(SortedSurfaceTexturesWithLightmaps& sorted);

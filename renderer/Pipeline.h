@@ -3,12 +3,10 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-struct AppState;
-
 struct Pipeline
 {
 	VkPipelineLayout pipelineLayout;
 	VkPipeline pipeline;
 
-	void Delete(AppState& appState);
+	void Delete(struct AppState& appState);
 };

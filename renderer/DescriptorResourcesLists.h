@@ -3,8 +3,6 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
-struct AppState;
-
 struct DescriptorResourcesLists
 {
 	bool created;
@@ -13,5 +11,5 @@ struct DescriptorResourcesLists
 	std::vector<VkDescriptorSet> descriptorSets;
 	std::vector<void*> bound;
 
-	void Delete(AppState& appState);
+	void Delete(struct AppState& appState);
 };

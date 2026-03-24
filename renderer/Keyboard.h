@@ -6,8 +6,6 @@
 #include <vector>
 #include "Texture.h"
 
-struct AppState;
-
 struct Keyboard
 {
 	Screen Screen;

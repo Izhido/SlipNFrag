@@ -29,8 +29,6 @@
 #include "LightmapChain.h"
 #include "LightmapRGBChain.h"
 
-struct AppState;
-
 struct Scene
 {
 	bool created;

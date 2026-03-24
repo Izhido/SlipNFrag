@@ -3,8 +3,6 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
-struct AppState;
-
 struct Buffer
 {
 	Buffer* next;
@@ -14,7 +12,7 @@ struct Buffer
 	VmaAllocation allocation;
 	void* mapped;
 
-	void Create(AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, bool mappable);
+	void Create(struct AppState& appState, VkDeviceSize size, VkBufferUsageFlags usage, bool mappable);
 	void CreateStagingBuffer(AppState& appState, VkDeviceSize size);
 	void CreateVertexBuffer(AppState& appState, VkDeviceSize size);
 	void CreateMappableVertexBuffer(AppState& appState, VkDeviceSize size);
