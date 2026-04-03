@@ -428,11 +428,6 @@ byte Mod_AveragePixels (std::vector<byte>& pixdata)
 	int		i;
 	int		vis;
 	int		pix;
-	int		dr, dg, db;
-	int		bestdistortion, distortion;
-	int		bestcolor;
-	byte	*pal;
-	int		e;
 	
 	vis = 0;
 	r = g = b = 0;
@@ -461,38 +456,7 @@ byte Mod_AveragePixels (std::vector<byte>& pixdata)
 	g /= vis;
 	b /= vis;
 	
-//
-// find the best color
-//
-	bestdistortion = r*r + g*g + b*b;
-	bestcolor = 0;
-	i = 0;
-	e = 224;
-
-	for ( ; i< e ; i++)
-	{
-		pix = i;	//pixdata[i];
-
-		pal = host_basepal.data() + pix*3;
-
-		dr = r - (int)pal[0];
-		dg = g - (int)pal[1];
-		db = b - (int)pal[2];
-
-		distortion = dr*dr + dg*dg + db*db;
-		if (distortion < bestdistortion)
-		{
-			if (!distortion)
-			{
-				return pix;		// perfect match
-			}
-
-			bestdistortion = distortion;
-			bestcolor = pix;
-		}
-	}
-
-	return bestcolor;
+	return r_24to8tableptr[(r << 16) | (g << 8) | b];
 }
 
 /*
@@ -500,11 +464,8 @@ byte Mod_AveragePixels (std::vector<byte>& pixdata)
 Mod_GenerateMipmaps
 =================
 */
-void Mod_GenerateMipmaps (byte* data, int w, int h)
+void Mod_GenerateMipmaps (byte* source, byte* target, unsigned w, unsigned h, std::vector<byte>& pixdata)
 {
-	auto source = data;
-	auto lump_p = data + w * h;
-	std::vector<byte> pixdata;
 	for (auto miplevel = 1 ; miplevel<MIPLEVELS ; miplevel++)
 	{
 		auto mipstep = 1<<miplevel;
@@ -513,13 +474,13 @@ void Mod_GenerateMipmaps (byte* data, int w, int h)
 		{
 			for (auto x = 0 ; x<w ; x+= mipstep)
 			{
-				size_t count = 0;
+				size_t p = 0;
 				for (auto yy=0 ; yy<mipstep ; yy++)
 					for (auto xx=0 ; xx<mipstep ; xx++)
 					{
-						pixdata[count++] = source[ (y+yy)*w + x + xx ];
+						pixdata[p++] = source[ (y+yy)*w + x + xx ];
 					}
-				*lump_p++ = Mod_AveragePixels (pixdata);
+				*target++ = Mod_AveragePixels (pixdata);
 			}
 		}
 	}
@@ -571,7 +532,7 @@ Mod_LoadTextures
 */
 void Mod_LoadTextures (lump_t *l)
 {
-	int		i, j, pixels, num, max, altmax;
+	int		i, j, texsize, pixels, num, max, altmax;
 	miptex_t	*mt;
 	texture_t	*tx, *tx2;
 	texture_t	*anims[10];
@@ -602,6 +563,8 @@ void Mod_LoadTextures (lump_t *l)
 	modelname.resize(loadmodel->name.length() - 5 + 1); // +5 to skip "maps/" during copy...
 	COM_StripExtension(loadmodel->name.c_str() + 5, modelname.data());
 
+	std::vector<byte> pixdata;
+
 	for (i=0 ; i<m->nummiptex ; i++)
 	{
 		m->dataofs[i] = LittleLong(m->dataofs[i]);
@@ -615,7 +578,8 @@ void Mod_LoadTextures (lump_t *l)
 		
 		if ( (mt->width & 15) || (mt->height & 15) )
 			Sys_Error ("Texture %s is not 16 aligned", mt->name);
-		pixels = mt->width*mt->height/64*85;
+		texsize = mt->width*mt->height;
+		pixels = texsize/64*85;
 		mod_pool.textures.emplace_back(sizeof(texture_t) + pixels);
 		tx = (texture_t*)mod_pool.textures.back().data();
 		loadmodel->textures[i] = tx;
@@ -627,34 +591,17 @@ void Mod_LoadTextures (lump_t *l)
 			tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
 		// the pixels immediately follow the structures
 		auto remaining = (mod_base + l->fileofs + l->filelen) - ((byte*)(mt+1));
-		if (remaining < pixels)
+		if (remaining < texsize)
 		{
 			Con_Printf("Mod_LoadTextures: %s extends past the end of the lump\n", mt->name);
-			if (remaining >= mt->width*mt->height)
-			{
-				memcpy ( tx+1, mt+1, mt->width*mt->height);
-				Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
-			}
-			else if (remaining > 0)
-			{
-				memcpy ( tx+1, mt+1, remaining);
-				memset ( tx+1+remaining, 0, mt->width*mt->height-remaining);
-				Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
-			}
-			else
-			{
-				memset ( tx+1, 0, pixels);
-			}
-		}
-		else if (tx->name[0] == '{')
-		{
-			memcpy ( tx+1, mt+1, mt->width*mt->height);
-			Mod_GenerateMipmaps ((byte*)(tx+1), mt->width, mt->height);
+			memcpy ( tx+1, mt+1, remaining);
+			memset ( ((byte*)tx+1)+remaining, 0, texsize-remaining);
 		}
 		else
 		{
-			memcpy ( tx+1, mt+1, pixels);
+			memcpy ( tx+1, mt+1, texsize);
 		}
+		Mod_GenerateMipmaps ((byte*)(tx+1), (byte*)(tx+1)+texsize, mt->width, mt->height, pixdata);
 		if (!Q_strncmp(mt->name,"sky",3))
 			R_InitSky (tx);
 
@@ -973,7 +920,6 @@ void Mod_LoadLighting (lump_t *l)
 				auto version = LittleLong(*((int*)(contents.data() + 4)));
 				if (version == 1)
 				{
-					Mod_Load24To8Table();
 					mod_pool.lightRGBdata.emplace_back(l->filelen*3);
 					loadmodel->lightRGBdata = mod_pool.lightRGBdata.back().data();
 					memcpy (loadmodel->lightRGBdata, contents.data() + 8, size-8);
@@ -2015,6 +1961,9 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
 	}
 	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
+
+	Mod_Load24To8Table ();
+
 	Mod_LoadTextures (&header->lumps[LUMP_TEXTURES]);
 	Mod_LoadLighting (&header->lumps[LUMP_LIGHTING]);
 	Mod_LoadPlanes (&header->lumps[LUMP_PLANES]);

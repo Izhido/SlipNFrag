@@ -54,7 +54,7 @@ android {
         }
     }
     ndkVersion = "29.0.14206865"
-    buildToolsVersion = "36.1.0"
+    buildToolsVersion = "37.0.0"
     compileSdkMinor = 1
 }
 
