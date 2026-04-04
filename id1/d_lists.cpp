@@ -137,12 +137,11 @@ void D_FillSurfaceSize(dturbulent_t& turbulent, int component_size, int mips)
 	}
 }
 
-void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
 	surface.created = cache->created;
-	auto texture = (texture_t*)(cache->texture);
 	surface.width = texture->width;
 	surface.height = texture->height;
 	D_FillSurfaceSize(surface, 1, mips);
@@ -151,12 +150,11 @@ void D_FillSurfaceData (dsurface_t& surface, msurface_t* face, surfcache_s* cach
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceColoredLightsData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+void D_FillSurfaceColoredLightsData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
 	surface.created = cache->created;
-	auto texture = (texture_t*)(cache->texture);
 	surface.width = texture->width;
 	surface.height = texture->height;
 	D_FillSurfaceSize(surface, 1, mips);
@@ -165,44 +163,39 @@ void D_FillSurfaceColoredLightsData (dsurface_t& surface, msurface_t* face, surf
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, texture_t* glow_texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
 	surface.created = cache->created;
-	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
 	surface.height = texture->height;
 	D_FillSurfaceSize(surface, sizeof(unsigned), mips);
 	surface.data = (unsigned char*)texture + texture->offsets[0];
-	texture = ((texture_t*)(cache->texture))->external_glow;
-	surface.glow_data = (unsigned char*)texture + texture->offsets[0];
+	surface.glow_data = (unsigned char*)glow_texture + glow_texture->offsets[0];
 	D_FillLightmap(surface, cache);
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBAColoredLightsData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+void D_FillSurfaceRGBAColoredLightsData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, texture_t* glow_texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
 	surface.created = cache->created;
-	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
 	surface.height = texture->height;
 	D_FillSurfaceSize(surface, sizeof(unsigned), mips);
 	surface.data = (unsigned char*)texture + texture->offsets[0];
-	texture = ((texture_t*)(cache->texture))->external_glow;
-	surface.glow_data = (unsigned char*)texture + texture->offsets[0];
+	surface.glow_data = (unsigned char*)glow_texture + glow_texture->offsets[0];
 	D_FillColoredLightmap(surface, cache);
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
 	surface.created = cache->created;
-	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
 	surface.height = texture->height;
 	D_FillSurfaceSize(surface, sizeof(unsigned), mips);
@@ -211,12 +204,11 @@ void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcac
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBANoGlowColoredLightsData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, int mips)
+void D_FillSurfaceRGBANoGlowColoredLightsData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
 	surface.created = cache->created;
-	auto texture = ((texture_t*)(cache->texture))->external_color;
 	surface.width = texture->width;
 	surface.height = texture->height;
 	D_FillSurfaceSize(surface, sizeof(unsigned), mips);
@@ -225,9 +217,9 @@ void D_FillSurfaceRGBANoGlowColoredLightsData (dsurface_t& surface, msurface_t* 
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha, int mips)
+void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, byte alpha, int mips)
 {
-	D_FillSurfaceData(surface, face, cache, entity, mips);
+	D_FillSurfaceData(surface, face, cache, entity, texture, mips);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -237,9 +229,9 @@ void D_FillSurfaceRotatedData (dsurfacerotated_t& surface, msurface_t* face, sur
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha, int mips)
+void D_FillSurfaceRotatedColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, byte alpha, int mips)
 {
-	D_FillSurfaceColoredLightsData(surface, face, cache, entity, mips);
+	D_FillSurfaceColoredLightsData(surface, face, cache, entity, texture, mips);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -249,9 +241,9 @@ void D_FillSurfaceRotatedColoredLightsData (dsurfacerotated_t& surface, msurface
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha, int mips)
+void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, texture_t* glow_texture, byte alpha, int mips)
 {
-	D_FillSurfaceRGBAData(surface, face, cache, entity, mips);
+	D_FillSurfaceRGBAData(surface, face, cache, entity, texture, glow_texture, mips);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -261,9 +253,9 @@ void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedRGBAColoredLightsData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha, int mips)
+void D_FillSurfaceRotatedRGBAColoredLightsData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, texture_t* glow_texture, byte alpha, int mips)
 {
-	D_FillSurfaceRGBAColoredLightsData(surface, face, cache, entity, mips);
+	D_FillSurfaceRGBAColoredLightsData(surface, face, cache, entity, texture, glow_texture, mips);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -273,9 +265,9 @@ void D_FillSurfaceRotatedRGBAColoredLightsData (dsurfacerotatedwithglow_t& surfa
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha, int mips)
+void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, byte alpha, int mips)
 {
-	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity, mips);
+	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity, texture, mips);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -285,9 +277,9 @@ void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t*
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedRGBANoGlowColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha, int mips)
+void D_FillSurfaceRotatedRGBANoGlowColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, byte alpha, int mips)
 {
-	D_FillSurfaceRGBANoGlowColoredLightsData(surface, face, cache, entity, mips);
+	D_FillSurfaceRGBANoGlowColoredLightsData(surface, face, cache, entity, texture, mips);
 	surface.origin_x = entity->origin[0];
 	surface.origin_y = entity->origin[1];
 	surface.origin_z = entity->origin[2];
@@ -299,7 +291,12 @@ void D_FillSurfaceRotatedRGBANoGlowColoredLightsData (dsurfacerotated_t& surface
 
 void D_AddSurfaceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture);
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -309,12 +306,17 @@ void D_AddSurfaceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity
 		d_lists.surfaces.emplace_back();
 	}
 	auto& surface = d_lists.surfaces[d_lists.last_surface];
-	D_FillSurfaceData(surface, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceData(surface, face, cache, entity, texture, MIPLEVELS);
 }
 
 void D_AddSurfaceColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture);
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -324,12 +326,22 @@ void D_AddSurfaceColoredLightsToLists (msurface_t* face, struct surfcache_s* cac
 		d_lists.surfaces_colored_lights.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_colored_lights[d_lists.last_surface_colored_lights];
-	D_FillSurfaceColoredLightsData(surface, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceColoredLightsData(surface, face, cache, entity, texture, MIPLEVELS);
 }
 
 void D_AddSurfaceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
+	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
 	}
@@ -339,12 +351,22 @@ void D_AddSurfaceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* en
 		d_lists.surfaces_rgba.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rgba[d_lists.last_surface_rgba];
-	D_FillSurfaceRGBAData(surface, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceRGBAData(surface, face, cache, entity, texture, glow_texture, MIPLEVELS);
 }
 
 void D_AddSurfaceRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
+	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
 	}
@@ -354,12 +376,17 @@ void D_AddSurfaceRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache,
 		d_lists.surfaces_rgba_colored_lights.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rgba_colored_lights[d_lists.last_surface_rgba_colored_lights];
-	D_FillSurfaceRGBAColoredLightsData(surface, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceRGBAColoredLightsData(surface, face, cache, entity, texture, glow_texture, MIPLEVELS);
 }
 
 void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -369,12 +396,17 @@ void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity
 		d_lists.surfaces_rgba_no_glow.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rgba_no_glow[d_lists.last_surface_rgba_no_glow];
-	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity, texture, MIPLEVELS);
 }
 
 void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -384,12 +416,17 @@ void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, surfcache_s* 
 		d_lists.surfaces_rgba_no_glow_colored_lights.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rgba_no_glow_colored_lights[d_lists.last_surface_rgba_no_glow_colored_lights];
-	D_FillSurfaceRGBANoGlowColoredLightsData(surface, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceRGBANoGlowColoredLightsData(surface, face, cache, entity, texture, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture);
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -399,12 +436,17 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t*
 		d_lists.surfaces_rotated.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rotated[d_lists.last_surface_rotated];
-	D_FillSurfaceRotatedData(surface, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedData(surface, face, cache, entity, texture, alpha, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture);
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -414,12 +456,22 @@ void D_AddSurfaceRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cac
 		d_lists.surfaces_rotated_colored_lights.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rotated_colored_lights[d_lists.last_surface_rotated_colored_lights];
-	D_FillSurfaceRotatedColoredLightsData(surface, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedColoredLightsData(surface, face, cache, entity, texture, alpha, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
+	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
 	}
@@ -429,12 +481,22 @@ void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entit
 		d_lists.surfaces_rotated_rgba.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rotated_rgba[d_lists.last_surface_rotated_rgba];
-	D_FillSurfaceRotatedRGBAData(surface, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedRGBAData(surface, face, cache, entity, texture, glow_texture, alpha, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
+	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
 	}
@@ -444,12 +506,17 @@ void D_AddSurfaceRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s*
 		d_lists.surfaces_rotated_rgba_colored_lights.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rotated_rgba_colored_lights[d_lists.last_surface_rotated_rgba_colored_lights];
-	D_FillSurfaceRotatedRGBAColoredLightsData(surface, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedRGBAColoredLightsData(surface, face, cache, entity, texture, glow_texture, alpha, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -459,12 +526,17 @@ void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache,
 		d_lists.surfaces_rotated_rgba_no_glow.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rotated_rgba_no_glow[d_lists.last_surface_rotated_rgba_no_glow];
-	D_FillSurfaceRotatedRGBANoGlowData(surface, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedRGBANoGlowData(surface, face, cache, entity, texture, alpha, MIPLEVELS);
 }
 
 void D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -474,12 +546,17 @@ void D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, surfca
 		d_lists.surfaces_rotated_rgba_no_glow_colored_lights.emplace_back();
 	}
 	auto& surface = d_lists.surfaces_rotated_rgba_no_glow_colored_lights[d_lists.last_surface_rotated_rgba_no_glow_colored_lights];
-	D_FillSurfaceRotatedRGBANoGlowColoredLightsData(surface, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedRGBANoGlowColoredLightsData(surface, face, cache, entity, texture, alpha, MIPLEVELS);
 }
 
 void D_AddFenceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture);
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -489,12 +566,17 @@ void D_AddFenceToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 		d_lists.fences.emplace_back();
 	}
 	auto& fence = d_lists.fences[d_lists.last_fence];
-	D_FillSurfaceData(fence, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceData(fence, face, cache, entity, texture, MIPLEVELS);
 }
 
 void D_AddFenceColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture);
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -504,12 +586,22 @@ void D_AddFenceColoredLightsToLists (msurface_t* face, surfcache_s* cache, entit
 		d_lists.fences_colored_lights.emplace_back();
 	}
 	auto& fence = d_lists.fences_colored_lights[d_lists.last_fence_colored_lights];
-	D_FillSurfaceColoredLightsData(fence, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceColoredLightsData(fence, face, cache, entity, texture, MIPLEVELS);
 }
 
 void D_AddFenceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
+	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
 	}
@@ -519,12 +611,22 @@ void D_AddFenceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* enti
 		d_lists.fences_rgba.emplace_back();
 	}
 	auto& fence = d_lists.fences_rgba[d_lists.last_fence_rgba];
-	D_FillSurfaceRGBAData(fence, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceRGBAData(fence, face, cache, entity, texture, glow_texture, MIPLEVELS);
 }
 
 void D_AddFenceRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
+	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
 	}
@@ -534,12 +636,17 @@ void D_AddFenceRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, e
 		d_lists.fences_rgba_colored_lights.emplace_back();
 	}
 	auto& fence = d_lists.fences_rgba_colored_lights[d_lists.last_fence_rgba_colored_lights];
-	D_FillSurfaceRGBAColoredLightsData(fence, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceRGBAColoredLightsData(fence, face, cache, entity, texture, glow_texture, MIPLEVELS);
 }
 
 void D_AddFenceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -549,12 +656,17 @@ void D_AddFenceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t
 		d_lists.fences_rgba_no_glow.emplace_back();
 	}
 	auto& fence = d_lists.fences_rgba_no_glow[d_lists.last_fence_rgba_no_glow];
-	D_FillSurfaceRGBANoGlowData(fence, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceRGBANoGlowData(fence, face, cache, entity, texture, MIPLEVELS);
 }
 
 void D_AddFenceRGBANoGlowColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -564,12 +676,17 @@ void D_AddFenceRGBANoGlowColoredLightsToLists (msurface_t* face, surfcache_s* ca
 		d_lists.fences_rgba_no_glow_colored_lights.emplace_back();
 	}
 	auto& fence = d_lists.fences_rgba_no_glow_colored_lights[d_lists.last_fence_rgba_no_glow_colored_lights];
-	D_FillSurfaceRGBANoGlowColoredLightsData(fence, face, cache, entity, MIPLEVELS);
+	D_FillSurfaceRGBANoGlowColoredLightsData(fence, face, cache, entity, texture, MIPLEVELS);
 }
 
 void D_AddFenceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture);
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -579,12 +696,17 @@ void D_AddFenceRotatedToLists (msurface_t* face, surfcache_s* cache, entity_t* e
 		d_lists.fences_rotated.emplace_back();
 	}
 	auto& fence = d_lists.fences_rotated[d_lists.last_fence_rotated];
-	D_FillSurfaceRotatedData(fence, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedData(fence, face, cache, entity, texture, alpha, MIPLEVELS);
 }
 
 void D_AddFenceRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture);
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -594,12 +716,22 @@ void D_AddFenceRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cache
 		d_lists.fences_rotated_colored_lights.emplace_back();
 	}
 	auto& fence = d_lists.fences_rotated_colored_lights[d_lists.last_fence_rotated_colored_lights];
-	D_FillSurfaceRotatedColoredLightsData(fence, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedColoredLightsData(fence, face, cache, entity, texture, alpha, MIPLEVELS);
 }
 
 void D_AddFenceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
+	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
 	}
@@ -609,12 +741,22 @@ void D_AddFenceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_
 		d_lists.fences_rotated_rgba.emplace_back();
 	}
 	auto& fence = d_lists.fences_rotated_rgba[d_lists.last_fence_rotated_rgba];
-	D_FillSurfaceRotatedRGBAData(fence, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedRGBAData(fence, face, cache, entity, texture, glow_texture, alpha, MIPLEVELS);
 }
 
 void D_AddFenceRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
+	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
 	}
@@ -624,12 +766,17 @@ void D_AddFenceRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s* c
 		d_lists.fences_rotated_rgba_colored_lights.emplace_back();
 	}
 	auto& fence = d_lists.fences_rotated_rgba_colored_lights[d_lists.last_fence_rotated_rgba_colored_lights];
-	D_FillSurfaceRotatedRGBAColoredLightsData(fence, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedRGBAColoredLightsData(fence, face, cache, entity, texture, glow_texture, alpha, MIPLEVELS);
 }
 
 void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -639,12 +786,17 @@ void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, e
 		d_lists.fences_rotated_rgba_no_glow.emplace_back();
 	}
 	auto& fence = d_lists.fences_rotated_rgba_no_glow[d_lists.last_fence_rotated_rgba_no_glow];
-	D_FillSurfaceRotatedRGBANoGlowData(fence, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedRGBANoGlowData(fence, face, cache, entity, texture, alpha, MIPLEVELS);
 }
 
 void D_AddFenceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = (texture_t*)(cache->texture)->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -654,14 +806,13 @@ void D_AddFenceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, surfcach
 		d_lists.fences_rotated_rgba_no_glow_colored_lights.emplace_back();
 	}
 	auto& fence = d_lists.fences_rotated_rgba_no_glow_colored_lights[d_lists.last_fence_rotated_rgba_no_glow_colored_lights];
-	D_FillSurfaceRotatedRGBANoGlowColoredLightsData(fence, face, cache, entity, alpha, MIPLEVELS);
+	D_FillSurfaceRotatedRGBANoGlowColoredLightsData(fence, face, cache, entity, texture, alpha, MIPLEVELS);
 }
 
-void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity, int mips)
+void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity, texture_t* texture, int mips)
 {
 	turbulent.face = face;
 	turbulent.model = entity->model;
-	auto texture = face->texinfo->texture;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
 	D_FillSurfaceSize(turbulent, 1, mips);
@@ -669,11 +820,10 @@ void D_FillTurbulentData (dturbulent_t& turbulent, msurface_t* face, entity_t* e
 	turbulent.count = face->numedges;
 }
 
-void D_FillTurbulentRGBAData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity, int mips)
+void D_FillTurbulentRGBAData (dturbulent_t& turbulent, msurface_t* face, entity_t* entity, miptex_t* texture, int mips)
 {
 	turbulent.face = face;
 	turbulent.model = entity->model;
-	auto texture = face->texinfo->texture->external_color;
 	turbulent.width = texture->width;
 	turbulent.height = texture->height;
 	D_FillSurfaceSize(turbulent, sizeof(unsigned), mips);
@@ -687,18 +837,28 @@ void D_AddTurbulentToLists (msurface_t* face, entity_t* entity)
 	{
 		return;
 	}
+	auto texture = face->texinfo->texture;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
 	d_lists.last_turbulent++;
 	if (d_lists.last_turbulent >= d_lists.turbulent.size())
 	{
 		d_lists.turbulent.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent[d_lists.last_turbulent];
-	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentData(turbulent, face, entity, texture, MIPLEVELS);
 }
 
 void D_AddTurbulentRGBAToLists (msurface_t* face, entity_t* entity)
 {
 	if (face->numedges < 3)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -708,12 +868,17 @@ void D_AddTurbulentRGBAToLists (msurface_t* face, entity_t* entity)
 		d_lists.turbulent_rgba.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rgba[d_lists.last_turbulent_rgba];
-	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentRGBAData(turbulent, face, entity, texture, MIPLEVELS);
 }
 
 void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -723,14 +888,19 @@ void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* e
 		d_lists.turbulent_lit.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_lit[d_lists.last_turbulent_lit];
-	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillLightmap(turbulent, cache);
 }
 
 void D_AddTurbulentColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -740,14 +910,19 @@ void D_AddTurbulentColoredLightsToLists (msurface_t* face, surfcache_s* cache, e
 		d_lists.turbulent_colored_lights.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_colored_lights[d_lists.last_turbulent_colored_lights];
-	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillColoredLightmap(turbulent, cache);
 }
 
 void D_AddTurbulentRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -757,14 +932,19 @@ void D_AddTurbulentRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_
 		d_lists.turbulent_rgba_lit.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rgba_lit[d_lists.last_turbulent_rgba_lit];
-	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentRGBAData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillLightmap(turbulent, cache);
 }
 
 void D_AddTurbulentRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -774,7 +954,7 @@ void D_AddTurbulentRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cach
 		d_lists.turbulent_rgba_colored_lights.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rgba_colored_lights[d_lists.last_turbulent_rgba_colored_lights];
-	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentRGBAData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillColoredLightmap(turbulent, cache);
 }
@@ -785,13 +965,18 @@ void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity, byte alph
 	{
 		return;
 	}
+	auto texture = face->texinfo->texture;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
 	d_lists.last_turbulent_rotated++;
 	if (d_lists.last_turbulent_rotated >= d_lists.turbulent_rotated.size())
 	{
 		d_lists.turbulent_rotated.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rotated[d_lists.last_turbulent_rotated];
-	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.origin_x = entity->origin[0];
 	turbulent.origin_y = entity->origin[1];
 	turbulent.origin_z = entity->origin[2];
@@ -807,13 +992,18 @@ void D_AddTurbulentRotatedRGBAToLists (msurface_t* face, entity_t* entity, byte 
 	{
 		return;
 	}
+	auto texture = face->texinfo->texture->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
+	{
+		return;
+	}
 	d_lists.last_turbulent_rotated_rgba++;
 	if (d_lists.last_turbulent_rotated_rgba >= d_lists.turbulent_rotated_rgba.size())
 	{
 		d_lists.turbulent_rotated_rgba.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rotated_rgba[d_lists.last_turbulent_rotated_rgba];
-	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentRGBAData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.origin_x = entity->origin[0];
 	turbulent.origin_y = entity->origin[1];
 	turbulent.origin_z = entity->origin[2];
@@ -825,7 +1015,12 @@ void D_AddTurbulentRotatedRGBAToLists (msurface_t* face, entity_t* entity, byte 
 
 void D_AddTurbulentRotatedLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -835,7 +1030,7 @@ void D_AddTurbulentRotatedLitToLists (msurface_t* face, surfcache_s* cache, enti
 		d_lists.turbulent_rotated_lit.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rotated_lit[d_lists.last_turbulent_rotated_lit];
-	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillLightmap(turbulent, cache);
 	turbulent.origin_x = entity->origin[0];
@@ -849,7 +1044,12 @@ void D_AddTurbulentRotatedLitToLists (msurface_t* face, surfcache_s* cache, enti
 
 void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -859,7 +1059,7 @@ void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, surfcache_s* c
 		d_lists.turbulent_rotated_colored_lights.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rotated_colored_lights[d_lists.last_turbulent_rotated_colored_lights];
-	D_FillTurbulentData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillColoredLightmap(turbulent, cache);
 	turbulent.origin_x = entity->origin[0];
@@ -873,7 +1073,12 @@ void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, surfcache_s* c
 
 void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -883,7 +1088,7 @@ void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, surfcache_s* cache, 
 		d_lists.turbulent_rotated_rgba_lit.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rotated_rgba_lit[d_lists.last_turbulent_rotated_rgba_lit];
-	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentRGBAData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillLightmap(turbulent, cache);
 	turbulent.origin_x = entity->origin[0];
@@ -897,7 +1102,12 @@ void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, surfcache_s* cache, 
 
 void D_AddTurbulentRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || cache->width <= 0 || cache->height <= 0)
+	if (face->numedges < 3 || cache->width == 0 || cache->height == 0)
+	{
+		return;
+	}
+	auto texture = face->texinfo->texture->external_color;
+	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
@@ -907,7 +1117,7 @@ void D_AddTurbulentRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_
 		d_lists.turbulent_rotated_rgba_colored_lights.emplace_back();
 	}
 	auto& turbulent = d_lists.turbulent_rotated_rgba_colored_lights[d_lists.last_turbulent_rotated_rgba_colored_lights];
-	D_FillTurbulentRGBAData(turbulent, face, entity, MIPLEVELS);
+	D_FillTurbulentRGBAData(turbulent, face, entity, texture, MIPLEVELS);
 	turbulent.created = cache->created;
 	D_FillColoredLightmap(turbulent, cache);
 	turbulent.origin_x = entity->origin[0];
