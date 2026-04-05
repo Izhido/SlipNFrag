@@ -65,6 +65,18 @@ static void	(*surfmiptablecolored[4])(void) = {
 	R_DrawSurfaceBlock8_coloredmip3
 };
 
+void R_DrawSurfaceBlock8_notexmip0 (void);
+void R_DrawSurfaceBlock8_notexmip1 (void);
+void R_DrawSurfaceBlock8_notexmip2 (void);
+void R_DrawSurfaceBlock8_notexmip3 (void);
+
+static void	(*surfmiptablenotex[4])(void) = {
+	R_DrawSurfaceBlock8_notexmip0,
+	R_DrawSurfaceBlock8_notexmip1,
+	R_DrawSurfaceBlock8_notexmip2,
+	R_DrawSurfaceBlock8_notexmip3
+};
+
 
 
 std::vector<unsigned>		r_blocklights_base(18*18);
@@ -536,7 +548,10 @@ void R_DrawSurface (void)
 
 	if (r_pixbytes == 1)
 	{
-		pblockdrawer = surfmiptable[r_drawsurf.surfmip];
+		if (mt->width == 0 || mt->height == 0)
+			pblockdrawer = surfmiptablenotex[r_drawsurf.surfmip];
+		else
+			pblockdrawer = surfmiptable[r_drawsurf.surfmip];
 	// TODO: only needs to be set when there is a display settings change
 		horzblockstep = blocksize;
 	}
@@ -627,7 +642,10 @@ void R_DrawSurfaceColored (void)
 
 	if (r_pixbytes == 1)
 	{
-		pblockdrawer = surfmiptablecolored[r_drawsurf.surfmip];
+		if (mt->width == 0 || mt->height == 0)
+			pblockdrawer = surfmiptablenotex[r_drawsurf.surfmip];
+		else
+			pblockdrawer = surfmiptablecolored[r_drawsurf.surfmip];
 	// TODO: only needs to be set when there is a display settings change
 		horzblockstep = blocksize;
 	}
@@ -1217,6 +1235,114 @@ void R_DrawSurfaceBlock8_coloredmip3 (void)
 
 		if (psource >= r_sourcemax)
 			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_notexmip0
+================
+*/
+void R_DrawSurfaceBlock8_notexmip0 (void)
+{
+	int				v, i, b;
+	unsigned char	pix = 0, *prowdest;
+
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+		for (i=0 ; i<16 ; i++)
+		{
+			for (b=15; b>=0; b--)
+			{
+				prowdest[b] = pix;
+			}
+	
+			prowdest += surfrowbytes;
+		}
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_notexmip1
+================
+*/
+void R_DrawSurfaceBlock8_notexmip1 (void)
+{
+	int				v, i, b;
+	unsigned char	pix = 0, *prowdest;
+
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+		for (i=0 ; i<8 ; i++)
+		{
+			for (b=7; b>=0; b--)
+			{
+				prowdest[b] = pix;
+			}
+	
+			prowdest += surfrowbytes;
+		}
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_notexmip2
+================
+*/
+void R_DrawSurfaceBlock8_notexmip2 (void)
+{
+	int				v, i, b;
+	unsigned char	pix = 0, *prowdest;
+
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+		for (i=0 ; i<4 ; i++)
+		{
+			for (b=3; b>=0; b--)
+			{
+				prowdest[b] = pix;
+			}
+	
+			prowdest += surfrowbytes;
+		}
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_notexmip3
+================
+*/
+void R_DrawSurfaceBlock8_notexmip3 (void)
+{
+	int				v, i, b;
+	unsigned char	pix = 0, *prowdest;
+
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+		for (i=0 ; i<2 ; i++)
+		{
+			for (b=1; b>=0; b--)
+			{
+				prowdest[b] = pix;
+			}
+	
+			prowdest += surfrowbytes;
+		}
 	}
 }
 

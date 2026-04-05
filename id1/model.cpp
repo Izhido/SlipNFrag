@@ -578,6 +578,8 @@ void Mod_LoadTextures (lump_t *l)
 		
 		if ( (mt->width & 15) || (mt->height & 15) )
 			Sys_Error ("Texture %s is not 16 aligned", mt->name);
+		if ( (mt->width == 0) || (mt->height == 0) )
+			Con_Printf ("Texture %s is zero-sized\n", mt->name);
 		texsize = mt->width*mt->height;
 		pixels = texsize/64*85;
 		mod_pool.textures.emplace_back(sizeof(texture_t) + pixels);

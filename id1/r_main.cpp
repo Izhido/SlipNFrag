@@ -577,14 +577,11 @@ void R_MarkLeaves (void)
 
 	vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
 		
-	auto p = 0;
-	unsigned char m = 1;
-	unsigned char v = vis[p];
-	for (i=1 ; i<=cl.worldmodel->numleafs ; i++)
+	for (i=0 ; i<cl.worldmodel->numleafs ; i++)
 	{
-		if (v & m)
+		if (vis[i>>3] & (1<<(i&7)))
 		{
-			node = (mnode_t *)&cl.worldmodel->leafs[i];
+			node = (mnode_t *)&cl.worldmodel->leafs[i+1];
 			do
 			{
 				if (node->visframe == r_visframecount)
@@ -592,16 +589,6 @@ void R_MarkLeaves (void)
 				node->visframe = r_visframecount;
 				node = node->parent;
 			} while (node);
-		}
-		if (m == 128)
-		{
-			m = 1;
-			p++;
-			v = vis[p];
-		}
-		else
-		{
-			m <<= 1;
 		}
 	}
 }
