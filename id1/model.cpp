@@ -577,7 +577,12 @@ void Mod_LoadTextures (lump_t *l)
 			mt->offsets[j] = LittleLong (mt->offsets[j]);
 		
 		if ( (mt->width & 15) || (mt->height & 15) )
-			Sys_Error ("Texture %s is not 16 aligned", mt->name);
+		{
+			if (mt->height == 8)
+				Con_Printf ("Texture %s has height %i instead of 16\n", mt->name, mt->height);
+			else
+				Sys_Error ("Texture %s is not 16 aligned", mt->name);
+		}
 		if ( (mt->width == 0) || (mt->height == 0) )
 			Con_Printf ("Texture %s is zero-sized\n", mt->name);
 		texsize = mt->width*mt->height;

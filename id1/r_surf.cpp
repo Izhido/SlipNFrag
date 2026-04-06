@@ -53,6 +53,18 @@ static void	(*surfmiptable[4])(void) = {
 	R_DrawSurfaceBlock8_mip3
 };
 
+void R_DrawSurfaceBlock8_h8mip0 (void);
+void R_DrawSurfaceBlock8_h8mip1 (void);
+void R_DrawSurfaceBlock8_h8mip2 (void);
+void R_DrawSurfaceBlock8_h8mip3 (void);
+
+static void	(*surfmiptableh8[4])(void) = {
+	R_DrawSurfaceBlock8_h8mip0,
+	R_DrawSurfaceBlock8_h8mip1,
+	R_DrawSurfaceBlock8_h8mip2,
+	R_DrawSurfaceBlock8_h8mip3
+};
+
 void R_DrawSurfaceBlock8_coloredmip0 (void);
 void R_DrawSurfaceBlock8_coloredmip1 (void);
 void R_DrawSurfaceBlock8_coloredmip2 (void);
@@ -63,6 +75,18 @@ static void	(*surfmiptablecolored[4])(void) = {
 	R_DrawSurfaceBlock8_coloredmip1,
 	R_DrawSurfaceBlock8_coloredmip2,
 	R_DrawSurfaceBlock8_coloredmip3
+};
+
+void R_DrawSurfaceBlock8_coloredh8mip0 (void);
+void R_DrawSurfaceBlock8_coloredh8mip1 (void);
+void R_DrawSurfaceBlock8_coloredh8mip2 (void);
+void R_DrawSurfaceBlock8_coloredh8mip3 (void);
+
+static void	(*surfmiptablecoloredh8[4])(void) = {
+	R_DrawSurfaceBlock8_coloredh8mip0,
+	R_DrawSurfaceBlock8_coloredh8mip1,
+	R_DrawSurfaceBlock8_coloredh8mip2,
+	R_DrawSurfaceBlock8_coloredh8mip3
 };
 
 void R_DrawSurfaceBlock8_notexmip0 (void);
@@ -550,6 +574,8 @@ void R_DrawSurface (void)
 	{
 		if (mt->width == 0 || mt->height == 0)
 			pblockdrawer = surfmiptablenotex[r_drawsurf.surfmip];
+		else if (mt->height == 8)
+			pblockdrawer = surfmiptableh8[r_drawsurf.surfmip];
 		else
 			pblockdrawer = surfmiptable[r_drawsurf.surfmip];
 	// TODO: only needs to be set when there is a display settings change
@@ -644,6 +670,8 @@ void R_DrawSurfaceColored (void)
 	{
 		if (mt->width == 0 || mt->height == 0)
 			pblockdrawer = surfmiptablenotex[r_drawsurf.surfmip];
+		else if (mt->height == 8)
+			pblockdrawer = surfmiptablecoloredh8[r_drawsurf.surfmip];
 		else
 			pblockdrawer = surfmiptablecolored[r_drawsurf.surfmip];
 	// TODO: only needs to be set when there is a display settings change
@@ -888,6 +916,206 @@ void R_DrawSurfaceBlock8_mip3 (void)
 			}
 	
 			psource += sourcetstep;
+			lightright += lightrightstep;
+			lightleft += lightleftstep;
+			prowdest += surfrowbytes;
+		}
+
+		if (psource >= r_sourcemax)
+			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_h8mip0
+================
+*/
+void R_DrawSurfaceBlock8_h8mip0 (void)
+{
+	int				v, i, b, lightstep, lighttemp, light;
+	unsigned char	pix, *psource, *prowdest;
+
+	psource = pbasesource;
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+	// FIXME: make these locals?
+	// FIXME: use delta rather than both right and left, like ASM?
+		lightleft = r_lightptr[0];
+		lightright = r_lightptr[1];
+		r_lightptr += r_lightwidth;
+		lightleftstep = (r_lightptr[0] - lightleft) >> 4;
+		lightrightstep = (r_lightptr[1] - lightright) >> 4;
+
+		for (i=0 ; i<16 ; i++)
+		{
+			lighttemp = lightleft - lightright;
+			lightstep = lighttemp >> 4;
+
+			light = lightright;
+
+			for (b=15; b>=0; b--)
+			{
+				pix = psource[b];
+				prowdest[b] = ((unsigned char *)vid.colormap)
+						[(light & VID_CMASK) + pix];
+				light += lightstep;
+			}
+	
+			if (i % 2) psource += sourcetstep;
+			lightright += lightrightstep;
+			lightleft += lightleftstep;
+			prowdest += surfrowbytes;
+		}
+
+		if (psource >= r_sourcemax)
+			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_h8mip1
+================
+*/
+void R_DrawSurfaceBlock8_h8mip1 (void)
+{
+	int				v, i, b, lightstep, lighttemp, light;
+	unsigned char	pix, *psource, *prowdest;
+
+	psource = pbasesource;
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+	// FIXME: make these locals?
+	// FIXME: use delta rather than both right and left, like ASM?
+		lightleft = r_lightptr[0];
+		lightright = r_lightptr[1];
+		r_lightptr += r_lightwidth;
+		lightleftstep = (r_lightptr[0] - lightleft) >> 3;
+		lightrightstep = (r_lightptr[1] - lightright) >> 3;
+
+		for (i=0 ; i<8 ; i++)
+		{
+			lighttemp = lightleft - lightright;
+			lightstep = lighttemp >> 3;
+
+			light = lightright;
+
+			for (b=7; b>=0; b--)
+			{
+				pix = psource[b];
+				prowdest[b] = ((unsigned char *)vid.colormap)
+						[(light & VID_CMASK) + pix];
+				light += lightstep;
+			}
+	
+			if (i % 2) psource += sourcetstep;
+			lightright += lightrightstep;
+			lightleft += lightleftstep;
+			prowdest += surfrowbytes;
+		}
+
+		if (psource >= r_sourcemax)
+			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_h8mip2
+================
+*/
+void R_DrawSurfaceBlock8_h8mip2 (void)
+{
+	int				v, i, b, lightstep, lighttemp, light;
+	unsigned char	pix, *psource, *prowdest;
+
+	psource = pbasesource;
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+	// FIXME: make these locals?
+	// FIXME: use delta rather than both right and left, like ASM?
+		lightleft = r_lightptr[0];
+		lightright = r_lightptr[1];
+		r_lightptr += r_lightwidth;
+		lightleftstep = (r_lightptr[0] - lightleft) >> 2;
+		lightrightstep = (r_lightptr[1] - lightright) >> 2;
+
+		for (i=0 ; i<4 ; i++)
+		{
+			lighttemp = lightleft - lightright;
+			lightstep = lighttemp >> 2;
+
+			light = lightright;
+
+			for (b=3; b>=0; b--)
+			{
+				pix = psource[b];
+				prowdest[b] = ((unsigned char *)vid.colormap)
+						[(light & VID_CMASK) + pix];
+				light += lightstep;
+			}
+	
+			if (i % 2) psource += sourcetstep;
+			lightright += lightrightstep;
+			lightleft += lightleftstep;
+			prowdest += surfrowbytes;
+		}
+
+		if (psource >= r_sourcemax)
+			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_h8mip3
+================
+*/
+void R_DrawSurfaceBlock8_h8mip3 (void)
+{
+	int				v, i, b, lightstep, lighttemp, light;
+	unsigned char	pix, *psource, *prowdest;
+
+	psource = pbasesource;
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+	// FIXME: make these locals?
+	// FIXME: use delta rather than both right and left, like ASM?
+		lightleft = r_lightptr[0];
+		lightright = r_lightptr[1];
+		r_lightptr += r_lightwidth;
+		lightleftstep = (r_lightptr[0] - lightleft) >> 1;
+		lightrightstep = (r_lightptr[1] - lightright) >> 1;
+
+		for (i=0 ; i<2 ; i++)
+		{
+			lighttemp = lightleft - lightright;
+			lightstep = lighttemp >> 1;
+
+			light = lightright;
+
+			for (b=1; b>=0; b--)
+			{
+				pix = psource[b];
+				prowdest[b] = ((unsigned char *)vid.colormap)
+						[(light & VID_CMASK) + pix];
+				light += lightstep;
+			}
+	
+			if (i == 1) psource += sourcetstep;
 			lightright += lightrightstep;
 			lightleft += lightleftstep;
 			prowdest += surfrowbytes;
@@ -1224,6 +1452,346 @@ void R_DrawSurfaceBlock8_coloredmip3 (void)
 			}
 	
 			psource += sourcetstep;
+			lightright_r += lightrightstep_r;
+			lightright_g += lightrightstep_g;
+			lightright_b += lightrightstep_b;
+			lightleft_r += lightleftstep_r;
+			lightleft_g += lightleftstep_g;
+			lightleft_b += lightleftstep_b;
+			prowdest += surfrowbytes;
+		}
+
+		if (psource >= r_sourcemax)
+			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_coloredh8mip0
+================
+*/
+void R_DrawSurfaceBlock8_coloredh8mip0 (void)
+{
+	int				v, i, b;
+	int				lightstep_r, lightstep_g, lightstep_b;
+	int				lighttemp_r, lighttemp_g, lighttemp_b;
+	int				light_r, light_g, light_b;
+	unsigned char	pix, *psource, *prowdest;
+
+	psource = pbasesource;
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+	// FIXME: use delta rather than both right and left, like ASM?
+		int lightleft_r = r_lightptr[0];
+		int lightleft_g = r_lightptr[1];
+		int lightleft_b = r_lightptr[2];
+		int lightright_r = r_lightptr[3];
+		int lightright_g = r_lightptr[4];
+		int lightright_b = r_lightptr[5];
+		r_lightptr += r_lightwidth;
+		int lightleftstep_r = ((int)r_lightptr[0] - lightleft_r) / 16;
+		int lightleftstep_g = ((int)r_lightptr[1] - lightleft_g) / 16;
+		int lightleftstep_b = ((int)r_lightptr[2] - lightleft_b) / 16;
+		int lightrightstep_r = ((int)r_lightptr[3] - lightright_r) / 16;
+		int lightrightstep_g = ((int)r_lightptr[4] - lightright_g) / 16;
+		int lightrightstep_b = ((int)r_lightptr[5] - lightright_b) / 16;
+
+		for (i=0 ; i<16 ; i++)
+		{
+			lighttemp_r = lightleft_r - lightright_r;
+			lighttemp_g = lightleft_g - lightright_g;
+			lighttemp_b = lightleft_b - lightright_b;
+			lightstep_r = lighttemp_r / 16;
+			lightstep_g = lighttemp_g / 16;
+			lightstep_b = lighttemp_b / 16;
+
+			light_r = lightright_r;
+			light_g = lightright_g;
+			light_b = lightright_b;
+
+			for (b=15; b>=0; b--)
+			{
+				pix = psource[b];
+				if (pix < 224)
+				{
+					auto pal = pbasepal + pix*3;
+					auto rcomp = ((light_r * (*pal++)) >> 15) & 511;
+					auto gcomp = ((light_g * (*pal++)) >> 15) & 511;
+					auto bcomp = ((light_b * (*pal)) >> 15) & 511;
+					if (rcomp > 255) rcomp = 255;
+					if (gcomp > 255) gcomp = 255;
+					if (bcomp > 255) bcomp = 255;
+					prowdest[b] = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+				}
+				else
+				{
+					prowdest[b] = pix;
+				}
+				light_r += lightstep_r;
+				light_g += lightstep_g;
+				light_b += lightstep_b;
+			}
+	
+			if (i % 2) psource += sourcetstep;
+			lightright_r += lightrightstep_r;
+			lightright_g += lightrightstep_g;
+			lightright_b += lightrightstep_b;
+			lightleft_r += lightleftstep_r;
+			lightleft_g += lightleftstep_g;
+			lightleft_b += lightleftstep_b;
+			prowdest += surfrowbytes;
+		}
+
+		if (psource >= r_sourcemax)
+			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_coloredh8mip1
+================
+*/
+void R_DrawSurfaceBlock8_coloredh8mip1 (void)
+{
+	int				v, i, b;
+	int				lightstep_r, lightstep_g, lightstep_b;
+	int				lighttemp_r, lighttemp_g, lighttemp_b;
+	int				light_r, light_g, light_b;
+	unsigned char	pix, *psource, *prowdest;
+
+	psource = pbasesource;
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+	// FIXME: use delta rather than both right and left, like ASM?
+		int lightleft_r = r_lightptr[0];
+		int lightleft_g = r_lightptr[1];
+		int lightleft_b = r_lightptr[2];
+		int lightright_r = r_lightptr[3];
+		int lightright_g = r_lightptr[4];
+		int lightright_b = r_lightptr[5];
+		r_lightptr += r_lightwidth;
+		int lightleftstep_r = ((int)r_lightptr[0] - lightleft_r) / 8;
+		int lightleftstep_g = ((int)r_lightptr[1] - lightleft_g) / 8;
+		int lightleftstep_b = ((int)r_lightptr[2] - lightleft_b) / 8;
+		int lightrightstep_r = ((int)r_lightptr[3] - lightright_r) / 8;
+		int lightrightstep_g = ((int)r_lightptr[4] - lightright_g) / 8;
+		int lightrightstep_b = ((int)r_lightptr[5] - lightright_b) / 8;
+
+		for (i=0 ; i<8 ; i++)
+		{
+			lighttemp_r = lightleft_r - lightright_r;
+			lighttemp_g = lightleft_g - lightright_g;
+			lighttemp_b = lightleft_b - lightright_b;
+			lightstep_r = lighttemp_r / 8;
+			lightstep_g = lighttemp_g / 8;
+			lightstep_b = lighttemp_b / 8;
+
+			light_r = lightright_r;
+			light_g = lightright_g;
+			light_b = lightright_b;
+
+			for (b=7; b>=0; b--)
+			{
+				pix = psource[b];
+				if (pix < 224)
+				{
+					auto pal = pbasepal + pix*3;
+					auto rcomp = ((light_r * (*pal++)) >> 15) & 511;
+					auto gcomp = ((light_g * (*pal++)) >> 15) & 511;
+					auto bcomp = ((light_b * (*pal)) >> 15) & 511;
+					if (rcomp > 255) rcomp = 255;
+					if (gcomp > 255) gcomp = 255;
+					if (bcomp > 255) bcomp = 255;
+					prowdest[b] = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+				}
+				else
+				{
+					prowdest[b] = pix;
+				}
+				light_r += lightstep_r;
+				light_g += lightstep_g;
+				light_b += lightstep_b;
+			}
+	
+			if (i % 2) psource += sourcetstep;
+			lightright_r += lightrightstep_r;
+			lightright_g += lightrightstep_g;
+			lightright_b += lightrightstep_b;
+			lightleft_r += lightleftstep_r;
+			lightleft_g += lightleftstep_g;
+			lightleft_b += lightleftstep_b;
+			prowdest += surfrowbytes;
+		}
+
+		if (psource >= r_sourcemax)
+			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_coloredh8mip2
+================
+*/
+void R_DrawSurfaceBlock8_coloredh8mip2 (void)
+{
+	int				v, i, b;
+	int				lightstep_r, lightstep_g, lightstep_b;
+	int				lighttemp_r, lighttemp_g, lighttemp_b;
+	int				light_r, light_g, light_b;
+	unsigned char	pix, *psource, *prowdest;
+
+	psource = pbasesource;
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+	// FIXME: use delta rather than both right and left, like ASM?
+		int lightleft_r = r_lightptr[0];
+		int lightleft_g = r_lightptr[1];
+		int lightleft_b = r_lightptr[2];
+		int lightright_r = r_lightptr[3];
+		int lightright_g = r_lightptr[4];
+		int lightright_b = r_lightptr[5];
+		r_lightptr += r_lightwidth;
+		int lightleftstep_r = ((int)r_lightptr[0] - lightleft_r) / 4;
+		int lightleftstep_g = ((int)r_lightptr[1] - lightleft_g) / 4;
+		int lightleftstep_b = ((int)r_lightptr[2] - lightleft_b) / 4;
+		int lightrightstep_r = ((int)r_lightptr[3] - lightright_r) / 4;
+		int lightrightstep_g = ((int)r_lightptr[4] - lightright_g) / 4;
+		int lightrightstep_b = ((int)r_lightptr[5] - lightright_b) / 4;
+
+		for (i=0 ; i<4 ; i++)
+		{
+			lighttemp_r = lightleft_r - lightright_r;
+			lighttemp_g = lightleft_g - lightright_g;
+			lighttemp_b = lightleft_b - lightright_b;
+			lightstep_r = lighttemp_r / 4;
+			lightstep_g = lighttemp_g / 4;
+			lightstep_b = lighttemp_b / 4;
+
+			light_r = lightright_r;
+			light_g = lightright_g;
+			light_b = lightright_b;
+
+			for (b=3; b>=0; b--)
+			{
+				pix = psource[b];
+				if (pix < 224)
+				{
+					auto pal = pbasepal + pix*3;
+					auto rcomp = ((light_r * (*pal++)) >> 15) & 511;
+					auto gcomp = ((light_g * (*pal++)) >> 15) & 511;
+					auto bcomp = ((light_b * (*pal)) >> 15) & 511;
+					if (rcomp > 255) rcomp = 255;
+					if (gcomp > 255) gcomp = 255;
+					if (bcomp > 255) bcomp = 255;
+					prowdest[b] = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+				}
+				else
+				{
+					prowdest[b] = pix;
+				}
+				light_r += lightstep_r;
+				light_g += lightstep_g;
+				light_b += lightstep_b;
+			}
+	
+			if (i % 2) psource += sourcetstep;
+			lightright_r += lightrightstep_r;
+			lightright_g += lightrightstep_g;
+			lightright_b += lightrightstep_b;
+			lightleft_r += lightleftstep_r;
+			lightleft_g += lightleftstep_g;
+			lightleft_b += lightleftstep_b;
+			prowdest += surfrowbytes;
+		}
+
+		if (psource >= r_sourcemax)
+			psource -= r_stepback;
+	}
+}
+
+
+/*
+================
+R_DrawSurfaceBlock8_coloredh8mip3
+================
+*/
+void R_DrawSurfaceBlock8_coloredh8mip3 (void)
+{
+	int				v, i, b;
+	int				lightstep_r, lightstep_g, lightstep_b;
+	int				lighttemp_r, lighttemp_g, lighttemp_b;
+	int				light_r, light_g, light_b;
+	unsigned char	pix, *psource, *prowdest;
+
+	psource = pbasesource;
+	prowdest = (unsigned char*)prowdestbase;
+
+	for (v=0 ; v<r_numvblocks ; v++)
+	{
+	// FIXME: use delta rather than both right and left, like ASM?
+		int lightleft_r = r_lightptr[0];
+		int lightleft_g = r_lightptr[1];
+		int lightleft_b = r_lightptr[2];
+		int lightright_r = r_lightptr[3];
+		int lightright_g = r_lightptr[4];
+		int lightright_b = r_lightptr[5];
+		r_lightptr += r_lightwidth;
+		int lightleftstep_r = ((int)r_lightptr[0] - lightleft_r) / 2;
+		int lightleftstep_g = ((int)r_lightptr[1] - lightleft_g) / 2;
+		int lightleftstep_b = ((int)r_lightptr[2] - lightleft_b) / 2;
+		int lightrightstep_r = ((int)r_lightptr[3] - lightright_r) / 2;
+		int lightrightstep_g = ((int)r_lightptr[4] - lightright_g) / 2;
+		int lightrightstep_b = ((int)r_lightptr[5] - lightright_b) / 2;
+
+		for (i=0 ; i<2 ; i++)
+		{
+			lighttemp_r = lightleft_r - lightright_r;
+			lighttemp_g = lightleft_g - lightright_g;
+			lighttemp_b = lightleft_b - lightright_b;
+			lightstep_r = lighttemp_r / 2;
+			lightstep_g = lighttemp_g / 2;
+			lightstep_b = lighttemp_b / 2;
+
+			light_r = lightright_r;
+			light_g = lightright_g;
+			light_b = lightright_b;
+
+			for (b=1; b>=0; b--)
+			{
+				pix = psource[b];
+				if (pix < 224)
+				{
+					auto pal = pbasepal + pix*3;
+					auto rcomp = ((light_r * (*pal++)) >> 15) & 511;
+					auto gcomp = ((light_g * (*pal++)) >> 15) & 511;
+					auto bcomp = ((light_b * (*pal)) >> 15) & 511;
+					if (rcomp > 255) rcomp = 255;
+					if (gcomp > 255) gcomp = 255;
+					if (bcomp > 255) bcomp = 255;
+					prowdest[b] = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+				}
+				else
+				{
+					prowdest[b] = pix;
+				}
+				light_r += lightstep_r;
+				light_g += lightstep_g;
+				light_b += lightstep_b;
+			}
+	
+			if (i == 1) psource += sourcetstep;
 			lightright_r += lightrightstep_r;
 			lightright_g += lightrightstep_g;
 			lightright_b += lightrightstep_b;
