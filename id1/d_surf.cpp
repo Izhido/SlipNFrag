@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 float           surfscale;
 qboolean        r_cache_thrash;         // set if surface cache is thrashing
+int             r_cache_wrap_count;
 
 int                                     sc_size;
 surfcache_t                     *sc_rover, *sc_base;
@@ -153,6 +154,7 @@ surfcache_t     *D_SCAlloc (int width, int size)
 		if (sc_rover)
 		{
 			wrapped_this_time = true;
+			r_cache_wrap_count++;
 		}
 		sc_rover = sc_base;
 	}

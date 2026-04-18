@@ -109,8 +109,16 @@ void VID_Resize()
 
 void VID_ReallocSurfCache()
 {
-    int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
-    surfcache.resize(surfcache.size() + surfcachesize);
+	size_t increase;
+	if (r_cache_wrap_count == 0 || surfcache.size() == 0)
+	{
+		increase = D_SurfaceCacheForRes(vid_width, vid_height);
+	}
+	else
+	{
+		increase = surfcache.size() * r_cache_wrap_count;
+	}
+    surfcache.resize(surfcache.size() + increase);
     Draw_ResizeScanTables();
     D_InitCaches (surfcache.data(), (int)surfcache.size());
 }
