@@ -4,8 +4,6 @@
 #include "DirectRect.h"
 #include "Locks.h"
 
-extern viddef_t vid;
-
 std::vector<unsigned char> vid_buffer;
 int vid_width;
 int vid_height;
@@ -14,7 +12,6 @@ int con_width;
 int con_height;
 std::vector<short> zbuffer;
 std::vector<byte> surfcache;
-int surfcache_extrasize;
 
 unsigned short d_8to16table[256];
 unsigned d_8to24table[256];
@@ -79,7 +76,6 @@ void VID_Init(unsigned char* /*palette*/)
     int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
     surfcache.resize(surfcachesize);
     D_InitCaches(surfcache.data(), (int)surfcache.size());
-    surfcache_extrasize = 0;
     d_palchangecount = 0;
 }
 
@@ -103,7 +99,6 @@ void VID_Resize(float forced_aspect)
     surfcache.resize(surfcachesize);
     Draw_ResizeScanTables();
     D_InitCaches (surfcache.data(), (int)surfcache.size());
-    surfcache_extrasize = 0;
     R_ResizeTurb();
     R_ResizeEdges();
     vid.recalc_refdef = 1;
@@ -111,9 +106,16 @@ void VID_Resize(float forced_aspect)
 
 void VID_ReallocSurfCache()
 {
-    int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
-    surfcache_extrasize += surfcachesize;
-    surfcache.resize(surfcachesize + surfcache_extrasize);
+    size_t increase;
+    if (r_cache_wrap_count == 0 || surfcache.empty())
+    {
+        increase = D_SurfaceCacheForRes(vid_width, vid_height);
+    }
+    else
+    {
+        increase = surfcache.size() * r_cache_wrap_count;
+    }
+    surfcache.resize(surfcache.size() + increase);
     Draw_ResizeScanTables();
     D_InitCaches (surfcache.data(), (int)surfcache.size());
 }

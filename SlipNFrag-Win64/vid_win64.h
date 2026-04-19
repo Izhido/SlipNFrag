@@ -11,7 +11,6 @@ extern int con_width;
 extern int con_height;
 extern int con_rowbytes;
 extern unsigned d_8to24table[256];
-extern qboolean vid_palettechanged;
 
 void VID_Resize();
 
