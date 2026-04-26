@@ -65,7 +65,7 @@ extern m_state_t m_state;
     [playButton addConstraint:[NSLayoutConstraint constraintWithItem:playButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:150]];
     [playButton addConstraint:[NSLayoutConstraint constraintWithItem:playButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:150]];
     preferencesButton = [[NSButton alloc] initWithFrame:NSZeroRect];
-    preferencesButton.image = [NSImage imageNamed:NSImageNameAdvanced];
+    preferencesButton.image = [NSImage imageWithSystemSymbolName:@"gear" accessibilityDescription:@"Preferences"];
     preferencesButton.bordered = NO;
     preferencesButton.translatesAutoresizingMaskIntoConstraints = NO;
     preferencesButton.imageScaling = NSImageScaleProportionallyUpOrDown;

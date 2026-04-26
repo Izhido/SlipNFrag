@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import "Slip___Frag-Swift.h"
 
 @interface AppDelegate ()
 
@@ -26,12 +27,7 @@
 
 - (IBAction)preferences:(NSMenuItem *)sender
 {
-    if (self.preferencesController != nil)
-    {
-        return;
-    }
-    self.preferencesController = [[NSStoryboard storyboardWithName:@"Main" bundle:NSBundle.mainBundle] instantiateControllerWithIdentifier:@"Preferences"];
-    [self.preferencesController showWindow:NSApplication.sharedApplication.mainWindow];
+	[[SettingsManager shared] openSettings];
 }
 
 @end
