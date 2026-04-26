@@ -167,18 +167,10 @@ extern m_state_t m_state;
 -(void)enableJoystick
 {
 	joystick.playerIndex = GCControllerPlayerIndex1;
-	if (@available(macOS 10.15, *)) {
-		[joystick.extendedGamepad.buttonMenu setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
-		 {
-			Input::AddKeyInput(K_ESCAPE, pressed);
-		}];
-	} else {
-		joystick.controllerPausedHandler = ^(GCController * _Nonnull controller)
-		{
-			Input::AddKeyInput(K_ESCAPE, true);
-			Input::AddKeyInput(K_ESCAPE, false);
-		};
-	}
+	[joystick.extendedGamepad.buttonMenu setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
+	 {
+		Input::AddKeyInput(K_ESCAPE, pressed);
+	}];
 	[joystick.extendedGamepad.buttonA setPressedChangedHandler:^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed)
 	 {
 		if (key_dest == key_menu)
@@ -405,3 +397,4 @@ extern m_state_t m_state;
 }
 
 @end
+

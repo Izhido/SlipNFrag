@@ -8,7 +8,7 @@ Slip & Frag aims to be two things:
 
 * An engine that allows you to play Quake, the game, as closely as it was when published in 1996 for the DOS platform. This means somewhat low resolution textures, low polygon count, colorful and high-contrast worlds, with sharp-edged, dangerous-looking creatures. That, and messages with large white (or brown) letters.
 
-* An engine that runs in modern operating systems (MacOS 10.14 and later, Windows 10 and later, Meta Quest/2/3/Pro/3s v62 and later, and others), removing the limitations that restricted the original engine to run in a limited, fixed amount of memory, thus allowing it to accept the content created during these years by the user community.
+* An engine that runs in modern operating systems (MacOS 11 and later, Windows 10 and later, Meta Quest/2/3/Pro/3s v62 and later, and others), removing the limitations that restricted the original engine to run in a limited, fixed amount of memory, thus allowing it to accept the content created during these years by the user community.
 
 ## What is available
 

@@ -54,7 +54,6 @@ extern m_state_t m_state;
     [super viewDidLoad];
     playButton = [[NSButton alloc] initWithFrame:NSZeroRect];
     playButton.image = [NSImage imageNamed:@"play"];
-    playButton.alternateImage = [NSImage imageNamed:@"play-pressed"];
     playButton.bordered = NO;
     playButton.translatesAutoresizingMaskIntoConstraints = NO;
 	[playButton setButtonType:NSButtonTypeMomentaryChange];
