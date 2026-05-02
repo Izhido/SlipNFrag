@@ -171,7 +171,6 @@
 		285AD3842A7B6A9500D6D013 /* Locks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 285AD3832A7B6A9500D6D013 /* Locks.cpp */; };
 		285AD3882A7B733E00D6D013 /* DirectRect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 285AD3862A7B723F00D6D013 /* DirectRect.cpp */; };
 		285D5B09229F9EE400B6ED09 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28BA2A6E229F31C2001830E9 /* MetalKit.framework */; };
-		2867E02622C79ADF0028B7BC /* PreferencesController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2867E02522C79ADF0028B7BC /* PreferencesController.mm */; };
 		286944BB2AAD71B8009945B2 /* Alias.mm in Sources */ = {isa = PBXBuildFile; fileRef = 286944BA2AAD71B8009945B2 /* Alias.mm */; };
 		286C04BD2A996905002C9126 /* Pipelines.mm in Sources */ = {isa = PBXBuildFile; fileRef = 286C04BC2A996905002C9126 /* Pipelines.mm */; };
 		286C04C02A997048002C9126 /* Surfaces.mm in Sources */ = {isa = PBXBuildFile; fileRef = 286C04BF2A997048002C9126 /* Surfaces.mm */; };
@@ -253,7 +252,7 @@
 		287A3253229DC1F400AE6BFA /* crc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3252229DC1F400AE6BFA /* crc.cpp */; };
 		287C395F2F9E8C180083AE5D /* StoryboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C395E2F9E8C180083AE5D /* StoryboardView.swift */; };
 		287C39612F9E8C700083AE5D /* SlipNFrag-MacOS-App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C39602F9E8C700083AE5D /* SlipNFrag-MacOS-App.swift */; };
-		287C39632F9E8F9E0083AE5D /* PreferencesStoryboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C39622F9E8F9E0083AE5D /* PreferencesStoryboardView.swift */; };
+		287C39682F9E9BEB0083AE5D /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C39672F9E9BEB0083AE5D /* PreferencesView.swift */; };
 		287C39652F9E9BEB0083AE5D /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C39642F9E9BEB0083AE5D /* SettingsManager.swift */; };
 		287EC31C2A8DC65300B1DFDF /* AppState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287EC31B2A8DC65300B1DFDF /* AppState.cpp */; };
 		2880A4C722C5757F00AF513D /* net_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4C522C5757F00AF513D /* net_macos.cpp */; };
@@ -520,8 +519,6 @@
 		285D5B0A229F9F9900B6ED09 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		285D5B0C229FA10500B6ED09 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		285D5B0E229FA12400B6ED09 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
-		2867E02422C79ADF0028B7BC /* PreferencesController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PreferencesController.h; sourceTree = "<group>"; };
-		2867E02522C79ADF0028B7BC /* PreferencesController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PreferencesController.mm; sourceTree = "<group>"; };
 		286944B82AAD6CF8009945B2 /* Alias.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Alias.h; sourceTree = "<group>"; };
 		286944B92AAD6D22009945B2 /* SortedAliasTexture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SortedAliasTexture.h; sourceTree = "<group>"; };
 		286944BA2AAD71B8009945B2 /* Alias.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = Alias.mm; sourceTree = "<group>"; };
@@ -590,7 +587,7 @@
 		287C395D2F9E8C180083AE5D /* SlipNFrag-MacOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SlipNFrag-MacOS-Bridging-Header.h"; sourceTree = "<group>"; };
 		287C395E2F9E8C180083AE5D /* StoryboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryboardView.swift; sourceTree = "<group>"; };
 		287C39602F9E8C700083AE5D /* SlipNFrag-MacOS-App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SlipNFrag-MacOS-App.swift"; sourceTree = "<group>"; };
-		287C39622F9E8F9E0083AE5D /* PreferencesStoryboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesStoryboardView.swift; sourceTree = "<group>"; };
+		287C39672F9E9BEB0083AE5D /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		287C39642F9E9BEB0083AE5D /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		287EC31A2A8DC61600B1DFDF /* AppState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppState.h; sourceTree = "<group>"; };
 		287EC31B2A8DC65300B1DFDF /* AppState.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AppState.cpp; sourceTree = "<group>"; };
@@ -829,6 +826,7 @@
 				287C395D2F9E8C180083AE5D /* SlipNFrag-MacOS-Bridging-Header.h */,
 				287C39602F9E8C700083AE5D /* SlipNFrag-MacOS-App.swift */,
 				287C39622F9E8F9E0083AE5D /* PreferencesStoryboardView.swift */,
+				287C39672F9E9BEB0083AE5D /* PreferencesView.swift */,
 				287C39642F9E9BEB0083AE5D /* SettingsManager.swift */,
 			);
 			path = "SlipNFrag-MacOS";
@@ -1354,6 +1352,7 @@
 				2849D47B260C41C900B4D4F0 /* cd_macos.cpp in Sources */,
 				28A4529528E2A780009EFBCE /* r_aliasc.cpp in Sources */,
 				287C39632F9E8F9E0083AE5D /* PreferencesStoryboardView.swift in Sources */,
+				287C39682F9E9BEB0083AE5D /* PreferencesView.swift in Sources */,
 				28BA2A96229F403C001830E9 /* pr_exec.cpp in Sources */,
 				28BA2AAB229F403C001830E9 /* view.cpp in Sources */,
 				28BA2AA3229F403C001830E9 /* r_surf.cpp in Sources */,

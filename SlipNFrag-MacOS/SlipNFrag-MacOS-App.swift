@@ -18,8 +18,8 @@ struct SlipNFrag_MacOS_App: App {
 				.edgesIgnoringSafeArea(.all)
 		}
 		Settings {
-			PreferencesStoryboardView()
-				.frame(width: 490, height: 460)
+			PreferencesView()
+				.frame(width: 490, height: 430)
 		}
 	}
 }
