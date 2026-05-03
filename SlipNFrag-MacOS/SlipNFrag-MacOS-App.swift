@@ -14,8 +14,8 @@ struct SlipNFrag_MacOS_App: App {
 
 	var body: some Scene {
 		WindowGroup {
-			StoryboardView()
-				.edgesIgnoringSafeArea(.all)
+			MainView()
+				.ignoresSafeArea()
 		}
 		Settings {
 			PreferencesView()

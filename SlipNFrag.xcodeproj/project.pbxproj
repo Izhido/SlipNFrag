@@ -16,7 +16,6 @@
 		2822EE54229ED2B900B5332D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 2822EE53229ED2B900B5332D /* AppDelegate.m */; };
 		2822EE57229ED2B900B5332D /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2822EE56229ED2B900B5332D /* ViewController.mm */; };
 		2822EE59229ED2BA00B5332D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2822EE58229ED2BA00B5332D /* Assets.xcassets */; };
-		2822EE5C229ED2BA00B5332D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2822EE5A229ED2BA00B5332D /* Main.storyboard */; };
 		2829D95B2A6CE68700516C16 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2829D95A2A6CE68700516C16 /* AudioToolbox.framework */; };
 		2829D95C2A6CE6EB00516C16 /* snd_float_dma.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D0605E2808E77F009E0953 /* snd_float_dma.cpp */; };
 		2829D95D2A6CE6EB00516C16 /* snd_float_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D060602808E77F009E0953 /* snd_float_mem.cpp */; };
@@ -250,10 +249,10 @@
 		287A322B229DBC4D00AE6BFA /* cd_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3226229DBC4D00AE6BFA /* cd_null.cpp */; };
 		287A3251229DC1DC00AE6BFA /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3250229DC1DC00AE6BFA /* common.cpp */; };
 		287A3253229DC1F400AE6BFA /* crc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287A3252229DC1F400AE6BFA /* crc.cpp */; };
-		287C395F2F9E8C180083AE5D /* StoryboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C395E2F9E8C180083AE5D /* StoryboardView.swift */; };
+		287C395F2F9E8C180083AE5D /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C395E2F9E8C180083AE5D /* MainView.swift */; };
 		287C39612F9E8C700083AE5D /* SlipNFrag-MacOS-App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C39602F9E8C700083AE5D /* SlipNFrag-MacOS-App.swift */; };
-		287C39682F9E9BEB0083AE5D /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C39672F9E9BEB0083AE5D /* PreferencesView.swift */; };
 		287C39652F9E9BEB0083AE5D /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C39642F9E9BEB0083AE5D /* SettingsManager.swift */; };
+		287C39682F9E9BEB0083AE5D /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287C39672F9E9BEB0083AE5D /* PreferencesView.swift */; };
 		287EC31C2A8DC65300B1DFDF /* AppState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 287EC31B2A8DC65300B1DFDF /* AppState.cpp */; };
 		2880A4C722C5757F00AF513D /* net_macos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4C522C5757F00AF513D /* net_macos.cpp */; };
 		2880A4CA22C576E000AF513D /* net_dgrm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2880A4C822C576E000AF513D /* net_dgrm.cpp */; };
@@ -405,7 +404,6 @@
 		2822EE55229ED2B900B5332D /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		2822EE56229ED2B900B5332D /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
 		2822EE58229ED2BA00B5332D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		2822EE5B229ED2BA00B5332D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		2822EE5D229ED2BA00B5332D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2829D95A2A6CE68700516C16 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = Platforms/XROS.platform/Developer/SDKs/XROS1.0.sdk/System/Library/Frameworks/AudioToolbox.framework; sourceTree = DEVELOPER_DIR; };
 		2829D9602A6CE7C000516C16 /* cd_visionos.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = cd_visionos.cpp; sourceTree = "<group>"; };
@@ -585,10 +583,10 @@
 		287A3250229DC1DC00AE6BFA /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
 		287A3252229DC1F400AE6BFA /* crc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = crc.cpp; sourceTree = "<group>"; };
 		287C395D2F9E8C180083AE5D /* SlipNFrag-MacOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SlipNFrag-MacOS-Bridging-Header.h"; sourceTree = "<group>"; };
-		287C395E2F9E8C180083AE5D /* StoryboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryboardView.swift; sourceTree = "<group>"; };
+		287C395E2F9E8C180083AE5D /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		287C39602F9E8C700083AE5D /* SlipNFrag-MacOS-App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SlipNFrag-MacOS-App.swift"; sourceTree = "<group>"; };
-		287C39672F9E9BEB0083AE5D /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		287C39642F9E9BEB0083AE5D /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		287C39672F9E9BEB0083AE5D /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		287EC31A2A8DC61600B1DFDF /* AppState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppState.h; sourceTree = "<group>"; };
 		287EC31B2A8DC65300B1DFDF /* AppState.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AppState.cpp; sourceTree = "<group>"; };
 		287EC31D2A8DC68F00B1DFDF /* AppMode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppMode.h; sourceTree = "<group>"; };
@@ -804,12 +802,9 @@
 				28B9DBDD2A7E08B2008E09EE /* Input.h */,
 				285AD3832A7B6A9500D6D013 /* Locks.cpp */,
 				2875EBEB2A78C2F200F66CDB /* Locks.h */,
-				2867E02422C79ADF0028B7BC /* PreferencesController.h */,
-				2867E02522C79ADF0028B7BC /* PreferencesController.mm */,
 				2822EE55229ED2B900B5332D /* ViewController.h */,
 				2822EE56229ED2B900B5332D /* ViewController.mm */,
 				2822EE58229ED2BA00B5332D /* Assets.xcassets */,
-				2822EE5A229ED2BA00B5332D /* Main.storyboard */,
 				2822EE5D229ED2BA00B5332D /* Info.plist */,
 				28BA2A72229F3271001830E9 /* Shaders.metal */,
 				2849D47A260C41C900B4D4F0 /* cd_macos.cpp */,
@@ -822,10 +817,9 @@
 				28BA2AB6229F4154001830E9 /* sys_macos.h */,
 				28BA2AB7229F4901001830E9 /* vid_macos.cpp */,
 				28BA2ABA229F51F8001830E9 /* vid_macos.h */,
-				287C395E2F9E8C180083AE5D /* StoryboardView.swift */,
+				287C395E2F9E8C180083AE5D /* MainView.swift */,
 				287C395D2F9E8C180083AE5D /* SlipNFrag-MacOS-Bridging-Header.h */,
 				287C39602F9E8C700083AE5D /* SlipNFrag-MacOS-App.swift */,
-				287C39622F9E8F9E0083AE5D /* PreferencesStoryboardView.swift */,
 				287C39672F9E9BEB0083AE5D /* PreferencesView.swift */,
 				287C39642F9E9BEB0083AE5D /* SettingsManager.swift */,
 			);
@@ -1204,7 +1198,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				2822EE59229ED2BA00B5332D /* Assets.xcassets in Resources */,
-				2822EE5C229ED2BA00B5332D /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1351,7 +1344,6 @@
 				28BA2A8A229F403C001830E9 /* host.cpp in Sources */,
 				2849D47B260C41C900B4D4F0 /* cd_macos.cpp in Sources */,
 				28A4529528E2A780009EFBCE /* r_aliasc.cpp in Sources */,
-				287C39632F9E8F9E0083AE5D /* PreferencesStoryboardView.swift in Sources */,
 				287C39682F9E9BEB0083AE5D /* PreferencesView.swift in Sources */,
 				28BA2A96229F403C001830E9 /* pr_exec.cpp in Sources */,
 				28BA2AAB229F403C001830E9 /* view.cpp in Sources */,
@@ -1369,7 +1361,6 @@
 				28BA2A94229F403C001830E9 /* pr_cmds.cpp in Sources */,
 				28BA2AB5229F40BD001830E9 /* sys_macos.cpp in Sources */,
 				28BA2AA0229F403C001830E9 /* r_part.cpp in Sources */,
-				2867E02622C79ADF0028B7BC /* PreferencesController.mm in Sources */,
 				28BA2A93229F403C001830E9 /* nonintel.cpp in Sources */,
 				28BA2A74229F403C001830E9 /* chase.cpp in Sources */,
 				28BA2A88229F403C001830E9 /* d_vars.cpp in Sources */,
@@ -1407,7 +1398,7 @@
 				28BA2A8B229F403C001830E9 /* host_cmd.cpp in Sources */,
 				28BA2AAD229F403C001830E9 /* world.cpp in Sources */,
 				28BA2AA6229F403C001830E9 /* screen.cpp in Sources */,
-				287C395F2F9E8C180083AE5D /* StoryboardView.swift in Sources */,
+				287C395F2F9E8C180083AE5D /* MainView.swift in Sources */,
 				282A603B24AC37BD001BAFDA /* d_lists.cpp in Sources */,
 				28BA2AAA229F403C001830E9 /* sv_user.cpp in Sources */,
 				28BA2A81229F403C001830E9 /* d_modech.cpp in Sources */,
@@ -1605,14 +1596,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		2822EE5A229ED2BA00B5332D /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				2822EE5B229ED2BA00B5332D /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		282AF2B5250E5B8100E171DA /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (

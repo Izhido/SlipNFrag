@@ -10,4 +10,6 @@
 
 @interface ViewController : NSViewController
 
+- (void)startGame;
+
 @end

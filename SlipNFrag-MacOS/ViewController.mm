@@ -27,8 +27,6 @@ extern m_state_t m_state;
 
 @implementation ViewController
 {
-    NSButton* playButton;
-    NSButton* preferencesButton;
 	NSThread* engineThread;
     id<MTLCommandQueue> commandQueue;
     MTKView* mtkView;
@@ -52,42 +50,37 @@ extern m_state_t m_state;
 -(void)viewDidLoad
 {
     [super viewDidLoad];
-    playButton = [[NSButton alloc] initWithFrame:NSZeroRect];
-    playButton.image = [NSImage imageNamed:@"play"];
-    playButton.bordered = NO;
-    playButton.translatesAutoresizingMaskIntoConstraints = NO;
-	[playButton setButtonType:NSButtonTypeMomentaryChange];
-    [playButton setTarget:self];
-    [playButton setAction:@selector(play:)];
-    [self.view addSubview:playButton];
-    [self.view addConstraint:[NSLayoutConstraint constraintWithItem:playButton attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeCenterX multiplier:1 constant:0]];
-    [self.view addConstraint:[NSLayoutConstraint constraintWithItem:playButton attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeCenterY multiplier:1 constant:0]];
-    [playButton addConstraint:[NSLayoutConstraint constraintWithItem:playButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:150]];
-    [playButton addConstraint:[NSLayoutConstraint constraintWithItem:playButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:150]];
-    preferencesButton = [[NSButton alloc] initWithFrame:NSZeroRect];
-    preferencesButton.image = [NSImage imageWithSystemSymbolName:@"gear" accessibilityDescription:@"Preferences"];
-    preferencesButton.bordered = NO;
-    preferencesButton.translatesAutoresizingMaskIntoConstraints = NO;
-    preferencesButton.imageScaling = NSImageScaleProportionallyUpOrDown;
-	[preferencesButton setButtonType:NSButtonTypeMomentaryChange];
-    [preferencesButton setTarget:self];
-    [preferencesButton setAction:@selector(preferences:)];
-    [self.view addSubview:preferencesButton];
-    [self.view addConstraint:[NSLayoutConstraint constraintWithItem:preferencesButton attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1 constant:-10]];
-    [self.view addConstraint:[NSLayoutConstraint constraintWithItem:preferencesButton attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1 constant:-10]];
-    [preferencesButton addConstraint:[NSLayoutConstraint constraintWithItem:preferencesButton attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:24]];
-    [preferencesButton addConstraint:[NSLayoutConstraint constraintWithItem:preferencesButton attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1 constant:24]];
 }
 
 -(void)viewWillAppear
 {
     [super viewWillAppear];
-    trackingArea = [[NSTrackingArea alloc] initWithRect:mtkView.frame options:NSTrackingCursorUpdate | NSTrackingMouseMoved | NSTrackingActiveAlways owner:self userInfo:nil];
+    if (mtkView != nil) {
+        [self setupTrackingArea];
+    }
+}
+
+-(void)setupTrackingArea
+{
+    if (mtkView == nil) {
+        return;
+    }
+
+    if (trackingArea != nil) {
+        [mtkView removeTrackingArea:trackingArea];
+        trackingArea = nil;
+    }
+
+    mtkView.postsFrameChangedNotifications = YES;
+    trackingArea = [[NSTrackingArea alloc] initWithRect:mtkView.bounds options:NSTrackingCursorUpdate | NSTrackingMouseMoved | NSTrackingActiveAlways owner:self userInfo:nil];
     [mtkView addTrackingArea:trackingArea];
+
     [NSNotificationCenter.defaultCenter addObserverForName:NSViewFrameDidChangeNotification object:mtkView queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification * _Nonnull note)
     {
-        [self->mtkView removeTrackingArea:self->trackingArea];
-        self->trackingArea = [[NSTrackingArea alloc] initWithRect:self->mtkView.frame options:NSTrackingCursorUpdate | NSTrackingMouseMoved | NSTrackingActiveAlways owner:self userInfo:nil];
+        if (self->trackingArea != nil) {
+            [self->mtkView removeTrackingArea:self->trackingArea];
+        }
+        self->trackingArea = [[NSTrackingArea alloc] initWithRect:self->mtkView.bounds options:NSTrackingCursorUpdate | NSTrackingMouseMoved | NSTrackingActiveAlways owner:self userInfo:nil];
         [self->mtkView addTrackingArea:self->trackingArea];
     }];
 }
@@ -301,10 +294,13 @@ extern m_state_t m_state;
 	}
 }
 
+- (void)startGame
+{
+    [self play:nil];
+}
+
 -(void)play:(NSButton*)sender
 {
-    [playButton removeFromSuperview];
-
 	vid_width = (int)self.view.frame.size.width;
 	vid_height = (int)self.view.frame.size.height;
 	[self calculateConsoleDimensions];
@@ -369,6 +365,7 @@ extern m_state_t m_state;
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:mtkView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeTop multiplier:1 constant:0]];
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:mtkView attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeRight multiplier:1 constant:0]];
     [self.view addConstraint:[NSLayoutConstraint constraintWithItem:mtkView attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:self.view attribute:NSLayoutAttributeBottom multiplier:1 constant:0]];
+    [self setupTrackingArea];
     commandQueue = [device newCommandQueue];
     id<MTLLibrary> library = [device newDefaultLibrary];
     id<MTLFunction> vertexProgram = [library newFunctionWithName:@"vertexMain"];
@@ -470,12 +467,6 @@ extern m_state_t m_state;
          self->previousModifierFlags = event.modifierFlags;
          return nil;
      }];
-}
-
--(void)preferences:(NSButton*)sender
-{
-    AppDelegate* appDelegate = NSApplication.sharedApplication.delegate;
-    [appDelegate preferences:nil];
 }
 
 -(void)calculateConsoleDimensions
