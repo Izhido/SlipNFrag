@@ -3,7 +3,7 @@ agp = "9.2.1"
 kotlin = "2.2.20"
 coreKtx = "1.18.0"
 appcompat = "1.7.1"
-material = "1.13.0"
+material = "1.14.0"
 gamesActivity = "4.4.2"
 openxr_loader_for_android = "1.1.59.1"
 

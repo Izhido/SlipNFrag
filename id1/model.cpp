@@ -578,10 +578,10 @@ void Mod_LoadTextures (lump_t *l)
 		
 		if ( (mt->width & 15) || (mt->height & 15) )
 		{
-			if (mt->height == 8)
-				Con_Printf ("Texture %s has height %i instead of 16\n", mt->name, mt->height);
+			if ( (mt->width & 7) || (mt->height & 7) )
+				Sys_Error ("Texture %s is not 8 or 16 aligned", mt->name);
 			else
-				Sys_Error ("Texture %s is not 16 aligned", mt->name);
+				Con_Printf ("Texture %s is 8 aligned instead of 16\n", mt->name, mt->height);
 		}
 		if ( (mt->width == 0) || (mt->height == 0) )
 			Con_Printf ("Texture %s is zero-sized\n", mt->name);
