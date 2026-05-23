@@ -36,8 +36,6 @@ extern void			R_TransformFrustum (void);
 
 vec3_t		transformed_modelorg;
 
-extern qboolean	r_skyinitialized;
-extern qboolean	r_skyRGBAinitialized;
 extern qboolean	r_skyboxinitialized;
 extern mtexinfo_t	r_skytexinfo[6];
 
@@ -272,14 +270,15 @@ void D_DrawSurfaces (void)
 			{
 				r_drawnpolycount++;
 
-				if (r_skyinitialized)
+				auto entry = r_skies.find(((msurface_t*)s->data)->texinfo->texture);
+				if (entry != r_skies.end())
 				{
-					if (!r_skymade)
+					if (!entry->second.made)
 					{
-						R_MakeSky ();
+						R_MakeSky (entry->second);
 					}
 
-					D_DrawSkyScans8 (s->spans);
+					D_DrawSkyScans8 (s->spans, entry->second);
 					(*d_drawzspans) (s->spans);
 				}
 			}

@@ -1768,7 +1768,7 @@ void D_FillSkyData (dsky_t& sky)
 	d_lists.textured_attributes[d_lists.last_textured_attribute] = bottom;
 }
 
-void D_AddSkyToLists ()
+void D_AddSkyToLists (skydesc_t& skydesc)
 {
 	if (d_lists.last_sky >= 0)
 	{
@@ -1783,11 +1783,11 @@ void D_AddSkyToLists ()
 	sky.width = 128;
 	sky.height = 128;
 	sky.size = sky.width * sky.height;
-	sky.data = r_skysource;
+	sky.data = skydesc.source;
 	D_FillSkyData(sky);
 }
 
-void D_AddSkyRGBAToLists ()
+void D_AddSkyRGBAToLists (skydesc_t& skydesc)
 {
 	if (d_lists.last_sky_rgba >= 0)
 	{
@@ -1799,10 +1799,10 @@ void D_AddSkyRGBAToLists ()
 		d_lists.sky_rgba.emplace_back();
 	}
 	auto& sky = d_lists.sky_rgba[d_lists.last_sky_rgba];
-	sky.width = r_skyRGBAwidth;
-	sky.height = r_skyRGBAheight;
+	sky.width = skydesc.widthRGBA;
+	sky.height = skydesc.heightRGBA;
 	sky.size = sky.width * 2 * sky.height * sizeof(unsigned);
-	sky.data = (byte*)r_skysourceRGBA;
+	sky.data = (byte*)skydesc.sourceRGBA;
 	D_FillSkyData(sky);
 }
 

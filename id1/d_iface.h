@@ -113,6 +113,19 @@ typedef struct
 	int		color;
 } zpointdesc_t;
 
+typedef struct
+{
+	int						made;
+	std::vector<byte>		bottomsky;
+	std::vector<byte>		bottommask;
+	std::vector<byte>		newsky;
+	std::vector<unsigned>	newskyRGBA;
+	byte					*source;
+	unsigned				*sourceRGBA;
+	int						widthRGBA;
+	int						heightRGBA;
+} skydesc_t;
+
 extern cvar_t	r_drawflat;
 extern int		d_spanpixcount;
 extern int		r_framecount;		// sequence # of current frame since Quake
@@ -182,10 +195,8 @@ void D_PolysetUpdateTables (void);
 
 // these are currently for internal use only, and should not be used by drivers
 extern int				r_skydirect;
-extern byte				*r_skysource;
-extern unsigned			*r_skysourceRGBA;
-extern int				r_skyRGBAwidth;
-extern int				r_skyRGBAheight;
+
+extern Q_HASHMAP<texture_t*, skydesc_t>	r_skies;
 
 // transparency types for D_DrawRect ()
 #define DR_SOLID		0

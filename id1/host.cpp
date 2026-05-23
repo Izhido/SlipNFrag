@@ -538,8 +538,7 @@ void Host_ClearMemory (void)
 	D_ResetLists ();
 	D_FlushCaches ();
 	Mod_ClearAll ();
-	r_skyinitialized = false;
-	r_skyRGBAinitialized = false;
+	r_skies.clear ();
 	r_skyboxinitialized = false;
 	r_skyboxprefix = "";
 	for (auto& entry : r_skyboxtexsources)

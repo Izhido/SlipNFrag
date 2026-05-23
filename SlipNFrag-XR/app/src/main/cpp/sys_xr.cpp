@@ -462,8 +462,6 @@ extern int		modemConfig_cursor;
 extern int		gameoptions_cursor;
 extern int		slist_cursor;
 extern double		oldrealtime;
-extern qboolean	r_skyinitialized;
-extern qboolean	r_skyRGBAinitialized;
 extern qboolean	r_skyboxinitialized;
 extern std::string r_skyboxprefix;
 extern Q_HASHMAP<std::string, texture_t**> r_skyboxtexsources;
@@ -535,8 +533,7 @@ void Sys_Terminate()
 	}
 	menu_cachepics.clear();
 	snd_initialized = false;
-	r_skyinitialized = false;
-	r_skyRGBAinitialized = false;
+	r_skies.clear();
 	r_skyboxinitialized = false;
 	r_skyboxprefix = "";
 	for (auto& entry : r_skyboxtexsources)

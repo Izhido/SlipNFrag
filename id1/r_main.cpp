@@ -332,8 +332,7 @@ void R_NewMap (void)
 				R_InitSkyBox ();
 				if (R_SetSkyBox (rotate, axis))
 				{
-					r_skyinitialized = false;
-					r_skyRGBAinitialized = false;
+					r_skies.clear ();
 					r_skyboxinitialized = true;
 				}
 			}
@@ -1027,18 +1026,25 @@ void R_DrawBEntitiesForLists (void)
 										D_AddCutoutSurfaceToLists (psurf, currententity);
 									}
 								}
-								else if (r_skyRGBAinitialized)
+								else
 								{
-									D_AddSkyRGBAToLists();
-								}
-								else if (r_skyinitialized)
-								{
-									if (!r_skymade)
+									auto entry = r_skies.find(psurf->texinfo->texture);
+									if (entry != r_skies.end())
 									{
-										R_MakeSky ();
-									}
+										if (entry->second.newskyRGBA.empty())
+										{
+											if (!entry->second.made)
+											{
+												R_MakeSky (entry->second);
+											}
 
-									D_AddSkyToLists();
+											D_AddSkyToLists (entry->second);
+										}
+										else
+										{
+											D_AddSkyRGBAToLists (entry->second);
+										}
+									}
 								}
 							}
 							else if (psurf->flags & SURF_DRAWBACKGROUND)

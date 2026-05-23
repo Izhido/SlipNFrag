@@ -1547,13 +1547,19 @@ void R_GenTile (msurface_t *psurf, void *pdest)
 	}
 	else if (psurf->flags & SURF_DRAWSKY)
 	{
+		auto entry = r_skies.find(psurf->texinfo->texture);
+		if (entry == r_skies.end())
+		{
+			return;
+		}
+			
 		if (r_pixbytes == 1)
 		{
-			R_GenSkyTile (pdest);
+			R_GenSkyTile (pdest, entry->second);
 		}
 		else
 		{
-			R_GenSkyTile16 (pdest);
+			R_GenSkyTile16 (pdest, entry->second);
 		}
 	}
 	else

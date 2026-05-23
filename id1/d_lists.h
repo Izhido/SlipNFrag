@@ -331,8 +331,8 @@ void D_AddViewmodelColoredLightsToLists (aliashdr_t* aliashdr, maliasskindesc_t*
 void D_AddViewmodelHoleyToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity);
 void D_AddViewmodelHoleyColoredLightsToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity);
 void D_AddParticleToLists (particle_t* part);
-void D_AddSkyToLists ();
-void D_AddSkyRGBAToLists ();
+void D_AddSkyToLists (skydesc_t& skydesc);
+void D_AddSkyRGBAToLists (skydesc_t& skydesc);
 void D_AddSkyboxToLists (mtexinfo_t* textures);
 void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color);
 void D_AddCutoutSurfaceToLists (msurface_t* face, entity_t* entity);

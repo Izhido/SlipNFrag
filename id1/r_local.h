@@ -175,8 +175,8 @@ void R_DrawSurfaceBlock8_coloredmip3 (void);
 
 #endif
 
-void R_GenSkyTile (void *pdest);
-void R_GenSkyTile16 (void *pdest);
+void R_GenSkyTile (void *pdest, skydesc_t& skydesc);
+void R_GenSkyTile16 (void *pdest, skydesc_t& skydesc);
 void R_Surf8Patch (void);
 void R_Surf16Patch (void);
 void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags);
@@ -372,8 +372,6 @@ void R_MarkLights (dlight_t *light, int index, mnode_t *node);
 
 qboolean R_LoadTGA (const char *name, int start, qboolean extra, int mips, qboolean log_failure, byte **pic, int *piclen, int *width, int *height);
 
-extern qboolean r_skyinitialized;
-extern qboolean r_skyRGBAinitialized;
 extern qboolean r_skyboxinitialized;
 extern std::string r_skyboxprefix;
 extern Q_HASHMAP<std::string, texture_t**> r_skyboxtexsources;

@@ -637,7 +637,7 @@ void Mod_LoadTextures (lump_t *l)
 					Mod_GenerateRGBAMipmaps((byte*)tx->external_color + tx->external_color->offsets[0], external_width, external_height);
 					Con_DPrintf("Mod_LoadTextures: loaded %s (%i x %i) from (%i x %i)\n", external_filename.c_str(), external_width, external_height, tx->width, tx->height);
 
-					R_InitSkyRGBA(tx->external_color);
+					R_InitSkyRGBA(tx);
 				}
 			}
 			else

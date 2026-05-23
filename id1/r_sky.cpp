@@ -30,30 +30,15 @@ float	skyspeed, skyspeed2;
 
 float		skytime;
 
-byte		*r_skysource;
-unsigned	*r_skysourceRGBA;
-int			r_skyRGBAwidth;
-int			r_skyRGBAheight;
-
-int r_skymade;
 int r_skydirect;		// not used?
 
-qboolean r_skyinitialized;
-qboolean r_skyRGBAinitialized;
+Q_HASHMAP<texture_t*, skydesc_t>	r_skies;
+
 qboolean r_skyboxinitialized;
 std::string r_skyboxprefix;
 Q_HASHMAP<std::string, texture_t**> r_skyboxtexsources;
 
 // TODO: clean up these routines
-
-byte	bottomsky[128*131];
-byte	bottommask[128*131];
-byte	newsky[128*256];	// newsky and topsky both pack in here, 128 bytes
-							//  of newsky on the left of each scan, 128 bytes
-							//  of topsky on the right, because the low-level
-							//  drawers need 256-byte scan widths
-
-std::vector<unsigned> newskyRGBA;
 
 msurface_t		*r_skyfaces;
 mplane_t		r_skyplanes[6];
@@ -107,15 +92,28 @@ void R_InitSky (texture_t *mt)
 	int			i, j;
 	byte		*src;
 
-	r_skyinitialized = true;
+	auto entry = r_skies.find(mt);
+	if (entry != r_skies.end())
+	{
+		return;
+	}
+
+	r_skies.insert({mt, { }});
+	entry = r_skies.find(mt);
+	entry->second.bottomsky.resize(128*131);
+	entry->second.bottommask.resize(128*131);
+	entry->second.newsky.resize(128*256);	// newsky and topsky both pack in here, 128 bytes
+											//  of newsky on the left of each scan, 128 bytes
+											//  of topsky on the right, because the low-level
+											//  drawers need 256-byte scan widths
+
+	auto newsky = entry->second.newsky.data();
+	auto bottomsky = entry->second.bottomsky.data();
+	auto bottommask = entry->second.bottommask.data();
 
 	if (mt->width < 2 || mt->height < 1)
 	{
-		memset(newsky, 0, 128*256);
-		memset(bottommask, 0, 128*131);
-		memset(bottomsky, 0, 128*131);
-
-		r_skysource = newsky;
+		entry->second.source = entry->second.newsky.data();
 
 		Con_Printf ("R_InitSky: %ix%i instead of 256x128\n", mt->width, mt->height);
 
@@ -163,7 +161,7 @@ void R_InitSky (texture_t *mt)
 			}
 		}
 		
-		r_skysource = newsky;
+		entry->second.source = entry->second.newsky.data();
 
 		Con_Printf ("R_InitSky: %ix%i instead of 256x128\n", mt->width, mt->height);
 
@@ -197,28 +195,32 @@ void R_InitSky (texture_t *mt)
 		}
 	}
 	
-	r_skysource = newsky;
+	entry->second.source = entry->second.newsky.data();
 }
 
 
-void R_InitSkyRGBA (miptex_t *mt)
+void R_InitSkyRGBA (texture_t *mt)
 {
-	int			i, j;
-	unsigned	*src;
+	auto entry = r_skies.find(mt);
+	if (entry != r_skies.end())
+	{
+		return;
+	}
 
-	r_skyRGBAinitialized = true;
+	r_skies.insert({mt, { }});
+	entry = r_skies.find(mt);
 
 	auto width = mt->width;
 	auto height = mt->height;
 	auto halfWidth = width / 2;
 
-	newskyRGBA.resize(width * height);
-	auto source = (unsigned*)((byte *)mt + mt->offsets[0]);
-	std::copy(source, source + newskyRGBA.size(), newskyRGBA.data());
+	entry->second.newskyRGBA.resize(width * height);
+	auto source = (unsigned*)((byte *)mt->external_color + mt->external_color->offsets[0]);
+	std::copy(source, source + entry->second.newskyRGBA.size(), entry->second.newskyRGBA.data());
 
-	r_skysourceRGBA = newskyRGBA.data();
-	r_skyRGBAwidth = halfWidth;
-	r_skyRGBAheight = height;
+	entry->second.sourceRGBA = entry->second.newskyRGBA.data();
+	entry->second.widthRGBA = halfWidth;
+	entry->second.heightRGBA = height;
 }
 
 
@@ -279,7 +281,7 @@ void R_InitSkyBox (void)
 R_MakeSky
 =================
 */
-void R_MakeSky (void)
+void R_MakeSky (skydesc_t& skydesc)
 {
 	int			x, y;
 	int			ofs, baseofs;
@@ -296,7 +298,9 @@ void R_MakeSky (void)
 	xlast = xshift;
 	ylast = yshift;
 	
-	pnewsky = (unsigned *)&newsky[0];
+	pnewsky = (unsigned *)skydesc.newsky.data();
+	auto bottomsky = skydesc.bottomsky.data();
+	auto bottommask = skydesc.bottommask.data();
 
 	for (y=0 ; y<SKYSIZE ; y++)
 	{
@@ -334,7 +338,7 @@ void R_MakeSky (void)
 		pnewsky += 128 / sizeof (unsigned);
 	}
 
-	r_skymade = 1;
+	skydesc.made = 1;
 }
 
 
@@ -343,7 +347,7 @@ void R_MakeSky (void)
 R_GenSkyTile
 =================
 */
-void R_GenSkyTile (void *pdest)
+void R_GenSkyTile (void *pdest, skydesc_t& skydesc)
 {
 	int			x, y;
 	int			ofs, baseofs;
@@ -354,8 +358,11 @@ void R_GenSkyTile (void *pdest)
 	xshift = skytime*skyspeed;
 	yshift = skytime*skyspeed;
 
-	pnewsky = (unsigned *)&newsky[0];
+	pnewsky = (unsigned *)skydesc.newsky.data();
 	pd = (unsigned *)pdest;
+
+	auto bottomsky = skydesc.bottomsky.data();
+	auto bottommask = skydesc.bottommask.data();
 
 	for (y=0 ; y<SKYSIZE ; y++)
 	{
@@ -402,7 +409,7 @@ void R_GenSkyTile (void *pdest)
 R_GenSkyTile16
 =================
 */
-void R_GenSkyTile16 (void *pdest)
+void R_GenSkyTile16 (void *pdest, skydesc_t& skydesc)
 {
 	int				x, y;
 	int				ofs, baseofs;
@@ -413,8 +420,11 @@ void R_GenSkyTile16 (void *pdest)
 	xshift = skytime * skyspeed;
 	yshift = skytime * skyspeed;
 
-	pnewsky = (byte *)&newsky[0];
+	pnewsky = (byte *)skydesc.newsky.data();
 	pd = (unsigned short *)pdest;
+
+	auto bottomsky = skydesc.bottomsky.data();
+	auto bottommask = skydesc.bottommask.data();
 
 	for (y=0 ; y<SKYSIZE ; y++)
 	{
@@ -459,7 +469,10 @@ void R_SetSkyFrame (void)
 	skytime = cl.time - ((int)(cl.time / temp) * temp);
 	
 
-	r_skymade = 0;
+	for (auto& entry : r_skies)
+	{
+		entry.second.made = 0;
+	}
 }
 
 

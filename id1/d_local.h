@@ -90,7 +90,7 @@ void Turbulent8 (espan_t *pspan);
 void TurbulentAlpha8 (espan_t *pspan, byte alpha);
 void D_SpriteDrawSpans (sspan_t *pspan);
 
-void D_DrawSkyScans8 (espan_t *pspan);
+void D_DrawSkyScans8 (espan_t *pspan, skydesc_t& skydesc);
 void D_DrawSkyScans16 (espan_t *pspan);
 
 void D_DrawFenceSpans8 (espan_t *pspans);

@@ -794,18 +794,25 @@ void R_RecursiveWorldNodeForLists (mnode_t *node)
 						{
 							D_AddSkyboxToLists(r_skytexinfo);
 						}
-						else if (r_skyRGBAinitialized)
+						else
 						{
-							D_AddSkyRGBAToLists();
-						}
-						else if (r_skyinitialized)
-						{
-							if (!r_skymade)
+							auto entry = r_skies.find(surf->texinfo->texture);
+							if (entry != r_skies.end())
 							{
-								R_MakeSky ();
-							}
+								if (entry->second.newskyRGBA.empty())
+								{
+									if (!entry->second.made)
+									{
+										R_MakeSky (entry->second);
+									}
 
-							D_AddSkyToLists();
+									D_AddSkyToLists (entry->second);
+								}
+								else
+								{
+									D_AddSkyRGBAToLists (entry->second);
+								}
+							}
 						}
 					}
 					else if (surf->flags & SURF_DRAWTURB)

@@ -62,7 +62,7 @@ void D_Sky_uv_To_st (int u, int v, fixed16_t *s, fixed16_t *t)
 D_DrawSkyScans8
 =================
 */
-void D_DrawSkyScans8 (espan_t *pspan)
+void D_DrawSkyScans8 (espan_t *pspan, skydesc_t& skydesc)
 {
 	int				count, spancount, u, v;
 	unsigned char	*pdest;
@@ -73,6 +73,8 @@ void D_DrawSkyScans8 (espan_t *pspan)
 	tstep = 0;	// ditto
 	snext = 0;
 	tnext = 0;
+
+	auto source = skydesc.source;
 
 	do
 	{
@@ -124,7 +126,7 @@ void D_DrawSkyScans8 (espan_t *pspan)
 
 			do
 			{
-				*pdest++ = r_skysource[((t & R_SKY_TMASK) >> 8) +
+				*pdest++ = source[((t & R_SKY_TMASK) >> 8) +
 						((s & R_SKY_SMASK) >> 16)];
 				s += sstep;
 				t += tstep;
