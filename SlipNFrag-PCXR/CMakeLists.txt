@@ -9,7 +9,7 @@ set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(SHADERS_DIR "${ROOT_DIR}/shaders")
 set(STB_DIR "${ROOT_DIR}/stb")
-set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.57")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.60")
 set(VMA_DIR "${ROOT_DIR}/VulkanMemoryAllocator-3.3.0")
 set(UNORDERED_DENSE_DIR "${ROOT_DIR}/unordered_dense-4.8.1")
 
