@@ -1,6 +1,15 @@
 # Changelog
 
-## Version **1.1.33**:
+## Version **1.1.34**:
+
+* Added support for textures in maps and/or models whose size is a multiple of 8, going beyond the current support of multiples of 16, fixing thus an issue that would not let the core engine play newer mods and jams such as Quake Brutalist Jam 3 (QBJ3), or the Solid Colors Jam (SCJ).
+* Added support for multiple sky textures, a feature that was only partially implemented in the original WinQuake engine, and because of which some recent maps have weird colors being displayed over the sky, as in SCJ mentioned above.
+* Allowed the core engine to recognize texture specifications with size = 0 and prevent any surfaces from rendering those, to avoid an unexpected crash on a few maps from QBJ3.
+* Reworked user interface for the MacOS version, to make it fully SwiftUI instead of the legacy storyboard-based approach, following recommendations by Apple for modern apps. Which, unfortunately, has the side-effect of moving up the minimum MacOS supported version to 11.0 .
+* Minor improvement in world rendering (cache space for surface rendering now increases in a slightly smarter way)for all desktop-based versions, to prevent some stuttering while rendering very large spaces in modern mods & maps.
+* Some extra minor optimizations to the core engine were added, as well.
+
+### Version **1.1.33**:
 
 * The XR version will now be distributed in two flavors: one *with*, and one *without* the shareware episode of Quake pre-packaged in, to allow the player to begin playing away immediately, with no need to transfer any data until they get the full game.
 * Support for **SteamVR** is now available for the PCXR version (and, potentially, the XR version), so the player has no need to switch between OpenXR runtimes anymore - also, in preparation for the newly announced headsets as of this writing.

@@ -8,7 +8,7 @@ Source code for the project is provided [here](https://github.com/Izhido/SlipNFr
 
 A Visual Studio 2022 solution file is provided at the root of the source code folder, called *SlipNFrag.sln*. The solution contains a single project, located at *SlipNFrag-Win64/SlipNFrag-Win64.vcxproj*. This is a Win32 project configured to run as a 64-bit application, that does not depend on any other APIs other than the ones that came with a Windows 10 or later machine - as well as the components listed below.
 
-> (A few users have reported that this executable, as it is, can also run in a Linux environment properly configured.)
+> (A few users have reported that this executable, as it is, can also run in a properly configured Linux environment.)
 
 The following is the list of components, and their version numbers, required to build the Win64 project, as of this writing:
 
@@ -184,10 +184,10 @@ The following is the list of components, and their version numbers, required to 
 | --------- | ------- |
 | Android SDK Platform | 16.0 API level 36.1
 | NDK (Side by Side) | 29.0.14206865 |
-| Android SDK Build-Tools | 36.1.0 |
+| Android SDK Build-Tools | 37.0.0 |
 | Gradle | 9.3.1 |
-| Android Gradle Plugin | 9.1.0 |
-| OpenXR SDK | 1.1.57 |
+| Android Gradle Plugin | 9.2.1 |
+| OpenXR SDK | 1.1.60 |
 | CMake | 4.1.2 or later |
 | stb | latest version gathered from https://github.com/nothings/stb |
 | Minizip | latest version gathered from https://github.com/domoticz/minizip |
