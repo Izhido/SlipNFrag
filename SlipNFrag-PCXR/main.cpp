@@ -963,7 +963,7 @@ int main(int argc, char* argv[])
 			chain = (void*)((XrBaseInStructure*)chain)->next;
 		}
 
-		XrSystemSimultaneousHandsAndControllersPropertiesMETA simultaneousHandsAndControllersProperties { XR_TYPE_SYSTEM_HAND_TRACKING_PROPERTIES_EXT };
+		XrSystemSimultaneousHandsAndControllersPropertiesMETA simultaneousHandsAndControllersProperties { XR_TYPE_SYSTEM_SIMULTANEOUS_HANDS_AND_CONTROLLERS_PROPERTIES_META };
 		if (simultaneousHandsAndControllersEnabled)
 		{
 			((XrBaseInStructure*)chain)->next = (XrBaseInStructure*)&simultaneousHandsAndControllersProperties;
