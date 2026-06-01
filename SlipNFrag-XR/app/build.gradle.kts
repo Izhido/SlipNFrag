@@ -14,7 +14,7 @@ android {
         versionCode = 34
         versionName = "1.1.34"
         shaders {
-            glslcArgs += listOf("-c", "-g")
+            glslcArgs += "-c"
         }
         ndk {
             //noinspection ChromeOsAbiSupport
@@ -24,12 +24,20 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            shaders {
+                glslcArgs += listOf("-g", "-O0")
+            }
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            shaders {
+                glslcArgs += listOf("-Os")
+            }
         }
     }
     compileOptions {
