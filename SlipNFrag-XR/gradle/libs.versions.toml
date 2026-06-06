@@ -1,7 +1,6 @@
 [versions]
 agp = "9.2.1"
-kotlin = "2.2.20"
-coreKtx = "1.18.0"
+coreKtx = "1.19.0"
 appcompat = "1.7.1"
 material = "1.14.0"
 gamesActivity = "4.4.2"
@@ -16,5 +15,4 @@ openxr-loader-android = { group = "org.khronos.openxr", name = "openxr_loader_fo
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
