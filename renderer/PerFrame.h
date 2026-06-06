@@ -23,6 +23,7 @@ struct PerFrame
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedSortedVertices;
 	CachedBuffers cachedAttributes;
+	CachedBuffers cachedAliasAttributes;
     CachedBuffers cachedSortedAttributes;
 	CachedBuffers cachedIndices8;
 	CachedBuffers cachedIndices16;
@@ -37,6 +38,7 @@ struct PerFrame
 	Buffer* vertices;
 	Buffer* sortedVertices;
 	Buffer* attributes;
+	Buffer* aliasAttributes;
 	Buffer* sortedAttributes;
 	Buffer* indices8;
 	Buffer* indices16;

@@ -680,11 +680,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		*target++ = 3;
 	}
 	offset += appState.Scene.skyboxAttributesSize;
-	aliasAttributeBase = skyboxAttributeBase + appState.Scene.skyboxAttributesSize;
-	auto count = (size_t)appState.Scene.aliasAttributesSize / sizeof(float);
-	std::copy(d_lists.alias_attributes.data(), d_lists.alias_attributes.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
-	offset += appState.Scene.aliasAttributesSize;
-	count = (size_t)appState.Scene.coloredColorsSize / sizeof(float);
+	auto count = (size_t)appState.Scene.coloredColorsSize / sizeof(float);
 	std::copy(d_lists.colored_colors.data(), d_lists.colored_colors.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.coloredColorsSize;
 	if (appState.IndexTypeUInt8Enabled)
@@ -1416,6 +1412,16 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 			sortedIndices32->UnmapAndFlush(appState);
 		}
 	}
+
+	if (appState.Scene.aliasAttributesSize > 0)
+	{
+		aliasAttributes = cachedAliasAttributes.GetMappableVertexBuffer(appState, appState.Scene.aliasAttributesSize);
+		aliasAttributes->Map(appState);
+		auto count = (size_t)appState.Scene.aliasAttributesSize / sizeof(float);
+		std::copy(d_lists.alias_attributes.data(), d_lists.alias_attributes.data() + count, (float*)aliasAttributes->mapped);
+		aliasAttributes->UnmapAndFlush(appState);
+	}
+	aliasAttributeBase = 0;
 }
 
 void PerFrame::FillColormapTextures(AppState& appState, LoadedAlias& loaded)
@@ -1860,6 +1866,7 @@ void PerFrame::Reset(AppState& appState)
     indices8 = nullptr;
     sortedAttributes = nullptr;
     attributes = nullptr;
+	aliasAttributes = nullptr;
 	sortedVertices = nullptr;
     vertices = nullptr;
     colormapCount = 0;
@@ -1872,6 +1879,7 @@ void PerFrame::Reset(AppState& appState)
     cachedIndices16.Reset(appState);
     cachedIndices8.Reset(appState);
     cachedSortedAttributes.Reset(appState);
+	cachedAliasAttributes.Reset(appState);
     cachedAttributes.Reset(appState);
 	cachedSortedVertices.Reset(appState);
     cachedVertices.Reset(appState);
@@ -2590,7 +2598,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
 					if (loaded.isHostColormap)
@@ -2671,7 +2679,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.aliasColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
 					auto texture = loaded.texture.texture;
@@ -3497,7 +3505,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.aliasAlpha.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
 					if (loaded.isHostColormap)
@@ -3578,7 +3586,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoley.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
 					if (loaded.isHostColormap)
@@ -3659,7 +3667,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyAlpha.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
 					if (loaded.isHostColormap)
@@ -3740,7 +3748,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.aliasAlphaColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
 					auto texture = loaded.texture.texture;
@@ -3798,7 +3806,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
 					auto texture = loaded.texture.texture;
@@ -3856,7 +3864,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
 					auto texture = loaded.texture.texture;
@@ -3914,7 +3922,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.viewmodels.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
 					if (loaded.isHostColormap)
@@ -3995,7 +4003,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsHoley.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, 16 * sizeof(float), pushConstants);
 					if (loaded.isHostColormap)
@@ -4076,7 +4084,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
 					auto texture = loaded.texture.texture;
@@ -4134,7 +4142,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 						previousTexCoords = texCoords;
 					}
 					VkDeviceSize attributeOffset = aliasAttributeBase + loaded.firstAttribute * sizeof(float);
-					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &attributes->buffer, &attributeOffset);
+					vkCmdBindVertexBuffers(commandBuffer, 2, 1, &aliasAttributes->buffer, &attributeOffset);
 					SetPushConstants(loaded, pushConstants);
 					vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsHoleyColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 21 * sizeof(float), pushConstants);
 					auto texture = loaded.texture.texture;
@@ -4384,6 +4392,7 @@ void PerFrame::Destroy(AppState& appState)
 	cachedIndices16.Delete(appState);
 	cachedIndices8.Delete(appState);
 	cachedSortedAttributes.Delete(appState);
+	cachedAliasAttributes.Delete(appState);
 	cachedAttributes.Delete(appState);
 	cachedSortedVertices.Delete(appState);
 	cachedVertices.Delete(appState);

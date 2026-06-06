@@ -3778,7 +3778,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 		skyboxAttributesSize += 6 * 4 * 3 * sizeof(float);
 	}
 	aliasAttributesSize = (d_lists.last_alias_attribute + 1) * sizeof(float);
-    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + leftHandAttributesSize + rightHandAttributesSize + statusBarAttributesSize + skyAttributesSize + skyboxAttributesSize + aliasAttributesSize;
+    attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + leftHandAttributesSize + rightHandAttributesSize + statusBarAttributesSize + skyAttributesSize + skyboxAttributesSize;
     if (attributesSize > 0)
     {
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
