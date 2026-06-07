@@ -12,6 +12,11 @@ struct FromEngine
 	float vup1;
 	float vup2;
 	double time;
+	float vblend0;
+	float vblend1;
+	float vblend2;
+	float vblend3;
+	float vgamma;
 	bool immersive_hands_enabled;
 	bool dominant_hand_left;
 	float viewmodel_rotate0;
@@ -23,5 +28,6 @@ struct FromEngine
 	float viewmodel_scale0;
 	float viewmodel_scale1;
 	float viewmodel_scale2;
+	bool show_hands;
 	bool sbar_on_hand;
 };

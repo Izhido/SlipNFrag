@@ -196,6 +196,11 @@ struct dlists_t
 	float vup1;
 	float vup2;
 	double time;
+	float vblend0;
+	float vblend1;
+	float vblend2;
+	float vblend3;
+	float vgamma;
 	qboolean immersive_hands_enabled;
 	qboolean dominant_hand_left;
 	float viewmodel_rotate0;
@@ -207,6 +212,7 @@ struct dlists_t
 	float viewmodel_scale0;
 	float viewmodel_scale1;
 	float viewmodel_scale2;
+	qboolean show_hands;
 	qboolean sbar_on_hand;
 	std::vector<dsurface_t> surfaces;
 	std::vector<dsurface_t> surfaces_colored_lights;

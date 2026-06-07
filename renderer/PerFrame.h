@@ -4,6 +4,8 @@
 #include "CachedTextures.h"
 #include "DescriptorResources.h"
 #include "DescriptorResourcesLists.h"
+#include "AliasPushConstants.h"
+#include "AliasColoredLightsPushConstants.h"
 
 struct PerFrame
 {
@@ -23,7 +25,6 @@ struct PerFrame
 	CachedBuffers cachedVertices;
 	CachedBuffers cachedSortedVertices;
 	CachedBuffers cachedAttributes;
-	CachedBuffers cachedAliasAttributes;
     CachedBuffers cachedSortedAttributes;
 	CachedBuffers cachedIndices8;
 	CachedBuffers cachedIndices16;
@@ -38,7 +39,6 @@ struct PerFrame
 	Buffer* vertices;
 	Buffer* sortedVertices;
 	Buffer* attributes;
-	Buffer* aliasAttributes;
 	Buffer* sortedAttributes;
 	Buffer* indices8;
 	Buffer* indices16;
@@ -96,8 +96,10 @@ struct PerFrame
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, struct LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
-	static void SetPushConstants(const struct LoadedAliasColoredLights& alias, float pushConstants[]);
-	static void SetTintPushConstants(float pushConstants[], size_t offset = 0);
+	static void SetAliasTransformPushConstants(const struct LoadedAliasColoredLights& alias, PushConstants& pushConstants);
+	static void SetTintPushConstants(const AppState& appState, PushConstants& pushConstants);
+	static void SetTintPushConstants(const AppState& appState, AliasColoredLightsPushConstants& pushConstants);
+	static void SetTintAndTimePushConstants(const AppState& appState, PushConstants& pushConstants);
 	void Render(AppState& appState, uint32_t swapchainImageIndex);
 	void DestroyFramebuffer(AppState& appState) const;
 	void Destroy(AppState& appState);

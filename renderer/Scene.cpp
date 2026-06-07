@@ -5,6 +5,8 @@
 #include "ImageAsset.h"
 #include "PipelineAttributes.h"
 #include "Floor.h"
+#include "AliasPushConstants.h"
+#include "AliasColoredLightsPushConstants.h"
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 #include "RendererNames.h"
 #endif
@@ -615,8 +617,8 @@ void Scene::Create(AppState& appState)
     texturedAttributes.vertexInputState.pVertexAttributeDescriptions = texturedAttributes.vertexAttributes.data();
 
     PipelineAttributes aliasAttributes { };
-    aliasAttributes.vertexAttributes.resize(3);
-    aliasAttributes.vertexBindings.resize(3);
+    aliasAttributes.vertexAttributes.resize(2);
+    aliasAttributes.vertexBindings.resize(2);
     aliasAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
     aliasAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
     aliasAttributes.vertexAttributes[1].location = 1;
@@ -624,11 +626,6 @@ void Scene::Create(AppState& appState)
     aliasAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
     aliasAttributes.vertexBindings[1].binding = 1;
     aliasAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-    aliasAttributes.vertexAttributes[2].location = 2;
-    aliasAttributes.vertexAttributes[2].binding = 2;
-    aliasAttributes.vertexAttributes[2].format = VK_FORMAT_R32_SFLOAT;
-    aliasAttributes.vertexBindings[2].binding = 2;
-    aliasAttributes.vertexBindings[2].stride = sizeof(float);
     aliasAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     aliasAttributes.vertexInputState.vertexBindingDescriptionCount = aliasAttributes.vertexBindings.size();
     aliasAttributes.vertexInputState.pVertexBindingDescriptions = aliasAttributes.vertexBindings.data();
@@ -636,8 +633,8 @@ void Scene::Create(AppState& appState)
     aliasAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAttributes.vertexAttributes.data();
 
     PipelineAttributes aliasAlphaAttributes { };
-	aliasAlphaAttributes.vertexAttributes.resize(3);
-	aliasAlphaAttributes.vertexBindings.resize(3);
+	aliasAlphaAttributes.vertexAttributes.resize(2);
+	aliasAlphaAttributes.vertexBindings.resize(2);
 	aliasAlphaAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
 	aliasAlphaAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
 	aliasAlphaAttributes.vertexAttributes[1].location = 1;
@@ -645,11 +642,6 @@ void Scene::Create(AppState& appState)
 	aliasAlphaAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
 	aliasAlphaAttributes.vertexBindings[1].binding = 1;
 	aliasAlphaAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	aliasAlphaAttributes.vertexAttributes[2].location = 2;
-	aliasAlphaAttributes.vertexAttributes[2].binding = 2;
-	aliasAlphaAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32_SFLOAT;
-	aliasAlphaAttributes.vertexBindings[2].binding = 2;
-	aliasAlphaAttributes.vertexBindings[2].stride = 2 * sizeof(float);
 	aliasAlphaAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	aliasAlphaAttributes.vertexInputState.vertexBindingDescriptionCount = aliasAlphaAttributes.vertexBindings.size();
 	aliasAlphaAttributes.vertexInputState.pVertexBindingDescriptions = aliasAlphaAttributes.vertexBindings.data();
@@ -657,8 +649,8 @@ void Scene::Create(AppState& appState)
 	aliasAlphaAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAlphaAttributes.vertexAttributes.data();
 
     PipelineAttributes aliasColoredLightsAttributes { };
-	aliasColoredLightsAttributes.vertexAttributes.resize(3);
-	aliasColoredLightsAttributes.vertexBindings.resize(3);
+	aliasColoredLightsAttributes.vertexAttributes.resize(2);
+	aliasColoredLightsAttributes.vertexBindings.resize(2);
 	aliasColoredLightsAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
 	aliasColoredLightsAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
 	aliasColoredLightsAttributes.vertexAttributes[1].location = 1;
@@ -666,11 +658,6 @@ void Scene::Create(AppState& appState)
 	aliasColoredLightsAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
 	aliasColoredLightsAttributes.vertexBindings[1].binding = 1;
 	aliasColoredLightsAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	aliasColoredLightsAttributes.vertexAttributes[2].location = 2;
-	aliasColoredLightsAttributes.vertexAttributes[2].binding = 2;
-	aliasColoredLightsAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-	aliasColoredLightsAttributes.vertexBindings[2].binding = 2;
-	aliasColoredLightsAttributes.vertexBindings[2].stride = 3 * sizeof(float);
 	aliasColoredLightsAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	aliasColoredLightsAttributes.vertexInputState.vertexBindingDescriptionCount = aliasColoredLightsAttributes.vertexBindings.size();
 	aliasColoredLightsAttributes.vertexInputState.pVertexBindingDescriptions = aliasColoredLightsAttributes.vertexBindings.data();
@@ -678,8 +665,8 @@ void Scene::Create(AppState& appState)
 	aliasColoredLightsAttributes.vertexInputState.pVertexAttributeDescriptions = aliasColoredLightsAttributes.vertexAttributes.data();
 
     PipelineAttributes aliasAlphaColoredLightsAttributes { };
-	aliasAlphaColoredLightsAttributes.vertexAttributes.resize(3);
-	aliasAlphaColoredLightsAttributes.vertexBindings.resize(3);
+	aliasAlphaColoredLightsAttributes.vertexAttributes.resize(2);
+	aliasAlphaColoredLightsAttributes.vertexBindings.resize(2);
 	aliasAlphaColoredLightsAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
 	aliasAlphaColoredLightsAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
 	aliasAlphaColoredLightsAttributes.vertexAttributes[1].location = 1;
@@ -687,11 +674,6 @@ void Scene::Create(AppState& appState)
 	aliasAlphaColoredLightsAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
 	aliasAlphaColoredLightsAttributes.vertexBindings[1].binding = 1;
 	aliasAlphaColoredLightsAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	aliasAlphaColoredLightsAttributes.vertexAttributes[2].location = 2;
-	aliasAlphaColoredLightsAttributes.vertexAttributes[2].binding = 2;
-	aliasAlphaColoredLightsAttributes.vertexAttributes[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	aliasAlphaColoredLightsAttributes.vertexBindings[2].binding = 2;
-	aliasAlphaColoredLightsAttributes.vertexBindings[2].stride = 4 * sizeof(float);
 	aliasAlphaColoredLightsAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	aliasAlphaColoredLightsAttributes.vertexInputState.vertexBindingDescriptionCount = aliasAlphaColoredLightsAttributes.vertexBindings.size();
 	aliasAlphaColoredLightsAttributes.vertexInputState.pVertexBindingDescriptions = aliasAlphaColoredLightsAttributes.vertexBindings.data();
@@ -1257,9 +1239,13 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-    pipelineLayoutCreateInfo.setLayoutCount = 3;
+    descriptorSetLayouts[0] = doubleBufferLayout;
+    descriptorSetLayouts[1] = singleStorageBufferLayout;
+    descriptorSetLayouts[2] = singleImageLayout;
+    descriptorSetLayouts[3] = singleImageLayout;
+    pipelineLayoutCreateInfo.setLayoutCount = 4;
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    pushConstantInfo.size = 16 * sizeof(float);
+    pushConstantInfo.size = sizeof(AliasPushConstants);
     pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
     pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &alias.pipelineLayout));
@@ -1310,9 +1296,12 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-	pipelineLayoutCreateInfo.setLayoutCount = 2;
+	descriptorSetLayouts[0] = doubleBufferLayout;
+	descriptorSetLayouts[1] = singleStorageBufferLayout;
+	descriptorSetLayouts[2] = singleImageLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 21 * sizeof(float);
+	pushConstantInfo.size = sizeof(AliasColoredLightsPushConstants);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasColoredLights.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasColoredLights.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &aliasColoredLightsAttributes.vertexInputState;
@@ -1361,9 +1350,13 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-	pipelineLayoutCreateInfo.setLayoutCount = 3;
+	descriptorSetLayouts[0] = doubleBufferLayout;
+	descriptorSetLayouts[1] = singleStorageBufferLayout;
+	descriptorSetLayouts[2] = singleImageLayout;
+	descriptorSetLayouts[3] = singleImageLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = 4;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	pushConstantInfo.size = 16 * sizeof(float);
+	pushConstantInfo.size = sizeof(AliasPushConstants);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodels.pipelineLayout));
     graphicsPipelineCreateInfo.layout = viewmodels.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
@@ -1386,9 +1379,12 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-	pipelineLayoutCreateInfo.setLayoutCount = 2;
+	descriptorSetLayouts[0] = doubleBufferLayout;
+	descriptorSetLayouts[1] = singleStorageBufferLayout;
+	descriptorSetLayouts[2] = singleImageLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = 21 * sizeof(float);
+	pushConstantInfo.size = sizeof(AliasColoredLightsPushConstants);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodelsColoredLights.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = viewmodelsColoredLights.pipelineLayout;
 	graphicsPipelineCreateInfo.pVertexInputState = &aliasColoredLightsAttributes.vertexInputState;
@@ -1453,6 +1449,8 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+    descriptorSetLayouts[0] = doubleBufferLayout;
+    descriptorSetLayouts[1] = singleImageLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 2;
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     pushConstantInfo.size = 13 * sizeof(float);
@@ -1474,6 +1472,8 @@ void Scene::Create(AppState& appState)
 #endif
 
     descriptorSetLayouts[0] = singleBufferLayout;
+    descriptorSetLayouts[1] = singleImageLayout;
+    pipelineLayoutCreateInfo.setLayoutCount = 2;
     pushConstantInfo.size = 15 * sizeof(float);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &skyRGBA.pipelineLayout));
     graphicsPipelineCreateInfo.layout = skyRGBA.pipelineLayout;
@@ -1486,6 +1486,9 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+    descriptorSetLayouts[0] = singleBufferLayout;
+    descriptorSetLayouts[1] = singleImageLayout;
+    pipelineLayoutCreateInfo.setLayoutCount = 2;
     pipelineLayoutCreateInfo.pushConstantRangeCount = 0;
     pipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &textured.pipelineLayout));
@@ -1502,6 +1505,9 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+	descriptorSetLayouts[0] = singleBufferLayout;
+	descriptorSetLayouts[1] = singleImageLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &skyboxRGBA.pipelineLayout));
 	depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
 	depthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
@@ -2923,6 +2929,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	lastCutoutIndex32 = d_lists.last_cutout_index32;
     lastSky = d_lists.last_sky;
     lastSkyRGBA = d_lists.last_sky_rgba;
+
     appState.FromEngine.vieworg0 = d_lists.vieworg0;
     appState.FromEngine.vieworg1 = d_lists.vieworg1;
     appState.FromEngine.vieworg2 = d_lists.vieworg2;
@@ -2933,6 +2940,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     appState.FromEngine.vup1 = d_lists.vup1;
     appState.FromEngine.vup2 = d_lists.vup2;
 	appState.FromEngine.time = d_lists.time;
+    appState.FromEngine.vblend0 = d_lists.vblend0;
+    appState.FromEngine.vblend1 = d_lists.vblend1;
+    appState.FromEngine.vblend2 = d_lists.vblend2;
+    appState.FromEngine.vblend3 = d_lists.vblend3;
+    appState.FromEngine.vgamma = d_lists.vgamma;
 	appState.FromEngine.immersive_hands_enabled = d_lists.immersive_hands_enabled;
 	appState.FromEngine.dominant_hand_left = d_lists.dominant_hand_left;
 	appState.FromEngine.viewmodel_rotate0 = d_lists.viewmodel_rotate0;
@@ -2944,6 +2956,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	appState.FromEngine.viewmodel_scale0 = d_lists.viewmodel_scale0;
 	appState.FromEngine.viewmodel_scale1 = d_lists.viewmodel_scale1;
 	appState.FromEngine.viewmodel_scale2 = d_lists.viewmodel_scale2;
+	appState.FromEngine.show_hands = d_lists.show_hands;
 	appState.FromEngine.sbar_on_hand = d_lists.sbar_on_hand;
 
     appState.VertexTransform.m[0] = appState.Scale;
@@ -3559,6 +3572,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 		GetStagingBufferSize(appState, d_lists.viewmodels_holey_colored_lights[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, viewmodelsHoleyColoredLights.sorted);
 	}
+	sortedAttributesSize += (d_lists.last_alias_attribute + 1) * sizeof(float);
 	perFrame.particleBase = sortedVerticesSize;
 	if (lastParticle >= 0)
 	{
@@ -3691,13 +3705,13 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     }
 	leftHandVerticesSize = 0;
 	rightHandVerticesSize = 0;
-	if (appState.HandTrackingEnabled && appState.Focused && (appState.Mode != AppWorldMode || ((Cvar_VariableValue("show_hands") != 0) && !(!appState.FromEngine.immersive_hands_enabled && key_dest == key_game))))
+	if (appState.HandTrackingEnabled && appState.Focused && (appState.Mode != AppWorldMode || (appState.FromEngine.show_hands && !(!appState.FromEngine.immersive_hands_enabled && key_dest == key_game))))
 	{
 		leftHandVerticesSize = appState.HandTrackers[LEFT_TRACKED_HAND].VerticesSize();
 		rightHandVerticesSize = appState.HandTrackers[RIGHT_TRACKED_HAND].VerticesSize();
 	}
 	statusBarVerticesSize = 0;
-	if (appState.Focused && appState.Mode == AppWorldMode && !(!appState.FromEngine.immersive_hands_enabled && key_dest == key_game))
+	if (appState.HandTrackingEnabled && appState.Focused && appState.Mode == AppWorldMode && appState.FromEngine.sbar_on_hand && !(!appState.FromEngine.immersive_hands_enabled && key_dest == key_game))
 	{
 		if (appState.FromEngine.dominant_hand_left)
 		{
