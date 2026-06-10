@@ -62,7 +62,6 @@ find_package(game-activity REQUIRED CONFIG)
 
 target_include_directories(slipnfrag_native PRIVATE
         ${OPENXR_DIR}/src
-        Vulkan::Headers
         ${LOCAL_DIR}
         ${ID1_DIR}
         ${RENDERER_DIR}
