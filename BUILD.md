@@ -63,7 +63,7 @@ The following is the list of components, and their version numbers, required to 
 | Component | Version |
 | --------- | ------- |
 | stb | latest version gathered from https://github.com/nothings/stb |
-| Vulkan Memory Allocator | 3.3.0 |
+| Vulkan Memory Allocator | 3.4.0 |
 | ankerl::unordered_dense::{map, set} | 4.8.1 |
 
 To set up the environment to build, debug and test the project for the first time:
@@ -192,7 +192,7 @@ The following is the list of components, and their version numbers, required to 
 | stb | latest version gathered from https://github.com/nothings/stb |
 | Minizip | latest version gathered from https://github.com/domoticz/minizip |
 | lhasa | 0.5.0 or later, gathered from https://github.com/fragglet/lhasa |
-| Vulkan Memory Allocator | 3.3.0 |
+| Vulkan Memory Allocator | 3.4.0 |
 | ankerl::unordered_dense::{map, set} | 4.8.1 |
 
 > (Versions for other components can be checked in *Project Structure* in the Android Studio project.)

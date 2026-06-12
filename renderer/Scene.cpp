@@ -632,54 +632,6 @@ void Scene::Create(AppState& appState)
     aliasAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasAttributes.vertexAttributes.size();
     aliasAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAttributes.vertexAttributes.data();
 
-    PipelineAttributes aliasAlphaAttributes { };
-	aliasAlphaAttributes.vertexAttributes.resize(2);
-	aliasAlphaAttributes.vertexBindings.resize(2);
-	aliasAlphaAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
-	aliasAlphaAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
-	aliasAlphaAttributes.vertexAttributes[1].location = 1;
-	aliasAlphaAttributes.vertexAttributes[1].binding = 1;
-	aliasAlphaAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-	aliasAlphaAttributes.vertexBindings[1].binding = 1;
-	aliasAlphaAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	aliasAlphaAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	aliasAlphaAttributes.vertexInputState.vertexBindingDescriptionCount = aliasAlphaAttributes.vertexBindings.size();
-	aliasAlphaAttributes.vertexInputState.pVertexBindingDescriptions = aliasAlphaAttributes.vertexBindings.data();
-	aliasAlphaAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasAlphaAttributes.vertexAttributes.size();
-	aliasAlphaAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAlphaAttributes.vertexAttributes.data();
-
-    PipelineAttributes aliasColoredLightsAttributes { };
-	aliasColoredLightsAttributes.vertexAttributes.resize(2);
-	aliasColoredLightsAttributes.vertexBindings.resize(2);
-	aliasColoredLightsAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
-	aliasColoredLightsAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
-	aliasColoredLightsAttributes.vertexAttributes[1].location = 1;
-	aliasColoredLightsAttributes.vertexAttributes[1].binding = 1;
-	aliasColoredLightsAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-	aliasColoredLightsAttributes.vertexBindings[1].binding = 1;
-	aliasColoredLightsAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	aliasColoredLightsAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	aliasColoredLightsAttributes.vertexInputState.vertexBindingDescriptionCount = aliasColoredLightsAttributes.vertexBindings.size();
-	aliasColoredLightsAttributes.vertexInputState.pVertexBindingDescriptions = aliasColoredLightsAttributes.vertexBindings.data();
-	aliasColoredLightsAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasColoredLightsAttributes.vertexAttributes.size();
-	aliasColoredLightsAttributes.vertexInputState.pVertexAttributeDescriptions = aliasColoredLightsAttributes.vertexAttributes.data();
-
-    PipelineAttributes aliasAlphaColoredLightsAttributes { };
-	aliasAlphaColoredLightsAttributes.vertexAttributes.resize(2);
-	aliasAlphaColoredLightsAttributes.vertexBindings.resize(2);
-	aliasAlphaColoredLightsAttributes.vertexAttributes[0].format = VK_FORMAT_R8G8B8_UINT;
-	aliasAlphaColoredLightsAttributes.vertexBindings[0].stride = 3 * sizeof(byte);
-	aliasAlphaColoredLightsAttributes.vertexAttributes[1].location = 1;
-	aliasAlphaColoredLightsAttributes.vertexAttributes[1].binding = 1;
-	aliasAlphaColoredLightsAttributes.vertexAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
-	aliasAlphaColoredLightsAttributes.vertexBindings[1].binding = 1;
-	aliasAlphaColoredLightsAttributes.vertexBindings[1].stride = 2 * sizeof(float);
-	aliasAlphaColoredLightsAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	aliasAlphaColoredLightsAttributes.vertexInputState.vertexBindingDescriptionCount = aliasAlphaColoredLightsAttributes.vertexBindings.size();
-	aliasAlphaColoredLightsAttributes.vertexInputState.pVertexBindingDescriptions = aliasAlphaColoredLightsAttributes.vertexBindings.data();
-	aliasAlphaColoredLightsAttributes.vertexInputState.vertexAttributeDescriptionCount = aliasAlphaColoredLightsAttributes.vertexAttributes.size();
-	aliasAlphaColoredLightsAttributes.vertexInputState.pVertexAttributeDescriptions = aliasAlphaColoredLightsAttributes.vertexAttributes.data();
-
     PipelineAttributes particleAttributes { };
     particleAttributes.vertexAttributes.resize(1);
     particleAttributes.vertexBindings.resize(1);
@@ -1262,7 +1214,6 @@ void Scene::Create(AppState& appState)
 
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasAlpha.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasAlpha.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasAlphaAttributes.vertexInputState;
 	stages[0].module = aliasAlphaVertex;
     stages[1].module = aliasAlphaFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasAlpha.pipeline));
@@ -1274,7 +1225,6 @@ void Scene::Create(AppState& appState)
 
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoley.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasHoley.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
 	stages[0].module = aliasVertex;
     stages[1].module = aliasHoleyFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoley.pipeline));
@@ -1286,7 +1236,6 @@ void Scene::Create(AppState& appState)
 
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoleyAlpha.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasHoleyAlpha.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasAlphaAttributes.vertexInputState;
 	stages[0].module = aliasAlphaVertex;
     stages[1].module = aliasHoleyAlphaFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoleyAlpha.pipeline));
@@ -1304,7 +1253,6 @@ void Scene::Create(AppState& appState)
 	pushConstantInfo.size = sizeof(AliasColoredLightsPushConstants);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasColoredLights.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasColoredLights.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasColoredLightsAttributes.vertexInputState;
 	stages[0].module = aliasColoredLightsVertex;
     stages[1].module = aliasColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasColoredLights.pipeline));
@@ -1316,7 +1264,6 @@ void Scene::Create(AppState& appState)
 
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasAlphaColoredLights.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasAlphaColoredLights.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasAlphaColoredLightsAttributes.vertexInputState;
 	stages[0].module = aliasAlphaColoredLightsVertex;
     stages[1].module = aliasAlphaColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasAlphaColoredLights.pipeline));
@@ -1328,7 +1275,6 @@ void Scene::Create(AppState& appState)
 
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoleyColoredLights.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasHoleyColoredLights.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasColoredLightsAttributes.vertexInputState;
 	stages[0].module = aliasColoredLightsVertex;
     stages[1].module = aliasHoleyColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoleyColoredLights.pipeline));
@@ -1340,7 +1286,6 @@ void Scene::Create(AppState& appState)
 
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasHoleyAlphaColoredLights.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasHoleyAlphaColoredLights.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasAlphaColoredLightsAttributes.vertexInputState;
 	stages[0].module = aliasAlphaColoredLightsVertex;
     stages[1].module = aliasHoleyAlphaColoredLightsFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &aliasHoleyAlphaColoredLights.pipeline));
@@ -1359,7 +1304,6 @@ void Scene::Create(AppState& appState)
 	pushConstantInfo.size = sizeof(AliasPushConstants);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodels.pipelineLayout));
     graphicsPipelineCreateInfo.layout = viewmodels.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasAttributes.vertexInputState;
     stages[0].module = viewmodelVertex;
     stages[1].module = viewmodelFragment;
     CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodels.pipeline));
@@ -1387,7 +1331,6 @@ void Scene::Create(AppState& appState)
 	pushConstantInfo.size = sizeof(AliasColoredLightsPushConstants);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodelsColoredLights.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = viewmodelsColoredLights.pipelineLayout;
-	graphicsPipelineCreateInfo.pVertexInputState = &aliasColoredLightsAttributes.vertexInputState;
 	stages[0].module = viewmodelColoredLightsVertex;
 	stages[1].module = viewmodelColoredLightsFragment;
 	CHECK_VKCMD(vkCreateGraphicsPipelines(appState.Device, appState.PipelineCache, 1, &graphicsPipelineCreateInfo, nullptr, &viewmodelsColoredLights.pipeline));
