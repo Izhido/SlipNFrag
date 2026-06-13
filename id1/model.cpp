@@ -2127,10 +2127,12 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 	int pbboxminoffset = (byte*)pbboxmin - mod_aliaspool.data();
 	int pbboxmaxoffset = (byte*)pbboxmax - mod_aliaspool.data();
 	int pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
+	int nameoffset = (byte*)name - mod_aliaspool.data();
 	int pooltop = mod_aliaspool.size();
 	mod_aliaspool.resize(pooltop + sizeof(maliasgroup_t) + (numframes - 1) * sizeof(paliasgroup->frames[0]) + numframes * sizeof(float));
 	pheader = (aliashdr_t*)mod_aliaspool.data();
 	paliasgroup = (maliasgroup_t*)(mod_aliaspool.data() + pooltop);
+	name = (char*)(mod_aliaspool.data() + nameoffset);
 
 	paliasgroup->numframes = numframes;
 
@@ -2206,6 +2208,9 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 									&paliasgroup->frames[i].bboxmin,
 									&paliasgroup->frames[i].bboxmax,
 									pheader, name);
+		pheader = (aliashdr_t*)mod_aliaspool.data();
+		paliasgroup = (maliasgroup_t*)(mod_aliaspool.data() + pooltop);
+		name = (char*)(mod_aliaspool.data() + nameoffset);
 	}
 
 	return ptemp;
@@ -2328,6 +2333,7 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 	{
 		ptemp = Mod_LoadAliasSkin (ptemp,
 				&paliasskingroup->skindescs[i].skin, skinsize, pheader);
+		pheader = (aliashdr_t*)mod_aliaspool.data();
 		paliasskingroup = (maliasskingroup_t*)(mod_aliaspool.data() + pooltop);
 	}
 
