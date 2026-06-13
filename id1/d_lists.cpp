@@ -163,7 +163,7 @@ void D_FillSurfaceColoredLightsData (dsurface_t& surface, msurface_t* face, surf
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, texture_t* glow_texture, int mips)
+void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, miptex_t* texture, miptex_t* glow_texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
@@ -177,7 +177,7 @@ void D_FillSurfaceRGBAData (dsurfacewithglow_t& surface, msurface_t* face, surfc
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBAColoredLightsData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, texture_t* glow_texture, int mips)
+void D_FillSurfaceRGBAColoredLightsData (dsurfacewithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, miptex_t* texture, miptex_t* glow_texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
@@ -191,7 +191,7 @@ void D_FillSurfaceRGBAColoredLightsData (dsurfacewithglow_t& surface, msurface_t
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, int mips)
+void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, miptex_t* texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
@@ -204,7 +204,7 @@ void D_FillSurfaceRGBANoGlowData (dsurface_t& surface, msurface_t* face, surfcac
 	surface.count = face->numedges;
 }
 
-void D_FillSurfaceRGBANoGlowColoredLightsData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, int mips)
+void D_FillSurfaceRGBANoGlowColoredLightsData (dsurface_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, miptex_t* texture, int mips)
 {
 	surface.face = face;
 	surface.model = entity->model;
@@ -241,7 +241,7 @@ void D_FillSurfaceRotatedColoredLightsData (dsurfacerotated_t& surface, msurface
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, texture_t* glow_texture, byte alpha, int mips)
+void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, miptex_t* texture, miptex_t* glow_texture, byte alpha, int mips)
 {
 	D_FillSurfaceRGBAData(surface, face, cache, entity, texture, glow_texture, mips);
 	surface.origin_x = entity->origin[0];
@@ -253,7 +253,7 @@ void D_FillSurfaceRotatedRGBAData (dsurfacerotatedwithglow_t& surface, msurface_
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedRGBAColoredLightsData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, texture_t* glow_texture, byte alpha, int mips)
+void D_FillSurfaceRotatedRGBAColoredLightsData (dsurfacerotatedwithglow_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, miptex_t* texture, miptex_t* glow_texture, byte alpha, int mips)
 {
 	D_FillSurfaceRGBAColoredLightsData(surface, face, cache, entity, texture, glow_texture, mips);
 	surface.origin_x = entity->origin[0];
@@ -265,7 +265,7 @@ void D_FillSurfaceRotatedRGBAColoredLightsData (dsurfacerotatedwithglow_t& surfa
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, byte alpha, int mips)
+void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, miptex_t* texture, byte alpha, int mips)
 {
 	D_FillSurfaceRGBANoGlowData(surface, face, cache, entity, texture, mips);
 	surface.origin_x = entity->origin[0];
@@ -277,7 +277,7 @@ void D_FillSurfaceRotatedRGBANoGlowData (dsurfacerotated_t& surface, msurface_t*
 	surface.alpha = alpha;
 }
 
-void D_FillSurfaceRotatedRGBANoGlowColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, texture_t* texture, byte alpha, int mips)
+void D_FillSurfaceRotatedRGBANoGlowColoredLightsData (dsurfacerotated_t& surface, msurface_t* face, surfcache_s* cache, entity_t* entity, miptex_t* texture, byte alpha, int mips)
 {
 	D_FillSurfaceRGBANoGlowColoredLightsData(surface, face, cache, entity, texture, mips);
 	surface.origin_x = entity->origin[0];
@@ -335,12 +335,12 @@ void D_AddSurfaceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* en
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
-	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	auto glow_texture = cache->texture->external_glow;
 	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
@@ -360,12 +360,12 @@ void D_AddSurfaceRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache,
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
-	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	auto glow_texture = cache->texture->external_glow;
 	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
@@ -385,7 +385,7 @@ void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
@@ -405,7 +405,7 @@ void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, surfcache_s* 
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
@@ -465,12 +465,12 @@ void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entit
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
-	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	auto glow_texture = cache->texture->external_glow;
 	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
@@ -490,12 +490,12 @@ void D_AddSurfaceRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s*
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
-	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	auto glow_texture = cache->texture->external_glow;
 	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
@@ -515,7 +515,7 @@ void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache,
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
@@ -535,7 +535,7 @@ void D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, surfca
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
@@ -595,12 +595,12 @@ void D_AddFenceRGBAToLists (msurface_t* face, surfcache_s* cache, entity_t* enti
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
-	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	auto glow_texture = cache->texture->external_glow;
 	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
@@ -620,12 +620,12 @@ void D_AddFenceRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, e
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
-	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	auto glow_texture = cache->texture->external_glow;
 	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
@@ -645,7 +645,7 @@ void D_AddFenceRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, entity_t
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
@@ -665,7 +665,7 @@ void D_AddFenceRGBANoGlowColoredLightsToLists (msurface_t* face, surfcache_s* ca
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
@@ -725,12 +725,12 @@ void D_AddFenceRotatedRGBAToLists (msurface_t* face, surfcache_s* cache, entity_
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
-	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	auto glow_texture = cache->texture->external_glow;
 	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
@@ -750,12 +750,12 @@ void D_AddFenceRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s* c
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
 	}
-	auto glow_texture = (texture_t*)(cache->texture)->external_glow;
+	auto glow_texture = cache->texture->external_glow;
 	if (glow_texture->width <= 0 || glow_texture->height <= 0)
 	{
 		return;
@@ -775,7 +775,7 @@ void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, surfcache_s* cache, e
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
@@ -795,7 +795,7 @@ void D_AddFenceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, surfcach
 	{
 		return;
 	}
-	auto texture = (texture_t*)(cache->texture)->external_color;
+	auto texture = cache->texture->external_color;
 	if (texture->width <= 0 || texture->height <= 0)
 	{
 		return;
