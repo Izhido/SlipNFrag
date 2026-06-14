@@ -3,7 +3,6 @@
 #include "CachedBuffers.h"
 #include "CachedTextures.h"
 #include "DescriptorResources.h"
-#include "DescriptorResourcesLists.h"
 #include "AliasPushConstants.h"
 #include "AliasColoredLightsPushConstants.h"
 
@@ -33,8 +32,6 @@ struct PerFrame
 	CachedBuffers cachedSortedIndices32;
 	CachedBuffers cachedColors;
 	CachedBuffers stagingBuffers;
-	CachedTextures colormaps;
-	int colormapCount;
     int paletteChangedFrame;
 	Buffer* vertices;
 	Buffer* sortedVertices;
@@ -52,7 +49,7 @@ struct PerFrame
 	VkDeviceSize particleBase;
 	DescriptorResources skyResources;
 	DescriptorResources skyRGBAResources;
-	DescriptorResources host_colormapResources;
+	DescriptorResources hostColormapResources;
 	DescriptorResources sceneMatricesResources;
 	DescriptorResources sceneMatricesAndPaletteResources;
 	DescriptorResources sceneMatricesPaletteAndAttributeResources;
@@ -60,7 +57,6 @@ struct PerFrame
 	DescriptorResources sceneMatricesNeutralPaletteAndAttributeResources;
 	DescriptorResources sceneMatricesAndColormapResources;
     DescriptorResources sortedAttributesResources;
-	DescriptorResourcesLists colormapResources;
 	DescriptorResources floorResources;
 	DescriptorResources controllerResources;
 	DescriptorResources handResources;

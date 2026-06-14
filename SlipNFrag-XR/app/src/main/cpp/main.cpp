@@ -1695,6 +1695,7 @@ void android_main(struct android_app* app)
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 
+				appState.Scene.colormaps.DeleteOld(appState);
 				appState.Scene.textures.DeleteOld(appState);
 				for (auto& entry : appState.Scene.surfaceRGBATextures)
 				{

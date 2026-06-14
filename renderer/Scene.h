@@ -99,7 +99,7 @@ struct Scene
     std::vector<Buffer> paletteBuffers;
     std::vector<Buffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;
-    Texture colormap;
+    Texture hostColormap;
 	int hostClearCount;
 	CachedAliasBuffers aliasBuffers;
 	CachedIndexBuffers indexBuffers;
@@ -130,9 +130,11 @@ struct Scene
 	std::vector<CachedSharedMemoryTextures> surfaceTextures;
 	std::vector<CachedSharedMemoryTextures> surfaceRGBATextures;
 	CachedSharedMemoryTextures textures;
+	CachedSharedMemoryTextures colormaps;
 	Q_HASHMAP<void*, SurfaceTexture> surfaceTextureCache;
 	Q_HASHMAP<void*, SharedMemoryTexture*> spriteCache;
 	Q_HASHMAP<void*, SharedMemoryTexture*> aliasTextureCache;
+	Q_HASHMAP<void*, SharedMemoryTexture*> aliasColormapCache;
 	Texture floorTexture;
 	Texture controllerTexture;
 	Texture patchTexture;
@@ -193,7 +195,7 @@ struct Scene
 	VkDeviceSize sortedIndices16Size;
 	VkDeviceSize sortedIndices32Size;
 	VkDeviceSize paletteSize;
-	VkDeviceSize colormapSize;
+	VkDeviceSize hostColormapSize;
 	StagingBuffer stagingBuffer;
 	void* previousTexture;
 	void* previousApverts;
@@ -237,9 +239,9 @@ struct Scene
 	void GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulentrotated_t& surface, PerSurfaceData& perSurface, LoadedTurbulentRotated& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite, LoadedSprite& loaded, VkDeviceSize& size);
 	void GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlights_t& alias, LoadedAliasColoredLights& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const daliascoloredlights_t& alias, LoadedAliasColoredLights& loaded, VkDeviceSize& size);
-	void GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmodel, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size);
+	void GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmodel, LoadedAlias& loaded, VkDeviceSize& size);
 	void GetStagingBufferSize(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded, VkDeviceSize& size);
 	static void RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame, uint32_t swapchainImageIndex);

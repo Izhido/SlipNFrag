@@ -1586,7 +1586,7 @@ void Scene::Initialize()
     sortedAttributesSize = 0;
     sortedIndicesCount = 0;
     paletteSize = 0;
-    colormapSize = 0;
+    hostColormapSize = 0;
 	aliasBuffers.Initialize();
     indexBuffers.Initialize();
 	lightmapChains.clear();
@@ -1595,16 +1595,14 @@ void Scene::Initialize()
 	lightmapRGBChainTexturesInUse.clear();
     for (auto& cached : surfaceTextures)
     {
-        cached.first = nullptr;
-        cached.current = nullptr;
+        cached.Reset();
     }
     for (auto& cached : surfaceRGBATextures)
     {
-        cached.first = nullptr;
-        cached.current = nullptr;
+        cached.Reset();
     }
-    textures.first = nullptr;
-    textures.current = nullptr;
+    textures.Reset();
+    colormaps.Reset();
 }
 
 void Scene::AddToVertexInputBarriers(VkBuffer buffer, VkAccessFlags flags)
@@ -2483,7 +2481,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
         else
         {
             loaded.texture.texture = entry->second;
-            loaded.texture.index = 0;
         }
         previousTexture = sprite.data;
         previousSharedMemoryTexture = loaded.texture.texture;
@@ -2491,8 +2488,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
     else
     {
         loaded.texture.texture = previousSharedMemoryTexture;
-        loaded.texture.index = 0;
     }
+    loaded.texture.index = 0;
     loaded.count = sprite.count;
     loaded.firstVertex = sprite.first_vertex;
 }
@@ -2557,7 +2554,6 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
         else
         {
             loaded.texture.texture = entry->second;
-            loaded.texture.index = 0;
         }
         previousTexture = alias.data;
         previousSharedMemoryTexture = loaded.texture.texture;
@@ -2565,8 +2561,8 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
     else
     {
         loaded.texture.texture = previousSharedMemoryTexture;
-        loaded.texture.index = 0;
     }
+    loaded.texture.index = 0;
     auto entry = aliasIndexCache.find(alias.aliashdr);
     if (entry == aliasIndexCache.end())
     {
@@ -2667,20 +2663,32 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
     loaded.count = alias.count;
 }
 
-void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, LoadedAlias& loaded, VkDeviceSize& size)
 {
 	GetStagingBufferSizeAlias(appState, alias, loaded, size);
-    if (alias.colormap == nullptr)
-    {
-        loaded.colormap.size = 0;
-        loaded.colormap.texture = host_colormap;
-    }
-    else
-    {
-        loaded.colormap.size = 16384;
-        size += loaded.colormap.size;
-    }
     loaded.isHostColormap = (alias.colormap == nullptr);
+    if (!loaded.isHostColormap)
+    {
+        auto entry = aliasColormapCache.find(alias.colormap);
+        if (entry == aliasColormapCache.end())
+        {
+            auto colormap = new SharedMemoryTexture { };
+            colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
+            colormaps.MoveToFront(colormap);
+            loaded.colormap.size = 256 * 64;
+            size += loaded.colormap.size;
+            loaded.colormap.texture = colormap;
+            loaded.colormap.source = alias.colormap;
+            loaded.colormap.mips = 1;
+            textures.Chain(loaded.colormap);
+            aliasColormapCache.insert({ alias.colormap, colormap });
+        }
+        else
+        {
+            loaded.colormap.texture = entry->second;
+            loaded.colormap.index = 0;
+        }
+    }
     for (auto j = 0; j < 3; j++)
     {
         for (auto i = 0; i < 4; i++)
@@ -2702,20 +2710,32 @@ void Scene::GetStagingBufferSize(AppState& appState, const daliascoloredlights_t
     }
 }
 
-void Scene::GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmodel, LoadedAlias& loaded, Texture* host_colormap, VkDeviceSize& size)
+void Scene::GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmodel, LoadedAlias& loaded, VkDeviceSize& size)
 {
 	GetStagingBufferSizeAlias(appState, viewmodel, loaded, size);
-    if (viewmodel.colormap == nullptr)
-    {
-        loaded.colormap.size = 0;
-        loaded.colormap.texture = host_colormap;
-    }
-    else
-    {
-        loaded.colormap.size = 16384;
-        size += loaded.colormap.size;
-    }
     loaded.isHostColormap = (viewmodel.colormap == nullptr);
+    if (!loaded.isHostColormap)
+    {
+        auto entry = aliasColormapCache.find(viewmodel.colormap);
+        if (entry == aliasColormapCache.end())
+        {
+            auto colormap = new SharedMemoryTexture { };
+            colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
+            colormaps.MoveToFront(colormap);
+            loaded.colormap.size = 256 * 64;
+            size += loaded.colormap.size;
+            loaded.colormap.texture = colormap;
+            loaded.colormap.source = viewmodel.colormap;
+            loaded.colormap.mips = 1;
+            textures.Chain(loaded.colormap);
+            aliasColormapCache.insert({ viewmodel.colormap, colormap });
+        }
+        else
+        {
+            loaded.colormap.texture = entry->second;
+            loaded.colormap.index = 0;
+        }
+    }
 	RelocateViewmodel(appState, viewmodel, loaded);
 }
 
@@ -2907,11 +2927,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
         size += paletteSize + paletteSize;
         perFrame.paletteChangedFrame = d_palchangecount;
     }
-    if (!host_colormap.empty() && colormap.image == VK_NULL_HANDLE)
+    if (!host_colormap.empty() && hostColormap.image == VK_NULL_HANDLE)
     {
-        colormap.Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
-        colormapSize = 16384;
-        size += colormapSize;
+        hostColormap.Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
+        hostColormapSize = 16384;
+        size += hostColormapSize;
     }
 
 	lightmapDescriptorWrites.clear();
@@ -3403,7 +3423,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= alias.last; i++)
     {
 		auto& loaded = alias.loaded[i];
-        GetStagingBufferSize(appState, d_lists.alias[i], loaded, &colormap, size);
+        GetStagingBufferSize(appState, d_lists.alias[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, alias.sorted);
     }
 	SortedSurfaces::Initialize(aliasAlpha.sorted);
@@ -3412,7 +3432,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasAlpha.last; i++)
 	{
 		auto& loaded = aliasAlpha.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_alpha[i], loaded, &colormap, size);
+		GetStagingBufferSize(appState, d_lists.alias_alpha[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasAlpha.sorted);
 	}
 	SortedSurfaces::Initialize(aliasColoredLights.sorted);
@@ -3439,7 +3459,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasHoley.last; i++)
 	{
 		auto& loaded = aliasHoley.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_holey[i], loaded, &colormap, size);
+		GetStagingBufferSize(appState, d_lists.alias_holey[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasHoley.sorted);
 	}
 	SortedSurfaces::Initialize(aliasHoleyAlpha.sorted);
@@ -3448,7 +3468,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasHoleyAlpha.last; i++)
 	{
 		auto& loaded = aliasHoleyAlpha.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_holey_alpha[i], loaded, &colormap, size);
+		GetStagingBufferSize(appState, d_lists.alias_holey_alpha[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasHoleyAlpha.sorted);
 	}
 	SortedSurfaces::Initialize(aliasHoleyColoredLights.sorted);
@@ -3475,7 +3495,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= viewmodels.last; i++)
     {
 		auto& loaded = viewmodels.loaded[i];
-        GetStagingBufferSize(appState, d_lists.viewmodels[i], loaded, &colormap, size);
+        GetStagingBufferSize(appState, d_lists.viewmodels[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, viewmodels.sorted);
     }
 	SortedSurfaces::Initialize(viewmodelsColoredLights.sorted);
@@ -3493,7 +3513,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= viewmodelsHoley.last; i++)
 	{
 		auto& loaded = viewmodelsHoley.loaded[i];
-		GetStagingBufferSize(appState, d_lists.viewmodels_holey[i], loaded, &colormap, size);
+		GetStagingBufferSize(appState, d_lists.viewmodels_holey[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, viewmodelsHoley.sorted);
 	}
 	SortedSurfaces::Initialize(viewmodelsHoleyColoredLights.sorted);
@@ -3919,9 +3939,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 
 void Scene::Reset(AppState& appState)
 {
+    aliasColormapCache.clear();
     aliasTextureCache.clear();
     spriteCache.clear();
     surfaceTextureCache.clear();
+    colormaps.DisposeFront();
     textures.DisposeFront();
     for (auto& cached : surfaceRGBATextures)
     {
@@ -3986,6 +4008,7 @@ void Scene::Destroy(AppState& appState)
 	controllerTexture.Delete(appState);
 	floorTexture.Delete(appState);
 
+    colormaps.Delete(appState);
 	textures.Delete(appState);
 
 	for (auto& entry : surfaceRGBATextures)
@@ -4022,9 +4045,9 @@ void Scene::Destroy(AppState& appState)
 	indexBuffers.Delete(appState);
 	aliasBuffers.Delete(appState);
 
-	if (colormap.image != VK_NULL_HANDLE)
+	if (hostColormap.image != VK_NULL_HANDLE)
 	{
-		colormap.Delete(appState);
+        hostColormap.Delete(appState);
 	}
 
 	for (auto& palette : neutralPaletteBuffers)

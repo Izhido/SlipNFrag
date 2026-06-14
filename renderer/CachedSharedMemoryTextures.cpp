@@ -15,6 +15,12 @@ void CachedSharedMemoryTextures::Chain(LoadedSharedMemoryTexture& loaded)
 	current = &loaded;
 }
 
+void CachedSharedMemoryTextures::Reset()
+{
+    first = nullptr;
+    current = nullptr;
+}
+
 void CachedSharedMemoryTextures::DeleteOld(AppState& appState)
 {
 	for (auto t = oldTextures.begin(); t != oldTextures.end(); )
