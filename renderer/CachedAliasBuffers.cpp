@@ -9,7 +9,7 @@ void CachedAliasBuffers::Initialize()
 	currentAliasTexCoords = nullptr;
 }
 
-void CachedAliasBuffers::SetupAliasVertices(LoadedBuffer& loaded)
+void CachedAliasBuffers::ChainToAliasVertices(LoadedBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasVertices == nullptr)
@@ -23,7 +23,7 @@ void CachedAliasBuffers::SetupAliasVertices(LoadedBuffer& loaded)
 	currentAliasVertices = &loaded;
 }
 
-void CachedAliasBuffers::SetupAliasTexCoords(LoadedTexCoordsBuffer &loaded)
+void CachedAliasBuffers::ChainToAliasTexCoords(LoadedTexCoordsBuffer &loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasTexCoords == nullptr)

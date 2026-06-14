@@ -13,7 +13,7 @@ struct CachedSharedMemoryTextures
 	LoadedSharedMemoryTexture* current;
 	int currentIndex;
 
-	void Setup(LoadedSharedMemoryTexture& loaded);
+	void Chain(LoadedSharedMemoryTexture& loaded);
 	void DeleteOld(AppState& appState);
 	void DisposeFront();
 	void MoveToFront(SharedMemoryTexture* texture);

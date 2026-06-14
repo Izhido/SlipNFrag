@@ -11,7 +11,7 @@ void CachedIndexBuffers::Initialize()
 	currentAliasIndices32 = nullptr;
 }
 
-void CachedIndexBuffers::SetupAliasIndices8(LoadedIndexBuffer& loaded)
+void CachedIndexBuffers::ChainToAliasIndices8(LoadedIndexBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasIndices8 == nullptr)
@@ -25,7 +25,7 @@ void CachedIndexBuffers::SetupAliasIndices8(LoadedIndexBuffer& loaded)
 	currentAliasIndices8 = &loaded;
 }
 
-void CachedIndexBuffers::SetupAliasIndices16(LoadedIndexBuffer& loaded)
+void CachedIndexBuffers::ChainToAliasIndices16(LoadedIndexBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasIndices16 == nullptr)
@@ -39,7 +39,7 @@ void CachedIndexBuffers::SetupAliasIndices16(LoadedIndexBuffer& loaded)
 	currentAliasIndices16 = &loaded;
 }
 
-void CachedIndexBuffers::SetupAliasIndices32(LoadedIndexBuffer& loaded)
+void CachedIndexBuffers::ChainToAliasIndices32(LoadedIndexBuffer& loaded)
 {
 	loaded.next = nullptr;
 	if (currentAliasIndices32 == nullptr)

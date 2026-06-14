@@ -14,9 +14,9 @@ struct CachedIndexBuffers
 	LoadedIndexBuffer* currentAliasIndices32;
 
 	void Initialize();
-	void SetupAliasIndices8(LoadedIndexBuffer& loaded);
-	void SetupAliasIndices16(LoadedIndexBuffer& loaded);
-	void SetupAliasIndices32(LoadedIndexBuffer& loaded);
+	void ChainToAliasIndices8(LoadedIndexBuffer& loaded);
+	void ChainToAliasIndices16(LoadedIndexBuffer& loaded);
+	void ChainToAliasIndices32(LoadedIndexBuffer& loaded);
 	void DisposeFront();
 	void MoveToFront(Buffer* buffer);
 	void Delete(AppState& appState);

@@ -13,8 +13,8 @@ struct CachedAliasBuffers
 	LoadedTexCoordsBuffer* currentAliasTexCoords;
 
 	void Initialize();
-	void SetupAliasVertices(LoadedBuffer& loaded);
-	void SetupAliasTexCoords(LoadedTexCoordsBuffer& loaded);
+	void ChainToAliasVertices(LoadedBuffer& loaded);
+	void ChainToAliasTexCoords(LoadedTexCoordsBuffer& loaded);
 	void DisposeFront();
 	void MoveToFront(Buffer* buffer);
 	void Delete(AppState& appState);

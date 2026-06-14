@@ -1918,7 +1918,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbule
             {
 				perSurface.texture = cached->textures.back();
             }
-            cached->Setup(loaded.texture);
+            cached->Chain(loaded.texture);
 			perSurface.textureIndex = cached->currentIndex;
             loaded.texture.size = turbulent.size;
             loaded.texture.allocated = GetAllocatedFor(turbulent.width, turbulent.height);
@@ -1978,7 +1978,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dturbulent_
             {
 				perSurface.texture = cached->textures.back();
             }
-            cached->Setup(loaded.texture);
+            cached->Chain(loaded.texture);
 			perSurface.textureIndex = cached->currentIndex;
             loaded.texture.size = turbulent.size;
             loaded.texture.allocated = GetAllocatedFor(turbulent.width, turbulent.height) * sizeof(unsigned);
@@ -2053,7 +2053,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			{
 				perSurface.texture = cached->textures.back();
 			}
-			cached->Setup(loaded.texture);
+			cached->Chain(loaded.texture);
 			perSurface.textureIndex = cached->currentIndex;
 			loaded.texture.size = surface.size;
 			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
@@ -2105,7 +2105,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			{
 				perSurface.glowTexture = cached->textures.back();
 			}
-			cached->Setup(loaded.glowTexture);
+			cached->Chain(loaded.glowTexture);
 			perSurface.glowTextureIndex = cached->currentIndex;
 			loaded.glowTexture.size = surface.size;
 			loaded.glowTexture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
@@ -2169,7 +2169,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			{
 				perSurface.texture = cached->textures.back();
             }
-			cached->Setup(loaded.texture);
+			cached->Chain(loaded.texture);
 			perSurface.textureIndex = cached->currentIndex;
 			loaded.texture.size = surface.size;
 			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
@@ -2221,7 +2221,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurfacewithglow_t& s
 			{
 				perSurface.glowTexture = cached->textures.back();
 			}
-			cached->Setup(loaded.glowTexture);
+			cached->Chain(loaded.glowTexture);
 			perSurface.glowTextureIndex = cached->currentIndex;
 			loaded.glowTexture.size = surface.size;
 			loaded.glowTexture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
@@ -2282,7 +2282,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 			{
 				perSurface.texture = cached->textures.back();
 			}
-			cached->Setup(loaded.texture);
+			cached->Chain(loaded.texture);
 			perSurface.textureIndex = cached->currentIndex;
 			loaded.texture.size = surface.size;
 			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
@@ -2343,7 +2343,7 @@ void Scene::GetStagingBufferSizeRGBANoGlow(AppState& appState, const dsurface_t&
 			{
 				perSurface.texture = cached->textures.back();
 			}
-			cached->Setup(loaded.texture);
+			cached->Chain(loaded.texture);
 			perSurface.textureIndex = cached->currentIndex;
 			loaded.texture.size = surface.size;
 			loaded.texture.allocated = GetAllocatedFor(surface.width, surface.height) * sizeof(unsigned);
@@ -2477,7 +2477,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
             loaded.texture.texture = texture;
             loaded.texture.source = sprite.data;
             loaded.texture.mips = 1;
-            textures.Setup(loaded.texture);
+            textures.Chain(loaded.texture);
             spriteCache.insert({ sprite.data, texture });
         }
         else
@@ -2511,7 +2511,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
 			aliasBuffers.MoveToFront(loaded.vertices.buffer);
             size += loaded.vertices.size;
             loaded.vertices.source = alias.apverts;
-			aliasBuffers.SetupAliasVertices(loaded.vertices);
+			aliasBuffers.ChainToAliasVertices(loaded.vertices);
             loaded.texCoords.size = alias.vertex_count * 2 * 2 * sizeof(float);
             loaded.texCoords.buffer = new Buffer { };
             loaded.texCoords.buffer->CreateVertexBuffer(appState, loaded.texCoords.size);
@@ -2520,7 +2520,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             loaded.texCoords.source = alias.texture_coordinates;
             loaded.texCoords.width = alias.width;
             loaded.texCoords.height = alias.height;
-			aliasBuffers.SetupAliasTexCoords(loaded.texCoords);
+			aliasBuffers.ChainToAliasTexCoords(loaded.texCoords);
             aliasVertexCache.insert({ alias.apverts, { loaded.vertices.buffer, loaded.texCoords.buffer } });
         }
         else
@@ -2551,7 +2551,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             loaded.texture.texture = texture;
             loaded.texture.source = alias.data;
             loaded.texture.mips = 1;
-            textures.Setup(loaded.texture);
+            textures.Chain(loaded.texture);
             aliasTextureCache.insert({ alias.data, texture });
         }
         else
@@ -2609,7 +2609,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             loaded.indices.source = alias.aliashdr;
             loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
             loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
-            indexBuffers.SetupAliasIndices8(loaded.indices);
+            indexBuffers.ChainToAliasIndices8(loaded.indices);
         }
         else if (maxIndex < UPPER_16BIT_LIMIT)
         {
@@ -2632,7 +2632,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             loaded.indices.source = alias.aliashdr;
             loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT16;
             loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 2;
-            indexBuffers.SetupAliasIndices16(loaded.indices);
+            indexBuffers.ChainToAliasIndices16(loaded.indices);
         }
         else
         {
@@ -2655,7 +2655,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             loaded.indices.source = alias.aliashdr;
             loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT32;
             loaded.indices.indices.firstIndex = loaded.indices.indices.offset / 4;
-            indexBuffers.SetupAliasIndices32(loaded.indices);
+            indexBuffers.ChainToAliasIndices32(loaded.indices);
         }
         aliasIndexCache.insert({ alias.aliashdr, loaded.indices.indices });
     }
