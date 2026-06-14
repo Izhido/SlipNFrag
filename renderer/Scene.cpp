@@ -500,6 +500,9 @@ void Scene::Create(AppState& appState)
     descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptorSetLayoutCreateInfo.bindingCount = 3;
     CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &twoBuffersAndImageLayout));
+    descriptorSetBindings[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    descriptorSetBindings[2].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    CHECK_VKCMD(vkCreateDescriptorSetLayout(appState.Device, &descriptorSetLayoutCreateInfo, nullptr, &twoBuffersAndStorageBufferLayout));
     descriptorSetBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descriptorSetBindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptorSetLayoutCreateInfo.bindingCount = 1;
@@ -1191,11 +1194,10 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-    descriptorSetLayouts[0] = doubleBufferLayout;
-    descriptorSetLayouts[1] = singleStorageBufferLayout;
+    descriptorSetLayouts[0] = twoBuffersAndStorageBufferLayout;
+    descriptorSetLayouts[1] = singleImageLayout;
     descriptorSetLayouts[2] = singleImageLayout;
-    descriptorSetLayouts[3] = singleImageLayout;
-    pipelineLayoutCreateInfo.setLayoutCount = 4;
+    pipelineLayoutCreateInfo.setLayoutCount = 3;
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstantInfo.size = sizeof(AliasPushConstants);
     pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
@@ -1245,10 +1247,7 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-	descriptorSetLayouts[0] = doubleBufferLayout;
-	descriptorSetLayouts[1] = singleStorageBufferLayout;
-	descriptorSetLayouts[2] = singleImageLayout;
-	pipelineLayoutCreateInfo.setLayoutCount = 3;
+	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(AliasColoredLightsPushConstants);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasColoredLights.pipelineLayout));
@@ -1295,11 +1294,7 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-	descriptorSetLayouts[0] = doubleBufferLayout;
-	descriptorSetLayouts[1] = singleStorageBufferLayout;
-	descriptorSetLayouts[2] = singleImageLayout;
-	descriptorSetLayouts[3] = singleImageLayout;
-	pipelineLayoutCreateInfo.setLayoutCount = 4;
+	pipelineLayoutCreateInfo.setLayoutCount = 3;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 	pushConstantInfo.size = sizeof(AliasPushConstants);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodels.pipelineLayout));
@@ -1323,10 +1318,7 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-	descriptorSetLayouts[0] = doubleBufferLayout;
-	descriptorSetLayouts[1] = singleStorageBufferLayout;
-	descriptorSetLayouts[2] = singleImageLayout;
-	pipelineLayoutCreateInfo.setLayoutCount = 3;
+	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantInfo.size = sizeof(AliasColoredLightsPushConstants);
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodelsColoredLights.pipelineLayout));
@@ -1350,6 +1342,7 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
+    descriptorSetLayouts[0] = doubleBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 1;
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstantInfo.size = 8 * sizeof(float);
@@ -1392,8 +1385,6 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-    descriptorSetLayouts[0] = doubleBufferLayout;
-    descriptorSetLayouts[1] = singleImageLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 2;
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     pushConstantInfo.size = 13 * sizeof(float);
@@ -1415,7 +1406,6 @@ void Scene::Create(AppState& appState)
 #endif
 
     descriptorSetLayouts[0] = singleBufferLayout;
-    descriptorSetLayouts[1] = singleImageLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 2;
     pushConstantInfo.size = 15 * sizeof(float);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &skyRGBA.pipelineLayout));
@@ -4106,6 +4096,8 @@ void Scene::Destroy(AppState& appState)
 
 	vkDestroyDescriptorSetLayout(appState.Device, singleImageLayout, nullptr);
 	singleImageLayout = VK_NULL_HANDLE;
+	vkDestroyDescriptorSetLayout(appState.Device, twoBuffersAndStorageBufferLayout, nullptr);
+    twoBuffersAndStorageBufferLayout = VK_NULL_HANDLE;
 	vkDestroyDescriptorSetLayout(appState.Device, twoBuffersAndImageLayout, nullptr);
 	twoBuffersAndImageLayout = VK_NULL_HANDLE;
 	vkDestroyDescriptorSetLayout(appState.Device, doubleBufferLayout, nullptr);

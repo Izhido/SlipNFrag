@@ -37,6 +37,7 @@ struct Scene
 	VkDescriptorSetLayout singleBufferLayout;
 	VkDescriptorSetLayout doubleBufferLayout;
 	VkDescriptorSetLayout twoBuffersAndImageLayout;
+	VkDescriptorSetLayout twoBuffersAndStorageBufferLayout;
 	VkDescriptorSetLayout singleImageLayout;
 	int frameCount;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceTexturesWithLightmaps> surfaces;
