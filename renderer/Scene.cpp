@@ -2667,7 +2667,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
 {
 	GetStagingBufferSizeAlias(appState, alias, loaded, size);
     loaded.isHostColormap = (alias.colormap == nullptr);
-    if (!loaded.isHostColormap)
+    if (loaded.isHostColormap)
+    {
+        loaded.colormap.texture = nullptr;
+    }
+    else
     {
         auto entry = aliasColormapCache.find(alias.colormap);
         if (entry == aliasColormapCache.end())
@@ -2686,9 +2690,9 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
         else
         {
             loaded.colormap.texture = entry->second;
-            loaded.colormap.index = 0;
         }
     }
+    loaded.colormap.index = 0;
     for (auto j = 0; j < 3; j++)
     {
         for (auto i = 0; i < 4; i++)
@@ -2714,7 +2718,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmod
 {
 	GetStagingBufferSizeAlias(appState, viewmodel, loaded, size);
     loaded.isHostColormap = (viewmodel.colormap == nullptr);
-    if (!loaded.isHostColormap)
+    if (loaded.isHostColormap)
+    {
+        loaded.colormap.texture = nullptr;
+    }
+    else
     {
         auto entry = aliasColormapCache.find(viewmodel.colormap);
         if (entry == aliasColormapCache.end())
@@ -2733,9 +2741,9 @@ void Scene::GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmod
         else
         {
             loaded.colormap.texture = entry->second;
-            loaded.colormap.index = 0;
         }
     }
+    loaded.colormap.index = 0;
 	RelocateViewmodel(appState, viewmodel, loaded);
 }
 

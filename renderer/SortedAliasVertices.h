@@ -1,8 +1,9 @@
 #pragma once
 
-struct SortedSurfaceTexture
+struct SortedAliasVertices
 {
-	VkDescriptorSet texture;
+	VkBuffer vertices;
+	VkBuffer texCoords;
 	std::vector<int> entries;
 	VkDeviceSize indexCount;
 };

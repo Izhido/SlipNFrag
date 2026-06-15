@@ -2576,62 +2576,40 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.alias.sorted.count; t++)
+			for (auto c = 0; c < appState.Scene.alias.sorted.count; c++)
 			{
-				auto& texture = appState.Scene.alias.sorted.textures[t];
-				for (auto i : texture.entries)
+				auto& colormap = appState.Scene.alias.sorted.colormaps[c];
+				if (colormap.colormap == nullptr)
 				{
-					auto& loaded = appState.Scene.alias.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
+				}
+				else
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &colormap.colormap, 0, nullptr);
+				}
+				for (auto ix = 0; ix < colormap.count; ix++)
+				{
+					auto& indices = colormap.indices[ix];
+					vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+					for (auto t = 0; t < indices.count; t++)
 					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
-					if (loaded.isHostColormap)
-					{
-						if (previousColormapDescriptorSet != hostColormapResources.descriptorSet)
+						auto& texture = indices.textures[t];
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+						for (auto v = 0; v < texture.count; v++)
 						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = hostColormapResources.descriptorSet;
+							auto vertices = texture.vertices[v];
+							vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+							vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+							for (auto i : vertices.entries)
+							{
+								auto& loaded = appState.Scene.alias.loaded[i];
+								SetAliasTransformPushConstants(loaded, pushConstants);
+								pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+								vkCmdPushConstants(commandBuffer, appState.Scene.alias.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
+								vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+							}
 						}
 					}
-					else
-					{
-						auto colormap = loaded.colormap.texture;
-						if (previousColormapDescriptorSet != colormap->descriptorSet)
-						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &colormap->descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = colormap->descriptorSet;
-						}
-					}
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
 				}
 			}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -2649,46 +2627,30 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.aliasColoredLights.sorted.count; t++)
-			{
-				auto& texture = appState.Scene.aliasColoredLights.sorted.textures[t];
-				for (auto i : texture.entries)
-				{
-					auto& loaded = appState.Scene.aliasColoredLights.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.aliasColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
-				}
-			}
+            for (auto ix = 0; ix < appState.Scene.aliasColoredLights.sorted.count; ix++)
+            {
+                auto& indices = appState.Scene.aliasColoredLights.sorted.indices[ix];
+                vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+                for (auto t = 0; t < indices.count; t++)
+                {
+                    auto& texture = indices.textures[t];
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasColoredLights.pipelineLayout, 1, 1, &texture.texture, 0, nullptr);
+                    for (auto v = 0; v < texture.count; v++)
+                    {
+                        auto vertices = texture.vertices[v];
+                        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+                        vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+                        for (auto i : vertices.entries)
+                        {
+                            auto& loaded = appState.Scene.aliasColoredLights.loaded[i];
+                            SetAliasTransformPushConstants(loaded, pushConstants);
+                            pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+                            vkCmdPushConstants(commandBuffer, appState.Scene.aliasColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
+                            vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+                        }
+                    }
+                }
+            }
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
@@ -3489,62 +3451,40 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.aliasAlpha.sorted.count; t++)
+			for (auto c = 0; c < appState.Scene.aliasAlpha.sorted.count; c++)
 			{
-				auto& texture = appState.Scene.aliasAlpha.sorted.textures[t];
-				for (auto i : texture.entries)
+				auto& colormap = appState.Scene.aliasAlpha.sorted.colormaps[c];
+				if (colormap.colormap == nullptr)
 				{
-					auto& loaded = appState.Scene.aliasAlpha.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
+				}
+				else
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 1, 1, &colormap.colormap, 0, nullptr);
+				}
+				for (auto ix = 0; ix < colormap.count; ix++)
+				{
+					auto& indices = colormap.indices[ix];
+					vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+					for (auto t = 0; t < indices.count; t++)
 					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.aliasAlpha.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
-					if (loaded.isHostColormap)
-					{
-						if (previousColormapDescriptorSet != hostColormapResources.descriptorSet)
+						auto& texture = indices.textures[t];
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+						for (auto v = 0; v < texture.count; v++)
 						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = hostColormapResources.descriptorSet;
+							auto vertices = texture.vertices[v];
+							vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+							vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+							for (auto i : vertices.entries)
+							{
+								auto& loaded = appState.Scene.aliasAlpha.loaded[i];
+								SetAliasTransformPushConstants(loaded, pushConstants);
+								pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+								vkCmdPushConstants(commandBuffer, appState.Scene.aliasAlpha.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
+								vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+							}
 						}
 					}
-					else
-					{
-						auto colormap = loaded.colormap.texture;
-						if (previousColormapDescriptorSet != colormap->descriptorSet)
-						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &colormap->descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = colormap->descriptorSet;
-						}
-					}
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
 				}
 			}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -3561,62 +3501,40 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.aliasHoley.sorted.count; t++)
+			for (auto c = 0; c < appState.Scene.aliasHoley.sorted.count; c++)
 			{
-				auto& texture = appState.Scene.aliasHoley.sorted.textures[t];
-				for (auto i : texture.entries)
+				auto& colormap = appState.Scene.aliasHoley.sorted.colormaps[c];
+				if (colormap.colormap == nullptr)
 				{
-					auto& loaded = appState.Scene.aliasHoley.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
+				}
+				else
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipelineLayout, 1, 1, &colormap.colormap, 0, nullptr);
+				}
+				for (auto ix = 0; ix < colormap.count; ix++)
+				{
+					auto& indices = colormap.indices[ix];
+					vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+					for (auto t = 0; t < indices.count; t++)
 					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoley.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
-					if (loaded.isHostColormap)
-					{
-						if (previousColormapDescriptorSet != hostColormapResources.descriptorSet)
+						auto& texture = indices.textures[t];
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+						for (auto v = 0; v < texture.count; v++)
 						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = hostColormapResources.descriptorSet;
+							auto vertices = texture.vertices[v];
+							vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+							vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+							for (auto i : vertices.entries)
+							{
+								auto& loaded = appState.Scene.aliasHoley.loaded[i];
+								SetAliasTransformPushConstants(loaded, pushConstants);
+								pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+								vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoley.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
+								vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+							}
 						}
 					}
-					else
-					{
-						auto colormap = loaded.colormap.texture;
-						if (previousColormapDescriptorSet != colormap->descriptorSet)
-						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &colormap->descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = colormap->descriptorSet;
-						}
-					}
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
 				}
 			}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -3633,62 +3551,40 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.aliasHoleyAlpha.sorted.count; t++)
+			for (auto c = 0; c < appState.Scene.aliasHoleyAlpha.sorted.count; c++)
 			{
-				auto& texture = appState.Scene.aliasHoleyAlpha.sorted.textures[t];
-				for (auto i : texture.entries)
+				auto& colormap = appState.Scene.aliasHoleyAlpha.sorted.colormaps[c];
+				if (colormap.colormap == nullptr)
 				{
-					auto& loaded = appState.Scene.aliasHoleyAlpha.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
+				}
+				else
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 1, 1, &colormap.colormap, 0, nullptr);
+				}
+				for (auto ix = 0; ix < colormap.count; ix++)
+				{
+					auto& indices = colormap.indices[ix];
+					vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+					for (auto t = 0; t < indices.count; t++)
 					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyAlpha.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
-					if (loaded.isHostColormap)
-					{
-						if (previousColormapDescriptorSet != hostColormapResources.descriptorSet)
+						auto& texture = indices.textures[t];
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+						for (auto v = 0; v < texture.count; v++)
 						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = hostColormapResources.descriptorSet;
+							auto vertices = texture.vertices[v];
+							vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+							vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+							for (auto i : vertices.entries)
+							{
+								auto& loaded = appState.Scene.aliasHoleyAlpha.loaded[i];
+								SetAliasTransformPushConstants(loaded, pushConstants);
+								pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+								vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyAlpha.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
+								vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+							}
 						}
 					}
-					else
-					{
-						auto colormap = loaded.colormap.texture;
-						if (previousColormapDescriptorSet != colormap->descriptorSet)
-						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &colormap->descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = colormap->descriptorSet;
-						}
-					}
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
 				}
 			}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -3706,46 +3602,30 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.aliasAlphaColoredLights.sorted.count; t++)
-			{
-				auto& texture = appState.Scene.aliasAlphaColoredLights.sorted.textures[t];
-				for (auto i : texture.entries)
-				{
-					auto& loaded = appState.Scene.aliasAlphaColoredLights.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.aliasAlphaColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlphaColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
-				}
-			}
+            for (auto ix = 0; ix < appState.Scene.aliasAlphaColoredLights.sorted.count; ix++)
+            {
+                auto& indices = appState.Scene.aliasAlphaColoredLights.sorted.indices[ix];
+                vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+                for (auto t = 0; t < indices.count; t++)
+                {
+                    auto& texture = indices.textures[t];
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlphaColoredLights.pipelineLayout, 1, 1, &texture.texture, 0, nullptr);
+                    for (auto v = 0; v < texture.count; v++)
+                    {
+                        auto vertices = texture.vertices[v];
+                        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+                        vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+                        for (auto i : vertices.entries)
+                        {
+                            auto& loaded = appState.Scene.aliasAlphaColoredLights.loaded[i];
+                            SetAliasTransformPushConstants(loaded, pushConstants);
+                            pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+                            vkCmdPushConstants(commandBuffer, appState.Scene.aliasAlphaColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
+                            vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+                        }
+                    }
+                }
+            }
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
@@ -3761,46 +3641,30 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.aliasHoleyColoredLights.sorted.count; t++)
-			{
-				auto& texture = appState.Scene.aliasHoleyColoredLights.sorted.textures[t];
-				for (auto i : texture.entries)
-				{
-					auto& loaded = appState.Scene.aliasHoleyColoredLights.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
-				}
-			}
+            for (auto ix = 0; ix < appState.Scene.aliasHoleyColoredLights.sorted.count; ix++)
+            {
+                auto& indices = appState.Scene.aliasHoleyColoredLights.sorted.indices[ix];
+                vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+                for (auto t = 0; t < indices.count; t++)
+                {
+                    auto& texture = indices.textures[t];
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyColoredLights.pipelineLayout, 1, 1, &texture.texture, 0, nullptr);
+                    for (auto v = 0; v < texture.count; v++)
+                    {
+                        auto vertices = texture.vertices[v];
+                        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+                        vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+                        for (auto i : vertices.entries)
+                        {
+                            auto& loaded = appState.Scene.aliasHoleyColoredLights.loaded[i];
+                            SetAliasTransformPushConstants(loaded, pushConstants);
+                            pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+                            vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
+                            vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+                        }
+                    }
+                }
+            }
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
@@ -3816,46 +3680,30 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.aliasHoleyAlphaColoredLights.sorted.count; t++)
-			{
-				auto& texture = appState.Scene.aliasHoleyAlphaColoredLights.sorted.textures[t];
-				for (auto i : texture.entries)
-				{
-					auto& loaded = appState.Scene.aliasHoleyAlphaColoredLights.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
-				}
-			}
+            for (auto ix = 0; ix < appState.Scene.aliasHoleyAlphaColoredLights.sorted.count; ix++)
+            {
+                auto& indices = appState.Scene.aliasHoleyAlphaColoredLights.sorted.indices[ix];
+                vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+                for (auto t = 0; t < indices.count; t++)
+                {
+                    auto& texture = indices.textures[t];
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, 1, 1, &texture.texture, 0, nullptr);
+                    for (auto v = 0; v < texture.count; v++)
+                    {
+                        auto vertices = texture.vertices[v];
+                        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+                        vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+                        for (auto i : vertices.entries)
+                        {
+                            auto& loaded = appState.Scene.aliasHoleyAlphaColoredLights.loaded[i];
+                            SetAliasTransformPushConstants(loaded, pushConstants);
+                            pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+                            vkCmdPushConstants(commandBuffer, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
+                            vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+                        }
+                    }
+                }
+            }
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
@@ -3870,62 +3718,40 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.viewmodels.sorted.count; t++)
+			for (auto c = 0; c < appState.Scene.viewmodels.sorted.count; c++)
 			{
-				auto& texture = appState.Scene.viewmodels.sorted.textures[t];
-				for (auto i : texture.entries)
+				auto& colormap = appState.Scene.viewmodels.sorted.colormaps[c];
+				if (colormap.colormap == nullptr)
 				{
-					auto& loaded = appState.Scene.viewmodels.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
+				}
+				else
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipelineLayout, 1, 1, &colormap.colormap, 0, nullptr);
+				}
+				for (auto ix = 0; ix < colormap.count; ix++)
+				{
+					auto& indices = colormap.indices[ix];
+					vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+					for (auto t = 0; t < indices.count; t++)
 					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.viewmodels.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
-					if (loaded.isHostColormap)
-					{
-						if (previousColormapDescriptorSet != hostColormapResources.descriptorSet)
+						auto& texture = indices.textures[t];
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+						for (auto v = 0; v < texture.count; v++)
 						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = hostColormapResources.descriptorSet;
+							auto vertices = texture.vertices[v];
+							vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+							vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+							for (auto i : vertices.entries)
+							{
+								auto& loaded = appState.Scene.viewmodels.loaded[i];
+								SetAliasTransformPushConstants(loaded, pushConstants);
+								pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+								vkCmdPushConstants(commandBuffer, appState.Scene.viewmodels.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
+								vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+							}
 						}
 					}
-					else
-					{
-						auto colormap = loaded.colormap.texture;
-						if (previousColormapDescriptorSet != colormap->descriptorSet)
-						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &colormap->descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = colormap->descriptorSet;
-						}
-					}
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
 				}
 			}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -3942,62 +3768,40 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoley.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			VkDescriptorSet previousColormapDescriptorSet = VK_NULL_HANDLE;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.viewmodelsHoley.sorted.count; t++)
+			for (auto c = 0; c < appState.Scene.viewmodelsHoley.sorted.count; c++)
 			{
-				auto& texture = appState.Scene.viewmodelsHoley.sorted.textures[t];
-				for (auto i : texture.entries)
+				auto& colormap = appState.Scene.viewmodelsHoley.sorted.colormaps[c];
+				if (colormap.colormap == nullptr)
 				{
-					auto& loaded = appState.Scene.viewmodelsHoley.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoley.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
+				}
+				else
+				{
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoley.pipelineLayout, 1, 1, &colormap.colormap, 0, nullptr);
+				}
+				for (auto ix = 0; ix < colormap.count; ix++)
+				{
+					auto& indices = colormap.indices[ix];
+					vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+					for (auto t = 0; t < indices.count; t++)
 					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsHoley.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
-					if (loaded.isHostColormap)
-					{
-						if (previousColormapDescriptorSet != hostColormapResources.descriptorSet)
+						auto& texture = indices.textures[t];
+						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoley.pipelineLayout, 2, 1, &texture.texture, 0, nullptr);
+						for (auto v = 0; v < texture.count; v++)
 						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &hostColormapResources.descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = hostColormapResources.descriptorSet;
+							auto vertices = texture.vertices[v];
+							vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+							vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+							for (auto i : vertices.entries)
+							{
+								auto& loaded = appState.Scene.viewmodelsHoley.loaded[i];
+								SetAliasTransformPushConstants(loaded, pushConstants);
+								pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+								vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsHoley.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(AliasPushConstants), &pushConstants);
+								vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+							}
 						}
 					}
-					else
-					{
-						auto colormap = loaded.colormap.texture;
-						if (previousColormapDescriptorSet != colormap->descriptorSet)
-						{
-							vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 1, 1, &colormap->descriptorSet, 0, nullptr);
-							previousColormapDescriptorSet = colormap->descriptorSet;
-						}
-					}
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoley.pipelineLayout, 2, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
 				}
 			}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
@@ -4015,46 +3819,30 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.viewmodelsColoredLights.sorted.count; t++)
-			{
-				auto& texture = appState.Scene.viewmodelsColoredLights.sorted.textures[t];
-				for (auto i : texture.entries)
-				{
-					auto& loaded = appState.Scene.viewmodelsColoredLights.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
-				}
-			}
+            for (auto ix = 0; ix < appState.Scene.viewmodelsColoredLights.sorted.count; ix++)
+            {
+                auto& indices = appState.Scene.viewmodelsColoredLights.sorted.indices[ix];
+                vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+                for (auto t = 0; t < indices.count; t++)
+                {
+                    auto& texture = indices.textures[t];
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsColoredLights.pipelineLayout, 1, 1, &texture.texture, 0, nullptr);
+                    for (auto v = 0; v < texture.count; v++)
+                    {
+                        auto vertices = texture.vertices[v];
+                        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+                        vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+                        for (auto i : vertices.entries)
+                        {
+                            auto& loaded = appState.Scene.viewmodelsColoredLights.loaded[i];
+                            SetAliasTransformPushConstants(loaded, pushConstants);
+                            pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+                            vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
+                            vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+                        }
+                    }
+                }
+            }
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
@@ -4070,46 +3858,30 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
-			Buffer* previousVertices = nullptr;
-			Buffer* previousTexCoords = nullptr;
-			SharedMemoryTexture* previousTexture = nullptr;
-			Buffer* previousIndices = nullptr;
-			for (auto t = 0; t < appState.Scene.viewmodelsHoleyColoredLights.sorted.count; t++)
-			{
-				auto& texture = appState.Scene.viewmodelsHoleyColoredLights.sorted.textures[t];
-				for (auto i : texture.entries)
-				{
-					auto& loaded = appState.Scene.viewmodelsHoleyColoredLights.loaded[i];
-					auto vertices = loaded.vertices.buffer;
-					if (previousVertices != vertices)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices->buffer, &appState.NoOffset);
-						previousVertices = vertices;
-					}
-					auto texCoords = loaded.texCoords.buffer;
-					if (previousTexCoords != texCoords)
-					{
-						vkCmdBindVertexBuffers(commandBuffer, 1, 1, &texCoords->buffer, &appState.NoOffset);
-						previousTexCoords = texCoords;
-					}
-					SetAliasTransformPushConstants(loaded, pushConstants);
-					pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
-					vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsHoleyColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
-					auto texture = loaded.texture.texture;
-					if (previousTexture != texture)
-					{
-						vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoleyColoredLights.pipelineLayout, 1, 1, &texture->descriptorSet, 0, nullptr);
-						previousTexture = texture;
-					}
-					auto indices = loaded.indices.indices.buffer;
-					if (previousIndices != indices)
-					{
-						vkCmdBindIndexBuffer(commandBuffer, indices->buffer, 0, loaded.indices.indices.indexType);
-						previousIndices = indices;
-					}
-					vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
-				}
-			}
+            for (auto ix = 0; ix < appState.Scene.viewmodelsHoleyColoredLights.sorted.count; ix++)
+            {
+                auto& indices = appState.Scene.viewmodelsHoleyColoredLights.sorted.indices[ix];
+                vkCmdBindIndexBuffer(commandBuffer, indices.indices, 0, indices.indexType);
+                for (auto t = 0; t < indices.count; t++)
+                {
+                    auto& texture = indices.textures[t];
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoleyColoredLights.pipelineLayout, 1, 1, &texture.texture, 0, nullptr);
+                    for (auto v = 0; v < texture.count; v++)
+                    {
+                        auto vertices = texture.vertices[v];
+                        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.vertices, &appState.NoOffset);
+                        vkCmdBindVertexBuffers(commandBuffer, 1, 1, &vertices.texCoords, &appState.NoOffset);
+                        for (auto i : vertices.entries)
+                        {
+                            auto& loaded = appState.Scene.viewmodelsHoleyColoredLights.loaded[i];
+                            SetAliasTransformPushConstants(loaded, pushConstants);
+                            pushConstants.index = aliasAttributeBase + loaded.firstAttribute;
+                            vkCmdPushConstants(commandBuffer, appState.Scene.viewmodelsHoleyColoredLights.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(AliasColoredLightsPushConstants), &pushConstants);
+                            vkCmdDrawIndexed(commandBuffer, loaded.count, 1, loaded.indices.indices.firstIndex, 0, 0);
+                        }
+                    }
+                }
+            }
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif

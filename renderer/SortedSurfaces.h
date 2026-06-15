@@ -5,28 +5,31 @@
 #include "SortedSurfaceTexturesWithLightmaps.h"
 #include "SortedSurfaceTexturePairsWithLightmaps.h"
 #include "SortedSurfaceTextures.h"
-#include "SortedAliasTextures.h"
+#include "SortedAliasColormaps.h"
+#include "SortedAliasIndices.h"
 #include "LoadedSurfaceRotatedColoredLights.h"
 #include "LoadedSurfaceRotated.h"
 #include "LoadedSurfaceRotated2Textures.h"
 #include "LoadedSurfaceRotated2TexturesColoredLights.h"
 #include "LoadedTurbulentRotated.h"
 #include "LoadedSprite.h"
-#include "LoadedAliasColoredLights.h"
+#include "LoadedAlias.h"
 
 struct SortedSurfaces
 {
     static void Initialize(SortedSurfaceTexturesWithLightmaps& sorted);
     static void Initialize(SortedSurfaceTexturePairsWithLightmaps& sorted);
     static void Initialize(SortedSurfaceTextures& sorted);
-	static void Initialize(SortedAliasTextures& sorted);
+	static void Initialize(SortedAliasColormaps& sorted);
+	static void Initialize(SortedAliasIndices& sorted);
     static void Sort(AppState& appState, LoadedSurface& loaded, int index, SortedSurfaceTexturesWithLightmaps& sorted);
     static void Sort(AppState& appState, LoadedSurfaceColoredLights& loaded, int index, SortedSurfaceTexturesWithLightmaps& sorted);
     static void Sort(AppState& appState, LoadedSurface2Textures& loaded, int index, SortedSurfaceTexturePairsWithLightmaps& sorted);
     static void Sort(AppState& appState, LoadedSurface2TexturesColoredLights& loaded, int index, SortedSurfaceTexturePairsWithLightmaps& sorted);
     static void Sort(AppState& appState, LoadedTurbulent& loaded, int index, SortedSurfaceTextures& sorted);
 	static void Sort(AppState& appState, LoadedSprite& loaded, int index, SortedSurfaceTextures& sorted);
-	static void Sort(AppState& appState, LoadedAliasColoredLights& loaded, int index, SortedAliasTextures& sorted);
+	static void Sort(AppState& appState, LoadedAlias& loaded, int index, SortedAliasColormaps& sorted);
+	static void Sort(AppState& appState, LoadedAliasColoredLights& loaded, int index, SortedAliasIndices& sorted);
     static float* CopyVertices(LoadedTurbulent& loaded, float attribute, float* target);
 	static void LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset);

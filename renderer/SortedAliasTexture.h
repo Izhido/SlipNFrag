@@ -1,8 +1,11 @@
 #pragma once
 
-#include <vector>
+#include "SortedAliasVertices.h"
 
 struct SortedAliasTexture
 {
-	std::vector<int> entries;
+	VkDescriptorSet texture;
+	int count;
+	std::vector<SortedAliasVertices> vertices;
+	std::unordered_map<VkBuffer, int> added;
 };

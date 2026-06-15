@@ -20,7 +20,13 @@ void SortedSurfaces::Initialize(SortedSurfaceTextures& sorted)
     sorted.added.clear();
 }
 
-void SortedSurfaces::Initialize(SortedAliasTextures& sorted)
+void SortedSurfaces::Initialize(SortedAliasColormaps& sorted)
+{
+	sorted.count = 0;
+	sorted.added.clear();
+}
+
+void SortedSurfaces::Initialize(SortedAliasIndices& sorted)
 {
 	sorted.count = 0;
 	sorted.added.clear();
@@ -292,27 +298,140 @@ void SortedSurfaces::Sort(AppState& appState, LoadedSprite& loaded, int index, S
 	}
 }
 
-void SortedSurfaces::Sort(AppState& appState, LoadedAliasColoredLights& loaded, int index, SortedAliasTextures& sorted)
+void SortedSurfaces::Sort(AppState& appState, LoadedAlias& loaded, int index, SortedAliasColormaps& sorted)
 {
-	auto texture = loaded.texture.texture->descriptorSet;
-	auto entry = sorted.added.find(texture);
-	if (entry == sorted.added.end())
+	VkDescriptorSet colormap;
+	if (loaded.colormap.texture == nullptr)
 	{
-		if (sorted.count >= sorted.textures.size())
-		{
-			sorted.textures.resize(sorted.textures.size() + Constants::sortedSurfaceElementIncrement);
-		}
-		auto& sortedTexture = sorted.textures[sorted.count];
-		sortedTexture.entries.clear();
-		sortedTexture.entries.push_back(index);
-		sorted.added.insert({ texture, sorted.count });
-		sorted.count++;
+		colormap = VK_NULL_HANDLE;
 	}
 	else
 	{
-		auto& sortedTexture = sorted.textures[entry->second];
-		sortedTexture.entries.push_back(index);
+		colormap = loaded.colormap.texture->descriptorSet;
 	}
+	auto indices = loaded.indices.indices.buffer->buffer;
+	auto texture = loaded.texture.texture->descriptorSet;
+	auto vertices = loaded.vertices.buffer->buffer;
+	auto texCoords = loaded.texCoords.buffer->buffer;
+
+	auto colormapEntry = sorted.added.find(colormap);
+	if (colormapEntry == sorted.added.end())
+	{
+		if (sorted.count >= sorted.colormaps.size())
+		{
+			sorted.colormaps.resize(sorted.colormaps.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedColormap = sorted.colormaps[sorted.count];
+		sortedColormap.colormap = colormap;
+		sortedColormap.count = 0;
+		sortedColormap.added.clear();
+		colormapEntry = sorted.added.insert({ colormap, sorted.count++ }).first;
+	}
+	auto& sortedColormap = sorted.colormaps[colormapEntry->second];
+
+	auto indicesEntry = sortedColormap.added.find(indices);
+	if (indicesEntry == sortedColormap.added.end())
+	{
+		if (sortedColormap.count >= sortedColormap.indices.size())
+		{
+			sortedColormap.indices.resize(sortedColormap.indices.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedIndices = sortedColormap.indices[sortedColormap.count];
+		sortedIndices.indices = indices;
+		sortedIndices.indexType = loaded.indices.indices.indexType;
+		sortedIndices.count = 0;
+		sortedIndices.added.clear();
+		indicesEntry = sortedColormap.added.insert({ indices, sortedColormap.count++ }).first;
+	}
+	auto& sortedIndices = sortedColormap.indices[indicesEntry->second];
+
+	auto textureEntry = sortedIndices.added.find(texture);
+	if (textureEntry == sortedIndices.added.end())
+	{
+		if (sortedIndices.count >= sortedIndices.textures.size())
+		{
+			sortedIndices.textures.resize(sortedIndices.textures.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedTexture = sortedIndices.textures[sortedIndices.count];
+		sortedTexture.texture = texture;
+		sortedTexture.count = 0;
+		sortedTexture.added.clear();
+		textureEntry = sortedIndices.added.insert({ texture, sortedIndices.count++ }).first;
+	}
+	auto& sortedTexture = sortedIndices.textures[textureEntry->second];
+
+	auto verticesEntry = sortedTexture.added.find(vertices);
+	if (verticesEntry == sortedTexture.added.end())
+	{
+		if (sortedTexture.count >= sortedTexture.vertices.size())
+		{
+			sortedTexture.vertices.resize(sortedTexture.vertices.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedVertices = sortedTexture.vertices[sortedTexture.count];
+		sortedVertices.vertices = vertices;
+		sortedVertices.texCoords = texCoords;
+		sortedVertices.entries.clear();
+		verticesEntry = sortedTexture.added.insert({ vertices, sortedTexture.count++ }).first;
+	}
+	auto& sortedVertices = sortedTexture.vertices[verticesEntry->second];
+
+	sortedVertices.entries.push_back(index);
+}
+
+void SortedSurfaces::Sort(AppState& appState, LoadedAliasColoredLights& loaded, int index, SortedAliasIndices& sorted)
+{
+	auto indices = loaded.indices.indices.buffer->buffer;
+	auto texture = loaded.texture.texture->descriptorSet;
+	auto vertices = loaded.vertices.buffer->buffer;
+	auto texCoords = loaded.texCoords.buffer->buffer;
+
+	auto indicesEntry = sorted.added.find(indices);
+	if (indicesEntry == sorted.added.end())
+	{
+		if (sorted.count >= sorted.indices.size())
+		{
+			sorted.indices.resize(sorted.indices.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedIndices = sorted.indices[sorted.count];
+		sortedIndices.indices = indices;
+		sortedIndices.indexType = loaded.indices.indices.indexType;
+		sortedIndices.count = 0;
+		sortedIndices.added.clear();
+		indicesEntry = sorted.added.insert({ indices, sorted.count++ }).first;
+	}
+	auto& sortedIndices = sorted.indices[indicesEntry->second];
+
+	auto textureEntry = sortedIndices.added.find(texture);
+	if (textureEntry == sortedIndices.added.end())
+	{
+		if (sortedIndices.count >= sortedIndices.textures.size())
+		{
+			sortedIndices.textures.resize(sortedIndices.textures.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedTexture = sortedIndices.textures[sortedIndices.count];
+		sortedTexture.texture = texture;
+		sortedTexture.count = 0;
+		sortedTexture.added.clear();
+		textureEntry = sortedIndices.added.insert({ texture, sortedIndices.count++ }).first;
+	}
+	auto& sortedTexture = sortedIndices.textures[textureEntry->second];
+
+	auto verticesEntry = sortedTexture.added.find(vertices);
+	if (verticesEntry == sortedTexture.added.end())
+	{
+		if (sortedTexture.count >= sortedTexture.vertices.size())
+		{
+			sortedTexture.vertices.resize(sortedTexture.vertices.size() + Constants::sortedSurfaceElementIncrement);
+		}
+		auto& sortedVertices = sortedTexture.vertices[sortedTexture.count];
+		sortedVertices.vertices = vertices;
+		sortedVertices.texCoords = texCoords;
+		sortedVertices.entries.clear();
+		verticesEntry = sortedTexture.added.insert({ vertices, sortedTexture.count++ }).first;
+	}
+	auto& sortedVertices = sortedTexture.vertices[verticesEntry->second];
+
+	sortedVertices.entries.push_back(index);
 }
 
 float* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, float attributeIndex, float* target)
