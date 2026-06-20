@@ -1909,7 +1909,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 		vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 		hostColormapResources.created = true;
 	}
-	if (!sceneMatricesResources.created || !sceneMatricesAndPaletteResources.created || (!sceneMatricesPaletteAndAttributeResources.created && sortedAttributes != nullptr) || !sceneMatricesAndNeutralPaletteResources.created || (!sceneMatricesNeutralPaletteAndAttributeResources.created && sortedAttributes != nullptr) || (!sceneMatricesAndColormapResources.created && appState.Scene.hostColormap.image != VK_NULL_HANDLE))
+	if (!sceneMatricesResources.created || !sceneMatricesAndPaletteResources.created || (!aliasResources.created && sortedAttributes != nullptr) || !sceneMatricesAndNeutralPaletteResources.created || (!aliasNeutralPaletteResources.created && sortedAttributes != nullptr) || (!sceneMatricesAndColormapResources.created && appState.Scene.hostColormap.image != VK_NULL_HANDLE))
 	{
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		poolSizes[0].descriptorCount = 1;
@@ -1928,13 +1928,13 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 			sceneMatricesResources.created = true;
 		}
-		if (!sceneMatricesAndPaletteResources.created || (!sceneMatricesPaletteAndAttributeResources.created && sortedAttributes != nullptr) || !sceneMatricesAndNeutralPaletteResources.created || (!sceneMatricesNeutralPaletteAndAttributeResources.created && sortedAttributes != nullptr) || (!sceneMatricesAndColormapResources.created && appState.Scene.hostColormap.image != VK_NULL_HANDLE))
+		if (!sceneMatricesAndPaletteResources.created || (!aliasResources.created && sortedAttributes != nullptr) || !sceneMatricesAndNeutralPaletteResources.created || (!aliasNeutralPaletteResources.created && sortedAttributes != nullptr) || (!sceneMatricesAndColormapResources.created && appState.Scene.hostColormap.image != VK_NULL_HANDLE))
 		{
 			poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			poolSizes[1].descriptorCount = 1;
 			writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			writes[1].pBufferInfo = bufferInfo + 1;
-			if (!sceneMatricesAndPaletteResources.created || (!sceneMatricesPaletteAndAttributeResources.created && sortedAttributes != nullptr))
+			if (!sceneMatricesAndPaletteResources.created || (!aliasResources.created && sortedAttributes != nullptr))
 			{
 				bufferInfo[1].buffer = appState.Scene.paletteBuffers[swapchainImageIndex].buffer;
 				bufferInfo[1].range = appState.Scene.paletteBufferSize;
@@ -1950,7 +1950,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					vkUpdateDescriptorSets(appState.Device, 2, writes, 0, nullptr);
 					sceneMatricesAndPaletteResources.created = true;
 				}
-				if (!sceneMatricesPaletteAndAttributeResources.created && sortedAttributes != nullptr)
+				if (!aliasResources.created && sortedAttributes != nullptr)
 				{
 					poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 					poolSizes[2].descriptorCount = 1;
@@ -1959,18 +1959,18 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					writes[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 					writes[2].pBufferInfo = bufferInfo + 2;
 					descriptorPoolCreateInfo.poolSizeCount = 3;
-					CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesPaletteAndAttributeResources.descriptorPool));
-					descriptorSetAllocateInfo.descriptorPool = sceneMatricesPaletteAndAttributeResources.descriptorPool;
+					CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &aliasResources.descriptorPool));
+					descriptorSetAllocateInfo.descriptorPool = aliasResources.descriptorPool;
 					descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.twoBuffersAndStorageBufferLayout;
-					CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &sceneMatricesPaletteAndAttributeResources.descriptorSet));
-					writes[0].dstSet = sceneMatricesPaletteAndAttributeResources.descriptorSet;
-					writes[1].dstSet = sceneMatricesPaletteAndAttributeResources.descriptorSet;
-					writes[2].dstSet = sceneMatricesPaletteAndAttributeResources.descriptorSet;
+					CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &aliasResources.descriptorSet));
+					writes[0].dstSet = aliasResources.descriptorSet;
+					writes[1].dstSet = aliasResources.descriptorSet;
+					writes[2].dstSet = aliasResources.descriptorSet;
 					vkUpdateDescriptorSets(appState.Device, 3, writes, 0, nullptr);
-					sceneMatricesPaletteAndAttributeResources.created = true;
+					aliasResources.created = true;
 				}
 			}
-			if (!sceneMatricesAndNeutralPaletteResources.created || (!sceneMatricesNeutralPaletteAndAttributeResources.created && sortedAttributes != nullptr))
+			if (!sceneMatricesAndNeutralPaletteResources.created || (!aliasNeutralPaletteResources.created && sortedAttributes != nullptr))
 			{
 				bufferInfo[1].buffer = appState.Scene.neutralPaletteBuffers[swapchainImageIndex].buffer;
 				bufferInfo[1].range = appState.Scene.paletteBufferSize;
@@ -1986,7 +1986,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
                     vkUpdateDescriptorSets(appState.Device, 2, writes, 0, nullptr);
                     sceneMatricesAndNeutralPaletteResources.created = true;
 				}
-				if (!sceneMatricesNeutralPaletteAndAttributeResources.created && sortedAttributes != nullptr)
+				if (!aliasNeutralPaletteResources.created && sortedAttributes != nullptr)
 				{
 					poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 					poolSizes[2].descriptorCount = 1;
@@ -1995,15 +1995,15 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 					writes[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 					writes[2].pBufferInfo = bufferInfo + 2;
 					descriptorPoolCreateInfo.poolSizeCount = 3;
-					CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &sceneMatricesNeutralPaletteAndAttributeResources.descriptorPool));
-					descriptorSetAllocateInfo.descriptorPool = sceneMatricesNeutralPaletteAndAttributeResources.descriptorPool;
+					CHECK_VKCMD(vkCreateDescriptorPool(appState.Device, &descriptorPoolCreateInfo, nullptr, &aliasNeutralPaletteResources.descriptorPool));
+					descriptorSetAllocateInfo.descriptorPool = aliasNeutralPaletteResources.descriptorPool;
 					descriptorSetAllocateInfo.pSetLayouts = &appState.Scene.twoBuffersAndStorageBufferLayout;
-					CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet));
-					writes[0].dstSet = sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet;
-					writes[1].dstSet = sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet;
-					writes[2].dstSet = sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet;
+					CHECK_VKCMD(vkAllocateDescriptorSets(appState.Device, &descriptorSetAllocateInfo, &aliasNeutralPaletteResources.descriptorSet));
+					writes[0].dstSet = aliasNeutralPaletteResources.descriptorSet;
+					writes[1].dstSet = aliasNeutralPaletteResources.descriptorSet;
+					writes[2].dstSet = aliasNeutralPaletteResources.descriptorSet;
 					vkUpdateDescriptorSets(appState.Device, 3, writes, 0, nullptr);
-					sceneMatricesNeutralPaletteAndAttributeResources.created = true;
+					aliasNeutralPaletteResources.created = true;
 				}
 			}
 			if (!sceneMatricesAndColormapResources.created && appState.Scene.hostColormap.image != VK_NULL_HANDLE)
@@ -2049,9 +2049,9 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
         writes[0].dstSet = sortedAttributesResources.descriptorSet;
         vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 		writes[0].dstBinding = 2;
-		writes[0].dstSet = sceneMatricesPaletteAndAttributeResources.descriptorSet;
+		writes[0].dstSet = aliasResources.descriptorSet;
         vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
-		writes[0].dstSet = sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet;
+		writes[0].dstSet = aliasNeutralPaletteResources.descriptorSet;
         vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 		writes[0].dstBinding = 0;
         previousSortedAttributes = sortedAttributes;
@@ -2557,7 +2557,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.alias.pipelineLayout, 0, 1, &aliasResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			appState.Scene.alias.Render(commandBuffer, pushConstants, VK_SHADER_STAGE_VERTEX_BIT, hostColormapResources.descriptorSet, aliasAttributeBase);
@@ -2572,7 +2572,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasColoredLights.pipelineLayout, 0, 1, &sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasColoredLights.pipelineLayout, 0, 1, &aliasNeutralPaletteResources.descriptorSet, 0, nullptr);
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
@@ -3374,7 +3374,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlpha.pipelineLayout, 0, 1, &aliasResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			appState.Scene.aliasAlpha.Render(commandBuffer, pushConstants, VK_SHADER_STAGE_VERTEX_BIT, hostColormapResources.descriptorSet, aliasAttributeBase);
@@ -3389,7 +3389,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoley.pipelineLayout, 0, 1, &aliasResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			appState.Scene.aliasHoley.Render(commandBuffer, pushConstants, VK_SHADER_STAGE_VERTEX_BIT, hostColormapResources.descriptorSet, aliasAttributeBase);
@@ -3404,7 +3404,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlpha.pipelineLayout, 0, 1, &aliasResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			appState.Scene.aliasHoleyAlpha.Render(commandBuffer, pushConstants, VK_SHADER_STAGE_VERTEX_BIT, hostColormapResources.descriptorSet, aliasAttributeBase);
@@ -3419,7 +3419,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlphaColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlphaColoredLights.pipelineLayout, 0, 1, &sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasAlphaColoredLights.pipelineLayout, 0, 1, &aliasNeutralPaletteResources.descriptorSet, 0, nullptr);
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
@@ -3435,7 +3435,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyColoredLights.pipelineLayout, 0, 1, &sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyColoredLights.pipelineLayout, 0, 1, &aliasNeutralPaletteResources.descriptorSet, 0, nullptr);
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
@@ -3451,7 +3451,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlphaColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, 0, 1, &sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.aliasHoleyAlphaColoredLights.pipelineLayout, 0, 1, &aliasNeutralPaletteResources.descriptorSet, 0, nullptr);
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
@@ -3467,7 +3467,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodels.pipelineLayout, 0, 1, &aliasResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			appState.Scene.viewmodels.Render(commandBuffer, pushConstants, VK_SHADER_STAGE_VERTEX_BIT, hostColormapResources.descriptorSet, aliasAttributeBase);
@@ -3482,7 +3482,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoley.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoley.pipelineLayout, 0, 1, &sceneMatricesPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoley.pipelineLayout, 0, 1, &aliasResources.descriptorSet, 0, nullptr);
 			AliasPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			appState.Scene.viewmodelsHoley.Render(commandBuffer, pushConstants, VK_SHADER_STAGE_VERTEX_BIT, hostColormapResources.descriptorSet, aliasAttributeBase);
@@ -3497,7 +3497,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsColoredLights.pipelineLayout, 0, 1, &sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsColoredLights.pipelineLayout, 0, 1, &aliasNeutralPaletteResources.descriptorSet, 0, nullptr);
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
@@ -3513,7 +3513,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &renderLabel);
 #endif
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoleyColoredLights.pipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoleyColoredLights.pipelineLayout, 0, 1, &sceneMatricesNeutralPaletteAndAttributeResources.descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, appState.Scene.viewmodelsHoleyColoredLights.pipelineLayout, 0, 1, &aliasNeutralPaletteResources.descriptorSet, 0, nullptr);
 			AliasColoredLightsPushConstants pushConstants { };
 			pushConstants.pushConstants[15] = 1;
 			SetTintPushConstants(appState, pushConstants);
@@ -3719,9 +3719,9 @@ void PerFrame::Destroy(AppState& appState)
 	floorResources.Delete(appState);
 	sortedAttributesResources.Delete(appState);
 	sceneMatricesAndColormapResources.Delete(appState);
-	sceneMatricesNeutralPaletteAndAttributeResources.Delete(appState);
+	aliasNeutralPaletteResources.Delete(appState);
 	sceneMatricesAndNeutralPaletteResources.Delete(appState);
-	sceneMatricesPaletteAndAttributeResources.Delete(appState);
+	aliasResources.Delete(appState);
 	sceneMatricesAndPaletteResources.Delete(appState);
 	sceneMatricesResources.Delete(appState);
 	hostColormapResources.Delete(appState);

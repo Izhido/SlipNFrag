@@ -52,9 +52,9 @@ struct PerFrame
 	DescriptorResources hostColormapResources;
 	DescriptorResources sceneMatricesResources;
 	DescriptorResources sceneMatricesAndPaletteResources;
-	DescriptorResources sceneMatricesPaletteAndAttributeResources;
+	DescriptorResources aliasResources;
 	DescriptorResources sceneMatricesAndNeutralPaletteResources;
-	DescriptorResources sceneMatricesNeutralPaletteAndAttributeResources;
+	DescriptorResources aliasNeutralPaletteResources;
 	DescriptorResources sceneMatricesAndColormapResources;
     DescriptorResources sortedAttributesResources;
 	DescriptorResources floorResources;
