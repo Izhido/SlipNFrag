@@ -17,15 +17,15 @@ layout(set = 1, binding = 0) readonly buffer TextureData
 	vec4 textureData[];
 };
 
-layout(location = 0) in vec4 vertexPosition;
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in uint attributeIndex;
 layout(location = 0) out vec2 fragmentTexCoords;
 layout(location = 1) out flat int fragmentTextureIndex;
 
 void main(void)
 {
-	vec4 position = vec4(vertexPosition.xyz, 1);
+	vec4 position = vec4(vertexPosition, 1);
 	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * position;
-	int attributeIndex = int(vertexPosition.w);
 	vec4 vecs0 = textureData[attributeIndex];
 	vec4 vecs1 = textureData[attributeIndex + 1];
 	vec4 sizesAndIndices = textureData[attributeIndex + 2];

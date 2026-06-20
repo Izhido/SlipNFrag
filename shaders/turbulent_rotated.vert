@@ -17,14 +17,14 @@ layout(set = 1, binding = 0) readonly buffer TextureData
 	vec4 textureData[];
 };
 
-layout(location = 0) in vec4 vertexPosition;
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in uint attributeIndex;
 layout(location = 0) out vec2 fragmentTexCoords;
 layout(location = 1) out flat ivec2 fragmentFlat;
 
 void main(void)
 {
-	vec4 position = vec4(vertexPosition.xyz, 1);
-	int attributeIndex = int(vertexPosition.w);
+	vec4 position = vec4(vertexPosition, 1);
 	vec4 origin = textureData[attributeIndex];
 	vec4 angles = textureData[attributeIndex + 1];
 	mat4 translation = mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, origin.x, origin.y, origin.z, origin.w);

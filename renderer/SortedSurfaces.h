@@ -14,6 +14,7 @@
 #include "LoadedTurbulentRotated.h"
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
+#include "Vertex.h"
 
 struct SortedSurfaces
 {
@@ -30,7 +31,7 @@ struct SortedSurfaces
 	static void Sort(AppState& appState, LoadedSprite& loaded, int index, SortedSurfaceTextures& sorted);
 	static void Sort(AppState& appState, LoadedAlias& loaded, int index, SortedAliasColormaps& sorted);
 	static void Sort(AppState& appState, LoadedAliasColoredLights& loaded, int index, SortedAliasIndices& sorted);
-    static float* CopyVertices(LoadedTurbulent& loaded, float attribute, float* target);
+    static Vertex* CopyVertices(LoadedTurbulent& loaded, uint32_t attribute, Vertex* target);
 	static void LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadVertices(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset);
 	static void LoadVertices(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2Textures>& loaded, uint32_t& attributeIndex, Buffer* stagingBuffer, VkDeviceSize& offset);

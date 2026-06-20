@@ -579,9 +579,12 @@ void Scene::Create(AppState& appState)
     triangleStrip.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
     PipelineAttributes surfaceAttributes { };
-    surfaceAttributes.vertexAttributes.resize(1);
+    surfaceAttributes.vertexAttributes.resize(2);
     surfaceAttributes.vertexBindings.resize(1);
-    surfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    surfaceAttributes.vertexAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    surfaceAttributes.vertexAttributes[1].location = 1;
+    surfaceAttributes.vertexAttributes[1].format = VK_FORMAT_R32_UINT;
+    surfaceAttributes.vertexAttributes[1].offset = 3 * sizeof(float);
     surfaceAttributes.vertexBindings[0].stride = 4 * sizeof(float);
     surfaceAttributes.vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     surfaceAttributes.vertexInputState.vertexBindingDescriptionCount = surfaceAttributes.vertexBindings.size();
