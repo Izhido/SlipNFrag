@@ -40,9 +40,11 @@ struct PipelineWithSortedAlias : Pipeline
 	}
 
 	template <typename PushConstantsType>
-	void Render(VkCommandBuffer commandBuffer, PushConstantsType& pushConstants, VkShaderStageFlags stageFlags, VkDescriptorSet hostColormap, int attributeBase)
+	void Render(VkCommandBuffer commandBuffer, PushConstantsType& pushConstants, VkDescriptorSet hostColormap, VkDeviceSize attributeBase)
 	{
-		static_assert(std::is_same<Sorted, SortedAliasColormaps>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer, PushConstantsType&, VkShaderStageFlags, VkDescriptorSet, int) is available only for SortedAliasColormaps");
+		static_assert(std::is_same<Sorted, SortedAliasColormaps>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer, PushConstantsType&, VkDescriptorSet, int) is available only for Sorted=SortedAliasColormaps");
+        std::array<VkBuffer, 2> vertexBuffers { };
+        std::array<VkDeviceSize, 2> offsets { 0, 0 };
 		for (auto c = 0; c < sorted.count; c++)
 		{
 			auto& colormap = sorted.colormaps[c];
@@ -65,15 +67,15 @@ struct PipelineWithSortedAlias : Pipeline
 					for (auto v = 0; v < texture.count; v++)
 					{
 						auto& vertices = texture.vertices[v];
-						VkBuffer vertexBuffers[] = { vertices.vertices, vertices.texCoords };
-						VkDeviceSize offsets[] = { 0, 0 };
-						vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
+						vertexBuffers[0] = vertices.vertices;
+                        vertexBuffers[1] = vertices.texCoords;
+						vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers.data(), offsets.data());
 						for (auto i : vertices.entries)
 						{
 							auto& l = loaded[i];
 							SetTransform(l, pushConstants);
-							pushConstants.index = attributeBase + l.firstAttribute;
-							vkCmdPushConstants(commandBuffer, pipelineLayout, stageFlags, 0, sizeof(PushConstantsType), &pushConstants);
+							pushConstants.index = (int)attributeBase + l.firstAttribute;
+							vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantsType), &pushConstants);
 							vkCmdDrawIndexed(commandBuffer, l.count, 1, l.indices.indices.firstIndex, 0, 0);
 						}
 					}
@@ -83,9 +85,11 @@ struct PipelineWithSortedAlias : Pipeline
 	}
 
 	template <typename PushConstantsType>
-	void Render(VkCommandBuffer commandBuffer, PushConstantsType& pushConstants, VkShaderStageFlags stageFlags, int attributeBase)
+	void Render(VkCommandBuffer commandBuffer, PushConstantsType& pushConstants, VkDeviceSize attributeBase)
 	{
-		static_assert(std::is_same<Sorted, SortedAliasIndices>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer, PushConstantsType&, VkShaderStageFlags, int) is available only for SortedAliasIndices");
+		static_assert(std::is_same<Sorted, SortedAliasIndices>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer, PushConstantsType&, int) is available only for Sorted=SortedAliasIndices");
+        std::array<VkBuffer, 2> vertexBuffers { };
+        std::array<VkDeviceSize, 2> offsets { 0, 0 };
 		for (auto ix = 0; ix < sorted.count; ix++)
 		{
 			auto& indices = sorted.indices[ix];
@@ -97,15 +101,15 @@ struct PipelineWithSortedAlias : Pipeline
 				for (auto v = 0; v < texture.count; v++)
 				{
 					auto& vertices = texture.vertices[v];
-					VkBuffer vertexBuffers[] = { vertices.vertices, vertices.texCoords };
-					VkDeviceSize offsets[] = { 0, 0 };
-					vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
+                    vertexBuffers[0] = vertices.vertices;
+                    vertexBuffers[1] = vertices.texCoords;
+					vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers.data(), offsets.data());
 					for (auto i : vertices.entries)
 					{
 						auto& l = loaded[i];
 						SetTransform(l, pushConstants);
-						pushConstants.index = attributeBase + l.firstAttribute;
-						vkCmdPushConstants(commandBuffer, pipelineLayout, stageFlags, 0, sizeof(PushConstantsType), &pushConstants);
+						pushConstants.index = (int)attributeBase + l.firstAttribute;
+						vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstantsType), &pushConstants);
 						vkCmdDrawIndexed(commandBuffer, l.count, 1, l.indices.indices.firstIndex, 0, 0);
 					}
 				}
