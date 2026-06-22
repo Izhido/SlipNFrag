@@ -73,7 +73,7 @@ struct PerFrame
 	VkDeviceSize statusBarAttributeBase;
 	VkDeviceSize skyAttributeBase;
 	VkDeviceSize skyboxAttributeBase;
-	VkDeviceSize aliasAttributeBase;
+	VkDeviceSize aliasLightBase;
 	VkDeviceSize controllersIndexBase;
 	VkDeviceSize handsIndexBase;
 	VkDeviceSize statusBarIndexBase;

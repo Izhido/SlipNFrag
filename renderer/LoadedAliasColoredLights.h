@@ -10,7 +10,7 @@ struct LoadedAliasColoredLights
 	LoadedTexCoordsBuffer texCoords;
 	LoadedIndexBuffer indices;
 	LoadedSharedMemoryTexture texture;
-	int firstAttribute;
+	int firstLight;
 	uint32_t count;
 	float transform[3][4];
 };

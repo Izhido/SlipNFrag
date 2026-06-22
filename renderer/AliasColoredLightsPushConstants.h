@@ -5,5 +5,5 @@
 struct AliasColoredLightsPushConstants : PushConstants
 {
     float tint[5];
-    int index;
+    int lightIndex;
 };

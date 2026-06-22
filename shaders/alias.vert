@@ -17,7 +17,7 @@ layout(set = 0, binding = 2) readonly buffer Lighting
 layout(push_constant) uniform Transforms
 {
 	layout(offset = 0) mat4 aliasTransform;
-	layout(offset = 64) int attributeOffset;
+	layout(offset = 64) int lightOffset;
 };
 
 layout(location = 0) in uvec3 vertexPosition;
@@ -29,5 +29,5 @@ void main(void)
 {
 	gl_Position = projectionMatrix[gl_ViewIndex] * viewMatrix[gl_ViewIndex] * vertexTransform * aliasTransform * vec4(vertexPosition, 1);
 	fragmentTexCoords = vertexTexCoords;
-	fragmentLight = lightData[attributeOffset + gl_VertexIndex];
+	fragmentLight = lightData[lightOffset + gl_VertexIndex];
 }

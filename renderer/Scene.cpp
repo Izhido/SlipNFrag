@@ -2662,7 +2662,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
     {
         loaded.indices.indices = entry->second;
     }
-    loaded.firstAttribute = alias.first_attribute;
+    loaded.firstLight = alias.first_light;
     loaded.count = alias.count;
 }
 
@@ -3536,7 +3536,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 		GetStagingBufferSize(appState, d_lists.viewmodels_holey_colored_lights[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, viewmodelsHoleyColoredLights.sorted);
 	}
-	sortedAttributesSize += (d_lists.last_alias_attribute + 1) * sizeof(float);
+	sortedAttributesSize += (d_lists.last_alias_light + 1) * sizeof(float);
 	perFrame.particleBase = sortedVerticesSize;
 	if (lastParticle >= 0)
 	{
@@ -3755,7 +3755,6 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	{
 		skyboxAttributesSize += 6 * 4 * 3 * sizeof(float);
 	}
-	aliasAttributesSize = (d_lists.last_alias_attribute + 1) * sizeof(float);
     attributesSize = floorAttributesSize + leftControllerAttributesSize + rightControllerAttributesSize + leftHandAttributesSize + rightHandAttributesSize + statusBarAttributesSize + skyAttributesSize + skyboxAttributesSize;
     if (attributesSize > 0)
     {

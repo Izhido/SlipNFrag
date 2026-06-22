@@ -169,7 +169,6 @@ struct Scene
 	VkDeviceSize statusBarAttributesSize;
 	VkDeviceSize skyAttributesSize;
 	VkDeviceSize skyboxAttributesSize;
-	VkDeviceSize aliasAttributesSize;
 	VkDeviceSize attributesSize;
 	VkDeviceSize coloredColorsSize;
 	VkDeviceSize colorsSize;

@@ -82,7 +82,7 @@ struct daliascoloredlights_t
 	trivertx_t* apverts;
 	stvert_t* texture_coordinates;
 	int vertex_count;
-	int first_attribute;
+	int first_light;
 	int count;
 	float transform[3][4];
 };
@@ -173,7 +173,7 @@ struct dlists_t
     int last_skybox;
 	int last_textured_vertex;
 	int last_textured_attribute;
-	int last_alias_attribute;
+	int last_alias_light;
 	int last_particle;
 	int last_colored_vertex;
 	int last_colored_color;
@@ -268,7 +268,7 @@ struct dlists_t
     std::vector<dskybox_t> skyboxes;
 	std::vector<float> textured_vertices;
 	std::vector<float> textured_attributes;
-	std::vector<float> alias_attributes;
+	std::vector<float> alias_lights;
 	std::vector<float> particles;
 	std::vector<float> colored_vertices;
 	std::vector<float> colored_colors;

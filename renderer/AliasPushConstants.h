@@ -4,5 +4,5 @@
 
 struct AliasPushConstants : PushConstants
 {
-    int index;
+    int lightIndex;
 };
