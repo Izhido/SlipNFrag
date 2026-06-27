@@ -90,7 +90,6 @@ struct PerFrame
 	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, struct LoadedSharedMemoryTexture* loadedTexture);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
 	void LoadNonStagedResources(AppState& appState);
-	void FillColormapTextures(AppState& appState, struct LoadedAlias& loaded);
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, struct LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
