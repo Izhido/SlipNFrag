@@ -523,6 +523,9 @@ int main(int argc, char* argv[])
 		auto bufferDeviceAddress = false;
 		auto createRenderPass2 = false;
 		auto depthStencilResolve = false;
+#if !defined(NDEBUG)
+		auto pipelineExecutableProperties = false;
+#endif
 		uint32_t vulkanSwapchainSampleCount;
 		{
 			std::vector<const char*> vulkanExtensions;
@@ -680,6 +683,13 @@ int main(int argc, char* argv[])
 					depthStencilResolve = true;
 					enabledExtensions.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
 				}
+#if !defined(NDEBUG)
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					pipelineExecutableProperties = true;
+					enabledExtensions.push_back(VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME);
+				}
+#endif
 			}
 
 			VkDeviceCreateInfo deviceInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
@@ -737,6 +747,16 @@ int main(int argc, char* argv[])
 				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&bufferDeviceAddressFeatures;
 				chain = (void*)((VkBaseInStructure*)chain)->pNext;
 			}
+
+#if !defined(NDEBUG)
+			VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR pipelineExecutablePropertiesFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR };
+			if (pipelineExecutableProperties)
+			{
+				pipelineExecutablePropertiesFeatures.pipelineExecutableInfo = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&pipelineExecutablePropertiesFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+#endif
 
 			XrVulkanDeviceCreateInfoKHR deviceCreateInfo { XR_TYPE_VULKAN_DEVICE_CREATE_INFO_KHR };
 			deviceCreateInfo.systemId = systemId;
@@ -1623,6 +1643,7 @@ int main(int argc, char* argv[])
 			{
 				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
 
+				appState.Scene.colormaps.DeleteOld(appState);
 				appState.Scene.textures.DeleteOld(appState);
 				for (auto& entry : appState.Scene.surfaceRGBATextures)
 				{
