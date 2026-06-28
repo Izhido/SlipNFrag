@@ -4,13 +4,13 @@
 #include <type_traits>
 #include "SortedAliasColormaps.h"
 #include "SortedAliasIndices.h"
-#include "AliasPushConstants.h"
 #include "AliasColoredLightsPushConstants.h"
 
 template <typename Loaded, typename Sorted>
 struct PipelineWithSortedAlias : Pipeline
 {
 	int last;
+    int attributeBaseIndex;
 	std::vector<Loaded> loaded;
 	Sorted sorted;
 
@@ -23,26 +23,9 @@ struct PipelineWithSortedAlias : Pipeline
 		}
 	}
 
-	void SetTransform(const Loaded& loaded, PushConstants& pushConstants)
+	void Render(VkCommandBuffer commandBuffer, VkDescriptorSet hostColormap)
 	{
-		pushConstants.pushConstants[0] = loaded.transform[0][0];
-		pushConstants.pushConstants[1] = loaded.transform[1][0];
-		pushConstants.pushConstants[2] = loaded.transform[2][0];
-		pushConstants.pushConstants[4] = loaded.transform[0][1];
-		pushConstants.pushConstants[5] = loaded.transform[1][1];
-		pushConstants.pushConstants[6] = loaded.transform[2][1];
-		pushConstants.pushConstants[8] = loaded.transform[0][2];
-		pushConstants.pushConstants[9] = loaded.transform[1][2];
-		pushConstants.pushConstants[10] = loaded.transform[2][2];
-		pushConstants.pushConstants[12] = loaded.transform[0][3];
-		pushConstants.pushConstants[13] = loaded.transform[1][3];
-		pushConstants.pushConstants[14] = loaded.transform[2][3];
-	}
-
-	template <typename PushConstantsType>
-	void Render(VkCommandBuffer commandBuffer, PushConstantsType& pushConstants, VkDescriptorSet hostColormap, VkDeviceSize lightBase)
-	{
-		static_assert(std::is_same<Sorted, SortedAliasColormaps>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer, PushConstantsType&, VkDescriptorSet, int) is available only for Sorted=SortedAliasColormaps");
+		static_assert(std::is_same<Sorted, SortedAliasColormaps>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer, VkDescriptorSet) is available only for Sorted=SortedAliasColormaps");
         std::array<VkBuffer, 2> vertexBuffers { };
         std::array<VkDeviceSize, 2> offsets { 0, 0 };
 		for (auto c = 0; c < sorted.count; c++)
@@ -70,13 +53,11 @@ struct PipelineWithSortedAlias : Pipeline
 						vertexBuffers[0] = vertices.vertices;
                         vertexBuffers[1] = vertices.texCoords;
 						vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers.data(), offsets.data());
+						vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(int), &attributeBaseIndex);
 						for (auto i : vertices.entries)
 						{
 							auto& l = loaded[i];
-							SetTransform(l, pushConstants);
-							pushConstants.lightIndex = (int)lightBase + l.firstLight;
-							vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantsType), &pushConstants);
-							vkCmdDrawIndexed(commandBuffer, l.count, 1, l.indices.indices.firstIndex, 0, 0);
+							vkCmdDrawIndexed(commandBuffer, l.count, 1, l.indices.indices.firstIndex, 0, i);
 						}
 					}
 				}
@@ -84,10 +65,9 @@ struct PipelineWithSortedAlias : Pipeline
 		}
 	}
 
-	template <typename PushConstantsType>
-	void Render(VkCommandBuffer commandBuffer, PushConstantsType& pushConstants, VkDeviceSize lightBase)
+	void Render(VkCommandBuffer commandBuffer)
 	{
-		static_assert(std::is_same<Sorted, SortedAliasIndices>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer, PushConstantsType&, int) is available only for Sorted=SortedAliasIndices");
+		static_assert(std::is_same<Sorted, SortedAliasIndices>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer) is available only for Sorted=SortedAliasIndices");
         std::array<VkBuffer, 2> vertexBuffers { };
         std::array<VkDeviceSize, 2> offsets { 0, 0 };
 		for (auto ix = 0; ix < sorted.count; ix++)
@@ -104,13 +84,11 @@ struct PipelineWithSortedAlias : Pipeline
                     vertexBuffers[0] = vertices.vertices;
                     vertexBuffers[1] = vertices.texCoords;
 					vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers.data(), offsets.data());
+					vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 20, sizeof(int), &attributeBaseIndex);
 					for (auto i : vertices.entries)
 					{
 						auto& l = loaded[i];
-						SetTransform(l, pushConstants);
-						pushConstants.lightIndex = (int)lightBase + l.firstLight;
-						vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstantsType), &pushConstants);
-						vkCmdDrawIndexed(commandBuffer, l.count, 1, l.indices.indices.firstIndex, 0, 0);
+						vkCmdDrawIndexed(commandBuffer, l.count, 1, l.indices.indices.firstIndex, 0, i);
 					}
 				}
 			}

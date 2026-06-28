@@ -5,7 +5,6 @@
 #include "ImageAsset.h"
 #include "PipelineAttributes.h"
 #include "Floor.h"
-#include "AliasPushConstants.h"
 #include "AliasColoredLightsPushConstants.h"
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 #include "RendererNames.h"
@@ -1202,7 +1201,7 @@ void Scene::Create(AppState& appState)
     descriptorSetLayouts[2] = singleImageLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 3;
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    pushConstantInfo.size = sizeof(AliasPushConstants);
+    pushConstantInfo.size = sizeof(int);
     pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
     pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantInfo;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &alias.pipelineLayout));
@@ -1251,8 +1250,7 @@ void Scene::Create(AppState& appState)
 #endif
 
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = sizeof(AliasColoredLightsPushConstants);
+	pushConstantInfo.size = 24;
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &aliasColoredLights.pipelineLayout));
     graphicsPipelineCreateInfo.layout = aliasColoredLights.pipelineLayout;
 	stages[0].module = aliasColoredLightsVertex;
@@ -1298,8 +1296,7 @@ void Scene::Create(AppState& appState)
 #endif
 
 	pipelineLayoutCreateInfo.setLayoutCount = 3;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	pushConstantInfo.size = sizeof(AliasPushConstants);
+	pushConstantInfo.size = sizeof(int);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodels.pipelineLayout));
     graphicsPipelineCreateInfo.layout = viewmodels.pipelineLayout;
     stages[0].module = viewmodelVertex;
@@ -1322,8 +1319,7 @@ void Scene::Create(AppState& appState)
 #endif
 
 	pipelineLayoutCreateInfo.setLayoutCount = 2;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	pushConstantInfo.size = sizeof(AliasColoredLightsPushConstants);
+	pushConstantInfo.size = 24;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &viewmodelsColoredLights.pipelineLayout));
 	graphicsPipelineCreateInfo.layout = viewmodelsColoredLights.pipelineLayout;
 	stages[0].module = viewmodelColoredLightsVertex;
@@ -1347,7 +1343,6 @@ void Scene::Create(AppState& appState)
 
     descriptorSetLayouts[0] = doubleBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 1;
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstantInfo.size = 8 * sizeof(float);
     CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &particles.pipelineLayout));
     graphicsPipelineCreateInfo.layout = particles.pipelineLayout;
@@ -3537,6 +3532,37 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 		SortedSurfaces::Sort(appState, loaded, i, viewmodelsHoleyColoredLights.sorted);
 	}
 	sortedAttributesSize += (d_lists.last_alias_light + 1) * sizeof(float);
+    while (sortedAttributesSize % 52 != 0)
+    {
+        sortedAttributesSize++;
+    }
+    perFrame.aliasAttributeBase = sortedAttributesSize;
+    VkDeviceSize currentOffset = perFrame.aliasAttributeBase;
+    alias.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(alias.last + 1) * 52;
+    aliasAlpha.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(aliasAlpha.last + 1) * 52;
+    aliasColoredLights.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(aliasColoredLights.last + 1) * 52;
+    aliasAlphaColoredLights.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(aliasAlphaColoredLights.last + 1) * 52;
+    aliasHoley.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(aliasHoley.last + 1) * 52;
+    aliasHoleyAlpha.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(aliasHoleyAlpha.last + 1) * 52;
+    aliasHoleyColoredLights.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(aliasHoleyColoredLights.last + 1) * 52;
+    aliasHoleyAlphaColoredLights.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(aliasHoleyAlphaColoredLights.last + 1) * 52;
+    viewmodels.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(viewmodels.last + 1) * 52;
+    viewmodelsColoredLights.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(viewmodelsColoredLights.last + 1) * 52;
+    viewmodelsHoley.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(viewmodelsHoley.last + 1) * 52;
+    viewmodelsHoleyColoredLights.attributeBaseIndex = (int)(currentOffset / 52);
+    currentOffset += (VkDeviceSize)(viewmodelsHoleyColoredLights.last + 1) * 52;
+    sortedAttributesSize = currentOffset;
 	perFrame.particleBase = sortedVerticesSize;
 	if (lastParticle >= 0)
 	{

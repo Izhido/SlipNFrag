@@ -1065,6 +1065,52 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTextures& sorted, std::
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
 }
 
+VkDeviceSize SortedSurfaces::LoadAttributes(int last, std::vector<LoadedAlias>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset)
+{
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+	for (auto i = 0; i <= last; i++)
+	{
+		auto& l = loaded[i];
+		*target++ = l.transform[0][0];
+		*target++ = l.transform[1][0];
+		*target++ = l.transform[2][0];
+		*target++ = l.transform[0][1];
+		*target++ = l.transform[1][1];
+		*target++ = l.transform[2][1];
+		*target++ = l.transform[0][2];
+		*target++ = l.transform[1][2];
+		*target++ = l.transform[2][2];
+		*target++ = l.transform[0][3];
+		*target++ = l.transform[1][3];
+		*target++ = l.transform[2][3];
+		*target++ = (int)lightBase + l.firstLight;
+	}
+	return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
+}
+
+VkDeviceSize SortedSurfaces::LoadAttributes(int last, std::vector<LoadedAliasColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset)
+{
+	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
+	for (auto i = 0; i <= last; i++)
+	{
+		auto& l = loaded[i];
+		*target++ = l.transform[0][0];
+		*target++ = l.transform[1][0];
+		*target++ = l.transform[2][0];
+		*target++ = l.transform[0][1];
+		*target++ = l.transform[1][1];
+		*target++ = l.transform[2][1];
+		*target++ = l.transform[0][2];
+		*target++ = l.transform[1][2];
+		*target++ = l.transform[2][2];
+		*target++ = l.transform[0][3];
+		*target++ = l.transform[1][3];
+		*target++ = l.transform[2][3];
+		*target++ = (int)lightBase + l.firstLight;
+	}
+	return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
+}
+
 VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize offset)
 {
 	auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);

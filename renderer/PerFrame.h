@@ -3,7 +3,7 @@
 #include "CachedBuffers.h"
 #include "CachedTextures.h"
 #include "DescriptorResources.h"
-#include "AliasPushConstants.h"
+#include "PushConstants.h"
 #include "AliasColoredLightsPushConstants.h"
 
 struct PerFrame
@@ -74,6 +74,7 @@ struct PerFrame
 	VkDeviceSize skyAttributeBase;
 	VkDeviceSize skyboxAttributeBase;
 	VkDeviceSize aliasLightBase;
+    VkDeviceSize aliasAttributeBase;
 	VkDeviceSize controllersIndexBase;
 	VkDeviceSize handsIndexBase;
 	VkDeviceSize statusBarIndexBase;

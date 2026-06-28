@@ -1,9 +1,7 @@
 #pragma once
 
-#include "PushConstants.h"
-
-struct AliasColoredLightsPushConstants : PushConstants
+struct AliasColoredLightsPushConstants
 {
-    float tint[5];
-    int lightIndex;
+    float tint[4];
+    float gamma;
 };

@@ -10,14 +10,10 @@ layout(set = 0, binding = 1) uniform Palette
 
 layout(set = 1, binding = 0) uniform usampler2D fragmentTexture;
 
-layout(push_constant) uniform Tint
-{
-	layout(offset = 64) vec4 tint;
-	layout(offset = 80) float gamma;
-};
-
 layout(location = 0) in vec2 fragmentTexCoords;
 layout(location = 1) in vec4 fragmentLight;
+layout(location = 2) in flat vec4 fragmentTint;
+layout(location = 3) in flat float fragmentGamma;
 layout(location = 0) out lowp vec4 outColor;
 
 void main()
@@ -35,11 +31,11 @@ void main()
 	vec4 color = min(vec4(255, 255, 255, 255),
 		mix(lowColor, highColor, fract(level.y)) *
 		((lowEntry.x >= 224 || highEntry.x >= 224) ? vec4(255, 255, 255, 255) : fragmentLight));
-	vec4 tinted = mix(color, tint, tint.a);
+	vec4 tinted = mix(color, fragmentTint, fragmentTint.a);
 	vec4 gammaCorrected = vec4(
-		clamp((gamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , gamma ) + 0.5), 0, 255),
-		clamp((gamma == 1) ? tinted.g : (255 * pow ( (tinted.g+0.5)/255.5 , gamma ) + 0.5), 0, 255),
-		clamp((gamma == 1) ? tinted.b : (255 * pow ( (tinted.b+0.5)/255.5 , gamma ) + 0.5), 0, 255),
+		clamp((fragmentGamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , fragmentGamma ) + 0.5), 0, 255),
+		clamp((fragmentGamma == 1) ? tinted.g : (255 * pow ( (tinted.g+0.5)/255.5 , fragmentGamma ) + 0.5), 0, 255),
+		clamp((fragmentGamma == 1) ? tinted.b : (255 * pow ( (tinted.b+0.5)/255.5 , fragmentGamma ) + 0.5), 0, 255),
 		255
 	) / 255;
 	outColor = vec4(
