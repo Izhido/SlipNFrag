@@ -370,12 +370,16 @@ void SortedSurfaces::Sort(AppState& appState, LoadedAlias& loaded, int index, So
 		auto& sortedVertices = sortedTexture.vertices[sortedTexture.count];
 		sortedVertices.vertices = vertices;
 		sortedVertices.texCoords = texCoords;
+        sortedVertices.firstIndex = loaded.indices.indices.firstIndex;
+        sortedVertices.indexCount = loaded.count;
+        sortedVertices.instanceCount = 0;
 		sortedVertices.entries.clear();
 		verticesEntry = sortedTexture.added.insert({ vertices, sortedTexture.count++ }).first;
 	}
 	auto& sortedVertices = sortedTexture.vertices[verticesEntry->second];
 
 	sortedVertices.entries.push_back(index);
+    sortedVertices.instanceCount++;
 }
 
 void SortedSurfaces::Sort(AppState& appState, LoadedAliasColoredLights& loaded, int index, SortedAliasIndices& sorted)
@@ -426,12 +430,16 @@ void SortedSurfaces::Sort(AppState& appState, LoadedAliasColoredLights& loaded, 
 		auto& sortedVertices = sortedTexture.vertices[sortedTexture.count];
 		sortedVertices.vertices = vertices;
 		sortedVertices.texCoords = texCoords;
+        sortedVertices.firstIndex = loaded.indices.indices.firstIndex;
+        sortedVertices.indexCount = loaded.count;
+        sortedVertices.instanceCount = 0;
 		sortedVertices.entries.clear();
 		verticesEntry = sortedTexture.added.insert({ vertices, sortedTexture.count++ }).first;
 	}
 	auto& sortedVertices = sortedTexture.vertices[verticesEntry->second];
 
 	sortedVertices.entries.push_back(index);
+    sortedVertices.instanceCount++;
 }
 
 Vertex* SortedSurfaces::CopyVertices(LoadedTurbulent& loaded, uint32_t attributeIndex, Vertex* target)
@@ -1065,48 +1073,76 @@ VkDeviceSize SortedSurfaces::LoadAttributes(SortedSurfaceTextures& sorted, std::
     return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
 }
 
-VkDeviceSize SortedSurfaces::LoadAttributes(int last, std::vector<LoadedAlias>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset)
+VkDeviceSize SortedSurfaces::LoadAttributes(SortedAliasColormaps& sorted, std::vector<LoadedAlias>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset)
 {
 	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
-	for (auto i = 0; i <= last; i++)
+	for (auto c = 0; c < sorted.count; c++)
 	{
-		auto& l = loaded[i];
-		*target++ = l.transform[0][0];
-		*target++ = l.transform[1][0];
-		*target++ = l.transform[2][0];
-		*target++ = l.transform[0][1];
-		*target++ = l.transform[1][1];
-		*target++ = l.transform[2][1];
-		*target++ = l.transform[0][2];
-		*target++ = l.transform[1][2];
-		*target++ = l.transform[2][2];
-		*target++ = l.transform[0][3];
-		*target++ = l.transform[1][3];
-		*target++ = l.transform[2][3];
-		*target++ = (int)lightBase + l.firstLight;
+		auto& colormap = sorted.colormaps[c];
+		for (auto ix = 0; ix < colormap.count; ix++)
+		{
+			auto& indices = colormap.indices[ix];
+			for (auto t = 0; t < indices.count; t++)
+			{
+				auto& texture = indices.textures[t];
+				for (auto v = 0; v < texture.count; v++)
+				{
+					auto& vertices = texture.vertices[v];
+					for (auto i : vertices.entries)
+					{
+						auto& l = loaded[i];
+						*target++ = l.transform[0][0];
+						*target++ = l.transform[1][0];
+						*target++ = l.transform[2][0];
+						*target++ = l.transform[0][1];
+						*target++ = l.transform[1][1];
+						*target++ = l.transform[2][1];
+						*target++ = l.transform[0][2];
+						*target++ = l.transform[1][2];
+						*target++ = l.transform[2][2];
+						*target++ = l.transform[0][3];
+						*target++ = l.transform[1][3];
+						*target++ = l.transform[2][3];
+						*target++ = (int)lightBase + l.firstLight;
+					}
+				}
+			}
+		}
 	}
 	return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
 }
 
-VkDeviceSize SortedSurfaces::LoadAttributes(int last, std::vector<LoadedAliasColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset)
+VkDeviceSize SortedSurfaces::LoadAttributes(SortedAliasIndices& sorted, std::vector<LoadedAliasColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset)
 {
 	auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
-	for (auto i = 0; i <= last; i++)
+	for (auto ix = 0; ix < sorted.count; ix++)
 	{
-		auto& l = loaded[i];
-		*target++ = l.transform[0][0];
-		*target++ = l.transform[1][0];
-		*target++ = l.transform[2][0];
-		*target++ = l.transform[0][1];
-		*target++ = l.transform[1][1];
-		*target++ = l.transform[2][1];
-		*target++ = l.transform[0][2];
-		*target++ = l.transform[1][2];
-		*target++ = l.transform[2][2];
-		*target++ = l.transform[0][3];
-		*target++ = l.transform[1][3];
-		*target++ = l.transform[2][3];
-		*target++ = (int)lightBase + l.firstLight;
+		auto& indices = sorted.indices[ix];
+		for (auto t = 0; t < indices.count; t++)
+		{
+			auto& texture = indices.textures[t];
+			for (auto v = 0; v < texture.count; v++)
+			{
+				auto& vertices = texture.vertices[v];
+				for (auto i : vertices.entries)
+				{
+					auto& l = loaded[i];
+					*target++ = l.transform[0][0];
+					*target++ = l.transform[1][0];
+					*target++ = l.transform[2][0];
+					*target++ = l.transform[0][1];
+					*target++ = l.transform[1][1];
+					*target++ = l.transform[2][1];
+					*target++ = l.transform[0][2];
+					*target++ = l.transform[1][2];
+					*target++ = l.transform[2][2];
+					*target++ = l.transform[0][3];
+					*target++ = l.transform[1][3];
+					*target++ = l.transform[2][3];
+					*target++ = (int)lightBase + l.firstLight;
+				}
+			}
+		}
 	}
 	return ((unsigned char*)target) - ((unsigned char*)stagingBuffer->mapped);
 }

@@ -28,6 +28,7 @@ struct PipelineWithSortedAlias : Pipeline
 		static_assert(std::is_same<Sorted, SortedAliasColormaps>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer, VkDescriptorSet) is available only for Sorted=SortedAliasColormaps");
         std::array<VkBuffer, 2> vertexBuffers { };
         std::array<VkDeviceSize, 2> offsets { 0, 0 };
+		uint32_t instanceIndex = 0;
 		for (auto c = 0; c < sorted.count; c++)
 		{
 			auto& colormap = sorted.colormaps[c];
@@ -54,11 +55,8 @@ struct PipelineWithSortedAlias : Pipeline
                         vertexBuffers[1] = vertices.texCoords;
 						vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers.data(), offsets.data());
 						vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(int), &attributeBaseIndex);
-						for (auto i : vertices.entries)
-						{
-							auto& l = loaded[i];
-							vkCmdDrawIndexed(commandBuffer, l.count, 1, l.indices.indices.firstIndex, 0, i);
-						}
+						vkCmdDrawIndexed(commandBuffer, vertices.indexCount, vertices.instanceCount, vertices.firstIndex, 0, instanceIndex);
+						instanceIndex += vertices.instanceCount;
 					}
 				}
 			}
@@ -70,6 +68,7 @@ struct PipelineWithSortedAlias : Pipeline
 		static_assert(std::is_same<Sorted, SortedAliasIndices>::value, "PipelineWithSortedAlias::Render(VkCommandBuffer) is available only for Sorted=SortedAliasIndices");
         std::array<VkBuffer, 2> vertexBuffers { };
         std::array<VkDeviceSize, 2> offsets { 0, 0 };
+		uint32_t instanceIndex = 0;
 		for (auto ix = 0; ix < sorted.count; ix++)
 		{
 			auto& indices = sorted.indices[ix];
@@ -85,11 +84,8 @@ struct PipelineWithSortedAlias : Pipeline
                     vertexBuffers[1] = vertices.texCoords;
 					vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers.data(), offsets.data());
 					vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 20, sizeof(int), &attributeBaseIndex);
-					for (auto i : vertices.entries)
-					{
-						auto& l = loaded[i];
-						vkCmdDrawIndexed(commandBuffer, l.count, 1, l.indices.indices.firstIndex, 0, i);
-					}
+                    vkCmdDrawIndexed(commandBuffer, vertices.indexCount, vertices.instanceCount, vertices.firstIndex, 0, instanceIndex);
+                    instanceIndex += vertices.instanceCount;
 				}
 			}
 		}

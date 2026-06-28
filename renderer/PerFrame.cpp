@@ -1332,18 +1332,18 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 			std::copy(d_lists.alias_lights.data(), d_lists.alias_lights.data() + count, (float*)((unsigned char*)sortedAttributes->mapped + offset));
 		}
         offset = aliasAttributeBase;
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.alias.last, appState.Scene.alias.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasAlpha.last, appState.Scene.aliasAlpha.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasColoredLights.last, appState.Scene.aliasColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasAlphaColoredLights.last, appState.Scene.aliasAlphaColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoley.last, appState.Scene.aliasHoley.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyAlpha.last, appState.Scene.aliasHoleyAlpha.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyColoredLights.last, appState.Scene.aliasHoleyColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyAlphaColoredLights.last, appState.Scene.aliasHoleyAlphaColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodels.last, appState.Scene.viewmodels.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsColoredLights.last, appState.Scene.viewmodelsColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsHoley.last, appState.Scene.viewmodelsHoley.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsHoleyColoredLights.last, appState.Scene.viewmodelsHoleyColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.alias.sorted, appState.Scene.alias.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasAlpha.sorted, appState.Scene.aliasAlpha.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasColoredLights.sorted, appState.Scene.aliasColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasAlphaColoredLights.sorted, appState.Scene.aliasAlphaColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoley.sorted, appState.Scene.aliasHoley.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyAlpha.sorted, appState.Scene.aliasHoleyAlpha.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyColoredLights.sorted, appState.Scene.aliasHoleyColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyAlphaColoredLights.sorted, appState.Scene.aliasHoleyAlphaColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodels.sorted, appState.Scene.viewmodels.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsColoredLights.sorted, appState.Scene.viewmodelsColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsHoley.sorted, appState.Scene.viewmodelsHoley.loaded, sortedAttributes, aliasLightBase, offset);
+        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsHoleyColoredLights.sorted, appState.Scene.viewmodelsHoleyColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
 		sortedAttributes->UnmapAndFlush(appState);
 	}
 

@@ -53,8 +53,8 @@ struct SortedSurfaces
 	static VkDeviceSize LoadAttributes(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurfaceRotated2TexturesColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset);
 	static VkDeviceSize LoadAttributes(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulent>& loaded, Buffer* stagingBuffer, VkDeviceSize offset);
 	static VkDeviceSize LoadAttributes(SortedSurfaceTextures& sorted, std::vector<LoadedTurbulentRotated>& loaded, Buffer* stagingBuffer, VkDeviceSize offset);
-	static VkDeviceSize LoadAttributes(int last, std::vector<LoadedAlias>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset);
-	static VkDeviceSize LoadAttributes(int last, std::vector<LoadedAliasColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset);
+	static VkDeviceSize LoadAttributes(SortedAliasColormaps& sorted, std::vector<LoadedAlias>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset);
+	static VkDeviceSize LoadAttributes(SortedAliasIndices& sorted, std::vector<LoadedAliasColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize lightBase, VkDeviceSize offset);
 	static VkDeviceSize LoadIndices16(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurface>& loaded, Buffer* stagingBuffer, VkDeviceSize offset);
 	static VkDeviceSize LoadIndices16(SortedSurfaceTexturesWithLightmaps& sorted, std::vector<LoadedSurfaceColoredLights>& loaded, Buffer* stagingBuffer, VkDeviceSize offset);
 	static VkDeviceSize LoadIndices16(SortedSurfaceTexturePairsWithLightmaps& sorted, std::vector<LoadedSurface2Textures>& loaded, Buffer* stagingBuffer, VkDeviceSize offset);
