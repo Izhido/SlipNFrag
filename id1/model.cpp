@@ -981,9 +981,10 @@ void Mod_LoadEntities (lump_t *l)
 		loadmodel->entities = NULL;
 		return;
 	}
-	mod_pool.entities.emplace_back(l->filelen);
+	mod_pool.entities.emplace_back(l->filelen + 1);
 	loadmodel->entities = mod_pool.entities.back().data();
 	memcpy (loadmodel->entities, mod_base + l->fileofs, l->filelen);
+	loadmodel->entities[l->filelen] = 0;
 }
 
 
