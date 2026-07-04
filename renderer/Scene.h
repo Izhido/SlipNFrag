@@ -215,6 +215,7 @@ struct Scene
 	void AddToVertexInputBarriers(VkBuffer buffer, VkAccessFlags flags);
     void AddToVertexShaderBarriers(VkBuffer buffer, VkAccessFlags flags);
 	static VkDeviceSize GetAllocatedFor(int width, int height);
+	static int GetMipsFor(int width, int height);
 	static uint32_t GetLayerCountFor(int width, int height);
     static void CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded);
 	void AddLightmapToDescriptorWrites(AppState& appState, Lightmap* lightmap);

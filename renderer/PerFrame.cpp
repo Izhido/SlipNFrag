@@ -98,7 +98,7 @@ unsigned char PerFrame::AveragePixels(std::vector<unsigned char>& pixdata)
 	return bestcolor;
 }
 
-void PerFrame::GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture)
+void PerFrame::GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture, std::vector<unsigned char>& pixdata)
 {
 	unsigned char* source = nullptr;
 	int sourceMipWidth = 0;
@@ -125,7 +125,6 @@ void PerFrame::GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, Loade
 		}
 		mips--;
 	}
-	std::vector<unsigned char> pixdata;
 	auto mipLevels = (int)(std::floor(std::log2(std::max(sourceMipWidth, sourceMipHeight)))) + 1;
 	for (auto miplevel = 1 ; miplevel<mipLevels ; miplevel++)
 	{
@@ -1086,13 +1085,14 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		memcpy((unsigned char*)stagingBuffer->mapped + offset, host_colormap.data(), appState.Scene.hostColormapSize);
 		offset += appState.Scene.hostColormapSize;
 	}
+	std::vector<unsigned char> pixdata;
 	for (auto& entry : appState.Scene.surfaceTextures)
 	{
 		auto loadedTexture = entry.first;
 		while (loadedTexture != nullptr)
 		{
 			memcpy((unsigned char*)stagingBuffer->mapped + offset, loadedTexture->source, loadedTexture->size);
-			GenerateMipmaps(stagingBuffer, offset, loadedTexture);
+			GenerateMipmaps(stagingBuffer, offset, loadedTexture, pixdata);
 			offset += loadedTexture->allocated;
 			loadedTexture = loadedTexture->next;
 		}
