@@ -57,7 +57,7 @@ void main()
 	vec3 fragmentTextureCoords = vec3(fragmentCoords.zw, fragmentFlat.y);
 	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.x);
 	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, texMip.y);
-	vec4 color = mix(lowColor, highColor, fract(texLevel.y)) * vec4(light, light, light, 1);
+	vec4 color = mix(lowColor, highColor, smoothstep(0.4, 0.6, fract(texLevel.y))) * vec4(light, light, light, 1);
 	if (color.a < 1.0 - (1.0 / 512.0))
 	{
 		discard;

@@ -25,5 +25,5 @@ void main()
 	}
 	vec4 lowColor = palette[lowEntry.x];
 	vec4 highColor = palette[highEntry.x];
-	outColor = mix(lowColor, highColor, fract(level.y));
+	outColor = mix(lowColor, highColor, smoothstep(0.4, 0.6, fract(level.y)));
 }

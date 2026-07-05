@@ -41,5 +41,5 @@ void main()
 	uvec4 highColormapped = texelFetch(fragmentColormap, ivec2(highEntry.x, fragmentAttributes.x), 0);
 	vec4 lowColor = palette[lowColormapped.x];
 	vec4 highColor = palette[highColormapped.x];
-	outColor = mix(lowColor, highColor, fract(level.y));
+	outColor = mix(lowColor, highColor, smoothstep(0.4, 0.6, fract(level.y)));
 }

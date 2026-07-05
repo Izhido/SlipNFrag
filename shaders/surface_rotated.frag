@@ -69,5 +69,5 @@ void main()
 	vec4 lowNextColor = palette[lowNextColormapped.x];
 	vec4 highColor = palette[highColormapped.x];
 	vec4 highNextColor = palette[highNextColormapped.x];
-	outColor = mix(mix(lowColor, lowNextColor, lightFrac), mix(highColor, highNextColor, lightFrac), fract(texLevel.y));
+	outColor = mix(mix(lowColor, lowNextColor, lightFrac), mix(highColor, highNextColor, lightFrac), smoothstep(0.4, 0.6, fract(texLevel.y)));
 }

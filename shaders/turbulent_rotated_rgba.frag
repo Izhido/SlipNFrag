@@ -41,7 +41,7 @@ void main()
 	vec3 fragmentTextureCoords = vec3(texCoords, fragmentFlat.x);
 	vec4 lowColor = textureLod(fragmentTexture, fragmentTextureCoords, mip.x);
 	vec4 highColor = textureLod(fragmentTexture, fragmentTextureCoords, mip.y);
-	vec4 color = mix(lowColor, highColor, fract(level.y));
+	vec4 color = mix(lowColor, highColor, smoothstep(0.4, 0.6, fract(level.y)));
 	vec4 tinted = mix(color, tint, tint.a);
 	vec4 gammaCorrected = vec4(
 		clamp((gamma == 1) ? tinted.r : (255 * pow ( (tinted.r+0.5)/255.5 , gamma ) + 0.5), 0, 255),

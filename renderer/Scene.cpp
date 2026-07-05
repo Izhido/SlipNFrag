@@ -2474,7 +2474,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dspritedata_t& sprite
             texture->Create(appState, sprite.width, sprite.height, VK_FORMAT_R8_UINT, mipCount, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
             textures.MoveToFront(texture);
             loaded.texture.size = sprite.size;
-            size += loaded.texture.size;
+            loaded.texture.allocated = GetAllocatedFor(sprite.width, sprite.height);
+            size += loaded.texture.allocated;
             loaded.texture.texture = texture;
             loaded.texture.source = sprite.data;
             loaded.texture.mips = 1;
@@ -2547,7 +2548,8 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             texture->Create(appState, alias.width, alias.height, VK_FORMAT_R8_UINT, mipCount, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
             textures.MoveToFront(texture);
             loaded.texture.size = alias.size;
-            size += loaded.texture.size;
+            loaded.texture.allocated = GetAllocatedFor(alias.width, alias.height);
+            size += loaded.texture.allocated;
             loaded.texture.texture = texture;
             loaded.texture.source = alias.data;
             loaded.texture.mips = 1;
@@ -2687,7 +2689,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
             loaded.colormap.texture = colormap;
             loaded.colormap.source = alias.colormap;
             loaded.colormap.mips = 1;
-            textures.Chain(loaded.colormap);
+            loaded.colormap.allocated = loaded.colormap.size;
+            colormaps.Chain(loaded.colormap);
             aliasColormapCache.insert({ alias.colormap, colormap });
         }
         else
@@ -2738,7 +2741,8 @@ void Scene::GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmod
             loaded.colormap.texture = colormap;
             loaded.colormap.source = viewmodel.colormap;
             loaded.colormap.mips = 1;
-            textures.Chain(loaded.colormap);
+            loaded.colormap.allocated = loaded.colormap.size;
+            colormaps.Chain(loaded.colormap);
             aliasColormapCache.insert({ viewmodel.colormap, colormap });
         }
         else

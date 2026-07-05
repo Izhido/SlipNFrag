@@ -45,8 +45,8 @@ void main()
 	vec3 fragmentGlowTextureCoords = vec3(fragmentCoords.zw, fragmentIndices.z);
 	vec4 lowGlow = textureLod(fragmentGlowTexture, fragmentGlowTextureCoords, texMip.x);
 	vec4 highGlow = textureLod(fragmentGlowTexture, fragmentGlowTextureCoords, texMip.y);
-	vec4 glow = mix(lowGlow, highGlow, fract(texLevel.y));
-	vec4 color = mix(lowColor, highColor, fract(texLevel.y)) * light + 2 * glow;
+	vec4 glow = mix(lowGlow, highGlow, smoothstep(0.4, 0.6, fract(texLevel.y)));
+	vec4 color = mix(lowColor, highColor, smoothstep(0.4, 0.6, fract(texLevel.y))) * light + 2 * glow;
 	if (color.a < 1.0 - (1.0 / 512.0))
 	{
 		discard;

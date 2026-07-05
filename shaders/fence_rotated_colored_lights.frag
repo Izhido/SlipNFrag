@@ -69,7 +69,7 @@ void main()
 	vec4 lowColor = palette[lowTexEntry.x];
 	vec4 highColor = palette[highTexEntry.x];
 	vec4 color =
-		mix(lowColor, highColor, fract(texLevel.y)) *
+		mix(lowColor, highColor, smoothstep(0.4, 0.6, fract(texLevel.y))) *
 		((lowTexEntry.x >= 224 || highTexEntry.x >= 224) ? vec4(255, 255, 255, 255) : light);
 	vec4 tinted = mix(color, tint, tint.a);
 	vec4 gammaCorrected = vec4(

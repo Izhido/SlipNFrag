@@ -45,7 +45,7 @@ void main()
 	vec4 lowColor = palette[lowEntry.x];
 	vec4 highColor = palette[highEntry.x];
 	vec4 color = min(vec4(255, 255, 255, 255),
-		mix(lowColor, highColor, fract(level.y)) *
+		mix(lowColor, highColor, smoothstep(0.4, 0.6, fract(level.y))) *
 		((lowEntry.x >= 224 || highEntry.x >= 224) ? vec4(255, 255, 255, 255) : vec4(fragmentAttributes.xyz, 255)));
 	vec4 tinted = mix(color, fragmentTint, fragmentTint.a);
 	vec4 gammaCorrected = vec4(

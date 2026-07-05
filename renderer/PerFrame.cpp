@@ -1020,70 +1020,19 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	while (t != nullptr)
 	{
 		memcpy((unsigned char*)stagingBuffer->mapped + offset, t->source, t->size);
-		offset += t->size;
+		GenerateMipmaps(stagingBuffer, offset, t, pixdata);
+		offset += t->allocated;
 		t = t->next;
 	}
 	t = appState.Scene.colormaps.first;
 	while (t != nullptr)
 	{
 		memcpy((unsigned char*)stagingBuffer->mapped + offset, t->source, t->size);
-		offset += t->size;
+		GenerateMipmaps(stagingBuffer, offset, t, pixdata);
+		offset += t->allocated;
 		t = t->next;
 	}
-	for (auto i = 0; i <= appState.Scene.alias.last; i++)
-	{
-		auto& alias = d_lists.alias[i];
-		if (alias.colormap != nullptr)
-		{
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, alias.colormap, 16384);
-			offset += 16384;
-		}
-	}
-	for (auto i = 0; i <= appState.Scene.aliasAlpha.last; i++)
-	{
-		auto& alias = d_lists.alias_alpha[i];
-		if (alias.colormap != nullptr)
-		{
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, alias.colormap, 16384);
-			offset += 16384;
-		}
-	}
-	for (auto i = 0; i <= appState.Scene.aliasHoley.last; i++)
-	{
-		auto& alias = d_lists.alias_holey[i];
-		if (alias.colormap != nullptr)
-		{
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, alias.colormap, 16384);
-			offset += 16384;
-		}
-	}
-	for (auto i = 0; i <= appState.Scene.aliasHoleyAlpha.last; i++)
-	{
-		auto& alias = d_lists.alias_holey_alpha[i];
-		if (alias.colormap != nullptr)
-		{
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, alias.colormap, 16384);
-			offset += 16384;
-		}
-	}
-	for (auto i = 0; i <= appState.Scene.viewmodels.last; i++)
-	{
-		auto& viewmodel = d_lists.viewmodels[i];
-		if (viewmodel.colormap != nullptr)
-		{
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, viewmodel.colormap, 16384);
-			offset += 16384;
-		}
-	}
-	for (auto i = 0; i <= appState.Scene.viewmodelsHoley.last; i++)
-	{
-		auto& viewmodel = d_lists.viewmodels_holey[i];
-		if (viewmodel.colormap != nullptr)
-		{
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, viewmodel.colormap, 16384);
-			offset += 16384;
-		}
-	}
+
 	while (offset % 4 != 0)
 	{
 		offset++;
@@ -1683,15 +1632,15 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	auto t = appState.Scene.textures.first;
 	while (t != nullptr)
 	{
-		t->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, t->mips, t->index);
-		appState.Scene.stagingBuffer.offset += t->size;
+		t->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, t->index);
+		appState.Scene.stagingBuffer.offset += t->allocated;
 		t = t->next;
 	}
 	t = appState.Scene.colormaps.first;
 	while (t != nullptr)
 	{
-		t->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, t->mips, t->index);
-		appState.Scene.stagingBuffer.offset += t->size;
+		t->texture->FillMipmapped(appState, appState.Scene.stagingBuffer, t->index);
+		appState.Scene.stagingBuffer.offset += t->allocated;
 		t = t->next;
 	}
 
