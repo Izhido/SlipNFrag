@@ -2,6 +2,7 @@
 #include "AppState.h"
 #include "Utils.h"
 #include "Floor.h"
+#include "model.h"
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 #include "RendererNames.h"
 #endif
@@ -25,125 +26,43 @@ float PerFrame::GammaCorrect(float component)
 	return std::pow((component + 0.055f) / 1.055f, 2.4f);
 }
 
-unsigned char PerFrame::AveragePixels(std::vector<unsigned char>& pixdata)
-{
-	int        r,g,b;
-	int        i;
-	int        vis;
-	int        pix;
-	int        dr, dg, db;
-	int        bestdistortion, distortion;
-	int        bestcolor;
-	unsigned char *pal;
-	int        e;
-
-	vis = 0;
-	r = g = b = 0;
-	for (i=0 ; i<pixdata.size() ; i++)
-	{
-		pix = pixdata[i];
-		if (pix == 255)
-		{
-			continue;
-		}
-		else if (pix >= 224)
-		{
-			return pix;
-		}
-
-		r += host_basepal[pix*3];
-		g += host_basepal[pix*3+1];
-		b += host_basepal[pix*3+2];
-		vis++;
-	}
-
-	if (vis == 0)
-		return 255;
-
-	r /= vis;
-	g /= vis;
-	b /= vis;
-
-//
-// find the best color
-//
-	bestdistortion = r*r + g*g + b*b;
-	bestcolor = 0;
-	i = 0;
-	e = 224;
-
-	for ( ; i< e ; i++)
-	{
-		pix = i;    //pixdata[i];
-
-		pal = host_basepal.data() + pix*3;
-
-		dr = r - (int)pal[0];
-		dg = g - (int)pal[1];
-		db = b - (int)pal[2];
-
-		distortion = dr*dr + dg*dg + db*db;
-		if (distortion < bestdistortion)
-		{
-			if (!distortion)
-			{
-				return pix;        // perfect match
-			}
-
-			bestdistortion = distortion;
-			bestcolor = pix;
-		}
-	}
-
-	return bestcolor;
-}
-
 void PerFrame::GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, LoadedSharedMemoryTexture* loadedTexture, std::vector<unsigned char>& pixdata)
 {
-	unsigned char* source = nullptr;
-	int sourceMipWidth = 0;
-	int sourceMipHeight = 0;
-	auto target = (unsigned char*)stagingBuffer->mapped + offset;
-	auto mipWidth = loadedTexture->texture->width;
-	auto mipHeight = loadedTexture->texture->height;
-	auto mips = loadedTexture->mips;
-	while (mips > 0)
-	{
-		source = target;
-		sourceMipWidth = mipWidth;
-		sourceMipHeight = mipHeight;
-		target += (mipWidth * mipHeight);
-		mipWidth /= 2;
-		if (mipWidth < 1)
-		{
-			mipWidth = 1;
-		}
-		mipHeight /= 2;
-		if (mipHeight < 1)
-		{
-			mipHeight = 1;
-		}
-		mips--;
-	}
-	auto mipLevels = (int)(std::floor(std::log2(std::max(sourceMipWidth, sourceMipHeight)))) + 1;
-	for (auto miplevel = 1 ; miplevel<mipLevels ; miplevel++)
-	{
-		auto mipstepx = std::min(1<<miplevel, sourceMipWidth);
-		auto mipstepy = std::min(1<<miplevel, sourceMipHeight);
-		for (auto y=0 ; y<sourceMipHeight ; y+=mipstepy)
-		{
-			for (auto x = 0 ; x<sourceMipWidth ; x+= mipstepx)
+	auto source = (unsigned char*)stagingBuffer->mapped + offset;
+	auto sourceMipWidth = loadedTexture->texture->width;
+	auto sourceMipHeight = loadedTexture->texture->height;
+    for (auto mipLevel = 1; mipLevel < loadedTexture->texture->mipCount; mipLevel++)
+    {
+        auto targetMipWidth = std::max(sourceMipWidth / 2, 1);
+        auto targetMipHeight = std::max(sourceMipHeight / 2, 1);
+		auto levelStart = source + (sourceMipWidth * sourceMipHeight);
+        if (mipLevel >= loadedTexture->mips)
+        {
+            auto target = levelStart;
+			auto startY = 0;
+			for (auto y=0 ; y<targetMipHeight ; y++)
 			{
-				pixdata.clear();
-				for (auto yy=0 ; yy<mipstepy ; yy++)
-					for (auto xx=0 ; xx<mipstepx ; xx++)
-					{
-						pixdata.push_back(source[ (y+yy)*sourceMipWidth + x + xx ]);
-					}
-				*target++ = AveragePixels (pixdata);
+				auto endY = (y + 1) * sourceMipHeight / targetMipHeight;
+				auto startX = 0;
+				for (auto x=0 ; x<targetMipWidth ; x++)
+				{
+					auto endX = (x + 1) * sourceMipWidth / targetMipWidth;
+					pixdata.clear();
+					for (auto yy=startY ; yy<endY ; yy++)
+						for (auto xx=startX ; xx<endX ; xx++)
+						{
+							pixdata.push_back(source[ (yy)*sourceMipWidth + xx ]);
+						}
+					*target++ = Mod_AveragePixels (pixdata);
+					startX = endX;
+				}
+				startY = endY;
 			}
-		}
-	}
+        }
+        sourceMipWidth = targetMipWidth;
+        sourceMipHeight = targetMipHeight;
+        source = levelStart;
+    }
 }
 
 void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)

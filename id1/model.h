@@ -399,4 +399,6 @@ void	Mod_TouchModel (char *name);
 mleaf_t *Mod_PointInLeaf (const float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 
+byte	Mod_AveragePixels (std::vector<byte>& pixdata);
+
 #endif	// __MODEL__
