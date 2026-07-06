@@ -118,11 +118,13 @@ struct Scene
 	int lastSkyRGBA;
 	LoadedSky loadedSky;
 	LoadedSky loadedSkyRGBA;
-	Q_HASHMAP<void*, LightmapBuffersPerTexture> lightmapBuffers;
+	Q_HASHMAP<void*, LightmapBuffersPerTexture> staticLightmapBuffers;
+	Q_HASHMAP<void*, LightmapBuffersPerTexture> variableLightmapBuffers;
 	LightmapsToDelete lightmapsToDelete;
 	std::vector<LightmapChain> lightmapChains;
 	Q_HASHMAP<void*, size_t> lightmapChainTexturesInUse;
-	Q_HASHMAP<void*, LightmapRGBBuffersPerTexture> lightmapRGBBuffers;
+	Q_HASHMAP<void*, LightmapRGBBuffersPerTexture> staticLightmapRGBBuffers;
+	Q_HASHMAP<void*, LightmapRGBBuffersPerTexture> variableLightmapRGBBuffers;
 	LightmapsRGBToDelete lightmapsRGBToDelete;
 	std::vector<LightmapRGBChain> lightmapRGBChains;
 	Q_HASHMAP<void*, size_t> lightmapRGBChainTexturesInUse;

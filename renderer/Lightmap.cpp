@@ -3,15 +3,17 @@
 #include "Utils.h"
 #include "Constants.h"
 
-bool Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, void* texture)
+bool Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, void* texture, bool variable)
 {
 	this->width = width;
 	this->height = height;
 	this->texture = texture;
+	this->variable = variable;
 
 	auto size = this->width * this->height;
 
-	auto& perTexture = appState.Scene.lightmapBuffers[this->texture];
+	auto& lightmapBuffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
+	auto& perTexture = lightmapBuffers[this->texture];
 	auto lightmapBuffer = perTexture.buffers;
 	bool found = false;
 	while (lightmapBuffer != nullptr)
@@ -94,11 +96,13 @@ void Lightmap::Delete(AppState& appState) const
 		}
 		else if (buffer->next != nullptr)
 		{
-			appState.Scene.lightmapBuffers[texture].buffers = buffer->next;
+			auto& lightmapBuffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
+			lightmapBuffers[texture].buffers = buffer->next;
 		}
 		else
 		{
-			appState.Scene.lightmapBuffers.erase(texture);
+			auto& lightmapBuffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
+			lightmapBuffers.erase(texture);
 		}
 		if (buffer->next != nullptr)
 		{

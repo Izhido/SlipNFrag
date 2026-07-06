@@ -11,9 +11,10 @@ struct LightmapRGB
 	int width;
 	int height;
 	void* texture;
+	bool variable;
 	LightmapRGBBuffer* buffer;
 	VkDeviceSize offset;
 
-	bool Create(AppState& appState, uint32_t width, uint32_t height, void* texture);
+	bool Create(AppState& appState, uint32_t width, uint32_t height, void* texture, bool variable);
 	void Delete(AppState& appState) const;
 };

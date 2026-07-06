@@ -1749,7 +1749,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	if (perSurface.lightmap == nullptr)
 	{
 		perSurface.lightmap = new Lightmap { };
-		auto addToWrites = perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		auto addToWrites = perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture, false);
 		if (addToWrites)
 		{
 			AddLightmapToDescriptorWrites(appState, perSurface.lightmap);
@@ -1779,7 +1779,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		lightmapsToDelete.Dispose(perSurface.lightmap);
 		perSurface.lightmap = new Lightmap { };
-		auto addToWrites = perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		auto addToWrites = perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture, true);
 		if (addToWrites)
 		{
 			AddLightmapToDescriptorWrites(appState, perSurface.lightmap);
@@ -1817,7 +1817,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	if (perSurface.lightmapRGB == nullptr)
 	{
 		perSurface.lightmapRGB = new LightmapRGB { };
-		auto addToWrites = perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		auto addToWrites = perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture, false);
 		if (addToWrites)
 		{
 			AddLightmapRGBToDescriptorWrites(appState, perSurface.lightmapRGB);
@@ -1847,7 +1847,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		lightmapsRGBToDelete.Dispose(perSurface.lightmapRGB);
 		perSurface.lightmapRGB = new LightmapRGB { };
-		auto addToWrites = perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture);
+		auto addToWrites = perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, perSurface.texture, true);
 		if (addToWrites)
 		{
 			AddLightmapRGBToDescriptorWrites(appState, perSurface.lightmapRGB);
@@ -4069,10 +4069,12 @@ void Scene::Destroy(AppState& appState)
 	surfaceTextures.clear();
 
 	lightmapsRGBToDelete.Delete(appState);
-	lightmapRGBBuffers.clear();
+	variableLightmapRGBBuffers.clear();
+	staticLightmapRGBBuffers.clear();
 
 	lightmapsToDelete.Delete(appState);
-	lightmapBuffers.clear();
+	variableLightmapBuffers.clear();
+	staticLightmapBuffers.clear();
 
 	for (auto& entry : perSurfaceCache)
 	{

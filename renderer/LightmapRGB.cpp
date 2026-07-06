@@ -3,15 +3,17 @@
 #include "Utils.h"
 #include "Constants.h"
 
-bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, void* texture)
+bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, void* texture, bool variable)
 {
 	this->width = width;
 	this->height = height;
 	this->texture = texture;
+	this->variable = variable;
 
 	auto size = this->width * this->height * 3;
 
-	auto& perTexture = appState.Scene.lightmapRGBBuffers[this->texture];
+	auto& lightmapRGBBuffers = (variable ? appState.Scene.variableLightmapRGBBuffers : appState.Scene.staticLightmapRGBBuffers);
+	auto& perTexture = lightmapRGBBuffers[this->texture];
 	auto lightmapBuffer = perTexture.buffers;
 	bool found = false;
 	while (lightmapBuffer != nullptr)
@@ -94,11 +96,13 @@ void LightmapRGB::Delete(AppState& appState) const
 		}
 		else if (buffer->next != nullptr)
 		{
-			appState.Scene.lightmapRGBBuffers[texture].buffers = buffer->next;
+			auto& lightmapRGBBuffers = (variable ? appState.Scene.variableLightmapRGBBuffers : appState.Scene.staticLightmapRGBBuffers);
+			lightmapRGBBuffers[texture].buffers = buffer->next;
 		}
 		else
 		{
-			appState.Scene.lightmapRGBBuffers.erase(texture);
+			auto& lightmapRGBBuffers = (variable ? appState.Scene.variableLightmapRGBBuffers : appState.Scene.staticLightmapRGBBuffers);
+			lightmapRGBBuffers.erase(texture);
 		}
 		if (buffer->next != nullptr)
 		{
