@@ -47,6 +47,8 @@ bool Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, void*
 			lightmapBuffer->next->previous = lightmapBuffer;
 			lightmapBuffer = lightmapBuffer->next;
 		}
+		perTexture.count++;
+
 		buffer = lightmapBuffer;
 
 		buffer->size = Constants::lightmapBufferSize;
@@ -90,18 +92,21 @@ void Lightmap::Delete(AppState& appState) const
 	{
 		vkDestroyDescriptorPool(appState.Device, buffer->descriptorPool, nullptr);
 		buffer->buffer.Delete(appState);
+
+		auto& lightmapBuffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
+		auto& perTexture = lightmapBuffers[texture];
+		perTexture.count--;
+
 		if (buffer->previous != nullptr)
 		{
 			buffer->previous->next = buffer->next;
 		}
 		else if (buffer->next != nullptr)
 		{
-			auto& lightmapBuffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
-			lightmapBuffers[texture].buffers = buffer->next;
+			perTexture.buffers = buffer->next;
 		}
 		else
 		{
-			auto& lightmapBuffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
 			lightmapBuffers.erase(texture);
 		}
 		if (buffer->next != nullptr)

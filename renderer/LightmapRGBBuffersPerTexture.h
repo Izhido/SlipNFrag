@@ -5,4 +5,5 @@
 struct LightmapRGBBuffersPerTexture
 {
 	LightmapRGBBuffer* buffers;
+	int count;
 };
