@@ -2,7 +2,7 @@
 
 #include "LightmapBuffer.h"
 
-struct LightmapBuffersPerTexture
+struct LightmapBuffers
 {
 	LightmapBuffer* buffers;
 	int count;

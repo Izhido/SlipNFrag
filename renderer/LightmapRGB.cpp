@@ -3,22 +3,20 @@
 #include "Utils.h"
 #include "Constants.h"
 
-bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, void* texture, bool variable)
+bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, bool variable)
 {
 	this->width = width;
 	this->height = height;
-	this->texture = texture;
 	this->variable = variable;
 
 	auto size = this->width * this->height * 3;
 
-	auto& lightmapRGBBuffers = (variable ? appState.Scene.variableLightmapRGBBuffers : appState.Scene.staticLightmapRGBBuffers);
-	auto& perTexture = lightmapRGBBuffers[this->texture];
-	auto lightmapBuffer = perTexture.buffers;
+	auto& buffers = (variable ? appState.Scene.variableLightmapRGBBuffers : appState.Scene.staticLightmapRGBBuffers);
+	auto lightmapBuffer = buffers.buffers;
 	bool found = false;
 	while (lightmapBuffer != nullptr)
 	{
-		if (lightmapBuffer->used + size < lightmapBuffer->size)
+		if (lightmapBuffer->used + size <= lightmapBuffer->size)
 		{
 			buffer = lightmapBuffer;
 			offset = lightmapBuffer->used;
@@ -38,16 +36,16 @@ bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, vo
 	{
 		if (lightmapBuffer == nullptr)
 		{
-			lightmapBuffer = new LightmapRGBBuffer { };
-			perTexture.buffers = lightmapBuffer;
+			lightmapBuffer = new LightmapBuffer { };
+			buffers.buffers = lightmapBuffer;
 		}
 		else
 		{
-			lightmapBuffer->next = new LightmapRGBBuffer { };
+			lightmapBuffer->next = new LightmapBuffer { };
 			lightmapBuffer->next->previous = lightmapBuffer;
 			lightmapBuffer = lightmapBuffer->next;
 		}
-		perTexture.count++;
+		buffers.count++;
 
 		buffer = lightmapBuffer;
 
@@ -93,21 +91,16 @@ void LightmapRGB::Delete(AppState& appState) const
 		vkDestroyDescriptorPool(appState.Device, buffer->descriptorPool, nullptr);
 		buffer->buffer.Delete(appState);
 
-		auto& lightmapRGBBuffers = (variable ? appState.Scene.variableLightmapRGBBuffers : appState.Scene.staticLightmapRGBBuffers);
-		auto& perTexture = lightmapRGBBuffers[texture];
-		perTexture.count--;
+		auto& buffers = (variable ? appState.Scene.variableLightmapRGBBuffers : appState.Scene.staticLightmapRGBBuffers);
+		buffers.count--;
 
 		if (buffer->previous != nullptr)
 		{
 			buffer->previous->next = buffer->next;
 		}
-		else if (buffer->next != nullptr)
-		{
-			perTexture.buffers = buffer->next;
-		}
 		else
 		{
-			lightmapRGBBuffers.erase(texture);
+			buffers.buffers = buffer->next;
 		}
 		if (buffer->next != nullptr)
 		{

@@ -3,22 +3,20 @@
 #include "Utils.h"
 #include "Constants.h"
 
-bool Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, void* texture, bool variable)
+bool Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, bool variable)
 {
 	this->width = width;
 	this->height = height;
-	this->texture = texture;
 	this->variable = variable;
 
 	auto size = this->width * this->height;
 
-	auto& lightmapBuffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
-	auto& perTexture = lightmapBuffers[this->texture];
-	auto lightmapBuffer = perTexture.buffers;
+	auto& buffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
+	auto lightmapBuffer = buffers.buffers;
 	bool found = false;
 	while (lightmapBuffer != nullptr)
 	{
-		if (lightmapBuffer->used + size < lightmapBuffer->size)
+		if (lightmapBuffer->used + size <= lightmapBuffer->size)
 		{
 			buffer = lightmapBuffer;
 			offset = lightmapBuffer->used;
@@ -39,7 +37,7 @@ bool Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, void*
 		if (lightmapBuffer == nullptr)
 		{
 			lightmapBuffer = new LightmapBuffer { };
-			perTexture.buffers = lightmapBuffer;
+			buffers.buffers = lightmapBuffer;
 		}
 		else
 		{
@@ -47,7 +45,7 @@ bool Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, void*
 			lightmapBuffer->next->previous = lightmapBuffer;
 			lightmapBuffer = lightmapBuffer->next;
 		}
-		perTexture.count++;
+		buffers.count++;
 
 		buffer = lightmapBuffer;
 
@@ -93,21 +91,16 @@ void Lightmap::Delete(AppState& appState) const
 		vkDestroyDescriptorPool(appState.Device, buffer->descriptorPool, nullptr);
 		buffer->buffer.Delete(appState);
 
-		auto& lightmapBuffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
-		auto& perTexture = lightmapBuffers[texture];
-		perTexture.count--;
+		auto& buffers = (variable ? appState.Scene.variableLightmapBuffers : appState.Scene.staticLightmapBuffers);
+		buffers.count--;
 
 		if (buffer->previous != nullptr)
 		{
 			buffer->previous->next = buffer->next;
 		}
-		else if (buffer->next != nullptr)
-		{
-			perTexture.buffers = buffer->next;
-		}
 		else
 		{
-			lightmapBuffers.erase(texture);
+			buffers.buffers = buffer->next;
 		}
 		if (buffer->next != nullptr)
 		{

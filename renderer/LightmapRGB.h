@@ -1,7 +1,7 @@
 #pragma once
 
 #include <list>
-#include "LightmapRGBBuffer.h"
+#include "LightmapBuffer.h"
 
 struct LightmapRGB
 {
@@ -10,11 +10,10 @@ struct LightmapRGB
 	int unusedCount;
 	int width;
 	int height;
-	void* texture;
 	bool variable;
-	LightmapRGBBuffer* buffer;
+	LightmapBuffer* buffer;
 	VkDeviceSize offset;
 
-	bool Create(AppState& appState, uint32_t width, uint32_t height, void* texture, bool variable);
+	bool Create(AppState& appState, uint32_t width, uint32_t height, bool variable);
 	void Delete(AppState& appState) const;
 };

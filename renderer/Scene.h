@@ -17,8 +17,7 @@
 #include "LoadedSprite.h"
 #include "LoadedAlias.h"
 #include "LoadedSky.h"
-#include "LightmapBuffersPerTexture.h"
-#include "LightmapRGBBuffersPerTexture.h"
+#include "LightmapBuffers.h"
 #include "LightmapsToDelete.h"
 #include "LightmapsRGBToDelete.h"
 #include "CachedSharedMemoryTextures.h"
@@ -118,13 +117,13 @@ struct Scene
 	int lastSkyRGBA;
 	LoadedSky loadedSky;
 	LoadedSky loadedSkyRGBA;
-	Q_HASHMAP<void*, LightmapBuffersPerTexture> staticLightmapBuffers;
-	Q_HASHMAP<void*, LightmapBuffersPerTexture> variableLightmapBuffers;
+	LightmapBuffers staticLightmapBuffers;
+	LightmapBuffers variableLightmapBuffers;
 	LightmapsToDelete lightmapsToDelete;
 	std::vector<LightmapChain> lightmapChains;
 	Q_HASHMAP<void*, size_t> lightmapChainTexturesInUse;
-	Q_HASHMAP<void*, LightmapRGBBuffersPerTexture> staticLightmapRGBBuffers;
-	Q_HASHMAP<void*, LightmapRGBBuffersPerTexture> variableLightmapRGBBuffers;
+	LightmapBuffers staticLightmapRGBBuffers;
+	LightmapBuffers variableLightmapRGBBuffers;
 	LightmapsRGBToDelete lightmapsRGBToDelete;
 	std::vector<LightmapRGBChain> lightmapRGBChains;
 	Q_HASHMAP<void*, size_t> lightmapRGBChainTexturesInUse;
