@@ -295,7 +295,7 @@ void Skybox::DeleteOld(AppState& appState)
 	for (Skybox** s = &appState.Scene.previousSkyboxes; *s != nullptr; )
 	{
 		(*s)->unusedCount++;
-		if ((*s)->unusedCount >= Constants::maxUnusedCount)
+		if ((*s)->unusedCount >= Constants::framesToLive)
 		{
 			auto next = (*s)->next;
 			(*s)->Delete(appState);

@@ -14,7 +14,7 @@ void LightmapsRGBToDelete::DeleteOld(AppState& appState)
 		for (auto l = &oldLightmaps; *l != nullptr; )
 		{
 			(*l)->unusedCount++;
-			if ((*l)->unusedCount >= Constants::maxUnusedCount)
+			if ((*l)->unusedCount >= Constants::framesToLive)
 			{
 				auto next = (*l)->next;
 				(*l)->Delete(appState);

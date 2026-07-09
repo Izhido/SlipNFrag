@@ -96,7 +96,7 @@ void CachedIndexBuffers::DeleteOld(AppState& appState)
 		for (auto b = &oldBuffers; *b != nullptr; )
 		{
 			(*b)->unusedCount++;
-			if ((*b)->unusedCount >= Constants::maxUnusedCount)
+			if ((*b)->unusedCount >= Constants::framesToLive)
 			{
 				auto next = (*b)->next;
 				(*b)->Delete(appState);

@@ -7,7 +7,7 @@ struct Constants
 	static const VkFormat colorFormat = VK_FORMAT_R8G8B8A8_SRGB;
 	static const VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 	static const int screenToConsoleMultiplier = 3;
-	static const int maxUnusedCount = 4;
+	static const int framesToLive = 7;
 	static const int indexBuffer8BitSize = 16 * 256;
 	static const int indexBuffer16BitSize = 16 * 65536;
 	static const int indexBuffer32BitSize = 16 * 65536;

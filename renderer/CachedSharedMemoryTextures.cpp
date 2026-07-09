@@ -26,7 +26,7 @@ void CachedSharedMemoryTextures::DeleteOld(AppState& appState)
 	for (auto t = oldTextures.begin(); t != oldTextures.end(); )
 	{
 		(*t)->unusedCount++;
-		if ((*t)->unusedCount >= Constants::maxUnusedCount)
+		if ((*t)->unusedCount >= Constants::framesToLive)
 		{
 			auto texture = *t;
 			texture->Delete(appState);

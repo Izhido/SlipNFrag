@@ -106,7 +106,7 @@ void CachedBuffers::Reset(AppState& appState)
 	for (auto b = oldBuffers.begin(); b != oldBuffers.end(); )
 	{
 		(*b)->unusedCount++;
-		if ((*b)->unusedCount >= Constants::maxUnusedCount)
+		if ((*b)->unusedCount >= Constants::framesToLive)
 		{
 			auto buffer = *b;
 			buffer->Delete(appState);

@@ -49,7 +49,7 @@ bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, bo
 
 		buffer = lightmapBuffer;
 
-		buffer->size = Constants::lightmapBufferSize;
+		buffer->size = Constants::lightmapBufferSize * 3;
 		if (buffer->size < size)
 		{
 			buffer->size = size;
