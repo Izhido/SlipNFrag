@@ -6,5 +6,5 @@ struct SortedSurfaceTextures
 {
     int count;
     std::vector<SortedSurfaceTexture> textures;
-    std::unordered_map<VkDescriptorSet, int> added;
+    USE_CUSTOM_HASHMAP<VkDescriptorSet, int> added;
 };

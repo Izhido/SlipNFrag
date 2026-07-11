@@ -6,5 +6,5 @@ struct SortedAliasColormaps
 {
     int count;
     std::vector<SortedAliasColormap> colormaps;
-    std::unordered_map<VkDescriptorSet, int> added;
+    USE_CUSTOM_HASHMAP<VkDescriptorSet, int> added;
 };

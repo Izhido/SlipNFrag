@@ -2426,11 +2426,6 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
 #endif
 		}
-		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		poolSizes[0].descriptorCount = 1;
-		descriptorPoolCreateInfo.poolSizeCount = 1;
-		writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		writes[0].pImageInfo = &textureInfo;
 		if (appState.Scene.alias.last >= 0)
 		{
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)

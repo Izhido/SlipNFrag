@@ -7,5 +7,5 @@ struct SortedAliasTexture
 	VkDescriptorSet texture;
 	int count;
 	std::vector<SortedAliasVertices> vertices;
-	std::unordered_map<VkBuffer, int> added;
+	USE_CUSTOM_HASHMAP<VkBuffer, int> added;
 };

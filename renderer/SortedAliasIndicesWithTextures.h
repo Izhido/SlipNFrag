@@ -8,5 +8,5 @@ struct SortedAliasIndicesWithTextures
     VkIndexType indexType;
     int count;
     std::vector<SortedAliasTexture> textures;
-    std::unordered_map<VkDescriptorSet, int> added;
+    USE_CUSTOM_HASHMAP<VkDescriptorSet, int> added;
 };

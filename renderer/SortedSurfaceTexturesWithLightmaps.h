@@ -1,11 +1,11 @@
 #pragma once
 
 #include "SortedSurfaceTextureWithLightmaps.h"
-#include <unordered_map>
+#include USE_CUSTOM_HASHMAP_INCLUDE
 
 struct SortedSurfaceTexturesWithLightmaps
 {
     int count;
     std::vector<SortedSurfaceTextureWithLightmaps> textures;
-    std::unordered_map<VkDescriptorSet, int> added;
+    USE_CUSTOM_HASHMAP<VkDescriptorSet, int> added;
 };

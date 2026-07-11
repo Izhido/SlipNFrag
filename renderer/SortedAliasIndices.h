@@ -6,5 +6,5 @@ struct SortedAliasIndices
 {
     int count;
     std::vector<SortedAliasIndicesWithTextures> indices;
-    std::unordered_map<VkBuffer, int> added;
+    USE_CUSTOM_HASHMAP<VkBuffer, int> added;
 };
