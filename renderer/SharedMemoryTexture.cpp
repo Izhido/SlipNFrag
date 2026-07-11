@@ -38,17 +38,10 @@ void SharedMemoryTexture::Create(AppState& appState, uint32_t width, uint32_t he
 
 	if (appState.Scene.latestTextureDescriptorSets == nullptr || appState.Scene.latestTextureDescriptorSets->used >= appState.Scene.latestTextureDescriptorSets->descriptorSets.size())
 	{
-		if (appState.Scene.latestTextureDescriptorSets != nullptr)
-		{
-			appState.Scene.latestTextureDescriptorSets->referenceCount--;
-			if (appState.Scene.latestTextureDescriptorSets->referenceCount == 0)
-			{
-				vkDestroyDescriptorPool(appState.Device, appState.Scene.latestTextureDescriptorSets->descriptorPool, nullptr);
-				delete appState.Scene.latestTextureDescriptorSets;
-			}
-		}
+		appState.Scene.ReleaseLatestTextureDescriptorSets(appState);
 
 		appState.Scene.latestTextureDescriptorSets = new DescriptorSets { };
+		appState.Scene.latestTextureDescriptorSets->referenceCount = 1;
 
 		VkDescriptorPoolSize poolSizes { };
 		poolSizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include <unordered_map>
 #include "PipelineWithSorted.h"
 #include "PipelineWithSortedAlias.h"
 #include "CachedAliasBuffers.h"
@@ -248,5 +247,6 @@ struct Scene
 	static void RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_t& viewmodel, LoadedAliasColoredLights& loaded);
 	VkDeviceSize GetStagingBufferSize(AppState& appState, PerFrame& perFrame, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
+	void ReleaseLatestTextureDescriptorSets(AppState& appState);
 	void Destroy(AppState& appState);
 };

@@ -4008,6 +4008,20 @@ void Scene::Reset(AppState& appState)
 	perSurfaceCache.clear();
     indexBuffers.DisposeFront();
 	aliasBuffers.DisposeFront();
+	ReleaseLatestTextureDescriptorSets(appState);
+    latestIndexBuffer32 = nullptr;
+    usedInLatestIndexBuffer32 = 0;
+    latestIndexBuffer16 = nullptr;
+    usedInLatestIndexBuffer16 = 0;
+    latestIndexBuffer8 = nullptr;
+    usedInLatestIndexBuffer8 = 0;
+    Skybox::MoveToPrevious(*this);
+    aliasIndexCache.clear();
+    aliasVertexCache.clear();
+}
+
+void Scene::ReleaseLatestTextureDescriptorSets(AppState& appState)
+{
 	if (latestTextureDescriptorSets != nullptr)
 	{
 		latestTextureDescriptorSets->referenceCount--;
@@ -4018,15 +4032,6 @@ void Scene::Reset(AppState& appState)
 		}
 		latestTextureDescriptorSets = nullptr;
 	}
-    latestIndexBuffer32 = nullptr;
-    usedInLatestIndexBuffer32 = 0;
-    latestIndexBuffer16 = nullptr;
-    usedInLatestIndexBuffer16 = 0;
-    latestIndexBuffer8 = nullptr;
-    usedInLatestIndexBuffer8 = 0;
-    Skybox::MoveToPrevious(*this);
-    aliasIndexCache.clear();
-    aliasVertexCache.clear();
 }
 
 void Scene::Destroy(AppState& appState)
@@ -4081,6 +4086,8 @@ void Scene::Destroy(AppState& appState)
 
 	indexBuffers.Delete(appState);
 	aliasBuffers.Delete(appState);
+
+	ReleaseLatestTextureDescriptorSets(appState);
 
 	if (hostColormap.image != VK_NULL_HANDLE)
 	{
