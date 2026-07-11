@@ -751,7 +751,6 @@ void Scene::Create(AppState& appState)
 #endif
 
     descriptorSetLayouts[0] = singleBufferLayout;
-	descriptorSetLayouts[2] = singleImageLayout;
 	descriptorSetLayouts[3] = singleImageLayout;
     descriptorSetLayouts[4] = singleFragmentStorageBufferLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 5;
@@ -1197,8 +1196,6 @@ void Scene::Create(AppState& appState)
 #endif
 
     descriptorSetLayouts[0] = twoBuffersAndStorageBufferLayout;
-    descriptorSetLayouts[1] = singleImageLayout;
-    descriptorSetLayouts[2] = singleImageLayout;
     pipelineLayoutCreateInfo.setLayoutCount = 3;
     pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstantInfo.size = sizeof(int);
@@ -1436,9 +1433,6 @@ void Scene::Create(AppState& appState)
 	CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &pipelineName));
 #endif
 
-	descriptorSetLayouts[0] = singleBufferLayout;
-	descriptorSetLayouts[1] = singleImageLayout;
-	pipelineLayoutCreateInfo.setLayoutCount = 2;
 	CHECK_VKCMD(vkCreatePipelineLayout(appState.Device, &pipelineLayoutCreateInfo, nullptr, &skyboxRGBA.pipelineLayout));
 	depthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
 	depthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
@@ -2682,7 +2676,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dalias_t& alias, Load
         if (entry == aliasColormapCache.end())
         {
             auto colormap = new SharedMemoryTexture { };
-            colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
+            colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, false);
             colormaps.MoveToFront(colormap);
             loaded.colormap.size = 256 * 64;
             size += loaded.colormap.size;
@@ -2734,7 +2728,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dviewmodel_t& viewmod
         if (entry == aliasColormapCache.end())
         {
             auto colormap = new SharedMemoryTexture { };
-            colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, true);
+            colormap->Create(appState, 256, 64, VK_FORMAT_R8_UINT, 1, 1, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, false);
             colormaps.MoveToFront(colormap);
             loaded.colormap.size = 256 * 64;
             size += loaded.colormap.size;
