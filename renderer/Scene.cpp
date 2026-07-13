@@ -1751,7 +1751,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
-		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 		loaded.next = nullptr;
 		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
@@ -1781,7 +1780,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
-		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 		loaded.next = nullptr;
 		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
@@ -1819,7 +1817,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
-		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 		loaded.next = nullptr;
 		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);
@@ -1849,7 +1846,6 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
-		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 		loaded.next = nullptr;
 		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);

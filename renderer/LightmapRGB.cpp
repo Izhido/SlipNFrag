@@ -55,7 +55,7 @@ bool LightmapRGB::Create(AppState& appState, uint32_t width, uint32_t height, bo
 			buffer->size = size;
 		}
 
-		buffer->buffer.CreateStorageBuffer(appState, buffer->size * sizeof(uint32_t));
+		buffer->buffer.CreateMappableStorageBuffer(appState, buffer->size * sizeof(uint32_t));
 
 		VkDescriptorPoolSize poolSizes { };
 		poolSizes.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
