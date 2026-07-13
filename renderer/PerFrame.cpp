@@ -1455,6 +1455,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 	}
 
 	std::unordered_set<void*> lightmapsInUse;
+	std::vector<VkBufferCopy> regions;
 
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
 	if (!appState.Scene.lightmapChains.empty()) {
@@ -1485,11 +1486,25 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 			{
 				delayedCopySize += loaded->size;
 			}
+			else if (delayedCopyBuffer == buffer->buffer.buffer)
+			{
+				bufferCopy.size = delayedCopySize;
+				bufferCopy.dstOffset = delayedCopyOffset;
+				regions.push_back(bufferCopy);
+				bufferCopy.dstOffset = 0;
+				bufferCopy.srcOffset += bufferCopy.size;
+				appState.Scene.stagingBuffer.offset += bufferCopy.size;
+				delayedCopyBuffer = buffer->buffer.buffer;
+				delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+				delayedCopySize = loaded->size;
+			}
 			else
 			{
 				bufferCopy.size = delayedCopySize;
 				bufferCopy.dstOffset = delayedCopyOffset;
-				vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
+				regions.push_back(bufferCopy);
+				vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, (uint32_t)regions.size(), regions.data());
+				regions.clear();
 				bufferCopy.dstOffset = 0;
 				bufferCopy.srcOffset += bufferCopy.size;
 				appState.Scene.stagingBuffer.offset += bufferCopy.size;
@@ -1503,7 +1518,9 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		{
 			bufferCopy.size = delayedCopySize;
 			bufferCopy.dstOffset = delayedCopyOffset;
-			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
+			regions.push_back(bufferCopy);
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, (uint32_t)regions.size(), regions.data());
+			regions.clear();
 			bufferCopy.dstOffset = 0;
 			bufferCopy.srcOffset += bufferCopy.size;
 			appState.Scene.stagingBuffer.offset += bufferCopy.size;
@@ -1543,11 +1560,25 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 			{
 				delayedCopySize += loaded->size;
 			}
+			else if (delayedCopyBuffer == buffer->buffer.buffer)
+			{
+				bufferCopy.size = delayedCopySize;
+				bufferCopy.dstOffset = delayedCopyOffset;
+				regions.push_back(bufferCopy);
+				bufferCopy.dstOffset = 0;
+				bufferCopy.srcOffset += bufferCopy.size;
+				appState.Scene.stagingBuffer.offset += bufferCopy.size;
+				delayedCopyBuffer = buffer->buffer.buffer;
+				delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+				delayedCopySize = loaded->size;
+			}
 			else
 			{
 				bufferCopy.size = delayedCopySize;
 				bufferCopy.dstOffset = delayedCopyOffset;
-				vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
+				regions.push_back(bufferCopy);
+				vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, (uint32_t)regions.size(), regions.data());
+				regions.clear();
 				bufferCopy.dstOffset = 0;
 				bufferCopy.srcOffset += bufferCopy.size;
 				appState.Scene.stagingBuffer.offset += bufferCopy.size;
@@ -1561,7 +1592,9 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		{
 			bufferCopy.size = delayedCopySize;
 			bufferCopy.dstOffset = delayedCopyOffset;
-			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, 1, &bufferCopy);
+			regions.push_back(bufferCopy);
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, (uint32_t)regions.size(), regions.data());
+			regions.clear();
 			bufferCopy.dstOffset = 0;
 			bufferCopy.srcOffset += bufferCopy.size;
 			appState.Scene.stagingBuffer.offset += bufferCopy.size;
@@ -1599,7 +1632,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, appState.Scene.neutralPaletteBuffers[swapchainImageIndex].buffer, 1, &bufferCopy);
 		bufferCopy.srcOffset += bufferCopy.size;
 
-		barrier.buffer = appState.Scene.paletteBuffers[swapchainImageIndex].buffer;
+		barrier.buffer = appState.Scene.neutralPaletteBuffers[swapchainImageIndex].buffer;
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 1, &barrier, 0, nullptr);
 	}
 
