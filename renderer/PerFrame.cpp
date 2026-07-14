@@ -907,6 +907,77 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	std::copy((uint32_t*)d_lists.cutout_indices32.data(), (uint32_t*)d_lists.cutout_indices32.data() + count, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.cutoutIndices32Size;
 
+	for (auto& chain : appState.Scene.lightmapChains)
+	{
+		uint32_t* delayedCopyBuffer = nullptr;
+		size_t delayedCopySize = 0;
+		auto loaded = chain.first;
+		while (loaded != nullptr)
+		{
+			if (!loaded->lightmap->variable)
+			{
+				count = (size_t)loaded->size / sizeof(uint32_t);
+				if (delayedCopyBuffer == nullptr)
+				{
+					delayedCopyBuffer = (uint32_t*)loaded->source;
+					delayedCopySize = count;
+				}
+				else if (delayedCopyBuffer + delayedCopySize == (uint32_t*)loaded->source)
+				{
+					delayedCopySize += count;
+				}
+				else
+				{
+					std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
+					offset += delayedCopySize * sizeof(uint32_t);
+					delayedCopyBuffer = (uint32_t*)loaded->source;
+					delayedCopySize = count;
+				}
+			}
+			loaded = loaded->next;
+		}
+		if (delayedCopyBuffer != nullptr)
+		{
+			std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
+			offset += delayedCopySize * sizeof(uint32_t);
+		}
+	}
+
+	for (auto& chain : appState.Scene.lightmapRGBChains)
+	{
+		uint32_t* delayedCopyBuffer = nullptr;
+		size_t delayedCopySize = 0;
+		auto loaded = chain.first;
+		while (loaded != nullptr)
+		{
+			if (!loaded->lightmap->variable)
+			{
+				count = (size_t)loaded->size / sizeof(uint32_t);
+				if (delayedCopyBuffer == nullptr)
+				{
+					delayedCopyBuffer = (uint32_t*)loaded->source;
+					delayedCopySize = count;
+				}
+				else if (delayedCopyBuffer + delayedCopySize == (uint32_t*)loaded->source)
+				{
+					delayedCopySize += count;
+				}
+				else
+				{
+					std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
+					offset += delayedCopySize * sizeof(uint32_t);
+					delayedCopyBuffer = (uint32_t*)loaded->source;
+					delayedCopySize = count;
+				}
+			}
+			loaded = loaded->next;
+		}
+		if (delayedCopyBuffer != nullptr)
+		{
+			std::copy(delayedCopyBuffer, delayedCopyBuffer + delayedCopySize, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
+			offset += delayedCopySize * sizeof(uint32_t);
+		}
+	}
 
 	if (appState.Scene.paletteSize > 0)
 	{
@@ -1155,13 +1226,16 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		auto loaded = chain.first;
 		while (loaded != nullptr)
 		{
-			auto buffer = loaded->lightmap->buffer;
-			if (buffer->buffer.mapped == nullptr)
+			if (loaded->lightmap->variable)
 			{
-				buffer->buffer.Map(appState);
-				lightmapBuffersToUnmap.insert(buffer);
+				auto buffer = loaded->lightmap->buffer;
+				if (buffer->buffer.mapped == nullptr)
+				{
+					buffer->buffer.Map(appState);
+					lightmapBuffersToUnmap.insert(buffer);
+				}
+				memcpy((unsigned char*)buffer->buffer.mapped + loaded->lightmap->offset * sizeof(uint32_t), loaded->source, loaded->size);
 			}
-			memcpy((unsigned char*)buffer->buffer.mapped + loaded->lightmap->offset * sizeof(uint32_t), loaded->source, loaded->size);
 			loaded = loaded->next;
 		}
 	}
@@ -1171,13 +1245,16 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		auto loaded = chain.first;
 		while (loaded != nullptr)
 		{
-			auto buffer = loaded->lightmap->buffer;
-			if (buffer->buffer.mapped == nullptr)
+			if (loaded->lightmap->variable)
 			{
-				buffer->buffer.Map(appState);
-				lightmapBuffersToUnmap.insert(buffer);
+				auto buffer = loaded->lightmap->buffer;
+				if (buffer->buffer.mapped == nullptr)
+				{
+					buffer->buffer.Map(appState);
+					lightmapBuffersToUnmap.insert(buffer);
+				}
+				memcpy((unsigned char*)buffer->buffer.mapped + loaded->lightmap->offset * sizeof(uint32_t), loaded->source, loaded->size);
 			}
-			memcpy((unsigned char*)buffer->buffer.mapped + loaded->lightmap->offset * sizeof(uint32_t), loaded->source, loaded->size);
 			loaded = loaded->next;
 		}
 	}
@@ -1330,7 +1407,7 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 
 	appState.Scene.stagingBuffer.lastStartBarrier = -1;
 	appState.Scene.stagingBuffer.lastEndBarrier = -1;
-    appState.Scene.stagingBuffer.lastVertexShaderEndBarrier = -1;
+	appState.Scene.stagingBuffer.lastFragmentShaderEndBarrier = -1;
 
 	VkBufferCopy bufferCopy { };
 
@@ -1427,14 +1504,171 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 		appState.Scene.AddToVertexInputBarriers(indices32->buffer, VK_ACCESS_INDEX_READ_BIT);
 	}
 
+	std::unordered_set<void*> lightmapsInUse;
+	std::vector<VkBufferCopy> regions;
+
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	if (!appState.Scene.lightmapChains.empty()) {
+	fillLabel.pLabelName = "Lightmaps";
+	appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &fillLabel);
+#endif
+	for (auto& chain : appState.Scene.lightmapChains)
+	{
+		lightmapsInUse.clear();
+		VkBuffer delayedCopyBuffer = VK_NULL_HANDLE;
+		VkDeviceSize delayedCopyOffset = 0;
+		VkDeviceSize delayedCopySize = 0;
+		auto loaded = chain.first;
+		while (loaded != nullptr)
+		{
+			if (!loaded->lightmap->variable)
+			{
+				auto buffer = loaded->lightmap->buffer;
+				if (lightmapsInUse.insert(buffer).second)
+				{
+					appState.Scene.AddToFragmentShaderBarriers(buffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
+				}
+				if (delayedCopyBuffer == VK_NULL_HANDLE)
+				{
+					delayedCopyBuffer = buffer->buffer.buffer;
+					delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+					delayedCopySize = loaded->size;
+				}
+				else if (delayedCopyBuffer == buffer->buffer.buffer && delayedCopyOffset + delayedCopySize == loaded->lightmap->offset * sizeof(uint32_t))
+				{
+					delayedCopySize += loaded->size;
+				}
+				else if (delayedCopyBuffer == buffer->buffer.buffer)
+				{
+					bufferCopy.size = delayedCopySize;
+					bufferCopy.dstOffset = delayedCopyOffset;
+					regions.push_back(bufferCopy);
+					bufferCopy.dstOffset = 0;
+					bufferCopy.srcOffset += bufferCopy.size;
+					appState.Scene.stagingBuffer.offset += bufferCopy.size;
+					delayedCopyBuffer = buffer->buffer.buffer;
+					delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+					delayedCopySize = loaded->size;
+				}
+				else
+				{
+					bufferCopy.size = delayedCopySize;
+					bufferCopy.dstOffset = delayedCopyOffset;
+					regions.push_back(bufferCopy);
+					vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, (uint32_t)regions.size(), regions.data());
+					regions.clear();
+					bufferCopy.dstOffset = 0;
+					bufferCopy.srcOffset += bufferCopy.size;
+					appState.Scene.stagingBuffer.offset += bufferCopy.size;
+					delayedCopyBuffer = buffer->buffer.buffer;
+					delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+					delayedCopySize = loaded->size;
+				}
+			}
+			loaded = loaded->next;
+		}
+		if (delayedCopyBuffer != VK_NULL_HANDLE)
+		{
+			bufferCopy.size = delayedCopySize;
+			bufferCopy.dstOffset = delayedCopyOffset;
+			regions.push_back(bufferCopy);
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, (uint32_t)regions.size(), regions.data());
+			regions.clear();
+			bufferCopy.dstOffset = 0;
+			bufferCopy.srcOffset += bufferCopy.size;
+			appState.Scene.stagingBuffer.offset += bufferCopy.size;
+		}
+	}
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+	}
+#endif
+
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	if (!appState.Scene.lightmapRGBChains.empty()) {
+	fillLabel.pLabelName = "Lightmaps (RGB)";
+	appState.vkCmdBeginDebugUtilsLabelEXT(commandBuffer, &fillLabel);
+#endif
+	for (auto& chain : appState.Scene.lightmapRGBChains)
+	{
+		lightmapsInUse.clear();
+		VkBuffer delayedCopyBuffer = VK_NULL_HANDLE;
+		VkDeviceSize delayedCopyOffset = 0;
+		VkDeviceSize delayedCopySize = 0;
+		auto loaded = chain.first;
+		while (loaded != nullptr)
+		{
+			if (!loaded->lightmap->variable)
+			{
+				auto buffer = loaded->lightmap->buffer;
+				if (lightmapsInUse.insert(buffer).second)
+				{
+					appState.Scene.AddToFragmentShaderBarriers(buffer->buffer.buffer, VK_ACCESS_SHADER_READ_BIT);
+				}
+				if (delayedCopyBuffer == VK_NULL_HANDLE)
+				{
+					delayedCopyBuffer = buffer->buffer.buffer;
+					delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+					delayedCopySize = loaded->size;
+				}
+				else if (delayedCopyBuffer == buffer->buffer.buffer && delayedCopyOffset + delayedCopySize == loaded->lightmap->offset * sizeof(uint32_t))
+				{
+					delayedCopySize += loaded->size;
+				}
+				else if (delayedCopyBuffer == buffer->buffer.buffer)
+				{
+					bufferCopy.size = delayedCopySize;
+					bufferCopy.dstOffset = delayedCopyOffset;
+					regions.push_back(bufferCopy);
+					bufferCopy.dstOffset = 0;
+					bufferCopy.srcOffset += bufferCopy.size;
+					appState.Scene.stagingBuffer.offset += bufferCopy.size;
+					delayedCopyBuffer = buffer->buffer.buffer;
+					delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+					delayedCopySize = loaded->size;
+				}
+				else
+				{
+					bufferCopy.size = delayedCopySize;
+					bufferCopy.dstOffset = delayedCopyOffset;
+					regions.push_back(bufferCopy);
+					vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, (uint32_t)regions.size(), regions.data());
+					regions.clear();
+					bufferCopy.dstOffset = 0;
+					bufferCopy.srcOffset += bufferCopy.size;
+					appState.Scene.stagingBuffer.offset += bufferCopy.size;
+					delayedCopyBuffer = buffer->buffer.buffer;
+					delayedCopyOffset = loaded->lightmap->offset * sizeof(uint32_t);
+					delayedCopySize = loaded->size;
+				}
+			}
+			loaded = loaded->next;
+		}
+		if (delayedCopyBuffer != VK_NULL_HANDLE)
+		{
+			bufferCopy.size = delayedCopySize;
+			bufferCopy.dstOffset = delayedCopyOffset;
+			regions.push_back(bufferCopy);
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer->buffer, delayedCopyBuffer, (uint32_t)regions.size(), regions.data());
+			regions.clear();
+			bufferCopy.dstOffset = 0;
+			bufferCopy.srcOffset += bufferCopy.size;
+			appState.Scene.stagingBuffer.offset += bufferCopy.size;
+		}
+	}
+#if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
+	appState.vkCmdEndDebugUtilsLabelEXT(commandBuffer);
+	}
+#endif
+
 	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)
 	{
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastEndBarrier + 1, appState.Scene.stagingBuffer.vertexInputEndBarriers.data(), 0, nullptr);
 	}
 
-    if (appState.Scene.stagingBuffer.lastVertexShaderEndBarrier >= 0)
+    if (appState.Scene.stagingBuffer.lastFragmentShaderEndBarrier >= 0)
     {
-        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastVertexShaderEndBarrier + 1, appState.Scene.stagingBuffer.vertexShaderEndBarriers.data(), 0, nullptr);
+        vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, appState.Scene.stagingBuffer.lastFragmentShaderEndBarrier + 1, appState.Scene.stagingBuffer.fragmentShaderEndBarriers.data(), 0, nullptr);
     }
 
     if (appState.Scene.paletteSize > 0)

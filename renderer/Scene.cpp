@@ -1613,15 +1613,15 @@ void Scene::AddToVertexInputBarriers(VkBuffer buffer, VkAccessFlags flags)
     barrier.dstAccessMask = flags;
 }
 
-void Scene::AddToVertexShaderBarriers(VkBuffer buffer, VkAccessFlags flags)
+void Scene::AddToFragmentShaderBarriers(VkBuffer buffer, VkAccessFlags flags)
 {
-    stagingBuffer.lastVertexShaderEndBarrier++;
-    if (stagingBuffer.vertexShaderEndBarriers.size() <= stagingBuffer.lastVertexShaderEndBarrier)
+    stagingBuffer.lastFragmentShaderEndBarrier++;
+    if (stagingBuffer.fragmentShaderEndBarriers.size() <= stagingBuffer.lastFragmentShaderEndBarrier)
     {
-        stagingBuffer.vertexShaderEndBarriers.emplace_back();
+        stagingBuffer.fragmentShaderEndBarriers.emplace_back();
     }
 
-    auto& barrier = stagingBuffer.vertexShaderEndBarriers[stagingBuffer.lastVertexShaderEndBarrier];
+    auto& barrier = stagingBuffer.fragmentShaderEndBarriers[stagingBuffer.lastFragmentShaderEndBarrier];
     barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
     barrier.buffer = buffer;
     barrier.size = VK_WHOLE_SIZE;
@@ -1751,6 +1751,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
+		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 		loaded.next = nullptr;
 		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
@@ -1817,6 +1818,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
 		loaded.size = surface.lightmap_size * sizeof(uint32_t);
+		size += loaded.size;
 		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
 		loaded.next = nullptr;
 		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);

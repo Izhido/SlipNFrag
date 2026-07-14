@@ -55,7 +55,14 @@ bool Lightmap::Create(AppState& appState, uint32_t width, uint32_t height, bool 
 			buffer->size = size;
 		}
 
-		buffer->buffer.CreateMappableStorageBuffer(appState, buffer->size * sizeof(uint32_t));
+		if (variable)
+		{
+			buffer->buffer.CreateMappableStorageBuffer(appState, buffer->size * sizeof(uint32_t));
+		}
+		else
+		{
+			buffer->buffer.CreateStorageBuffer(appState, buffer->size * sizeof(uint32_t));
+		}
 
 		VkDescriptorPoolSize poolSizes { };
 		poolSizes.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
