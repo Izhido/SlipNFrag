@@ -499,6 +499,7 @@ void android_main(struct android_app* app)
 		auto bufferDeviceAddress = false;
 		auto createRenderPass2 = false;
 		auto depthStencilResolve = false;
+		VkResolveModeFlagBits depthResolveMode = VK_RESOLVE_MODE_NONE;
 #if !defined(NDEBUG)
 		auto pipelineExecutableProperties = false;
 #endif
@@ -756,15 +757,34 @@ void android_main(struct android_app* app)
 			graphicsBinding.queueFamilyIndex = queueInfo.queueFamilyIndex;
 			graphicsBinding.queueIndex = 0;
 
-			VkPhysicalDeviceProperties properties;
-			vkGetPhysicalDeviceProperties(vulkanPhysicalDevice, &properties);
+			VkPhysicalDeviceProperties2 properties {  VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+
+			VkPhysicalDeviceDepthStencilResolveProperties depthStencilResolveProperties { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES };
+			if (depthStencilResolve && depthCompositionLayerEnabled)
+			{
+				properties.pNext = &depthStencilResolveProperties;
+			}
+
+			vkGetPhysicalDeviceProperties2(vulkanPhysicalDevice, &properties);
 
 			for (auto i = 0; i < 32; i++)
 			{
 				auto flag = 1 << i;
-				if ((properties.limits.framebufferColorSampleCounts & flag) == flag && (properties.limits.framebufferDepthSampleCounts & flag) == flag)
+				if ((properties.properties.limits.framebufferColorSampleCounts & flag) == flag && (properties.properties.limits.framebufferDepthSampleCounts & flag) == flag)
 				{
 					vulkanSwapchainSampleCount = flag;
+				}
+			}
+
+			if (depthStencilResolve && depthCompositionLayerEnabled)
+			{
+				if ((depthStencilResolveProperties.supportedDepthResolveModes & VK_RESOLVE_MODE_AVERAGE_BIT) != 0u)
+				{
+					depthResolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
+				}
+				else
+				{
+					depthResolveMode = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT;
 				}
 			}
 		}
@@ -1121,7 +1141,7 @@ void android_main(struct android_app* app)
 			resolveDepthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 			VkSubpassDescriptionDepthStencilResolve depthStencilResolveForSubpass { VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE };
-			depthStencilResolveForSubpass.depthResolveMode = VK_RESOLVE_MODE_AVERAGE_BIT;
+			depthStencilResolveForSubpass.depthResolveMode = depthResolveMode;
 			depthStencilResolveForSubpass.stencilResolveMode = VK_RESOLVE_MODE_NONE;
 			depthStencilResolveForSubpass.pDepthStencilResolveAttachment = &resolveDepthReference;
 
