@@ -2,6 +2,17 @@ cmake_minimum_required(VERSION 3.22)
 
 project(SlipNFrag-PCXR)
 
+set(APP_VERSION_MAJOR 1)
+set(APP_VERSION_MINOR 1)
+set(APP_VERSION_PATCH 34)
+set(APP_VERSION_STRING "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_PATCH}.0")
+
+set(APP_INTERNAL_NAME "SlipNFrag")
+set(APP_COPYRIGHT "Copyright (C) 2026")
+set(APP_ORIGINAL_FILENAME "slipnfrag_pcxr.exe")
+set(APP_NAME "Slip & Frag")
+set(APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/appicon.ico")
+
 set(ROOT_DIR "${PROJECT_SOURCE_DIR}/..")
 set(LOCAL_DIR ".")
 set(ID1_DIR "${ROOT_DIR}/id1")
@@ -9,7 +20,7 @@ set(RENDERER_DIR "${ROOT_DIR}/renderer")
 set(SND_FLOAT_DIR "${ROOT_DIR}/snd_float")
 set(SHADERS_DIR "${ROOT_DIR}/shaders")
 set(STB_DIR "${ROOT_DIR}/stb")
-set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.60")
+set(OPENXR_DIR "${ROOT_DIR}/OpenXR-SDK-release-1.1.61")
 set(VMA_DIR "${ROOT_DIR}/VulkanMemoryAllocator-3.3.0")
 set(UNORDERED_DENSE_DIR "${ROOT_DIR}/unordered_dense-4.8.1")
 
@@ -69,22 +80,34 @@ foreach(shader_file IN LISTS SHADERS_SOURCE)
     list(APPEND COMPILED_SHADERS ${output_file})
 endforeach()
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/version.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY
+)
+
 set(RESOURCES_RC ${CMAKE_CURRENT_BINARY_DIR}/resources.rc)
 file(WRITE ${RESOURCES_RC} "")
 
 foreach(spv_file IN LISTS COMPILED_SHADERS)
     get_filename_component(spv_filename ${spv_file} NAME)
 
+    string(REGEX REPLACE "[/\\\\.\\-]" "_" spv_resname "${spv_filename}")
+    string(TOUPPER "${spv_resname}" spv_resname)
+
     file(APPEND ${RESOURCES_RC}
-        "\"shaders/${spv_filename}\" RCDATA \"${spv_file}\"\n"
+        "SHADERS_${spv_resname} RCDATA \"${spv_file}\"\n"
     )
 endforeach()
 
 foreach(png_file IN LISTS SLIPNFRAG_XR_ASSETS)
     get_filename_component(png_filename ${png_file} NAME)
 
+    string(REGEX REPLACE "[/\\\\.\\-]" "_" png_resname "${png_filename}")
+    string(TOUPPER "${png_resname}" png_resname)
+
     file(APPEND ${RESOURCES_RC}
-        "\"${png_filename}\" RCDATA \"${png_file}\"\n"
+        "${png_resname} RCDATA \"${png_file}\"\n"
     )
 endforeach()
 
@@ -108,7 +131,8 @@ target_include_directories(slipnfrag_pcxr PRIVATE
 
 target_link_libraries(slipnfrag_pcxr PRIVATE 
         openxr_loader
-        winmm.lib
+        winmm
+        version
         Vulkan::Vulkan
 )
 
@@ -120,4 +144,7 @@ target_compile_features(slipnfrag_pcxr PUBLIC cxx_std_20)
 
 target_compile_definitions(slipnfrag_pcxr PRIVATE _CRT_SECURE_NO_WARNINGS)
 
-target_sources(slipnfrag_pcxr PRIVATE ${RESOURCES_RC})
+target_sources(slipnfrag_pcxr PRIVATE 
+    ${RESOURCES_RC}
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+)

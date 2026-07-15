@@ -1,0 +1,35 @@
+#include <winver.h>
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION @APP_VERSION_MAJOR@,@APP_VERSION_MINOR@,@APP_VERSION_PATCH@,0
+ PRODUCTVERSION @APP_VERSION_MAJOR@,@APP_VERSION_MINOR@,@APP_VERSION_PATCH@,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040004b0"
+        BEGIN
+            VALUE "FileVersion", "@APP_VERSION_STRING@"
+            VALUE "InternalName", "@APP_INTERNAL_NAME@"
+            VALUE "LegalCopyright", "@APP_COPYRIGHT@"
+            VALUE "OriginalFilename", "@APP_ORIGINAL_FILENAME@"
+            VALUE "ProductName", "@APP_NAME@"
+            VALUE "ProductVersion", "@APP_VERSION_STRING@"
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x400, 1200
+    END
+END
+
+IDI_MAINICON ICON "@APP_ICON@"
