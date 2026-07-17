@@ -291,6 +291,10 @@ void android_main(struct android_app* app)
 				appState.GenericControllerEnabled = true;
 				xrInstanceExtensionSources.emplace_back(extension.extensionName);
 			}
+			else if (strncmp(extension.extensionName, XR_EXT_LOCAL_FLOOR_EXTENSION_NAME, sizeof(extension.extensionName)) == 0)
+			{
+				xrInstanceExtensionSources.emplace_back(extension.extensionName);
+			}
 
 			appState.Logger->Verbose("  Name=%s SpecVersion=%d", extension.extensionName, extension.extensionVersion);
 		}
@@ -904,8 +908,13 @@ void android_main(struct android_app* app)
 		CHECK_XRCMD(xrEnumerateReferenceSpaces(appState.Session, spaceCount, &spaceCount, spaces.data()));
 
 		appState.Logger->Info("Available reference spaces: %d", spaceCount);
+		auto localFloorSpaceAvailable = false;
 		for (XrReferenceSpaceType space : spaces)
 		{
+			if (space == XR_REFERENCE_SPACE_TYPE_LOCAL_FLOOR_EXT)
+			{
+				localFloorSpaceAvailable = true;
+			}
 			appState.Logger->Verbose("  Name: %s", to_string(space));
 		}
 
@@ -932,10 +941,16 @@ void android_main(struct android_app* app)
 
 		XrReferenceSpaceCreateInfo referenceSpaceCreateInfo { XR_TYPE_REFERENCE_SPACE_CREATE_INFO };
 		referenceSpaceCreateInfo.poseInReferenceSpace.orientation.w = 1;
-
-		XrSpace worldSpace = XR_NULL_HANDLE;
-		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
-		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &worldSpace));
+		XrSpace cameraSpace = XR_NULL_HANDLE;
+		if (localFloorSpaceAvailable)
+		{
+			referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL_FLOOR_EXT;
+		}
+		else
+		{
+			referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
+		}
+		CHECK_XRCMD(xrCreateReferenceSpace(appState.Session, &referenceSpaceCreateInfo, &cameraSpace));
 
 		XrSpace appSpace = XR_NULL_HANDLE;
 		referenceSpaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
@@ -1899,7 +1914,7 @@ void android_main(struct android_app* app)
 						}
 
 						XrSpaceLocation spaceLocation { XR_TYPE_SPACE_LOCATION };
-						res = xrLocateSpace(worldSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
+						res = xrLocateSpace(cameraSpace, appSpace, frameState.predictedDisplayTime, &spaceLocation);
 
 						appState.DistanceToFloor = spaceLocation.pose.position.y;
 						appState.Scale = -spaceLocation.pose.position.y / playerHeight;
@@ -2748,14 +2763,29 @@ void android_main(struct android_app* app)
 			}
 		}
 
-		if (worldSpace != XR_NULL_HANDLE)
+		if (consoleKeyboardSpace != XR_NULL_HANDLE)
 		{
-			xrDestroySpace(worldSpace);
+			xrDestroySpace(consoleKeyboardSpace);
+		}
+
+		if (keyboardSpace != XR_NULL_HANDLE)
+		{
+			xrDestroySpace(keyboardSpace);
+		}
+
+		if (screenSpace != XR_NULL_HANDLE)
+		{
+			xrDestroySpace(screenSpace);
 		}
 
 		if (appSpace != XR_NULL_HANDLE)
 		{
 			xrDestroySpace(appSpace);
+		}
+
+		if (cameraSpace != XR_NULL_HANDLE)
+		{
+			xrDestroySpace(cameraSpace);
 		}
 
 		if (appState.Session != XR_NULL_HANDLE)
