@@ -292,8 +292,7 @@ void SV_AreaTriggerEdicts (edict_t* ent, areanode_t* node, std::vector<edict_t*>
 			Sys_Error ("SV_AreaTriggerEdicts: NULL trigger edict");
 		}
 		next = l->next;
-		auto base_ptr = (size_t)&(((edict_t*)0)->area);
-		touch = ((edict_t*)((byte *)l - (int)base_ptr));
+		touch = EDICT_FROM_AREA(l);
 		if (touch == ent)
 			continue;
 		if (!touch->v.touch || touch->v.solid != SOLID_TRIGGER)
@@ -893,8 +892,7 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 			Sys_Error ("SV_ClipToLinks: NULL solid edict");
 		}
 		next = l->next;
-		auto base_ptr = (size_t)&(((edict_t*)0)->area);
-		touch = ((edict_t*)((byte *)l - (int)base_ptr));
+		touch = EDICT_FROM_AREA(l);
 		if (touch->v.solid == SOLID_NOT)
 			continue;
 		if (touch == clip->passedict)

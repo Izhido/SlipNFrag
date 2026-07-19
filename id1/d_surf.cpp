@@ -140,8 +140,7 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	if (size <= 0)
 		Sys_Error ("D_SCAlloc: bad cache size %d\n", size);
 	
-	auto size_ptr = (size_t)&((surfcache_t *)0)->data[size];
-	size = (int)size_ptr;
+	size = (int)(offsetof(surfcache_t, data) + (size * sizeof(byte)));
 	size = (size + 7) & ~7;
 	if (size > sc_size)
 		Sys_Error ("D_SCAlloc: %i > cache size",size);
