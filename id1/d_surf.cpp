@@ -143,7 +143,14 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	size = (int)(offsetof(surfcache_t, data) + (size * sizeof(byte)));
 	size = (size + 7) & ~7;
 	if (size > sc_size)
-		Sys_Error ("D_SCAlloc: %i > cache size",size);
+	{
+		if (!r_cache_thrash)
+		{
+			Con_Printf ("D_SCAlloc: %i > cache size\n",size);
+			r_cache_thrash = true;
+		}
+		return NULL;
+	}
 
 // if there is not size bytes after the rover, reset to the start
 	wrapped_this_time = false;
@@ -166,9 +173,21 @@ surfcache_t     *D_SCAlloc (int width, int size)
 	while (new_surf->size < size)
 	{
 	// free another
+		if (sc_rover->next == NULL)
+		{
+			sc_rover = new_surf;
+			if (wrapped_this_time)
+			{
+				d_roverwrapped = true;
+			}
+			if (!r_cache_thrash)
+			{
+				Con_Printf ("D_SCAlloc: hit the end of memory\n");
+				r_cache_thrash = true;
+			}
+			return NULL;
+		}
 		sc_rover = sc_rover->next;
-		if (!sc_rover)
-			Sys_Error ("D_SCAlloc: hit the end of memory");
 		if (sc_rover->owner)
 			*sc_rover->owner = NULL;
 			
