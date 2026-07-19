@@ -30,7 +30,7 @@ int             r_cache_wrap_count;
 size_t                                  sc_size;
 surfcache_t                     *sc_rover, *sc_base;
 
-#define GUARDSIZE       4
+#define GUARDSIZE       8
 
 
 int     D_SurfaceCacheForRes (int width, int height)
