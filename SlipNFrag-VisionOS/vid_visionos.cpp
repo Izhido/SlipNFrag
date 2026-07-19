@@ -79,7 +79,7 @@ void VID_Init(unsigned char *palette)
 	srand(time(nullptr));
 	int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
 	surfcache.resize(surfcachesize);
-	D_InitCaches(surfcache.data(), (int)surfcache.size());
+	D_InitCaches(surfcache.data(), surfcache.size());
 }
 
 void VID_Resize(float forced_aspect)
@@ -101,7 +101,7 @@ void VID_Resize(float forced_aspect)
 	int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
 	surfcache.resize(surfcachesize);
 	Draw_ResizeScanTables();
-	D_InitCaches (surfcache.data(), (int)surfcache.size());
+	D_InitCaches (surfcache.data(), surfcache.size());
 	R_ResizeTurb();
 	R_ResizeEdges();
 	vid.recalc_refdef = 1;
@@ -112,7 +112,7 @@ void VID_ReallocSurfCache()
 	int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
 	surfcache.resize(surfcache.size() + surfcachesize);
 	Draw_ResizeScanTables();
-	D_InitCaches (surfcache.data(), (int)surfcache.size());
+	D_InitCaches (surfcache.data(), surfcache.size());
 }
 
 void VID_Shutdown(void)

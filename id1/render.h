@@ -168,6 +168,6 @@ extern	int		r_cache_wrap_count;
 int	D_SurfaceCacheForRes (int width, int height);
 void D_FlushCaches (void);
 void D_DeleteSurfaceCache (void);
-void D_InitCaches (void *buffer, int size);
+void D_InitCaches (void *buffer, size_t size);
 void R_SetVrect (vrect_t *pvrect, vrect_t *pvrectin, int lineadj);
 

@@ -27,7 +27,7 @@ float           surfscale;
 qboolean        r_cache_thrash;         // set if surface cache is thrashing
 int             r_cache_wrap_count;
 
-int                                     sc_size;
+size_t                                  sc_size;
 surfcache_t                     *sc_rover, *sc_base;
 
 #define GUARDSIZE       4
@@ -81,7 +81,7 @@ D_InitCaches
 
 ================
 */
-void D_InitCaches (void *buffer, int size)
+void D_InitCaches (void *buffer, size_t size)
 {
 
 	if (!msg_suppress_1)
@@ -225,7 +225,7 @@ void D_SCDump (void)
 	{
 		if (test == sc_rover)
 			Sys_Printf ("ROVER:\n");
-		printf ("%p : %i bytes     %i width\n",test, test->size, test->width);
+		printf ("%p : %lu bytes     %i width\n",test, test->size, test->width);
 	}
 }
 
