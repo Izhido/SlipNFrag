@@ -443,7 +443,7 @@ surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture)
 // determine shape of surface
 //
 	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax;
-	auto widthinbytes = r_blocklights_smax * sizeof(unsigned);
+	auto widthinbytes = r_blocklights_smax * (int)sizeof(unsigned);
 
 //
 // see if the cache holds apropriate data
@@ -471,7 +471,7 @@ surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture)
 	if (!cache)     // if a texture just animated, don't reallocate it
 	{
 		cache = D_SCAlloc (widthinbytes,
-						   r_blocklights_size * sizeof(unsigned));
+						   r_blocklights_size * (int)sizeof(unsigned));
 		surface->cachespots[0] = cache;
 		if (cache == nullptr)
 		{
@@ -550,7 +550,7 @@ surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture)
 // determine shape of surface
 //
 	r_blocklights_size = r_blocklights_smax*r_blocklights_tmax*3;
-	auto widthinbytes = r_blocklights_smax * 3 * sizeof(unsigned);
+	auto widthinbytes = r_blocklights_smax * 3 * (int)sizeof(unsigned);
 
 //
 // see if the cache holds apropriate data
@@ -578,7 +578,7 @@ surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture)
 	if (!cache)     // if a texture just animated, don't reallocate it
 	{
 		cache = D_SCAlloc (widthinbytes,
-						   r_blocklights_size * sizeof(unsigned));
+						   r_blocklights_size * (int)sizeof(unsigned));
 		surface->cachespots[0] = cache;
 		if (cache == nullptr)
 		{

@@ -154,13 +154,13 @@ void D_CalcGradients (msurface_t *pface)
 
 	VectorScale (transformed_modelorg, mipscale, p_temp1);
 
-	t = 0x10000*mipscale;
-	sadjust = ((fixed16_t)(DotProduct (p_temp1, p_saxis) * 0x10000 + 0.5)) -
-			((pface->texturemins[0] << 16) >> miplevel)
-			+ pface->texinfo->vecs[0][3]*t;
-	tadjust = ((fixed16_t)(DotProduct (p_temp1, p_taxis) * 0x10000 + 0.5)) -
-			((pface->texturemins[1] << 16) >> miplevel)
-			+ pface->texinfo->vecs[1][3]*t;
+	t = 0x100000*mipscale;
+	sadjust = (((fixed44p20_t)(DotProduct (p_temp1, p_saxis) * 0x100000 + 0.5)) -
+			(((fixed44p20_t)pface->texturemins[0] << 20) >> miplevel)
+			+ pface->texinfo->vecs[0][3]*t) / 16;
+	tadjust = (((fixed44p20_t)(DotProduct (p_temp1, p_taxis) * 0x100000 + 0.5)) -
+			(((fixed44p20_t)pface->texturemins[1] << 20) >> miplevel)
+			+ pface->texinfo->vecs[1][3]*t) / 16;
 
 //
 // -1 (-epsilon) so we never wander off the edge of the texture
@@ -193,19 +193,19 @@ void D_TurbCalcGradients (msurface_t *pface)
 	d_tdivzorigin = p_taxis[2] - xcenter * d_tdivzstepu -
 			ycenter * d_tdivzstepv;
 
-	sadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_saxis) * 0x10000 + 0.5)) -
-			(-8192 * 0x10000)
-			+ pface->texinfo->vecs[0][3]*0x10000;
-	tadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_taxis) * 0x10000 + 0.5)) -
-			(-8192 * 0x10000)
-			+ pface->texinfo->vecs[1][3]*0x10000;
+	sadjust = (((fixed44p20_t)(DotProduct (transformed_modelorg, p_saxis) * 0x100000 + 0.5)) -
+			((fixed44p20_t)-8192 * 0x100000)
+			+ pface->texinfo->vecs[0][3]*0x100000) / 16;
+	tadjust = (((fixed44p20_t)(DotProduct (transformed_modelorg, p_taxis) * 0x100000 + 0.5)) -
+			((fixed44p20_t)-8192 * 0x100000)
+			+ pface->texinfo->vecs[1][3]*0x100000) / 16;
 
-	r_turb_lm_sadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_saxis) * 0x10000 + 0.5)) -
-			(pface->texturemins[0] * 0x10000)
-			+ pface->texinfo->vecs[0][3]*0x10000;
-	r_turb_lm_tadjust = ((fixed16_t)(DotProduct (transformed_modelorg, p_taxis) * 0x10000 + 0.5)) -
-			(pface->texturemins[1] * 0x10000)
-			+ pface->texinfo->vecs[1][3]*0x10000;
+	r_turb_lm_sadjust = (((fixed44p20_t)(DotProduct (transformed_modelorg, p_saxis) * 0x100000 + 0.5)) -
+			((fixed44p20_t)pface->texturemins[0] * 0x100000)
+			+ pface->texinfo->vecs[0][3]*0x100000) / 16;
+	r_turb_lm_tadjust = (((fixed44p20_t)(DotProduct (transformed_modelorg, p_taxis) * 0x100000 + 0.5)) -
+			((fixed44p20_t)pface->texturemins[1] * 0x100000)
+			+ pface->texinfo->vecs[1][3]*0x100000) / 16;
 
 //
 // -1 (-epsilon) so we never wander off the edge of the texture
