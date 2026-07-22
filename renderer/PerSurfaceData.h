@@ -6,7 +6,7 @@
 
 struct PerSurfaceData
 {
-	std::vector<float> vertices;
+	float* vertices;
 	SharedMemoryTexture* texture;
 	int textureIndex;
 	unsigned char* textureSource;

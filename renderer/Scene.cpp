@@ -1679,9 +1679,9 @@ void Scene::CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded)
 {
 	auto face = (msurface_t*)loaded.face;
 	loaded.numedges = face->numedges;
-	if (perSurface.vertices.empty())
+	if (perSurface.vertices == nullptr)
 	{
-		perSurface.vertices.resize(loaded.numedges * 3);
+		perSurface.vertices = vertexStore.Allocate(loaded.numedges * 3);
 		auto model = (model_t*)loaded.model;
 		auto vertexes = model->vertexes;
         auto e = face->firstedge;
@@ -1705,7 +1705,7 @@ void Scene::CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded)
             e++;
         }
     }
-	loaded.vertices = perSurface.vertices.data();
+	loaded.vertices = perSurface.vertices;
 }
 
 void Scene::AddLightmapToDescriptorWrites(AppState& appState, Lightmap* lightmap)
@@ -4004,6 +4004,7 @@ void Scene::Reset(AppState& appState)
 		}
 	}
 	perSurfaceCache.clear();
+	vertexStore.Clear();
     indexBuffers.DisposeFront();
 	aliasBuffers.DisposeFront();
 	ReleaseLatestTextureDescriptorSets(appState);
@@ -4081,6 +4082,7 @@ void Scene::Destroy(AppState& appState)
 		}
 	}
 	perSurfaceCache.clear();
+	vertexStore.Clear();
 
 	indexBuffers.Delete(appState);
 	aliasBuffers.Delete(appState);
