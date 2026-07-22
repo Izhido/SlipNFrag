@@ -122,6 +122,7 @@ typedef struct msurface_s
 	
 // surface generation data
 	struct surfcache_s	*cachespots[MIPLEVELS];
+	surfcache_s	*lmcachespot;
 
 	int		texturemins[2];
 	int		extents[2];

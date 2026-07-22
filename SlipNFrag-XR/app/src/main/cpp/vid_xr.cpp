@@ -95,7 +95,11 @@ void VID_Resize(float forced_aspect)
     vid.conrowbytes = con_width;
     zbuffer.resize(vid_width * vid_height);
     d_pzbuffer = zbuffer.data();
-    int surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
+    size_t surfcachesize = D_SurfaceCacheForRes(vid_width, vid_height);
+    if (surfcachesize < surfcache.size())
+    {
+        std::vector<byte>().swap(surfcache);
+    }
     surfcache.resize(surfcachesize);
     Draw_ResizeScanTables();
     D_InitCaches (surfcache.data(), surfcache.size());

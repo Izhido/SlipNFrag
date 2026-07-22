@@ -448,7 +448,7 @@ surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture)
 //
 // see if the cache holds apropriate data
 //
-	cache = surface->cachespots[0];
+	cache = surface->lmcachespot;
 
 	if (cache && !cache->dlight && surface->dlightframe != r_framecount
 			&& cache->texture == r_drawsurf.texture
@@ -472,12 +472,12 @@ surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture)
 	{
 		cache = D_SCAlloc (widthinbytes,
 						   r_blocklights_size * (int)sizeof(unsigned));
-		surface->cachespots[0] = cache;
+		surface->lmcachespot = cache;
 		if (cache == nullptr)
 		{
 			return cache;
 		}
-		cache->owner = &surface->cachespots[0];
+		cache->owner = &surface->lmcachespot;
 		cache->mipscale = 1;
 	}
 
@@ -506,7 +506,7 @@ surfcache_t* D_CacheLightmap (msurface_t *surface, texture_t *texture)
 	c_surf++;
 	R_BuildLightMap ();
 
-	return surface->cachespots[0];
+	return surface->lmcachespot;
 }
 
 /*
@@ -555,7 +555,7 @@ surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture)
 //
 // see if the cache holds apropriate data
 //
-	cache = surface->cachespots[0];
+	cache = surface->lmcachespot;
 
 	if (cache && !cache->dlight && surface->dlightframe != r_framecount
 			&& cache->texture == r_drawsurf.texture
@@ -579,12 +579,12 @@ surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture)
 	{
 		cache = D_SCAlloc (widthinbytes,
 						   r_blocklights_size * (int)sizeof(unsigned));
-		surface->cachespots[0] = cache;
+		surface->lmcachespot = cache;
 		if (cache == nullptr)
 		{
 			return cache;
 		}
-		cache->owner = &surface->cachespots[0];
+		cache->owner = &surface->lmcachespot;
 		cache->mipscale = 1;
 	}
 
@@ -613,7 +613,7 @@ surfcache_t* D_CacheColoredLightmap (msurface_t *surface, texture_t *texture)
 	c_surf++;
 	R_BuildColoredLightMap ();
 
-	return surface->cachespots[0];
+	return surface->lmcachespot;
 }
 
 
