@@ -1162,19 +1162,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& s
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1197,19 +1201,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& s
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
             lightmap.indexCount = indexCount;
 		}
@@ -1232,19 +1240,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& s
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
             lightmap.indexCount = indexCount;
 		}
@@ -1267,19 +1279,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturesWithLightmaps& s
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
             lightmap.indexCount = indexCount;
 		}
@@ -1302,19 +1318,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmap
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1337,19 +1357,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmap
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1372,19 +1396,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmap
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1407,19 +1435,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTexturePairsWithLightmap
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1439,19 +1471,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::v
 		{
 			auto& surface = loaded[i];
 			auto count = surface.count - 2;
-			auto first = index;
-			*target++ = index++;
-			*target++ = index++;
-			*target++ = index;
-			for (auto j = 1; j < count; j++)
+			for (auto j = 0; j < count; j++)
 			{
-				*target++ = first;
-				*target++ = index++;
-				*target++ = index;
+				if (j % 2 == 0)
+				{
+					*target++ = index + j;
+					*target++ = index + j + 1;
+					*target++ = index + j + 2;
+				}
+				else
+				{
+					*target++ = index + j + 1;
+					*target++ = index + j;
+					*target++ = index + j + 2;
+				}
 			}
-			index++;
-			count *= 3;
-			indexCount += count;
+			index += surface.count;
+			indexCount += (VkDeviceSize)count * 3;
 		}
 		texture.indexCount = indexCount;
 	}
@@ -1470,19 +1506,23 @@ VkDeviceSize SortedSurfaces::LoadIndices16(SortedSurfaceTextures& sorted, std::v
 		{
 			auto& surface = loaded[i];
 			auto count = surface.count - 2;
-			auto first = index;
-			*target++ = index++;
-			*target++ = index++;
-			*target++ = index;
-			for (auto j = 1; j < count; j++)
+			for (auto j = 0; j < count; j++)
 			{
-				*target++ = first;
-				*target++ = index++;
-				*target++ = index;
+				if (j % 2 == 0)
+				{
+					*target++ = index + j;
+					*target++ = index + j + 1;
+					*target++ = index + j + 2;
+				}
+				else
+				{
+					*target++ = index + j + 1;
+					*target++ = index + j;
+					*target++ = index + j + 2;
+				}
 			}
-			index++;
-			count *= 3;
-			indexCount += count;
+			index += surface.count;
+			indexCount += (VkDeviceSize)count * 3;
 		}
 		texture.indexCount = indexCount;
 	}
@@ -1535,19 +1575,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& s
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
             lightmap.indexCount = indexCount;
 		}
@@ -1570,19 +1614,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& s
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
             lightmap.indexCount = indexCount;
 		}
@@ -1605,19 +1653,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmap
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1640,19 +1692,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmap
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1675,19 +1731,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& s
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
             lightmap.indexCount = indexCount;
 		}
@@ -1710,19 +1770,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturesWithLightmaps& s
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
             lightmap.indexCount = indexCount;
 		}
@@ -1745,19 +1809,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmap
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1780,19 +1848,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTexturePairsWithLightmap
 			{
 				auto& surface = loaded[i];
 				auto count = surface.count - 2;
-				auto first = index;
-				*target++ = index++;
-				*target++ = index++;
-				*target++ = index;
-				for (auto j = 1; j < count; j++)
+				for (auto j = 0; j < count; j++)
 				{
-					*target++ = first;
-					*target++ = index++;
-					*target++ = index;
+					if (j % 2 == 0)
+					{
+						*target++ = index + j;
+						*target++ = index + j + 1;
+						*target++ = index + j + 2;
+					}
+					else
+					{
+						*target++ = index + j + 1;
+						*target++ = index + j;
+						*target++ = index + j + 2;
+					}
 				}
-				index++;
-				count *= 3;
-				indexCount += count;
+				index += surface.count;
+				indexCount += (VkDeviceSize)count * 3;
 			}
 			lightmap.indexCount = indexCount;
 		}
@@ -1812,19 +1884,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::v
 		{
 			auto& surface = loaded[i];
 			auto count = surface.count - 2;
-			auto first = index;
-			*target++ = index++;
-			*target++ = index++;
-			*target++ = index;
-			for (auto j = 1; j < count; j++)
+			for (auto j = 0; j < count; j++)
 			{
-				*target++ = first;
-				*target++ = index++;
-				*target++ = index;
+				if (j % 2 == 0)
+				{
+					*target++ = index + j;
+					*target++ = index + j + 1;
+					*target++ = index + j + 2;
+				}
+				else
+				{
+					*target++ = index + j + 1;
+					*target++ = index + j;
+					*target++ = index + j + 2;
+				}
 			}
-			index++;
-			count *= 3;
-			indexCount += count;
+			index += surface.count;
+			indexCount += (VkDeviceSize)count * 3;
 		}
 		texture.indexCount = indexCount;
 	}
@@ -1843,19 +1919,23 @@ VkDeviceSize SortedSurfaces::LoadIndices32(SortedSurfaceTextures& sorted, std::v
 		{
 			auto& surface = loaded[i];
 			auto count = surface.count - 2;
-			auto first = index;
-			*target++ = index++;
-			*target++ = index++;
-			*target++ = index;
-			for (auto j = 1; j < count; j++)
+			for (auto j = 0; j < count; j++)
 			{
-				*target++ = first;
-				*target++ = index++;
-				*target++ = index;
+				if (j % 2 == 0)
+				{
+					*target++ = index + j;
+					*target++ = index + j + 1;
+					*target++ = index + j + 2;
+				}
+				else
+				{
+					*target++ = index + j + 1;
+					*target++ = index + j;
+					*target++ = index + j + 2;
+				}
 			}
-			index++;
-			count *= 3;
-			indexCount += count;
+			index += surface.count;
+			indexCount += (VkDeviceSize)count * 3;
 		}
 		texture.indexCount = indexCount;
 	}

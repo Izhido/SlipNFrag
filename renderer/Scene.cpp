@@ -1685,10 +1685,23 @@ void Scene::CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded)
 		auto model = (model_t*)loaded.model;
 		auto vertexes = model->vertexes;
         auto e = face->firstedge;
-        auto v = 0;
+        auto target = perSurface.vertices;
         for (auto i = 0; i < loaded.numedges; i++)
         {
-            auto edge = model->surfedges[e];
+            int k;
+            if (i == 0)
+            {
+                k = 0;
+            }
+            else if (i % 2 != 0)
+            {
+                k = (i + 1) / 2;
+            }
+            else
+            {
+                k = loaded.numedges - i / 2;
+            }
+            auto edge = model->surfedges[e + k];
             unsigned int index;
             if (edge >= 0)
             {
@@ -1699,10 +1712,9 @@ void Scene::CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded)
                 index = model->edges[-edge].v[1];
             }
             auto vertex = vertexes[index].position;
-			perSurface.vertices[v++] = vertex[0];
-			perSurface.vertices[v++] = vertex[1];
-			perSurface.vertices[v++] = vertex[2];
-            e++;
+			*target++ = vertex[0];
+            *target++ = vertex[1];
+            *target++ = vertex[2];
         }
     }
 	loaded.vertices = perSurface.vertices;
