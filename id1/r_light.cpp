@@ -96,14 +96,22 @@ void R_MarkLights (dlight_t *light, int index, mnode_t *node)
 	{
 		if (surf->dlightframe != r_dlightframecount)
 		{
-			surf->dlightbits.clear();
+			surf->dlightbits_vec.clear();
+			surf->dlightbits = 0;
 			surf->dlightframe = r_dlightframecount;
 		}
-		while (surf->dlightbits.size() <= index)
+		if (index < MAX_DLIGHTS - 1)
 		{
-			surf->dlightbits.resize(surf->dlightbits.size() + MAX_DLIGHTS);
+			surf->dlightbits |= (1 << index);
 		}
-		surf->dlightbits[index] = true;
+		else
+		{
+			while (surf->dlightbits_vec.size() <= index - (MAX_DLIGHTS - 1))
+			{
+				surf->dlightbits_vec.resize(surf->dlightbits_vec.size() + MAX_DLIGHTS);
+			}
+			surf->dlightbits_vec[index - (MAX_DLIGHTS - 1)] = true;
+		}
 	}
 
 	R_MarkLights (light, index, node->children[0]);

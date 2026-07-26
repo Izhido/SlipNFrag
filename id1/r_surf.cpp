@@ -103,8 +103,16 @@ void R_AddDynamicLights (void)
 
 	for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
 	{
-		if ( surf->dlightbits.size() <= lnum || !surf->dlightbits[lnum] )
-			continue;		// not lit by this light
+		if (lnum < MAX_DLIGHTS - 1)
+		{
+			if ( !(surf->dlightbits & (1<<lnum) ) )
+				continue;		// not lit by this light
+		}
+		else
+		{
+			if ( surf->dlightbits_vec.size() <= lnum - (MAX_DLIGHTS - 1) || !surf->dlightbits_vec[lnum - (MAX_DLIGHTS - 1)] )
+				continue;		// not lit by this light
+		}
 
 		rad = cl_dlights[lnum].radius;
 		dist = DotProduct (cl_dlights[lnum].origin, surf->plane->normal) -
@@ -191,8 +199,16 @@ void R_AddDynamicColoredLights (void)
 
 	for (lnum=0 ; lnum<cl_dlights.size() ; lnum++)
 	{
-		if ( surf->dlightbits.size() <= lnum || !surf->dlightbits[lnum] )
-			continue;		// not lit by this light
+		if (lnum < MAX_DLIGHTS - 1)
+		{
+			if ( !(surf->dlightbits & (1<<lnum) ) )
+				continue;		// not lit by this light
+		}
+		else
+		{
+			if ( surf->dlightbits_vec.size() <= lnum - (MAX_DLIGHTS - 1) || !surf->dlightbits_vec[lnum - (MAX_DLIGHTS - 1)] )
+				continue;		// not lit by this light
+		}
 
 		rad = cl_dlights[lnum].radius;
 		dist = DotProduct (cl_dlights[lnum].origin, surf->plane->normal) -
