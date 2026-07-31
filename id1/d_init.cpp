@@ -178,6 +178,10 @@ void D_SetupFrame (void)
 		d_lists.vblend2 = v_blend[2];
 		d_lists.vblend3 = v_blend[3];
 		d_lists.vgamma = v_gamma.value;
+		d_lists.rframecount = r_framecount;
+		Q_memcpy (d_lists.dlightstylevalues, d_lightstylevalue, sizeof(d_lightstylevalue));
+		d_lists.rfullbright = Cvar_VariableValue("r_fullbright");
+		D_AddDynamicLightsToLists ();
 		d_lists.immersive_hands_enabled = cl.immersive_hands_enabled;
 
 		if (d_lists.immersive_hands_enabled)

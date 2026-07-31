@@ -13,6 +13,9 @@ struct PerSurfaceData
 	SharedMemoryTexture* glowTexture;
 	int glowTextureIndex;
 	unsigned char* glowTextureSource;
+	uint32_t* lightmapSource;
+	bool dlight;
+	int lightadj[MAXLIGHTMAPS];
 	Lightmap* lightmap;
 	LightmapRGB* lightmapRGB;
 	int frameCount;

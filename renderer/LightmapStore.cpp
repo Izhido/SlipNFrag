@@ -1,7 +1,7 @@
-#include "VertexStore.h"
+#include "LightmapStore.h"
 #include "Constants.h"
 
-float* VertexStore::Allocate(size_t count)
+uint32_t* LightmapStore::Allocate(size_t count)
 {
 	if (pages.empty() || currentPageOffset + count > Constants::storePageSize)
 	{
@@ -11,7 +11,7 @@ float* VertexStore::Allocate(size_t count)
 		}
 		else
 		{
-			pages.push_back(std::make_unique<float[]>(Constants::storePageSize));
+			pages.push_back(std::make_unique<uint32_t[]>(Constants::storePageSize));
 			currentPageIndex = pages.size() - 1;
 		}
 		currentPageOffset = 0;
@@ -22,7 +22,7 @@ float* VertexStore::Allocate(size_t count)
 	return result;
 }
 
-void VertexStore::Clear()
+void LightmapStore::Clear()
 {
 	pages.clear();
 	currentPageIndex = 0;

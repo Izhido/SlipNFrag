@@ -17,11 +17,8 @@ struct dturbulent_t
 
 struct dsurface_t : dturbulent_t
 {
-	int created;
-	int lightmap_width;
-	int lightmap_height;
-	int lightmap_size;
-	int first_lightmap_texel;
+	// No new fields. This is done to distinguish between surfaces
+	// that need lightmaps generated and those that don't.
 };
 
 struct dsurfacewithglow_t : dsurface_t
@@ -117,6 +114,15 @@ struct dskybox_t
     mtexinfo_t* textures;
 };
 
+struct ddynamiclight_t
+{
+	float origin0;
+	float origin1;
+	float origin2;
+	float radius;
+	float minlight;
+};
+
 struct dlists_t
 {
 	int last_surface;
@@ -184,7 +190,7 @@ struct dlists_t
 	int last_cutout_index8;
 	int last_cutout_index16;
 	int last_cutout_index32;
-	int last_lightmap_texel;
+	int last_dynamic_light;
 	int clear_color;
 	float vieworg0;
 	float vieworg1;
@@ -201,6 +207,9 @@ struct dlists_t
 	float vblend2;
 	float vblend3;
 	float vgamma;
+	int rframecount;
+	int dlightstylevalues[256];
+	float rfullbright;
 	qboolean immersive_hands_enabled;
 	qboolean dominant_hand_left;
 	float viewmodel_rotate0;
@@ -279,7 +288,7 @@ struct dlists_t
 	std::vector<unsigned char> cutout_indices8;
 	std::vector<uint16_t> cutout_indices16;
 	std::vector<uint32_t> cutout_indices32;
-	std::vector<uint32_t> lightmap_texels;
+	std::vector<ddynamiclight_t> dynamic_lights;
 };
 
 extern dlists_t d_lists;
@@ -287,42 +296,42 @@ extern dlists_t d_lists;
 extern qboolean d_uselists;
 
 void D_ResetLists ();
-void D_AddSurfaceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddSurfaceColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddSurfaceRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddSurfaceRGBAColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddSurfaceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddSurfaceRotatedColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddSurfaceRotatedRGBAColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddFenceToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddFenceColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddFenceRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddFenceRGBAColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddFenceRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddFenceRGBANoGlowColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity);
-void D_AddFenceRotatedToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddFenceRotatedColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddFenceRotatedRGBAToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddFenceRotatedRGBAColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddFenceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, struct surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddTurbulentToLists (msurface_t* face, entity_t* entity);
-void D_AddTurbulentRGBAToLists (msurface_t* face, entity_t* entity);
-void D_AddTurbulentLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
-void D_AddTurbulentColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
-void D_AddTurbulentRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
-void D_AddTurbulentRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity);
-void D_AddTurbulentRotatedToLists (msurface_t* face, entity_t* entity, byte alpha);
-void D_AddTurbulentRotatedRGBAToLists (msurface_t* face, entity_t* entity, byte alpha);
-void D_AddTurbulentRotatedLitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha);
-void D_AddTurbulentRotatedRGBAColoredLightsToLists (msurface_t* face, surfcache_s* cache, entity_t* entity, byte alpha);
+void D_AddSurfaceToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddSurfaceColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddSurfaceRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddSurfaceRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddSurfaceRotatedToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddSurfaceRotatedColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddSurfaceRotatedRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddFenceToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddFenceColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddFenceRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddFenceRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddFenceRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddFenceRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddFenceRotatedToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddFenceRotatedColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddFenceRotatedRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddFenceRotatedRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddFenceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddTurbulentToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddTurbulentRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddTurbulentLitToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddTurbulentColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddTurbulentRGBALitToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddTurbulentRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
+void D_AddTurbulentRotatedToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddTurbulentRotatedRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddTurbulentRotatedLitToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
+void D_AddTurbulentRotatedRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha);
 void D_AddSpriteToLists (vec5_t* pverts, spritedesc_t* spritedesc);
 void D_AddAliasToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity);
 void D_AddAliasAlphaToLists (aliashdr_t* aliashdr, maliasskindesc_t* skindesc, trivertx_t* apverts, entity_t* entity);
@@ -342,3 +351,4 @@ void D_AddSkyRGBAToLists (skydesc_t& skydesc);
 void D_AddSkyboxToLists (mtexinfo_t* textures);
 void D_AddColoredSurfaceToLists (msurface_t* face, entity_t* entity, int color);
 void D_AddCutoutSurfaceToLists (msurface_t* face, entity_t* entity);
+void D_AddDynamicLightsToLists ();

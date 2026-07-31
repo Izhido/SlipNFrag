@@ -19,6 +19,7 @@
 #include "LightmapBuffers.h"
 #include "LightmapsToDelete.h"
 #include "VertexStore.h"
+#include "LightmapStore.h"
 #include "LightmapsRGBToDelete.h"
 #include "CachedSharedMemoryTextures.h"
 #include "SurfaceTexture.h"
@@ -104,6 +105,7 @@ struct Scene
 	CachedAliasBuffers aliasBuffers;
 	CachedIndexBuffers indexBuffers;
 	VertexStore vertexStore;
+	LightmapStore lightmapStore;
 	Q_HASHMAP<void*, PerSurfaceData> perSurfaceCache;
 	Q_HASHMAP<void*, AliasVertices> aliasVertexCache;
 	Q_HASHMAP<void*, IndexBuffer> aliasIndexCache;
@@ -220,6 +222,8 @@ struct Scene
 	static int GetMipsFor(int width, int height);
 	static uint32_t GetLayerCountFor(int width, int height);
     void CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded);
+	static void GenerateLightmap(const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size);
+	static void GenerateLightmapRGB(const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size);
 	void AddLightmapToDescriptorWrites(AppState& appState, Lightmap* lightmap);
 	void AddLightmapRGBToDescriptorWrites(AppState& appState, LightmapRGB* lightmap);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmap& loaded, VkDeviceSize& size);

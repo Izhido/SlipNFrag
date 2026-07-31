@@ -16,7 +16,7 @@ struct Constants
 	static constexpr int minimumBufferAllocation = 4096;
     static constexpr int sortedSurfaceElementIncrement = 32;
 	static constexpr int lightmapBufferSize = 32 * 1024;
-	static constexpr int vertexStorePageSize = 256 * 1024;
+	static constexpr int storePageSize = 256 * 1024;
 	static constexpr float nearPlaneForProjection = 0.05f;
 	static constexpr float farPlaneForProjection = 0;
 	static constexpr float farPlaneForDepthCompositionLayer = INFINITY;

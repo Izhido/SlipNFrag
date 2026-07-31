@@ -1720,6 +1720,220 @@ void Scene::CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded)
 	loaded.vertices = perSurface.vertices;
 }
 
+void Scene::GenerateLightmap(const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size)
+{
+    auto surf = (msurface_t*)surface.face;
+	auto lightmap = surf->samples;
+	if (d_lists.rfullbright != 0 || !cl.worldmodel->lightdata)
+	{
+		std::fill(perSurface.lightmapSource, perSurface.lightmapSource + size, 0);
+		return;
+	}
+	std::fill(perSurface.lightmapSource, perSurface.lightmapSource + size, r_refdef.ambientlight_shift8);
+    perSurface.lightadj[0] = d_lists.dlightstylevalues[surf->styles[0]];
+    perSurface.lightadj[1] = d_lists.dlightstylevalues[surf->styles[1]];
+    perSurface.lightadj[2] = d_lists.dlightstylevalues[surf->styles[2]];
+    perSurface.lightadj[3] = d_lists.dlightstylevalues[surf->styles[3]];
+	if (lightmap)
+	{
+		for (auto maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
+		{
+			auto scale = perSurface.lightadj[maps];
+			for (auto i=0 ; i<size ; i++)
+			{
+                perSurface.lightmapSource[i] += lightmap[i] * scale;
+			}
+			lightmap += size;
+		}
+	}
+    perSurface.dlight = (surf->dlightframe == d_lists.rframecount);
+	if (perSurface.dlight)
+	{
+        auto smax = width * 16;
+        auto tmax = height * 16;
+		for (auto lnum=0 ; lnum<=d_lists.last_dynamic_light ; lnum++)
+		{
+			if (lnum < MAX_DLIGHTS - 1)
+			{
+				if ( !(surf->dlightbits & (1<<lnum) ) )
+                {
+					continue;
+				}
+			}
+			else
+			{
+				if ( surf->dlightbits_vec.size() <= lnum - (MAX_DLIGHTS - 1) || !surf->dlightbits_vec[lnum - (MAX_DLIGHTS - 1)] )
+				{
+					continue;
+				}
+			}
+			auto rad = d_lists.dynamic_lights[lnum].radius;
+			auto dist = d_lists.dynamic_lights[lnum].origin0 * surf->plane->normal[0]
+			           + d_lists.dynamic_lights[lnum].origin1 * surf->plane->normal[1]
+			           + d_lists.dynamic_lights[lnum].origin2 * surf->plane->normal[2]
+			           - surf->plane->dist;
+			rad -= fabs(dist);
+			auto minlight = d_lists.dynamic_lights[lnum].minlight;
+			if (rad < minlight)
+			{
+				continue;
+			}
+			minlight = rad - minlight;
+			auto impact0 = d_lists.dynamic_lights[lnum].origin0 - surf->plane->normal[0]*dist;
+			auto impact1 = d_lists.dynamic_lights[lnum].origin1 - surf->plane->normal[1]*dist;
+			auto impact2 = d_lists.dynamic_lights[lnum].origin2 - surf->plane->normal[2]*dist;
+			auto local0 = impact0 * surf->texinfo->vecs[0][0]
+			            + impact1 * surf->texinfo->vecs[0][1]
+			            + impact2 * surf->texinfo->vecs[0][2]
+			            + surf->texinfo->vecs[0][3];
+			auto local1 = impact0 * surf->texinfo->vecs[1][0]
+			            + impact1 * surf->texinfo->vecs[1][1]
+			            + impact2 * surf->texinfo->vecs[1][2]
+			            + surf->texinfo->vecs[1][3];
+            local0 -= surf->texturemins[0];
+            local1 -= surf->texturemins[1];
+
+            auto target = perSurface.lightmapSource;
+            for (auto t = 0 ; t<tmax ; t += 16)
+            {
+                auto td = (int)(local1 - t);
+                if (td < 0)
+                    td = -td;
+                for (auto s=0 ; s<smax ; s += 16)
+                {
+                    auto sd = (int)(local0 - s);
+                    if (sd < 0)
+                        sd = -sd;
+                    if (sd > td)
+                        dist = sd + (td>>1);
+                    else
+                        dist = td + (sd>>1);
+                    if (dist < minlight)
+                        *target += (rad - dist)*256;
+                    target++;
+                }
+            }
+        }
+    }
+	for (auto i=0 ; i<size ; i++)
+	{
+        auto t = (255*256 - (int)perSurface.lightmapSource[i]) >> (8 - VID_CBITS);
+        perSurface.lightmapSource[i] = std::max(t, 1 << 6);
+	}
+}
+
+void Scene::GenerateLightmapRGB(const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size)
+{
+    auto surf = (msurface_t*)surface.face;
+	auto lightmap = surf->samplesRGB;
+	if (d_lists.rfullbright != 0 || !cl.worldmodel->lightRGBdata)
+	{
+		std::fill(perSurface.lightmapSource, perSurface.lightmapSource + size, 65535);
+		return;
+	}
+	std::fill(perSurface.lightmapSource, perSurface.lightmapSource + size, r_refdef.ambientlight_shift8);
+    perSurface.lightadj[0] = d_lists.dlightstylevalues[surf->styles[0]];
+    perSurface.lightadj[1] = d_lists.dlightstylevalues[surf->styles[1]];
+    perSurface.lightadj[2] = d_lists.dlightstylevalues[surf->styles[2]];
+    perSurface.lightadj[3] = d_lists.dlightstylevalues[surf->styles[3]];
+	if (lightmap)
+	{
+		for (auto maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
+		{
+			auto scale = perSurface.lightadj[maps];
+			for (auto i=0 ; i<size ; i++)
+			{
+                perSurface.lightmapSource[i] += lightmap[i] * scale;
+			}
+			lightmap += size;
+		}
+	}
+    perSurface.dlight = (surf->dlightframe == d_lists.rframecount);
+	if (perSurface.dlight)
+	{
+        auto smax = width * 16;
+        auto tmax = height * 16;
+		for (auto lnum=0 ; lnum<=d_lists.last_dynamic_light ; lnum++)
+		{
+			if (lnum < MAX_DLIGHTS - 1)
+			{
+				if ( !(surf->dlightbits & (1<<lnum) ) )
+                {
+					continue;
+				}
+			}
+			else
+			{
+				if ( surf->dlightbits_vec.size() <= lnum - (MAX_DLIGHTS - 1) || !surf->dlightbits_vec[lnum - (MAX_DLIGHTS - 1)] )
+				{
+					continue;
+				}
+			}
+			auto rad = d_lists.dynamic_lights[lnum].radius;
+			auto dist = d_lists.dynamic_lights[lnum].origin0 * surf->plane->normal[0]
+			           + d_lists.dynamic_lights[lnum].origin1 * surf->plane->normal[1]
+			           + d_lists.dynamic_lights[lnum].origin2 * surf->plane->normal[2]
+			           - surf->plane->dist;
+			rad -= fabs(dist);
+			auto minlight = d_lists.dynamic_lights[lnum].minlight;
+			if (rad < minlight)
+			{
+				continue;
+			}
+			minlight = rad - minlight;
+			auto impact0 = d_lists.dynamic_lights[lnum].origin0 - surf->plane->normal[0]*dist;
+			auto impact1 = d_lists.dynamic_lights[lnum].origin1 - surf->plane->normal[1]*dist;
+			auto impact2 = d_lists.dynamic_lights[lnum].origin2 - surf->plane->normal[2]*dist;
+			auto local0 = impact0 * surf->texinfo->vecs[0][0]
+			            + impact1 * surf->texinfo->vecs[0][1]
+			            + impact2 * surf->texinfo->vecs[0][2]
+			            + surf->texinfo->vecs[0][3];
+			auto local1 = impact0 * surf->texinfo->vecs[1][0]
+			            + impact1 * surf->texinfo->vecs[1][1]
+			            + impact2 * surf->texinfo->vecs[1][2]
+			            + surf->texinfo->vecs[1][3];
+			local0 -= surf->texturemins[0];
+			local1 -= surf->texturemins[1];
+            auto target = perSurface.lightmapSource;
+			for (auto t = 0 ; t<tmax ; t += 16)
+			{
+				auto td = (int)(local1 - t);
+				if (td < 0)
+					td = -td;
+				for (auto s=0 ; s<smax ; s += 16)
+				{
+					auto sd = (int)(local0 - s);
+					if (sd < 0)
+						sd = -sd;
+					if (sd > td)
+						dist = sd + (td>>1);
+					else
+						dist = td + (sd>>1);
+					if (dist < minlight)
+					{
+						unsigned inc = (rad - dist)*256;
+						*target += inc;
+						target++;
+						*target += inc;
+						target++;
+						*target += inc;
+						target++;
+					}
+					else
+					{
+						target += 3;
+					}
+				}
+			}
+		}
+	}
+	for (auto i=0 ; i<size ; i++)
+	{
+		auto t = (int)perSurface.lightmapSource[i];
+        perSurface.lightmapSource[i] = std::min(std::max(t, 255), 65535);
+	}
+}
+
 void Scene::AddLightmapToDescriptorWrites(AppState& appState, Lightmap* lightmap)
 {
 	lightmapDescriptorInfos.push_back({ });
@@ -1754,17 +1968,24 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 {
 	if (perSurface.lightmap == nullptr)
 	{
+		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
+		auto height = (((msurface_t*)surface.face)->extents[1]>>4)+1;
+		auto lightmapSize = width * height;
 		perSurface.lightmap = new Lightmap { };
-		auto addToWrites = perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, false);
+		auto addToWrites = perSurface.lightmap->Create(appState, width, height, false);
 		if (addToWrites)
 		{
 			AddLightmapToDescriptorWrites(appState, perSurface.lightmap);
 		}
-		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
-		loaded.size = surface.lightmap_size * sizeof(uint32_t);
+		loaded.size = lightmapSize * sizeof(uint32_t);
 		size += loaded.size;
-		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
+		if (perSurface.lightmapSource == nullptr)
+		{
+		    perSurface.lightmapSource = lightmapStore.Allocate(lightmapSize);
+		}
+        GenerateLightmap(surface, perSurface, width, height, lightmapSize);
+		loaded.source = perSurface.lightmapSource;
 		loaded.next = nullptr;
 		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
 		if (entry == lightmapChainTexturesInUse.end())
@@ -1781,19 +2002,26 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			chain.current = &loaded;
 		}
 	}
-	else if (perSurface.lightmap->createdFrameCount != surface.created)
+	else if (perSurface.lightadj[0] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
+	         perSurface.lightadj[1] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
+	         perSurface.lightadj[2] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
+	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
+	         ((msurface_t*)surface.face)->dlightframe == d_lists.rframecount || perSurface.dlight)
 	{
 		lightmapsToDelete.Dispose(perSurface.lightmap);
+		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
+		auto height = (((msurface_t*)surface.face)->extents[1]>>4)+1;
+		auto lightmapSize = width * height;
 		perSurface.lightmap = new Lightmap { };
-		auto addToWrites = perSurface.lightmap->Create(appState, surface.lightmap_width, surface.lightmap_height, true);
+		auto addToWrites = perSurface.lightmap->Create(appState, width, height, true);
 		if (addToWrites)
 		{
 			AddLightmapToDescriptorWrites(appState, perSurface.lightmap);
 		}
-		perSurface.lightmap->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmap;
-		loaded.size = surface.lightmap_size * sizeof(uint32_t);
-		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
+        loaded.size = lightmapSize * sizeof(uint32_t);
+        GenerateLightmap(surface, perSurface, width, height, lightmapSize);
+		loaded.source = perSurface.lightmapSource;
 		loaded.next = nullptr;
 		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
 		if (entry == lightmapChainTexturesInUse.end())
@@ -1821,17 +2049,24 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 {
 	if (perSurface.lightmapRGB == nullptr)
 	{
+		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
+		auto height = (((msurface_t*)surface.face)->extents[1]>>4)+1;
+		auto lightmapSize = width * 3 * height;
 		perSurface.lightmapRGB = new LightmapRGB { };
-		auto addToWrites = perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, false);
+		auto addToWrites = perSurface.lightmapRGB->Create(appState, width, height, false);
 		if (addToWrites)
 		{
 			AddLightmapRGBToDescriptorWrites(appState, perSurface.lightmapRGB);
 		}
-		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
-		loaded.size = surface.lightmap_size * sizeof(uint32_t);
+        loaded.size = lightmapSize * sizeof(uint32_t);
 		size += loaded.size;
-		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
+        if (perSurface.lightmapSource == nullptr)
+		{
+			perSurface.lightmapSource = lightmapStore.Allocate(lightmapSize);
+		}
+		GenerateLightmapRGB(surface, perSurface, width, height, lightmapSize);
+		loaded.source = perSurface.lightmapSource;
 		loaded.next = nullptr;
 		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);
 		if (entry == lightmapRGBChainTexturesInUse.end())
@@ -1848,19 +2083,26 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			chain.current = &loaded;
 		}
     }
-	else if (perSurface.lightmapRGB->createdFrameCount != surface.created)
+	else if (perSurface.lightadj[0] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
+	         perSurface.lightadj[1] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
+	         perSurface.lightadj[2] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
+	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
+	         ((msurface_t*)surface.face)->dlightframe == d_lists.rframecount || perSurface.dlight)
 	{
 		lightmapsRGBToDelete.Dispose(perSurface.lightmapRGB);
+		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
+		auto height = (((msurface_t*)surface.face)->extents[1]>>4)+1;
+		auto lightmapSize = width * 3 * height;
 		perSurface.lightmapRGB = new LightmapRGB { };
-		auto addToWrites = perSurface.lightmapRGB->Create(appState, surface.lightmap_width, surface.lightmap_height, true);
+		auto addToWrites = perSurface.lightmapRGB->Create(appState, width, height, true);
 		if (addToWrites)
 		{
 			AddLightmapRGBToDescriptorWrites(appState, perSurface.lightmapRGB);
 		}
-		perSurface.lightmapRGB->createdFrameCount = surface.created;
 		loaded.lightmap = perSurface.lightmapRGB;
-		loaded.size = surface.lightmap_size * sizeof(uint32_t);
-		loaded.source = d_lists.lightmap_texels.data() + surface.first_lightmap_texel;
+        loaded.size = lightmapSize * sizeof(uint32_t);
+        GenerateLightmapRGB(surface, perSurface, width, height, lightmapSize);
+		loaded.source = perSurface.lightmapSource;
 		loaded.next = nullptr;
 		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);
 		if (entry == lightmapRGBChainTexturesInUse.end())
@@ -4016,6 +4258,7 @@ void Scene::Reset(AppState& appState)
 		}
 	}
 	perSurfaceCache.clear();
+    lightmapStore.Clear();
 	vertexStore.Clear();
     indexBuffers.DisposeFront();
 	aliasBuffers.DisposeFront();
@@ -4094,6 +4337,7 @@ void Scene::Destroy(AppState& appState)
 		}
 	}
 	perSurfaceCache.clear();
+    lightmapStore.Clear();
 	vertexStore.Clear();
 
 	indexBuffers.Delete(appState);
