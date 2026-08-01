@@ -275,7 +275,7 @@ Combine and scale multiple lightmaps into the 8.8 format in blocklights
 void R_BuildLightMap (void)
 {
 	int			t;
-	int			i;
+	int			i, size;
 	byte		*lightmap;
 	unsigned	scale;
 	int			maps;
@@ -283,78 +283,36 @@ void R_BuildLightMap (void)
 
 	surf = r_drawsurf.surf;
 
+	size = r_blocklights_size;
 	lightmap = surf->samples;
 
 	if (r_fullbright.value || !cl.worldmodel->lightdata)
 	{
-		std::fill(blocklights, blocklights + r_blocklights_size, 0);
+		std::fill(blocklights, blocklights + size, 0);
 		return;
 	}
 
 // clear to ambient
-	std::fill(blocklights, blocklights + r_blocklights_size, r_refdef.ambientlight_shift8);
+	std::fill(blocklights, blocklights + size, r_refdef.ambientlight_shift8);
 
-
-	auto blocklights_trailing = r_blocklights_size - r_blocklights_size % 4;
 
 // add all the lightmaps
 	if (lightmap)
-	{
 		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
 			 maps++)
 		{
 			scale = r_drawsurf.lightadj[maps];	// 8.8 fraction
-			for (i=0 ; i<blocklights_trailing ; i+=4)
-			{
+			for (i=0 ; i<size ; i++)
 				blocklights[i] += lightmap[i] * scale;
-				blocklights[i + 1] += lightmap[i + 1] * scale;
-				blocklights[i + 2] += lightmap[i + 2] * scale;
-				blocklights[i + 3] += lightmap[i + 3] * scale;
-			}
-			for (i=blocklights_trailing ; i<r_blocklights_size; i++)
-			{
-				blocklights[i] += lightmap[i] * scale;
-			}
-			lightmap += r_blocklights_size;	// skip to next lightmap
+			lightmap += size;	// skip to next lightmap
 		}
-	}
 
 // add all the dynamic lights
 	if (surf->dlightframe == r_framecount)
 		R_AddDynamicLights ();
 
 // bound, invert, and shift
-	for (i=0 ; i<blocklights_trailing ; i+=4)
-	{
-		t = (255*256 - (int)blocklights[i]) >> (8 - VID_CBITS);
-
-		if (t < (1 << 6))
-			t = (1 << 6);
-
-		blocklights[i] = t;
-
-		t = (255*256 - (int)blocklights[i+1]) >> (8 - VID_CBITS);
-
-		if (t < (1 << 6))
-			t = (1 << 6);
-
-		blocklights[i+1] = t;
-
-		t = (255*256 - (int)blocklights[i+2]) >> (8 - VID_CBITS);
-
-		if (t < (1 << 6))
-			t = (1 << 6);
-
-		blocklights[i+2] = t;
-
-		t = (255*256 - (int)blocklights[i+3]) >> (8 - VID_CBITS);
-
-		if (t < (1 << 6))
-			t = (1 << 6);
-
-		blocklights[i+3] = t;
-	}
-	for (i=blocklights_trailing ; i<r_blocklights_size ; i++)
+	for (i=0 ; i<size ; i++)
 	{
 		t = (255*256 - (int)blocklights[i]) >> (8 - VID_CBITS);
 
@@ -376,7 +334,7 @@ Combine and scale multiple colored lightmaps into the 8.8 format in blocklights
 void R_BuildColoredLightMap (void)
 {
 	int			t;
-	int			i;
+	int			i, size;
 	byte		*lightmap;
 	unsigned	scale;
 	int			maps;
@@ -384,41 +342,29 @@ void R_BuildColoredLightMap (void)
 
 	surf = r_drawsurf.surf;
 
+	size = r_blocklights_size;
 	lightmap = surf->samplesRGB;
 
 	if (r_fullbright.value || !cl.worldmodel->lightRGBdata)
 	{
-		std::fill(blocklights, blocklights + r_blocklights_size, 65535);
+		std::fill(blocklights, blocklights + size, 65535);
 		return;
 	}
 
 // clear to ambient
-	std::fill(blocklights, blocklights + r_blocklights_size, r_refdef.ambientlight_shift8);
+	std::fill(blocklights, blocklights + size, r_refdef.ambientlight_shift8);
 
-
-	auto blocklights_trailing = r_blocklights_size - r_blocklights_size % 4;
 
 // add all the lightmaps
 	if (lightmap)
-	{
 		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ;
 			 maps++)
 		{
 			scale = r_drawsurf.lightadj[maps];	// 8.8 fraction
-			for (i=0 ; i<blocklights_trailing ; i+=4)
-			{
+			for (i=0 ; i<size ; i++)
 				blocklights[i] += lightmap[i] * scale;
-				blocklights[i + 1] += lightmap[i + 1] * scale;
-				blocklights[i + 2] += lightmap[i + 2] * scale;
-				blocklights[i + 3] += lightmap[i + 3] * scale;
-			}
-			for (i=blocklights_trailing ; i<r_blocklights_size; i++)
-			{
-				blocklights[i] += lightmap[i] * scale;
-			}
-			lightmap += r_blocklights_size;	// skip to next lightmap
+			lightmap += size;	// skip to next lightmap
 		}
-	}
 
 // add all the dynamic lights
 	if (surf->dlightframe == r_framecount)
@@ -426,45 +372,7 @@ void R_BuildColoredLightMap (void)
 	
 
 // bound
-	for (i=0 ; i<blocklights_trailing ; i+=4)
-	{
-		t = (int)blocklights[i];
-
-		if (t < 255)
-			t = 255;
-		if (t > 65535)
-			t = 65535;
-
-		blocklights[i] = t;
-
-		t = (int)blocklights[i+1];
-
-		if (t < 255)
-			t = 255;
-		if (t > 65535)
-			t = 65535;
-
-		blocklights[i+1] = t;
-
-		t = (int)blocklights[i+2];
-
-		if (t < 255)
-			t = 255;
-		if (t > 65535)
-			t = 65535;
-
-		blocklights[i+2] = t;
-
-		t = (int)blocklights[i+3];
-
-		if (t < 255)
-			t = 255;
-		if (t > 65535)
-			t = 65535;
-
-		blocklights[i+3] = t;
-	}
-	for (i=blocklights_trailing ; i<r_blocklights_size ; i++)
+	for (i=0 ; i<size ; i++)
 	{
 		t = (int)blocklights[i];
 
