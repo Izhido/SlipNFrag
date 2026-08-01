@@ -84,6 +84,8 @@ void D_DrawLittleZSpans64 (espan_t *pspans);
 void D_DrawBigZSpans64 (espan_t *pspans);
 void TurbulentLit8 (espan_t *pspan);
 void TurbulentLitAlpha8 (espan_t *pspan, byte alpha);
+void TurbulentColoredLit8 (espan_t *pspan);
+void TurbulentColoredLitAlpha8 (espan_t *pspan, byte alpha);
 void Turbulent8Non64 (espan_t *pspan);
 void TurbulentAlpha8Non64 (espan_t *pspan, byte alpha);
 void Turbulent8 (espan_t *pspan);

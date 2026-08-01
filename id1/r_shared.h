@@ -47,11 +47,14 @@ extern void	R_DrawLine (polyvert_t *polyvert0, polyvert_t *polyvert1);
 extern int		cachewidth;
 extern int		r_turb_cacheheight;
 extern pixel_t	*cacheblock;
+extern byte		*r_turb_basepal;
+extern unsigned	*r_turb_lightmapblock;
+extern int		r_turb_lightmapwidth;
+extern int		r_turb_lightmapspan;
 extern int		r_turb_lightmapwidthminusone;
 extern int		r_turb_lightmapheightminusone;
 extern fixed16_t	r_turb_lightmapwidthminusone16;
 extern fixed16_t	r_turb_lightmapheightminusone16;
-extern unsigned	*r_turb_lightmapblock;
 extern int		screenwidth;
 
 extern	float	pixelAspect;

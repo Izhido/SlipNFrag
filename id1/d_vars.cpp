@@ -44,8 +44,11 @@ int			r_turb_extents0, r_turb_extents1;
 
 pixel_t			*cacheblock;
 int				cachewidth;
+byte*			r_turb_basepal;
 int				r_turb_cacheheight;
 unsigned		*r_turb_lightmapblock;
+int				r_turb_lightmapwidth;
+int				r_turb_lightmapspan;
 int				r_turb_lightmapwidthminusone;
 int				r_turb_lightmapheightminusone;
 fixed16_t		r_turb_lightmapwidthminusone16;

@@ -353,7 +353,28 @@ void D_DrawSurfaces (void)
 					}
 
 					D_TurbCalcGradients (pface);
-					if (pface->samples != nullptr)
+					if (pface->samplesRGB != nullptr)
+					{
+						auto texture = R_TextureAnimation (pface->texinfo->texture);
+						pcurrentcache = D_CacheColoredLightmap (pface, texture);
+						if (pcurrentcache == nullptr)
+						{
+							Turbulent8Non64 (s->spans);
+						}
+						else
+						{
+							r_turb_basepal = host_basepal.data();
+							r_turb_lightmapblock = (unsigned*)&(pcurrentcache->data[0]);
+							r_turb_lightmapspan = pcurrentcache->width / sizeof(unsigned);
+							r_turb_lightmapwidth = r_turb_lightmapspan / 3;
+							r_turb_lightmapwidthminusone = r_turb_lightmapwidth - 1;
+							r_turb_lightmapheightminusone = pcurrentcache->height - 1;
+							r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
+							r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
+							TurbulentColoredLit8 (s->spans);
+						}
+					}
+					else if (pface->samples != nullptr)
 					{
 						auto texture = R_TextureAnimation (pface->texinfo->texture);
 						pcurrentcache = D_CacheLightmap (pface, texture);
@@ -364,7 +385,8 @@ void D_DrawSurfaces (void)
 						else
 						{
 							r_turb_lightmapblock = (unsigned*)&(pcurrentcache->data[0]);
-							r_turb_lightmapwidthminusone = (pcurrentcache->width / sizeof(unsigned)) - 1;
+							r_turb_lightmapwidth = pcurrentcache->width / sizeof(unsigned);
+							r_turb_lightmapwidthminusone = r_turb_lightmapwidth - 1;
 							r_turb_lightmapheightminusone = pcurrentcache->height - 1;
 							r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
 							r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
@@ -492,7 +514,28 @@ void D_DrawSurfaces (void)
 				}
 
 				D_TurbCalcGradients (pface);
-				if (pface->samples != nullptr)
+				if (pface->samplesRGB != nullptr)
+				{
+					auto texture = R_TextureAnimation (pface->texinfo->texture);
+					pcurrentcache = D_CacheColoredLightmap (pface, texture);
+					if (pcurrentcache == nullptr)
+					{
+						TurbulentAlpha8Non64 (s->spans, s->alpha);
+					}
+					else
+					{
+						r_turb_basepal = host_basepal.data();
+						r_turb_lightmapblock = (unsigned*)&(pcurrentcache->data[0]);
+						r_turb_lightmapspan = pcurrentcache->width / sizeof(unsigned);
+						r_turb_lightmapwidth = r_turb_lightmapspan / 3;
+						r_turb_lightmapwidthminusone = r_turb_lightmapwidth - 1;
+						r_turb_lightmapheightminusone = pcurrentcache->height - 1;
+						r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
+						r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
+						TurbulentColoredLitAlpha8 (s->spans, s->alpha);
+					}
+				}
+				else if (pface->samples != nullptr)
 				{
 					auto texture = R_TextureAnimation (pface->texinfo->texture);
 					pcurrentcache = D_CacheLightmap (pface, texture);
@@ -503,7 +546,8 @@ void D_DrawSurfaces (void)
 					else
 					{
 						r_turb_lightmapblock = (unsigned*)&(pcurrentcache->data[0]);
-						r_turb_lightmapwidthminusone = (pcurrentcache->width / sizeof(unsigned)) - 1;
+						r_turb_lightmapwidth = pcurrentcache->width / sizeof(unsigned);
+						r_turb_lightmapwidthminusone = r_turb_lightmapwidth - 1;
 						r_turb_lightmapheightminusone = pcurrentcache->height - 1;
 						r_turb_lightmapwidthminusone16 = r_turb_lightmapwidthminusone << 16;
 						r_turb_lightmapheightminusone16 = r_turb_lightmapheightminusone << 16;
