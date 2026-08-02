@@ -764,68 +764,62 @@ void R_RecursiveWorldNodeForLists (mnode_t *node)
 	{
 		surf = cl.worldmodel->surfaces + node->firstsurface;
 
-		if (dot < 0 -BACKFACE_EPSILON)
-			side = SURF_PLANEBACK;
-		else if (dot > BACKFACE_EPSILON)
-			side = 0;
+		for ( ; c ; c--, surf++)
 		{
-			for ( ; c ; c--, surf++)
+			if (surf->visframe != r_framecount)
+				continue;
+
+			if (r_drawflat.value)
 			{
-				if (surf->visframe != r_framecount)
+				if (surf->flags & SURF_DRAWSKYBOX)
 					continue;
 
-				if (r_drawflat.value)
+				auto data_ptr = (size_t)surf;
+				int data = (int)data_ptr & 0xFF;
+
+				D_AddColoredSurfaceToLists (surf, currententity, data);
+			}
+			else
+			{
+				r_drawnpolycount++;
+
+				if (surf->flags & SURF_DRAWSKY)
 				{
-					if (surf->flags & SURF_DRAWSKYBOX)
-						continue;
-
-					auto data_ptr = (size_t)surf;
-					int data = (int)data_ptr & 0xFF;
-
-					D_AddColoredSurfaceToLists (surf, currententity, data);
-				}
-				else
-				{
-					r_drawnpolycount++;
-
-					if (surf->flags & SURF_DRAWSKY)
+					if (r_skyboxinitialized)
 					{
-						if (r_skyboxinitialized)
-						{
-							D_AddSkyboxToLists(r_skytexinfo);
-						}
-						else
-						{
-							auto entry = r_skies.find(surf->texinfo->texture);
-							if (entry != r_skies.end())
-							{
-								if (entry->second.newskyRGBA.empty())
-								{
-									if (!entry->second.made)
-									{
-										R_MakeSky (entry->second);
-									}
-
-									D_AddSkyToLists (entry->second);
-								}
-								else
-								{
-									D_AddSkyRGBAToLists (entry->second);
-								}
-							}
-						}
-					}
-					else if (surf->flags & SURF_DRAWTURB)
-					{
-						D_DrawTurbulentToLists(surf);
+						D_AddSkyboxToLists(r_skytexinfo);
 					}
 					else
 					{
-						D_DrawSurfaceToLists(surf);
+						auto entry = r_skies.find(surf->texinfo->texture);
+						if (entry != r_skies.end())
+						{
+							if (entry->second.newskyRGBA.empty())
+							{
+								if (!entry->second.made)
+								{
+									R_MakeSky (entry->second);
+								}
+
+								D_AddSkyToLists (entry->second);
+							}
+							else
+							{
+								D_AddSkyRGBAToLists (entry->second);
+							}
+						}
 					}
 				}
-
+				else if (surf->flags & SURF_DRAWTURB)
+				{
+					D_DrawTurbulentToLists(surf);
+				}
+				else
+				{
+					D_DrawSurfaceToLists(surf);
+				}
 			}
+
 		}
 
 	}
