@@ -6,8 +6,7 @@
 struct VertexStore
 {
 	std::vector<std::unique_ptr<float[]>> pages;
-	size_t currentPageIndex;
-	size_t currentPageOffset;
+	size_t used;
 
 	float* Allocate(size_t count);
 	void Clear();

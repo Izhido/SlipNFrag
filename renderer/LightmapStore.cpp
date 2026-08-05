@@ -3,28 +3,27 @@
 
 uint32_t* LightmapStore::Allocate(size_t count)
 {
-	if (pages.empty() || currentPageOffset + count > Constants::storePageSize)
+	if (pages.empty() || used + count > Constants::storePageSize)
 	{
-		if (currentPageIndex + 1 < pages.size())
+		if (count > Constants::storePageSize)
 		{
-			currentPageIndex++;
+			size_t roundedSize = ((count + Constants::storePageSize - 1) / Constants::storePageSize) * Constants::storePageSize;
+			pages.push_back(std::make_unique<uint32_t[]>(roundedSize));
+			used = Constants::storePageSize;
+			return pages.back().get();
 		}
-		else
-		{
-			pages.push_back(std::make_unique<uint32_t[]>(Constants::storePageSize));
-			currentPageIndex = pages.size() - 1;
-		}
-		currentPageOffset = 0;
+
+		pages.push_back(std::make_unique<uint32_t[]>(Constants::storePageSize));
+		used = 0;
 	}
 
-	auto result = pages[currentPageIndex].get() + currentPageOffset;
-	currentPageOffset += count;
+	auto result = pages.back().get() + used;
+	used += count;
 	return result;
 }
 
 void LightmapStore::Clear()
 {
 	pages.clear();
-	currentPageIndex = 0;
-	currentPageOffset = 0;
+	used = 0;
 }

@@ -3,28 +3,19 @@
 
 float* VertexStore::Allocate(size_t count)
 {
-	if (pages.empty() || currentPageOffset + count > Constants::storePageSize)
+	if (pages.empty() || used + count > Constants::storePageSize)
 	{
-		if (currentPageIndex + 1 < pages.size())
-		{
-			currentPageIndex++;
-		}
-		else
-		{
-			pages.push_back(std::make_unique<float[]>(Constants::storePageSize));
-			currentPageIndex = pages.size() - 1;
-		}
-		currentPageOffset = 0;
+		pages.push_back(std::make_unique<float[]>(Constants::storePageSize));
+		used = 0;
 	}
 
-	auto result = pages[currentPageIndex].get() + currentPageOffset;
-	currentPageOffset += count;
+	auto result = pages.back().get() + used;
+	used += count;
 	return result;
 }
 
 void VertexStore::Clear()
 {
 	pages.clear();
-	currentPageIndex = 0;
-	currentPageOffset = 0;
+	used = 0;
 }
