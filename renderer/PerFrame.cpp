@@ -1093,6 +1093,14 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			loadedTexture = loadedTexture->next;
 		}
 	}
+
+	if (appState.Scene.skybox != nullptr && appState.Scene.skybox->needsUpload)
+	{
+		auto& skybox = d_lists.skyboxes[d_lists.last_skybox];
+		int width = skybox.textures[0].texture->width;
+		int height = skybox.textures[0].texture->height;
+		appState.Scene.skybox->CopyPixels(appState, stagingBuffer, skybox);
+	}
 }
 
 void PerFrame::LoadNonStagedResources(AppState &appState)
@@ -1775,6 +1783,11 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
 			appState.Scene.stagingBuffer.offset += loadedTexture->allocated;
 			loadedTexture = loadedTexture->next;
 		}
+	}
+
+	if (appState.Scene.skybox != nullptr && appState.Scene.skybox->needsUpload)
+	{
+		appState.Scene.skybox->Upload(appState, commandBuffer);
 	}
 
 	if (appState.Scene.stagingBuffer.lastEndBarrier >= 0)

@@ -3854,6 +3854,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
         size += loadedSkyRGBA.size;
     }
 
+	VkDeviceSize skyboxSize = 0;
 	if (appState.Mode == AppWorldMode && d_lists.last_skybox >= 0)
 	{
 		int width = -1;
@@ -3927,12 +3928,14 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 
 			if (appState.CubeCompositionLayerEnabled)
 			{
-				appState.Scene.skybox->Create(appState, width, height, skybox, swapchainImageIndex);
+				appState.Scene.skybox->Initialize(appState, width, height, skybox, swapchainImageIndex);
 			}
 			else
 			{
-				appState.Scene.skybox->Create(appState, width, height, skybox);
+				appState.Scene.skybox->Initialize(appState, width, height, skybox);
 			}
+
+			skyboxSize = 6 * width * height * sizeof(uint32_t);
 		}
 	}
 
@@ -4216,6 +4219,17 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	if (statusBarVerticesSize > 0)
 	{
 		size += appState.ConsoleWidth * (SBAR_HEIGHT + 24) * 4;
+	}
+
+	if (skyboxSize > 0)
+	{
+		while (size % 4 != 0)
+		{
+			size++;
+		}
+		auto offset = size;
+		appState.Scene.skybox->stagingBufferOffset = size;
+		size += skyboxSize;
 	}
 
     // Add extra space (and also realign to a 8-byte boundary) to compensate for alignment among 8-, 16-, 32- and 64-bit data:

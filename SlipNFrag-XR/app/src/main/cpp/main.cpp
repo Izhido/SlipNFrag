@@ -2712,6 +2712,11 @@ void android_main(struct android_app* app)
 			{
 				CHECK_XRCMD(xrReleaseSwapchainImage(appState.Keyboard.Screen.swapchain, &releaseInfo));
 			}
+			if (appState.Scene.skybox != nullptr && appState.Scene.skybox->needsRelease)
+			{
+				CHECK_XRCMD(xrReleaseSwapchainImage(appState.Scene.skybox->swapchain, &releaseInfo));
+				appState.Scene.skybox->needsRelease = false;
+			}
 
 			XrFrameEndInfo frameEndInfo { XR_TYPE_FRAME_END_INFO };
 			frameEndInfo.displayTime = frameState.predictedDisplayTime;
