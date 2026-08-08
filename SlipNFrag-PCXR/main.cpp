@@ -1726,7 +1726,7 @@ int main(int argc, char* argv[])
 				appState.Scene.indexBuffers.DeleteOld(appState);
 				appState.Scene.aliasBuffers.DeleteOld(appState);
 
-				Skybox::DeleteOld(appState);
+				Skybox::SetUnused(appState);
 
 				for (auto& entry : appState.Scene.perSurfaceCache)
 				{
@@ -2692,6 +2692,11 @@ int main(int argc, char* argv[])
 			if (keyboardRendered)
 			{
 				CHECK_XRCMD(xrReleaseSwapchainImage(appState.Keyboard.Screen.swapchain, &releaseInfo));
+			}
+			if (appState.Scene.skybox != nullptr && appState.Scene.skybox->needsRelease)
+			{
+				CHECK_XRCMD(xrReleaseSwapchainImage(appState.Scene.skybox->swapchain, &releaseInfo));
+				appState.Scene.skybox->needsRelease = false;
 			}
 
 			XrFrameEndInfo frameEndInfo { XR_TYPE_FRAME_END_INFO };

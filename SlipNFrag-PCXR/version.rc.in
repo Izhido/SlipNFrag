@@ -22,6 +22,7 @@ BEGIN
             VALUE "LegalCopyright", "@APP_COPYRIGHT@"
             VALUE "OriginalFilename", "@APP_ORIGINAL_FILENAME@"
             VALUE "ProductName", "@APP_NAME@"
+            VALUE "FileDescription", "@APP_NAME@"
             VALUE "ProductVersion", "@APP_VERSION_STRING@"
         END
     END
