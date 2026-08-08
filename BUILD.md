@@ -176,18 +176,17 @@ In the particular case of the MacOS executable, the .dmg file that is used to di
 
 Setting up the environment to debug, test or create a release of the Meta Quest, Quest 2 and Quest 3 versions involves more steps than the versions above, due to the amount of external components involved in the compile & release process.
 
-The XR version is an Android Studio project that can be found at `SlipNFrag-XR` folder from the root of the source code folder. The minimum required version of Android Studio is version *2025.2.3*. The project itself is a CMake-backed native activity project, configured with special settings that allow it to run in standalone VR headsets such as the Meta Quest/2/3/Pro/3s.
+The XR version is an Android Studio project that can be found at `SlipNFrag-XR` folder from the root of the source code folder. The minimum required version of Android Studio is version *2026.1.3* - as a matter of fact, it is recommended that you use the latest available version in order to support the latest Android component versions. The project itself is a CMake-backed native activity project, configured with special settings that allow it to run in standalone VR headsets such as the Meta Quest/2/3/Pro/3s.
 
 The following is the list of components, and their version numbers, required to build the Android project, as of this writing:
 
 | Component | Version |
 | --------- | ------- |
-| Android SDK Platform | 16.0 API level 36.1
+| Android SDK Platform | 16.0 API level 37.0
 | NDK (Side by Side) | 29.0.14206865 |
 | Android SDK Build-Tools | 37.0.0 |
-| Gradle | 9.3.1 |
-| Android Gradle Plugin | 9.2.1 |
-| OpenXR SDK | 1.1.60 |
+| Android Gradle Plugin | 9.3.1 |
+| OpenXR SDK | 1.1.62 |
 | CMake | 4.1.2 or later |
 | stb | latest version gathered from https://github.com/nothings/stb |
 | Minizip | latest version gathered from https://github.com/domoticz/minizip |
@@ -249,7 +248,7 @@ The folder structure, so far, should look like this:
    ...
 ```
 
-* Open Android Studio 2025.2.3 (or newer), then open the project in the `SlipNFrag-XR` folder. Wait for Gradle to finish configuring the environment for the project, and follow the prompts if instructed to do so.
+* Open Android Studio (version stated above), then open the project in the `SlipNFrag-XR` folder. Wait for Gradle to finish configuring the environment for the project, and follow the prompts if instructed to do so.
 >(Check that your environment has the components described above, with their respective versions.)
 
 * Locate the Build Variants tab in Android Studio, ensure that you have selected the following:

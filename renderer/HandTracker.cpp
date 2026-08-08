@@ -1,5 +1,5 @@
 #include "HandTracker.h"
-#include "common/xr_linear.h"
+#include <common/xr_linear.h>
 #include <vector>
 
 VkDeviceSize HandTracker::VerticesSize()

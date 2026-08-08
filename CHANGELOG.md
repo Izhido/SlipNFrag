@@ -1,6 +1,18 @@
 # Changelog
 
-## Version **1.1.34**:
+## Version **1.1.35**:
+
+* Rebuilt lightmap generation code for the XR and PCXR versions - lighting is now calculated in the renderer side, making things faster and preventing unnecessary data transfers between the engine and renderer, increasing performance for medium, large and very large custom maps & mods. Also, static lightmaps vs. dynamic lightmaps are treated differently, using separate stores for them, thus minimizing problems in memory management for those and making the app a bit more stable.
+* Fixed incorrect initialization of hand tracking for the XR version, to avoid a potential crash when hand tracking + controller tracking is available.
+* Fixed bug in data transfer for surfaces using high-resolution RGB textures, which caused frequent crashes in maps and mods that used them.
+* Alias & viewmodels (monsters, items, weapons) are now properly sorted in the renderer, to minimize draw calls in the rendering code of the XR and PCXR versions and (hopefully) increase performance.
+* Fixed loading of entities in the core engine with names that are non null-terminated, which caused a crash when loading at least one recent custom map.
+* The PCXR version has now its own app icon & resource info, as is expected of Windows applications. This had the unintended side effect of making the app visible in the Library in Meta Horizon Link with its own proper banner instead of a placeholder one.
+* Fixed missing support of turbulent surfaces (water, slime, lava, portals) for which colored (RGB) lights are applied when rendering in the XR and PCXR version.
+* Due to a recent regression bug introduced in the latest version of the Meta OpenXR runtime for PCVR apps, skybox code had to be refactored to keep skyboxes in memory at all times, recycling them when they are needed after loading new maps, and only being destroyed at application exit.
+* Other miscellaneous stability and performance issues were fixed, as well.
+
+### Version **1.1.34**:
 
 * Added support for textures in maps and/or models whose size is a multiple of 8, going beyond the current support of multiples of 16, fixing thus an issue that would not let the core engine play newer mods and jams such as Quake Brutalist Jam 3 (QBJ3), or the Solid Colors Jam (SCJ).
 * Added support for multiple sky textures, a feature that was only partially implemented in the original WinQuake engine, and because of which some recent maps have weird colors being displayed over the sky, as in SCJ mentioned above.

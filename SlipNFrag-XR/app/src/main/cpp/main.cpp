@@ -1596,7 +1596,7 @@ void android_main(struct android_app* app)
 				{
 					if (appState.Mode == AppWorldMode && (appState.PreviousMode == AppStartupMode || appState.PreviousMode == AppSharewareGameDataMode || appState.PreviousMode == AppNoGameDataUncompressMode || appState.PreviousMode == AppInvalidGameDataUncompressMode))
 					{
-						sys_version = "XR 1.1.34";
+						sys_version = "XR 1.1.35";
 						std::vector<std::string> arguments;
 						arguments.emplace_back("SlipNFrag");
 						arguments.emplace_back("-basedir");
