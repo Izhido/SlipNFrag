@@ -25,8 +25,8 @@ struct Skybox
 	void Initialize(struct AppState& appState, int width, int height, struct dskybox_t& skybox);
 	void CopyPixels(struct AppState& appState, struct Buffer* stagingBuffer, struct dskybox_t& skybox);
 	void Upload(struct AppState& appState, VkCommandBuffer commandBuffer);
-	void Delete(AppState& appState) const;
+	static Skybox* Get(struct AppState& appState, int width, int height);
 	static void MoveToPrevious(struct Scene& scene);
-	static void DeleteOld(AppState& appState);
+	static void SetUnused(AppState& appState);
 	static void DeleteAll(AppState& appState);
 };

@@ -1745,7 +1745,7 @@ void android_main(struct android_app* app)
 				appState.Scene.indexBuffers.DeleteOld(appState);
 				appState.Scene.aliasBuffers.DeleteOld(appState);
 
-				Skybox::DeleteOld(appState);
+				Skybox::SetUnused(appState);
 
 				for (auto& entry : appState.Scene.perSurfaceCache)
 				{

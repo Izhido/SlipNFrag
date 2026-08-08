@@ -226,17 +226,19 @@ void Skybox::Upload(AppState &appState, VkCommandBuffer commandBuffer)
 	needsUpload = false;
 }
 
-void Skybox::Delete(AppState& appState) const
+Skybox* Skybox::Get(AppState &appState, int width, int height)
 {
-	if (swapchain != XR_NULL_HANDLE)
+	for (Skybox** s = &appState.Scene.previousSkyboxes; *s != nullptr; s = &(*s)->next)
 	{
-		xrDestroySwapchain(swapchain);
+		if ((*s)->width == width && (*s)->height == height && (*s)->unusedCount >= Constants::framesToLive)
+		{
+			auto skybox = (*s);
+			(*s) = skybox->next;
+			skybox->next = nullptr;
+			return skybox;
+		}
 	}
-	if (texture != nullptr)
-	{
-		texture->Delete(appState);
-		delete texture;
-	}
+	return nullptr;
 }
 
 void Skybox::MoveToPrevious(Scene& scene)
@@ -249,21 +251,13 @@ void Skybox::MoveToPrevious(Scene& scene)
 	}
 }
 
-void Skybox::DeleteOld(AppState& appState)
+void Skybox::SetUnused(AppState& appState)
 {
-	for (Skybox** s = &appState.Scene.previousSkyboxes; *s != nullptr; )
+	for (Skybox* s = appState.Scene.previousSkyboxes; s != nullptr; s = s->next)
 	{
-		(*s)->unusedCount++;
-		if ((*s)->unusedCount >= Constants::framesToLive)
+		if (s->unusedCount < Constants::framesToLive)
 		{
-			auto next = (*s)->next;
-			(*s)->Delete(appState);
-			delete *s;
-			*s = next;
-		}
-		else
-		{
-			s = &(*s)->next;
+			s->unusedCount++;
 		}
 	}
 	if (appState.Scene.skybox != nullptr)
@@ -278,8 +272,16 @@ void Skybox::DeleteAll(AppState& appState)
 	for (Skybox** s = &appState.Scene.previousSkyboxes; *s != nullptr; )
 	{
 		auto next = (*s)->next;
-		(*s)->Delete(appState);
+		if ((*s)->swapchain != XR_NULL_HANDLE)
+		{
+			xrDestroySwapchain((*s)->swapchain);
+		}
+		if ((*s)->texture != nullptr)
+		{
+			(*s)->texture->Delete(appState);
+			delete (*s)->texture;
+		}
 		delete *s;
-		*s = next;
+		(*s) = next;
 	}
 }

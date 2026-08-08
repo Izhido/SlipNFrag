@@ -3924,17 +3924,20 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 		}
 		if (width > 0 && height > 0)
 		{
-			appState.Scene.skybox = new Skybox { };
+            appState.Scene.skybox = Skybox::Get(appState, width, height);
+            if (appState.Scene.skybox == nullptr)
+            {
+                appState.Scene.skybox = new Skybox { };
 
-			if (appState.CubeCompositionLayerEnabled)
-			{
-				appState.Scene.skybox->Initialize(appState, width, height, skybox, swapchainImageIndex);
-			}
-			else
-			{
-				appState.Scene.skybox->Initialize(appState, width, height, skybox);
-			}
-
+                if (appState.CubeCompositionLayerEnabled)
+                {
+                    appState.Scene.skybox->Initialize(appState, width, height, skybox, swapchainImageIndex);
+                }
+                else
+                {
+                    appState.Scene.skybox->Initialize(appState, width, height, skybox);
+                }
+            }
 			skyboxSize = 6 * width * height * sizeof(uint32_t);
 		}
 	}
