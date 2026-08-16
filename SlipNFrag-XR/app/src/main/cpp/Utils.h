@@ -4,6 +4,7 @@
 #include <openxr/openxr.h>
 #include <openxr/openxr_reflection.h>
 #include <ctime>
+#include <unistd.h>
 
 #define CHK_STRINGIFY(x) #x
 #define TOSTRING(x) CHK_STRINGIFY(x)
@@ -212,4 +213,9 @@ inline double GetTime()
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     return (now.tv_sec * 1e9 + now.tv_nsec) * 0.000000001;
+}
+
+inline void Sleep(double seconds)
+{
+    usleep((useconds_t)(seconds * 1000 * 1000));
 }
