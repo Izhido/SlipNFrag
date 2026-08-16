@@ -13,7 +13,7 @@ void runEngine(AppState* appState)
 	{
 		if (!host_initialized)
 		{
-			std::this_thread::yield();
+			Sleep(0.001);
 			continue;
 		}
 		{
@@ -232,6 +232,6 @@ void runEngine(AppState* appState)
 				break;
 			}
 		}
-		std::this_thread::yield();
+		Sleep(0.001);
 	}
 }

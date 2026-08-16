@@ -1533,7 +1533,7 @@ int main(int argc, char* argv[])
 
 			if (!sessionRunning)
 			{
-				std::this_thread::yield();
+				Sleep(0.001);
 				continue;
 			}
 
@@ -1642,7 +1642,7 @@ int main(int argc, char* argv[])
 						{
 							xrRequestExitSession(appState.Session);
 							sessionRunning = false;
-							std::this_thread::yield();
+							Sleep(0.001);
 							continue;
 						}
 						appState.DefaultFOV = (int)Cvar_VariableValue("fov");

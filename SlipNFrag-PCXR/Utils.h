@@ -6,6 +6,8 @@
 #include <ctime>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <thread>
+#include <chrono>
 
 #define CHK_STRINGIFY(x) #x
 #define TOSTRING(x) CHK_STRINGIFY(x)
@@ -235,4 +237,29 @@ inline double GetTime()
     LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);
     return (double)time.QuadPart / (double)frequency.QuadPart;
+}
+
+inline void Sleep(double seconds)
+{
+    LARGE_INTEGER dueTime { };
+    dueTime.QuadPart = -(LONGLONG)(seconds * 10 * 1000 * 1000);
+
+    thread_local HANDLE timer = []() -> HANDLE 
+    {
+        return CreateWaitableTimer(NULL, TRUE, NULL);
+    }();
+
+    if (timer == NULL)
+    {
+        std::this_thread::sleep_for(std::chrono::duration<double>(seconds));
+        return;
+    }
+
+    if (!SetWaitableTimer(timer, &dueTime, 0, NULL, NULL, FALSE))
+    {
+        std::this_thread::sleep_for(std::chrono::duration<double>(seconds));
+        return;
+    }
+
+    WaitForSingleObject(timer, INFINITE);
 }
