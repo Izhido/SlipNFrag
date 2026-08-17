@@ -3,6 +3,14 @@
 #define UPPER_8BIT_LIMIT 240
 #define UPPER_16BIT_LIMIT 65520
 
+enum dlists_state_t
+{
+	dlists_producing,
+	dlists_produced,
+	dlists_consuming,
+	dlists_consumed
+};
+
 struct dturbulent_t
 {
 	void* face;
@@ -17,8 +25,9 @@ struct dturbulent_t
 
 struct dsurface_t : dturbulent_t
 {
-	// No new fields. This is done to distinguish between surfaces
-	// that need lightmaps generated and those that don't.
+	int dlightbits;
+	int first_extra_dlightbit;
+	int num_extra_dlightbits;
 };
 
 struct dsurfacewithglow_t : dsurface_t
@@ -190,6 +199,7 @@ struct dlists_t
 	int last_cutout_index8;
 	int last_cutout_index16;
 	int last_cutout_index32;
+	int last_extra_dlightbit;
 	int last_dynamic_light;
 	int clear_color;
 	float vieworg0;
@@ -289,13 +299,27 @@ struct dlists_t
 	std::vector<uint16_t> cutout_indices16;
 	std::vector<uint32_t> cutout_indices32;
 	std::vector<ddynamiclight_t> dynamic_lights;
+	std::vector<unsigned char> extra_dlightbits;
+	std::vector<unsigned char> con_buffer;
 };
 
-extern dlists_t d_lists;
+extern std::array<dlists_t, 3> d_lists;
+
+extern std::array<dlists_state_t, 3> d_lists_state;
+
+extern dlists_t* d_lists_producing;
+extern int d_lists_producer_index;
+
+extern dlists_t* d_lists_consuming;
+extern int d_lists_consumer_index;
 
 extern qboolean d_uselists;
 
-void D_ResetLists ();
+void D_ResetLists (dlists_t* lists);
+void D_ClearLists (dlists_t* lists);
+void D_PickProducer ();
+void D_MarkAsProduced ();
+void D_PickConsumer ();
 void D_AddSurfaceToLists (msurface_t* face, texture_t* texture, entity_t* entity);
 void D_AddSurfaceColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
 void D_AddSurfaceRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity);

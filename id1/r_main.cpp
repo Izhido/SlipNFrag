@@ -1049,7 +1049,7 @@ void R_DrawBEntitiesForLists (void)
 							}
 							else if (psurf->flags & SURF_DRAWBACKGROUND)
 							{
-								d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+								d_lists_producing->clear_color = (int)r_clearcolor.value & 0xFF;
 							}
 							else if (psurf->flags & SURF_DRAWTURB)
 							{

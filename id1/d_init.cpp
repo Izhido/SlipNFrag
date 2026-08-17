@@ -163,46 +163,47 @@ void D_SetupFrame (void)
 
 	if (d_uselists)
 	{
-		d_lists.vieworg0 = r_refdef.vieworg[0];
-		d_lists.vieworg1 = r_refdef.vieworg[1];
-		d_lists.vieworg2 = r_refdef.vieworg[2];
-		d_lists.vright0 = vright[0];
-		d_lists.vright1 = vright[1];
-		d_lists.vright2 = vright[2];
-		d_lists.vup0 = vup[0];
-		d_lists.vup1 = vup[1];
-		d_lists.vup2 = vup[2];
-		d_lists.time = cl.time;
-		d_lists.vblend0 = v_blend[0];
-		d_lists.vblend1 = v_blend[1];
-		d_lists.vblend2 = v_blend[2];
-		d_lists.vblend3 = v_blend[3];
-		d_lists.vgamma = v_gamma.value;
-		d_lists.rframecount = r_framecount;
-		Q_memcpy (d_lists.dlightstylevalues, d_lightstylevalue, sizeof(d_lightstylevalue));
-		d_lists.rfullbright = Cvar_VariableValue("r_fullbright");
-		D_AddDynamicLightsToLists ();
-		d_lists.immersive_hands_enabled = cl.immersive_hands_enabled;
+		d_lists_producing->vieworg0 = r_refdef.vieworg[0];
+		d_lists_producing->vieworg1 = r_refdef.vieworg[1];
+		d_lists_producing->vieworg2 = r_refdef.vieworg[2];
+		d_lists_producing->vright0 = vright[0];
+		d_lists_producing->vright1 = vright[1];
+		d_lists_producing->vright2 = vright[2];
+		d_lists_producing->vup0 = vup[0];
+		d_lists_producing->vup1 = vup[1];
+		d_lists_producing->vup2 = vup[2];
+		d_lists_producing->time = cl.time;
+		d_lists_producing->vblend0 = v_blend[0];
+		d_lists_producing->vblend1 = v_blend[1];
+		d_lists_producing->vblend2 = v_blend[2];
+		d_lists_producing->vblend3 = v_blend[3];
+		d_lists_producing->vgamma = v_gamma.value;
+		d_lists_producing->rframecount = r_framecount;
 
-		if (d_lists.immersive_hands_enabled)
+		Q_memcpy (d_lists_producing->dlightstylevalues, d_lightstylevalue, sizeof(d_lightstylevalue));
+		d_lists_producing->rfullbright = Cvar_VariableValue("r_fullbright");
+		D_AddDynamicLightsToLists ();
+
+		d_lists_producing->immersive_hands_enabled = cl.immersive_hands_enabled;
+		if (d_lists_producing->immersive_hands_enabled)
 		{
 			auto hand = Cvar_VariableString ("dominant_hand");
-			d_lists.dominant_hand_left = (Q_strncmp(hand, "left", 4) == 0);
+			d_lists_producing->dominant_hand_left = (Q_strncmp(hand, "left", 4) == 0);
 
-			d_lists.viewmodel_rotate0 = cl.immersive_viewmodel_rotate[0];
-			d_lists.viewmodel_rotate1 = cl.immersive_viewmodel_rotate[1];
-			d_lists.viewmodel_rotate2 = cl.immersive_viewmodel_rotate[2];
+			d_lists_producing->viewmodel_rotate0 = cl.immersive_viewmodel_rotate[0];
+			d_lists_producing->viewmodel_rotate1 = cl.immersive_viewmodel_rotate[1];
+			d_lists_producing->viewmodel_rotate2 = cl.immersive_viewmodel_rotate[2];
 
-			d_lists.viewmodel_offset0 = cl.immersive_viewmodel_offset[0];
-			d_lists.viewmodel_offset1 = cl.immersive_viewmodel_offset[1];
-			d_lists.viewmodel_offset2 = cl.immersive_viewmodel_offset[2];
+			d_lists_producing->viewmodel_offset0 = cl.immersive_viewmodel_offset[0];
+			d_lists_producing->viewmodel_offset1 = cl.immersive_viewmodel_offset[1];
+			d_lists_producing->viewmodel_offset2 = cl.immersive_viewmodel_offset[2];
 
-			d_lists.viewmodel_scale0 = cl.immersive_viewmodel_scale[0];
-			d_lists.viewmodel_scale1 = cl.immersive_viewmodel_scale[1];
-			d_lists.viewmodel_scale2 = cl.immersive_viewmodel_scale[2];
+			d_lists_producing->viewmodel_scale0 = cl.immersive_viewmodel_scale[0];
+			d_lists_producing->viewmodel_scale1 = cl.immersive_viewmodel_scale[1];
+			d_lists_producing->viewmodel_scale2 = cl.immersive_viewmodel_scale[2];
 
-			d_lists.show_hands = (cl_immersive_show_hands.value != 0);
-			d_lists.sbar_on_hand = (cl_immersive_sbar_on_hand.value != 0);
+			d_lists_producing->show_hands = (cl_immersive_show_hands.value != 0);
+			d_lists_producing->sbar_on_hand = (cl_immersive_sbar_on_hand.value != 0);
 		}
 	}
 }

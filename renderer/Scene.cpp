@@ -1724,16 +1724,16 @@ void Scene::GenerateLightmap(const dsurface_t& surface, PerSurfaceData& perSurfa
 {
     auto surf = (msurface_t*)surface.face;
 	auto lightmap = surf->samples;
-	if (d_lists.rfullbright != 0 || !cl.worldmodel->lightdata)
+	if (d_lists_consuming->rfullbright != 0 || !cl.worldmodel->lightdata)
 	{
 		std::fill(perSurface.lightmapSource, perSurface.lightmapSource + size, 0);
 		return;
 	}
 	std::fill(perSurface.lightmapSource, perSurface.lightmapSource + size, r_refdef.ambientlight_shift8);
-    perSurface.lightadj[0] = d_lists.dlightstylevalues[surf->styles[0]];
-    perSurface.lightadj[1] = d_lists.dlightstylevalues[surf->styles[1]];
-    perSurface.lightadj[2] = d_lists.dlightstylevalues[surf->styles[2]];
-    perSurface.lightadj[3] = d_lists.dlightstylevalues[surf->styles[3]];
+    perSurface.lightadj[0] = d_lists_consuming->dlightstylevalues[surf->styles[0]];
+    perSurface.lightadj[1] = d_lists_consuming->dlightstylevalues[surf->styles[1]];
+    perSurface.lightadj[2] = d_lists_consuming->dlightstylevalues[surf->styles[2]];
+    perSurface.lightadj[3] = d_lists_consuming->dlightstylevalues[surf->styles[3]];
 	if (lightmap)
 	{
 		for (auto maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
@@ -1746,42 +1746,43 @@ void Scene::GenerateLightmap(const dsurface_t& surface, PerSurfaceData& perSurfa
 			lightmap += size;
 		}
 	}
-    perSurface.dlight = (surf->dlightframe == d_lists.rframecount);
+    perSurface.dlight = (surface.dlightbits != 0 || surface.num_extra_dlightbits > 0);
 	if (perSurface.dlight)
 	{
         auto smax = width * 16;
         auto tmax = height * 16;
-		for (auto lnum=0 ; lnum<=d_lists.last_dynamic_light ; lnum++)
+		for (auto lnum=0 ; lnum<=d_lists_consuming->last_dynamic_light ; lnum++)
 		{
 			if (lnum < MAX_DLIGHTS - 1)
 			{
-				if ( !(surf->dlightbits & (1<<lnum) ) )
+				if ( !(surface.dlightbits & (1<<lnum) ) )
                 {
 					continue;
 				}
 			}
 			else
 			{
-				if ( surf->dlightbits_vec.size() <= lnum - (MAX_DLIGHTS - 1) || !surf->dlightbits_vec[lnum - (MAX_DLIGHTS - 1)] )
+				auto index = lnum - (MAX_DLIGHTS - 1);
+				if ( surface.num_extra_dlightbits <= index || !d_lists_consuming->extra_dlightbits[surface.first_extra_dlightbit + index] )
 				{
 					continue;
 				}
 			}
-			auto rad = d_lists.dynamic_lights[lnum].radius;
-			auto dist = d_lists.dynamic_lights[lnum].origin0 * surf->plane->normal[0]
-			           + d_lists.dynamic_lights[lnum].origin1 * surf->plane->normal[1]
-			           + d_lists.dynamic_lights[lnum].origin2 * surf->plane->normal[2]
+			auto rad = d_lists_consuming->dynamic_lights[lnum].radius;
+			auto dist = d_lists_consuming->dynamic_lights[lnum].origin0 * surf->plane->normal[0]
+			           + d_lists_consuming->dynamic_lights[lnum].origin1 * surf->plane->normal[1]
+			           + d_lists_consuming->dynamic_lights[lnum].origin2 * surf->plane->normal[2]
 			           - surf->plane->dist;
 			rad -= fabs(dist);
-			auto minlight = d_lists.dynamic_lights[lnum].minlight;
+			auto minlight = d_lists_consuming->dynamic_lights[lnum].minlight;
 			if (rad < minlight)
 			{
 				continue;
 			}
 			minlight = rad - minlight;
-			auto impact0 = d_lists.dynamic_lights[lnum].origin0 - surf->plane->normal[0]*dist;
-			auto impact1 = d_lists.dynamic_lights[lnum].origin1 - surf->plane->normal[1]*dist;
-			auto impact2 = d_lists.dynamic_lights[lnum].origin2 - surf->plane->normal[2]*dist;
+			auto impact0 = d_lists_consuming->dynamic_lights[lnum].origin0 - surf->plane->normal[0]*dist;
+			auto impact1 = d_lists_consuming->dynamic_lights[lnum].origin1 - surf->plane->normal[1]*dist;
+			auto impact2 = d_lists_consuming->dynamic_lights[lnum].origin2 - surf->plane->normal[2]*dist;
 			auto local0 = impact0 * surf->texinfo->vecs[0][0]
 			            + impact1 * surf->texinfo->vecs[0][1]
 			            + impact2 * surf->texinfo->vecs[0][2]
@@ -1826,16 +1827,16 @@ void Scene::GenerateLightmapRGB(const dsurface_t& surface, PerSurfaceData& perSu
 {
     auto surf = (msurface_t*)surface.face;
 	auto lightmap = surf->samplesRGB;
-	if (d_lists.rfullbright != 0 || !cl.worldmodel->lightRGBdata)
+	if (d_lists_consuming->rfullbright != 0 || !cl.worldmodel->lightRGBdata)
 	{
 		std::fill(perSurface.lightmapSource, perSurface.lightmapSource + size, 65535);
 		return;
 	}
 	std::fill(perSurface.lightmapSource, perSurface.lightmapSource + size, r_refdef.ambientlight_shift8);
-    perSurface.lightadj[0] = d_lists.dlightstylevalues[surf->styles[0]];
-    perSurface.lightadj[1] = d_lists.dlightstylevalues[surf->styles[1]];
-    perSurface.lightadj[2] = d_lists.dlightstylevalues[surf->styles[2]];
-    perSurface.lightadj[3] = d_lists.dlightstylevalues[surf->styles[3]];
+    perSurface.lightadj[0] = d_lists_consuming->dlightstylevalues[surf->styles[0]];
+    perSurface.lightadj[1] = d_lists_consuming->dlightstylevalues[surf->styles[1]];
+    perSurface.lightadj[2] = d_lists_consuming->dlightstylevalues[surf->styles[2]];
+    perSurface.lightadj[3] = d_lists_consuming->dlightstylevalues[surf->styles[3]];
 	if (lightmap)
 	{
 		for (auto maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
@@ -1848,42 +1849,43 @@ void Scene::GenerateLightmapRGB(const dsurface_t& surface, PerSurfaceData& perSu
 			lightmap += size;
 		}
 	}
-    perSurface.dlight = (surf->dlightframe == d_lists.rframecount);
+    perSurface.dlight = (surface.dlightbits != 0 || surface.num_extra_dlightbits > 0);
 	if (perSurface.dlight)
 	{
         auto smax = width * 16;
         auto tmax = height * 16;
-		for (auto lnum=0 ; lnum<=d_lists.last_dynamic_light ; lnum++)
+		for (auto lnum=0 ; lnum<=d_lists_consuming->last_dynamic_light ; lnum++)
 		{
 			if (lnum < MAX_DLIGHTS - 1)
 			{
-				if ( !(surf->dlightbits & (1<<lnum) ) )
+				if ( !(surface.dlightbits & (1<<lnum) ) )
                 {
 					continue;
 				}
 			}
 			else
 			{
-				if ( surf->dlightbits_vec.size() <= lnum - (MAX_DLIGHTS - 1) || !surf->dlightbits_vec[lnum - (MAX_DLIGHTS - 1)] )
+				auto index = lnum - (MAX_DLIGHTS - 1);
+				if ( surface.num_extra_dlightbits <= index || !d_lists_consuming->extra_dlightbits[surface.first_extra_dlightbit + index] )
 				{
 					continue;
 				}
 			}
-			auto rad = d_lists.dynamic_lights[lnum].radius;
-			auto dist = d_lists.dynamic_lights[lnum].origin0 * surf->plane->normal[0]
-			           + d_lists.dynamic_lights[lnum].origin1 * surf->plane->normal[1]
-			           + d_lists.dynamic_lights[lnum].origin2 * surf->plane->normal[2]
+			auto rad = d_lists_consuming->dynamic_lights[lnum].radius;
+			auto dist = d_lists_consuming->dynamic_lights[lnum].origin0 * surf->plane->normal[0]
+			           + d_lists_consuming->dynamic_lights[lnum].origin1 * surf->plane->normal[1]
+			           + d_lists_consuming->dynamic_lights[lnum].origin2 * surf->plane->normal[2]
 			           - surf->plane->dist;
 			rad -= fabs(dist);
-			auto minlight = d_lists.dynamic_lights[lnum].minlight;
+			auto minlight = d_lists_consuming->dynamic_lights[lnum].minlight;
 			if (rad < minlight)
 			{
 				continue;
 			}
 			minlight = rad - minlight;
-			auto impact0 = d_lists.dynamic_lights[lnum].origin0 - surf->plane->normal[0]*dist;
-			auto impact1 = d_lists.dynamic_lights[lnum].origin1 - surf->plane->normal[1]*dist;
-			auto impact2 = d_lists.dynamic_lights[lnum].origin2 - surf->plane->normal[2]*dist;
+			auto impact0 = d_lists_consuming->dynamic_lights[lnum].origin0 - surf->plane->normal[0]*dist;
+			auto impact1 = d_lists_consuming->dynamic_lights[lnum].origin1 - surf->plane->normal[1]*dist;
+			auto impact2 = d_lists_consuming->dynamic_lights[lnum].origin2 - surf->plane->normal[2]*dist;
 			auto local0 = impact0 * surf->texinfo->vecs[0][0]
 			            + impact1 * surf->texinfo->vecs[0][1]
 			            + impact2 * surf->texinfo->vecs[0][2]
@@ -2002,11 +2004,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			chain.current = &loaded;
 		}
 	}
-	else if (perSurface.lightadj[0] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
-	         perSurface.lightadj[1] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
-	         perSurface.lightadj[2] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
-	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
-	         ((msurface_t*)surface.face)->dlightframe == d_lists.rframecount || perSurface.dlight)
+	else if (perSurface.lightadj[0] != d_lists_consuming->dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
+	         perSurface.lightadj[1] != d_lists_consuming->dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
+	         perSurface.lightadj[2] != d_lists_consuming->dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
+	         perSurface.lightadj[3] != d_lists_consuming->dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
+	         surface.dlightbits != 0 || surface.num_extra_dlightbits > 0 || perSurface.dlight)
 	{
 		lightmapsToDelete.Dispose(perSurface.lightmap);
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
@@ -2083,11 +2085,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			chain.current = &loaded;
 		}
     }
-	else if (perSurface.lightadj[0] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
-	         perSurface.lightadj[1] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
-	         perSurface.lightadj[2] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
-	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
-	         ((msurface_t*)surface.face)->dlightframe == d_lists.rframecount || perSurface.dlight)
+	else if (perSurface.lightadj[0] != d_lists_consuming->dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
+	         perSurface.lightadj[1] != d_lists_consuming->dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
+	         perSurface.lightadj[2] != d_lists_consuming->dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
+	         perSurface.lightadj[3] != d_lists_consuming->dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
+	         surface.dlightbits != 0 || surface.num_extra_dlightbits > 0 || perSurface.dlight)
 	{
 		lightmapsRGBToDelete.Dispose(perSurface.lightmapRGB);
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
@@ -3085,93 +3087,93 @@ void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_
 VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame, uint32_t swapchainImageIndex)
 {
 	frameCount++;
-    surfaces.Allocate(d_lists.last_surface);
-    surfacesColoredLights.Allocate(d_lists.last_surface_colored_lights);
-    surfacesRGBA.Allocate(d_lists.last_surface_rgba);
-    surfacesRGBAColoredLights.Allocate(d_lists.last_surface_rgba_colored_lights);
-    surfacesRGBANoGlow.Allocate(d_lists.last_surface_rgba_no_glow);
-    surfacesRGBANoGlowColoredLights.Allocate(d_lists.last_surface_rgba_no_glow_colored_lights);
-    surfacesRotated.Allocate(d_lists.last_surface_rotated);
-    surfacesRotatedColoredLights.Allocate(d_lists.last_surface_rotated_colored_lights);
-    surfacesRotatedRGBA.Allocate(d_lists.last_surface_rotated_rgba);
-    surfacesRotatedRGBAColoredLights.Allocate(d_lists.last_surface_rotated_rgba_colored_lights);
-    surfacesRotatedRGBANoGlow.Allocate(d_lists.last_surface_rotated_rgba_no_glow);
-    surfacesRotatedRGBANoGlowColoredLights.Allocate(d_lists.last_surface_rotated_rgba_no_glow_colored_lights);
-    fences.Allocate(d_lists.last_fence);
-    fencesColoredLights.Allocate(d_lists.last_fence_colored_lights);
-    fencesRGBA.Allocate(d_lists.last_fence_rgba);
-    fencesRGBAColoredLights.Allocate(d_lists.last_fence_rgba_colored_lights);
-    fencesRGBANoGlow.Allocate(d_lists.last_fence_rgba_no_glow);
-    fencesRGBANoGlowColoredLights.Allocate(d_lists.last_fence_rgba_no_glow_colored_lights);
-    fencesRotated.Allocate(d_lists.last_fence_rotated);
-    fencesRotatedColoredLights.Allocate(d_lists.last_fence_rotated_colored_lights);
-    fencesRotatedRGBA.Allocate(d_lists.last_fence_rotated_rgba);
-    fencesRotatedRGBAColoredLights.Allocate(d_lists.last_fence_rotated_rgba_colored_lights);
-    fencesRotatedRGBANoGlow.Allocate(d_lists.last_fence_rotated_rgba_no_glow);
-    fencesRotatedRGBANoGlowColoredLights.Allocate(d_lists.last_fence_rotated_rgba_no_glow_colored_lights);
-    turbulent.Allocate(d_lists.last_turbulent);
-    turbulentRGBA.Allocate(d_lists.last_turbulent_rgba);
-    turbulentLit.Allocate(d_lists.last_turbulent_lit);
-    turbulentColoredLights.Allocate(d_lists.last_turbulent_colored_lights);
-    turbulentRGBALit.Allocate(d_lists.last_turbulent_rgba_lit);
-    turbulentRGBAColoredLights.Allocate(d_lists.last_turbulent_rgba_colored_lights);
-    turbulentRotated.Allocate(d_lists.last_turbulent_rotated);
-    turbulentRotatedRGBA.Allocate(d_lists.last_turbulent_rotated_rgba);
-    turbulentRotatedLit.Allocate(d_lists.last_turbulent_rotated_lit);
-    turbulentRotatedColoredLights.Allocate(d_lists.last_turbulent_rotated_colored_lights);
-    turbulentRotatedRGBALit.Allocate(d_lists.last_turbulent_rotated_rgba_lit);
-    turbulentRotatedRGBAColoredLights.Allocate(d_lists.last_turbulent_rotated_rgba_colored_lights);
-    sprites.Allocate(d_lists.last_sprite);
-    alias.Allocate(d_lists.last_alias);
-	aliasAlpha.Allocate(d_lists.last_alias_alpha);
-	aliasColoredLights.Allocate(d_lists.last_alias_colored_lights);
-	aliasAlphaColoredLights.Allocate(d_lists.last_alias_alpha_colored_lights);
-	aliasHoley.Allocate(d_lists.last_alias_holey);
-	aliasHoleyAlpha.Allocate(d_lists.last_alias_holey_alpha);
-	aliasHoleyColoredLights.Allocate(d_lists.last_alias_holey_colored_lights);
-	aliasHoleyAlphaColoredLights.Allocate(d_lists.last_alias_holey_alpha_colored_lights);
-    viewmodels.Allocate(d_lists.last_viewmodel);
-	viewmodelsColoredLights.Allocate(d_lists.last_viewmodel_colored_lights);
-	viewmodelsHoley.Allocate(d_lists.last_viewmodel_holey);
-	viewmodelsHoleyColoredLights.Allocate(d_lists.last_viewmodel_holey_colored_lights);
-    lastParticle = (d_lists.last_particle + 1) / 4 - 1;
-    lastColoredIndex8 = d_lists.last_colored_index8;
-    lastColoredIndex16 = d_lists.last_colored_index16;
-    lastColoredIndex32 = d_lists.last_colored_index32;
-	lastCutoutIndex8 = d_lists.last_cutout_index8;
-	lastCutoutIndex16 = d_lists.last_cutout_index16;
-	lastCutoutIndex32 = d_lists.last_cutout_index32;
-    lastSky = d_lists.last_sky;
-    lastSkyRGBA = d_lists.last_sky_rgba;
+    surfaces.Allocate(d_lists_consuming->last_surface);
+    surfacesColoredLights.Allocate(d_lists_consuming->last_surface_colored_lights);
+    surfacesRGBA.Allocate(d_lists_consuming->last_surface_rgba);
+    surfacesRGBAColoredLights.Allocate(d_lists_consuming->last_surface_rgba_colored_lights);
+    surfacesRGBANoGlow.Allocate(d_lists_consuming->last_surface_rgba_no_glow);
+    surfacesRGBANoGlowColoredLights.Allocate(d_lists_consuming->last_surface_rgba_no_glow_colored_lights);
+    surfacesRotated.Allocate(d_lists_consuming->last_surface_rotated);
+    surfacesRotatedColoredLights.Allocate(d_lists_consuming->last_surface_rotated_colored_lights);
+    surfacesRotatedRGBA.Allocate(d_lists_consuming->last_surface_rotated_rgba);
+    surfacesRotatedRGBAColoredLights.Allocate(d_lists_consuming->last_surface_rotated_rgba_colored_lights);
+    surfacesRotatedRGBANoGlow.Allocate(d_lists_consuming->last_surface_rotated_rgba_no_glow);
+    surfacesRotatedRGBANoGlowColoredLights.Allocate(d_lists_consuming->last_surface_rotated_rgba_no_glow_colored_lights);
+    fences.Allocate(d_lists_consuming->last_fence);
+    fencesColoredLights.Allocate(d_lists_consuming->last_fence_colored_lights);
+    fencesRGBA.Allocate(d_lists_consuming->last_fence_rgba);
+    fencesRGBAColoredLights.Allocate(d_lists_consuming->last_fence_rgba_colored_lights);
+    fencesRGBANoGlow.Allocate(d_lists_consuming->last_fence_rgba_no_glow);
+    fencesRGBANoGlowColoredLights.Allocate(d_lists_consuming->last_fence_rgba_no_glow_colored_lights);
+    fencesRotated.Allocate(d_lists_consuming->last_fence_rotated);
+    fencesRotatedColoredLights.Allocate(d_lists_consuming->last_fence_rotated_colored_lights);
+    fencesRotatedRGBA.Allocate(d_lists_consuming->last_fence_rotated_rgba);
+    fencesRotatedRGBAColoredLights.Allocate(d_lists_consuming->last_fence_rotated_rgba_colored_lights);
+    fencesRotatedRGBANoGlow.Allocate(d_lists_consuming->last_fence_rotated_rgba_no_glow);
+    fencesRotatedRGBANoGlowColoredLights.Allocate(d_lists_consuming->last_fence_rotated_rgba_no_glow_colored_lights);
+    turbulent.Allocate(d_lists_consuming->last_turbulent);
+    turbulentRGBA.Allocate(d_lists_consuming->last_turbulent_rgba);
+    turbulentLit.Allocate(d_lists_consuming->last_turbulent_lit);
+    turbulentColoredLights.Allocate(d_lists_consuming->last_turbulent_colored_lights);
+    turbulentRGBALit.Allocate(d_lists_consuming->last_turbulent_rgba_lit);
+    turbulentRGBAColoredLights.Allocate(d_lists_consuming->last_turbulent_rgba_colored_lights);
+    turbulentRotated.Allocate(d_lists_consuming->last_turbulent_rotated);
+    turbulentRotatedRGBA.Allocate(d_lists_consuming->last_turbulent_rotated_rgba);
+    turbulentRotatedLit.Allocate(d_lists_consuming->last_turbulent_rotated_lit);
+    turbulentRotatedColoredLights.Allocate(d_lists_consuming->last_turbulent_rotated_colored_lights);
+    turbulentRotatedRGBALit.Allocate(d_lists_consuming->last_turbulent_rotated_rgba_lit);
+    turbulentRotatedRGBAColoredLights.Allocate(d_lists_consuming->last_turbulent_rotated_rgba_colored_lights);
+    sprites.Allocate(d_lists_consuming->last_sprite);
+    alias.Allocate(d_lists_consuming->last_alias);
+	aliasAlpha.Allocate(d_lists_consuming->last_alias_alpha);
+	aliasColoredLights.Allocate(d_lists_consuming->last_alias_colored_lights);
+	aliasAlphaColoredLights.Allocate(d_lists_consuming->last_alias_alpha_colored_lights);
+	aliasHoley.Allocate(d_lists_consuming->last_alias_holey);
+	aliasHoleyAlpha.Allocate(d_lists_consuming->last_alias_holey_alpha);
+	aliasHoleyColoredLights.Allocate(d_lists_consuming->last_alias_holey_colored_lights);
+	aliasHoleyAlphaColoredLights.Allocate(d_lists_consuming->last_alias_holey_alpha_colored_lights);
+    viewmodels.Allocate(d_lists_consuming->last_viewmodel);
+	viewmodelsColoredLights.Allocate(d_lists_consuming->last_viewmodel_colored_lights);
+	viewmodelsHoley.Allocate(d_lists_consuming->last_viewmodel_holey);
+	viewmodelsHoleyColoredLights.Allocate(d_lists_consuming->last_viewmodel_holey_colored_lights);
+    lastParticle = (d_lists_consuming->last_particle + 1) / 4 - 1;
+    lastColoredIndex8 = d_lists_consuming->last_colored_index8;
+    lastColoredIndex16 = d_lists_consuming->last_colored_index16;
+    lastColoredIndex32 = d_lists_consuming->last_colored_index32;
+	lastCutoutIndex8 = d_lists_consuming->last_cutout_index8;
+	lastCutoutIndex16 = d_lists_consuming->last_cutout_index16;
+	lastCutoutIndex32 = d_lists_consuming->last_cutout_index32;
+    lastSky = d_lists_consuming->last_sky;
+    lastSkyRGBA = d_lists_consuming->last_sky_rgba;
 
-    appState.FromEngine.vieworg0 = d_lists.vieworg0;
-    appState.FromEngine.vieworg1 = d_lists.vieworg1;
-    appState.FromEngine.vieworg2 = d_lists.vieworg2;
-    appState.FromEngine.vright0 = d_lists.vright0;
-    appState.FromEngine.vright1 = d_lists.vright1;
-    appState.FromEngine.vright2 = d_lists.vright2;
-    appState.FromEngine.vup0 = d_lists.vup0;
-    appState.FromEngine.vup1 = d_lists.vup1;
-    appState.FromEngine.vup2 = d_lists.vup2;
-	appState.FromEngine.time = d_lists.time;
-    appState.FromEngine.vblend0 = d_lists.vblend0;
-    appState.FromEngine.vblend1 = d_lists.vblend1;
-    appState.FromEngine.vblend2 = d_lists.vblend2;
-    appState.FromEngine.vblend3 = d_lists.vblend3;
-    appState.FromEngine.vgamma = d_lists.vgamma;
-	appState.FromEngine.immersive_hands_enabled = d_lists.immersive_hands_enabled;
-	appState.FromEngine.dominant_hand_left = d_lists.dominant_hand_left;
-	appState.FromEngine.viewmodel_rotate0 = d_lists.viewmodel_rotate0;
-	appState.FromEngine.viewmodel_rotate1 = d_lists.viewmodel_rotate1;
-	appState.FromEngine.viewmodel_rotate2 = d_lists.viewmodel_rotate2;
-	appState.FromEngine.viewmodel_offset0 = d_lists.viewmodel_offset0;
-	appState.FromEngine.viewmodel_offset1 = d_lists.viewmodel_offset1;
-	appState.FromEngine.viewmodel_offset2 = d_lists.viewmodel_offset2;
-	appState.FromEngine.viewmodel_scale0 = d_lists.viewmodel_scale0;
-	appState.FromEngine.viewmodel_scale1 = d_lists.viewmodel_scale1;
-	appState.FromEngine.viewmodel_scale2 = d_lists.viewmodel_scale2;
-	appState.FromEngine.show_hands = d_lists.show_hands;
-	appState.FromEngine.sbar_on_hand = d_lists.sbar_on_hand;
+    appState.FromEngine.vieworg0 = d_lists_consuming->vieworg0;
+    appState.FromEngine.vieworg1 = d_lists_consuming->vieworg1;
+    appState.FromEngine.vieworg2 = d_lists_consuming->vieworg2;
+    appState.FromEngine.vright0 = d_lists_consuming->vright0;
+    appState.FromEngine.vright1 = d_lists_consuming->vright1;
+    appState.FromEngine.vright2 = d_lists_consuming->vright2;
+    appState.FromEngine.vup0 = d_lists_consuming->vup0;
+    appState.FromEngine.vup1 = d_lists_consuming->vup1;
+    appState.FromEngine.vup2 = d_lists_consuming->vup2;
+	appState.FromEngine.time = d_lists_consuming->time;
+    appState.FromEngine.vblend0 = d_lists_consuming->vblend0;
+    appState.FromEngine.vblend1 = d_lists_consuming->vblend1;
+    appState.FromEngine.vblend2 = d_lists_consuming->vblend2;
+    appState.FromEngine.vblend3 = d_lists_consuming->vblend3;
+    appState.FromEngine.vgamma = d_lists_consuming->vgamma;
+	appState.FromEngine.immersive_hands_enabled = d_lists_consuming->immersive_hands_enabled;
+	appState.FromEngine.dominant_hand_left = d_lists_consuming->dominant_hand_left;
+	appState.FromEngine.viewmodel_rotate0 = d_lists_consuming->viewmodel_rotate0;
+	appState.FromEngine.viewmodel_rotate1 = d_lists_consuming->viewmodel_rotate1;
+	appState.FromEngine.viewmodel_rotate2 = d_lists_consuming->viewmodel_rotate2;
+	appState.FromEngine.viewmodel_offset0 = d_lists_consuming->viewmodel_offset0;
+	appState.FromEngine.viewmodel_offset1 = d_lists_consuming->viewmodel_offset1;
+	appState.FromEngine.viewmodel_offset2 = d_lists_consuming->viewmodel_offset2;
+	appState.FromEngine.viewmodel_scale0 = d_lists_consuming->viewmodel_scale0;
+	appState.FromEngine.viewmodel_scale1 = d_lists_consuming->viewmodel_scale1;
+	appState.FromEngine.viewmodel_scale2 = d_lists_consuming->viewmodel_scale2;
+	appState.FromEngine.show_hands = d_lists_consuming->show_hands;
+	appState.FromEngine.sbar_on_hand = d_lists_consuming->sbar_on_hand;
 
     appState.VertexTransform.m[0] = appState.Scale;
     appState.VertexTransform.m[6] = -appState.Scale;
@@ -3203,8 +3205,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfaces.last; i++)
     {
         auto& loaded = surfaces.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces[i].face];
-        GetStagingBufferSize(appState, d_lists.surfaces[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->surfaces[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfaces.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3216,8 +3218,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesColoredLights.last; i++)
     {
         auto& loaded = surfacesColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.surfaces_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->surfaces_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3229,8 +3231,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRGBA.last; i++)
     {
         auto& loaded = surfacesRGBA.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rgba[i].face];
-        GetStagingBufferSize(appState, d_lists.surfaces_rgba[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rgba[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->surfaces_rgba[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRGBA.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3242,8 +3244,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRGBAColoredLights.last; i++)
     {
         auto& loaded = surfacesRGBAColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rgba_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.surfaces_rgba_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rgba_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->surfaces_rgba_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRGBAColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3255,8 +3257,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRGBANoGlow.last; i++)
     {
         auto& loaded = surfacesRGBANoGlow.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rgba_no_glow[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.surfaces_rgba_no_glow[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rgba_no_glow[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->surfaces_rgba_no_glow[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRGBANoGlow.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3268,8 +3270,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRGBANoGlowColoredLights.last; i++)
     {
         auto& loaded = surfacesRGBANoGlowColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rgba_no_glow_colored_lights[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.surfaces_rgba_no_glow_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rgba_no_glow_colored_lights[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->surfaces_rgba_no_glow_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRGBANoGlowColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3281,8 +3283,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRotated.last; i++)
     {
         auto& loaded = surfacesRotated.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rotated[i].face];
-        GetStagingBufferSize(appState, d_lists.surfaces_rotated[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rotated[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->surfaces_rotated[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRotated.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3294,8 +3296,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRotatedColoredLights.last; i++)
     {
         auto& loaded = surfacesRotatedColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rotated_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.surfaces_rotated_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rotated_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->surfaces_rotated_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRotatedColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3307,8 +3309,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRotatedRGBA.last; i++)
     {
         auto& loaded = surfacesRotatedRGBA.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rotated_rgba[i].face];
-        GetStagingBufferSize(appState, d_lists.surfaces_rotated_rgba[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rotated_rgba[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->surfaces_rotated_rgba[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRotatedRGBA.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3320,8 +3322,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRotatedRGBAColoredLights.last; i++)
     {
         auto& loaded = surfacesRotatedRGBAColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rotated_rgba_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.surfaces_rotated_rgba_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rotated_rgba_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->surfaces_rotated_rgba_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRotatedRGBAColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3333,8 +3335,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRotatedRGBANoGlow.last; i++)
     {
         auto& loaded = surfacesRotatedRGBANoGlow.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rotated_rgba_no_glow[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.surfaces_rotated_rgba_no_glow[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rotated_rgba_no_glow[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->surfaces_rotated_rgba_no_glow[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRotatedRGBANoGlow.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3346,8 +3348,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= surfacesRotatedRGBANoGlowColoredLights.last; i++)
     {
         auto& loaded = surfacesRotatedRGBANoGlowColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.surfaces_rotated_rgba_no_glow_colored_lights[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.surfaces_rotated_rgba_no_glow_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->surfaces_rotated_rgba_no_glow_colored_lights[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->surfaces_rotated_rgba_no_glow_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, surfacesRotatedRGBANoGlowColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3359,8 +3361,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fences.last; i++)
     {
         auto& loaded = fences.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences[i].face];
-        GetStagingBufferSize(appState, d_lists.fences[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->fences[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fences.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3372,8 +3374,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesColoredLights.last; i++)
     {
         auto& loaded = fencesColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.fences_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->fences_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3385,8 +3387,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRGBA.last; i++)
     {
         auto& loaded = fencesRGBA.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rgba[i].face];
-        GetStagingBufferSize(appState, d_lists.fences_rgba[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rgba[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->fences_rgba[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRGBA.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3398,8 +3400,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRGBAColoredLights.last; i++)
     {
         auto& loaded = fencesRGBAColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rgba_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.fences_rgba_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rgba_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->fences_rgba_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRGBAColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3411,8 +3413,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRGBANoGlow.last; i++)
     {
         auto& loaded = fencesRGBANoGlow.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rgba_no_glow[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.fences_rgba_no_glow[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rgba_no_glow[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->fences_rgba_no_glow[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRGBANoGlow.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3424,8 +3426,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRGBANoGlowColoredLights.last; i++)
     {
         auto& loaded = fencesRGBANoGlowColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rgba_no_glow_colored_lights[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.fences_rgba_no_glow_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rgba_no_glow_colored_lights[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->fences_rgba_no_glow_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRGBANoGlowColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3437,8 +3439,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRotated.last; i++)
     {
         auto& loaded = fencesRotated.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rotated[i].face];
-        GetStagingBufferSize(appState, d_lists.fences_rotated[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rotated[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->fences_rotated[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRotated.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3450,8 +3452,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRotatedColoredLights.last; i++)
     {
         auto& loaded = fencesRotatedColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rotated_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.fences_rotated_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rotated_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->fences_rotated_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRotatedColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3463,8 +3465,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRotatedRGBA.last; i++)
     {
         auto& loaded = fencesRotatedRGBA.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rotated_rgba[i].face];
-        GetStagingBufferSize(appState, d_lists.fences_rotated_rgba[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rotated_rgba[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->fences_rotated_rgba[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRotatedRGBA.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3476,8 +3478,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRotatedRGBAColoredLights.last; i++)
     {
         auto& loaded = fencesRotatedRGBAColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rotated_rgba_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.fences_rotated_rgba_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rotated_rgba_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->fences_rotated_rgba_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRotatedRGBAColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3489,8 +3491,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRotatedRGBANoGlow.last; i++)
     {
         auto& loaded = fencesRotatedRGBANoGlow.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rotated_rgba_no_glow[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.fences_rotated_rgba_no_glow[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rotated_rgba_no_glow[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->fences_rotated_rgba_no_glow[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRotatedRGBANoGlow.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3502,8 +3504,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= fencesRotatedRGBANoGlowColoredLights.last; i++)
     {
         auto& loaded = fencesRotatedRGBANoGlowColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.fences_rotated_rgba_no_glow_colored_lights[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.fences_rotated_rgba_no_glow_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->fences_rotated_rgba_no_glow_colored_lights[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->fences_rotated_rgba_no_glow_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, fencesRotatedRGBANoGlowColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3515,8 +3517,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulent.last; i++)
     {
         auto& loaded = turbulent.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent[i].face];
-        GetStagingBufferSize(appState, d_lists.turbulent[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->turbulent[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulent.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3528,8 +3530,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRGBA.last; i++)
     {
         auto& loaded = turbulentRGBA.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rgba[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_rgba[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rgba[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->turbulent_rgba[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRGBA.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3541,8 +3543,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentLit.last; i++)
     {
         auto& loaded = turbulentLit.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_lit[i].face];
-        GetStagingBufferSize(appState, d_lists.turbulent_lit[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_lit[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->turbulent_lit[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentLit.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3554,8 +3556,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentColoredLights.last; i++)
     {
         auto& loaded = turbulentColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.turbulent_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->turbulent_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3567,8 +3569,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRGBALit.last; i++)
     {
         auto& loaded = turbulentRGBALit.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rgba_lit[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_rgba_lit[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rgba_lit[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->turbulent_rgba_lit[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRGBALit.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3580,8 +3582,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRGBAColoredLights.last; i++)
     {
         auto& loaded = turbulentRGBAColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rgba_colored_lights[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_rgba_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rgba_colored_lights[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->turbulent_rgba_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRGBAColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3593,8 +3595,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRotated.last; i++)
     {
         auto& loaded = turbulentRotated.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rotated[i].face];
-        GetStagingBufferSize(appState, d_lists.turbulent_rotated[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rotated[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->turbulent_rotated[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotated.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3606,8 +3608,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRotatedRGBA.last; i++)
     {
         auto& loaded = turbulentRotatedRGBA.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rotated_rgba[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_rotated_rgba[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rotated_rgba[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->turbulent_rotated_rgba[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedRGBA.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3619,8 +3621,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRotatedLit.last; i++)
     {
         auto& loaded = turbulentRotatedLit.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rotated_lit[i].face];
-        GetStagingBufferSize(appState, d_lists.turbulent_rotated_lit[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rotated_lit[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->turbulent_rotated_lit[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedLit.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3632,8 +3634,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRotatedColoredLights.last; i++)
     {
         auto& loaded = turbulentRotatedColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rotated_colored_lights[i].face];
-        GetStagingBufferSize(appState, d_lists.turbulent_rotated_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rotated_colored_lights[i].face];
+        GetStagingBufferSize(appState, d_lists_consuming->turbulent_rotated_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3645,8 +3647,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRotatedRGBALit.last; i++)
     {
         auto& loaded = turbulentRotatedRGBALit.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rotated_rgba_lit[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_rotated_rgba_lit[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rotated_rgba_lit[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->turbulent_rotated_rgba_lit[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedRGBALit.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3658,8 +3660,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= turbulentRotatedRGBAColoredLights.last; i++)
     {
         auto& loaded = turbulentRotatedRGBAColoredLights.loaded[i];
-		auto& perSurface = perSurfaceCache[d_lists.turbulent_rotated_rgba_colored_lights[i].face];
-        GetStagingBufferSizeRGBANoGlow(appState, d_lists.turbulent_rotated_rgba_colored_lights[i], perSurface, loaded, size);
+		auto& perSurface = perSurfaceCache[d_lists_consuming->turbulent_rotated_rgba_colored_lights[i].face];
+        GetStagingBufferSizeRGBANoGlow(appState, d_lists_consuming->turbulent_rotated_rgba_colored_lights[i], perSurface, loaded, size);
         SortedSurfaces::Sort(appState, loaded, i, turbulentRotatedRGBAColoredLights.sorted);
         sortedVerticesCount += loaded.count;
         sortedVerticesSize += (loaded.count * 4 * sizeof(float));
@@ -3672,7 +3674,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= sprites.last; i++)
     {
 		auto& loaded = sprites.loaded[i];
-        GetStagingBufferSize(appState, d_lists.sprites[i], loaded, size);
+        GetStagingBufferSize(appState, d_lists_consuming->sprites[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, sprites.sorted);
 		sortedVerticesCount += loaded.count;
 		sortedVerticesSize += (loaded.count * 5 * sizeof(float));
@@ -3684,7 +3686,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= alias.last; i++)
     {
 		auto& loaded = alias.loaded[i];
-        GetStagingBufferSize(appState, d_lists.alias[i], loaded, size);
+        GetStagingBufferSize(appState, d_lists_consuming->alias[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, alias.sorted);
     }
 	SortedSurfaces::Initialize(aliasAlpha.sorted);
@@ -3693,7 +3695,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasAlpha.last; i++)
 	{
 		auto& loaded = aliasAlpha.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_alpha[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->alias_alpha[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasAlpha.sorted);
 	}
 	SortedSurfaces::Initialize(aliasColoredLights.sorted);
@@ -3702,7 +3704,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasColoredLights.last; i++)
 	{
 		auto& loaded = aliasColoredLights.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_colored_lights[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->alias_colored_lights[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasColoredLights.sorted);
 	}
 	SortedSurfaces::Initialize(aliasAlphaColoredLights.sorted);
@@ -3711,7 +3713,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasAlphaColoredLights.last; i++)
 	{
 		auto& loaded = aliasAlphaColoredLights.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_alpha_colored_lights[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->alias_alpha_colored_lights[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasAlphaColoredLights.sorted);
 	}
 	SortedSurfaces::Initialize(aliasHoley.sorted);
@@ -3720,7 +3722,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasHoley.last; i++)
 	{
 		auto& loaded = aliasHoley.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_holey[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->alias_holey[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasHoley.sorted);
 	}
 	SortedSurfaces::Initialize(aliasHoleyAlpha.sorted);
@@ -3729,7 +3731,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasHoleyAlpha.last; i++)
 	{
 		auto& loaded = aliasHoleyAlpha.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_holey_alpha[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->alias_holey_alpha[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasHoleyAlpha.sorted);
 	}
 	SortedSurfaces::Initialize(aliasHoleyColoredLights.sorted);
@@ -3738,7 +3740,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasHoleyColoredLights.last; i++)
 	{
 		auto& loaded = aliasHoleyColoredLights.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_holey_colored_lights[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->alias_holey_colored_lights[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasHoleyColoredLights.sorted);
 	}
 	SortedSurfaces::Initialize(aliasHoleyAlphaColoredLights.sorted);
@@ -3747,7 +3749,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= aliasHoleyAlphaColoredLights.last; i++)
 	{
 		auto& loaded = aliasHoleyAlphaColoredLights.loaded[i];
-		GetStagingBufferSize(appState, d_lists.alias_holey_alpha_colored_lights[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->alias_holey_alpha_colored_lights[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, aliasHoleyAlphaColoredLights.sorted);
 	}
 	SortedSurfaces::Initialize(viewmodels.sorted);
@@ -3756,7 +3758,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= viewmodels.last; i++)
     {
 		auto& loaded = viewmodels.loaded[i];
-        GetStagingBufferSize(appState, d_lists.viewmodels[i], loaded, size);
+        GetStagingBufferSize(appState, d_lists_consuming->viewmodels[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, viewmodels.sorted);
     }
 	SortedSurfaces::Initialize(viewmodelsColoredLights.sorted);
@@ -3765,7 +3767,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     for (auto i = 0; i <= viewmodelsColoredLights.last; i++)
     {
 		auto& loaded = viewmodelsColoredLights.loaded[i];
-        GetStagingBufferSize(appState, d_lists.viewmodels_colored_lights[i], loaded, size);
+        GetStagingBufferSize(appState, d_lists_consuming->viewmodels_colored_lights[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, viewmodelsColoredLights.sorted);
     }
 	SortedSurfaces::Initialize(viewmodelsHoley.sorted);
@@ -3774,7 +3776,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= viewmodelsHoley.last; i++)
 	{
 		auto& loaded = viewmodelsHoley.loaded[i];
-		GetStagingBufferSize(appState, d_lists.viewmodels_holey[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->viewmodels_holey[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, viewmodelsHoley.sorted);
 	}
 	SortedSurfaces::Initialize(viewmodelsHoleyColoredLights.sorted);
@@ -3783,10 +3785,10 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	for (auto i = 0; i <= viewmodelsHoleyColoredLights.last; i++)
 	{
 		auto& loaded = viewmodelsHoleyColoredLights.loaded[i];
-		GetStagingBufferSize(appState, d_lists.viewmodels_holey_colored_lights[i], loaded, size);
+		GetStagingBufferSize(appState, d_lists_consuming->viewmodels_holey_colored_lights[i], loaded, size);
 		SortedSurfaces::Sort(appState, loaded, i, viewmodelsHoleyColoredLights.sorted);
 	}
-	sortedAttributesSize += (d_lists.last_alias_light + 1) * sizeof(float);
+	sortedAttributesSize += (d_lists_consuming->last_alias_light + 1) * sizeof(float);
     while (sortedAttributesSize % 52 != 0)
     {
         sortedAttributesSize++;
@@ -3821,16 +3823,16 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	perFrame.particleBase = sortedVerticesSize;
 	if (lastParticle >= 0)
 	{
-		sortedVerticesSize += (d_lists.last_particle + 1) * sizeof(float);
+		sortedVerticesSize += (d_lists_consuming->last_particle + 1) * sizeof(float);
 	}
     if (lastSky >= 0)
     {
-        loadedSky.width = d_lists.sky[lastSky].width;
-        loadedSky.height = d_lists.sky[lastSky].height;
-        loadedSky.size = d_lists.sky[lastSky].size;
-        loadedSky.data = d_lists.sky[lastSky].data;
-        loadedSky.firstVertex = d_lists.sky[lastSky].first_vertex;
-        loadedSky.count = d_lists.sky[lastSky].count;
+        loadedSky.width = d_lists_consuming->sky[lastSky].width;
+        loadedSky.height = d_lists_consuming->sky[lastSky].height;
+        loadedSky.size = d_lists_consuming->sky[lastSky].size;
+        loadedSky.data = d_lists_consuming->sky[lastSky].data;
+        loadedSky.firstVertex = d_lists_consuming->sky[lastSky].first_vertex;
+        loadedSky.count = d_lists_consuming->sky[lastSky].count;
         if (perFrame.sky == nullptr)
         {
             perFrame.sky = new Texture { };
@@ -3840,12 +3842,12 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     }
     if (lastSkyRGBA >= 0)
     {
-        loadedSkyRGBA.width = d_lists.sky_rgba[lastSkyRGBA].width;
-        loadedSkyRGBA.height = d_lists.sky_rgba[lastSkyRGBA].height;
-        loadedSkyRGBA.size = d_lists.sky_rgba[lastSkyRGBA].size;
-        loadedSkyRGBA.data = d_lists.sky_rgba[lastSkyRGBA].data;
-        loadedSkyRGBA.firstVertex = d_lists.sky_rgba[lastSkyRGBA].first_vertex;
-        loadedSkyRGBA.count = d_lists.sky_rgba[lastSkyRGBA].count;
+        loadedSkyRGBA.width = d_lists_consuming->sky_rgba[lastSkyRGBA].width;
+        loadedSkyRGBA.height = d_lists_consuming->sky_rgba[lastSkyRGBA].height;
+        loadedSkyRGBA.size = d_lists_consuming->sky_rgba[lastSkyRGBA].size;
+        loadedSkyRGBA.data = d_lists_consuming->sky_rgba[lastSkyRGBA].data;
+        loadedSkyRGBA.firstVertex = d_lists_consuming->sky_rgba[lastSkyRGBA].first_vertex;
+        loadedSkyRGBA.count = d_lists_consuming->sky_rgba[lastSkyRGBA].count;
         if (perFrame.skyRGBA == nullptr)
         {
             perFrame.skyRGBA = new Texture { };
@@ -3855,11 +3857,11 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     }
 
 	VkDeviceSize skyboxSize = 0;
-	if (appState.Mode == AppWorldMode && d_lists.last_skybox >= 0)
+	if (appState.Mode == AppWorldMode && d_lists_consuming->last_skybox >= 0)
 	{
 		int width = -1;
 		int height = -1;
-		auto& skybox = d_lists.skyboxes[d_lists.last_skybox];
+		auto& skybox = d_lists_consuming->skyboxes[d_lists_consuming->last_skybox];
 		if (appState.Scene.skybox == nullptr)
 		{
 			for (size_t i = 0; i < 6; i++)
@@ -3990,8 +3992,8 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
 	{
 		skyboxVerticesSize += 6 * 4 * 3 * sizeof(float);
 	}
-    coloredVerticesSize = (d_lists.last_colored_vertex + 1) * sizeof(float);
-	cutoutVerticesSize = (d_lists.last_cutout_vertex + 1) * sizeof(float);
+    coloredVerticesSize = (d_lists_consuming->last_colored_vertex + 1) * sizeof(float);
+	cutoutVerticesSize = (d_lists_consuming->last_cutout_vertex + 1) * sizeof(float);
     verticesSize = floorVerticesSize + leftControllerVerticesSize + rightControllerVerticesSize + leftHandVerticesSize + rightHandVerticesSize + statusBarVerticesSize + skyVerticesSize + skyboxVerticesSize + coloredVerticesSize + cutoutVerticesSize;
     if (verticesSize > 0)
     {
@@ -4048,7 +4050,7 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
         perFrame.attributes = perFrame.cachedAttributes.GetVertexBuffer(appState, attributesSize);
     }
     size += attributesSize;
-    coloredColorsSize = (d_lists.last_colored_color + 1) * sizeof(float);
+    coloredColorsSize = (d_lists_consuming->last_colored_color + 1) * sizeof(float);
     colorsSize = coloredColorsSize;
     if (colorsSize > 0)
     {

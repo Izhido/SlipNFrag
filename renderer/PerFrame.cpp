@@ -307,7 +307,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
         if (appState.Scene.lastSky >= 0 || appState.Scene.lastSkyRGBA >= 0)
         {
 			auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
-            auto source = d_lists.textured_vertices.data() + firstVertex * 3;
+            auto source = d_lists_consuming->textured_vertices.data() + firstVertex * 3;
             auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
             *target++ = -appState.SkyLeft + appState.SkyHorizontal * source[0];
 			*target++ = appState.SkyTop - appState.SkyVertical * source[1];
@@ -409,11 +409,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += appState.Scene.skyboxVerticesSize;
 		coloredVertexBase = skyboxVertexBase + appState.Scene.skyboxVerticesSize;
 		auto count = (size_t)appState.Scene.coloredVerticesSize / sizeof(float);
-		std::copy(d_lists.colored_vertices.data(), d_lists.colored_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
+		std::copy(d_lists_consuming->colored_vertices.data(), d_lists_consuming->colored_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 		offset += appState.Scene.coloredVerticesSize;
 		cutoutVertexBase = coloredVertexBase + appState.Scene.coloredVerticesSize;
 		count = (size_t)appState.Scene.cutoutVerticesSize / sizeof(float);
-		std::copy(d_lists.cutout_vertices.data(), d_lists.cutout_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
+		std::copy(d_lists_consuming->cutout_vertices.data(), d_lists_consuming->cutout_vertices.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 		offset += appState.Scene.cutoutVerticesSize;
 	}
 	if (appState.Scene.floorAttributesSize > 0)
@@ -502,7 +502,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
         float skyTexCoordsHorizontal = appState.SkyHorizontal / 2;
         float skyTexCoordsVertical = appState.SkyVertical / 2;
 		auto firstVertex = (appState.Scene.lastSky >= 0 ? appState.Scene.loadedSky.firstVertex : appState.Scene.loadedSkyRGBA.firstVertex);
-        auto source = d_lists.textured_attributes.data() + firstVertex * 2;
+        auto source = d_lists_consuming->textured_attributes.data() + firstVertex * 2;
         auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
         *target++ = skyTexCoordsLeft + skyTexCoordsHorizontal * source[0];
 		*target++ = skyTexCoordsTop + skyTexCoordsVertical * source[1];
@@ -599,7 +599,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 	offset += appState.Scene.skyboxAttributesSize;
 	auto count = (size_t)appState.Scene.coloredColorsSize / sizeof(float);
-	std::copy(d_lists.colored_colors.data(), d_lists.colored_colors.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
+	std::copy(d_lists_consuming->colored_colors.data(), d_lists_consuming->colored_colors.data() + count, (float*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.coloredColorsSize;
 	if (appState.IndexTypeUInt8Enabled)
 	{
@@ -676,10 +676,10 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			}
 			offset += appState.Scene.skyboxIndicesSize;
 			coloredIndex8Base = skyboxIndexBase + appState.Scene.skyboxIndicesSize;
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices8.data(), appState.Scene.coloredIndices8Size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists_consuming->colored_indices8.data(), appState.Scene.coloredIndices8Size);
 			offset += appState.Scene.coloredIndices8Size;
 			cutoutIndex8Base = coloredIndex8Base + appState.Scene.coloredIndices8Size;
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.cutout_indices8.data(), appState.Scene.cutoutIndices8Size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists_consuming->cutout_indices8.data(), appState.Scene.cutoutIndices8Size);
 			offset += appState.Scene.cutoutIndices8Size;
 			while (offset % 4 != 0)
 			{
@@ -741,10 +741,10 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 				offset += appState.Scene.statusBarIndicesSize;
 			}
 			coloredIndex16Base = statusBarIndexBase + appState.Scene.statusBarIndicesSize;
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists_consuming->colored_indices16.data(), appState.Scene.coloredIndices16Size);
 			offset += appState.Scene.coloredIndices16Size;
 			cutoutIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices16Size;
-			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
+			memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists_consuming->cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
 			offset += appState.Scene.cutoutIndices16Size;
 			while (offset % 4 != 0)
 			{
@@ -880,19 +880,19 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		auto target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < appState.Scene.coloredIndices8Size; i++)
 		{
-			*target++ = d_lists.colored_indices8[i];
+			*target++ = d_lists_consuming->colored_indices8[i];
 		}
 		offset += appState.Scene.coloredIndices8Size * sizeof(uint16_t);
-		memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.colored_indices16.data(), appState.Scene.coloredIndices16Size);
+		memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists_consuming->colored_indices16.data(), appState.Scene.coloredIndices16Size);
 		offset += appState.Scene.coloredIndices16Size;
 		cutoutIndex16Base = coloredIndex16Base + appState.Scene.coloredIndices8Size * sizeof(uint16_t) + appState.Scene.coloredIndices16Size;
 		target = (uint16_t*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < appState.Scene.cutoutIndices8Size; i++)
 		{
-			*target++ = d_lists.cutout_indices8[i];
+			*target++ = d_lists_consuming->cutout_indices8[i];
 		}
 		offset += appState.Scene.cutoutIndices8Size * sizeof(uint16_t);
-		memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists.cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
+		memcpy((unsigned char*)stagingBuffer->mapped + offset, d_lists_consuming->cutout_indices16.data(), appState.Scene.cutoutIndices16Size);
 		offset += appState.Scene.cutoutIndices16Size;
 		while (offset % 4 != 0)
 		{
@@ -900,11 +900,11 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		}
 	}
 	count = (size_t)appState.Scene.coloredIndices32Size / sizeof(uint32_t);
-	std::copy((uint32_t*)d_lists.colored_indices32.data(), (uint32_t*)d_lists.colored_indices32.data() + count, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
+	std::copy((uint32_t*)d_lists_consuming->colored_indices32.data(), (uint32_t*)d_lists_consuming->colored_indices32.data() + count, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.coloredIndices32Size;
 	cutoutIndex32Base = appState.Scene.coloredIndices32Size;
 	count = (size_t)appState.Scene.cutoutIndices32Size / sizeof(uint32_t);
-	std::copy((uint32_t*)d_lists.cutout_indices32.data(), (uint32_t*)d_lists.cutout_indices32.data() + count, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
+	std::copy((uint32_t*)d_lists_consuming->cutout_indices32.data(), (uint32_t*)d_lists_consuming->cutout_indices32.data() + count, (uint32_t*)((unsigned char*)stagingBuffer->mapped + offset));
 	offset += appState.Scene.cutoutIndices32Size;
 
 	for (auto& chain : appState.Scene.lightmapChains)
@@ -1097,7 +1097,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 
 	if (appState.Scene.skybox != nullptr && appState.Scene.skybox->needsUpload)
 	{
-		auto& skybox = d_lists.skyboxes[d_lists.last_skybox];
+		auto& skybox = d_lists_consuming->skyboxes[d_lists_consuming->last_skybox];
 		int width = skybox.textures[0].texture->width;
 		int height = skybox.textures[0].texture->height;
 		appState.Scene.skybox->CopyPixels(appState, stagingBuffer, skybox);
@@ -1158,10 +1158,10 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, attributeIndex, sortedVertices, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
 		SortedSurfaces::LoadVertices(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedVertices, offset);
-		if (d_lists.last_particle >= 0)
+		if (d_lists_consuming->last_particle >= 0)
 		{
-			auto count = (d_lists.last_particle + 1);
-			std::copy(d_lists.particles.data(), d_lists.particles.data() + count, (float*)(((unsigned char*)sortedVertices->mapped) + offset));
+			auto count = (d_lists_consuming->last_particle + 1);
+			std::copy(d_lists_consuming->particles.data(), d_lists_consuming->particles.data() + count, (float*)(((unsigned char*)sortedVertices->mapped) + offset));
 		}
 		sortedVertices->UnmapAndFlush(appState);
 	}
@@ -1208,10 +1208,10 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedAttributes, offset);
 		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedAttributes, offset);
 		aliasLightBase = offset / sizeof(float);
-		if (d_lists.last_alias_light >= 0)
+		if (d_lists_consuming->last_alias_light >= 0)
 		{
-			auto count = (d_lists.last_alias_light + 1);
-			std::copy(d_lists.alias_lights.data(), d_lists.alias_lights.data() + count, (float*)((unsigned char*)sortedAttributes->mapped + offset));
+			auto count = (d_lists_consuming->last_alias_light + 1);
+			std::copy(d_lists_consuming->alias_lights.data(), d_lists_consuming->alias_lights.data() + count, (float*)((unsigned char*)sortedAttributes->mapped + offset));
 		}
         offset = aliasAttributeBase;
         offset = SortedSurfaces::LoadAttributes(appState.Scene.alias.sorted, appState.Scene.alias.loaded, sortedAttributes, aliasLightBase, offset);

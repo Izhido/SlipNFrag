@@ -646,8 +646,8 @@ void SortedSurfaces::LoadVertices(SortedSurfaceTextures& sorted, std::vector<Loa
 		auto& texture = sorted.textures[t];
 		for (auto i : texture.entries)
 		{
-			auto vertices = d_lists.textured_vertices.data() + loaded[i].firstVertex * 3;
-			auto attributes = d_lists.textured_attributes.data() + loaded[i].firstVertex * 2;
+			auto vertices = d_lists_consuming->textured_vertices.data() + loaded[i].firstVertex * 3;
+			auto attributes = d_lists_consuming->textured_attributes.data() + loaded[i].firstVertex * 2;
 			for (auto v = 0; v < loaded[i].count; v++)
 			{
 				*target++ = *vertices++;

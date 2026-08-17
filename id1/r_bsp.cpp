@@ -850,7 +850,7 @@ void R_RenderWorld (void)
 
 	if (d_uselists)
 	{
-		d_lists.clear_color = (int)r_clearcolor.value & 0xFF;
+		d_lists_producing->clear_color = (int)r_clearcolor.value & 0xFF;
 		R_RecursiveWorldNodeForLists (clmodel->nodes);
 	}
 	else

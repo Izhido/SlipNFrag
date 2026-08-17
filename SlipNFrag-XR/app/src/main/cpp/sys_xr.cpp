@@ -245,12 +245,12 @@ int Sys_Random()
 
 void Sys_BeginClearMemory()
 {
-    Locks::RenderMutex.lock();
+    Locks::ClearMutex.lock();
 }
 
 void Sys_EndClearMemory()
 {
-    Locks::RenderMutex.unlock();
+    Locks::ClearMutex.unlock();
 }
 
 extern void M_Menu_Options_f (void);
@@ -487,7 +487,10 @@ void Sys_Terminate()
 	pr_strings = nullptr;
 	pr_functions = nullptr;
 	progs = nullptr;
-	D_ResetLists();
+	for (auto& lists : d_lists)
+	{
+		D_ClearLists (&lists);
+	}
 	if (fakedma)
 	{
 		delete shm;

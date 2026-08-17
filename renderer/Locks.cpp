@@ -6,7 +6,9 @@ std::mutex Locks::InputMutex;
 
 std::mutex Locks::RenderInputMutex;
 
-std::mutex Locks::RenderMutex;
+std::mutex Locks::ClearMutex;
+
+std::mutex Locks::ListsMutex;
 
 std::mutex Locks::DirectRectMutex;
 

@@ -75,7 +75,7 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 			}
 			if (updated)
 			{
-				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+				std::lock_guard<std::mutex> lock(Locks::ClearMutex);
 				if (appState->Scene.hostClearCount != host_clearcount)
 				{
 					appState->Scene.Reset(*appState);
@@ -84,6 +84,7 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				r_modelorg_delta[0] = 0;
 				r_modelorg_delta[1] = 0;
 				r_modelorg_delta[2] = 0;
+				vid.conbuffer = con_buffer.data();
 				Host_FrameRender();
 				if (sys_quitcalled || sys_errorcalled)
 				{
@@ -207,11 +208,13 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 			auto previousRoll = cl.viewangles[ROLL];
 			if (updated)
 			{
-				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-				if (appState->Scene.hostClearCount != host_clearcount)
 				{
-					appState->Scene.Reset(*appState);
-					appState->Scene.hostClearCount = host_clearcount;
+					std::lock_guard<std::mutex> lock(Locks::ClearMutex);
+					if (appState->Scene.hostClearCount != host_clearcount)
+					{
+						appState->Scene.Reset(*appState);
+						appState->Scene.hostClearCount = host_clearcount;
+					}
 				}
 				r_modelorg_delta[0] = originDeltaX;
 				r_modelorg_delta[1] = originDeltaY;
@@ -222,8 +225,21 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				cl.viewangles[ROLL] = roll;
 				auto nodrift = cl.nodrift;
 				cl.nodrift = true;
-				D_ResetLists();
+				{
+					std::lock_guard<std::mutex> lock(Locks::ListsMutex);
+					D_PickProducer ();
+				}
+				D_ResetLists (d_lists_producing);
+				if (d_lists_producing->con_buffer.size() != con_buffer.size())
+				{
+					d_lists_producing->con_buffer.resize(con_buffer.size());
+				}
+				vid.conbuffer = d_lists_producing->con_buffer.data();
 				Host_FrameRender();
+				{
+					std::lock_guard<std::mutex> lock(Locks::ListsMutex);
+					D_MarkAsProduced ();
+				}
 				if (sys_quitcalled || sys_errorcalled)
 				{
 					break;
