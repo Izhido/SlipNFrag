@@ -1654,8 +1654,11 @@ int main(int argc, char* argv[])
 					}
 					if (appState.Mode == AppScreenMode)
 					{
-						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-						D_ResetLists();
+						std::lock_guard<std::mutex> lock(Locks::ClearMutex);
+						for (auto& lists : d_lists)
+						{
+							D_ResetLists (&lists);
+						}
 						d_uselists = false;
 						sb_onconsole = false;
 						Cvar_SetValue("joyadvanced", 1);
@@ -1673,8 +1676,11 @@ int main(int argc, char* argv[])
 					}
 					else if (appState.Mode == AppWorldMode)
 					{
-						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-						D_ResetLists();
+						std::lock_guard<std::mutex> lock(Locks::ClearMutex);
+						for (auto& lists : d_lists)
+						{
+							D_ResetLists (&lists);
+						}
 						d_uselists = true;
 						sb_onconsole = true;
 						Cvar_SetValue("joyadvanced", 1);
@@ -1699,8 +1705,11 @@ int main(int argc, char* argv[])
 					}
 					else if (appState.Mode == AppNoGameDataMode)
 					{
-						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
-						D_ResetLists();
+						std::lock_guard<std::mutex> lock(Locks::ClearMutex);
+						for (auto& lists : d_lists)
+						{
+							D_ResetLists (&lists);
+						}
 						d_uselists = false;
 						sb_onconsole = false;
 					}
@@ -1709,7 +1718,7 @@ int main(int argc, char* argv[])
 			}
 
 			{
-				std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+				std::lock_guard<std::mutex> lock(Locks::ClearMutex);
 
 				appState.Scene.colormaps.DeleteOld(appState);
 				appState.Scene.textures.DeleteOld(appState);
@@ -1984,11 +1993,16 @@ int main(int argc, char* argv[])
 					VkDeviceSize stagingBufferSize;
 					Buffer* stagingBuffer;
 					{
-						std::lock_guard<std::mutex> lock(Locks::RenderMutex);
+						std::lock_guard<std::mutex> lock(Locks::ClearMutex);
 
-						if (readClearColor && d_lists.clear_color >= 0)
 						{
-							auto color = d_8to24table[d_lists.clear_color];
+							std::lock_guard<std::mutex> listsLock(Locks::ListsMutex);
+							D_PickConsumer();
+						}
+
+						if (readClearColor && d_lists_consuming->clear_color >= 0)
+						{
+							auto color = d_8to24table[d_lists_consuming->clear_color];
 							clearR = (float)(color & 255) / 255.0f;
 							clearG = (float)(color >> 8 & 255) / 255.0f;
 							clearB = (float)(color >> 16 & 255) / 255.0f;
@@ -1998,15 +2012,15 @@ int main(int argc, char* argv[])
 						if (appState.Mode == AppScreenMode || appState.Mode == AppWorldMode)
 						{
 							std::copy(d_8to24table, d_8to24table + 256, appState.Scene.paletteData);
-							if (appState.Mode == AppScreenMode)
+						}
+						if (appState.Mode == AppScreenMode)
+						{
+							size_t screenSize = vid_width * vid_height;
+							if (appState.Scene.screenData.size() < screenSize)
 							{
-								size_t screenSize = vid_width * vid_height;
-								if (appState.Scene.screenData.size() < screenSize)
-								{
-									appState.Scene.screenData.resize(screenSize);
-								}
-								memcpy(appState.Scene.screenData.data(), vid_buffer.data(), screenSize);
+								appState.Scene.screenData.resize(screenSize);
 							}
+							memcpy(appState.Scene.screenData.data(), vid_buffer.data(), screenSize);
 							size_t consoleSize = con_width * con_height;
 							if (appState.Scene.consoleData.size() < consoleSize)
 							{
@@ -2014,10 +2028,26 @@ int main(int argc, char* argv[])
 							}
 							memcpy(appState.Scene.consoleData.data(), con_buffer.data(), consoleSize);
 						}
+						else if (appState.Mode == AppWorldMode)
+						{
+							size_t consoleSize = con_width * con_height;
+							if (appState.Scene.consoleData.size() < consoleSize)
+							{
+								appState.Scene.consoleData.resize(consoleSize);
+							}
+							if (d_lists_consuming->con_buffer.size() == consoleSize)
+							{
+								memcpy(appState.Scene.consoleData.data(), d_lists_consuming->con_buffer.data(), consoleSize);
+							}
+							else
+							{
+								memset(appState.Scene.consoleData.data(), 255, consoleSize);
+							}
+						}
 
 						stagingBufferSize = appState.Scene.GetStagingBufferSize(appState, perFrame, swapchainImageIndex);
 
-						stagingBufferSize = ((stagingBufferSize >> 19) + 1) << 19;
+						stagingBufferSize = ((stagingBufferSize >> 20) + 1) << 20;
 						stagingBuffer = perFrame.stagingBuffers.GetStagingBuffer(appState, stagingBufferSize);
 						stagingBuffer->Map(appState);
 						perFrame.LoadStagingBuffer(appState, stagingBuffer);
