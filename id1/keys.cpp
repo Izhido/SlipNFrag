@@ -47,6 +47,8 @@ int		keyshift[256];		// key to map to if shift held down in console
 int		key_repeats[256];	// if > 1, it is autorepeating
 qboolean	keydown[256];
 
+extern	qboolean	d_uselists;
+
 typedef struct
 {
 	const char	*name;
@@ -169,8 +171,11 @@ void Key_Console (int key)
 		key_lines[edit_line][0] = ']';
 		key_linepos = 1;
 		if (cls.state == ca_disconnected)
-			SCR_UpdateScreen ();	// force an update, because the command
-									// may take some time
+			if (d_uselists)
+				SCR_UpdateConsole ();
+			else
+				SCR_UpdateScreen ();	// force an update, because the command
+										// may take some time
 		return;
 	}
 

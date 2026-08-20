@@ -707,7 +707,9 @@ void SCR_BeginLoadingPlaque (void)
 	scr_drawloading = true;
 	scr_fullupdate = 0;
 	Sbar_Changed ();
-	if (!d_uselists)
+	if (d_uselists)
+		SCR_UpdateConsole ();
+	else
 		SCR_UpdateScreen ();
 	scr_drawloading = false;
 
@@ -826,6 +828,47 @@ void SCR_BringDownConsole (void)
 
 	cl.cshifts[0].percent = 0;		// no area contents palette on next frame
 	VID_SetPalette (host_basepal.data());
+}
+
+
+/*
+==================
+SCR_UpdateConsole
+
+Only updates the console memory, without a full screen refresh.
+==================
+*/
+void SCR_UpdateConsole (void)
+{
+	if (scr_skipupdate || block_drawing)
+		return;
+
+	if (cls.state == ca_dedicated)
+		return;				// stdout only
+
+	if (!scr_initialized || !con_initialized)
+		return;				// not initialized yet
+
+	pconupdate = NULL;
+
+	D_EnableBackBufferAccess ();
+
+	SCR_SetUpToDrawConsole ();
+
+	if (scr_drawdialog)
+	{
+		SCR_DrawNotifyString ();
+	}
+	else if (scr_drawloading)
+	{
+		SCR_DrawLoading ();
+	}
+	else
+	{
+		SCR_DrawConsole ();
+	}
+
+	D_DisableBackBufferAccess ();
 }
 
 

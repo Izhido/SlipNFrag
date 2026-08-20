@@ -56,6 +56,7 @@ qboolean	con_debuglog;
 extern	char	key_lines[32][MAXCMDLINE];
 extern	int		edit_line;
 extern	int		key_linepos;
+extern	qboolean	d_uselists;
 		
 
 qboolean	con_initialized;
@@ -428,7 +429,10 @@ void Con_Printf (const char *fmt, ...)
 		if (!inupdate)
 		{
 			inupdate = true;
-			SCR_UpdateScreen ();
+			if (d_uselists)
+				SCR_UpdateConsole ();
+			else
+				SCR_UpdateScreen ();
 			inupdate = false;
 		}
 	}
