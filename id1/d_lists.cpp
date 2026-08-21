@@ -430,7 +430,7 @@ void D_FillSurfaceRotatedRGBANoGlowColoredLightsData (dsurfacerotated_t& surface
 
 void D_AddSurfaceToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -445,7 +445,7 @@ void D_AddSurfaceToLists (msurface_t* face, texture_t* texture, entity_t* entity
 
 void D_AddSurfaceColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -460,7 +460,7 @@ void D_AddSurfaceColoredLightsToLists (msurface_t* face, texture_t* texture, ent
 
 void D_AddSurfaceRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -485,7 +485,7 @@ void D_AddSurfaceRGBAToLists (msurface_t* face, texture_t* texture, entity_t* en
 
 void D_AddSurfaceRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -510,7 +510,7 @@ void D_AddSurfaceRGBAColoredLightsToLists (msurface_t* face, texture_t* texture,
 
 void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -530,7 +530,7 @@ void D_AddSurfaceRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity
 
 void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -550,7 +550,7 @@ void D_AddSurfaceRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* te
 
 void D_AddSurfaceRotatedToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -565,7 +565,7 @@ void D_AddSurfaceRotatedToLists (msurface_t* face, texture_t* texture, entity_t*
 
 void D_AddSurfaceRotatedColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -580,7 +580,7 @@ void D_AddSurfaceRotatedColoredLightsToLists (msurface_t* face, texture_t* textu
 
 void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -605,7 +605,7 @@ void D_AddSurfaceRotatedRGBAToLists (msurface_t* face, texture_t* texture, entit
 
 void D_AddSurfaceRotatedRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -630,7 +630,7 @@ void D_AddSurfaceRotatedRGBAColoredLightsToLists (msurface_t* face, texture_t* t
 
 void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -650,7 +650,7 @@ void D_AddSurfaceRotatedRGBANoGlowToLists (msurface_t* face, texture_t* texture,
 
 void D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -670,7 +670,7 @@ void D_AddSurfaceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, textur
 
 void D_AddFenceToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -685,7 +685,7 @@ void D_AddFenceToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 
 void D_AddFenceColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -700,7 +700,7 @@ void D_AddFenceColoredLightsToLists (msurface_t* face, texture_t* texture, entit
 
 void D_AddFenceRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -725,7 +725,7 @@ void D_AddFenceRGBAToLists (msurface_t* face, texture_t* texture, entity_t* enti
 
 void D_AddFenceRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -750,7 +750,7 @@ void D_AddFenceRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, e
 
 void D_AddFenceRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -770,7 +770,7 @@ void D_AddFenceRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t
 
 void D_AddFenceRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -790,7 +790,7 @@ void D_AddFenceRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* text
 
 void D_AddFenceRotatedToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -805,7 +805,7 @@ void D_AddFenceRotatedToLists (msurface_t* face, texture_t* texture, entity_t* e
 
 void D_AddFenceRotatedColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -820,7 +820,7 @@ void D_AddFenceRotatedColoredLightsToLists (msurface_t* face, texture_t* texture
 
 void D_AddFenceRotatedRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -845,7 +845,7 @@ void D_AddFenceRotatedRGBAToLists (msurface_t* face, texture_t* texture, entity_
 
 void D_AddFenceRotatedRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -870,7 +870,7 @@ void D_AddFenceRotatedRGBAColoredLightsToLists (msurface_t* face, texture_t* tex
 
 void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -890,7 +890,7 @@ void D_AddFenceRotatedRGBANoGlowToLists (msurface_t* face, texture_t* texture, e
 
 void D_AddFenceRotatedRGBANoGlowColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -967,7 +967,7 @@ void D_AddTurbulentRGBAToLists (msurface_t* face, texture_t* texture, entity_t* 
 
 void D_AddTurbulentLitToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -983,7 +983,7 @@ void D_AddTurbulentLitToLists (msurface_t* face, texture_t* texture, entity_t* e
 
 void D_AddTurbulentColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -999,7 +999,7 @@ void D_AddTurbulentColoredLightsToLists (msurface_t* face, texture_t* texture, e
 
 void D_AddTurbulentRGBALitToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -1020,7 +1020,7 @@ void D_AddTurbulentRGBALitToLists (msurface_t* face, texture_t* texture, entity_
 
 void D_AddTurbulentRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -1090,7 +1090,7 @@ void D_AddTurbulentRotatedRGBAToLists (msurface_t* face, texture_t* texture, ent
 
 void D_AddTurbulentRotatedLitToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -1113,7 +1113,7 @@ void D_AddTurbulentRotatedLitToLists (msurface_t* face, texture_t* texture, enti
 
 void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -1136,7 +1136,7 @@ void D_AddTurbulentRotatedColoredLightsToLists (msurface_t* face, texture_t* tex
 
 void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
@@ -1164,7 +1164,7 @@ void D_AddTurbulentRotatedRGBALitToLists (msurface_t* face, texture_t* texture, 
 
 void D_AddTurbulentRotatedRGBAColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity, byte alpha)
 {
-	if (face->numedges < 3 || texture->width == 0 || texture->height == 0)
+	if (face->numedges < 3 || texture->width == 0 || texture->height == 0 || (face->extents[0]>>4)+1 >= 1024 || (face->extents[1]>>4)+1 >= 1024)
 	{
 		return;
 	}
