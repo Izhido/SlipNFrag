@@ -1758,7 +1758,7 @@ void android_main(struct android_app* app)
 
 				for (auto& entry : appState.Scene.perSurfaceCache)
 				{
-					if (entry.second.frameCount != appState.Scene.frameCount)
+					if (entry.second.frameCount != appState.Scene.perSurfaceFrameCount)
 					{
 						if (entry.second.lightmap != nullptr)
 						{
@@ -2715,6 +2715,8 @@ void android_main(struct android_app* app)
 
 						layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&skyboxLayer));
 					}
+
+					appState.Scene.frameCount = appState.FromEngine.rframecount;
 				}
 			}
 

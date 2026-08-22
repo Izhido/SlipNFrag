@@ -202,6 +202,7 @@ struct dlists_t
 	int last_extra_dlightbit;
 	int last_dynamic_light;
 	int clear_color;
+	int rframecount;
 	float vieworg0;
 	float vieworg1;
 	float vieworg2;
@@ -217,7 +218,6 @@ struct dlists_t
 	float vblend2;
 	float vblend3;
 	float vgamma;
-	int rframecount;
 	int dlightstylevalues[256];
 	float rfullbright;
 	qboolean immersive_hands_enabled;

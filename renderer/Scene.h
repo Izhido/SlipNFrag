@@ -40,7 +40,6 @@ struct Scene
 	VkDescriptorSetLayout twoBuffersAndImageLayout;
 	VkDescriptorSetLayout twoBuffersAndStorageBufferLayout;
 	VkDescriptorSetLayout singleImageLayout;
-	int frameCount;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceTexturesWithLightmaps> surfaces;
 	PipelineWithSorted<LoadedSurfaceColoredLights, SortedSurfaceTexturesWithLightmaps> surfacesColoredLights;
 	PipelineWithSorted<LoadedSurface2Textures, SortedSurfaceTexturePairsWithLightmaps> surfacesRGBA;
@@ -97,6 +96,8 @@ struct Scene
 	Pipeline skyRGBA;
 	Pipeline textured;
 	Pipeline skyboxRGBA;
+	int perSurfaceFrameCount;
+	int frameCount;
     std::vector<Buffer> paletteBuffers;
     std::vector<Buffer> neutralPaletteBuffers;
     VkDeviceSize paletteBufferSize;

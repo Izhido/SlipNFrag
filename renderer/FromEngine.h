@@ -2,6 +2,7 @@
 
 struct FromEngine
 {
+	int rframecount;
 	float vieworg0;
 	float vieworg1;
 	float vieworg2;

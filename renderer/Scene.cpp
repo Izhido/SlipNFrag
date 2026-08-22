@@ -2044,7 +2044,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		loaded.lightmap = perSurface.lightmap;
 	}
-	perSurface.frameCount = frameCount;
+	perSurface.frameCount = perSurfaceFrameCount;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmapRGB& loaded, VkDeviceSize& size)
@@ -2125,7 +2125,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		loaded.lightmap = perSurface.lightmapRGB;
 	}
-	perSurface.frameCount = frameCount;
+	perSurface.frameCount = perSurfaceFrameCount;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulent& loaded, VkDeviceSize& size)

@@ -163,6 +163,7 @@ void D_SetupFrame (void)
 
 	if (d_uselists)
 	{
+		d_lists_producing->rframecount = r_framecount;
 		d_lists_producing->vieworg0 = r_refdef.vieworg[0];
 		d_lists_producing->vieworg1 = r_refdef.vieworg[1];
 		d_lists_producing->vieworg2 = r_refdef.vieworg[2];
@@ -178,7 +179,6 @@ void D_SetupFrame (void)
 		d_lists_producing->vblend2 = v_blend[2];
 		d_lists_producing->vblend3 = v_blend[3];
 		d_lists_producing->vgamma = v_gamma.value;
-		d_lists_producing->rframecount = r_framecount;
 
 		Q_memcpy (d_lists_producing->dlightstylevalues, d_lightstylevalue, sizeof(d_lightstylevalue));
 		d_lists_producing->rfullbright = Cvar_VariableValue("r_fullbright");
