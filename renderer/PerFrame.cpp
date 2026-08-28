@@ -169,6 +169,10 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 		offset += loadedBuffer->size;
 		loadedBuffer = loadedBuffer->next;
 	}
+	while (offset % 4 != 0)
+	{
+		offset++;
+	}
 	auto loadedTexCoordsBuffer = appState.Scene.aliasBuffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
 	{
@@ -1447,6 +1451,11 @@ void PerFrame::FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, 
         appState.Scene.AddToVertexInputBarriers(loaded->buffer->buffer, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
         loaded = loaded->next;
     }
+
+	while (bufferCopy.srcOffset % 4 != 0)
+	{
+		bufferCopy.srcOffset++;
+	}
 
 	auto loadedTexCoordsBuffer = appState.Scene.aliasBuffers.firstAliasTexCoords;
 	while (loadedTexCoordsBuffer != nullptr)
