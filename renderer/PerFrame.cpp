@@ -985,7 +985,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 
 	if (appState.Scene.paletteSize > 0)
 	{
-		auto source = d_8to24table;
+		auto source = appState.Scene.paletteData;
 		auto target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < 256; i++)
 		{
@@ -996,7 +996,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 			*target++ = (float)((entry >> 24) & 255) / 255;
 		}
 		offset += appState.Scene.paletteSize;
-		source = d_8to24table;
+		source = appState.Scene.paletteData;
 		target = (float*)((unsigned char*)stagingBuffer->mapped + offset);
 		for (auto i = 0; i < 256; i++)
 		{
@@ -1049,12 +1049,13 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	if (appState.Scene.statusBarVerticesSize > 0)
 	{
 		auto source = appState.Scene.consoleData.data() + (appState.ConsoleHeight - (SBAR_HEIGHT + 24)) * appState.ConsoleWidth;
+		auto palette = appState.Scene.paletteData;
 		auto target = (unsigned char*)stagingBuffer->mapped + offset;
 		for (auto y = 0; y < SBAR_HEIGHT + 24; y++)
 		{
 			for (auto x = 0; x < appState.ConsoleWidth; x++)
 			{
-				auto color = d_8to24table[*source++];
+				auto color = palette[*source++];
 				*target++ = color & 255;
 				*target++ = color >> 8 & 255;
 				*target++ = color >> 16 & 255;
