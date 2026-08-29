@@ -1523,13 +1523,13 @@ void android_main(struct android_app* app)
 			if (exitRenderLoop || requestRestart)
 			{
 				GameActivity_finish(app->activity);
-				std::this_thread::yield();
+				Sleep(0.001);
 				continue;
 			}
 
 			if (!sessionRunning)
 			{
-				std::this_thread::yield();
+				Sleep(0.001);
 				continue;
 			}
 

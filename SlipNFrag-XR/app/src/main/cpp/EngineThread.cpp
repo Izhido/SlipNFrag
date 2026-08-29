@@ -22,7 +22,7 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 	{
 		if (!host_initialized)
 		{
-			std::this_thread::yield();
+			Sleep(0.001);
 			continue;
 		}
 		{
@@ -241,6 +241,6 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 				break;
 			}
 		}
-		std::this_thread::yield();
+		Sleep(0.001);
 	}
 }
