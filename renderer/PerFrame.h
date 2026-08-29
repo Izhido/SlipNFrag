@@ -84,7 +84,7 @@ struct PerFrame
 	VkDeviceSize cutoutIndex8Base;
 	VkDeviceSize cutoutIndex16Base;
 	VkDeviceSize cutoutIndex32Base;
-    Buffer* previousSortedAttributes;
+    VkBuffer previousSortedAttributesBuffer;
 
 	static float GammaCorrect(float component);
 	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, struct LoadedSharedMemoryTexture* loadedTexture, std::vector<unsigned char>& pixdata);

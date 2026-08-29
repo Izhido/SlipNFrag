@@ -2021,7 +2021,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			}
 		}
 	}
-    if (sortedAttributes != nullptr && previousSortedAttributes != sortedAttributes)
+    if (sortedAttributes != nullptr && previousSortedAttributesBuffer != sortedAttributes->buffer)
     {
         poolSizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         poolSizes[0].descriptorCount = 1;
@@ -2046,7 +2046,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 		writes[0].dstSet = aliasNeutralPaletteResources.descriptorSet;
         vkUpdateDescriptorSets(appState.Device, 1, writes, 0, nullptr);
 		writes[0].dstBinding = 0;
-        previousSortedAttributes = sortedAttributes;
+		previousSortedAttributesBuffer = sortedAttributes->buffer;
     }
 	if (!appState.Scene.lightmapDescriptorWrites.empty())
 	{
