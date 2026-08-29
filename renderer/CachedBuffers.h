@@ -1,13 +1,14 @@
 #pragma once
 
 #include "Buffer.h"
-#include <list>
 
 struct CachedBuffers
 {
-	std::list<Buffer*> buffers;
-	std::list<Buffer*> oldBuffers;
+	Buffer* current;
+	Buffer* toDispose;
+	Buffer* reusable;
 
+	Buffer* Acquire();
 	Buffer* Get(VkDeviceSize size);
 	static VkDeviceSize MinimumAllocationFor(VkDeviceSize size);
 	Buffer* GetStagingBuffer(AppState& appState, VkDeviceSize size);

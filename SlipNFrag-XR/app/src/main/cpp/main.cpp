@@ -1651,6 +1651,18 @@ void android_main(struct android_app* app)
 							strcpy(sys_argv[i], arguments[i].c_str());
 						}
 						cl_bobdisabled.default_value = "1";
+						if (appState.Mode == AppScreenMode)
+						{
+							vid_width = appState.ScreenWidth;
+							vid_height = appState.ScreenHeight;
+						}
+						else
+						{
+							vid_width = (int)appState.EyeTextureMaxDimension;
+							vid_height = (int)appState.EyeTextureMaxDimension;
+						}
+						con_width = appState.ConsoleWidth;
+						con_height = appState.ConsoleHeight;
 						Sys_Init(sys_argc, sys_argv);
 						if (sys_errorcalled)
 						{
@@ -1740,8 +1752,8 @@ void android_main(struct android_app* app)
 				{
 					entry.DeleteOld(appState);
 				}
-				appState.Scene.lightmapsRGBToDelete.DeleteOld(appState);
-				appState.Scene.lightmapsToDelete.DeleteOld(appState);
+				appState.Scene.lightmapRGBPool.DeleteOld(appState);
+				appState.Scene.lightmapPool.DeleteOld(appState);
 				appState.Scene.indexBuffers.DeleteOld(appState);
 				appState.Scene.aliasBuffers.DeleteOld(appState);
 
@@ -1753,12 +1765,12 @@ void android_main(struct android_app* app)
 					{
 						if (entry.second.lightmap != nullptr)
 						{
-							appState.Scene.lightmapsToDelete.Dispose(entry.second.lightmap);
+							appState.Scene.lightmapPool.Dispose(entry.second.lightmap);
 							entry.second.lightmap = nullptr;
 						}
 						if (entry.second.lightmapRGB != nullptr)
 						{
-							appState.Scene.lightmapsRGBToDelete.Dispose(entry.second.lightmapRGB);
+							appState.Scene.lightmapRGBPool.Dispose(entry.second.lightmapRGB);
 							entry.second.lightmapRGB = nullptr;
 						}
 					}

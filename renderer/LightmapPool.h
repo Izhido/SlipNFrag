@@ -2,10 +2,12 @@
 
 #include "Lightmap.h"
 
-struct LightmapsToDelete
+struct LightmapPool
 {
-	Lightmap* oldLightmaps;
+	Lightmap* toDispose;
+	Lightmap* reusable;
 
+	Lightmap* Acquire();
 	void Dispose(Lightmap* lightmap);
 	void DeleteOld(AppState& appState);
 	void Delete(AppState& appState);

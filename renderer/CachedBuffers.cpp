@@ -3,17 +3,33 @@
 #include "AppState.h"
 #include "Utils.h"
 
+Buffer* CachedBuffers::Acquire()
+{
+	if (reusable != nullptr)
+	{
+		auto reused = reusable;
+		reusable = reusable->next;
+		memset(reused, 0, sizeof(Buffer));
+		return reused;
+	}
+	return new Buffer { };
+}
+
 Buffer* CachedBuffers::Get(VkDeviceSize size)
 {
-	for (auto b = oldBuffers.begin(); b != oldBuffers.end(); b++)
+	if (toDispose != nullptr)
 	{
-		if ((((*b)->size == Constants::minimumBufferAllocation &&
-			size <= Constants::minimumBufferAllocation)) ||
-			((*b)->size >= size && (*b)->size < size * 2))
+		for (auto b = &toDispose; *b != nullptr; b = &(*b)->next)
 		{
-			auto buffer = *b;
-			oldBuffers.erase(b);
-			return buffer;
+			if ((((*b)->size == Constants::minimumBufferAllocation &&
+				size <= Constants::minimumBufferAllocation)) ||
+				((*b)->size >= size && (*b)->size < size * 2))
+			{
+				auto buffer = *b;
+				(*b) = buffer->next;
+				buffer->next = nullptr;
+ 				return buffer;
+			}
 		}
 	}
 	return nullptr;
@@ -34,7 +50,7 @@ Buffer* CachedBuffers::GetStagingBuffer(AppState& appState, VkDeviceSize size)
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
-		buffer = new Buffer { };
+		buffer = Acquire();
 		buffer->CreateStagingBuffer(appState, size);
 	}
 	MoveToFront(buffer);
@@ -46,7 +62,7 @@ Buffer* CachedBuffers::GetVertexBuffer(AppState& appState, VkDeviceSize size)
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
-		buffer = new Buffer { };
+		buffer = Acquire();
 		buffer->CreateVertexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
@@ -58,7 +74,7 @@ Buffer* CachedBuffers::GetMappableVertexBuffer(AppState& appState, VkDeviceSize 
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
-		buffer = new Buffer { };
+		buffer = Acquire();
 		buffer->CreateMappableVertexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
@@ -70,7 +86,7 @@ Buffer* CachedBuffers::GetIndexBuffer(AppState& appState, VkDeviceSize size)
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
-		buffer = new Buffer { };
+		buffer = Acquire();
 		buffer->CreateIndexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
@@ -82,7 +98,7 @@ Buffer* CachedBuffers::GetMappableIndexBuffer(AppState& appState, VkDeviceSize s
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
-		buffer = new Buffer { };
+		buffer = Acquire();
 		buffer->CreateMappableIndexBuffer(appState, MinimumAllocationFor(size));
 	}
 	MoveToFront(buffer);
@@ -94,7 +110,7 @@ Buffer* CachedBuffers::GetMappableStorageBuffer(AppState& appState, VkDeviceSize
 	auto buffer = Get(size);
 	if (buffer == nullptr)
 	{
-		buffer = new Buffer { };
+		buffer = Acquire();
 		buffer->CreateMappableStorageBuffer(appState, size);
 	}
 	MoveToFront(buffer);
@@ -103,40 +119,58 @@ Buffer* CachedBuffers::GetMappableStorageBuffer(AppState& appState, VkDeviceSize
 
 void CachedBuffers::Reset(AppState& appState)
 {
-	for (auto b = oldBuffers.begin(); b != oldBuffers.end(); )
+	if (toDispose != nullptr)
 	{
-		(*b)->unusedCount++;
-		if ((*b)->unusedCount >= Constants::framesToLive)
+		for (auto b = &toDispose; *b != nullptr; )
 		{
-			auto buffer = *b;
-			buffer->Delete(appState);
-			delete buffer;
-			b = oldBuffers.erase(b);
-		}
-		else
-		{
-			b++;
+			(*b)->unusedCount++;
+			if ((*b)->unusedCount >= Constants::framesToLive)
+			{
+				auto buffer = *b;
+				buffer->Delete(appState);
+				(*b) = buffer->next;
+				buffer->next = reusable;
+				reusable = buffer;
+			}
+			else
+			{
+				b = &(*b)->next;
+			}
 		}
 	}
-	oldBuffers.splice(oldBuffers.begin(), buffers);
+	if (current != nullptr)
+	{
+		current->next = toDispose;
+		toDispose = current;
+		current = nullptr;
+	}
 }
 
 void CachedBuffers::MoveToFront(Buffer* buffer)
 {
 	buffer->unusedCount = 0;
-	buffers.push_back(buffer);
+	current = buffer;
 }
 
 void CachedBuffers::Delete(AppState& appState)
 {
-	for (auto b : oldBuffers)
+	for (Buffer* b = reusable, *next; b != nullptr; b = next)
 	{
-		b->Delete(appState);
+		next = b->next;
+		delete b;
 	}
-	oldBuffers.clear();
-	for (auto b : buffers)
+	reusable = nullptr;
+	for (Buffer* b = toDispose, *next; b != nullptr; b = next)
 	{
+		next = b->next;
 		b->Delete(appState);
+		delete b;
 	}
-	buffers.clear();
+	toDispose = nullptr;
+	if (current != nullptr)
+	{
+		current->Delete(appState);
+		delete current;
+		current = nullptr;
+	}
 }

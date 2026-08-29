@@ -17,10 +17,10 @@
 #include "LoadedAlias.h"
 #include "LoadedSky.h"
 #include "LightmapBuffers.h"
-#include "LightmapsToDelete.h"
+#include "LightmapPool.h"
 #include "VertexStore.h"
 #include "LightmapStore.h"
-#include "LightmapsRGBToDelete.h"
+#include "LightmapRGBPool.h"
 #include "CachedSharedMemoryTextures.h"
 #include "SurfaceTexture.h"
 #include "Skybox.h"
@@ -122,12 +122,12 @@ struct Scene
 	LoadedSky loadedSkyRGBA;
 	LightmapBuffers staticLightmapBuffers;
 	LightmapBuffers variableLightmapBuffers;
-	LightmapsToDelete lightmapsToDelete;
+	LightmapPool lightmapPool;
 	std::vector<LightmapChain> lightmapChains;
 	Q_HASHMAP<void*, size_t> lightmapChainTexturesInUse;
 	LightmapBuffers staticLightmapRGBBuffers;
 	LightmapBuffers variableLightmapRGBBuffers;
-	LightmapsRGBToDelete lightmapsRGBToDelete;
+	LightmapRGBPool lightmapRGBPool;
 	std::vector<LightmapRGBChain> lightmapRGBChains;
 	Q_HASHMAP<void*, size_t> lightmapRGBChainTexturesInUse;
 	std::vector<VkDescriptorBufferInfo> lightmapDescriptorInfos;

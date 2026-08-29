@@ -50,7 +50,7 @@ cvar_t	cl_immersive_sbar_on_hand = {"sbar_on_hand", "1", true};
 client_static_t	cls;
 client_state_t	cl;
 // FIXME: put these on hunk?
-std::list<efrag_t>			cl_efrags;
+std::vector<std::vector<efrag_t>>		cl_efrags;
 std::vector<entity_t>		cl_entities(MAX_EDICTS);
 std::list<entity_t>		cl_static_entities;
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
@@ -129,6 +129,8 @@ CL_ClearState
 */
 void CL_ClearState (void)
 {
+	int			i;
+
 	if (!sv.active)
 		Host_ClearMemory ();
 
@@ -138,7 +140,9 @@ void CL_ClearState (void)
 	SZ_Clear (&cls.message);
 
 // clear other arrays	
-	if (cl_efrags.empty()) cl_efrags.resize(MAX_EFRAGS);
+	cl_efrags.resize(1);
+	cl_efrags[0].resize(MAX_EFRAGS);
+	memset(cl_efrags[0].data(), 0, cl_efrags[0].size() * sizeof(efrag_t));
 	memset (cl_entities.data(), 0, cl_entities.size() * sizeof(entity_t));
 	cl_static_entities.clear();
 	cl_dlights.clear();
@@ -150,17 +154,10 @@ void CL_ClearState (void)
 //
 // allocate the efrags and chain together into a free list
 //
-	auto entry = cl_efrags.begin();
-	efrag_t* efrag = &*entry;
-	memset(efrag, 0, sizeof(efrag_t));
-	cl.free_efrags = efrag;
-	for (entry++; entry != cl_efrags.end(); entry++)
-	{
-		efrag->entnext = &*entry;
-		efrag = &*entry;
-		memset(efrag, 0, sizeof(efrag_t));
-	}
-	efrag->entnext = nullptr;
+	cl.free_efrags = cl_efrags[0].data();
+	for (i=0 ; i<(int)cl_efrags[0].size()-1 ; i++)
+		cl.free_efrags[i].entnext = &cl.free_efrags[i+1];
+	cl.free_efrags[i].entnext = NULL;
 }
 
 /*

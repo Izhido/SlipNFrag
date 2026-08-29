@@ -2079,9 +2079,11 @@ void * Mod_LoadAliasFrame (void * pin, int *pframeindex, int numv,
 
 	pinframe = (trivertx_t *)(pdaliasframe + 1);
 	
-	int pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
-	int pooltop = mod_aliaspool.size();
-	mod_aliaspool.resize(pooltop + numv * sizeof(*pframe));
+	auto pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
+	auto pooltop = mod_aliaspool.size();
+	auto allocated = numv * sizeof(*pframe);
+	allocated = ((allocated+15)&~15);
+	mod_aliaspool.resize(pooltop + allocated);
 	pheader = (aliashdr_t*)mod_aliaspool.data();
 	pframe = (trivertx_t*)(mod_aliaspool.data() + pooltop);
 
@@ -2126,12 +2128,16 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 
 	numframes = LittleLong (pingroup->numframes);
 
-	int pbboxminoffset = (byte*)pbboxmin - mod_aliaspool.data();
-	int pbboxmaxoffset = (byte*)pbboxmax - mod_aliaspool.data();
-	int pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
-	int nameoffset = (byte*)name - mod_aliaspool.data();
-	int pooltop = mod_aliaspool.size();
-	mod_aliaspool.resize(pooltop + sizeof(maliasgroup_t) + (numframes - 1) * sizeof(paliasgroup->frames[0]) + numframes * sizeof(float));
+	auto pbboxminoffset = (byte*)pbboxmin - mod_aliaspool.data();
+	auto pbboxmaxoffset = (byte*)pbboxmax - mod_aliaspool.data();
+	auto pframeindexoffset = (byte*)pframeindex - mod_aliaspool.data();
+	auto nameoffset = (byte*)name - mod_aliaspool.data();
+	auto pooltop = mod_aliaspool.size();
+	auto allocatedgroup = sizeof(maliasgroup_t) + (numframes - 1) * sizeof(paliasgroup->frames[0]);
+	allocatedgroup = ((allocatedgroup+15)&~15);
+	auto allocatedframes = numframes * sizeof(float);
+	allocatedframes = ((allocatedframes+15)&~15);
+	mod_aliaspool.resize(pooltop + allocatedgroup + allocatedframes);
 	pheader = (aliashdr_t*)mod_aliaspool.data();
 	paliasgroup = (maliasgroup_t*)(mod_aliaspool.data() + pooltop);
 	name = (char*)(mod_aliaspool.data() + nameoffset);
@@ -2152,7 +2158,7 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 
 	pin_intervals = (daliasinterval_t *)(pingroup + 1);
 
-	poutintervals = (float*)(mod_aliaspool.data() + pooltop + sizeof(maliasgroup_t) + (numframes - 1) * sizeof(paliasgroup->frames[0]));
+	poutintervals = (float*)(mod_aliaspool.data() + pooltop + allocatedgroup);
 
 	paliasgroup->intervals = (byte *)poutintervals - (byte *)pheader;
 
@@ -2184,7 +2190,7 @@ void * Mod_LoadAliasGroup (void * pin, int *pframeindex, int numv,
 		{
 			Con_Printf("Mod_LoadAliasGroup: intervals do not increase - rebuilding with first interval\n");
 
-			poutintervals = (float*)(mod_aliaspool.data() + pooltop + sizeof(maliasgroup_t) + (numframes - 1) * sizeof(paliasgroup->frames[0]));
+			poutintervals = (float*)(mod_aliaspool.data() + pooltop + allocatedgroup);
 
 			auto interval = firstinterval;
 
@@ -2231,9 +2237,11 @@ void * Mod_LoadAliasSkin (void * pin, int *pskinindex, int skinsize,
 	byte	*pskin, *pinskin;
 	unsigned short	*pusskin;
 
-	int pskinindexoffset = (byte*)pskinindex - mod_aliaspool.data();
-	int pooltop = mod_aliaspool.size();
-	mod_aliaspool.resize(pooltop + skinsize * r_pixbytes);
+	auto pskinindexoffset = (byte*)pskinindex - mod_aliaspool.data();
+	auto pooltop = mod_aliaspool.size();
+	auto allocated = skinsize * r_pixbytes;
+	allocated = ((allocated+15)&~15);
+	mod_aliaspool.resize(pooltop + allocated);
 	pheader = (aliashdr_t*)mod_aliaspool.data();
 	pskin = mod_aliaspool.data() + pooltop;
 	pinskin = (byte *)pin;
@@ -2281,9 +2289,14 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 	pinskingroup = (daliasskingroup_t *)pin;
 
 	numskins = LittleLong (pinskingroup->numskins);
-	int pskinindexoffset = (byte*)pskinindex - mod_aliaspool.data();
-	int pooltop = mod_aliaspool.size();
-	mod_aliaspool.resize(pooltop + sizeof(maliasskingroup_t) + (numskins - 1) * sizeof(paliasskingroup->skindescs[0]) + numskins * sizeof(float));
+	auto pskinindexoffset = (byte*)pskinindex - mod_aliaspool.data();
+	auto pooltop = mod_aliaspool.size();
+	auto allocatedgroup = sizeof (maliasskingroup_t) +
+			(numskins - 1) * sizeof (paliasskingroup->skindescs[0]);
+	allocatedgroup = ((allocatedgroup+15)&~15);
+	auto allocatedskins = numskins * sizeof(float);
+	allocatedskins = ((allocatedskins+15)&~15);
+	mod_aliaspool.resize(pooltop + allocatedgroup + allocatedskins);
 	pheader = (aliashdr_t*)mod_aliaspool.data();
 	paliasskingroup = (maliasskingroup_t*)(mod_aliaspool.data() + pooltop);
 
@@ -2294,7 +2307,7 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 
 	pinskinintervals = (daliasskininterval_t *)(pinskingroup + 1);
 
-	poutskinintervals = (float*)(mod_aliaspool.data() + pooltop + sizeof(maliasskingroup_t) + (numskins - 1) * sizeof(paliasskingroup->skindescs[0]));
+	poutskinintervals = (float*)(mod_aliaspool.data() + pooltop + allocatedgroup);
 
 	paliasskingroup->intervals = (byte *)poutskinintervals - (byte *)pheader;
 
@@ -2318,7 +2331,7 @@ void * Mod_LoadAliasSkinGroup (void * pin, int *pskinindex, int skinsize,
 	{
 		Con_Printf("Mod_LoadAliasGroup: skin intervals do not increase - rebuilding with 0.1 second intervals\n");
 
-		poutskinintervals = (float*)(mod_aliaspool.data() + pooltop + sizeof(maliasskingroup_t) + (numskins - 1) * sizeof(paliasskingroup->skindescs[0]));
+		poutskinintervals = (float*)(mod_aliaspool.data() + pooltop + allocatedgroup);
 
 		auto interval = 0.1;
 
@@ -2386,6 +2399,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer, int buf_size)
 			sizeof (mdl_t) +
 			LittleLong (pinmodel->numverts) * sizeof (stvert_t) +
 			LittleLong (pinmodel->numtris) * sizeof (mtriangle_t);
+	size = ((size+15)&~15);
 
 	mod_aliaspool.resize(size);
 	pheader = (aliashdr_t*)mod_aliaspool.data();
@@ -2445,8 +2459,10 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer, int buf_size)
 
 	pskintype = (daliasskintype_t *)&pinmodel[1];
 
-	int pooltop = mod_aliaspool.size();
-	mod_aliaspool.resize(pooltop + numskins * sizeof(maliasskindesc_t));
+	auto pooltop = mod_aliaspool.size();
+	auto allocated = numskins * sizeof(maliasskindesc_t);
+	allocated = ((allocated+15)&~15);
+	mod_aliaspool.resize(pooltop + allocated);
 	pheader = (aliashdr_t*)mod_aliaspool.data();
 	pskindesc = (maliasskindesc_t*)(mod_aliaspool.data() + pooltop);
 
@@ -2592,9 +2608,11 @@ void * Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe)
 	height = LittleLong (pinframe->height);
 	size = width * height;
 	
-	int ppframeoffset = (byte*)ppframe - mod_pool.sprites.back().data();
-	int pooltop = mod_pool.sprites.back().size();
-	mod_pool.sprites.back().resize(pooltop + sizeof (mspriteframe_t) + size*r_pixbytes);
+	auto ppframeoffset = (byte*)ppframe - mod_pool.sprites.back().data();
+	auto pooltop = mod_pool.sprites.back().size();
+	auto allocated = sizeof (mspriteframe_t) + size*r_pixbytes;
+	allocated = ((allocated+15)&~15);
+	mod_pool.sprites.back().resize(pooltop + allocated);
 	pspriteframe = (mspriteframe_t*)(mod_pool.sprites.back().data() + pooltop);
 	ppframe = (mspriteframe_t**)(mod_pool.sprites.back().data() + ppframeoffset);
 
@@ -2651,9 +2669,14 @@ void * Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe)
 
 	numframes = LittleLong (pingroup->numframes);
 
-	int ppframeoffset = (byte*)ppframe - mod_pool.sprites.back().data();
-	int pooltop = mod_pool.sprites.back().size();
-	mod_pool.sprites.back().resize(pooltop + sizeof(mspritegroup_t) + (numframes - 1) * sizeof(pspritegroup->frames[0]) + numframes * sizeof (float));
+	auto ppframeoffset = (byte*)ppframe - mod_pool.sprites.back().data();
+	auto pooltop = mod_pool.sprites.back().size();
+	auto allocatedgroup = sizeof (mspritegroup_t) +
+	                      (numframes - 1) * sizeof (pspritegroup->frames[0]);
+	allocatedgroup = ((allocatedgroup+15)&~15);
+	auto allocatedframes = numframes * sizeof (float);
+	allocatedframes = ((allocatedframes+15)&~15);
+	mod_pool.sprites.back().resize(pooltop + allocatedgroup + allocatedframes);
 	pspritegroup = (mspritegroup_t*)(mod_pool.sprites.back().data() + pooltop);
 	ppframe = (mspriteframe_t**)(mod_pool.sprites.back().data() + ppframeoffset);
 
@@ -2663,7 +2686,7 @@ void * Mod_LoadSpriteGroup (void * pin, mspriteframe_t **ppframe)
 
 	pin_intervals = (dspriteinterval_t *)(pingroup + 1);
 
-	poutintervals = (float*)(mod_pool.sprites.back().data() + pooltop + sizeof(mspritegroup_t) + (numframes - 1) * sizeof(pspritegroup->frames[0]));
+	poutintervals = (float*)(mod_pool.sprites.back().data() + pooltop + allocatedgroup);
 
 	pspritegroup->intervals = poutintervals;
 
@@ -2714,6 +2737,7 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 	numframes = LittleLong (pin->numframes);
 
 	size = sizeof (msprite_t) +	(numframes - 1) * sizeof (psprite->frames);
+	size = ((size+15)&~15);
 	mod_pool.sprites.emplace_back(size);
 	psprite = (msprite_t*)(mod_pool.sprites.back().data());
 

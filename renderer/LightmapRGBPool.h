@@ -2,10 +2,12 @@
 
 #include "LightmapRGB.h"
 
-struct LightmapsRGBToDelete
+struct LightmapRGBPool
 {
-	LightmapRGB* oldLightmaps;
+	LightmapRGB* toDispose;
+	LightmapRGB* reusable;
 
+	LightmapRGB* Acquire();
 	void Dispose(LightmapRGB* lightmap);
 	void DeleteOld(AppState& appState);
 	void Delete(AppState& appState);

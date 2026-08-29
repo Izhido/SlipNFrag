@@ -34,7 +34,7 @@ void Scene::AddBorder(AppState& appState, std::vector<uint32_t>& target)
 {
     for (auto b = 0; b < 5; b++)
     {
-        auto i = (unsigned char)(192.0 * sin(M_PI / (double)(b - 1)));
+        auto i = (unsigned char)(192.0 * sin(b * M_PI / 5));
         auto color = ((uint32_t)255 << 24) | ((uint32_t)i << 16) | ((uint32_t)i << 8) | i;
         auto texTopIndex = b * appState.ScreenWidth + b;
         auto texBottomIndex = (appState.ScreenHeight - 1 - b) * appState.ScreenWidth + b;
@@ -1971,7 +1971,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
 		auto height = (((msurface_t*)surface.face)->extents[1]>>4)+1;
 		auto lightmapSize = width * height;
-		perSurface.lightmap = new Lightmap { };
+		perSurface.lightmap = lightmapPool.Acquire();
 		auto addToWrites = perSurface.lightmap->Create(appState, width, height, false);
 		if (addToWrites)
 		{
@@ -2008,11 +2008,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
 	         ((msurface_t*)surface.face)->dlightframe == d_lists.rframecount || perSurface.dlight)
 	{
-		lightmapsToDelete.Dispose(perSurface.lightmap);
+		lightmapPool.Dispose(perSurface.lightmap);
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
 		auto height = (((msurface_t*)surface.face)->extents[1]>>4)+1;
 		auto lightmapSize = width * height;
-		perSurface.lightmap = new Lightmap { };
+		perSurface.lightmap = lightmapPool.Acquire();
 		auto addToWrites = perSurface.lightmap->Create(appState, width, height, true);
 		if (addToWrites)
 		{
@@ -2052,7 +2052,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
 		auto height = (((msurface_t*)surface.face)->extents[1]>>4)+1;
 		auto lightmapSize = width * 3 * height;
-		perSurface.lightmapRGB = new LightmapRGB { };
+		perSurface.lightmapRGB = lightmapRGBPool.Acquire();
 		auto addToWrites = perSurface.lightmapRGB->Create(appState, width, height, false);
 		if (addToWrites)
 		{
@@ -2089,11 +2089,11 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
 	         ((msurface_t*)surface.face)->dlightframe == d_lists.rframecount || perSurface.dlight)
 	{
-		lightmapsRGBToDelete.Dispose(perSurface.lightmapRGB);
+		lightmapRGBPool.Dispose(perSurface.lightmapRGB);
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
 		auto height = (((msurface_t*)surface.face)->extents[1]>>4)+1;
 		auto lightmapSize = width * 3 * height;
-		perSurface.lightmapRGB = new LightmapRGB { };
+		perSurface.lightmapRGB = lightmapRGBPool.Acquire();
 		auto addToWrites = perSurface.lightmapRGB->Create(appState, width, height, true);
 		if (addToWrites)
 		{
@@ -4265,12 +4265,12 @@ void Scene::Reset(AppState& appState)
 	{
 		if (entry.second.lightmap != nullptr)
 		{
-			appState.Scene.lightmapsToDelete.Dispose(entry.second.lightmap);
+			appState.Scene.lightmapPool.Dispose(entry.second.lightmap);
 			entry.second.lightmap = nullptr;
 		}
 		if (entry.second.lightmapRGB != nullptr)
 		{
-			appState.Scene.lightmapsRGBToDelete.Dispose(entry.second.lightmapRGB);
+			appState.Scene.lightmapRGBPool.Dispose(entry.second.lightmapRGB);
 			entry.second.lightmapRGB = nullptr;
 		}
 	}
@@ -4338,9 +4338,9 @@ void Scene::Destroy(AppState& appState)
 	}
 	surfaceTextures.clear();
 
-	lightmapsRGBToDelete.Delete(appState);
+	lightmapRGBPool.Delete(appState);
 
-	lightmapsToDelete.Delete(appState);
+	lightmapPool.Delete(appState);
 
 	for (auto& entry : perSurfaceCache)
 	{

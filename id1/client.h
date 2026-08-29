@@ -297,7 +297,7 @@ extern void (*cl_immersivemenukeyfn)(int key);
 extern	client_state_t	cl;
 
 // FIXME, allocate dynamically
-extern	std::list<efrag_t>			cl_efrags;
+extern	std::vector<std::vector<efrag_t>>		cl_efrags;
 extern	std::vector<entity_t>		cl_entities;
 extern	std::list<entity_t>		cl_static_entities;
 extern	lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];

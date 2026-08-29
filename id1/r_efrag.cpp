@@ -111,31 +111,22 @@ void R_SplitEntityOnNode (mnode_t *node)
 
 // grab an efrag off the free list
 		ef = cl.free_efrags;
-		if (ef->entnext == nullptr)
+		if (!ef || !ef->entnext)
 		{
-			auto start = cl_efrags.size();
-			cl_efrags.resize(cl_efrags.size() + MAX_EFRAGS);
-			efrag_t* efrag = nullptr;
-			int i = 0;
-			for (auto entry = cl_efrags.begin(); entry != cl_efrags.end(); i++, entry++)
+			cl_efrags.emplace_back(MAX_EFRAGS);
+			auto newest = cl_efrags.back().data();
+			for (auto i=0 ; i<MAX_EFRAGS-1 ; i++)
+				newest[i].entnext = &newest[i+1];
+			if (!ef)
 			{
-				if (i == start)
-				{
-					efrag = &*entry;
-					ef->entnext = efrag;
-				}
-				else if (i > start)
-				{
-					efrag->entnext = &*entry;
-					efrag = &*entry;
-				}
-				else if (i == cl_efrags.size() - 1)
-				{
-					efrag->entnext = nullptr;
-				}
+				cl.free_efrags = newest;
+				ef = cl.free_efrags;
+			}
+			else
+			{
+				ef->entnext = newest;
 			}
 		}
-		
 		cl.free_efrags = cl.free_efrags->entnext;
 
 		ef->entity = r_addent;
