@@ -1533,7 +1533,7 @@ int main(int argc, char* argv[])
 
 			if (!sessionRunning)
 			{
-				std::this_thread::yield();
+				Sleep(0.001);
 				continue;
 			}
 
@@ -1637,6 +1637,18 @@ int main(int argc, char* argv[])
 						sys_argc = argc;
 						sys_argv = argv;
 						cl_bobdisabled.default_value = "1";
+						if (appState.Mode == AppScreenMode)
+						{
+							vid_width = appState.ScreenWidth;
+							vid_height = appState.ScreenHeight;
+						}
+						else
+						{
+							vid_width = (int)appState.EyeTextureMaxDimension;
+							vid_height = (int)appState.EyeTextureMaxDimension;
+						}
+						con_width = appState.ConsoleWidth;
+						con_height = appState.ConsoleHeight;
 						Sys_Init(sys_argc, sys_argv);
 						if (sys_errorcalled)
 						{
@@ -1721,8 +1733,8 @@ int main(int argc, char* argv[])
 				{
 					entry.DeleteOld(appState);
 				}
-				appState.Scene.lightmapsRGBToDelete.DeleteOld(appState);
-				appState.Scene.lightmapsToDelete.DeleteOld(appState);
+				appState.Scene.lightmapRGBPool.DeleteOld(appState);
+				appState.Scene.lightmapPool.DeleteOld(appState);
 				appState.Scene.indexBuffers.DeleteOld(appState);
 				appState.Scene.aliasBuffers.DeleteOld(appState);
 
@@ -1734,12 +1746,12 @@ int main(int argc, char* argv[])
 					{
 						if (entry.second.lightmap != nullptr)
 						{
-							appState.Scene.lightmapsToDelete.Dispose(entry.second.lightmap);
+							appState.Scene.lightmapPool.Dispose(entry.second.lightmap);
 							entry.second.lightmap = nullptr;
 						}
 						if (entry.second.lightmapRGB != nullptr)
 						{
-							appState.Scene.lightmapsRGBToDelete.Dispose(entry.second.lightmapRGB);
+							appState.Scene.lightmapRGBPool.Dispose(entry.second.lightmapRGB);
 							entry.second.lightmapRGB = nullptr;
 						}
 					}
