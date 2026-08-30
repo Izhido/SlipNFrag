@@ -1720,7 +1720,7 @@ void Scene::CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded)
 	loaded.vertices = perSurface.vertices;
 }
 
-void Scene::GenerateLightmap(const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size)
+void Scene::GenerateLightmap(const AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size)
 {
     auto surf = (msurface_t*)surface.face;
 	auto lightmap = surf->samples;
@@ -1746,7 +1746,7 @@ void Scene::GenerateLightmap(const dsurface_t& surface, PerSurfaceData& perSurfa
 			lightmap += size;
 		}
 	}
-    perSurface.dlight = (surf->dlightframe == d_lists.rframecount);
+    perSurface.dlight = (surf->dlightframe == appState.FromEngine.rframecount);
 	if (perSurface.dlight)
 	{
         auto smax = width * 16;
@@ -1822,7 +1822,7 @@ void Scene::GenerateLightmap(const dsurface_t& surface, PerSurfaceData& perSurfa
 	}
 }
 
-void Scene::GenerateLightmapRGB(const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size)
+void Scene::GenerateLightmapRGB(const AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size)
 {
     auto surf = (msurface_t*)surface.face;
 	auto lightmap = surf->samplesRGB;
@@ -1848,7 +1848,7 @@ void Scene::GenerateLightmapRGB(const dsurface_t& surface, PerSurfaceData& perSu
 			lightmap += size;
 		}
 	}
-    perSurface.dlight = (surf->dlightframe == d_lists.rframecount);
+    perSurface.dlight = (surf->dlightframe == appState.FromEngine.rframecount);
 	if (perSurface.dlight)
 	{
         auto smax = width * 16;
@@ -1984,7 +1984,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		{
 		    perSurface.lightmapSource = lightmapStore.Allocate(lightmapSize);
 		}
-        GenerateLightmap(surface, perSurface, width, height, lightmapSize);
+        GenerateLightmap(appState, surface, perSurface, width, height, lightmapSize);
 		loaded.source = perSurface.lightmapSource;
 		loaded.next = nullptr;
 		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
@@ -2006,7 +2006,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	         perSurface.lightadj[1] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
 	         perSurface.lightadj[2] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
 	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
-	         ((msurface_t*)surface.face)->dlightframe == d_lists.rframecount || perSurface.dlight)
+	         ((msurface_t*)surface.face)->dlightframe == appState.FromEngine.rframecount || perSurface.dlight)
 	{
 		lightmapPool.Dispose(perSurface.lightmap);
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
@@ -2020,7 +2020,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		}
 		loaded.lightmap = perSurface.lightmap;
         loaded.size = lightmapSize * sizeof(uint32_t);
-        GenerateLightmap(surface, perSurface, width, height, lightmapSize);
+        GenerateLightmap(appState, surface, perSurface, width, height, lightmapSize);
 		loaded.source = perSurface.lightmapSource;
 		loaded.next = nullptr;
 		auto entry = lightmapChainTexturesInUse.find(perSurface.texture);
@@ -2042,7 +2042,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		loaded.lightmap = perSurface.lightmap;
 	}
-	perSurface.frameCount = frameCount;
+	perSurface.frameCount = frameCountPerSurface;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmapRGB& loaded, VkDeviceSize& size)
@@ -2065,7 +2065,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		{
 			perSurface.lightmapSource = lightmapStore.Allocate(lightmapSize);
 		}
-		GenerateLightmapRGB(surface, perSurface, width, height, lightmapSize);
+		GenerateLightmapRGB(appState, surface, perSurface, width, height, lightmapSize);
 		loaded.source = perSurface.lightmapSource;
 		loaded.next = nullptr;
 		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);
@@ -2087,7 +2087,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	         perSurface.lightadj[1] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
 	         perSurface.lightadj[2] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
 	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
-	         ((msurface_t*)surface.face)->dlightframe == d_lists.rframecount || perSurface.dlight)
+	         ((msurface_t*)surface.face)->dlightframe == appState.FromEngine.rframecount || perSurface.dlight)
 	{
 		lightmapRGBPool.Dispose(perSurface.lightmapRGB);
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
@@ -2101,7 +2101,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 		}
 		loaded.lightmap = perSurface.lightmapRGB;
         loaded.size = lightmapSize * sizeof(uint32_t);
-        GenerateLightmapRGB(surface, perSurface, width, height, lightmapSize);
+        GenerateLightmapRGB(appState, surface, perSurface, width, height, lightmapSize);
 		loaded.source = perSurface.lightmapSource;
 		loaded.next = nullptr;
 		auto entry = lightmapRGBChainTexturesInUse.find(perSurface.texture);
@@ -2123,7 +2123,7 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 	{
 		loaded.lightmap = perSurface.lightmapRGB;
 	}
-	perSurface.frameCount = frameCount;
+	perSurface.frameCount = frameCountPerSurface;
 }
 
 void Scene::GetStagingBufferSize(AppState& appState, const dturbulent_t& turbulent, PerSurfaceData& perSurface, LoadedTurbulent& loaded, VkDeviceSize& size)
@@ -3084,7 +3084,6 @@ void Scene::RelocateViewmodel(AppState& appState, const dviewmodelcoloredlights_
 
 VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame, uint32_t swapchainImageIndex)
 {
-	frameCount++;
     surfaces.Allocate(d_lists.last_surface);
     surfacesColoredLights.Allocate(d_lists.last_surface_colored_lights);
     surfacesRGBA.Allocate(d_lists.last_surface_rgba);
@@ -3144,6 +3143,9 @@ VkDeviceSize Scene::GetStagingBufferSize(AppState& appState, PerFrame& perFrame,
     lastSky = d_lists.last_sky;
     lastSkyRGBA = d_lists.last_sky_rgba;
 
+    frameCountPerSurface++;
+
+    appState.FromEngine.rframecount = d_lists.rframecount;
     appState.FromEngine.vieworg0 = d_lists.vieworg0;
     appState.FromEngine.vieworg1 = d_lists.vieworg1;
     appState.FromEngine.vieworg2 = d_lists.vieworg2;

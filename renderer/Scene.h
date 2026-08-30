@@ -40,7 +40,8 @@ struct Scene
 	VkDescriptorSetLayout twoBuffersAndImageLayout;
 	VkDescriptorSetLayout twoBuffersAndStorageBufferLayout;
 	VkDescriptorSetLayout singleImageLayout;
-	int frameCount;
+	int frameCountPerSurface;
+	int frameCountFromEngine;
 	PipelineWithSorted<LoadedSurface, SortedSurfaceTexturesWithLightmaps> surfaces;
 	PipelineWithSorted<LoadedSurfaceColoredLights, SortedSurfaceTexturesWithLightmaps> surfacesColoredLights;
 	PipelineWithSorted<LoadedSurface2Textures, SortedSurfaceTexturePairsWithLightmaps> surfacesRGBA;
@@ -222,8 +223,8 @@ struct Scene
 	static int GetMipsFor(int width, int height);
 	static uint32_t GetLayerCountFor(int width, int height);
     void CacheVertices(PerSurfaceData& perSurface, LoadedTurbulent& loaded);
-	static void GenerateLightmap(const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size);
-	static void GenerateLightmapRGB(const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size);
+	static void GenerateLightmap(const AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size);
+	static void GenerateLightmapRGB(const AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, int width, int height, int size);
 	void AddLightmapToDescriptorWrites(AppState& appState, Lightmap* lightmap);
 	void AddLightmapRGBToDescriptorWrites(AppState& appState, LightmapRGB* lightmap);
 	void GetStagingBufferSize(AppState& appState, const dsurface_t& surface, PerSurfaceData& perSurface, LoadedLightmap& loaded, VkDeviceSize& size);

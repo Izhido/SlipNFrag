@@ -1761,7 +1761,7 @@ void android_main(struct android_app* app)
 
 				for (auto& entry : appState.Scene.perSurfaceCache)
 				{
-					if (entry.second.frameCount != appState.Scene.frameCount)
+					if (entry.second.frameCount != appState.Scene.frameCountPerSurface)
 					{
 						if (entry.second.lightmap != nullptr)
 						{
@@ -2737,6 +2737,8 @@ void android_main(struct android_app* app)
 			frameEndInfo.layers = layers.data();
 
 			CHECK_XRCMD(xrEndFrame(appState.Session, &frameEndInfo));
+
+			appState.Scene.frameCountFromEngine = appState.FromEngine.rframecount;
 		}
 
 		if (appState.EngineThread.joinable())
