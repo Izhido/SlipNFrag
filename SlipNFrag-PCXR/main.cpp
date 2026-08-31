@@ -1742,7 +1742,7 @@ int main(int argc, char* argv[])
 
 				for (auto& entry : appState.Scene.perSurfaceCache)
 				{
-					if (entry.second.frameCount != appState.Scene.frameCount)
+					if (entry.second.frameCount != appState.Scene.frameCountPerSurface)
 					{
 						if (entry.second.lightmap != nullptr)
 						{

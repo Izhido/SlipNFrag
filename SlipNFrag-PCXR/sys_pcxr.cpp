@@ -8,6 +8,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "Logger_pcxr.h"
+#include "AppInput.h"
 
 int sys_argc;
 char** sys_argv;
@@ -192,6 +193,21 @@ void Sys_Sleep()
 
 void Sys_SendKeyEvents()
 {
+	std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
+	for (auto i = 0; i <= AppInput::lastInputQueueItem; i++)
+	{
+		auto& input = AppInput::inputQueue[i];
+		if (input.key > 0)
+		{
+			Key_Event(input.key, input.down);
+		}
+		if (!input.command.empty())
+		{
+			Cmd_ExecuteString(input.command.c_str(), src_command);
+		}
+	}
+	AppInput::lastInputQueueItem = -1;
 }
 
 void Sys_HighFPPrecision()
