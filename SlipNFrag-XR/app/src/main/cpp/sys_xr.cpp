@@ -6,6 +6,7 @@
 #include "Locks.h"
 #include "Logger_xr.h"
 #include "d_lists.h"
+#include "AppInput.h"
 
 int sys_argc;
 char** sys_argv;
@@ -228,6 +229,21 @@ void Sys_Sleep()
 
 void Sys_SendKeyEvents()
 {
+	std::lock_guard<std::mutex> lock(Locks::InputMutex);
+
+	for (auto i = 0; i <= AppInput::lastInputQueueItem; i++)
+	{
+		auto& input = AppInput::inputQueue[i];
+		if (input.key > 0)
+		{
+			Key_Event(input.key, input.down);
+		}
+		if (!input.command.empty())
+		{
+			Cmd_ExecuteString(input.command.c_str(), src_command);
+		}
+	}
+	AppInput::lastInputQueueItem = -1;
 }
 
 void Sys_HighFPPrecision()

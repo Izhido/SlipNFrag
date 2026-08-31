@@ -83,6 +83,7 @@ extern m_state_t m_return_state;
 extern m_state_t m_state;
 extern qboolean m_return_onerror;
 extern char m_return_reason[32];
+extern qboolean d_uselists;
 
 
 #ifdef DEBUG
@@ -1265,7 +1266,7 @@ static qsocket_t *_Datagram_Connect (const char *host)
 		goto ErrorReturn;
 
 	// send the connection request
-	Con_Printf("trying...\n"); SCR_UpdateScreen ();
+	Con_Printf("trying...\n"); if (d_uselists) SCR_UpdateConsole(); else SCR_UpdateScreen ();
 	start_time = net_time;
 
 	for (reps = 0; reps < 3; reps++)
@@ -1329,7 +1330,7 @@ static qsocket_t *_Datagram_Connect (const char *host)
 		while (ret == 0 && (SetNetTime() - start_time) < 2.5);
 		if (ret)
 			break;
-		Con_Printf("still trying...\n"); SCR_UpdateScreen ();
+		Con_Printf("still trying...\n"); if (d_uselists) SCR_UpdateConsole(); else SCR_UpdateScreen ();
 		start_time = SetNetTime();
 	}
 

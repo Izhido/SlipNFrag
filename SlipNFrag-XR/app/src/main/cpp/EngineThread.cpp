@@ -2,7 +2,6 @@
 #include "AppState_xr.h"
 #include "sys_xr.h"
 #include "vid_xr.h"
-#include "AppInput.h"
 #include "r_local.h"
 #include <pthread.h>
 #include <sys/prctl.h>
@@ -25,23 +24,7 @@ void runEngine(AppState_xr* appState, struct android_app* app)
 			Sleep(0.001);
 			continue;
 		}
-		{
-			std::lock_guard<std::mutex> lock(Locks::InputMutex);
 
-			for (auto i = 0; i <= AppInput::lastInputQueueItem; i++)
-			{
-				auto& input = AppInput::inputQueue[i];
-				if (input.key > 0)
-				{
-					Key_Event(input.key, input.down);
-				}
-				if (!input.command.empty())
-				{
-					Cmd_ExecuteString(input.command.c_str(), src_command);
-				}
-			}
-			AppInput::lastInputQueueItem = -1;
-		}
 		AppMode mode;
 		{
 			std::lock_guard<std::mutex> lock(Locks::ModeChangeMutex);
