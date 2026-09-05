@@ -1,5 +1,5 @@
 #include "AppInput.h"
-#include "AppState.h"
+#include "AppState_pcxr.h"
 #include "in_pcxr.h"
 #include "Utils.h"
 #include "Locks.h"
@@ -39,7 +39,7 @@ void AppInput::AddCommandInput(const char* command)
 	entry.command = command;
 }
 
-void AppInput::Handle(AppState& appState, bool keyPressHandled)
+void AppInput::Handle(AppState_pcxr& appState, bool keyPressHandled)
 {
 	XrActionStateGetInfo actionGetInfo { XR_TYPE_ACTION_STATE_GET_INFO };
 	XrActionStateBoolean booleanActionState { XR_TYPE_ACTION_STATE_BOOLEAN };
@@ -274,11 +274,29 @@ void AppInput::Handle(AppState& appState, bool keyPressHandled)
 			}
 			if (enterDown)
 			{
-				AddKeyInput(K_ENTER, true);
+				if (key_dest == key_menu)
+				{
+					AddKeyInput(K_ENTER, true);
+					appState.EnterInsideMenu = true;
+				}
+				else
+				{
+					AddCommandInput("+attack");
+					appState.EnterOutsideMenu = true;
+				}
 			}
 			if (enterUp)
 			{
-				AddKeyInput(K_ENTER, false);
+				if (appState.EnterInsideMenu)
+				{
+					AddKeyInput(K_ENTER, false);
+					appState.EnterInsideMenu = false;
+				}
+				if (appState.EnterOutsideMenu)
+				{
+					AddCommandInput("-attack");
+					appState.EnterOutsideMenu = false;
+				}
 			}
 			// The following actions are performed only to reset any in-game actions
 			// after a transition occurs - this is why only currentState == false is checked:
