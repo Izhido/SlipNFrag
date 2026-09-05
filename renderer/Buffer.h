@@ -24,5 +24,6 @@ struct Buffer
 	void CreateMappableStorageBuffer(AppState& appState, VkDeviceSize size);
 	void Map(AppState& appState);
 	void UnmapAndFlush(AppState& appState) const;
+	void CopyFrom(Buffer* source);
 	void Delete(AppState& appState) const;
 };

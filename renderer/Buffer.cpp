@@ -73,6 +73,14 @@ void Buffer::UnmapAndFlush(AppState &appState) const
 	CHECK_VKCMD(vmaFlushAllocation(appState.Allocator, allocation, 0, VK_WHOLE_SIZE));
 }
 
+void Buffer::CopyFrom(Buffer* source)
+{
+	size = source->size;
+	buffer = source->buffer;
+	allocation = source->allocation;
+	mapped = source->mapped;
+}
+
 void Buffer::Delete(AppState& appState) const
 {
 	vmaDestroyBuffer(appState.Allocator, buffer, allocation);

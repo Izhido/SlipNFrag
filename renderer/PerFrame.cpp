@@ -1108,7 +1108,7 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 	}
 }
 
-void PerFrame::LoadNonStagedResources(AppState &appState)
+void PerFrame::LoadNonStagedResources(AppState &appState, uint32_t swapchainImageIndex, uint32_t previousSwapchainImageIndex)
 {
 	matrices->Map(appState);
 	auto mapped = (float*)matrices->mapped;
@@ -1121,116 +1121,155 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 
 	if (appState.Scene.sortedVerticesSize > 0)
 	{
-		sortedVertices = cachedSortedVertices.GetMappableVertexBuffer(appState, appState.Scene.sortedVerticesSize);
-		sortedVertices->Map(appState);
-		uint32_t attributeIndex = 0;
-		VkDeviceSize offset = 0;
-		SortedSurfaces::LoadVertices(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fences.sorted, appState.Scene.fences.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
-		SortedSurfaces::LoadVertices(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedVertices, offset);
-		if (d_lists.last_particle >= 0)
+		auto found = false;
+		if (appState.Scene.frameCountFromEngine == appState.FromEngine.rframecount && previousSwapchainImageIndex != std::numeric_limits<uint32_t>::max() && previousSwapchainImageIndex != swapchainImageIndex)
 		{
-			auto count = (d_lists.last_particle + 1);
-			std::copy(d_lists.particles.data(), d_lists.particles.data() + count, (float*)(((unsigned char*)sortedVertices->mapped) + offset));
+			auto& previous = appState.PerFrame.at(previousSwapchainImageIndex);
+			if (previous.sortedVertices != nullptr)
+			{
+				sortedVertices = cachedSortedVertices.Acquire();
+				sortedVertices->CopyFrom(previous.sortedVertices);
+				cachedSortedVertices.current = sortedVertices;
+				previous.sortedVertices->next = previous.cachedSortedVertices.reusable;
+				previous.cachedSortedVertices.reusable = previous.sortedVertices;
+				previous.cachedSortedVertices.current = nullptr;
+				previous.sortedVertices = nullptr;
+				found = true;
+			}
 		}
-		sortedVertices->UnmapAndFlush(appState);
+		if (!found)
+		{
+			sortedVertices = cachedSortedVertices.GetMappableVertexBuffer(appState, appState.Scene.sortedVerticesSize);
+			sortedVertices->Map(appState);
+			uint32_t attributeIndex = 0;
+			VkDeviceSize offset = 0;
+			SortedSurfaces::LoadVertices(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fences.sorted, appState.Scene.fences.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, attributeIndex, sortedVertices, offset);
+			SortedSurfaces::LoadVertices(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedVertices, offset);
+			if (d_lists.last_particle >= 0)
+			{
+				auto count = (d_lists.last_particle + 1);
+				std::copy(d_lists.particles.data(), d_lists.particles.data() + count, (float*)(((unsigned char*)sortedVertices->mapped) + offset));
+			}
+			sortedVertices->UnmapAndFlush(appState);
+		}
 	}
 
 	if (appState.Scene.sortedAttributesSize > 0)
 	{
-		sortedAttributes = cachedSortedAttributes.GetMappableStorageBuffer(appState, appState.Scene.sortedAttributesSize);
-		sortedAttributes->Map(appState);
-		VkDeviceSize offset = 0;
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fences.sorted, appState.Scene.fences.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedAttributes, offset);
-		offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedAttributes, offset);
-		aliasLightBase = offset / sizeof(float);
-		if (d_lists.last_alias_light >= 0)
+		auto found = false;
+		if (appState.Scene.frameCountFromEngine == appState.FromEngine.rframecount && previousSwapchainImageIndex != std::numeric_limits<uint32_t>::max() && previousSwapchainImageIndex != swapchainImageIndex)
 		{
-			auto count = (d_lists.last_alias_light + 1);
-			std::copy(d_lists.alias_lights.data(), d_lists.alias_lights.data() + count, (float*)((unsigned char*)sortedAttributes->mapped + offset));
+			auto& previous = appState.PerFrame.at(previousSwapchainImageIndex);
+			if (previous.sortedAttributes != nullptr)
+			{
+				sortedAttributes = cachedSortedAttributes.Acquire();
+				sortedAttributes->CopyFrom(previous.sortedAttributes);
+				cachedSortedAttributes.current = sortedAttributes;
+				previous.sortedAttributes->next = previous.cachedSortedAttributes.reusable;
+				previous.cachedSortedAttributes.reusable = previous.sortedAttributes;
+				previous.cachedSortedAttributes.current = nullptr;
+				previous.sortedAttributes = nullptr;
+				aliasLightBase = previous.aliasLightBase;
+				found = true;
+			}
 		}
-        offset = aliasAttributeBase;
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.alias.sorted, appState.Scene.alias.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasAlpha.sorted, appState.Scene.aliasAlpha.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasColoredLights.sorted, appState.Scene.aliasColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasAlphaColoredLights.sorted, appState.Scene.aliasAlphaColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoley.sorted, appState.Scene.aliasHoley.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyAlpha.sorted, appState.Scene.aliasHoleyAlpha.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyColoredLights.sorted, appState.Scene.aliasHoleyColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyAlphaColoredLights.sorted, appState.Scene.aliasHoleyAlphaColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodels.sorted, appState.Scene.viewmodels.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsColoredLights.sorted, appState.Scene.viewmodelsColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsHoley.sorted, appState.Scene.viewmodelsHoley.loaded, sortedAttributes, aliasLightBase, offset);
-        offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsHoleyColoredLights.sorted, appState.Scene.viewmodelsHoleyColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
-		sortedAttributes->UnmapAndFlush(appState);
+		if (!found)
+		{
+			sortedAttributes = cachedSortedAttributes.GetMappableStorageBuffer(appState, appState.Scene.sortedAttributesSize);
+			sortedAttributes->Map(appState);
+			VkDeviceSize offset = 0;
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fences.sorted, appState.Scene.fences.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedAttributes, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedAttributes, offset);
+			aliasLightBase = offset / sizeof(float);
+			if (d_lists.last_alias_light >= 0)
+			{
+				auto count = (d_lists.last_alias_light + 1);
+				std::copy(d_lists.alias_lights.data(), d_lists.alias_lights.data() + count, (float*)((unsigned char*)sortedAttributes->mapped + offset));
+			}
+			offset = aliasAttributeBase;
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.alias.sorted, appState.Scene.alias.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasAlpha.sorted, appState.Scene.aliasAlpha.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasColoredLights.sorted, appState.Scene.aliasColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasAlphaColoredLights.sorted, appState.Scene.aliasAlphaColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoley.sorted, appState.Scene.aliasHoley.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyAlpha.sorted, appState.Scene.aliasHoleyAlpha.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyColoredLights.sorted, appState.Scene.aliasHoleyColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.aliasHoleyAlphaColoredLights.sorted, appState.Scene.aliasHoleyAlphaColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodels.sorted, appState.Scene.viewmodels.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsColoredLights.sorted, appState.Scene.viewmodelsColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsHoley.sorted, appState.Scene.viewmodelsHoley.loaded, sortedAttributes, aliasLightBase, offset);
+			offset = SortedSurfaces::LoadAttributes(appState.Scene.viewmodelsHoleyColoredLights.sorted, appState.Scene.viewmodelsHoleyColoredLights.loaded, sortedAttributes, aliasLightBase, offset);
+			sortedAttributes->UnmapAndFlush(appState);
+		}
 	}
 
 	std::unordered_set<LightmapBuffer*> lightmapBuffersToUnmap;
@@ -1282,91 +1321,129 @@ void PerFrame::LoadNonStagedResources(AppState &appState)
 	{
 		if (appState.Scene.sortedIndices16Size > 0)
 		{
-			sortedIndices16 = cachedSortedIndices16.GetMappableIndexBuffer(appState, appState.Scene.sortedIndices16Size);
-			sortedIndices16->Map(appState);
-			VkDeviceSize offset = 0;
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fences.sorted, appState.Scene.fences.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedIndices16, offset);
-			offset = SortedSurfaces::LoadIndices16(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedIndices16, offset);
-			sortedIndices16->UnmapAndFlush(appState);
+			auto found = false;
+			if (appState.Scene.frameCountFromEngine == appState.FromEngine.rframecount && previousSwapchainImageIndex != std::numeric_limits<uint32_t>::max() && previousSwapchainImageIndex != swapchainImageIndex)
+			{
+				auto& previous = appState.PerFrame.at(previousSwapchainImageIndex);
+				if (previous.sortedIndices16 != nullptr)
+				{
+					sortedIndices16 = cachedSortedIndices16.Acquire();
+					sortedIndices16->CopyFrom(previous.sortedIndices16);
+					cachedSortedIndices16.current = sortedIndices16;
+					previous.sortedIndices16->next = previous.cachedSortedIndices16.reusable;
+					previous.cachedSortedIndices16.reusable = previous.sortedIndices16;
+					previous.cachedSortedIndices16.current = nullptr;
+					previous.sortedIndices16 = nullptr;
+					found = true;
+				}
+			}
+			if (!found)
+			{
+				sortedIndices16 = cachedSortedIndices16.GetMappableIndexBuffer(appState, appState.Scene.sortedIndices16Size);
+				sortedIndices16->Map(appState);
+				VkDeviceSize offset = 0;
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fences.sorted, appState.Scene.fences.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedIndices16, offset);
+				offset = SortedSurfaces::LoadIndices16(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedIndices16, offset);
+				sortedIndices16->UnmapAndFlush(appState);
+			}
 		}
 		else
 		{
-			sortedIndices32 = cachedSortedIndices32.GetMappableIndexBuffer(appState, appState.Scene.sortedIndices32Size);
-			sortedIndices32->Map(appState);
-			VkDeviceSize offset = 0;
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fences.sorted, appState.Scene.fences.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedIndices32, offset);
-			offset = SortedSurfaces::LoadIndices32(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedIndices32, offset);
-			sortedIndices32->UnmapAndFlush(appState);
+			auto found = false;
+			if (appState.Scene.frameCountFromEngine == appState.FromEngine.rframecount && previousSwapchainImageIndex != std::numeric_limits<uint32_t>::max() && previousSwapchainImageIndex != swapchainImageIndex)
+			{
+				auto& previous = appState.PerFrame.at(previousSwapchainImageIndex);
+				if (previous.sortedIndices32 != nullptr)
+				{
+					sortedIndices32 = cachedSortedIndices32.Acquire();
+					sortedIndices32->CopyFrom(previous.sortedIndices32);
+					cachedSortedIndices32.current = sortedIndices32;
+					previous.sortedIndices32->next = previous.cachedSortedIndices32.reusable;
+					previous.cachedSortedIndices32.reusable = previous.sortedIndices32;
+					previous.cachedSortedIndices32.current = nullptr;
+					previous.sortedIndices32 = nullptr;
+					found = true;
+				}
+			}
+			if (!found)
+			{
+				sortedIndices32 = cachedSortedIndices32.GetMappableIndexBuffer(appState, appState.Scene.sortedIndices32Size);
+				sortedIndices32->Map(appState);
+				VkDeviceSize offset = 0;
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfaces.sorted, appState.Scene.surfaces.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesColoredLights.sorted, appState.Scene.surfacesColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBA.sorted, appState.Scene.surfacesRGBA.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBAColoredLights.sorted, appState.Scene.surfacesRGBAColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBANoGlow.sorted, appState.Scene.surfacesRGBANoGlow.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRGBANoGlowColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotated.sorted, appState.Scene.surfacesRotated.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedColoredLights.sorted, appState.Scene.surfacesRotatedColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedRGBA.sorted, appState.Scene.surfacesRotatedRGBA.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedRGBAColoredLights.sorted, appState.Scene.surfacesRotatedRGBAColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedRGBANoGlow.sorted, appState.Scene.surfacesRotatedRGBANoGlow.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.surfacesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.surfacesRotatedRGBANoGlowColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fences.sorted, appState.Scene.fences.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesColoredLights.sorted, appState.Scene.fencesColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRGBA.sorted, appState.Scene.fencesRGBA.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRGBAColoredLights.sorted, appState.Scene.fencesRGBAColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRGBANoGlow.sorted, appState.Scene.fencesRGBANoGlow.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRGBANoGlowColoredLights.sorted, appState.Scene.fencesRGBANoGlowColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotated.sorted, appState.Scene.fencesRotated.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedColoredLights.sorted, appState.Scene.fencesRotatedColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedRGBA.sorted, appState.Scene.fencesRotatedRGBA.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedRGBAColoredLights.sorted, appState.Scene.fencesRotatedRGBAColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedRGBANoGlow.sorted, appState.Scene.fencesRotatedRGBANoGlow.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.fencesRotatedRGBANoGlowColoredLights.sorted, appState.Scene.fencesRotatedRGBANoGlowColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulent.sorted, appState.Scene.turbulent.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRGBA.sorted, appState.Scene.turbulentRGBA.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentLit.sorted, appState.Scene.turbulentLit.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentColoredLights.sorted, appState.Scene.turbulentColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRGBALit.sorted, appState.Scene.turbulentRGBALit.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRGBAColoredLights.sorted, appState.Scene.turbulentRGBAColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotated.sorted, appState.Scene.turbulentRotated.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBA.sorted, appState.Scene.turbulentRotatedRGBA.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedLit.sorted, appState.Scene.turbulentRotatedLit.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedColoredLights.sorted, appState.Scene.turbulentRotatedColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBALit.sorted, appState.Scene.turbulentRotatedRGBALit.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.turbulentRotatedRGBAColoredLights.sorted, appState.Scene.turbulentRotatedRGBAColoredLights.loaded, sortedIndices32, offset);
+				offset = SortedSurfaces::LoadIndices32(appState.Scene.sprites.sorted, appState.Scene.sprites.loaded, sortedIndices32, offset);
+				sortedIndices32->UnmapAndFlush(appState);
+			}
 		}
 	}
 }

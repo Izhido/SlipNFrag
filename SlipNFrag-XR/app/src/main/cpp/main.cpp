@@ -1367,6 +1367,8 @@ void android_main(struct android_app* app)
 
 		appState.ActiveHands.resize(2);
 
+		uint32_t previousSwapchainImageIndex = std::numeric_limits<uint32_t>::max();
+
 		const char* basedir = "/sdcard/android/data/com.heribertodelgado.slipnfrag_xr/files";
 
 		auto sessionState = XR_SESSION_STATE_UNKNOWN;
@@ -1788,10 +1790,6 @@ void android_main(struct android_app* app)
 			if (depthSwapchain != VK_NULL_HANDLE)
 			{
 				CHECK_XRCMD(xrAcquireSwapchainImage(depthSwapchain, nullptr, &depthSwapchainImageIndex));
-				if (depthSwapchainImageIndex != swapchainImageIndex)
-				{
-					appState.Logger->Warn("Image indices for swapchain and depth swapchain do not match: %i vs %i", swapchainImageIndex, depthSwapchainImageIndex);
-				}
 			}
 
 			auto& perFrame = appState.PerFrame[swapchainImageIndex];
@@ -2054,7 +2052,7 @@ void android_main(struct android_app* app)
 						perFrame.LoadStagingBuffer(appState, stagingBuffer);
 						stagingBuffer->UnmapAndFlush(appState);
 
-						perFrame.LoadNonStagedResources(appState);
+						perFrame.LoadNonStagedResources(appState, swapchainImageIndex, previousSwapchainImageIndex);
 					}
 
 					if (perFrame.commandBuffer == VK_NULL_HANDLE)
@@ -2182,14 +2180,15 @@ void android_main(struct android_app* app)
 
 					layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&worldLayer));
 
-					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.swapchain, nullptr, &swapchainImageIndex));
+					uint32_t screenSwapchainImageIndex;
+					CHECK_XRCMD(xrAcquireSwapchainImage(appState.Screen.swapchain, nullptr, &screenSwapchainImageIndex));
 					CHECK_XRCMD(xrWaitSwapchainImage(appState.Screen.swapchain, &waitInfo));
 
-					auto& screenPerFrame = appState.Screen.perFrame[swapchainImageIndex];
+					auto& screenPerFrame = appState.Screen.perFrame[screenSwapchainImageIndex];
 
 					if (screenPerFrame.image == VK_NULL_HANDLE)
 					{
-						screenPerFrame.image = appState.Screen.swapchainImages[swapchainImageIndex].image;
+						screenPerFrame.image = appState.Screen.swapchainImages[screenSwapchainImageIndex].image;
 					}
 
 					if (screenPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
@@ -2208,7 +2207,7 @@ void android_main(struct android_app* app)
 
 					if (appState.Mode == AppWorldMode && key_dest == key_game)
 					{
-						auto& consoleTexture = appState.ConsoleTextures[swapchainImageIndex];
+						auto& consoleTexture = appState.ConsoleTextures[screenSwapchainImageIndex];
 
 						VkImageMemoryBarrier imageMemoryBarrier { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
 						imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -2237,7 +2236,7 @@ void android_main(struct android_app* app)
 						imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 						vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
-						auto& statusBarTexture = appState.StatusBarTextures[swapchainImageIndex];
+						auto& statusBarTexture = appState.StatusBarTextures[screenSwapchainImageIndex];
 						if (statusBarTexture.filled)
 						{
 							imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
@@ -2386,14 +2385,15 @@ void android_main(struct android_app* app)
 
 					if (appState.Keyboard.Draw(appState))
 					{
-						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.swapchain, nullptr, &swapchainImageIndex));
+						uint32_t keyboardSwapchainImageIndex;
+						CHECK_XRCMD(xrAcquireSwapchainImage(appState.Keyboard.Screen.swapchain, nullptr, &keyboardSwapchainImageIndex));
 						CHECK_XRCMD(xrWaitSwapchainImage(appState.Keyboard.Screen.swapchain, &waitInfo));
 
-						auto& keyboardPerFrame = appState.Keyboard.Screen.perFrame[swapchainImageIndex];
+						auto& keyboardPerFrame = appState.Keyboard.Screen.perFrame[keyboardSwapchainImageIndex];
 
 						if (keyboardPerFrame.image == VK_NULL_HANDLE)
 						{
-							keyboardPerFrame.image = appState.Keyboard.Screen.swapchainImages[swapchainImageIndex].image;
+							keyboardPerFrame.image = appState.Keyboard.Screen.swapchainImages[keyboardSwapchainImageIndex].image;
 						}
 
 						if (keyboardPerFrame.stagingBuffer.buffer == VK_NULL_HANDLE)
@@ -2401,20 +2401,20 @@ void android_main(struct android_app* app)
 							keyboardPerFrame.stagingBuffer.CreateStagingBuffer(appState, appState.ConsoleWidth * appState.ConsoleHeight / 2 * sizeof(uint32_t));
 						}
 
-						auto& keyboardTexture = appState.KeyboardTextures[swapchainImageIndex];
+						auto& keyboardTexture = appState.KeyboardTextures[keyboardSwapchainImageIndex];
 						if (keyboardTexture.image == VK_NULL_HANDLE)
 						{
 							keyboardTexture.Create(appState, appState.ConsoleWidth, appState.ConsoleHeight / 2, Constants::colorFormat, 1, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, false);
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-							while (appState.KeyboardTextureNames.size() <= swapchainImageIndex)
+							while (appState.KeyboardTextureNames.size() <= keyboardSwapchainImageIndex)
 							{
 								appState.KeyboardTextureNames.push_back("");
 							}
-							appState.KeyboardTextureNames[swapchainImageIndex] = "Keyboard texture " + std::to_string(swapchainImageIndex);
+							appState.KeyboardTextureNames[keyboardSwapchainImageIndex] = "Keyboard texture " + std::to_string(keyboardSwapchainImageIndex);
 							VkDebugUtilsObjectNameInfoEXT textureName { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
 							textureName.objectType = VK_OBJECT_TYPE_IMAGE;
 							textureName.objectHandle = (uint64_t)keyboardTexture.image;
-							textureName.pObjectName = appState.KeyboardTextureNames[swapchainImageIndex].c_str();
+							textureName.pObjectName = appState.KeyboardTextureNames[keyboardSwapchainImageIndex].c_str();
 							CHECK_VKCMD(appState.vkSetDebugUtilsObjectNameEXT(appState.Device, &textureName));
 #endif
 						}
@@ -2697,6 +2697,10 @@ void android_main(struct android_app* app)
 
 						layers.insert(layers.begin(), reinterpret_cast<XrCompositionLayerBaseHeader*>(&skyboxLayer));
 					}
+
+					appState.Scene.frameCountFromEngine = appState.FromEngine.rframecount;
+
+					previousSwapchainImageIndex = swapchainImageIndex;
 				}
 			}
 
@@ -2737,8 +2741,6 @@ void android_main(struct android_app* app)
 			frameEndInfo.layers = layers.data();
 
 			CHECK_XRCMD(xrEndFrame(appState.Session, &frameEndInfo));
-
-			appState.Scene.frameCountFromEngine = appState.FromEngine.rframecount;
 		}
 
 		if (appState.EngineThread.joinable())

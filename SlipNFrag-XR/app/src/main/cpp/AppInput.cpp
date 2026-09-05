@@ -547,11 +547,29 @@ void AppInput::Handle(AppState_xr& appState, bool keyPressHandled, const char* b
 			}
 			if (enterDown)
 			{
-				AddKeyInput(K_ENTER, true);
+				if (key_dest == key_menu)
+				{
+					AddKeyInput(K_ENTER, true);
+					appState.EnterInsideMenu = true;
+				}
+				else
+				{
+					AddCommandInput("+attack");
+					appState.EnterOutsideMenu = true;
+				}
 			}
 			if (enterUp)
 			{
-				AddKeyInput(K_ENTER, false);
+				if (appState.EnterInsideMenu)
+				{
+					AddKeyInput(K_ENTER, false);
+					appState.EnterInsideMenu = false;
+				}
+				if (appState.EnterOutsideMenu)
+				{
+					AddCommandInput("-attack");
+					appState.EnterOutsideMenu = false;
+				}
 			}
 			// The following actions are performed only to reset any in-game actions
 			// after a transition occurs - this is why only currentState == false is checked:

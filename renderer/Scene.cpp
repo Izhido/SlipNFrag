@@ -2002,11 +2002,12 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			chain.current = &loaded;
 		}
 	}
-	else if (perSurface.lightadj[0] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
+	else if (appState.Scene.frameCountFromEngine != appState.FromEngine.rframecount &&
+	         (perSurface.lightadj[0] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
 	         perSurface.lightadj[1] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
 	         perSurface.lightadj[2] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
 	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
-	         ((msurface_t*)surface.face)->dlightframe == appState.FromEngine.rframecount || perSurface.dlight)
+	         ((msurface_t*)surface.face)->dlightframe == appState.FromEngine.rframecount || perSurface.dlight))
 	{
 		lightmapPool.Dispose(perSurface.lightmap);
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;
@@ -2083,11 +2084,12 @@ void Scene::GetStagingBufferSize(AppState& appState, const dsurface_t& surface, 
 			chain.current = &loaded;
 		}
     }
-	else if (perSurface.lightadj[0] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
+	else if (appState.Scene.frameCountFromEngine != appState.FromEngine.rframecount &&
+	         (perSurface.lightadj[0] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[0]] ||
 	         perSurface.lightadj[1] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[1]] ||
 	         perSurface.lightadj[2] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[2]] ||
 	         perSurface.lightadj[3] != d_lists.dlightstylevalues[((msurface_t*)surface.face)->styles[3]] ||
-	         ((msurface_t*)surface.face)->dlightframe == appState.FromEngine.rframecount || perSurface.dlight)
+	         ((msurface_t*)surface.face)->dlightframe == appState.FromEngine.rframecount || perSurface.dlight))
 	{
 		lightmapRGBPool.Dispose(perSurface.lightmapRGB);
 		auto width = (((msurface_t*)surface.face)->extents[0]>>4)+1;

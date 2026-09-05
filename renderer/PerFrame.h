@@ -89,7 +89,7 @@ struct PerFrame
 	static float GammaCorrect(float component);
 	static void GenerateMipmaps(Buffer* stagingBuffer, VkDeviceSize offset, struct LoadedSharedMemoryTexture* loadedTexture, std::vector<unsigned char>& pixdata);
 	void LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer);
-	void LoadNonStagedResources(AppState& appState);
+	void LoadNonStagedResources(AppState& appState, uint32_t swapchainImageIndex, uint32_t previousSwapchainImageIndex);
 	void FillAliasFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, struct LoadedIndexBuffer* first, VkBufferCopy& bufferCopy, Buffer*& previousBuffer) const;
 	void FillFromStagingBuffer(AppState& appState, Buffer* stagingBuffer, uint32_t swapchainImageIndex);
 	void Reset(AppState& appState);
