@@ -500,6 +500,7 @@ void android_main(struct android_app* app)
 #endif
 
 		auto maintenance4 = false;
+		auto maintenance5 = false;
 		auto bufferDeviceAddress = false;
 		auto createRenderPass2 = false;
 		auto depthStencilResolve = false;
@@ -629,6 +630,11 @@ void android_main(struct android_app* app)
 				{
 					maintenance4 = true;
 					enabledExtensions.push_back(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_MAINTENANCE_5_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					maintenance5 = true;
+					enabledExtensions.push_back(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
 				}
 				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
@@ -1356,6 +1362,7 @@ void android_main(struct android_app* app)
 
 		VmaAllocatorCreateInfo allocatorCreateInfo { };
 		if (maintenance4) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT;
+		if (maintenance5) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE5_BIT;
 		if (bufferDeviceAddress) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 		allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_1;
 		allocatorCreateInfo.physicalDevice = vulkanPhysicalDevice;
