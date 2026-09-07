@@ -499,10 +499,14 @@ void android_main(struct android_app* app)
 		}
 #endif
 
+		auto vulkanApiVersion = VK_MAKE_API_VERSION(0, 1, 1, 0);
+
 		auto maintenance4 = false;
+		auto maintenance5 = false;
 		auto bufferDeviceAddress = false;
 		auto createRenderPass2 = false;
 		auto depthStencilResolve = false;
+		auto dynamicRendering = false;
 		VkResolveModeFlagBits depthResolveMode = VK_RESOLVE_MODE_NONE;
 #if !defined(NDEBUG)
 		auto pipelineExecutableProperties = false;
@@ -520,7 +524,7 @@ void android_main(struct android_app* app)
 			appInfo.applicationVersion = 1;
 			appInfo.pEngineName = "slipnfrag_xr";
 			appInfo.engineVersion = 1;
-			appInfo.apiVersion = VK_MAKE_API_VERSION(0, 1, 1, 0);
+			appInfo.apiVersion = vulkanApiVersion;
 
 			VkInstanceCreateInfo instInfo { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
 			instInfo.pApplicationInfo = &appInfo;
@@ -619,6 +623,10 @@ void android_main(struct android_app* app)
 			auto shaderTerminateInvocation = false;
 			std::vector<const char*> enabledExtensions;
 
+			auto depthStencilResolveAvailable = false;
+			auto dynamicRenderingAvailable = false;
+			auto maintenance5Available = false;
+
 			const std::string indentStr(4, ' ');
 			appState.Logger->Verbose("%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
 			for (uint32_t i = 0; i < availableExtensionCount; ++i)
@@ -629,6 +637,10 @@ void android_main(struct android_app* app)
 				{
 					maintenance4 = true;
 					enabledExtensions.push_back(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
+				}
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_MAINTENANCE_5_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					maintenance5Available = true;
 				}
 				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
@@ -657,8 +669,7 @@ void android_main(struct android_app* app)
 				}
 				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
 				{
-					depthStencilResolve = true;
-					enabledExtensions.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
+					depthStencilResolveAvailable = true;
 				}
 #if !defined(NDEBUG)
 				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
@@ -667,6 +678,29 @@ void android_main(struct android_app* app)
 					enabledExtensions.push_back(VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME);
 				}
 #endif
+				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				{
+					dynamicRenderingAvailable = true;
+				}
+			}
+
+			if (createRenderPass2)
+			{
+				if (depthStencilResolveAvailable)
+				{
+					depthStencilResolve = true;
+					enabledExtensions.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
+					if (dynamicRenderingAvailable)
+					{
+						dynamicRendering = true;
+						enabledExtensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+						if (maintenance5Available)
+						{
+							maintenance5 = true;
+							enabledExtensions.push_back(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
+						}
+					}
+				}
 			}
 
 			VkDeviceCreateInfo deviceInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
@@ -722,6 +756,30 @@ void android_main(struct android_app* app)
 			{
 				bufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
 				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&bufferDeviceAddressFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeatures { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR };
+			if (dynamicRendering)
+			{
+				dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&dynamicRenderingFeatures;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES_KHR };
+			if (maintenance4)
+			{
+				maintenance4Features.maintenance4 = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&maintenance4Features;
+				chain = (void*)((VkBaseInStructure*)chain)->pNext;
+			}
+
+			VkPhysicalDeviceMaintenance5FeaturesKHR maintenance5Features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES_KHR };
+			if (maintenance5)
+			{
+				maintenance5Features.maintenance5 = VK_TRUE;
+				((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&maintenance5Features;
 				chain = (void*)((VkBaseInStructure*)chain)->pNext;
 			}
 
@@ -1351,8 +1409,9 @@ void android_main(struct android_app* app)
 
 		VmaAllocatorCreateInfo allocatorCreateInfo { };
 		if (maintenance4) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT;
+		if (maintenance5) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE5_BIT;
 		if (bufferDeviceAddress) allocatorCreateInfo.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
-		allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_1;
+		allocatorCreateInfo.vulkanApiVersion = vulkanApiVersion;
 		allocatorCreateInfo.physicalDevice = vulkanPhysicalDevice;
 		allocatorCreateInfo.device = appState.Device;
 		allocatorCreateInfo.instance = vulkanInstance;
