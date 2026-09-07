@@ -503,7 +503,7 @@ void Sys_Terminate()
 	pr_strings = nullptr;
 	pr_functions = nullptr;
 	progs = nullptr;
-	D_ResetLists();
+	D_ClearLists();
 	if (fakedma)
 	{
 		delete shm;

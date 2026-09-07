@@ -87,6 +87,77 @@ void D_ResetLists ()
 	d_lists.clear_color = -1;
 }
 
+void D_ClearLists ()
+{
+	D_ResetLists ();
+	std::vector<dsurface_t>().swap(d_lists.surfaces);
+	std::vector<dsurface_t>().swap(d_lists.surfaces_colored_lights);
+	std::vector<dsurfacewithglow_t>().swap(d_lists.surfaces_rgba);
+	std::vector<dsurfacewithglow_t>().swap(d_lists.surfaces_rgba_colored_lights);
+	std::vector<dsurface_t>().swap(d_lists.surfaces_rgba_no_glow);
+	std::vector<dsurface_t>().swap(d_lists.surfaces_rgba_no_glow_colored_lights);
+	std::vector<dsurfacerotated_t>().swap(d_lists.surfaces_rotated);
+	std::vector<dsurfacerotated_t>().swap(d_lists.surfaces_rotated_colored_lights);
+	std::vector<dsurfacerotatedwithglow_t>().swap(d_lists.surfaces_rotated_rgba);
+	std::vector<dsurfacerotatedwithglow_t>().swap(d_lists.surfaces_rotated_rgba_colored_lights);
+	std::vector<dsurfacerotated_t>().swap(d_lists.surfaces_rotated_rgba_no_glow);
+	std::vector<dsurfacerotated_t>().swap(d_lists.surfaces_rotated_rgba_no_glow_colored_lights);
+	std::vector<dsurface_t>().swap(d_lists.fences);
+	std::vector<dsurface_t>().swap(d_lists.fences_colored_lights);
+	std::vector<dsurfacewithglow_t>().swap(d_lists.fences_rgba);
+	std::vector<dsurfacewithglow_t>().swap(d_lists.fences_rgba_colored_lights);
+	std::vector<dsurface_t>().swap(d_lists.fences_rgba_no_glow);
+	std::vector<dsurface_t>().swap(d_lists.fences_rgba_no_glow_colored_lights);
+	std::vector<dsurfacerotated_t>().swap(d_lists.fences_rotated);
+	std::vector<dsurfacerotated_t>().swap(d_lists.fences_rotated_colored_lights);
+	std::vector<dsurfacerotatedwithglow_t>().swap(d_lists.fences_rotated_rgba);
+	std::vector<dsurfacerotatedwithglow_t>().swap(d_lists.fences_rotated_rgba_colored_lights);
+	std::vector<dsurfacerotated_t>().swap(d_lists.fences_rotated_rgba_no_glow);
+	std::vector<dsurfacerotated_t>().swap(d_lists.fences_rotated_rgba_no_glow_colored_lights);
+	std::vector<dturbulent_t>().swap(d_lists.turbulent);
+	std::vector<dturbulent_t>().swap(d_lists.turbulent_rgba);
+	std::vector<dsurface_t>().swap(d_lists.turbulent_lit);
+	std::vector<dsurface_t>().swap(d_lists.turbulent_colored_lights);
+	std::vector<dsurface_t>().swap(d_lists.turbulent_rgba_lit);
+	std::vector<dsurface_t>().swap(d_lists.turbulent_rgba_colored_lights);
+	std::vector<dturbulentrotated_t>().swap(d_lists.turbulent_rotated);
+	std::vector<dturbulentrotated_t>().swap(d_lists.turbulent_rotated_rgba);
+	std::vector<dsurfacerotated_t>().swap(d_lists.turbulent_rotated_lit);
+	std::vector<dsurfacerotated_t>().swap(d_lists.turbulent_rotated_colored_lights);
+	std::vector<dsurfacerotated_t>().swap(d_lists.turbulent_rotated_rgba_lit);
+	std::vector<dsurfacerotated_t>().swap(d_lists.turbulent_rotated_rgba_colored_lights);
+	std::vector<dspritedata_t>().swap(d_lists.sprites);
+	std::vector<dalias_t>().swap(d_lists.alias);
+	std::vector<dalias_t>().swap(d_lists.alias_alpha);
+	std::vector<daliascoloredlights_t>().swap(d_lists.alias_colored_lights);
+	std::vector<daliascoloredlights_t>().swap(d_lists.alias_alpha_colored_lights);
+	std::vector<dalias_t>().swap(d_lists.alias_holey);
+	std::vector<dalias_t>().swap(d_lists.alias_holey_alpha);
+	std::vector<daliascoloredlights_t>().swap(d_lists.alias_holey_colored_lights);
+	std::vector<daliascoloredlights_t>().swap(d_lists.alias_holey_alpha_colored_lights);
+	std::vector<dviewmodel_t>().swap(d_lists.viewmodels);
+	std::vector<dviewmodelcoloredlights_t>().swap(d_lists.viewmodels_colored_lights);
+	std::vector<dviewmodel_t>().swap(d_lists.viewmodels_holey);
+	std::vector<dviewmodelcoloredlights_t>().swap(d_lists.viewmodels_holey_colored_lights);
+	std::vector<dsky_t>().swap(d_lists.sky);
+	std::vector<dsky_t>().swap(d_lists.sky_rgba);
+    std::vector<dskybox_t>().swap(d_lists.skyboxes);
+	std::vector<float>().swap(d_lists.textured_vertices);
+	std::vector<float>().swap(d_lists.textured_attributes);
+	std::vector<float>().swap(d_lists.alias_lights);
+	std::vector<float>().swap(d_lists.particles);
+	std::vector<float>().swap(d_lists.colored_vertices);
+	std::vector<float>().swap(d_lists.colored_colors);
+	std::vector<unsigned char>().swap(d_lists.colored_indices8);
+	std::vector<uint16_t>().swap(d_lists.colored_indices16);
+	std::vector<uint32_t>().swap(d_lists.colored_indices32);
+	std::vector<float>().swap(d_lists.cutout_vertices);
+	std::vector<unsigned char>().swap(d_lists.cutout_indices8);
+	std::vector<uint16_t>().swap(d_lists.cutout_indices16);
+	std::vector<uint32_t>().swap(d_lists.cutout_indices32);
+	std::vector<ddynamiclight_t>().swap(d_lists.dynamic_lights);
+}
+
 void D_FillSurfaceSize(dturbulent_t& turbulent, int component_size, int mips)
 {
 	auto size = turbulent.width * turbulent.height * component_size;

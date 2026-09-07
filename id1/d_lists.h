@@ -296,6 +296,7 @@ extern dlists_t d_lists;
 extern qboolean d_uselists;
 
 void D_ResetLists ();
+void D_ClearLists ();
 void D_AddSurfaceToLists (msurface_t* face, texture_t* texture, entity_t* entity);
 void D_AddSurfaceColoredLightsToLists (msurface_t* face, texture_t* texture, entity_t* entity);
 void D_AddSurfaceRGBAToLists (msurface_t* face, texture_t* texture, entity_t* entity);

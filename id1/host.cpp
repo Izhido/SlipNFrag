@@ -535,7 +535,7 @@ void Host_ClearMemory (void)
 	Sys_BeginClearMemory();
 
 	Con_DPrintf ("Clearing memory\n");
-	D_ResetLists ();
+	D_ClearLists ();
 	D_FlushCaches ();
 	Mod_ClearAll ();
 	r_skies.clear ();

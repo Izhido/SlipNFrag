@@ -749,7 +749,7 @@ void R_DrawViewModel (void)
 		return;
 
 	currententity = &cl.viewent;
-	if (!currententity->model)
+	if (!currententity->model || !currententity->model->extradata)
 		return;
 
 	VectorCopy (currententity->origin, r_entorigin);
