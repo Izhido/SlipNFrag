@@ -442,16 +442,22 @@ Writes a SAVEGAME_COMMENT_LENGTH character comment describing the current
 void Host_SavegameComment (char *text)
 {
 	int		i;
-	char	kills[SAVEGAME_COMMENT_LENGTH-22];
+	char	kills[20];
 
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
 		text[i] = ' ';
-	snprintf (text, SAVEGAME_COMMENT_LENGTH, "%s", cl.levelname);
-	snprintf (kills,SAVEGAME_COMMENT_LENGTH-22,"kills:%3i/%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
-	memcpy (text+22, kills, strlen(kills));
+	memcpy (text, cl.levelname, std::min((int)strlen(cl.levelname), SAVEGAME_COMMENT_LENGTH));
+	auto monsters = cl.stats[STAT_MONSTERS];
+	auto totalmonsters = cl.stats[STAT_TOTALMONSTERS];
+	auto largest = std::max(std::max(monsters, totalmonsters), 1);
+	auto size = std::max((int)std::floor(std::log10(largest))+1, 3);
+	char format[20];
+	snprintf (format,sizeof(format),"kills:%%%ii/%%%ii", size, size);
+	snprintf (kills,sizeof(kills),format, monsters, totalmonsters);
+	memcpy (text+22, kills, std::min((int)strlen(kills), 17));
 // convert space to _ to make stdio happy
 	for (i=0 ; i<SAVEGAME_COMMENT_LENGTH ; i++)
-		if (text[i] <= ' ')
+		if (text[i] == ' ')
 			text[i] = '_';
 	text[SAVEGAME_COMMENT_LENGTH] = '\0';
 }
@@ -564,7 +570,6 @@ void Host_Loadgame_f (void)
 	int	f;
 	char	mapname[MAX_QPATH];
 	float	time, tfloat;
-	char	str[32768];
 	const char *start;
 	int		i;
 	edict_t	*ent;
@@ -621,9 +626,6 @@ void Host_Loadgame_f (void)
 		to_read.push_back(onechar);
 		len = Sys_FileRead (f, &onechar, 1);
 	}
-	len = std::min((int)to_read.length(), 32767);
-	Q_memcpy(str, to_read.c_str(), len);
-	str[len] = 0;
 	for (i=0 ; i<NUM_SPAWN_PARMS ; i++)
 	{
 		to_read.clear();
