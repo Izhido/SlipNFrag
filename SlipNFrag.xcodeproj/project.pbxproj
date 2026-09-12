@@ -1636,6 +1636,7 @@
 					"$(inherited)",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.11.0/include";
 				INFOPLIST_FILE = "SlipNFrag-VisionOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slip & Frag";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
@@ -1679,6 +1680,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_PREPROCESSOR_DEFINITIONS = "USE_LONGJMP=1";
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.11.0/include";
 				INFOPLIST_FILE = "SlipNFrag-VisionOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slip & Frag";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
@@ -1723,7 +1725,7 @@
 					"USE_CUSTOM_HASHMAP_INCLUDE=<ankerl/unordered_dense.h>",
 					"USE_CUSTOM_HASHMAP=ankerl::unordered_dense::map",
 				);
-				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.8.1/include";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.11.0/include";
 				INFOPLIST_FILE = "SlipNFrag-MacOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slip & Frag";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
@@ -1761,7 +1763,7 @@
 					"USE_CUSTOM_HASHMAP_INCLUDE=<ankerl/unordered_dense.h>",
 					"USE_CUSTOM_HASHMAP=ankerl::unordered_dense::map",
 				);
-				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.8.1/include";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.11.0/include";
 				INFOPLIST_FILE = "SlipNFrag-MacOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slip & Frag";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
@@ -1787,6 +1789,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 35;
 				DEVELOPMENT_TEAM = "";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.11.0/include";
 				INFOPLIST_FILE = "SlipNFrag-iOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slip & Frag";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.7;
@@ -1812,6 +1815,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 35;
 				DEVELOPMENT_TEAM = "";
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.11.0/include";
 				INFOPLIST_FILE = "SlipNFrag-iOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Slip & Frag";
 				IPHONEOS_DEPLOYMENT_TARGET = 13.7;
@@ -1955,6 +1959,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = EZ7GK5VS2K;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.11.0/include";
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1967,6 +1972,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = EZ7GK5VS2K;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/unordered_dense-4.11.0/include";
 				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};

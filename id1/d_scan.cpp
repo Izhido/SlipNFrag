@@ -497,7 +497,7 @@ void D_DrawTurbulentColoredLitAlpha8Span (void)
 				if (rcomp > 255) rcomp = 255;
 				if (gcomp > 255) gcomp = 255;
 				if (bcomp > 255) bcomp = 255;
-				*r_turb_pdest++ = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
+				*r_turb_pdest = r_24to8tableptr[(rcomp << 16) | (gcomp << 8) | bcomp];
 			}
 		}
 
