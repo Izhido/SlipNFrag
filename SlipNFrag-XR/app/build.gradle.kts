@@ -4,7 +4,11 @@ plugins {
 
 android {
     namespace = "com.heribertodelgado.slipnfrag_xr"
+
     compileSdk = 37
+    compileSdkMinor = 2
+    ndkVersion = "30.0.16248370"
+    buildToolsVersion = "37.0.0"
 
     defaultConfig {
         applicationId = "com.heribertodelgado.slipnfrag_xr"
@@ -61,8 +65,6 @@ android {
             }
         }
     }
-    ndkVersion = "29.0.14206865"
-    buildToolsVersion = "37.0.0"
 }
 
 dependencies {

@@ -2856,7 +2856,7 @@ void Scene::GetStagingBufferSizeAlias(AppState& appState, const daliascoloredlig
             usedInLatestIndexBuffer8 += loaded.indices.size;
             size += loaded.indices.size;
             loaded.indices.source = alias.aliashdr;
-            loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_EXT;
+            loaded.indices.indices.indexType = VK_INDEX_TYPE_UINT8_KHR;
             loaded.indices.indices.firstIndex = loaded.indices.indices.offset;
             indexBuffers.ChainToAliasIndices8(loaded.indices);
         }

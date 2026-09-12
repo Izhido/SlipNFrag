@@ -513,11 +513,34 @@ void android_main(struct android_app* app)
 #endif
 		uint32_t vulkanSwapchainSampleCount;
 		{
-			std::vector<const char*> vulkanExtensions;
+			uint32_t availableInstanceExtensionCount = 0;
+			vkEnumerateInstanceExtensionProperties(nullptr, &availableInstanceExtensionCount, nullptr);
 
+			std::vector<VkExtensionProperties> availableInstanceExtensions(availableInstanceExtensionCount);
+			vkEnumerateInstanceExtensionProperties(nullptr, &availableInstanceExtensionCount, availableInstanceExtensions.data());
+
+			std::vector<const char*> enabledInstanceExtensions;
+
+			appState.Logger->Verbose("Available Vulkan Instance Extensions: (%d)", availableInstanceExtensionCount);
+			for (uint32_t i = 0; i < availableInstanceExtensionCount; ++i)
+			{
+				appState.Logger->Verbose("  Name=%s SpecVersion=%d", availableInstanceExtensions[i].extensionName, availableInstanceExtensions[i].specVersion);
+
+				if (strncmp(availableInstanceExtensions[i].extensionName, VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME, sizeof(availableInstanceExtensions[i].extensionName)) == 0)
+				{
+					enabledInstanceExtensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+				}
 #if !defined(NDEBUG) || defined(ENABLE_DEBUG_UTILS)
-			vulkanExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+				else if (strncmp(availableInstanceExtensions[i].extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME, sizeof(availableInstanceExtensions[i].extensionName)) == 0)
+				{
+					enabledInstanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+				}
+				else if (strncmp(availableInstanceExtensions[i].extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME, sizeof(availableInstanceExtensions[i].extensionName)) == 0)
+				{
+					enabledInstanceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+				}
 #endif
+			}
 
 			VkApplicationInfo appInfo { VK_STRUCTURE_TYPE_APPLICATION_INFO };
 			appInfo.pApplicationName = "slipnfrag_xr";
@@ -530,8 +553,8 @@ void android_main(struct android_app* app)
 			instInfo.pApplicationInfo = &appInfo;
 			instInfo.enabledLayerCount = (uint32_t)instanceLayerNames.size();
 			instInfo.ppEnabledLayerNames = (instanceLayerNames.empty() ? nullptr : instanceLayerNames.data());
-			instInfo.enabledExtensionCount = (uint32_t)vulkanExtensions.size();
-			instInfo.ppEnabledExtensionNames = (vulkanExtensions.empty() ? nullptr : vulkanExtensions.data());
+			instInfo.enabledExtensionCount = (uint32_t)enabledInstanceExtensions.size();
+			instInfo.ppEnabledExtensionNames = (enabledInstanceExtensions.empty() ? nullptr : enabledInstanceExtensions.data());
 
 #if !defined(NDEBUG)
 			VkBool32 vvlValidateSync = VK_TRUE;
@@ -613,72 +636,72 @@ void android_main(struct android_app* app)
 
 			auto vkEnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)vkGetInstanceProcAddr(vulkanInstance, "vkEnumerateDeviceExtensionProperties");
 
-			uint32_t availableExtensionCount = 0;
-			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, nullptr);
+			uint32_t availableDeviceExtensionCount = 0;
+			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableDeviceExtensionCount, nullptr);
 
-			std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
-			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableExtensionCount, availableExtensions.data());
+			std::vector<VkExtensionProperties> availableDeviceExtensions(availableDeviceExtensionCount);
+			vkEnumerateDeviceExtensionProperties(vulkanPhysicalDevice, nullptr, &availableDeviceExtensionCount, availableDeviceExtensions.data());
 
 			auto shaderDemoteToHelperInvocation = false;
 			auto shaderTerminateInvocation = false;
-			std::vector<const char*> enabledExtensions;
+			std::vector<const char*> enabledDeviceExtensions;
 
 			auto depthStencilResolveAvailable = false;
 			auto dynamicRenderingAvailable = false;
 			auto maintenance5Available = false;
 
 			const std::string indentStr(4, ' ');
-			appState.Logger->Verbose("%sAvailable Vulkan Extensions: (%d)", indentStr.c_str(), availableExtensionCount);
-			for (uint32_t i = 0; i < availableExtensionCount; ++i)
+			appState.Logger->Verbose("%sAvailable Vulkan Device Extensions: (%d)", indentStr.c_str(), availableDeviceExtensionCount);
+			for (uint32_t i = 0; i < availableDeviceExtensionCount; ++i)
 			{
-				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableExtensions[i].extensionName, availableExtensions[i].specVersion);
+				appState.Logger->Verbose("%s  Name=%s SpecVersion=%d", indentStr.c_str(), availableDeviceExtensions[i].extensionName, availableDeviceExtensions[i].specVersion);
 
-				if (strncmp(availableExtensions[i].extensionName, VK_KHR_MAINTENANCE_4_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_MAINTENANCE_4_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					maintenance4 = true;
-					enabledExtensions.push_back(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
+					enabledDeviceExtensions.push_back(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
 				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_MAINTENANCE_5_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_MAINTENANCE_5_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					maintenance5Available = true;
 				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					bufferDeviceAddress = true;
-					enabledExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+					enabledDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_INDEX_TYPE_UINT8_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					appState.IndexTypeUInt8Enabled = true;
-					enabledExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
+					enabledDeviceExtensions.push_back(VK_KHR_INDEX_TYPE_UINT8_EXTENSION_NAME);
 				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					shaderDemoteToHelperInvocation = true;
-					enabledExtensions.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
+					enabledDeviceExtensions.push_back(VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME);
 				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					shaderTerminateInvocation = true;
-					enabledExtensions.push_back(VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME);
+					enabledDeviceExtensions.push_back(VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME);
 				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					createRenderPass2 = true;
-					enabledExtensions.push_back(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
+					enabledDeviceExtensions.push_back(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 				}
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					depthStencilResolveAvailable = true;
 				}
 #if !defined(NDEBUG)
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					pipelineExecutableProperties = true;
-					enabledExtensions.push_back(VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME);
+					enabledDeviceExtensions.push_back(VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME);
 				}
 #endif
-				else if (strncmp(availableExtensions[i].extensionName, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, sizeof(availableExtensions[i].extensionName)) == 0)
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					dynamicRenderingAvailable = true;
 				}
@@ -689,15 +712,15 @@ void android_main(struct android_app* app)
 				if (depthStencilResolveAvailable)
 				{
 					depthStencilResolve = true;
-					enabledExtensions.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
+					enabledDeviceExtensions.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
 					if (dynamicRenderingAvailable)
 					{
 						dynamicRendering = true;
-						enabledExtensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+						enabledDeviceExtensions.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 						if (maintenance5Available)
 						{
 							maintenance5 = true;
-							enabledExtensions.push_back(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
+							enabledDeviceExtensions.push_back(VK_KHR_MAINTENANCE_5_EXTENSION_NAME);
 						}
 					}
 				}
@@ -706,8 +729,8 @@ void android_main(struct android_app* app)
 			VkDeviceCreateInfo deviceInfo { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
 			deviceInfo.queueCreateInfoCount = 1;
 			deviceInfo.pQueueCreateInfos = &queueInfo;
-			deviceInfo.enabledExtensionCount = (uint32_t)enabledExtensions.size();
-			deviceInfo.ppEnabledExtensionNames = enabledExtensions.data();
+			deviceInfo.enabledExtensionCount = (uint32_t)enabledDeviceExtensions.size();
+			deviceInfo.ppEnabledExtensionNames = enabledDeviceExtensions.data();
 
 			void* chain = &deviceInfo;
 
@@ -727,7 +750,7 @@ void android_main(struct android_app* app)
 			((VkBaseInStructure*)chain)->pNext = (VkBaseInStructure*)&multiviewFeatures;
 			chain = (void*)((VkBaseInStructure*)chain)->pNext;
 
-			VkPhysicalDeviceIndexTypeUint8FeaturesEXT indexTypeUint8Features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT };
+			VkPhysicalDeviceIndexTypeUint8FeaturesKHR indexTypeUint8Features { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_KHR };
 			if (appState.IndexTypeUInt8Enabled)
 			{
 				indexTypeUint8Features.indexTypeUint8 = VK_TRUE;

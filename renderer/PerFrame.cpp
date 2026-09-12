@@ -2161,7 +2161,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			VkDeviceSize size;
 			if (appState.IndexTypeUInt8Enabled)
 			{
-				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, skyboxIndexBase, VK_INDEX_TYPE_UINT8_EXT);
+				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, skyboxIndexBase, VK_INDEX_TYPE_UINT8_KHR);
 				size = appState.Scene.skyboxIndicesSize;
 			}
 			else
@@ -2684,7 +2684,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             {
                 if (appState.Scene.lastColoredIndex8 >= 0)
                 {
-                    vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, coloredIndex8Base, VK_INDEX_TYPE_UINT8_EXT);
+                    vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, coloredIndex8Base, VK_INDEX_TYPE_UINT8_KHR);
                     vkCmdDrawIndexed(commandBuffer, appState.Scene.lastColoredIndex8 + 1, 1, 0, 0, 0);
                 }
                 if (appState.Scene.lastColoredIndex16 >= 0)
@@ -2723,7 +2723,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
             {
                 if (appState.Scene.lastCutoutIndex8 >= 0)
                 {
-                    vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, cutoutIndex8Base, VK_INDEX_TYPE_UINT8_EXT);
+                    vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, cutoutIndex8Base, VK_INDEX_TYPE_UINT8_KHR);
                     vkCmdDrawIndexed(commandBuffer, appState.Scene.lastCutoutIndex8 + 1, 1, 0, 0, 0);
                 }
                 if (appState.Scene.lastCutoutIndex16 >= 0)
@@ -3611,7 +3611,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &appState.NoOffset);
 			if (appState.IndexTypeUInt8Enabled)
 			{
-				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, 0, VK_INDEX_TYPE_UINT8_EXT);
+				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, 0, VK_INDEX_TYPE_UINT8_KHR);
 			}
 			else
 			{
@@ -3646,7 +3646,7 @@ void PerFrame::Render(AppState& appState, uint32_t swapchainImageIndex)
 			vkCmdBindVertexBuffers(commandBuffer, 1, 1, &attributes->buffer, &controllersAttributeBase);
 			if (appState.IndexTypeUInt8Enabled)
 			{
-				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, controllersIndexBase, VK_INDEX_TYPE_UINT8_EXT);
+				vkCmdBindIndexBuffer(commandBuffer, indices8->buffer, controllersIndexBase, VK_INDEX_TYPE_UINT8_KHR);
 			}
 			else
 			{
