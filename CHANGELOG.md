@@ -1,6 +1,14 @@
 # Changelog
 
-## Version **1.1.35**:
+## Version **1.1.36**:
+
+* Applied optimization that allow the XR and PCXR versions to detect whether the current frame being rendered contains the same information as the previous frame, and if detected, skip creating or reprocessing several large buffers, instead reusing them for the current and future frames, which increased effectively the frame rate of both versions, making things way smoother during play.
+* Fixed issue with viewmodels (weapons, player models) that are loaded without proper "extra data" to prevent them from rendering, which caused a crash when playing demos from LibreQuake.
+* Fixed incorrect rendering of turbulent surfaces (water, slime, lava, portals) that are affected by colored lights and may be transparent, which appeared distorted when shown on screen in the desktop versions (Win64, MacOS).
+* Fixed input schema in the XR and PCXR versions to allow the triggers in the controllers to send to the core engine the equivalent of the left mouse button when not displaying the main menu during the intermission screen, to allow players to get out of the intermission screen without having to use the onscreen keyboard - a bug that affected play also in LibreQuake.
+* Other minor updates and optimizations applied as well, and some component updates were applied too.
+
+### Version **1.1.35**:
 
 * Rebuilt lightmap generation code for the XR and PCXR versions - lighting is now calculated in the renderer side, making things faster and preventing unnecessary data transfers between the engine and renderer, increasing performance for medium, large and very large custom maps & mods. Also, static lightmaps vs. dynamic lightmaps are treated differently, using separate stores for them, thus minimizing problems in memory management for those and making the app a bit more stable.
 * Fixed incorrect initialization of hand tracking for the XR version, to avoid a potential crash when hand tracking + controller tracking is available.

@@ -16,7 +16,7 @@ Slip & Frag aims to be two things:
 
 ## What is available
 
-Latest version: **1.1.35** - see [Changelog](CHANGELOG.md) for details.
+Latest version: **1.1.36** - see [Changelog](CHANGELOG.md) for details.
 
 Releases are available [here](https://github.com/Izhido/SlipNFrag/releases/latest). They are:
 
@@ -39,13 +39,13 @@ First (and most important) of all, you need Quake, the game, installed in your c
 
 Quake can be purchased from several venues (Steam, GOG, marketplaces within Amazon, and many others). There is also a shareware version of the game, hosted on many sites, which can be used to play the game with Slip & Frag, if desired.
 
-*IMPORTANT*: Slip & Frag does not currently support the .pak files from the Quake re-release, issued for the 25th anniversary of the game. The original .pak files, however, can still be found in the folder where the new game is installed.
+*IMPORTANT*: Slip & Frag does not currently support the .pak files from the Quake re-releases, issued for both the 25th and 30th anniversary of the game. The original .pak files, however, can still be found in the folder where the new games are installed.
 
 For the **XR** release, you'll need a Meta Quest device (1, 2, Pro, 3, 3s), updated to the latest available version.
 
 Additionally, in order to play the **PCXR** release, you need:
 
-* A fairly recent PC running Windows, with a video card no more than 5 years old;
+* A fairly recent PC running Windows, with a graphics card no more than 5 years old;
 
 * Meta Horizon Link installed and running;
 

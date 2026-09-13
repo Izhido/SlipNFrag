@@ -15,7 +15,7 @@ The following is the list of components, and their version numbers, required to 
 | Component | Version |
 | --------- | ------- |
 | stb | latest version gathered from https://github.com/nothings/stb |
-| ankerl::unordered_dense::{map, set} | 4.8.1 |
+| ankerl::unordered_dense::{map, set} | 4.11.0 |
 
 To set up the environment to build, debug and test the project for the first time:
 
@@ -64,7 +64,7 @@ The following is the list of components, and their version numbers, required to 
 | --------- | ------- |
 | stb | latest version gathered from https://github.com/nothings/stb |
 | Vulkan Memory Allocator | 3.4.0 |
-| ankerl::unordered_dense::{map, set} | 4.8.1 |
+| ankerl::unordered_dense::{map, set} | 4.11.0 |
 
 To set up the environment to build, debug and test the project for the first time:
 
@@ -131,7 +131,7 @@ The following is the list of components, and their version numbers, required to 
 | Component | Version |
 | --------- | ------- |
 | stb | latest version gathered from https://github.com/nothings/stb |
-| ankerl::unordered_dense::{map, set} | 4.8.1 |
+| ankerl::unordered_dense::{map, set} | 4.11.0 |
 
 To set up the environment to build, debug and test the project for the first time, for either target:
 
@@ -182,17 +182,17 @@ The following is the list of components, and their version numbers, required to 
 
 | Component | Version |
 | --------- | ------- |
-| Android SDK Platform | 16.0 API level 37.0
-| NDK (Side by Side) | 29.0.14206865 |
+| Android SDK Platform | 16.0 API level 37.2
+| NDK (Side by Side) | 30.0.16248370 |
 | Android SDK Build-Tools | 37.0.0 |
-| Android Gradle Plugin | 9.3.1 |
-| OpenXR SDK | 1.1.62 |
+| Android Gradle Plugin | 9.4.0 |
+| OpenXR SDK | 1.1.63 |
 | CMake | 4.1.2 or later |
 | stb | latest version gathered from https://github.com/nothings/stb |
 | Minizip | latest version gathered from https://github.com/domoticz/minizip |
 | lhasa | 0.5.0 or later, gathered from https://github.com/fragglet/lhasa |
 | Vulkan Memory Allocator | 3.4.0 |
-| ankerl::unordered_dense::{map, set} | 4.8.1 |
+| ankerl::unordered_dense::{map, set} | 4.11.0 |
 
 > (Versions for other components can be checked in *Project Structure* in the Android Studio project.)
 
