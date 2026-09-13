@@ -15,8 +15,8 @@ android {
         minSdk = 29
         //noinspection ExpiredTargetSdkVersion
         targetSdk = 32
-        versionCode = 35
-        versionName = "1.1.35"
+        versionCode = 36
+        versionName = "1.1.36"
         shaders {
             glslcArgs += "-c"
         }
