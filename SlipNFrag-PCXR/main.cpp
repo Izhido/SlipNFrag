@@ -703,6 +703,11 @@ int main(int argc, char* argv[])
 					appState.IndexTypeUInt8Enabled = true;
 					enabledDeviceExtensions.push_back(VK_KHR_INDEX_TYPE_UINT8_EXTENSION_NAME);
 				}
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
+				{
+					appState.IndexTypeUInt8Enabled = true;
+					enabledDeviceExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
+				}
 				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					shaderDemoteToHelperInvocation = true;
