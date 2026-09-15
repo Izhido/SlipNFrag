@@ -675,6 +675,11 @@ void android_main(struct android_app* app)
 					appState.IndexTypeUInt8Enabled = true;
 					enabledDeviceExtensions.push_back(VK_KHR_INDEX_TYPE_UINT8_EXTENSION_NAME);
 				}
+				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
+				{
+					appState.IndexTypeUInt8Enabled = true;
+					enabledDeviceExtensions.push_back(VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME);
+				}
 				else if (strncmp(availableDeviceExtensions[i].extensionName, VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME, sizeof(availableDeviceExtensions[i].extensionName)) == 0)
 				{
 					shaderDemoteToHelperInvocation = true;
@@ -1666,7 +1671,70 @@ void android_main(struct android_app* app)
 				{
 					if (appState.Mode == AppWorldMode && (appState.PreviousMode == AppStartupMode || appState.PreviousMode == AppSharewareGameDataMode || appState.PreviousMode == AppNoGameDataUncompressMode || appState.PreviousMode == AppInvalidGameDataUncompressMode))
 					{
-						sys_version = "XR 1.1.36";
+						sys_version = "XR ";
+						{
+							auto activityClass = Env->GetObjectClass(app->activity->javaGameActivity);
+							auto getPackageName = Env->GetMethodID(activityClass, "getPackageName", "()Ljava/lang/String;");
+							auto getPackageManager = Env->GetMethodID(activityClass, "getPackageManager", "()Landroid/content/pm/PackageManager;");
+							if (getPackageName == nullptr || getPackageManager == nullptr)
+							{
+								Env->ExceptionClear();
+								Env->DeleteLocalRef(activityClass);
+								sys_version += "*.*.**";
+							}
+
+							auto packageName = static_cast<jstring>(Env->CallObjectMethod(app->activity->javaGameActivity, getPackageName));
+							auto packageManager = Env->CallObjectMethod(app->activity->javaGameActivity, getPackageManager);
+							if (Env->ExceptionCheck() || packageName == nullptr || packageManager == nullptr)
+							{
+								Env->ExceptionClear();
+								Env->DeleteLocalRef(activityClass);
+								sys_version += "*.*.**";
+							}
+
+							auto packageManagerClass = Env->GetObjectClass(packageManager);
+							auto getPackageInfo = Env->GetMethodID(packageManagerClass, "getPackageInfo", "(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;");
+							if (getPackageInfo == nullptr)
+							{
+								Env->ExceptionClear();
+								Env->DeleteLocalRef(packageManagerClass);
+								Env->DeleteLocalRef(packageManager);
+								Env->DeleteLocalRef(packageName);
+								Env->DeleteLocalRef(activityClass);
+								sys_version += "*.*.**";
+							}
+
+							auto packageInfo = Env->CallObjectMethod(packageManager, getPackageInfo, packageName, 0);
+							if (Env->ExceptionCheck() || packageInfo == nullptr)
+							{
+								Env->ExceptionClear();
+								Env->DeleteLocalRef(packageManagerClass);
+								Env->DeleteLocalRef(packageManager);
+								Env->DeleteLocalRef(packageName);
+								Env->DeleteLocalRef(activityClass);
+								sys_version += "*.*.**";
+							}
+
+							auto packageInfoClass = Env->GetObjectClass(packageInfo);
+							auto versionName = Env->GetFieldID(packageInfoClass, "versionName", "Ljava/lang/String;");
+							auto version = versionName == nullptr ? nullptr : static_cast<jstring>(Env->GetObjectField(packageInfo, versionName));
+							if (!Env->ExceptionCheck() && version != nullptr)
+							{
+								const char* versionChars = Env->GetStringUTFChars(version, nullptr);
+								if (versionChars != nullptr)
+								{
+									sys_version += versionChars;
+									Env->ReleaseStringUTFChars(version, versionChars);
+								}
+							}
+							Env->ExceptionClear();
+							Env->DeleteLocalRef(packageInfoClass);
+							Env->DeleteLocalRef(packageInfo);
+							Env->DeleteLocalRef(packageManagerClass);
+							Env->DeleteLocalRef(packageManager);
+							Env->DeleteLocalRef(packageName);
+							Env->DeleteLocalRef(activityClass);
+						}
 						std::vector<std::string> arguments;
 						arguments.emplace_back("SlipNFrag");
 						arguments.emplace_back("-basedir");

@@ -807,12 +807,12 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 				*target++ = 1;
 				*target++ = 0;
 
-				*target++ = 0;
-				*target++ = 3;
-				*target++ = 2;
-				*target++ = 2;
-				*target++ = 1;
-				*target++ = 0;
+				*target++ = 4;
+				*target++ = 7;
+				*target++ = 6;
+				*target++ = 6;
+				*target++ = 5;
+				*target++ = 4;
 			}
 			else
 			{
@@ -823,12 +823,12 @@ void PerFrame::LoadStagingBuffer(AppState& appState, Buffer* stagingBuffer)
 				*target++ = 3;
 				*target++ = 0;
 
-				*target++ = 0;
-				*target++ = 1;
-				*target++ = 2;
-				*target++ = 2;
-				*target++ = 3;
-				*target++ = 0;
+				*target++ = 4;
+				*target++ = 5;
+				*target++ = 6;
+				*target++ = 6;
+				*target++ = 7;
+				*target++ = 4;
 			}
 			offset += appState.Scene.statusBarIndicesSize;
 		}

@@ -1,6 +1,11 @@
 # Changelog
 
-## Version **1.1.36**:
+## Version **1.1.37**:
+
+* Fix to the status bar not being displayed in the inner side of the non-dominant hand when hand tracking is enabled in the XR version.
+* Fix to the detection code for the Vulkan extensions that enable 8-bit indices not being properly handled since the upgrade to the latest NDK in the XR version. This was also applied to the PCXR version during initialization.
+
+### Version **1.1.36**:
 
 * Applied optimization that allow the XR and PCXR versions to detect whether the current frame being rendered contains the same information as the previous frame, and if detected, skip creating or reprocessing several large buffers, instead reusing them for the current and future frames, which increased effectively the frame rate of both versions, making things way smoother during play.
 * Fixed issue with viewmodels (weapons, player models) that are loaded without proper "extra data" to prevent them from rendering, which caused a crash when playing demos from LibreQuake.
